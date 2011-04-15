@@ -401,8 +401,8 @@ program pamtra
     grid_x: do nx = 1, ngridx !nx_in, nx_fin   
 
     ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
-	lat = profiles(nx,ny)%latitude                  ! �
-	lon = profiles(nx,ny)%longitude                 ! �
+	lat = profiles(nx,ny)%latitude                  ! °
+	lon = profiles(nx,ny)%longitude                 ! °
 	lfrac = profiles(nx,ny)%land_fraction
 	relhum_lev = profiles(nx,ny)%relhum_lev         ! %
 	press_lev = profiles(nx,ny)%press_lev           ! Pa
