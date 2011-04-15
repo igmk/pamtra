@@ -1,0 +1,6 @@
+bin
+*.o
+*.mod
+pamtra
+.cproject
+.project
