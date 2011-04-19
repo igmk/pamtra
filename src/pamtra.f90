@@ -230,7 +230,7 @@ program pamtra
   !                                                                       
   read ( *, * ) input_file 
   read ( *, * ) nx_in, nx_fin, ny_in, ny_fin, tau_min, tau_max 
-  read ( *, * ) freq 
+  read ( *, * ) freq               ! frequency [Ghz]
 
   ! read name list parameter file
 
@@ -334,26 +334,6 @@ program pamtra
     allocate(tb_up(nstokes,nummu,noutlevels,ngridy,ngridx),tb_down(nstokes,nummu,noutlevels,ngridy,ngridx))
   end if
 
-                                                         
-!   if (nullify_hyds) then
-!     do i = 1, ngridx
-!       do j = 1, ngridy 
-! ! 	profiles(i,j)%cwp = 0.
-! ! 	profiles(i,j)%iwp = 0.
-! ! 	profiles(i,j)%rwp = 0.
-! ! 	profiles(i,j)%swp = 0.
-! ! 	profiles(i,j)%gwp = 0.
-! 	do k = 1, nlyr 
-! 	  profiles(i,j)%cloud_water_q(k) = 0.
-! 	  profiles(i,j)%cloud_ice_q(k) = 0.
-! 	  profiles(i,j)%rain_q(k) = 0.
-!  	  profiles(i,j)%snow_q(k) = 0.
-! 	  profiles(i,j)%graupel_q(k) = 0.
-! 	end do
-!       end do
-!     end do
-!   end if
-
   !                                                                       
   !     This GCE model format does not have all the fields expected by    
   !     the radiative transfer code (i.e. total pressure, and water vapor 
@@ -425,6 +405,7 @@ program pamtra
 	if (verbose .gt. 0) print*, 'type to local variables done' 
 
 	! Determine surface properties
+
 	if (lfrac .ge. 0.5 .and. lfrac .le. 1.0) then
 	  ground_type = 'L'
 	  ise=13
@@ -459,7 +440,7 @@ program pamtra
 
     ! gaseous absorption
 	! 
-	! kextatmo   extinction by moist air [Np/km]
+	! kextatmo   extinction by moist air [Np/m]
     !
 
     if (lgas_extinction) then
@@ -470,396 +451,29 @@ program pamtra
 
 	if (verbose .gt. 0) print*, 'Gas absorption calculated'
 
-        write(xstr, '(i3.3)') profiles(nx,ny)%isamp
-        write(ystr, '(i3.3)') profiles(nx,ny)%jsamp
-        file_profile = '/tmp/Profilex'//xstr//'y'//ystr//'f'//frq_str
+    write(xstr, '(i3.3)') profiles(nx,ny)%isamp
+    write(ystr, '(i3.3)') profiles(nx,ny)%jsamp
+    file_profile = '/tmp/Profilex'//xstr//'y'//ystr//'f'//frq_str
 
-!         ! INITIALIZATION OF LEGENDRE COEFFICIENTS  
-! 
-! 	if (verbose .gt. 0) print*, 'start loop over layer'
-! 
-!         grid_z: do nz = 1, N_lay_cut  ! loop over all layers
-! 
-! 	   if (verbose .gt. 0) print*, 'Layer: ', nz
-! 
-!            write(Nzstr, '(i2.2)') nz
-!            nlegen = 0 
-!            legen   = 0.d0
-!            legen2  = 0.d0
-!            legen3  = 0.d0
-!            legen4  = 0.d0
-! 
-!            !strings with blank spaces            
-!            FILE_PH(nz) = ''
-! 
-! !---------------------------------------------------------
-! ! calculation of the single scattering properties
-! ! of hydrometeors. cloud water and cloud ice are 
-! ! with respect to radius. whereas the distribution 
-! ! of precipitating particles is with respect to diameter.
-! !---------------------------------------------------------
-! 
-! 
-! !---------------------------------------------------------
-! !        single scattering properties of cloud water
-! !---------------------------------------------------------
-! 
-! 
-!            nlegencw = 0 
-!            legencw  = 0.d0
-!            legen2cw = 0.d0
-!            legen3cw = 0.d0
-!            legen4cw = 0.d0
-! 
-! 	   kextcw = 0.d0 
-! 	   salbcw = 0.d0 
-! 	   backcw = 0.d0 
-! 
-!            if (cwc_q(nz) .ge. 1.e-5) then
-! 
-! 	      ! absind  absorptive index 
-! 	      ! abscof  absorption coefficient    [1/m]
-! 	      call ref_water(0.d0, temp(nz)-273.15, freq, refre, refim, absind, abscof)
-!               mindex = refre-im*refim
-!               del_r = 1.d-8     ! [m]
-!               rad1 = 1.d-5      ! [m] 10 micron radius monodisperse
-!               rad2 = rad1 + del_r 
-!               den_liq = 1.d3 ! density of liquid water [kg/m^3]
-!               drop_mass = 4./3. * pi * rad1**3 * den_liq ! [kg]
-! 	      lwc = spec2abs(cwc_q(nz),temp(nz),press(nz),q_hum(nz)) ! [kg/m^3]
-!               ad = lwc / (drop_mass*del_r)
-! 
-!               bd = 0.d0 
-!               alpha = 0.d0 ! exponential SD
-!               gamma = 1.d0 
-!               numrad = 2 
-!               call mie(freq, mindex, rad1, rad2, numrad, maxleg, ad,       &
-!                    bd, alpha, gamma, lphase_flag, kextcw, salbcw, backcw,  &
-!                    nlegencw, legencw, legen2cw, legen3cw, legen4cw, 'C')
-!               nlegen = max(nlegen, nlegencw)
-!            else
-!               kextcw = 0.0d0 
-!               salbcw = 0.0d0 
-!               backcw = 0.0d0 
-!            end if
-! 
-! !---------------------------------------------------------
-! !       single scattering properties of rain
-! !---------------------------------------------------------
-! 
-!            nlegenrr = 0 
-!            legenrr  = 0.d0
-!            legen2rr = 0.d0
-!            legen3rr = 0.d0
-!            legen4rr = 0.d0
-! 
-!            kextrr = 0.d0 
-!            salbrr = 0.d0 
-!            backrr = 0.d0 
-! 
-!            if (rwc_q(nz) .ge. 1.e-5) then
-! 
-!               call ref_water(0.d0, temp(nz)-273.15, freq, refre, refim, absind, abscof)
-! 
-!               mindex = refre-im*refim
-!               rad1 = 1.d-4   ! minimum diameter [m]
-!               rad2 = 6.d-3   ! maximum diameter [m]
-!               den_liq = 1.d3  ! density of liquid water [kg/m^3]
-!               ! this is for integration over diameters
-! 	      rwc = spec2abs(rwc_q(nz),temp(nz),press(nz),q_hum(nz)) ! [kg/m^3]
-! 
-!               ad = n_0rainD*1.d6   ! [1/m^4]
-!               bd = (pi * den_liq * ad / rwc)**0.25
-! 
-!               numrad = 100 
-!               alpha = 0.d0 ! exponential SD
-!               gamma = 1.d0 
-! 
-!               call mie(freq, mindex, rad1/2., rad2/2., numrad, maxleg, ad,    &
-!                    bd, alpha, gamma, lphase_flag, kextrr, salbrr, backrr,     &
-!                    nlegenrr, legenrr, legen2rr, legen3rr, legen4rr, 'C')    
-!               nlegen = max(nlegen, nlegenrr) 
-!            else
-!               kextrr = 0.0d0 
-!               salbrr = 0.0d0 
-!               backrr = 0.0d0 
-!            end if
-! 
-! !---------------------------------------------------------
-! !       single scattering properties of ice crystals
-! !---------------------------------------------------------
-! 
-!            nlegenci = 0 
-!            legenci  = 0.d0
-!            legen2ci = 0.d0
-!            legen3ci = 0.d0
-!            legen4ci = 0.d0
-! 
-!            kextci = 0.0d0 
-!            salbci = 0.0d0 
-!            backci = 0.0d0 
-! 
-!            if (iwc_q(nz) .ge. 1.e-5) then
-! 
-!               call ref_ice(temp(nz), freq, refre, refim)
-!               mindex = refre-Im*refim  ! mimicking a
-!               ! monodisperse distribution
-!               del_r = 1.d-8    ! [m] 
-!               rad1 = 5.d-5     ! [m] 5 micron radius
-!               rad2 = rad1 + del_r 
-!               den_ice = 917.d0  ! [kg/m^3]
-!               drop_mass = 4./3. * pi * rad1**3 * den_ice 
-! 	      iwc = spec2abs(iwc_q(nz),temp(nz),press(nz),q_hum(nz)) ! [kg/m^3]
-! 
-!               ad = iwc/(drop_mass*del_r) 
-!               bd = 0.0d0 
-!               alpha = 0.0d0     ! exponential SD
-!               gamma = 1.0d0 
-!               numrad = 2 
-!               call mie(freq, mindex, rad1, rad2, numrad, maxleg, ad,    &
-!                    bd, alpha, gamma, lphase_flag, kextci, salbci, backci,     &
-!                    nlegenci, legenci, legen2ci, legen3ci, legen4ci, 'C')    
-!               nlegen = max(nlegen, nlegenci)
-! 	   else
-! 	      kextci = 0.0d0
-!               salbci = 0.0d0 
-!               backci = 0.0d0 
-!            end if
-! 
-! !---------------------------------------------------------
-! !       single scattering properties of snow
-! !---------------------------------------------------------
-! 
-!            nlegensn = 0 
-!            legensn = 0.0d0
-!            legen2sn = 0.0d0
-!            legen3sn = 0.0d0
-!            legen4sn = 0.0d0
-! 
-!            if (swc_q(nz) .ge. 1.e-5) then 
-! 
-!               b_snow = 2.0d0     ! MKS system
-!               a_msnow = 0.038d0 
-! 
-! 
-!               call ref_ice(temp(nz), freq, refre, refim)
-!               mindex = refre-Im*refim  ! mimicking a
-! 
-!               m_air = 1.0d0 - 0.0d0 * Im 
-! 
-!               rad1 = 1.d-6 ! minimum maximum diameter [m] after kneifel
-!               rad2 = 2.d-2 ! maximum maximum diameter [m] after kneifel
-! 
-! 	      swc =  spec2abs(swc_q(nz),temp(nz),press(nz),q_hum(nz)) ! [kg/m^3]
-!               ! Field param. ! multiplied by 10^6 is 1/m^4
-!               ad = n_0snowDsnow * 1.d6 * exp(-0.107d0 * (temp(nz) - 273.15))
-! 
-!               bd = (exp(gammln(b_snow + 1)) * a_msnow * ad/swc)**(1.0d0/(1.0d0 + b_snow))  ! [m**-1]   
-! 
-!               !formula 3.12 Mario Mech´s but for radii and units converted
-!               numrad = 100 
-! 
-! 	      if (EM_snow .eq. 'icesf') then 
-! 		call MIE_densitysizedep_spheremasseq(freq, mindex,      &
-!                       m_air, a_msnow, b_snow, rad1/2., rad2/2., numrad, maxleg,   &
-!                       ad, bd, alpha, gamma, lphase_flag, kextsn, salbsn,      &
-!                       backsn, NLEGENsn, LEGENsn, LEGEN2sn, LEGEN3sn,        &
-!                       LEGEN4sn, 'C')
-! 	      elseif (EM_snow .eq. 'surus') then 
-! 		call mie_icefactor(freq, temp(nz),mindex,      &
-!                       m_air, a_msnow, b_snow, rad1/2., rad2/2., numrad, maxleg,   &
-!                       ad, bd, alpha, gamma, lphase_flag, kextsn, salbsn,      &
-!                       backsn, NLEGENsn, LEGENsn, LEGEN2sn, LEGEN3sn,        &
-!                       LEGEN4sn, 'C',0.863*1.e-3*freq+0.115,42)
-! 	      elseif (EM_snow(1:3) .eq. 'liu') then
-! 		 call dda_db_liu(freq,temp(nz),9,mindex, &
-! 		      rad1/2.,rad2/2.,numrad,maxleg,ad,&
-! 		      bd, alpha, gamma, lphase_flag,kextsn, salbsn,&
-!                       backsn, nlegensn, legensn, legen2sn, legen3sn,&
-!                       legen4sn, 'C')
-!               else 
-!                  write (*, *) 'no em mod', EM_snow
-!                  stop
-!               endif
-!               nlegen = max(nlegen, nlegensn) 
-!               call legendre2phasefunction(legensn, nlegensn, 2, 200,p11, ang)                                                
-!               backsn = kextsn * salbsn * P11 (2) 
-!            else
-!               kextsn = 0.0d0 
-!               salbsn = 0.0d0 
-!               backsn = 0.0d0 
-!            endif
-! 
-! !---------------------------------------------------------
-! !       single scattering properties of graupel
-! !---------------------------------------------------------
-! 
-!            nlegengr = 0 
-!            legengr = 0.0d0
-!            legen2gr = 0.0d0
-!            legen3gr = 0.0d0
-!            legen4gr = 0.0d0
-! 
-!            if (gwc_q(nz) .ge. 1.e-5) then 
-! 
-!               b_g = 3.1d0
-!               a_mgraup = 169.6d0 
-! 
-!               call ref_ice(temp(nz), freq, refre, refim)
-!               mindex = refre-Im*refim
-!               m_air = 1.0d0 - 0.0d0 * Im
-! 
-!               rad1 = 1.d-5 
-!               rad2 = 1.d-2
-!               numrad = 100
-! 	      alpha = 0.
-! 	      gamma = 1.
-! 
-! 	      gwc =  spec2abs(gwc_q(nz),temp(nz),press(nz),q_hum(nz)) ! [kg/m^3]
-! 
-!               ad = n_0grauDgrau*1.d6
-!               bd = (exp(gammln(b_g + 1)) * a_mgraup * ad/gwc)**(1.0d0 /(1.0d0 + b_g)) !  [m**-1]
-! 
-!               if (EM_grau .eq. 'icesf') then
-! 		call mie_densitysizedep_spheremasseq(freq, mindex,      &
-!                       m_air, a_mgraup, b_g, rad1/2., rad2/2., numrad, maxleg,   &
-!                       ad, bd, alpha, gamma, lphase_flag, kextgr, salbgr,      &
-!                       backgr, nlegengr, legengr, legen2gr, legen3gr,        &
-!                       legen4gr, 'C')
-! 	      elseif (EM_grau .eq. 'surus') then 
-! 		call mie_icefactor(freq, temp(nz),mindex,      &
-!                       m_air, a_mgraup, b_g, rad1/2., rad2/2., numrad, maxleg,   &
-!                       ad, bd, alpha, gamma, lphase_flag, kextgr, salbgr,      &
-!                       backgr, NLEGENgr, LEGENgr, LEGEN2gr, LEGEN3gr,        &
-!                       LEGEN4gr, 'C',0.815*1.e-3*freq+0.0112,44)
-!               else 
-!                  write (*, *) 'no em mod for grau'
-!                  stop
-!               end if
-!               nlegen = max(nlegen, nlegengr) 
-!               call legendre2phasefunction(legengr, nlegengr, 2, 200, p11, ang)                                                
-!               backgr = kextgr * salbgr * p11 (2) 
-!            else
-!               kextgr = 0.0d0
-!               salbgr = 0.0d0 
-!               backgr = 0.0d0 
-!            endif
-! 
-! 	   if (verbose .gt. 0) print*, 'End of scattering calc for layer: ', nz
-! 
-!            !CCCCCCCCCCCCC   END OF SINGLE SCATTERING PROPERTY COMPUTATIONS  CCCCCCC
-! 
-!            !                                                                       
-!            !           Summing up the scattering parameters and writing the
-!            !           input file of the scattering properties of each layer
-!            !                                                                       
-! 
-!            kexttot(nx,ny,nz) = kextcw + kextrr + kextci + kextsn + kextgr
-!            kextcloud(nx,ny,nz) = max(0.0d0, kextcw)
-!            kextrain(nx,ny,nz) = max(0.0d0, kextrr)
-!            kextice(nx,ny,nz) = max(0.0d0, kextci)
-!            kextsnow(nx,ny,nz) = max(0.0d0, kextsn)
-!            kextgraupel(nx,ny,nz) = max(0.0d0, kextgr)
-!            back(nx,ny,nz) = backcw + backrr + backci + backsn + backgr                                                     
-! 
-!            if (kexttot(nx,ny,nz) .lt. 0.) write(*,*) 'something wrong'
-!            if (kexttot(nx, ny, nz) .le. 0.) then 
-!               salbtot(nx, ny, nz) = 0.0 
-!            else 
-!               salbtot(nx, ny, nz) = (salbcw * kextcw + salbrr *       &
-!                    kextrr + salbci * kextci + salbsn * kextsn + salbgr *    &
-!                    kextgr) / kexttot(nx, ny, nz)                           
-!            endif
-! 
-!            if (salbtot(nx, ny, nz) .le.0.0) then 
-!               asymtot(nx, ny, nz) = 0.0d0 
-!            else 
-!               asymtot(nx, ny, nz) = (asymcw * salbcw * kextcw +       &
-!                    asymrr * salbrr * kextrr + asymci * salbci * kextci +    &
-!                    asymsn * salbsn * kextsn + asymgr * salbgr * kextgr)     &
-!                    / (salbtot(nx, ny, nz) * kexttot(nx, ny, nz) )         
-!            endif
-!            absorp(nx, ny, nz) = (1.0 - salbtot(nx, ny, nz) ) * kexttot(nx, ny, nz)                                                 
-! 
-! !!!!!!!!!!!!!!!!! check whether hgt_lev needs to be km or m !!!!!!!!!!!!!!!!!
-! !!!!!!!!!!!!!!!! By the way, tau and tau_hydro are not used further down !!!!!
-! 
-!            tau(nx, ny) = tau(nx, ny) + (kexttot(nx, ny, nz) +       &
-!                 kextatmo(nz) ) * (hgt_lev(nz) - hgt_lev(nz - 1) )                                                   
-!            tau_hydro(nx, ny) = tau_hydro(nx, ny) + kexttot(nx, ny,  &
-!                 nz) * (hgt_lev( nz) - hgt_lev(nz - 1) )    
-! ! 	   write(*,'f7.1,1x,es10.3,1x,es10.3,1x,es10.3,1x,es10.3') &
-! ! 	      hgt_lev( nz) - hgt_lev(nz - 1),abscoef_o2(nz),abscoef_h2o(nz), abscoef_n2(nz), kexttot(nx,ny,nz)
-! 
-!            !   summing up the Legendre coefficient                                 
-! 
-!            if (kexttot(nx, ny, nz) .le. 0.0 .or.    &
-!                 salbtot(nx, ny, nz) .le. 0.0) then
-!               FILE_PH(nz) = ''
-!               !    writing no file                                                                        
-!            else ! there are hydrometeor present : a PH file is needed
-! 
-!               FILE_PH(nz) = '/tmp/PHx'//xstr//'y'//ystr//'lev'//Nzstr//'f'//frq_str
-! 
-!               open(unit=21, file=file_PH(nz), STATUS='unknown', &
-!                    form='FORMATTED')
-!               write(21,*) kexttot(nx,ny,nz), '   EXINCTION'
-!               write(21,*) kexttot(nx,ny,nz) * salbtot(nx,ny,nz), '   SCATTERING'
-!               write(21,*) salbtot(nx,ny,nz), '   SINGLE SCATTERING ALBEDO'
-!               write(21,*) Nlegen - 1, '      DEGREE OF LEGENDRE SERIES'
-! 
-!               do jj = 1, Nlegen 
-! 
-!                  legen (jj) = (legencw (jj) * salbcw * kextcw + legenrr ( &
-!                       jj) * salbrr * kextrr + legenci (jj) * salbci * kextci + &
-!                       legensn (jj) * salbsn * kextsn + legengr (jj) * salbgr * &
-!                       kextgr) / (salbtot (nx, ny, nz) * kexttot (nx, ny, nz) ) 
-! 
-!                  legen2 (jj) = (legen2cw (jj) * salbcw * kextcw +         &
-!                       legen2rr (jj) * salbrr * kextrr + legen2ci (jj) * salbci &
-!                       * kextci + legen2sn (jj) * salbsn * kextsn + legen2gr (  &
-!                       jj) * salbgr * kextgr) / (salbtot (nx, ny, nz) * kexttot &
-!                       (nx, ny, nz) )                                           
-! 
-!                  legen3 (jj) = (legen3cw (jj) * salbcw * kextcw +         &
-!                       legen3rr (jj) * salbrr * kextrr + legen3ci (jj) * salbci &
-!                       * kextci + legen3sn (jj) * salbsn * kextsn + legen3gr (  &
-!                       jj) * salbgr * kextgr) / (salbtot (nx, ny, nz) * kexttot &
-!                       (nx, ny, nz) )                                           
-! 
-!                  legen4 (jj) = (legen4cw (jj) * salbcw * kextcw +         &
-!                       legen4rr (jj) * salbrr * kextrr + legen4ci (jj) * salbci &
-!                       * kextci + legen4sn (jj) * salbsn * kextsn + legen4gr (  &
-!                       jj) * salbgr * kextgr) / (salbtot (nx, ny, nz) * kexttot &
-!                       (nx, ny, nz) )                                           
-! 
-!                  write (21, 1005) jj - 1, legen (jj), legen2 (jj),        &
-!                       legen3 (jj), legen4 (jj), legen (jj), legen3 (jj)        
-!                  g_coeff (nx, ny, nz) = legen (2) / 3.0d0 
-! 1005             format  (i3,6(1x,f10.7))
-! 
-!               end do ! end of cycle over Legendre coefficient
-!               close(21)
-!            end if
-!         end do grid_z !end of cycle over the vertical layers
+	! hydrometeor extinction desired
 
 	if (lhyd_extinction) call hydrometeor_extinction(freq, n_lay_cut,xstr,ystr,frq_str,file_ph)
 
-        !      Preparation of the PROFILE file  (needed by RT3)                 
-        open(21, file = file_profile, form = 'FORMATTED', status =  &
-             'unknown')                                                  
+    !      Preparation of the PROFILE file  (needed by RT3)
+    open(21, file = file_profile, form = 'FORMATTED', status =  &
+         'unknown')
  
-        do nz = N_lay_cut, 1, - 1 !nlyr,1,-1
-           str1 = ''''
-           ! position of the first blank space
-           offset1 = index(FILE_PH(nz) , ' ') 
-           tmp_file1 = FILE_PH(nz) 
-           FILE_PH2(nz) = str1//tmp_file1(1:offset1 - 1)//str1
-           write(21,1013) hgt_lev(nz), temp_lev(nz), kextatmo(nz), FILE_PH2(nz)                        
-1013       format   (f7.1,1x,f6.2,1x,E9.4,1x,a38) 
-        end do !end of cycle over the vertical layers
-        write(21,1012) hgt_lev(0) , temp_lev(0), KEXTATMO (1) , ''' '''                                    
-1012    format   (f7.1,1x,f6.2,1x,E9.4,1x,a3) 
+    do nz = N_lay_cut, 1, - 1 !nlyr,1,-1
+       str1 = ''''
+       ! position of the first blank space
+       offset1 = index(FILE_PH(nz) , ' ')
+       tmp_file1 = FILE_PH(nz)
+       FILE_PH2(nz) = str1//tmp_file1(1:offset1 - 1)//str1
+       write(21,1013) hgt_lev(nz), temp_lev(nz), kextatmo(nz), FILE_PH2(nz)
+1013   format(f7.1,1x,f6.2,1x,E9.4,1x,a38)
+    end do !end of cycle over the vertical layers
+    write(21,1012) hgt_lev(0) , temp_lev(0), KEXTATMO (1) , ''' '''
+1012 format(f7.1,1x,f6.2,1x,E9.4,1x,a3)
         close(21)
 
 

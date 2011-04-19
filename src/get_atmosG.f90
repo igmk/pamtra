@@ -41,11 +41,9 @@ subroutine get_atmosg(press, temp, vapor_pressure, rho_vap, nlyr, freq, gas_mod,
       !    extinction by dry air       Np/km
       !    extinction by water vapor   Np/km      
 	    call gasabsr98(freq,temp(nz),rho_vap(nz),press(nz),absair,abswv)!,abs_n2,abs_o2)
+
         abscoef(nz) = (absair + abswv)/1000.    ! [1/m]
 
-! 	abscoef_h2o(nz) = abswv/1000.
-! 	abscoef_o2(nz) = abs_o2/1000.
-! 	abscoef_n2(nz) = abs_n2/1000.
       else
 	    abscoef(nz) = 0
         print*, "No gas absorption model specified!"

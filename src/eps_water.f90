@@ -5,9 +5,9 @@ function eps_water(s,T,f)
 ! Valid parameter range: s 0-40, T 0-30, f 0-500 (1000)
 !
 ! Input:
-!	s  salinity in ppt
-!	t  temperature in Celsius degree
-!	f  frequency in GHz
+!	s  salinity [ppt]
+!	t  temperature [°C]
+!	f  frequency [GHz]
 !
 ! Result:
 !	eps_water complex permittivity of natural water

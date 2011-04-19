@@ -40,6 +40,8 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
        absorp,     & ! might be unnecessary
        back        
 
+  real(kind=dbl) :: threshold ! threshold value for hydrometeor extinction as mass mixing ratio
+
   character(2) :: nzstr
 
   character(3), intent(in) :: xstr, ystr
@@ -49,6 +51,8 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
   character(64), intent(out) :: file_PH(mxlyr)
 
   if (verbose .gt. 1) print*, 'Entering hydrometeor_extinction'
+
+  threshold = 1.e-5   ! [kg/kg]
 
   if (verbose .gt. 0) print*, 'start loop over layer'
 
@@ -90,7 +94,7 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
       salbcw = 0.d0 
       backcw = 0.d0 
 
-      if (cwc_q(nz) .ge. 1.e-5) then
+      if (cwc_q(nz) .ge. threshold) then
     	call cloud_ssp(f,cwc_q(nz),temp(nz),press(nz),q_hum(nz),&
     		maxleg, kextcw, salbcw, backcw,  &
             nlegencw, legencw, legen2cw, legen3cw, legen4cw, 'C')
@@ -114,7 +118,7 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
       salbrr = 0.d0 
       backrr = 0.d0 
 
-      if (rwc_q(nz) .ge. 1.e-5) then
+      if (rwc_q(nz) .ge. threshold) then
 	    call rain_ssp(f,rwc_q(nz),temp(nz),press(nz),q_hum(nz),&
 		    maxleg,kextrr, salbrr, backrr,  &
             nlegenrr, legenrr, legen2rr, legen3rr, legen4rr, 'C')
@@ -138,7 +142,7 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
       salbci = 0.0d0 
       backci = 0.0d0 
 
-      if (iwc_q(nz) .ge. 1.e-5) then
+      if (iwc_q(nz) .ge. threshold) then
 	    call ice_ssp(f,iwc_q(nz),temp(nz),press(nz),q_hum(nz),&
 		    maxleg,kextci, salbci, backci,  &
             nlegenci, legenci, legen2ci, legen3ci, legen4ci, 'C')
@@ -158,7 +162,7 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
       legen3sn = 0.0d0
       legen4sn = 0.0d0
 
-      if (swc_q(nz) .ge. 1.e-5) then 
+      if (swc_q(nz) .ge. threshold) then
 	    call snow_ssp(f,swc_q(nz),temp(nz),press(nz),q_hum(nz),&
 		    maxleg,kextsn, salbsn, backsn,  &
             nlegensn, legensn, legen2sn, legen3sn, legen4sn, 'C')
@@ -180,16 +184,16 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
       legen3gr = 0.0d0
       legen4gr = 0.0d0
 
-      if (gwc_q(nz) .ge. 1.e-5) then 
-	call grau_ssp(f,gwc_q(nz),temp(nz),press(nz),q_hum(nz),&
-		maxleg,kextgr, salbgr, backgr,  &
-                nlegengr, legengr, legen2gr, legen3gr, legen4gr, 'C')
-	call legendre2phasefunction(legengr, nlegengr, 2, 200, p11, ang)                                                
-	backgr = kextgr * salbgr * p11 (2) 
+      if (gwc_q(nz) .ge. threshold) then
+		call grau_ssp(f,gwc_q(nz),temp(nz),press(nz),q_hum(nz),&
+			maxleg,kextgr, salbgr, backgr,  &
+            nlegengr, legengr, legen2gr, legen3gr, legen4gr, 'C')
+		call legendre2phasefunction(legengr, nlegengr, 2, 200, p11, ang)
+			backgr = kextgr * salbgr * p11 (2)
       else
-	kextgr = 0.0d0
-	salbgr = 0.0d0 
-	backgr = 0.0d0 
+		kextgr = 0.0d0
+		salbgr = 0.0d0
+		backgr = 0.0d0
       endif
 
       nlegen = max(nlegen,nlegencw,nlegenci,nlegenrr,nlegensn,nlegengr)
@@ -213,9 +217,9 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
 
       if (kexttot(nz) .lt. 0.) write(*,*) 'something wrong'
       if (kexttot(nz) .le. 0.) then 
-	salbtot(nz) = 0.0 
+		salbtot(nz) = 0.0
       else 
-	salbtot(nz) = (salbcw * kextcw + salbrr *       &
+		salbtot(nz) = (salbcw * kextcw + salbrr *       &
 	      kextrr + salbci * kextci + salbsn * kextsn + salbgr *    &
 	      kextgr) / kexttot(nz)                           
       endif
@@ -227,49 +231,49 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
       !   summing up the Legendre coefficient                                 
 
       if (kexttot(nz) .le. 0.0 .or.    &
-	  salbtot(nz) .le. 0.0) then
-	FILE_PH(nz) = ''
+		  salbtot(nz) .le. 0.0) then
+		FILE_PH(nz) = ''
 	!    writing no file                                                                        
       else ! there are hydrometeor present : a PH file is needed
 
-	FILE_PH(nz) = '/tmp/PHx'//xstr//'y'//ystr//'lev'//Nzstr//'f'//frq_str
+		FILE_PH(nz) = '/tmp/PHx'//xstr//'y'//ystr//'lev'//Nzstr//'f'//frq_str
 
-	open(unit=21, file=file_PH(nz), STATUS='unknown', &
+		open(unit=21, file=file_PH(nz), STATUS='unknown', &
 	      form='FORMATTED')
-	write(21,*) kexttot(nz), '   EXINCTION'
-	write(21,*) kexttot(nz) * salbtot(nz), '   SCATTERING'
-	write(21,*) salbtot(nz), '   SINGLE SCATTERING ALBEDO'
-	write(21,*) Nlegen - 1, '      DEGREE OF LEGENDRE SERIES'
+		write(21,*) kexttot(nz), '   EXINCTION'
+		write(21,*) kexttot(nz) * salbtot(nz), '   SCATTERING'
+		write(21,*) salbtot(nz), '   SINGLE SCATTERING ALBEDO'
+		write(21,*) Nlegen - 1, '      DEGREE OF LEGENDRE SERIES'
 
-	do jj = 1, Nlegen 
+		do jj = 1, Nlegen
 
-	    legen (jj) = (legencw (jj) * salbcw * kextcw + legenrr ( &
-		jj) * salbrr * kextrr + legenci (jj) * salbci * kextci + &
-		legensn (jj) * salbsn * kextsn + legengr (jj) * salbgr * &
-		kextgr) / (salbtot (nz) * kexttot (nz) ) 
+	    	legen (jj) = (legencw (jj) * salbcw * kextcw + legenrr ( &
+				jj) * salbrr * kextrr + legenci (jj) * salbci * kextci + &
+			legensn (jj) * salbsn * kextsn + legengr (jj) * salbgr * &
+				kextgr) / (salbtot (nz) * kexttot (nz) )
 
-	    legen2 (jj) = (legen2cw (jj) * salbcw * kextcw +         &
-		legen2rr (jj) * salbrr * kextrr + legen2ci (jj) * salbci &
-		* kextci + legen2sn (jj) * salbsn * kextsn + legen2gr (  &
-		jj) * salbgr * kextgr) / (salbtot (nz) * kexttot &
-		(nz) )                                           
+	    	legen2 (jj) = (legen2cw (jj) * salbcw * kextcw +         &
+				legen2rr (jj) * salbrr * kextrr + legen2ci (jj) * salbci &
+				* kextci + legen2sn (jj) * salbsn * kextsn + legen2gr (  &
+				jj) * salbgr * kextgr) / (salbtot (nz) * kexttot &
+				(nz) )
 
-	    legen3 (jj) = (legen3cw (jj) * salbcw * kextcw +         &
-		legen3rr (jj) * salbrr * kextrr + legen3ci (jj) * salbci &
-		* kextci + legen3sn (jj) * salbsn * kextsn + legen3gr (  &
-		jj) * salbgr * kextgr) / (salbtot (nz) * kexttot &
-		(nz) )                                           
+		    legen3 (jj) = (legen3cw (jj) * salbcw * kextcw +         &
+				legen3rr (jj) * salbrr * kextrr + legen3ci (jj) * salbci &
+				* kextci + legen3sn (jj) * salbsn * kextsn + legen3gr (  &
+				jj) * salbgr * kextgr) / (salbtot (nz) * kexttot &
+				(nz) )
 
-	    legen4 (jj) = (legen4cw (jj) * salbcw * kextcw +         &
-		legen4rr (jj) * salbrr * kextrr + legen4ci (jj) * salbci &
-		* kextci + legen4sn (jj) * salbsn * kextsn + legen4gr (  &
-		jj) * salbgr * kextgr) / (salbtot (nz) * kexttot &
-		(nz) )                                           
+	    	legen4 (jj) = (legen4cw(jj) * salbcw * kextcw +         &
+				legen4rr (jj) * salbrr * kextrr + legen4ci (jj) * salbci &
+				* kextci + legen4sn (jj) * salbsn * kextsn + legen4gr (  &
+				jj) * salbgr * kextgr) / (salbtot(nz) * kexttot &
+				(nz))
 
-	    write (21, 1005) jj - 1, legen (jj), legen2 (jj),        &
-		legen3 (jj), legen4 (jj), legen (jj), legen3 (jj)        
-	    g_coeff (nz) = legen (2) / 3.0d0 
-1005             format  (i3,6(1x,f10.7))
+	   		write (21, 1005) jj - 1, legen (jj), legen2 (jj),        &
+				legen3 (jj), legen4 (jj), legen (jj), legen3 (jj)
+	    	g_coeff (nz) = legen (2) / 3.0d0
+1005        format  (i3,6(1x,f10.7))
 
 	end do ! end of cycle over Legendre coefficient
 	close(21)

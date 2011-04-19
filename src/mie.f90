@@ -72,9 +72,7 @@ subroutine mie(f, mindex, rad1, rad2, numrad, maxleg,   &
     if ((ir .eq. 1 .or. ir .eq. numrad+1) .and. numrad .gt. 0) then 
 	ndens = 0.5 * ndens 
     end if 
-!    tot_mass = tot_mass +4./3.*pi*(radius)**3*ndens*2.*delrad*0.917d3
     tot_mass = tot_mass +0.038*(2.*radius)**2*ndens*2.*delrad
-!    print*, radius, ndens, tot_mass
     x = 2.0d0 * pi * radius / wavelength ! size parameter
     nmie = 0 
     call miecalc(nmie, x, msphere, a, b) ! calculate a and b
@@ -86,24 +84,23 @@ subroutine mie(f, mindex, rad1, rad2, numrad, maxleg,   &
     if (lphase_flag) then 
       nmie = min(nmie, nterms) 
       do i = 1, nquad 
-	call mieangle(nmie, a, b, mu(i), p1, p2, p3, p4) 
-	sump1(i) = sump1(i) + p1 * ndens 
-	sump2(i) = sump2(i) + p2 * ndens 
-	sump3(i) = sump3(i) + p3 * ndens 
-	sump4(i) = sump4(i) + p4 * ndens 
+		call mieangle(nmie, a, b, mu(i), p1, p2, p3, p4)
+		sump1(i) = sump1(i) + p1 * ndens
+		sump2(i) = sump2(i) + p2 * ndens
+		sump3(i) = sump3(i) + p3 * ndens
+		sump4(i) = sump4(i) + p4 * ndens
       end do 
     end if 
   end do 
-								    
-								    
+
   !   multiply the sums by the integration delta and other constants
   !   put quadrature weights in angular array for later usage    
   if (numrad .eq. 0) delrad = 1.0d0 
 
-  extinction = pi * sumqe * delrad      ! [1/m]
-  scatter = pi * sumqs * delrad         ! [1/m]
-  back_scatt = pi * sumqback * delrad   ! [1/m]
-  albedo = scatter / extinction 
+  extinction = pi * sumqe * delrad      ! extinction [1/m]
+  scatter = pi * sumqs * delrad         ! scattering  [1/m]
+  back_scatt = pi * sumqback * delrad   ! back scattering [1/m]
+  albedo = scatter / extinction         ! single scattering albedo
 								    
   ! if the phase function is not desired then leave now           
   if ( .not. lphase_flag) return 

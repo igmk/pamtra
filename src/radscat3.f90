@@ -1,5 +1,4 @@
-      SUBROUTINE READ_SCAT_FILE (SCAT_FILE, DELTAM, NUMMU, NLEGEN, COEF,&
-      EXTINCTION, SCATTER)                                              
+      SUBROUTINE READ_SCAT_FILE(SCAT_FILE, DELTAM, NUMMU, NLEGEN, COEF, EXTINCTION, SCATTER)
 !        READ_SCAT_FILE reads in the scattering file and returns        
 !      the degree of the Legendre series (NLEGEN), the extinction       
 !      coefficient, the single scatter albedo, and the Legendre         

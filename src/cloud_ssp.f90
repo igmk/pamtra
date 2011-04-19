@@ -1,6 +1,22 @@
 subroutine cloud_ssp(f,qc,t,p,q,maxleg,kext, salb, back,  &
 	nlegen, legen, legen2, legen3, legen4)
   
+  ! This subroutine prepares the input parameters for the routines
+  ! calculating the extinction, absorption, and backscattering coefficients.
+  !
+  ! Input:
+  !   f    frequency [GHz]
+  !   qc   claud water mass mixing ratio [kg/kg]
+  !   t    temperature [K]
+  !   p    pressure [Pa]
+  !   q    specific humidity (mass of water vapor per moist air) [kg/kg]
+  !
+  ! Output:
+  !  kext
+  !  salb
+  !  back
+  !  legen[2-4] legendre coefficients for the phase function
+
   use kinds
   use nml_params, only: verbose, lphase_flag
   use constants, only: pi, im
