@@ -274,8 +274,8 @@ program pamtra
   if (grid_calc) then
     open(UNIT=14, FILE='/net/roumet/mech/pamtra/profiles/'//input_file, STATUS='OLD', form='formatted')
   else
-!    open(UNIT=14, FILE='profiles/'//input_file, STATUS='OLD', form='formatted')
-    open(UNIT=14, FILE='/work/mech/pamtra/profiles/'//input_file, STATUS='OLD', form='formatted')
+    open(UNIT=14, FILE='profiles/'//input_file, STATUS='OLD', form='formatted')
+!    open(UNIT=14, FILE='/work/mech/pamtra/profiles/'//input_file, STATUS='OLD', form='formatted')
   end if
 
   read(14,*) year, month, day, time, ngridx, ngridy, nlyr, deltax, deltay
@@ -328,10 +328,11 @@ program pamtra
 
   if (write_nc) then
     allocate(is(ngridy,ngridx),js(ngridy,ngridx))
-    allocate(lons(ngridy,ngridx),lats(ngridy,ngridx),lfracs(ngridy,ngridx),w10s(ngridy,ngridx),iwvs(ngridy,ngridx))
+    allocate(lons(ngridy,ngridx),lats(ngridy,ngridx),lfracs(ngridy,ngridx))
+    allocate(t_g(ngridy,ngridx),w10s(ngridy,ngridx),iwvs(ngridy,ngridx))
     allocate(cwps(ngridy,ngridx),iwps(ngridy,ngridx),rwps(ngridy,ngridx),swps(ngridy,ngridx),gwps(ngridy,ngridx))
     allocate(flux_up(nstokes,noutlevels,ngridy,ngridx),flux_down(nstokes,noutlevels,ngridy,ngridx))
-    allocate(tb_up(nstokes,nummu,noutlevels,ngridy,ngridx),tb_down(nstokes,nummu,noutlevels,ngridy,ngridx))
+    allocate(tb(nstokes,2*nummu,noutlevels,ngridy,ngridx))
   end if
 
   !                                                                       
@@ -536,7 +537,6 @@ program pamtra
 
   if (write_nc) then
     nc_out_file = trim(input_file(1:len_trim(input_file)-4))//'_'//frq_str//'_res.nc'
-
     call write_nc_results(nc_out_file)
   end if
 

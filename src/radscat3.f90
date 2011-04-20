@@ -36,7 +36,7 @@
       READ (7, * ) K, COEF (1, L), COEF (2, L), COEF (3, L), COEF (4, L)&
       , COEF (5, L), COEF (6, L)                                        
       ENDDO 
-      CLOSE (7)!, status='delete')
+      CLOSE (7, status='delete')
                                                                         
       IF (DELTAM.EQ.'Y') THEN 
          IF (NUMMU + 1.LE.NLEGEN + 1) THEN 

@@ -5,11 +5,11 @@ ifeq ($(ARCH),Darwin)
 	NCFLAGS=-I/opt/local/include/ #-g
 	LFLAGS=-L/opt/local/lib/
 else
-	NCFLAGS=-I/usr/include
-	LFLAGS=
+	NCFLAGS=-I/home/mech/include
+	LFLAGS=-L/home/mech/lib
 endif
 
-LDFLAGS=-lnetcdf -lnetcdff
+LDFLAGS=-lnetcdf -static
 
 OBJECTS=kinds.o nml_params.o constants.o profile_type.o vars_atmosphere.o data.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o radmat.o \
 	scat_utilities.o dsd_utilities.o mpm93.o get_atmosG0.o get_atmosG.o mie.o mie_densitysizedep_spheremasseq.o\

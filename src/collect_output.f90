@@ -1,5 +1,5 @@
 subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
-      QUAD_TYPE,GROUND_TYPE, &
+      QUAD_TYPE, GROUND_TEMP, GROUND_TYPE, &
       WAVELENGTH, UNITS, OUTPOL,NOUTLEVELS,        &
       OUTLEVELS, NUMAZIMUTHS, UP_FLUX, DOWN_FLUX, UP_RAD,    &
       DOWN_RAD,lon,lat,lfrac,wind10,iwv,cwp,iwp,rwp,swp,gwp,model_i,model_j,a,b)
@@ -14,6 +14,7 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
       INTEGER NSTOKES, NUMMU, NUMAZI, AZIORDER 
       INTEGER NOUTLEVELS, OUTLEVELS ( * ), NUMAZIMUTHS
       REAL(kind=dbl) WAVELENGTH 
+      REAL(kind=dbl) GROUND_TEMP
       REAL(kind=dbl) UP_FLUX (NSTOKES, NOUTLEVELS) 
       REAL(kind=dbl) DOWN_FLUX (NSTOKES, NOUTLEVELS) 
       REAL(kind=dbl) UP_RAD (NSTOKES, NUMMU, AZIORDER + 1, NOUTLEVELS) 
@@ -44,23 +45,6 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
       GROUND_NAME = 'LAMBERTIAN' 
       IF (GROUND_TYPE.EQ.'F') GROUND_NAME = 'FRESNEL' 
                                                                        
-                                                                        
-!           Output the parameters                                       
-!       WRITE (3, '(A,I3,A,I3,A,I3,A,I1)') 'C  NUMMU=', NUMMU, '  NUMAZI=', NUMAZI, '  AZIORDER=', AZIORDER, '  NSTOKES=', NSTOKES          
-!       WRITE (3, '(A,A32,A,A1)') 'C  LAYER_FILE=', LAYER_FILE, '   DELTA-M=', DELTAM                                                       
-!       WRITE (3, '(A,I1,A,A16)') 'C  SRC_CODE=', SRC_CODE, '   QUAD_TYPE=', QUAD_NAME                                                      
-!       IF (SRC_CODE.EQ.1.OR.SRC_CODE.EQ.3) THEN 
-!       WRITE (3, '(A,E11.5,A,F8.6)') 'C  DIRECT_FLUX=', DIRECT_FLUX, '   DIRECT_MU=', DIRECT_MU                                            
-!       ENDIF 
-!       write(3,'(A,F8.3,A,F8.3,A,F8.3)') 'C  LON=',lon,' LAT=',lat,' LFRAC=',lfrac
-!       WRITE (3, '(A,F8.2,A,A16,A,F8.3)') 'C  GROUND_TEMP=', GROUND_TEMP,'   GROUND_TYPE=', GROUND_NAME,' W10=',wind10                                    
-!       IF (GROUND_TYPE (1:1) .EQ.'F') THEN
-!       WRITE (3, '(A,2F9.4,A,F8.2)') 'C  GROUND_INDEX=', GROUND_INDEX, ' SKY_TEMP=', SKY_TEMP                                            
-!       ELSE 
-!       WRITE (3, '(A,F8.5,A,F8.2)') 'C  GROUND_ALBEDO=', GROUND_ALBEDO, ' SKY_TEMP=', SKY_TEMP                                           
-!       ENDIF 
-!       WRITE (3, '(A,E12.6)') 'C  WAVELENGTH=', WAVELENGTH 
-!       WRITE (3, '(A,A25,A,A2)') 'C  UNITS=', UNITS_NAME, '   OUTPUT_POLARIZATION=', OUTPOL                                                
 
 !      Output integrated quantities
 
@@ -69,6 +53,7 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
       lons(b,a) = lon
       lats(b,a) = lat
       lfracs(b,a) = lfrac
+      t_g(b,a) = GROUND_TEMP
       w10s(b,a) = wind10
       iwvs(b,a) = iwv
       cwps(b,a) = cwp
@@ -76,6 +61,7 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
       rwps(b,a) = rwp
       swps(b,a) = swp
       gwps(b,a) = gwp
+
 
                                                                         
       do l = 1, noutlevels 
@@ -114,7 +100,7 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
 	    end do 
 	    do i = 1, nstokes
 !	      tb_up(a,b,l,j,i) = out(i)
-	      tb_up(i,j,l,b,a) = out(i)
+	      tb(i,(nummu+1)-j,l,b,a) = out(i)
 	    end do
 !	    write (3, form1) height (li), phid, - mu_values (j), (out (i),i = 1, nstokes)                                                   
 	  end do 
@@ -132,7 +118,7 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
 	    end do 
 	    do i = 1, nstokes
 !	      tb_down(a,b,l,j,i) = out(i)
-	      tb_down(i,j,l,b,a) = out(i)
+	      tb(i,nummu+j,l,b,a) = out(i)
 	    end do
 !	    write (3, form1) height (li), phid, mu_values(j), (out(i),i = 1, nstokes)                                                   
 	  end do 

@@ -302,7 +302,7 @@
 
       if (write_nc) then 
 	call collect_output(NSTOKES, NUMMU, AZIORDER, &
-	QUAD_TYPE, GROUND_TYPE, WAVELENGTH,   &
+	QUAD_TYPE, GROUND_TEMP, GROUND_TYPE, WAVELENGTH,   &
 	UNITS, OUTPOL,NOUTLEVELS, OUTLEVELS,         &
 	NUMAZIMUTHS, UP_FLUX, DOWN_FLUX, UP_RAD, DOWN_RAD,     &
 	lon,lat,lfrac,wind10,iwv,cwp,iwp,rwp,swp,gwp,model_i,model_j,nx,ny)
@@ -442,7 +442,7 @@
       ENDIF 
       GOTO 100 
   110 CONTINUE 
-      CLOSE (1)!, status='delete')
+      CLOSE (1, status='delete')
       NUM_LAYERS = I - 2 
       RETURN 
                                                                         
