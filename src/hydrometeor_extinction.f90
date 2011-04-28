@@ -142,7 +142,7 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
       salbci = 0.0d0 
       backci = 0.0d0 
 
-      if (iwc_q(nz) .ge. threshold) then
+      if (iwc_q(nz) .ge. threshold*1.e-2) then
 	    call ice_ssp(f,iwc_q(nz),temp(nz),press(nz),q_hum(nz),&
 		    maxleg,kextci, salbci, backci,  &
             nlegenci, legenci, legen2ci, legen3ci, legen4ci, 'C')
