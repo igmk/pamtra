@@ -10,7 +10,7 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
 
   implicit none
 
-  integer :: numrad, nlegen
+  integer :: numrad, nlegen, nn, isnow_n0temp
   integer, intent(in) :: maxleg
 
   real(kind=dbl), intent(in) :: &
@@ -35,6 +35,9 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
 
   real(kind=dbl) :: spec2abs, gammln
   
+  real(kind=dbl), dimension(10) :: mma, mmb
+
+  real(kind=dbl) :: ztc, hlp, alf, bet, m2s, m3s
 
   if (verbose .gt. 1) print*, 'Entering snow_ssp'
 
@@ -50,9 +53,38 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
 	rad1 = 1.d-6 ! minimum maximum diameter [m] after kneifel
 	rad2 = 2.d-2 ! maximum maximum diameter [m] after kneifel
 
+if (isnow_n0temp .eq. 2) then
+!taken from COSMO-de routine hydci_pp_gr in src_gscp.f90
+    ! Coeffs for moment relation based on 2nd moment (Field 2005)
+    mma = (/   5.065339, -0.062659, -3.032362, 0.029469, -0.000285, &
+               0.312550,  0.000204,  0.003199, 0.000000, -0.015952 /)
+    mmb = (/   0.476221, -0.015896,  0.165977, 0.007468, -0.000141, &
+               0.060366,  0.000079,  0.000594, 0.000000, -0.003577 /)
+    ! Calculate n0s using the temperature-dependent moment
+    ! relations of Field et al. (2005)
+    ztc = t - 273.15
+    ztc = MAX(MIN(ztc,0.0),-40.0)
+
+    nn  = 3
+    hlp = mma(1)      +mma(2)*ztc      +mma(3)*nn       +mma(4)*ztc*nn+mma(5)*ztc**2 &
+        + mma(6)*nn**2+mma(7)*ztc**2*nn+mma(8)*ztc*nn**2+mma(9)*ztc**3+mma(10)*nn**3
+    alf = 10.0d0**hlp
+    bet = mmb(1)      +mmb(2)*ztc      +mmb(3)*nn       +mmb(4)*ztc*nn+mmb(5)*ztc**2 &
+        + mmb(6)*nn**2+mmb(7)*ztc**2*nn+mmb(8)*ztc*nn**2+mmb(9)*ztc**3+mmb(10)*nn**3
+    m2s = qs / 0.038 ! 0.038 = Formfactor in the mass-size relation of snow particles
+    m3s = alf*EXP(bet*LOG(m2s))
+    hlp  = n_0snowDsnow * 1.d6*EXP(-0.107d0*ztc)
+!!!CHECK THIS STUFFFF
+    ad = 13.5 * m2s**4 / m3s**3
+    ad = MAX(ad,0.5*hlp)
+    ad = MIN(ad,1e2*hlp)
+    ad = MIN(ad,1e9)
+    ad = MAX(ad,1e6)
+else
 	swc =  spec2abs(qs,t,p,q) ! [kg/m^3]
 	! Field param. ! multiplied by 10^6 is 1/m^4
 	ad = n_0snowDsnow * 1.d6 * exp(-0.107d0 * (t - 273.15))
+endif
 
 	bd = (exp(gammln(b_snow + 1)) * a_msnow * ad/swc)**(1.0d0/(1.0d0 + b_snow))  ! [m**-1]   
 
