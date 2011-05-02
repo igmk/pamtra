@@ -61,24 +61,22 @@ subroutine cloud_ssp(f,qc,t,p,q,maxleg,kext, salb, back,  &
   !		iautocon =  1 fixed number density eq to 1.0d8 [1/m^3] (eq to variable cloud_num in COSMO)
   !		iautocon /= 1 fixed radius eq to 1.d-5 [m]
   iautocon = 1
+
   den_liq = 1.d3 	  									! density of liquid water [kg/m^3]
   del_r = 1.d-8     									! delta_radius for mie calculation [m]
  if (iautocon .eq. 1) then
-  number_density = 1.0d8								! fixed number density [1/m^3]
-  lwc = spec2abs(qc,t,p,q) 								! [kg/m^3]
-  drop_mass = lwc /  number_density						! [kg]
-  rad1 = (3./4. * drop_mass / pi / den_liq)**(1./3.)	! monodisperse size distribution [m]
-  rad2 = rad1 + del_r
-  ad = lwc / (drop_mass*del_r)
-!  Print*,'iautocon,lwc,number_density,drop_mass,rad1',iautocon,lwc,number_density,drop_mass,rad1
+	number_density = 1.0d8								! fixed number density [1/m^3]
+  	lwc = spec2abs(qc,t,p,q) 							! [kg/m^3]
+  	drop_mass = lwc /  number_density					! [kg]
+  	rad1 = (3./4. * drop_mass / pi / den_liq)**(1./3.)	! monodisperse size distribution [m]
+  	rad2 = rad1 + del_r
+  	ad = lwc / (drop_mass*del_r)						! intercept parameter [1/m^4]
 else
-  rad1 = 1.d-5      									! [m] 10 micron radius monodisperse
-  rad2 = rad1 + del_r
-  drop_mass = 4./3. * pi * rad1**3 * den_liq 			! [kg]
-  lwc = spec2abs(qc,t,p,q) 								! [kg/m^3]
-  ad = lwc / (drop_mass*del_r)
-!  number_density = lwc / drop_mass
-!  Print*,'iautocon,lwc,number_density,drop_mass,rad1',iautocon,lwc,number_density,drop_mass,rad1
+	rad1 = 1.d-5      									! [m] 10 micron radius monodisperse
+ 	rad2 = rad1 + del_r
+  	drop_mass = 4./3. * pi * rad1**3 * den_liq 			! [kg]
+  	lwc = spec2abs(qc,t,p,q) 							! [kg/m^3]
+  	ad = lwc / (drop_mass*del_r)						! intercept parameter [1/m^4]
 end if
 
   bd = 0.d0 
