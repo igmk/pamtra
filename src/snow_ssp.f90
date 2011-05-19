@@ -54,8 +54,8 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
 	rad2 = 2.d-2 ! maximum maximum diameter [m] after kneifel
 
 	!option isnow_n0temp as in COSMO-de 1 moment scheme
-	!isnow_n0temp = 2 intercept parameter of snow depend on T and qs (snow mixing ratio) Fiels 2005
-	!isnow_n0temp = 1 intercept parameter of snow depend on T  	Fiels 2005
+	!isnow_n0temp = 2 intercept parameter of snow depend on T and qs (snow mixing ratio) Field 2005
+	!isnow_n0temp = 1 intercept parameter of snow depend on T  	Field 2005
 	isnow_n0temp=2
 
 if (isnow_n0temp .eq. 2) then

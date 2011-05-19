@@ -42,7 +42,7 @@ if (cloud_flag .eq. 1) then
 	!	Number_concentration of activated ice ctystal is temperature dependent
 	!	 from COSMO-de code src_ssp.f90 routine: hydci_pp_gr
 	!	Radius is derived from mass-size relation m=aD^3
-	!	 a=130 kg/m^3 (esagonal plates with aspect ratio of 0.2 -> thickness=0.2*Diameter)
+	!	 a=130 kg/m^3 (hexagonal plates with aspect ratio of 0.2 -> thickness=0.2*Diameter)
 	iwc = spec2abs(qi,t,p,q) 								! [kg/m^3]
 	number_concentration = 1.0d2*DEXP(0.2d0*(273.15d0-t)) 	! [1/m^3]
 	drop_mass = iwc/number_concentration 					! [kg]
@@ -53,7 +53,7 @@ else
     ! monodisperse distribution
     ! Fixed RADIUS
 	del_r = 1.d-8    ! [m]
-    rad1 = 5.d-5     ! [m] 5 micron radius
+    rad1 = 5.d-5     ! [m] 50 micron radius
     rad2 = rad1 + del_r
     den_ice = 917.d0  ! [kg/m^3]
     drop_mass = 4./3. * pi * rad1**3 * den_ice
