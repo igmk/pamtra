@@ -1,12 +1,13 @@
 ARCH=$(shell uname -s)
+HOME=/home/emiliano
 FC=gfortran
 FCFLAGS=-c
 ifeq ($(ARCH),Darwin)
 	NCFLAGS=-I/opt/local/include/ #-g
 	LFLAGS=-L/opt/local/lib/
 else
-	NCFLAGS=-I/home/mech/include
-	LFLAGS=-L/home/mech/lib
+	NCFLAGS=-I$(HOME)/include
+	LFLAGS=-L$(HOME)/lib
 endif
 
 LDFLAGS=-lnetcdf -static
