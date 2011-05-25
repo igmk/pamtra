@@ -83,6 +83,7 @@ if (isnow_n0temp .eq. 2) then
     m3s = alf*EXP(bet*LOG(m2s))
     hlp  = n_0snowDsnow * 1.d6*EXP(-0.107d0*ztc)	! N0snow as a function of solely T from Field (2005)				[1/m^4]
     ad = 13.5 * m2s**4 / m3s**3						! N0snow as a function of T and snow mixing ratio from Field (2005)	[1/m^4]
+!write(47,'(e13.6,x,e13.6,x,e13.6,x,e13.6)')ad,hlp,ztc,qs
     ad = MAX(ad,0.5*hlp)
     ad = MIN(ad,1e2*hlp)
     ad = MIN(ad,1e9)

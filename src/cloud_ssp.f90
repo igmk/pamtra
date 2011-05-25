@@ -71,12 +71,15 @@ subroutine cloud_ssp(f,qc,t,p,q,maxleg,kext, salb, back,  &
   	rad1 = (3./4. * drop_mass / pi / den_liq)**(1./3.)	! monodisperse size distribution [m]
   	rad2 = rad1 + del_r
   	ad = lwc / (drop_mass*del_r)						! intercept parameter [1/m^4]
+!write(45,'(e13.6,x,e13.6,x,e13.6)')lwc,rad1,number_density
 else
 	rad1 = 1.d-5      									! [m] 10 micron radius monodisperse
  	rad2 = rad1 + del_r
   	drop_mass = 4./3. * pi * rad1**3 * den_liq 			! [kg]
+!number_density=lwc / drop_mass
   	lwc = spec2abs(qc,t,p,q) 							! [kg/m^3]
   	ad = lwc / (drop_mass*del_r)						! intercept parameter [1/m^4]
+!write(46,'(e13.6,x,e13.6,x,e13.6)')lwc,rad1,number_density
 end if
 
   bd = 0.d0 
