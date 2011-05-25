@@ -165,8 +165,9 @@ function distribution(a, b, alpha, gamma, r, distflag)
   !   log-normal distribution                                      
       distribution = a / r * exp( -0.5*(log(r / b) )**2 / alpha**2)
   elseif (distflag .eq. 'C') then 
-  !   distribution according to cosmo-de model                                  
-      distribution = a * exp(-b*2.*r)
+  !   distribution according to cosmo-de model
+  !	  from drop-size distribution as a function of diameter to radius: a -> 2*a and b -> 2*b
+      distribution = 2.*a * exp(-b*2.*r)
   else 
       write ( * , * ) 'unrecognized distflag in distribution' 
   end if 
