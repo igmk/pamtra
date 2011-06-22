@@ -1,4 +1,6 @@
-subroutine double_moments(rohydro,ntot,nu_mass,mu_mass,alpha_dm,beta_dm,a_rad,lambda_rad,nu_rad,mu_rad)
+subroutine double_moments( &
+	rohydro,ntot,nu_mass,mu_mass,alpha_dm,beta_dm, &		!IN
+	a_rad,lambda_rad,nu_rad,mu_rad,alpha_md,beta_md)		!OUT
 
   !This routine convert the parameters of a drop size distribution as a function of MASS F(m)
   !		F(m)=A_mass * m ^ Nu_mass * exp(- Lambda_mass * m ^ Mu_mass)
@@ -15,23 +17,25 @@ subroutine double_moments(rohydro,ntot,nu_mass,mu_mass,alpha_dm,beta_dm,a_rad,la
   !ntot			: total number concentration					[#/m^3]
   !nu_mass		: Nu parameter of F(m)
   !mu_mass		: Mu parameter of F(m)
-  !alpha_dm 	: alpha parameter for mass-diameter relation	[m*kb^(-beta_dm)]
-  !beta_dm		: beta parameter for mass-diameter relation
+  !alpha_dm 	: alpha parameter for diameter-mass relation	[m*kb^(-beta_dm)]
+  !beta_dm		: beta parameter for diameter-mass relation
   !
   !OUTPUT
   !a_rad		: A parameter of F(r)							[#/m^(nu_rad+4)]
   !lambda_rad	: Lambda parameter of F(r)						[m^(-mu_rad)]
   !nu_rad		: Nu parameter of F(r)
   !mu_rad		: Mu parameter of F(r)
+  !alpha_md		: alpha parameter for mass-diameter relation	[m*kb^(-beta_md)]
+  !beta_md		: beta parameter for mass-diameter relation
 
 use kinds
 
     implicit none
 
 	real (kind=dbl),intent(in)			:: 		rohydro,ntot,nu_mass,mu_mass,alpha_dm,beta_dm
-	real (kind=dbl),intent(out)			::		a_rad,lambda_rad,nu_rad,mu_rad
+	real (kind=dbl),intent(out)			::		a_rad,lambda_rad,nu_rad,mu_rad, alpha_md, beta_md
 
-	real (kind=dbl)					::		a_temp, lambda_temp, alpha_md, beta_md
+	real (kind=dbl)					::		a_temp, lambda_temp
 	real (kind=dbl)					::		gammln
 	real (kind=dbl)					::		arg1, arg2, gamma1, gamma2
 	real (kind=dbl)					::		a_diam, lambda_diam
@@ -58,7 +62,9 @@ use kinds
 !Now from the drop size distribution as a function of diameter F(D) to RADIUS F(r)
 	a_rad=a_diam*2.**(nu_rad+1)
 	lambda_rad=lambda_diam*2.**(mu_rad)
-!!nu, mu do not change from F(D) to F(r)
+	alpha_md=alpha_md*2.**beta_md
+!!nu, mu, beta do not change from F(D) to F(r)
+
 
 
 
