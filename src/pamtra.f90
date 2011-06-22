@@ -5,6 +5,7 @@ program pamtra
   use nml_params
   use vars_atmosphere
   use vars_output
+  use double_moments_module
 
   !     Radiative transfer code to process COSMO-model derived profiles   
   !     The code read a full COSMO grid and compute for each profile the  
@@ -68,7 +69,7 @@ program pamtra
   real(kind=dbl) :: E1, E2
 
   real(kind=dbl) :: RAD1, RAD2, refre, refim,&
-       N_0sr, Coeff_corr, AD, BD, ALPHA, GAMMA,  &
+       N_0sr, Coeff_corr, AD, BD,  &
        n0S, lambda_D, tmp, N_0snowD, N_0grauD,              &
        Coeff_snow, a_mgraup, b_g, b_snow,        &
        a_msnow, Coeff_grau, den_liq, drop_mass, del_r, den_ice,&
@@ -167,6 +168,8 @@ program pamtra
 
   character(80) :: femis ! filename for the emissivity databases
 
+  character(20) :: moments_filein, dummy
+
   ! namelist parameters
 
 !   real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
@@ -205,6 +208,7 @@ program pamtra
   namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, SP
   namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau
   namelist / rain_params / SD_rain, N_0rainD
+  namelist / moments / n_moments
 
   !    some inputs variable                                               
   N_lay_cut = 50
@@ -225,13 +229,6 @@ program pamtra
   tau_hydro = 0.0d0 
   file_ph2(:) = ''
 
-  !
-  !     Get input/output file names from run file.
-  !                                                                       
-  read ( *, * ) input_file 
-  read ( *, * ) nx_in, nx_fin, ny_in, ny_fin, tau_min, tau_max 
-  read ( *, * ) freq               ! frequency [Ghz]
-
   ! read name list parameter file
 
   open(7, file='run_params.nml',delim='APOSTROPHE')
@@ -245,9 +242,31 @@ program pamtra
   read(7,nml=snow_params)
   read(7,nml=graupel_params)
   read(7,nml=rain_params)
+  read(7,nml=moments)
   close(7)
 
+  !
+  !     Get input/output file names from run file.
+  !
+  read ( *, * ) input_file
+  read ( *, * ) nx_in, nx_fin, ny_in, ny_fin, tau_min, tau_max
+  read ( *, * ) freq               ! frequency [Ghz]
+  if (n_moments .eq. 2) read ( *, * ) moments_filein
   lam = 299.7925 / freq   ! mm
+
+  if (n_moments .eq. 2) then
+    open(118,file=moments_filein)
+    !read NU & Mu parameter of the drop size distr. as a function of MASS
+    !and Alpha & Beta parameter of Diameter-Mass function
+    !gamma_xxx(1)=nu	gamma_xxx(2)=mu		gamma_xxx(3)=alpha		gamma_xxx(4)=beta
+    read(118,'(a20,4(x,d13.6))') dummy,gamma_cloud
+    read(118,'(a20,4(x,d13.6))') dummy,gamma_rain
+    read(118,'(a20,4(x,d13.6))') dummy,gamma_ice
+    read(118,'(a20,4(x,d13.6))') dummy,gamma_snow
+    read(118,'(a20,4(x,d13.6))') dummy,gamma_graupel
+    read(118,'(a20,4(x,d13.6))') dummy,gamma_hail
+	close(118)
+  end if
 
   !                                                                       
   !     read atmospheric profiles                 
@@ -294,13 +313,26 @@ program pamtra
 		   profiles(i,j)%land_fraction,&     !
 		   profiles(i,j)%wind_10m            ! m/s
         ! integrated quantities
-        read(14,*) &
+        if (n_moments .eq. 1) then
+           read(14,*) &
            profiles(i,j)%iwv,&               ! kg/m^2
 		   profiles(i,j)%cwp,&               ! kg/m^2
 		   profiles(i,j)%iwp,&               ! kg/m^2
 		   profiles(i,j)%rwp,&               ! kg/m^2
 		   profiles(i,j)%swp,&               ! kg/m^2
 		   profiles(i,j)%gwp                 ! kg/m^2
+		end if
+		if (n_moments .eq. 2) then
+           read(14,*) &
+           profiles(i,j)%iwv,&               ! kg/m^2
+		   profiles(i,j)%cwp,&               ! kg/m^2
+		   profiles(i,j)%iwp,&               ! kg/m^2
+		   profiles(i,j)%rwp,&               ! kg/m^2
+		   profiles(i,j)%swp,&               ! kg/m^2
+		   profiles(i,j)%gwp,&               ! kg/m^2
+		   profiles(i,j)%hwp                 ! kg/m^2
+		end if
+
         ! surface values
         read(14,*) &
            profiles(i,j)%hgt_lev(0),&
@@ -308,7 +340,8 @@ program pamtra
 		   profiles(i,j)%temp_lev(0),&
 		   profiles(i,j)%relhum_lev(0)
         do k = 1, nlyr 
-           read(14,*) &
+		   if (n_moments .eq. 1) then
+              read(14,*) &
               profiles(i,j)%hgt_lev(k), &             ! m
 		      profiles(i,j)%press_lev(k), &           ! Pa
 		      profiles(i,j)%temp_lev(k), &            ! K
@@ -318,6 +351,26 @@ program pamtra
 		      profiles(i,j)%rain_q(k), &              ! kg/kg
 		      profiles(i,j)%snow_q(k), &              ! kg/kg
 		      profiles(i,j)%graupel_q(k)              ! kg/kg
+		    end if
+			if (n_moments .eq. 2) then
+		      read(14,*) &
+              profiles(i,j)%hgt_lev(k), &             ! m
+		      profiles(i,j)%press_lev(k), &           ! Pa
+		      profiles(i,j)%temp_lev(k), &            ! K
+		      profiles(i,j)%relhum_lev(k), &          ! %
+		      profiles(i,j)%cloud_water_q(k), &       ! kg/kg
+		      profiles(i,j)%cloud_ice_q(k), &         ! kg/kg
+		      profiles(i,j)%rain_q(k), &              ! kg/kg
+		      profiles(i,j)%snow_q(k), &              ! kg/kg
+		      profiles(i,j)%graupel_q(k), &           ! kg/kg
+		      profiles(i,j)%hail_q(k), &       		  ! kg/kg
+		      profiles(i,j)%cloud_water_n(k), &       ! #/kg
+		      profiles(i,j)%cloud_ice_n(k), &         ! #/kg
+		      profiles(i,j)%rain_n(k), &              ! #/kg
+		      profiles(i,j)%snow_n(k), &              ! #/kg
+		      profiles(i,j)%graupel_n(k), &           ! #/kg
+		      profiles(i,j)%hail_n(k)                 ! #/kg
+	        end if
 		end do
      end do
   end do
@@ -372,10 +425,6 @@ program pamtra
   micro_str = SD_snow//N0snowstr//EM_snow//SP_str//SD_grau//        &
        N0graustr//EM_grau//SD_rain//N0rainstr                            
 
-  alpha = 0.0d0 
-
-  gamma = 1.0d0 ! always exponential SD
-
   if (verbose .gt. 0) print*, 'Start loop over profiles!'
 
   grid_y: do ny = 1, ngridy !ny_in, ny_fin  
@@ -395,6 +444,16 @@ program pamtra
 	rwc_q = profiles(nx,ny)%rain_q                  ! kg/kg
 	swc_q = profiles(nx,ny)%snow_q                  ! kg/kg
 	gwc_q = profiles(nx,ny)%graupel_q               ! kg/kg
+
+	if (n_moments .eq. 2) then
+	  hwc_q = profiles(nx,ny)%hail_q				! kg/kg
+	  cwc_n = profiles(nx,ny)%cloud_water_n			! #/kg
+	  iwc_n = profiles(nx,ny)%cloud_ice_n			! #/kg
+	  rwc_n = profiles(nx,ny)%rain_n				! #/kg
+	  swc_n = profiles(nx,ny)%snow_n				! #/kg
+	  gwc_n = profiles(nx,ny)%graupel_n				! #/kg
+	  hwc_n = profiles(nx,ny)%hail_n				! #/kg
+	end if
 
 	press = profiles(nx,ny)%press                   ! Pa
 	temp = profiles(nx,ny)%temp                     ! K
