@@ -8,17 +8,17 @@ save
 
 integer :: ngridx, ngridy, nlyr
 			  
-real(kind=dbl), allocatable, dimension(:) :: relhum_lev,&
-                                          press_lev, &
-                                          temp_lev, &
-					  hgt_lev
+real(kind=dbl), allocatable, dimension(:) :: 	relhum_lev,&
+                                          		press_lev, &
+                                          		temp_lev, &
+					  							hgt_lev
 
-real(kind=dbl), allocatable, dimension(:) :: press, &
-					     temp,&
-					     relhum,&
-                                             vapor_pressure, &
-                                             rho_vap, &
-					     q_hum
+real(kind=dbl), allocatable, dimension(:) :: 	press, &
+					     						temp,&
+					     						relhum,&
+                         						vapor_pressure, &
+                         						rho_vap, &
+					     						q_hum
 
 !real(kind=dbl), dimension(:), allocatable :: lyr_temp, &
 !                                      lyr_pres
@@ -27,11 +27,18 @@ real(kind=dbl), allocatable, dimension(:) :: press, &
 !                                      avgpressure, &
 !                                      vaporpressure
 
-real(kind=dbl), allocatable, dimension(:) :: cwc_q, &
-                                          iwc_q, &
-                                          rwc_q, &
-                                          swc_q, &
-                                          gwc_q
+real(kind=dbl), allocatable, dimension(:) :: 	cwc_q, &
+                                          		iwc_q, &
+                                          		rwc_q, &
+                                          		swc_q, &
+                                          		gwc_q, &
+                                          		hwc_q
+ real(kind=dbl), allocatable, dimension(:) ::	cwc_n, &
+                                          		iwc_n, &
+                                          		rwc_n, &
+                                          		swc_n, &
+                                          		gwc_n, &
+                                          		hwc_n
 
 ! real, allocatable, dimension(:,:) :: lon, &
 !                                      lat, &
