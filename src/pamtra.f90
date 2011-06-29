@@ -482,6 +482,7 @@ program pamtra
                 access='direct',recl=28)
 	  ! land_emis could give polarized reflectivities
       call land_emis(ise,lon,lat,real(freq),emissivity)
+
 	  close(ise)
 	  ground_albedo = 1. - emissivity
 	else if (lfrac .ge. 0.0 .and. lfrac .lt. 0.5) then
