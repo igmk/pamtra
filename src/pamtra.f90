@@ -167,6 +167,8 @@ program pamtra
 
   character(80) :: femis ! filename for the emissivity databases
 
+  integer :: istat
+
   ! namelist parameters
 
 !   real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
@@ -187,7 +189,7 @@ program pamtra
 
 ! temporary variables
 
-  real :: lat, lon, lfrac, wind10
+  real :: lat, lon, lfrac, wind10u, wind10v
 
   real(kind=dbl) :: lwc, iwc, rwc, gwc, swc
 
@@ -272,13 +274,15 @@ program pamtra
   ! Perform calculation through dispatch or not
 
   if (grid_calc) then
-    open(UNIT=14, FILE='/net/roumet/mech/pamtra/profiles/'//input_file, STATUS='OLD', form='formatted')
+    open(UNIT=14, FILE='/net/roumet/mech/pamtra/profiles/'//input_file, STATUS='OLD', form='formatted',iostat=istat)
+    if (istat .ne. 0) call error_msg(input_file)
   else
     open(UNIT=14, FILE='profiles/'//input_file, STATUS='OLD', form='formatted')
 !    open(UNIT=14, FILE='/work/mech/pamtra/profiles/'//input_file, STATUS='OLD', form='formatted')
   end if
 
-  read(14,*) year, month, day, time, ngridx, ngridy, nlyr, deltax, deltay
+  read(14,*,iostat=istat) year, month, day, time, ngridx, ngridy, nlyr, deltax, deltay
+  if (istat .ne. 0) call error_msg(input_file,0,0)
 
   n_lay_cut = nlyr  ! in future n_lay_cut can be delete  $##
 
@@ -287,28 +291,33 @@ program pamtra
   ! $## think about order of reading
   do i = 1, ngridx
      do j = 1, ngridy 
-        read(14,*) profiles(i,j)%isamp, profiles(i,j)%jsamp ! 
-        read(14,*) &
-           profiles(i,j)%latitude, &	     ! �
-		   profiles(i,j)%longitude,&         ! �
+        read(14,*,iostat=istat) profiles(i,j)%isamp, profiles(i,j)%jsamp !
+	    if (istat .ne. 0) call error_msg(input_file, i, j)
+        read(14,*,iostat=istat) &
+           profiles(i,j)%latitude, &	     ! degree
+		   profiles(i,j)%longitude,&         ! degree
 		   profiles(i,j)%land_fraction,&     !
-		   profiles(i,j)%wind_10m            ! m/s
+		   profiles(i,j)%wind_10u,&          ! m/s
+		   profiles(i,j)%wind_10v            ! m/s
+	    if (istat .ne. 0) call error_msg(input_file, i, j)
         ! integrated quantities
-        read(14,*) &
+        read(14,*,iostat=istat) &
            profiles(i,j)%iwv,&               ! kg/m^2
 		   profiles(i,j)%cwp,&               ! kg/m^2
 		   profiles(i,j)%iwp,&               ! kg/m^2
 		   profiles(i,j)%rwp,&               ! kg/m^2
 		   profiles(i,j)%swp,&               ! kg/m^2
 		   profiles(i,j)%gwp                 ! kg/m^2
+	    if (istat .ne. 0) call error_msg(input_file, i, j)
         ! surface values
-        read(14,*) &
+        read(14,*,iostat=istat) &
            profiles(i,j)%hgt_lev(0),&
 		   profiles(i,j)%press_lev(0),&
 		   profiles(i,j)%temp_lev(0),&
 		   profiles(i,j)%relhum_lev(0)
+	    if (istat .ne. 0) call error_msg(input_file, i, j)
         do k = 1, nlyr 
-           read(14,*) &
+           read(14,*,iostat=istat) &
               profiles(i,j)%hgt_lev(k), &             ! m
 		      profiles(i,j)%press_lev(k), &           ! Pa
 		      profiles(i,j)%temp_lev(k), &            ! K
@@ -318,6 +327,7 @@ program pamtra
 		      profiles(i,j)%rain_q(k), &              ! kg/kg
 		      profiles(i,j)%snow_q(k), &              ! kg/kg
 		      profiles(i,j)%graupel_q(k)              ! kg/kg
+	    if (istat .ne. 0) call error_msg(input_file, i, j,k)
 		end do
      end do
   end do
@@ -329,7 +339,7 @@ program pamtra
   if (write_nc) then
     allocate(is(ngridy,ngridx),js(ngridy,ngridx))
     allocate(lons(ngridy,ngridx),lats(ngridy,ngridx),lfracs(ngridy,ngridx))
-    allocate(t_g(ngridy,ngridx),w10s(ngridy,ngridx),iwvs(ngridy,ngridx))
+    allocate(t_g(ngridy,ngridx),w10u(ngridy,ngridx),w10v(ngridy,ngridx),iwvs(ngridy,ngridx))
     allocate(cwps(ngridy,ngridx),iwps(ngridy,ngridx),rwps(ngridy,ngridx),swps(ngridy,ngridx),gwps(ngridy,ngridx))
     allocate(flux_up(nstokes,noutlevels,ngridy,ngridx),flux_down(nstokes,noutlevels,ngridy,ngridx))
     allocate(tb(nstokes,2*nummu,noutlevels,ngridy,ngridx))
@@ -427,7 +437,7 @@ program pamtra
 	  ground_albedo = 1. - emissivity
 	else if (lfrac .ge. 0.0 .and. lfrac .lt. 0.5) then
       ! computing the refractive index of the sea (Fresnel) surface
-	  ground_type = 'F'
+	  ground_type = 'O'
 	  ground_albedo = 1.0
 	  epsi = eps_water(salinity, ground_temp - 273.15, freq)
 	  ground_index = dconjg(sqrt(epsi))

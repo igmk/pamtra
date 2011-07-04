@@ -119,7 +119,6 @@
       CALL MZERO (2 * N, 1, SOURCE) 
       CALL MIDENTITY (N, TRANS (1, 1, 1, 1, 1) ) 
       CALL MIDENTITY (N, TRANS (1, 1, 1, 1, 2) ) 
-                                                                        
       EPSILON = INDEX**2
       DO J = 1, NUMMU 
       COSI = MU_VALUES (J) 
@@ -135,9 +134,9 @@
 	call foam(wind10, ffoam)
       end if
       R1 = ((cdABS(RV)**2)*c1-c2(1)+(cdABS(RH)**2)*c1-c2(2))*(1-ffoam) / 2.0D0 
-      R2 = ((cdABS(RV)**2)*c1-c2(1)-(cdABS(RH)**2)*c1+c2(2))*(1-ffoam) / 2.0D0 
+      R2 = ((cdABS(RV)**2)*c1-c2(1)-(cdABS(RH)**2)*c1+c2(2))*(1-ffoam) / 2.0D0
       R3 = DREAL (RV * CONJG (RH) ) 
-      R4 = DIMAG (RV * CONJG (RH) ) 
+      R4 = DIMAG (RV * CONJG (RH) )
       REFLECT (1, J, 1, J, 2) = R1 
       IF (NSTOKES.GT.1) THEN 
          REFLECT (1, J, 2, J, 2) = R2 
@@ -152,6 +151,7 @@
          REFLECT (4, J, 3, J, 2) = R4 
          REFLECT (4, J, 4, J, 2) = R3 
       ENDIF 
+!         print*, cosi,R1,R2
       ENDDO 
 
       RETURN 

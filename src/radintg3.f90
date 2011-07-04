@@ -16,19 +16,15 @@
                                                                         
                                                                         
       DO I = 1, N 
-      K = MOD ( (I - 1) / NSTOKES, NUMMU) + 1 
+      K = MOD ( (I - 1) / NSTOKES, NUMMU) + 1
       TMP = DELTA_Z / MU_VALUES (K) 
       DO J = 1, N 
       DIAG = 0.0 
       IF (J.EQ.I) DIAG = 1.0 
-      REFLECT (I, J, 1) = TMP * EXTINCTION * ALBEDO * PHASE_FUNCTION (I,&
-      J, 2)                                                             
-      TRANS (I, J, 1) = DIAG - TMP * EXTINCTION * (DIAG - ALBEDO *      &
-      PHASE_FUNCTION (I, J, 1) )                                        
-      REFLECT (I, J, 2) = TMP * EXTINCTION * ALBEDO * PHASE_FUNCTION (I,&
-      J, 3)                                                             
-      TRANS (I, J, 2) = DIAG - TMP * EXTINCTION * (DIAG - ALBEDO *      &
-      PHASE_FUNCTION (I, J, 4) )                                        
+      REFLECT (I, J, 1) = TMP * EXTINCTION * ALBEDO * PHASE_FUNCTION (I, J, 2)
+      TRANS (I, J, 1) = DIAG - TMP * EXTINCTION * (DIAG - ALBEDO * PHASE_FUNCTION (I, J, 1) )
+      REFLECT (I, J, 2) = TMP * EXTINCTION * ALBEDO * PHASE_FUNCTION (I, J, 3)
+      TRANS (I, J, 2) = DIAG - TMP * EXTINCTION * (DIAG - ALBEDO * PHASE_FUNCTION (I, J, 4) )
       ENDDO 
       ENDDO 
                                                                         
@@ -80,21 +76,19 @@ use kinds
       CALL MZERO (2 * N, N, TRANS) 
       DO J = 1, NUMMU 
       FACTOR = DEXP ( - DELTATAU / MU_VALUES (J) ) 
-      DO I = 1, NSTOKES 
+      DO I = 1, NSTOKES
       TRANS (I, J, I, J, 1) = FACTOR 
-      TRANS (I, J, I, J, 2) = FACTOR 
+      TRANS (I, J, I, J, 2) = FACTOR
       ENDDO 
-      ENDDO 
-                                                                        
+      ENDDO
+
       CALL MZERO (2 * N, 1, SOURCE) 
       IF (MODE.EQ.0.AND.DELTATAU.GT.0.0) THEN 
          DO J = 1, NUMMU 
          PATH = DELTATAU / MU_VALUES (J) 
          SLOPE = (PLANCK1 - PLANCK0) / PATH 
-         SOURCE (1, J, 1) = PLANCK1 - SLOPE- (PLANCK1 - SLOPE * (1.0 +  &
-         PATH) ) * DEXP ( - PATH)                                       
-         SOURCE (1, J, 2) = PLANCK0 + SLOPE- (PLANCK0 + SLOPE * (1.0 +  &
-         PATH) ) * DEXP ( - PATH)                                       
+         SOURCE (1, J, 1) = PLANCK1 - SLOPE- (PLANCK1 - SLOPE * (1.0 + PATH) ) * DEXP( - PATH)
+         SOURCE (1, J, 2) = PLANCK0 + SLOPE- (PLANCK0 + SLOPE * (1.0 + PATH) ) * DEXP( - PATH)
          ENDDO 
       ENDIF 
                                                                         
@@ -125,25 +119,22 @@ use kinds
                                                                         
                                                                         
 !               Compute gamma plus                                      
-      CALL MMULT (N, N, N, UPREFLECT (1, 1, 1), DOWNREFLECT (1, 1, 2),  &
-      X)                                                                
+      CALL MMULT (N, N, N, UPREFLECT (1, 1, 1), DOWNREFLECT (1, 1, 2),X)
       CALL MIDENTITY (N, Y) 
       CALL MSUB (N, N, Y, X, Y) 
       CALL MINVERT (N, Y, X) 
-!               Calculate the internal downwelling (plus) radiance vecto
+!               Calculate the internal downwelling (plus) radiance vector
       CALL MMULT (N, N, 1, DOWNTRANS (1, 1, 2), INBOTTOMRAD, V) 
       CALL MMULT (N, N, 1, UPREFLECT (1, 1, 1), V, S) 
       CALL MMULT (N, N, 1, UPTRANS (1, 1, 1), INTOPRAD, V) 
       CALL MADD (N, 1, V, S, S) 
-      CALL MMULT (N, N, 1, UPREFLECT (1, 1, 1), DOWNSOURCE (1, 2),      &
-      V)                                                                
+      CALL MMULT (N, N, 1, UPREFLECT (1, 1, 1), DOWNSOURCE (1, 2),V)
       CALL MADD (N, 1, V, S, S) 
       CALL MADD (N, 1, UPSOURCE (1, 1), S, S) 
       CALL MMULT (N, N, 1, X, S, DOWNRAD) 
                                                                         
 !               Compute gamma minus                                     
-      CALL MMULT (N, N, N, DOWNREFLECT (1, 1, 2), UPREFLECT (1, 1, 1),  &
-      X)                                                                
+      CALL MMULT (N, N, N, DOWNREFLECT (1, 1, 2), UPREFLECT (1, 1, 1),X)
       CALL MIDENTITY (N, Y) 
       CALL MSUB (N, N, Y, X, Y) 
       CALL MINVERT (N, Y, X) 
@@ -152,8 +143,7 @@ use kinds
       CALL MMULT (N, N, 1, DOWNREFLECT (1, 1, 2), V, S) 
       CALL MMULT (N, N, 1, DOWNTRANS (1, 1, 2), INBOTTOMRAD, V) 
       CALL MADD (N, 1, V, S, S) 
-      CALL MMULT (N, N, 1, DOWNREFLECT (1, 1, 2), UPSOURCE (1, 1),      &
-      V)                                                                
+      CALL MMULT (N, N, 1, DOWNREFLECT (1, 1, 2), UPSOURCE (1, 1),V)
       CALL MADD (N, 1, V, S, S) 
       CALL MADD (N, 1, DOWNSOURCE (1, 2), S, S) 
       CALL MMULT (N, N, 1, X, S, UPRAD) 
@@ -165,18 +155,19 @@ use kinds
       SUBROUTINE DOUBLING_INTEGRATION (N, NUM_DOUBLES, SRC_CODE,        &
       SYMMETRIC, REFLECT, TRANS, EXP_SOURCE, EXPFACTOR, LIN_SOURCE,     &
       LINFACTOR, T_REFLECT, T_TRANS, T_SOURCE)                          
-!        DOUBLING_INTEGRATION integrates homogeneous thin layers using  
-!      the doubling algorithm.  NUM_DOUBLES doubling steps are done.    
-!      The initial reflection (REFLECT) and transmission (TRANS) matrice
-!      are input.  Depending on SRC_CODE linear (thermal) and exponentia
-!      (solar) sources are doubled.  The EXP_SOURCE and LIN_SOURCE vecto
-!      are the source vectors at zero optical depth.  The EXPFACTOR is  
-!      the single layer attenuation factor for the exponential source,  
-!      while the LINFACTOR is the single layer slope for the linear sour
-!      The SYMMETRIC flag specifies whether the plus and minus parts    
-!      of the reflection and transmission matrices are separately calcul
-!      or are assumed to be the same.  The integrated output is in      
-!      T_REFLECT, T_TRANS, and T_SOURCE.       
+!        DOUBLING_INTEGRATION integrates homogeneous thin layers using
+!      the doubling algorithm.  NUM_DOUBLES doubling steps are done.
+!      The initial reflection (REFLECT) and transmission (TRANS) matrices
+!      are input.  Depending on SRC_CODE linear (thermal) and exponential
+!      (solar) sources are doubled.  The EXP_SOURCE and LIN_SOURCE vectors
+!      are the source vectors at zero optical depth.  The EXPFACTOR is
+!      the single layer attenuation factor for the exponential source,
+!      while the LINFACTOR is the single layer slope for the linear source.
+!      The SYMMETRIC flag specifies whether the plus and minus parts
+!      of the reflection and transmission matrices are separately calculated
+!      or are assumed to be the same.  The integrated output is in
+!      T_REFLECT, T_TRANS, and T_SOURCE.
+
 use kinds
       INTEGER N, NUM_DOUBLES, SRC_CODE 
       LOGICAL SYMMETRIC 
@@ -204,8 +195,7 @@ use kinds
       DO I = 1, NUM_DOUBLES 
                                                                         
 !           Make gamma plus matrix: GAMMA = inv[1 - Rp*Rm]              
-      CALL MMULT (N, N, N, REFLECT (1, 1, 1), REFLECT (1, 1, 2),        &
-      X)                                                                
+      CALL MMULT (N, N, N, REFLECT (1, 1, 1), REFLECT (1, 1, 2),X)
       CALL MIDENTITY (N, Y) 
       CALL MSUB (N, N, Y, X, Y) 
       CALL MINVERT (N, Y, GAMMA) 

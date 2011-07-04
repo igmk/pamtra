@@ -9,7 +9,7 @@ subroutine write_nc_results(nc_file)
 
   integer :: ncid
   integer :: dlonID, dlatID, dangID, dfreID, doutID, dstokesID
-  integer :: isVarID, jsVarID, lonVarID, latVarID, lfracVarID, t_gVarID, wind10VarID, iwvVarID, cwpVarID,&
+  integer :: isVarID, jsVarID, lonVarID, latVarID, lfracVarID, t_gVarID, wind10uVarID, wind10vVarID, iwvVarID, cwpVarID,&
 	     iwpVarID, rwpVarID, swpVarID, gwpVarID, flux_upVarID, flux_downVarID, &
 	     tbVarID
   
@@ -39,7 +39,8 @@ subroutine write_nc_results(nc_file)
   call check(nf90_def_var(ncid,'latitude', nf90_float,dim2d, latVarID))
   call check(nf90_def_var(ncid,'lfrac', nf90_float,dim2d, lfracVarID))
   call check(nf90_def_var(ncid,'t_g', nf90_float,dim2d, t_gVarID))
-  call check(nf90_def_var(ncid,'wind10', nf90_float,dim2d, wind10VarID))
+  call check(nf90_def_var(ncid,'wind10u', nf90_float,dim2d, wind10uVarID))
+  call check(nf90_def_var(ncid,'wind10v', nf90_float,dim2d, wind10vVarID))
   call check(nf90_def_var(ncid,'iwv', nf90_float,dim2d, iwvVarID))
   call check(nf90_def_var(ncid,'cwp', nf90_float,dim2d, cwpVarID))
   call check(nf90_def_var(ncid,'iwp', nf90_float,dim2d, iwpVarID))
@@ -61,7 +62,8 @@ subroutine write_nc_results(nc_file)
   call check(nf90_put_var(ncid, latVarID, lats))
   call check(nf90_put_var(ncid, lfracVarID, lfracs))
   call check(nf90_put_var(ncid, t_gVarID, t_g))
-  call check(nf90_put_var(ncid, wind10VarID, w10s))
+  call check(nf90_put_var(ncid, wind10uVarID, w10u))
+  call check(nf90_put_var(ncid, wind10vVarID, w10v))
   call check(nf90_put_var(ncid, iwvVarID, iwvs))
   call check(nf90_put_var(ncid, cwpVarID, cwps))
   call check(nf90_put_var(ncid, iwpVarID, iwps))
@@ -74,7 +76,7 @@ subroutine write_nc_results(nc_file)
 
   call check(nf90_close(ncid))
 
-  deallocate(lons,lats,lfracs,t_g,w10s,iwvs,cwps,iwps,rwps,swps,gwps,flux_up,flux_down,tb)
+  deallocate(lons,lats,lfracs,t_g,w10u,w10v,iwvs,cwps,iwps,rwps,swps,gwps,flux_up,flux_down,tb)
 
   return
 

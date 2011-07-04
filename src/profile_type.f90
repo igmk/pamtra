@@ -12,7 +12,7 @@ type profile
   real :: latitude
   real :: longitude
   real :: land_fraction
-  real :: wind_10m
+  real :: wind_10u, wind_10v
   real :: iwv
   real :: cwp
   real :: iwp

@@ -2,7 +2,7 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
       QUAD_TYPE, GROUND_TEMP, GROUND_TYPE, &
       WAVELENGTH, UNITS, OUTPOL,NOUTLEVELS,        &
       OUTLEVELS, NUMAZIMUTHS, UP_FLUX, DOWN_FLUX, UP_RAD,    &
-      DOWN_RAD,lon,lat,lfrac,wind10,iwv,cwp,iwp,rwp,swp,gwp,model_i,model_j,a,b)
+      DOWN_RAD,lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,model_i,model_j,a,b)
 
   use kinds
   use constants, only: pi
@@ -25,7 +25,7 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
       REAL OUT (4), PHI, PHID 
                                                                         
       integer :: model_i, model_j
-      real lon,lat,lfrac,wind10,iwv,cwp,iwp,rwp,swp,gwp
+      real lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp
                                                                         
       N = NUMMU * (AZIORDER + 1) * NOUTLEVELS 
       CALL CONVERT_OUTPUT(UNITS, OUTPOL, NSTOKES, N, WAVELENGTH, 0,UP_RAD)
@@ -54,7 +54,8 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
       lats(b,a) = lat
       lfracs(b,a) = lfrac
       t_g(b,a) = GROUND_TEMP
-      w10s(b,a) = wind10
+      w10u(b,a) = wind10u
+      w10v(b,a) = wind10v
       iwvs(b,a) = iwv
       cwps(b,a) = cwp
       iwps(b,a) = iwp

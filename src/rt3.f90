@@ -243,7 +243,7 @@
       CHARACTER(64) SCAT_FILES (MAXLAY) 
                                                                         
       integer :: model_i, model_j
-      real lon,lat,lfrac,wind10,iwv,cwp,iwp,rwp,swp,gwp
+      real lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp
 
       integer :: verbose
       logical :: write_nc
@@ -253,7 +253,8 @@
       lon = profiles(nx,ny)%longitude
       lat = profiles(nx,ny)%latitude
       lfrac = profiles(nx,ny)%land_fraction
-      wind10 = profiles(nx,ny)%wind_10m
+      wind10u = profiles(nx,ny)%wind_10u
+      wind10v = profiles(nx,ny)%wind_10v
 
       iwv = profiles(nx,ny)%iwv
       cwp = profiles(nx,ny)%cwp
@@ -288,7 +289,7 @@
       GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP, WAVELENGTH,   &
       NUM_LAYERS, HEIGHT, TEMPERATURES, GAS_EXTINCT, SCAT_FILES,        &
       NOUTLEVELS, OUTLEVELS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD,     &
-      DOWN_RAD,dble(wind10),verbose)                                                         
+      DOWN_RAD,dble(wind10u),dble(wind10v),verbose)
 
       if (verbose .gt. 0) print*, ".... radtran done!"
 
@@ -305,7 +306,7 @@
 	QUAD_TYPE, GROUND_TEMP, GROUND_TYPE, WAVELENGTH,   &
 	UNITS, OUTPOL,NOUTLEVELS, OUTLEVELS,         &
 	NUMAZIMUTHS, UP_FLUX, DOWN_FLUX, UP_RAD, DOWN_RAD,     &
-	lon,lat,lfrac,wind10,iwv,cwp,iwp,rwp,swp,gwp,model_i,model_j,nx,ny)
+	lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,model_i,model_j,nx,ny)
       else
 	CALL OUTPUT_FILE (NSTOKES, NUMMU, AZIORDER, SRC_CODE, LAYER_FILE, &
 	OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU, GROUND_TEMP, &
@@ -604,6 +605,7 @@
       IF (UNITS.EQ.'R') UNITS_NAME = 'KELVINS - RJ' 
       GROUND_NAME = 'LAMBERTIAN' 
       IF (GROUND_TYPE.EQ.'F') GROUND_NAME = 'FRESNEL' 
+      IF (GROUND_TYPE.EQ.'O') GROUND_NAME = 'OCEAN'
       IF (GROUND_TYPE.EQ.'S') GROUND_NAME = 'SPECULAR' 
                                                                        
       OPEN (UNIT = 3, FILE = OUT_FILE, STATUS = 'UNKNOWN') 
@@ -623,7 +625,7 @@
       ' LFRAC=',lfrac
       WRITE (3, '(A,F8.2,A,A16,A,F8.3)') 'C  GROUND_TEMP=', GROUND_TEMP,&
      & '   GROUND_TYPE=', GROUND_NAME,' W10=',wind10                                    
-      IF (GROUND_TYPE (1:1) .EQ.'F') THEN
+      IF (GROUND_TYPE (1:1) .EQ.'F' .OR. GROUND_TYPE (1:1) .EQ. 'O' ) THEN
       WRITE (3, '(A,2F9.4,A,F8.2)') 'C  GROUND_INDEX=', GROUND_INDEX, ' &
      &  SKY_TEMP=', SKY_TEMP                                            
       ELSE 
