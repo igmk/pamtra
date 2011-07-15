@@ -299,6 +299,10 @@ subroutine fastem4( wavelength   , &  ! Input
     END IF
 
   ! azimuthal component
+  !
+  ! the azimuthal component is ignpred when doing simulations for COSMO runs
+  ! since we do not know what direction does the satellite have in advance
+  !
   ! --------------------------------
     Azimuth_Emi = ZERO
 

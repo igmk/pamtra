@@ -426,10 +426,10 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
 	! call fastem4 ocean emissivity model. the correction due to transmittance is not necessary in
 	! our multi-stream model (?!)
       wind10 = sqrt(wind10u**2+wind10v**2)
-      IF (wind10u >= 0.0 .AND. wind10v >= 0.0) iquadrant = 1
-      IF (wind10u >= 0.0 .AND. wind10v < 0.0 ) iquadrant = 2
-      IF (wind10u < 0.0 .AND. wind10v >= 0.0 ) iquadrant = 4
-      IF (wind10u < 0.0 .AND. wind10v < 0.0  ) iquadrant = 3
+      IF (wind10u >= 0.0 .AND. wind10v >= 0.0 ) iquadrant = 1
+      IF (wind10u >= 0.0 .AND. wind10v <  0.0 ) iquadrant = 2
+      IF (wind10u <  0.0 .AND. wind10v >= 0.0 ) iquadrant = 4
+      IF (wind10u <  0.0 .AND. wind10v <  0.0 ) iquadrant = 3
       IF (abs(wind10v) >= 0.0001) THEN
         windratio = wind10u / wind10v
       ELSE
@@ -441,6 +441,12 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
       windangle        = atan(abs(windratio))
       rel_azimuth = (quadcof(iquadrant, 1) * pi + windangle * quadcof(iquadrant, 2))*180./pi
 
+  ! azimuthal component
+  !
+  ! the azimuthal component is ignored (rel_azimuth > 360°) when doing simulations for COSMO runs
+  ! since we do not know what direction does the satellite have in advance
+  !
+		rel_azimuth = 400.
         transmittance(:) = 1.
         salinity = 33.
 		call fastem4(wavelength   , &  ! Input

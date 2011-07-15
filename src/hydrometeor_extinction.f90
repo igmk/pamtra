@@ -7,7 +7,7 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
   implicit none
 
   integer, parameter :: &
-    mxlyr = 50, &      ! max grid dimension in z
+    mxlyr = 60, &      ! max grid dimension in z
     maxleg = 200
 
   integer :: jj, nz, n_lay_cut

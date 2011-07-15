@@ -70,9 +70,9 @@ subroutine mie(f, mindex, rad1, rad2, numrad, maxleg,   &
     radius = rad1 + (ir - 1) * delrad
     ndens = distribution(ad, bd, alpha, gamma, radius, aerodist)  ! number density
     if ((ir .eq. 1 .or. ir .eq. numrad+1) .and. numrad .gt. 0) then 
-	ndens = 0.5 * ndens 
+		ndens = 0.5 * ndens
     end if 
-    tot_mass = tot_mass +0.038*(2.*radius)**2*ndens*2.*delrad
+    tot_mass = tot_mass + 0.038*(2.*radius)**2*ndens*2.*delrad
     x = 2.0d0 * pi * radius / wavelength ! size parameter
     nmie = 0 
     call miecalc(nmie, x, msphere, a, b) ! calculate a and b

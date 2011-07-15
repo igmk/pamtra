@@ -21,7 +21,7 @@ program pamtra
 
   integer, parameter :: mxgridx = 880, &  ! max grid dimension in x (421)
                         mxgridy = 880, &  ! max grid dimension in y (461)
-                         mxlyr = 50       ! max grid dimension in z
+                         mxlyr = 60       ! max grid dimension in z
 
   integer, parameter :: nummu = 16,         & ! no. of observation angles
        ntheta_i = 2*nummu, &
@@ -209,7 +209,7 @@ program pamtra
   namelist / rain_params / SD_rain, N_0rainD
 
   !    some inputs variable                                               
-  N_lay_cut = 50
+  N_lay_cut = 60
   QUAD_TYPE = 'L'                                             
   Aziorder = 0 
   NUMAZIMUTHS = 1 
@@ -418,7 +418,7 @@ program pamtra
 	! Determine surface properties
 
 	if (lfrac .ge. 0.5 .and. lfrac .le. 1.0) then
-	  ground_type = 'L'
+	  ground_type = 'S' ! changed to specular after advice of cathrine prigent
 	  ise=13
 	  read(month,'(i2)') imonth
 	  if (imonth .ge. 7 .and. imonth .le. 12) then
@@ -442,8 +442,7 @@ program pamtra
 	  epsi = eps_water(salinity, ground_temp - 273.15, freq)
 	  ground_index = dconjg(sqrt(epsi))
 	else
-	! this is for specular reflection (only testing)
-	  ground_type = 'S'
+	! this is for ground_type specified in run_params.nml
 	  ground_albedo = 1 - emissivity
 	end if
 
