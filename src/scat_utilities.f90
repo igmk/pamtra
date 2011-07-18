@@ -1607,7 +1607,7 @@ end subroutine gausquad
       END SUBROUTINE snow_SS_param                  
                                                                         
                                                                         
-      SUBROUTINE get_atmosGlev (temp_lev, press_lev, relhum, mxlyr,     &
+      SUBROUTINE get_atmosGlev (temp_lev, press_lev, relhum,     &
       nlyr, vapor_pressure, freq, ABSCOEF)                              
                                                                         
 !     Calculate average air pressure and vapor pressure in specified    
@@ -1618,11 +1618,11 @@ end subroutine gausquad
 !+----------------------------------------------------------------------
   use kinds
       IMPLICIT none 
-      INTEGER mxlyr, nlyr, nz 
-      REAL(kind=dbl) press_lev (0:mxlyr) 
-      REAL(kind=dbl) temp_lev (0:mxlyr) 
-      REAL(kind=dbl) relhum (0:mxlyr), ABScoef (0:mxlyr) 
-      REAL(kind=dbl) vapor_pressure (0:mxlyr) 
+      INTEGER nlyr, nz 
+      REAL(kind=dbl) press_lev (0:nlyr) 
+      REAL(kind=dbl) temp_lev (0:nlyr) 
+      REAL(kind=dbl) relhum (0:nlyr), ABScoef (0:nlyr) 
+      REAL(kind=dbl) vapor_pressure (0:nlyr) 
                                                                         
       REAL(kind=dbl) freq, tc, es, a0, a1, a2, a3, a4, a5, a6 
                                                                         

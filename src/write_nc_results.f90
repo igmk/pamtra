@@ -22,7 +22,7 @@ subroutine write_nc_results(nc_file)
 
   character(100) :: nc_file
 
-  call check(nf90_create(path='/net/roumet/mech/pamtra/output/'//nc_file,cmode=nf90_noclobber,ncid=ncid))
+  call check(nf90_create(path=nc_file,cmode=nf90_noclobber,ncid=ncid))
 
   call check(nf90_def_dim(ncid, 'nlon', ngridx, dlonID))
   call check(nf90_def_dim(ncid, 'nlat', ngridy, dlatID))
