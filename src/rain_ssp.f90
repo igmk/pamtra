@@ -7,7 +7,7 @@ subroutine rain_ssp(f,qr,t,p,q,maxleg,kext, salb, back,  &
 
   implicit none
 
-  integer :: numrad, nlegen
+  integer :: nbins, nlegen
   integer, intent(in) :: maxleg
 
   real(kind=dbl), intent(in) :: &
@@ -21,7 +21,7 @@ subroutine rain_ssp(f,qr,t,p,q,maxleg,kext, salb, back,  &
 
   real(kind=dbl) :: absind, abscof
 
-  real(kind=dbl) :: rad1, rad2, den_liq, rwc, ad, bd, alpha, gamma
+  real(kind=dbl) :: dia1, dia2, den_liq, rwc, ad, bd, alpha, gamma
 
   real(kind=dbl), intent(out) :: &
     kext,&
@@ -39,8 +39,8 @@ subroutine rain_ssp(f,qr,t,p,q,maxleg,kext, salb, back,  &
     call ref_water(0.d0, t-273.15, f, refre, refim, absind, abscof)
 
     mindex = refre-im*refim
-    rad1 = 1.d-4   ! minimum diameter [m]
-    rad2 = 6.d-3   ! maximum diameter [m]
+    dia1 = 1.d-4   ! minimum diameter [m]
+    dia2 = 6.d-3   ! maximum diameter [m]
     den_liq = 1.d3  ! density of liquid water [kg/m^3]
     ! this is for integration over diameters
     rwc = spec2abs(qr,t,p,q) ! [kg/m^3]
@@ -48,11 +48,11 @@ subroutine rain_ssp(f,qr,t,p,q,maxleg,kext, salb, back,  &
     ad = n_0rainD*1.d6   ! [1/m^4]
     bd = (pi * den_liq * ad / rwc)**0.25
 
-    numrad = 100 
+    nbins = 100
     alpha = 0.d0 ! exponential SD
     gamma = 1.d0 
 
-    call mie(f, mindex, rad1/2., rad2/2., numrad, maxleg, ad,    &
+    call mie(f, mindex, dia1, dia2, nbins, maxleg, ad,    &
 	  bd, alpha, gamma, lphase_flag, kext, salb, back,     &
 	  nlegen, legen, legen2, legen3, legen4, 'C')    
 

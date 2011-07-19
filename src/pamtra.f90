@@ -147,9 +147,9 @@ program pamtra
 
   character(100) :: OUT_FILE, tmp_file1, nc_out_file
 
-  character(64) :: file_PH(mxlyr), file_PH2(mxlyr)
+  character(68) :: file_PH(mxlyr), file_PH2(mxlyr)
 
-  character(74) :: file_profile
+  character(78) :: file_profile
 
   character :: ssstr*1, ttstr*1, Anglestr*4, FILEOUT3D*65
 
@@ -168,24 +168,6 @@ program pamtra
   character(80) :: femis ! filename for the emissivity databases
 
   integer :: istat
-
-  ! namelist parameters
-
-!   real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
-!  
-!   logical :: lphase_flag, &        ! flag for phase function calculation
-! 	     lgas_extinction, &    ! gas extinction desired
-! 	     lhyd_extinction, &       ! no hydrometeors desired
-! 	     grid_calc, &	   ! calculate with dispatch or not
-! 	     write_nc		   ! write netcdf output
-! 
-!   character(3) :: gas_mod
-
-  !     The following parameters are set for the TMI sensor
-
-!  real(kind=dbl), parameter :: pi = 3.141592653589793
-
-!  complex(kind=dbl), parameter :: Im = (0.0, 1.0)
 
 ! temporary variables
 
@@ -218,7 +200,7 @@ program pamtra
   DIRECT_FLUX = 0.d0 
   DIRECT_MU = 0.0d0 
   maxleg = 200 
-  SKY_TEMP = 2.7 
+  SKY_TEMP = 2.73
   ! WAVELENGTH = 1000000.0 ! check this
 
   ! initialize values
@@ -463,7 +445,7 @@ program pamtra
 
     write(xstr, '(i3.3)') profiles(nx,ny)%isamp
     write(ystr, '(i3.3)') profiles(nx,ny)%jsamp
-    file_profile = '/tmp/Profilex'//xstr//'y'//ystr//'f'//frq_str
+    file_profile = '/dev/shm/Profilex'//xstr//'y'//ystr//'f'//frq_str
 
 	! hydrometeor extinction desired
 

@@ -23,7 +23,7 @@ subroutine cloud_ssp(f,qc,t,p,q,maxleg,kext, salb, back,  &
 
   implicit none
 
-  integer :: numrad, nlegen
+  integer :: nbins, nlegen
   integer, intent(in) :: maxleg
 
   real(kind=dbl), intent(in) :: &
@@ -37,7 +37,7 @@ subroutine cloud_ssp(f,qc,t,p,q,maxleg,kext, salb, back,  &
 
   real(kind=dbl) :: absind, abscof
 
-  real(kind=dbl) :: rad1, rad2, del_r, den_liq, drop_mass, lwc, ad, bd, alpha, gamma
+  real(kind=dbl) :: dia1, dia2, del_d, den_liq, drop_mass, lwc, ad, bd, alpha, gamma
 
   real(kind=dbl), intent(out) :: &
     kext,&
@@ -57,20 +57,20 @@ subroutine cloud_ssp(f,qc,t,p,q,maxleg,kext, salb, back,  &
 
   call ref_water(0.d0, t-273.15, f, refre, refim, absind, abscof)
   mindex = refre-im*refim
-  del_r = 1.d-8     ! [m]
-  rad1 = 1.d-5      ! [m] 10 micron radius monodisperse
-  rad2 = rad1 + del_r 
+  del_d = 1.d-8     ! [m]
+  dia1 = 2.d-5      ! [m] 20 micron diameter monodisperse
+  dia2 = dia1 + del_d
   den_liq = 1.d3 ! density of liquid water [kg/m^3]
-  drop_mass = 4./3. * pi * rad1**3 * den_liq ! [kg]
+  drop_mass = 1./6. * pi * dia1**3 * den_liq ! [kg]
   lwc = spec2abs(qc,t,p,q) ! [kg/m^3]
-  ad = lwc / (drop_mass*del_r)
+  ad = lwc / (drop_mass*del_d)
 
   bd = 0.d0 
   alpha = 0.d0 ! exponential SD
   gamma = 1.d0 
-  numrad = 2 
+  nbins = 2
 
-  call mie(f, mindex, rad1, rad2, numrad, maxleg, ad,       &
+  call mie(f, mindex, dia1, dia2, nbins, maxleg, ad,       &
 	bd, alpha, gamma, lphase_flag, kext, salb, back,  &
 	nlegen, legen, legen2, legen3, legen4, 'C')
 

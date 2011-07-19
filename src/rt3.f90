@@ -435,7 +435,7 @@
       I = 1 
   100 CONTINUE 
       READ (1, *, ERR = 990, END = 110) HEIGHT (I), TEMPERATURES (I),   &
-      GAS_EXTINCT (I), SCAT_FILES (I)                                   
+      GAS_EXTINCT (I), SCAT_FILES (I)
       I = I + 1 
       IF (I.EQ.MAXLAY) THEN 
          WRITE ( * , * ) 'Too many layers' 

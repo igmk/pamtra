@@ -7,7 +7,7 @@ subroutine grau_ssp(f,qg,t,p,q,maxleg,kext, salb, back,  &
 
   implicit none
 
-  integer :: numrad, nlegen
+  integer :: nbins, nlegen
   integer, intent(in) :: maxleg
 
   real(kind=dbl), intent(in) :: &
@@ -19,7 +19,7 @@ subroutine grau_ssp(f,qg,t,p,q,maxleg,kext, salb, back,  &
 
   real(kind=dbl) :: refre, refim
 
-  real(kind=dbl) :: rad1, rad2, gwc, ad, bd, alpha, gamma, b_grau, a_mgrau
+  real(kind=dbl) :: dia1, dia2, gwc, ad, bd, alpha, gamma, b_grau, a_mgrau
 
   real(kind=dbl), intent(out) :: &
     kext,&
@@ -41,9 +41,9 @@ subroutine grau_ssp(f,qg,t,p,q,maxleg,kext, salb, back,  &
 	mindex = refre-Im*refim
 	m_air = 1.0d0 - 0.0d0 * Im
 
-	rad1 = 1.d-5 
-	rad2 = 1.d-2
-	numrad = 100
+	dia1 = 1.d-5
+	dia2 = 1.d-2
+	nbins = 100
 	alpha = 0.
 	gamma = 1.
 
@@ -54,13 +54,13 @@ subroutine grau_ssp(f,qg,t,p,q,maxleg,kext, salb, back,  &
 
 	if (EM_grau .eq. 'icesf') then
 	  call mie_densitysizedep_spheremasseq(f, mindex,      &
-		a_mgrau, b_grau, rad1/2., rad2/2., numrad, maxleg,   &
+		a_mgrau, b_grau, dia1, dia2, nbins, maxleg,   &
 		ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
 		back, nlegen, legen, legen2, legen3,        &
 		legen4, 'C')
 	elseif (EM_grau .eq. 'surus') then 
 	  call mie_icefactor(f, t,mindex,      &
-		a_mgrau, b_grau, rad1/2., rad2/2., numrad, maxleg,   &
+		a_mgrau, b_grau, dia1, dia2, nbins, maxleg,   &
 		ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
 		back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
 		LEGEN4, 'C',0.815*1.e-3*f+0.0112,44)

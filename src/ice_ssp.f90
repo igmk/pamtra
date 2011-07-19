@@ -7,7 +7,7 @@ subroutine ice_ssp(f,qi,t,p,q,maxleg,kext, salb, back,  &
 
   implicit none
 
-  integer :: numrad, nlegen
+  integer :: nbins, nlegen
   integer, intent(in) :: maxleg
 
   real(kind=dbl), intent(in) :: &
@@ -19,7 +19,7 @@ subroutine ice_ssp(f,qi,t,p,q,maxleg,kext, salb, back,  &
 
   real(kind=dbl) :: refre, refim
 
-  real(kind=dbl) :: rad1, rad2, del_r, den_ice, drop_mass, iwc, ad, bd, alpha, gamma
+  real(kind=dbl) :: dia1, dia2, del_d, den_ice, drop_mass, iwc, ad, bd, alpha, gamma
 
   real(kind=dbl), intent(out) :: &
     kext,&
@@ -37,20 +37,20 @@ subroutine ice_ssp(f,qi,t,p,q,maxleg,kext, salb, back,  &
     call ref_ice(t,f, refre, refim)
     mindex = refre-im*refim  ! mimicking a
     ! monodisperse distribution
-    del_r = 1.d-8    ! [m] 
-    rad1 = 5.d-5     ! [m] 5 micron radius
-    rad2 = rad1 + del_r 
+    del_d = 1.d-8    ! [m]
+    dia1 = 1.d-4     ! [m] 10 micron diameter
+    dia2 = dia1 + del_d
     den_ice = 917.d0  ! [kg/m^3]
-    drop_mass = 4./3. * pi * rad1**3 * den_ice 
+    drop_mass = pi/6. * dia1**3 * den_ice
     iwc = spec2abs(qi,t,p,q) ! [kg/m^3]
 
-    ad = iwc/(drop_mass*del_r) 
+    ad = iwc/(drop_mass*del_d)
     bd = 0.0d0 
     alpha = 0.0d0     ! exponential SD
     gamma = 1.0d0 
-    numrad = 2 
+    nbins = 2
 
-    call mie(f, mindex, rad1, rad2, numrad, maxleg, ad,    &
+    call mie(f, mindex, dia1, dia2, nbins, maxleg, ad,    &
 	  bd, alpha, gamma, lphase_flag, kext, salb, back,     &
 	  nlegen, legen, legen2, legen3, legen4, 'C')
   if (verbose .gt. 1) print*, 'Exiting ice_ssp'

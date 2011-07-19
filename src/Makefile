@@ -1,6 +1,6 @@
 ARCH=$(shell uname -s)
 FC=gfortran
-FCFLAGS=-c
+FCFLAGS=-c -fdefault-real-8 -fdefault-double-8
 ifeq ($(ARCH),Darwin)
 	NCFLAGS=-I/opt/local/include/ #-g
 	LFLAGS=-L/opt/local/lib/

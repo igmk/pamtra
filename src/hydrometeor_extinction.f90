@@ -48,7 +48,7 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
 
   character(6), intent(in) :: frq_str
 
-  character(64), intent(out) :: file_PH(mxlyr)
+  character(68), intent(out) :: file_PH(mxlyr)
 
   if (verbose .gt. 1) print*, 'Entering hydrometeor_extinction'
 
@@ -236,7 +236,7 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
 	!    writing no file                                                                        
       else ! there are hydrometeor present : a PH file is needed
 
-		FILE_PH(nz) = '/tmp/PHx'//xstr//'y'//ystr//'lev'//Nzstr//'f'//frq_str
+		FILE_PH(nz) = '/dev/shm/PHx'//xstr//'y'//ystr//'lev'//Nzstr//'f'//frq_str
 
 		open(unit=21, file=file_PH(nz), STATUS='unknown', &
 	      form='FORMATTED')

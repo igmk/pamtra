@@ -406,7 +406,6 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
      KS = 1 + 2 * N * (NUM_LAYERS) 
 
      if (verbose .gt. 0) print*, "Calculating surface emissivity ...."
-
       IF (GROUND_TYPE.EQ.'F') THEN
   ! For a Fresnel surface
     wind10 = sqrt(wind10u**2+wind10v**2)
