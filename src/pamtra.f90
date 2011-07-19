@@ -1,5 +1,4 @@
 program pamtra
-
   use kinds
   use constants
   use nml_params
