@@ -275,14 +275,14 @@
          STOP 
       ENDIF 
                                                                         
-!         write(27,*)'reading layers'                                   
+      if (verbose .gt. 1) print*, "reading layers"                            
       CALL READ_LAYERS (LAYER_FILE, MAXLAY, NUM_LAYERS, HEIGHT,         &
       TEMPERATURES, GAS_EXTINCT, SCAT_FILES)                            
-!       write(27,*)'read layers,now calling RT'                         
+      if (verbose .gt. 1) print*, "read layers,now calling RT "                       
                                                                         
       MAX_DELTA_TAU = 1.0E-6 
 
-      if (verbose .gt. 0) print*, "Entering radtran ...."
+      if (verbose .gt. 1) print*, "Entering radtran ...."
 
       CALL RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU, SRC_CODE,  &
       QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU, GROUND_TEMP,           &
@@ -291,7 +291,7 @@
       NOUTLEVELS, OUTLEVELS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD,     &
       DOWN_RAD,dble(wind10u),dble(wind10v),verbose)
 
-      if (verbose .gt. 0) print*, ".... radtran done!"
+      if (verbose .gt. 1) print*, ".... radtran done!"
 
 !            write(27,*)'RT done'                                       
 !       N = NUMMU*(AZIORDER+1)*NOUTLEVELS                               
@@ -299,7 +299,7 @@
 !     .                     WAVELENGTH, 0, UP_RAD)                      
                                                                         
 
-      if (verbose .gt. 0) print*, "Writing output ...."
+      if (verbose .gt. 1) print*, "Writing output ...."
 
       if (write_nc) then 
 	call collect_output(NSTOKES, NUMMU, AZIORDER, &
@@ -316,7 +316,7 @@
 	lon,lat,lfrac,wind10,iwv,cwp,iwp,rwp,swp,gwp)
       end if
 
-      if (verbose .gt. 0) print*, ".... done!"
+      if (verbose .gt. 1) print*, ".... done!"
                                                                         
       END SUBROUTINE RT3                            
                                                                         

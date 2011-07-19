@@ -166,7 +166,7 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   real(kind=dbl) :: rel_azimuth, salinity
   real(kind=dbl), dimension(nummu) :: transmittance
 
-  if (verbose .gt. 0) print*, "Entered radtran ...."
+  if (verbose .gt. 1) print*, "Entered radtran ...."
 
   IF (SRC_CODE.EQ.1.OR.SRC_CODE.EQ.3) THEN 
      IF (GROUND_TYPE.NE.'L') THEN 
@@ -205,7 +205,7 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   ENDIF
 
   !   Make the desired quadrature abscissas and weights           
-  if (verbose .gt. 0) print*, "Make the desired quadrature abscissas and weights ...."
+  if (verbose .gt. 1) print*, "Make the desired quadrature abscissas and weights ...."
 
   IF (QUAD_TYPE (1:1) .EQ.'D') THEN 
      CALL DOUBLE_GAUSS_QUADRATURE (NUMMU, MU_VALUES, QUAD_WEIGHTS) 
@@ -230,7 +230,7 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   ENDIF
   NLEGLIM = MAX (NLEGLIM, 1) 
 
-  if (verbose .gt. 0) print*, ".... done!"
+  if (verbose .gt. 1) print*, ".... done!"
   !       Make all of the scattering matrices ahead of time               
   !         and store them in memory                                      
   SCAT_NUM = 0 
@@ -405,7 +405,8 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
      KRT = 1 + 2 * N * N * (NUM_LAYERS) 
      KS = 1 + 2 * N * (NUM_LAYERS) 
 
-     if (verbose .gt. 0) print*, "Calculating surface emissivity ...."
+     if (verbose .gt. 1) print*, "Calculating surface emissivity ...."
+
       IF (GROUND_TYPE.EQ.'F') THEN
   ! For a Fresnel surface
     wind10 = sqrt(wind10u**2+wind10v**2)
@@ -472,7 +473,7 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
              NUM_LAYERS + 1), GND_RADIANCE)                                 
      ENDIF
 
-     if (verbose .gt. 0) print*, ".... done!"
+     if (verbose .gt. 1) print*, ".... done!"
 
      ! Assume the radiation coming from above is blackbody radiation
      CALL THERMAL_RADIANCE (NSTOKES, NUMMU, MODE, SKY_TEMP, ZERO,      &

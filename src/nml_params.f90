@@ -21,12 +21,13 @@ module nml_params
   logical :: lphase_flag, &        ! flag for phase function calculation
 	     lgas_extinction, &    ! gas extinction desired
 	     lhyd_extinction, &    ! hydrometeor extinction desired
-	     grid_calc, &	   ! calculate with dispatch or not
 	     write_nc		   ! write netcdf output
 
   character(5) :: EM_snow, EM_grau
   character(3) :: SD_snow, SD_grau, SD_rain
 
   character(3) :: gas_mod
+
+  character(100) :: input_path, output_path, tmp_path
 
 end module nml_params

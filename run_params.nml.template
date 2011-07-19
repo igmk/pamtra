@@ -1,11 +1,11 @@
 &verbose_mode
-verbose=0
+verbose=1
 /
-&process_mode
-grid_calc=.true.
-/
-&output_mode
+&inoutput_mode
 write_nc=.true.
+input_path='/path/to/profiles/'
+output_path='/path/to/output/'
+tmp_path='/dev/shm/'
 /
 &output
 obs_height=833000.

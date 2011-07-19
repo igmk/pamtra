@@ -6,6 +6,7 @@ implicit none
 
 integer :: i,j
 
+
       allocate(hgt_lev(0:nlyr))
       allocate(press_lev(0:nlyr))
       allocate(press(nlyr))
@@ -92,5 +93,6 @@ integer :: i,j
 ! 	nullify(profiles(i,j)%legen4)
 !      end do
 !   end do
+
 
 end subroutine allocate_vars_atmosphere

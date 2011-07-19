@@ -8,7 +8,9 @@ subroutine get_atmosg(press, temp, vapor_pressure, rho_vap, nlyr, freq, gas_mod,
   use kinds
   
   implicit none
-      
+
+
+
   integer, intent(in) :: nlyr
   integer :: nz
   real(kind=dbl), dimension(nlyr), intent(in) :: press
@@ -23,11 +25,12 @@ subroutine get_atmosg(press, temp, vapor_pressure, rho_vap, nlyr, freq, gas_mod,
   real(kind=dbl) :: tc
   
   character(3) :: gas_mod
-      
+
+
     do nz = 1, nlyr                     
       tc = temp(nz) - 273.15 
       if (gas_mod .eq. 'L93') then
-	    call mpm93(freq, press(nz)/1.d3, vapor_pressure/1.d3,tc, 0.0d0, abscoef(nz))
+	    call mpm93(freq, press(nz)/1.d3, vapor_pressure(nz)/1.d3,tc, 0.0d0, abscoef(nz))
 	    abscoef(nz) = abscoef(nz)/1000.
       else if (gas_mod .eq. 'R98') then
       ! Rosenkranz 1998 gas absorption model

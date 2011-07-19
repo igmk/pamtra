@@ -7,7 +7,7 @@ program pamtra
   use vars_output
 
   !     Radiative transfer code to process COSMO-model derived profiles   
-  !     The code read a full COSMO grid and compute for each profile the  
+  !     The code reads a full COSMO grid and computes for each profile the  
   !     radiative transfer for the given frequency                        
   !                                                                      
   !     This code is completely self contained and needs no databases     
@@ -18,10 +18,6 @@ program pamtra
   !                    **  RADTRAN I/O SPECIFICATIONS  **
 
   implicit none
-
-  integer, parameter :: mxgridx = 880, &  ! max grid dimension in x (421)
-                        mxgridy = 880, &  ! max grid dimension in y (461)
-                         mxlyr = 60       ! max grid dimension in z
 
   integer, parameter :: nummu = 16,         & ! no. of observation angles
        ntheta_i = 2*nummu, &
@@ -36,8 +32,8 @@ program pamtra
   integer, parameter :: NOUTLEVELS = 2
 
   integer :: i, j, k, jj, nf, nx, ny, nz, nlev,&
-             nx_in, nx_fin, ny_in, ny_fin,     &
              offset1,offset2, length1, length2,&
+             inarg, &
              ise, imonth ! filehandle for the emissivity data
 
   integer :: MAXLEG, NLEGEN, NUMRAD, NLEGENcw, NLEGENci, NLEGENgr, &
@@ -49,13 +45,10 @@ program pamtra
 
   integer :: NP_LUT, N_temp
 
-  integer :: j_temp, ind_temp, N_lay_cut
+  integer :: j_temp, ind_temp
 
   integer :: i_bot, i_top, nnz, N_layer_new, ss, tt, length
 
-!  integer, dimension(mxgridx,mxgridy) :: isamp, jsamp ! temporary for naming output
-
-  integer, dimension(mxgridx,mxgridy) :: ics
 
   integer, dimension(maxlay) :: OUTLEVELS
 
@@ -78,8 +71,8 @@ program pamtra
 
   real(kind=dbl) :: atm_ext, kextcw, salbcw, asymcw, kextrr, salbrr, asymrr,  &
        kextci, salbci, asymci, kextsn, salbsn, asymsn, kextgr, salbgr,   &
-       asymgr, salbhl, asymhl, backcw, backrr, backci, backsn, backgr,   &
-       tau_min, tau_max                                                  
+       asymgr, salbhl, asymhl, backcw, backrr, backci, backsn, backgr
+                                                      
 
   real(kind=dbl) :: mu, D_0, D_max, D_min, A1, A2
 
@@ -104,34 +97,11 @@ program pamtra
        LEGEN3cw, LEGEN3rr, LEGEN3ci, LEGEN3gr, LEGEN3sn,  &
        LEGEN4cw, LEGEN4rr, LEGEN4ci, LEGEN4gr, LEGEN4sn
 
-  real(kind=dbl), dimension(mxgridx,mxgridy) :: tskin ! surface temperature
-
-  real(kind=dbl), dimension(mxlyr) :: KEXTATMO   ! atmospheric extinction due to gases
-!  real(kind=dbl), dimension(mxlyr) :: abscoef_o2,abscoef_h2o,abscoef_n2
-  real(kind=dbl), dimension(2) :: P11, ang
-
-  real(kind=dbl), dimension(mxgridx,mxgridy,mxlyr) :: &
-       g_coeff,    &
-       kexttot,    &
-       kextcloud,  &
-       kextrain,   &
-       kextice,    &
-       kextgraupel,&
-       kextsnow,   &
-       salbtot,    &
-       absorp,     & ! might be unnecessary
-       asymtot,    &
-       back        
-
-  real(kind=dbl), dimension(mxgridx, mxgridy) :: &
-       tau,       &
-       tau_hydro
 
   real(kind=dbl), dimension(maxv) :: MU_VALUES
 
   real(kind=dbl), dimension(ntheta_i) :: TTheta_i, TTheta_s
 
-  real(kind=dbl), dimension(mxlyr+1) :: H_levs
 
   complex(kind=dbl) :: GROUND_INDEX
   complex(kind=dbl) :: eps_water, & ! function to calculate the dielectic properties of (salt)water
@@ -145,9 +115,7 @@ program pamtra
   character :: QUAD_TYPE*1, UNITS*1, OUTPOL*2, GROUND_TYPE*1,  &
        rLWC_str*4                                                      
 
-  character(100) :: OUT_FILE, tmp_file1, nc_out_file
-
-  character(68) :: file_PH(mxlyr), file_PH2(mxlyr)
+  character(300) :: OUT_FILE, tmp_file1, nc_out_file, namelist_file
 
   character(78) :: file_profile
 
@@ -177,11 +145,49 @@ program pamtra
 
   real(kind=dbl) :: spec2abs
 
+
+
+
+  real(kind=dbl), dimension(2) :: P11, ang
+
+
+
+
+!  integer, dimension(ngridx,ngridy) :: isamp, jsamp ! temporary for naming output
+
+  integer, allocatable, dimension(:,:) :: ics
+  real(kind=dbl), dimension(:,:), allocatable :: tskin ! surface temperature
+
+  real(kind=dbl), allocatable, dimension(:) :: KEXTATMO   ! atmospheric extinction due to gases
+!  real(kind=dbl), dimension(nlyr) :: abscoef_o2,abscoef_h2o,abscoef_n2
+
+
+  real(kind=dbl), allocatable, dimension(:,:,:) :: &
+       g_coeff,    &
+       kexttot,    &
+       kextcloud,  &
+       kextrain,   &
+       kextice,    &
+       kextgraupel,&
+       kextsnow,   &
+       salbtot,    &
+       absorp,     & ! might be unnecessary
+       asymtot,    &
+       back        
+
+  real(kind=dbl), allocatable, dimension(:,:) :: &
+       tau,       &
+       tau_hydro
+
+  real(kind=dbl), allocatable, dimension(:) :: H_levs
+
+  character(len=64), allocatable, dimension(:) :: file_PH, file_PH2
+
+
   ! name list declarations
  
   namelist / verbose_mode / verbose
-  namelist / process_mode / grid_calc
-  namelist / output_mode / write_nc
+  namelist / inoutput_mode / write_nc, input_path, output_path, tmp_path
   namelist / output / obs_height,units,outpol
   namelist / surface_params / ground_type,salinity, emissivity
   namelist / gas_abs_mod / lgas_extinction, gas_mod
@@ -190,38 +196,42 @@ program pamtra
   namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau
   namelist / rain_params / SD_rain, N_0rainD
 
-  !    some inputs variable                                               
-  N_lay_cut = 60
-  QUAD_TYPE = 'L'                                             
-  Aziorder = 0 
-  NUMAZIMUTHS = 1 
-  DELTAM = 'N' 
-  SRC_CODE = 2 
-  DIRECT_FLUX = 0.d0 
-  DIRECT_MU = 0.0d0 
-  maxleg = 200 
-  SKY_TEMP = 2.73
-  ! WAVELENGTH = 1000000.0 ! check this
+!   !
+!   !     Get input/output file names from run file.
+!   !                                                                       
+!   read ( *, * ) input_file
+!   read ( *, * ) freq               ! frequency [Ghz]
+! 
+!!!!!!!!!!!!!!!!!!!
 
-  ! initialize values
+inarg = iargc()
 
-  tau = 0.0d0
-  tau_hydro = 0.0d0 
-  file_ph2(:) = ''
+if (inarg == 3) then
+   call getarg(1,namelist_file)
+else if (inarg == 2) then
+   namelist_file = 'run_params.nml'
+else
+   print *,'Usage: pamtra profile_file frequency <namelist_file>'
+   print *,'If namelist_file is not provided, it looks in the'
+   print *,'current working directory for run_params.nml.'
+   print *, 'See namelist file for further pamtra options'
+   stop
+end if
+   call getarg(1,input_file)
+   call getarg(2,frq_str)
+   read(frq_str,*) freq
+   frq_str = repeat('0', 6-len_trim(adjustl(frq_str)))//adjustl(frq_str)
 
-  !
-  !     Get input/output file names from run file.
-  !                                                                       
-  read ( *, * ) input_file 
-  read ( *, * ) nx_in, nx_fin, ny_in, ny_fin, tau_min, tau_max 
-  read ( *, * ) freq               ! frequency [Ghz]
+
+! 
+!!!!!!!!!!!!!1
+
 
   ! read name list parameter file
 
-  open(7, file='run_params.nml',delim='APOSTROPHE')
+  open(7, file=namelist_file,delim='APOSTROPHE')
   read(7,nml=verbose_mode)
-  read(7,nml=process_mode)
-  read(7,nml=output_mode)
+  read(7,nml=inoutput_mode)
   read(7,nml=output)
   read(7,nml=surface_params)
   read(7,nml=gas_abs_mod)
@@ -232,7 +242,6 @@ program pamtra
   close(7)
 
   lam = 299.7925 / freq   ! mm
-
   !                                                                       
   !     read atmospheric profiles                 
   !  
@@ -255,18 +264,58 @@ program pamtra
 
   ! Perform calculation through dispatch or not
 
-  if (grid_calc) then
-    open(UNIT=14, FILE='/net/roumet/mech/pamtra/profiles/'//input_file, STATUS='OLD', form='formatted',iostat=istat)
-    if (istat .ne. 0) call error_msg(input_file)
-  else
-    open(UNIT=14, FILE='profiles/'//input_file, STATUS='OLD', form='formatted')
-!    open(UNIT=14, FILE='/work/mech/pamtra/profiles/'//input_file, STATUS='OLD', form='formatted')
-  end if
+
+   if (verbose .gt. 0) print *,"opening: ",input_path(:LEN(trim(input_path)))//"/"//input_file
+
+  open(UNIT=14, FILE=input_path(:LEN(trim(input_path)))//"/"//input_file, STATUS='OLD', form='formatted',iostat=istat)
+
 
   read(14,*,iostat=istat) year, month, day, time, ngridx, ngridy, nlyr, deltax, deltay
   if (istat .ne. 0) call error_msg(input_file,0,0)
 
-  n_lay_cut = nlyr  ! in future n_lay_cut can be delete  $##
+	! now allocate variables
+
+	allocate(g_coeff(ngridx, ngridy,nlyr))
+	allocate(kexttot(ngridx, ngridy,nlyr))
+	allocate(kextcloud(ngridx, ngridy,nlyr))
+	allocate(kextrain(ngridx, ngridy,nlyr))
+	allocate(kextice(ngridx, ngridy,nlyr))
+	allocate(kextgraupel(ngridx, ngridy,nlyr))
+	allocate(kextsnow(ngridx, ngridy,nlyr))
+	allocate(salbtot(ngridx, ngridy,nlyr))
+	allocate(absorp(ngridx, ngridy,nlyr))
+	allocate(asymtot(ngridx, ngridy,nlyr))
+	allocate(back(ngridx, ngridy,nlyr))
+
+	allocate(ics(ngridx, ngridy))
+	allocate(tskin(ngridx, ngridy))
+
+	allocate(tau(ngridx, ngridy))
+	allocate(tau_hydro(ngridx, ngridy))
+
+
+	allocate(H_levs(nlyr+1))
+	allocate(file_PH(nlyr))
+	allocate(file_PH2(nlyr))
+	allocate(KEXTATMO(nlyr))
+
+  !    some inputs variable                                               
+  QUAD_TYPE = 'L'                                             
+  Aziorder = 0 
+  NUMAZIMUTHS = 1 
+  DELTAM = 'N' 
+  SRC_CODE = 2 
+  DIRECT_FLUX = 0.d0 
+  DIRECT_MU = 0.0d0 
+  maxleg = 200 
+  SKY_TEMP = 2.7 
+  ! WAVELENGTH = 1000000.0 ! check this
+
+  ! initialize values
+
+  tau = 0.0d0
+  tau_hydro = 0.0d0 
+  file_ph2(:) = ''
 
   call allocate_vars_atmosphere
 
@@ -334,11 +383,9 @@ program pamtra
   !
 
   call get_atmosG0
-
   if (verbose .gt. 0) print*, 'variables filled up!'
 
-  write (frq_str, '(f6.2)') freq
-  frq_str = repeat('0', 6-len_trim(adjustl(frq_str)))//adjustl(frq_str)
+
 
   write (SP_str (1:3) , '(f3.1)') SP
 
@@ -364,14 +411,17 @@ program pamtra
   micro_str = SD_snow//N0snowstr//EM_snow//SP_str//SD_grau//        &
        N0graustr//EM_grau//SD_rain//N0rainstr                            
 
+	
   alpha = 0.0d0 
 
   gamma = 1.0d0 ! always exponential SD
 
-  if (verbose .gt. 0) print*, 'Start loop over profiles!'
+  if (verbose .gt. 1) print*, 'Start loop over profiles!'
 
   grid_y: do ny = 1, ngridy !ny_in, ny_fin  
     grid_x: do nx = 1, ngridx !nx_in, nx_fin   
+
+    if (verbose .gt. 0) print*, "Y:",ny, " of ", ngridy, "X:", nx, " of ", ngridx
 
     ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
 	lat = profiles(nx,ny)%latitude                  ! °
@@ -395,7 +445,7 @@ program pamtra
 	rho_vap = profiles(nx,ny)%rho_vap               ! kg/m^3
 	q_hum = profiles(nx,ny)%q_hum                   ! kg/kg
 
-	if (verbose .gt. 0) print*, 'type to local variables done' 
+	if (verbose .gt. 1) print*, nx,ny, 'type to local variables done' 
 
 	! Determine surface properties
 
@@ -408,7 +458,7 @@ program pamtra
 	  else if (imonth .ge. 1 .and. imonth .lt. 7) then
 	    femis = 'data/emissivity/ssmi_mean_emis_93'//month//'_direct'
 	  else
-	    print*, "Warning: No emissivity data found!"
+	    print*, nx,ny, "Warning: No emissivity data found!"
 	    stop
 	  end if
       open(ise,file=trim(femis),status='old',form='unformatted',&
@@ -428,34 +478,36 @@ program pamtra
 	  ground_albedo = 1 - emissivity
 	end if
 
-	if (verbose .gt. 0) print*, 'Surface emissivity calculated!'
+	if (verbose .gt. 1) print*, nx,ny, 'Surface emissivity calculated!'
 
     ! gaseous absorption
 	! 
 	! kextatmo   extinction by moist air [Np/m]
     !
-
     if (lgas_extinction) then
       call get_atmosg(press, temp, vapor_pressure, rho_vap, nlyr, freq, gas_mod, kextatmo)!,abscoef_o2,abscoef_h2o,abscoef_n2)
     else
       kextatmo = 0.0D0 ! for the whole column
     end if
 
-	if (verbose .gt. 0) print*, 'Gas absorption calculated'
+	if (verbose .gt. 1) print*, nx,ny, 'Gas absorption calculated'
 
     write(xstr, '(i3.3)') profiles(nx,ny)%isamp
     write(ystr, '(i3.3)') profiles(nx,ny)%jsamp
-    file_profile = '/dev/shm/Profilex'//xstr//'y'//ystr//'f'//frq_str
+
+    !shm is a ram disk, makes it running like hell! (I hope)
+    file_profile = tmp_path(:LEN(trim(tmp_path)))//'/Profilex'//xstr//'y'//ystr//'f'//frq_str
 
 	! hydrometeor extinction desired
 
-	if (lhyd_extinction) call hydrometeor_extinction(freq, n_lay_cut,xstr,ystr,frq_str,file_ph)
+
+	if (lhyd_extinction) call hydrometeor_extinction(freq,nlyr,xstr,ystr,frq_str,file_ph)
 
     !      Preparation of the PROFILE file  (needed by RT3)
     open(21, file = file_profile, form = 'FORMATTED', status =  &
          'unknown')
  
-    do nz = N_lay_cut, 1, - 1 !nlyr,1,-1
+    do nz = nlyr, 1, - 1 !nlyr,1,-1
        str1 = ''''
        ! position of the first blank space
        offset1 = index(FILE_PH(nz) , ' ')
@@ -469,8 +521,8 @@ program pamtra
         close(21)
 
 
-        file_profile2 = micro_str//'date'//date_str//'x'//xstr//    &
-             'y'//ystr//'f'//frq_str                                     
+!         file_profile2 = micro_str//'date'//date_str//'x'//xstr//    &
+!              'y'//ystr//'f'//frq_str                                     
 
 
 1110    format   (i3,1x,i3,1x,4(1x,f7.3))
@@ -480,12 +532,11 @@ program pamtra
 
         !&&&&&&&&   I/O FILE NAMES for the MC&&&&&&&&&&&&&&&&&&                 
 
-!        FILEOUT1 = '/work/mech/pamtra/output/RT3TB'//date_str//micro_str//'x'//xstr//'y'//&
-!             ystr//'f'//frq_str
-       FILEOUT1 = 'output/RT3TB'//date_str//micro_str//'x'//xstr//'y'//&
+
+       FILEOUT1 = "/"//date_str//micro_str//'x'//xstr//'y'//&
             ystr//'f'//frq_str
 
-        OUT_FILE = FILEOUT1
+        OUT_FILE = output_path(:LEN(trim(output_path)))//"/"//FILEOUT1
 
 
 ! find the output level
@@ -512,7 +563,7 @@ program pamtra
 
       wavelength = lam*1.e3    ! in microns
 
-      if (verbose .gt. 0) print*, "Entering rt3 ...."
+      if (verbose .gt. 1) print*, nx,ny, "Entering rt3 ...."
   
       call RT3(NSTOKES, NUMMU, AZIORDER, MU_VALUES, src_code,     &
 	    FILE_profile, out_file, QUAD_TYPE, deltam, DIRECT_FLUX,     &
@@ -521,13 +572,14 @@ program pamtra
 	    NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,&
 	    nx,ny,write_nc,verbose)
 
-      if (verbose .gt. 0) print*, "....rt3 finished"
+      if (verbose .gt. 1) print*, nx,ny, "....rt3 finished"
 
      end do grid_x
   end do grid_y
 
   if (write_nc) then
-    nc_out_file = trim(input_file(1:len_trim(input_file)-4))//'_'//frq_str//'_res.nc'
+    nc_out_file = output_path(:LEN(trim(output_path)))//"/"//trim(input_file(1:len_trim(input_file)-4))//'_'//frq_str//'_res.nc'
+    if (verbose .gt. 0) print*,"writing: ", nc_out_file
     call write_nc_results(nc_out_file)
   end if
 

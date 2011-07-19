@@ -1,16 +1,16 @@
-subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
+subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
 
   use kinds
   use vars_atmosphere
-  use nml_params, only: verbose
+  use nml_params, only: verbose, tmp_path
 
   implicit none
 
-  integer, parameter :: &
-    mxlyr = 60, &      ! max grid dimension in z
-    maxleg = 200
+  integer, parameter :: maxleg = 200
 
-  integer :: jj, nz, n_lay_cut
+  integer, intent(in) :: no_lyr
+
+  integer :: jj, nz
 
   integer :: nlegen, nlegencw, nlegenci, nlegenrr, nlegensn, nlegengr
 
@@ -28,7 +28,7 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
 
   real(kind=dbl), dimension(2) :: P11, ang
 
-  real(kind=dbl), dimension(mxlyr) :: &
+  real(kind=dbl), dimension(no_lyr) :: &
        g_coeff,    &
        kexttot,    &
        kextcloud,  &
@@ -48,17 +48,17 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
 
   character(6), intent(in) :: frq_str
 
-  character(68), intent(out) :: file_PH(mxlyr)
+  character(64), intent(out) :: file_PH(no_lyr)
 
   if (verbose .gt. 1) print*, 'Entering hydrometeor_extinction'
 
   threshold = 1.e-5   ! [kg/kg]
 
-  if (verbose .gt. 0) print*, 'start loop over layer'
+  if (verbose .gt. 1) print*, 'start loop over layer'
 
-  grid_z: do nz = 1, N_lay_cut  ! loop over all layers
+  grid_z: do nz = 1, no_lyr  ! loop over all layers
 
-      if (verbose .gt. 0) print*, 'Layer: ', nz
+      if (verbose .gt. 1) print*, 'Layer: ', nz
 
       write(nzstr, '(i2.2)') nz
 
@@ -198,7 +198,7 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
 
       nlegen = max(nlegen,nlegencw,nlegenci,nlegenrr,nlegensn,nlegengr)
 
-      if (verbose .gt. 0) print*, 'End of scattering calc for layer: ', nz
+      if (verbose .gt. 1) print*, 'End of scattering calc for layer: ', nz
 
       !CCCCCCCCCCCCC   END OF SINGLE SCATTERING PROPERTY COMPUTATIONS  CCCCCCC
 
@@ -236,7 +236,7 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
 	!    writing no file                                                                        
       else ! there are hydrometeor present : a PH file is needed
 
-		FILE_PH(nz) = '/dev/shm/PHx'//xstr//'y'//ystr//'lev'//Nzstr//'f'//frq_str
+		FILE_PH(nz) = tmp_path(:LEN(trim(tmp_path)))//'/PHx'//xstr//'y'//ystr//'lev'//Nzstr//'f'//frq_str
 
 		open(unit=21, file=file_PH(nz), STATUS='unknown', &
 	      form='FORMATTED')
