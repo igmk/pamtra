@@ -201,9 +201,6 @@ program pamtra
   character(len=64), allocatable, dimension(:) :: file_PH, file_PH2
 
 
-
-
-
   ! name list declarations
  
   namelist / verbose_mode / verbose
