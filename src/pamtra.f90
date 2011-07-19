@@ -1,5 +1,7 @@
 program pamtra
-!max comment
+
+!jkgkghkghkh
+
   use kinds
   use constants
   use nml_params
