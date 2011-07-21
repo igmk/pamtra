@@ -177,11 +177,22 @@ program pamtra
   character(len=64), allocatable, dimension(:) :: file_PH, file_PH2
 
 
+!!!!!!!!!
+
+!test Max
+
+  !real(kind=dbl) :: , refre, refim, absind, abscof
+!end test max
+
+!!!!!!!!!!!!!1
+
+
   ! name list declarations
  
   namelist / verbose_mode / verbose
   namelist / inoutput_mode / write_nc, input_path, output_path, tmp_path
   namelist / output / obs_height,units,outpol
+  namelist / run_mode / active, passive
   namelist / surface_params / ground_type,salinity, emissivity
   namelist / gas_abs_mod / lgas_extinction, gas_mod
   namelist / hyd_opts / lhyd_extinction, lphase_flag
@@ -211,8 +222,8 @@ end if
    frq_str = formatted_frqstr(frq_str)!repeat('0', 6-len_trim(adjustl(frq_str)))//adjustl(frq_str)
 
 
-! 
-!!!!!!!!!!!!!1
+
+
 
 
   ! read name list parameter file
@@ -221,6 +232,7 @@ end if
   read(7,nml=verbose_mode)
   read(7,nml=inoutput_mode)
   read(7,nml=output)
+  read(7,nml=run_mode)
   read(7,nml=surface_params)
   read(7,nml=gas_abs_mod)
   read(7,nml=hyd_opts)
@@ -255,6 +267,9 @@ end if
 
 
    if (verbose .gt. 0) print *,"opening: ",input_path(:len_trim(input_path))//"/"//input_file
+
+
+   if (verbose .gt. 0) print *,"PASSIVE: ", passive, "ACTIVE: ", active
 
   open(UNIT=14, FILE=input_path(:len_trim(input_path))//"/"//input_file, STATUS='OLD', form='formatted',iostat=istat)
 
@@ -303,6 +318,7 @@ end if
   tau = 0.0d0
   tau_hydro = 0.0d0 
   file_ph2(:) = ''
+
 
   call allocate_vars_atmosphere
 
@@ -482,7 +498,6 @@ end if
     write(xstr, '(i3.3)') profiles(nx,ny)%isamp
     write(ystr, '(i3.3)') profiles(nx,ny)%jsamp
 
-    !shm is a ram disk, makes it running like hell! (I hope)
     file_profile = tmp_path(:len_trim(tmp_path))//'/Profilex'//xstr//'y'//ystr//'f'//frq_str
 
 	! hydrometeor extinction desired

@@ -12,6 +12,10 @@ obs_height=833000.
 units='T'
 outpol='VH' 
 /
+&run_mode
+active=.true.
+passive=.true.
+/
 &surface_params
 ground_type='S'
 salinity=33.0
