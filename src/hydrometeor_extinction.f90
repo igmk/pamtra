@@ -2,7 +2,7 @@ subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
 
   use kinds
   use vars_atmosphere
-  use nml_params, only: verbose, tmp_path
+  use nml_params, only: verbose, tmp_path, active, passive
 
   implicit none
 
@@ -73,7 +73,7 @@ subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
       !strings with blank spaces            
       FILE_PH(nz) = ''
 
-!---------------------------------------------------------
+!---------------------------salinity------------------------------
 ! calculation of the single scattering properties
 ! of hydrometeors. cloud water and cloud ice are 
 ! with respect to radius. whereas the distribution 
@@ -214,6 +214,12 @@ subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
       kextsnow(nz) = max(0.0d0, kextsn)
       kextgraupel(nz) = max(0.0d0, kextgr)
       back(nz) = backcw + backrr + backci + backsn + backgr                                                     
+
+
+      if (active .eqv. .true.) then
+      !call ref_water(0.d0, -10, freq, refre, refim, absind, abscof)
+	print *," "
+      end if
 
       if (kexttot(nz) .lt. 0.) write(*,*) 'something wrong'
       if (kexttot(nz) .le. 0.) then 
