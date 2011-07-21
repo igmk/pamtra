@@ -31,10 +31,10 @@ subroutine land_emis (&
   !subroutine arguments:
   integer, intent(in) :: ise
 
-  real, intent(in) :: lon,lat
+  real(kind=sgl), intent(in) :: lon,lat
 
   !local constants:
-  real, parameter :: dlat=0.25
+  real(kind=sgl), parameter :: dlat=0.25
 
   !local variables:
   integer :: ilon,ilat,cellnum,i,ii,ilon3,ilat3
@@ -42,13 +42,13 @@ subroutine land_emis (&
 
   integer, dimension(4) :: cell
 
-  real :: alat,alon,alat3,alon3,alat4,alon4
-  real :: emiv,emih,theta,ff
-  real, intent(in) :: freq ! frequency in [GHz]
+  real(kind=sgl) :: alat,alon,alat3,alon3,alat4,alon4
+  real(kind=sgl) :: emiv,emih,theta,ff
+  real(kind=sgl), intent(in) :: freq ! frequency in [GHz]
 
-  real, dimension(4) :: a
-  real, dimension(7) :: emis
-  real, dimension(4,7) :: emis_p
+  real(kind=sgl), dimension(4) :: a
+  real(kind=sgl), dimension(7) :: emis
+  real(kind=sgl), dimension(4,7) :: emis_p
 
   real(kind=dbl), intent(out) :: emissivity
 

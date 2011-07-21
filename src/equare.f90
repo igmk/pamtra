@@ -5,7 +5,7 @@ subroutine equare
 
   implicit none
 
-  real, parameter :: dlat=0.25
+  real(kind=sgl), parameter :: dlat=0.25
 
   integer, parameter :: maxlat=180./dlat,maxlon=360./dlat
 
@@ -15,7 +15,7 @@ subroutine equare
        rlatb,rlate,xlate,htb,hte,htzone,dlongr,rcelat,azone,&
        rcellr,acell,asq
 
-  real, parameter :: rearth = 6371.2  
+  real(kind=sgl), parameter :: rearth = 6371.2
 
   pi = 4.0 * atan(1.0)
   rcelat = (dlat*pi)/180.
