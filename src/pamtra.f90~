@@ -280,26 +280,6 @@ end if
 
 
 
-
-
-
- call ref_water(0.d0, 20, freq, refre, refim, absind, abscof)
-
-print *,freq, refre, refim, absind, abscof, refre**2 + refim**2
-
-
-call dielec_water(0.d0, 20, freq, refim)
-
-print *, refim
-
-stop
-
-
-
-
-
-
-
    if (verbose .gt. 0) print *,"PASSIVE: ", passive, "ACTIVE: ", active
 
    if (verbose .gt. 0) print *,"opening: ",input_path(:LEN(trim(input_path)))//"/"//input_file

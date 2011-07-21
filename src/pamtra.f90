@@ -279,7 +279,6 @@ end if
 
 
 
-
    if (verbose .gt. 0) print *,"PASSIVE: ", passive, "ACTIVE: ", active
 
    if (verbose .gt. 0) print *,"opening: ",input_path(:LEN(trim(input_path)))//"/"//input_file
