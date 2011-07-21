@@ -10,7 +10,8 @@ module constants
  
   implicit none
 
-  real(kind=dbl), parameter :: pi      = 3.141592653589793
+  real(kind=dbl), parameter :: c = 299792458_dbl
+  real(kind=dbl), parameter :: pi = 3.141592653589793_dbl
 
   complex(kind=dbl), parameter :: im = (0.0, 1.0)
 

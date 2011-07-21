@@ -52,7 +52,7 @@ subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
 
   if (verbose .gt. 1) print*, 'Entering hydrometeor_extinction'
 
-  threshold = 1.e-5   ! [kg/kg]
+  threshold = 1.d-5   ! [kg/kg]
 
   if (verbose .gt. 1) print*, 'start loop over layer'
 

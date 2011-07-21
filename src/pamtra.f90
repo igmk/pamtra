@@ -1,6 +1,5 @@
 program pamtra
 
-
   use kinds
   use constants
   use nml_params
@@ -56,8 +55,7 @@ program pamtra
   real(kind=dbl) :: DIRECT_FLUX, DIRECT_MU
 
   real(kind=dbl) :: freq,   & ! frequency [GHz]
-             lam,    & ! wavelength [mm] 
-             gammln    
+	             gammln
 
   real(kind=dbl) :: E1, E2
 
@@ -81,7 +79,7 @@ program pamtra
 
   real(kind=dbl) :: SKY_TEMP         ! cosmic background
 
-  real(kind=dbl) :: WAVELENGTH
+  real(kind=dbl) :: wavelength       ! microns
 
   real(kind=dbl) :: salinity         ! sea surface salinity
 
@@ -124,7 +122,7 @@ program pamtra
 
   character :: Nzstr*2, xstr*3, ystr*3,&
        frq_str*6, theta_str*3, H_str*3,&
-       surf_type*10
+       surf_type*10,formatted_frqstr*6
 
   character(99) :: input_file
 
@@ -146,13 +144,7 @@ program pamtra
 
   real(kind=dbl) :: spec2abs
 
-
-
-
   real(kind=dbl), dimension(2) :: P11, ang
-
-
-
 
 !  integer, dimension(ngridx,ngridy) :: isamp, jsamp ! temporary for naming output
 
@@ -208,13 +200,6 @@ program pamtra
   namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau
   namelist / rain_params / SD_rain, N_0rainD
 
-!   !
-!   !     Get input/output file names from run file.
-!   !                                                                       
-!   read ( *, * ) input_file
-!   read ( *, * ) freq               ! frequency [Ghz]
-! 
-!!!!!!!!!!!!!!!!!!!
 
 inarg = iargc()
 
@@ -232,7 +217,9 @@ end if
    call getarg(1,input_file)
    call getarg(2,frq_str)
    read(frq_str,*) freq
-   frq_str = repeat('0', 6-len_trim(adjustl(frq_str)))//adjustl(frq_str)
+   ! that's just cosmetic
+
+   frq_str = formatted_frqstr(frq_str)!repeat('0', 6-len_trim(adjustl(frq_str)))//adjustl(frq_str)
 
 
 
@@ -254,7 +241,8 @@ end if
   read(7,nml=rain_params)
   close(7)
 
-  lam = 299.7925 / freq   ! mm
+  wavelength = c / (freq*1.d3)   ! microns
+
   !                                                                       
   !     read atmospheric profiles                 
   !  
@@ -278,13 +266,11 @@ end if
   ! Perform calculation through dispatch or not
 
 
+   if (verbose .gt. 0) print *,"opening: ",input_path(:len_trim(input_path))//"/"//input_file
 
    if (verbose .gt. 0) print *,"PASSIVE: ", passive, "ACTIVE: ", active
 
-   if (verbose .gt. 0) print *,"opening: ",input_path(:LEN(trim(input_path)))//"/"//input_file
-
-  open(UNIT=14, FILE=input_path(:LEN(trim(input_path)))//"/"//input_file, STATUS='OLD', form='formatted',iostat=istat)
-
+  open(UNIT=14, FILE=input_path(:len_trim(input_path))//"/"//input_file, STATUS='OLD', form='formatted',iostat=istat)
 
   read(14,*,iostat=istat) year, month, day, time, ngridx, ngridy, nlyr, deltax, deltay
   if (istat .ne. 0) call error_msg(input_file,0,0)
@@ -324,7 +310,8 @@ end if
   DIRECT_FLUX = 0.d0 
   DIRECT_MU = 0.0d0 
   maxleg = 200 
-  SKY_TEMP = 2.7 
+  SKY_TEMP = 2.73d0
+
   ! initialize values
 
   tau = 0.0d0
@@ -481,16 +468,16 @@ end if
 	  ! land_emis could give polarized reflectivities
       call land_emis(ise,lon,lat,real(freq),emissivity)
 	  close(ise)
-	  ground_albedo = 1. - emissivity
+	  ground_albedo = 1.d0 - emissivity
 	else if (lfrac .ge. 0.0 .and. lfrac .lt. 0.5) then
       ! computing the refractive index of the sea (Fresnel) surface
 	  ground_type = 'O'
-	  ground_albedo = 1.0
-	  epsi = eps_water(salinity, ground_temp - 273.15, freq)
+	  ground_albedo = 1.0d0
+	  epsi = eps_water(salinity, ground_temp - 273.15d0, freq)
 	  ground_index = dconjg(sqrt(epsi))
 	else
 	! this is for ground_type specified in run_params.nml
-	  ground_albedo = 1 - emissivity
+	  ground_albedo = 1.d0 - emissivity
 	end if
 
 	if (verbose .gt. 1) print*, nx,ny, 'Surface emissivity calculated!'
@@ -510,7 +497,7 @@ end if
     write(xstr, '(i3.3)') profiles(nx,ny)%isamp
     write(ystr, '(i3.3)') profiles(nx,ny)%jsamp
 
-    file_profile = tmp_path(:LEN(trim(tmp_path)))//'/Profilex'//xstr//'y'//ystr//'f'//frq_str
+    file_profile = tmp_path(:len_trim(tmp_path))//'/Profilex'//xstr//'y'//ystr//'f'//frq_str
 
 	! hydrometeor extinction desired
 
@@ -519,7 +506,7 @@ end if
 
     !      Preparation of the PROFILE file  (needed by RT3)
     open(21, file = file_profile, form = 'FORMATTED', status =  &
-         'unknown')
+         'unknown',iostat=istat)
  
     do nz = nlyr, 1, - 1 !nlyr,1,-1
        str1 = ''''

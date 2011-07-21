@@ -1,4 +1,5 @@
 &verbose_mode
+<<<<<<< HEAD
 verbose=1
 /
 &inoutput_mode
@@ -11,11 +12,26 @@ tmp_path='/dev/shm/'
 !input_path='/home/mmaahn/projects/pamtra/profiles/'
 !output_path='/home/mmaahn/projects/pamtra/output/'
 
+=======
+verbose=0
+/
+&inoutput_mode
+write_nc=.false.
+input_path='profiles'
+output_path='output'
+!input_path='/home/mech/models/pamtra/profiles'
+!output_path='/work/mech/pamtra/output'
+!input_path='/net/roumet/mech/pamtra/profiles'
+!output_path='/net/roumet/mech/pamtra/output'
+tmp_path='/tmp'
+/
+>>>>>>> c941183dcbfdd53738762fdc5028b469fac7759e
 &output
 obs_height=833000.
 units='T'
 outpol='VH' 
 /
+<<<<<<< HEAD
 &run_mode
 active=.true.
 passive=.true.
@@ -24,6 +40,12 @@ passive=.true.
 ground_type='S'
 salinity=33.0
 emissivity=0.6
+=======
+&surface_params
+ground_type='L'
+salinity=33.0
+emissivity=1.0
+>>>>>>> c941183dcbfdd53738762fdc5028b469fac7759e
 /
 &gas_abs_mod
 lgas_extinction=.true.
@@ -36,13 +58,21 @@ lphase_flag = .true.
 &snow_params
 SD_snow='Exp' 
 N_0snowDsnow=7.628 
+<<<<<<< HEAD
 EM_snow='surus' 
+=======
+EM_snow='icesf' 
+>>>>>>> c941183dcbfdd53738762fdc5028b469fac7759e
 SP=0.2 
 /
 &graupel_params
 SD_grau='Exp' 
 N_0grauDgrau=4.0 
+<<<<<<< HEAD
 EM_grau='surus'
+=======
+EM_grau='icesf'
+>>>>>>> c941183dcbfdd53738762fdc5028b469fac7759e
 /
 &rain_params
 SD_rain='Exp' 
