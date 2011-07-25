@@ -551,16 +551,20 @@ end if
 
       OUTLEVELS(2) = nlyr+1    ! this is the bottom
 
-      if (verbose .gt. 1) print*, nx,ny, "Entering rt3 ...."
-  
-      call RT3(NSTOKES, NUMMU, AZIORDER, MU_VALUES, src_code,     &
-	    FILE_profile, out_file_pas, QUAD_TYPE, deltam, DIRECT_FLUX,     &
-	    DIRECT_MU, GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO,         &
-	    GROUND_INDEX, SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,          &
-	    NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,&
-	    nx,ny,write_nc,verbose)
+	if (passive .eqv. .true.) then
 
-      if (verbose .gt. 1) print*, nx,ny, "....rt3 finished"
+	if (verbose .gt. 1) print*, nx,ny, "Entering rt3 ...."
+	
+	call RT3(NSTOKES, NUMMU, AZIORDER, MU_VALUES, src_code,     &
+		FILE_profile, out_file_pas, QUAD_TYPE, deltam, DIRECT_FLUX,     &
+		DIRECT_MU, GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO,         &
+		GROUND_INDEX, SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,          &
+		NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,&
+		nx,ny,write_nc,verbose)
+
+	if (verbose .gt. 1) print*, nx,ny, "....rt3 finished"
+
+	end if
 
      end do grid_x
   end do grid_y

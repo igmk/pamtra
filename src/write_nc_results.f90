@@ -42,10 +42,12 @@ subroutine write_nc_results(nc_file)
   !make dimensions
   call check(nf90_def_dim(ncid, 'nlon', ngridx, dlonID))
   call check(nf90_def_dim(ncid, 'nlat', ngridy, dlatID))
-  call check(nf90_def_dim(ncid, 'nang', nang, dangID))
   call check(nf90_def_dim(ncid, 'nfre', nfre, dfreID))
+if (passive) then
+  call check(nf90_def_dim(ncid, 'nang', nang, dangID))
   call check(nf90_def_dim(ncid, 'nout', nout, doutID))
   call check(nf90_def_dim(ncid, 'nstokes', nstokes, dstokesID))
+end if
 if (active) then
   call check(nf90_def_dim(ncid, 'nlyr', nlyr, dlayerID))
 end if
@@ -86,7 +88,7 @@ end if
   call check(nf90_put_att(ncid, wind10vVarID, "units", "m/s"))
   call check(nf90_put_att(ncid, wind10vVarID, "missing_value", -9999))
 
-
+if (passive) then
   call check(nf90_def_var(ncid,'iwv', nf90_float,dim2d, iwvVarID))
   call check(nf90_put_att(ncid, iwvVarID, "units", "kg/m^2"))
   call check(nf90_put_att(ncid, iwvVarID, "missing_value", -9999))
@@ -110,7 +112,7 @@ end if
   call check(nf90_def_var(ncid,'gwp', nf90_float,dim2d, gwpVarID))
   call check(nf90_put_att(ncid, gwpVarID, "units", "kg/m^2"))
   call check(nf90_put_att(ncid, gwpVarID, "missing_value", -9999))
-
+end if
 
 if (active) then
   dim3d = (/dlayerID,dlatID,dlonID/)
@@ -141,7 +143,7 @@ if (active) then
 end if
 
 
-
+if (passive) then
   dim4d = (/dstokesID,doutID,dlatID,dlonID/)
   call check(nf90_def_var(ncid,'flux_up', nf90_double,dim4d, flux_upVarID))
   call check(nf90_put_att(ncid, flux_upVarID, "units", "J s^−1 m^−2 sr^−1 m^−1 (?)"))
@@ -155,6 +157,7 @@ end if
   call check(nf90_def_var(ncid,'tb', nf90_double,dim5d, tbVarID))
   call check(nf90_put_att(ncid, tbVarID, "units", "K"))
   call check(nf90_put_att(ncid, tbVarID, "missing_value", -9999))
+end if
 
   call check(nf90_enddef(ncid))
 !  call check(nf90_inq_varid(ncid, 'longitude', VarId))
@@ -168,6 +171,7 @@ end if
   call check(nf90_put_var(ncid, t_gVarID, t_g))
   call check(nf90_put_var(ncid, wind10uVarID, w10u))
   call check(nf90_put_var(ncid, wind10vVarID, w10v))
+if (passive) then
   call check(nf90_put_var(ncid, iwvVarID, iwvs))
   call check(nf90_put_var(ncid, cwpVarID, cwps))
   call check(nf90_put_var(ncid, iwpVarID, iwps))
@@ -177,6 +181,7 @@ end if
   call check(nf90_put_var(ncid, flux_upVarID, flux_up))
   call check(nf90_put_var(ncid, flux_downVarID, flux_down))
   call check(nf90_put_var(ncid, tbVarID, tb))
+end if
 
 if (active) then                             !reshapeing needed due to Fortran's crazy Netcdf handling...
   call check(nf90_put_var(ncid, heightVarID, RESHAPE( hgt, (/ nlyr, ngridy, ngridx/), ORDER = (/3,2,1/))))
