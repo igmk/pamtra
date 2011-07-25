@@ -3,6 +3,7 @@ subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
   use kinds
   use vars_atmosphere
   use nml_params, only: verbose, tmp_path, active, passive
+  use constants
 
   implicit none
 
@@ -14,11 +15,11 @@ subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
 
   integer :: nlegen, nlegencw, nlegenci, nlegenrr, nlegensn, nlegengr
 
-  real(kind=dbl) :: f
+  real(kind=dbl) :: f, wavelength
 
   real(kind=dbl) :: kextcw, salbcw, kextrr, salbrr,  &
        kextci, salbci, kextsn, salbsn, kextgr, salbgr,   &
-       backcw, backrr, backci, backsn, backgr                   
+       backcw, backrr, backci, backsn, backgr         
 
   real(kind=dbl), dimension(200) :: LEGEN, LEGEN2, LEGEN3, LEGEN4,&
        LEGENcw, LEGENrr, LEGENci, LEGENgr, LEGENsn,       &
@@ -30,15 +31,20 @@ subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
 
   real(kind=dbl), dimension(no_lyr) :: &
        g_coeff,    &
-       kexttot,    &
        kextcloud,  &
        kextrain,   &
        kextice,    &
        kextgraupel,&
        kextsnow,   &
        salbtot,    &
-       absorp,     & ! might be unnecessary
-       back        
+       absorp   ! might be unnecessary
+
+
+
+
+! real(kind=dbl), dimension(no_lyr), intent(out) :: &
+! !        back,         &
+!        kexttot
 
   real(kind=dbl) :: threshold ! threshold value for hydrometeor extinction as mass mixing ratio
 
@@ -49,6 +55,7 @@ subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
   character(6), intent(in) :: frq_str
 
   character(64), intent(out) :: file_PH(no_lyr)
+
 
   if (verbose .gt. 1) print*, 'Entering hydrometeor_extinction'
 
@@ -215,12 +222,7 @@ subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
       kextgraupel(nz) = max(0.0d0, kextgr)
       back(nz) = backcw + backrr + backci + backsn + backgr                                                     
 
-
-      if (active .eqv. .true.) then
-      !call ref_water(0.d0, -10, freq, refre, refim, absind, abscof)
-	print *," "
-      end if
-
+  
       if (kexttot(nz) .lt. 0.) write(*,*) 'something wrong'
       if (kexttot(nz) .le. 0.) then 
 		salbtot(nz) = 0.0

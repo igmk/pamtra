@@ -94,5 +94,9 @@ integer :: i,j
 !      end do
 !   end do
 
+      allocate(back(nlyr))
+      allocate(kexttot(nlyr))
+      allocate(kextatmo(nlyr))
+
 
 end subroutine allocate_vars_atmosphere

@@ -114,7 +114,7 @@ program pamtra
   character :: QUAD_TYPE*1, UNITS*1, OUTPOL*2, GROUND_TYPE*1,  &
        rLWC_str*4                                                      
 
-  character(300) :: OUT_FILE, tmp_file1, nc_out_file, namelist_file
+  character(300) :: OUT_FILE_PAS, OUT_FILE_ACT, tmp_file1, nc_out_file, namelist_file
 
   character(78) :: file_profile
 
@@ -129,8 +129,6 @@ program pamtra
   character :: micro_str*31, SP_str*3, str1*1,  &
        DELTAM*1, file_profile2*78, &
         N0snowstr*3, N0graustr*3, N0rainstr*3
-
-  character(100) :: FILEOUT1
 
   character(80) :: femis ! filename for the emissivity databases
 
@@ -151,37 +149,36 @@ program pamtra
   integer, allocatable, dimension(:,:) :: ics
   real(kind=dbl), dimension(:,:), allocatable :: tskin ! surface temperature
 
-  real(kind=dbl), allocatable, dimension(:) :: KEXTATMO   ! atmospheric extinction due to gases
+!   real(kind=dbl), allocatable, dimension(:) :: KEXTATMO!, &   ! atmospheric extinction due to gases
+! 					       kexttot!, & ! extinnction die to hydrometeors
+					      ! back !backscattering of hydrometeors
 !  real(kind=dbl), dimension(nlyr) :: abscoef_o2,abscoef_h2o,abscoef_n2
 
+! 
+!   real(kind=dbl), allocatable, dimension(:,:,:) :: &
+!        g_coeff,    &
+!        kexttot,    &
+!        kextcloud,  &
+!        kextrain,   &
+!        kextice,    &
+!        kextgraupel,&
+!        kextsnow,   &
+!        salbtot,    &
+!        absorp,     & ! might be unnecessary
+!        asymtot
 
-  real(kind=dbl), allocatable, dimension(:,:,:) :: &
-       g_coeff,    &
-       kexttot,    &
-       kextcloud,  &
-       kextrain,   &
-       kextice,    &
-       kextgraupel,&
-       kextsnow,   &
-       salbtot,    &
-       absorp,     & ! might be unnecessary
-       asymtot,    &
-       back        
+ 
+!   real(kind=dbl), allocatable, dimension(:,:) :: &
+!        tau,       &
+!        tau_hydro
 
-  real(kind=dbl), allocatable, dimension(:,:) :: &
-       tau,       &
-       tau_hydro
-
-  real(kind=dbl), allocatable, dimension(:) :: H_levs
+! !   real(kind=dbl), allocatable, dimension(:) :: H_levs  not neededF
 
   character(len=64), allocatable, dimension(:) :: file_PH, file_PH2
 
 
 !!!!!!!!!
-
-!test Max
-
-  !real(kind=dbl) :: , refre, refim, absind, abscof
+  
 !end test max
 
 !!!!!!!!!!!!!1
@@ -265,10 +262,10 @@ end if
 
   ! Perform calculation through dispatch or not
 
+   if (verbose .gt. 1) print *,"PASSIVE: ", passive, "ACTIVE: ", active
 
    if (verbose .gt. 0) print *,"opening: ",input_path(:len_trim(input_path))//"/"//input_file
 
-   if (verbose .gt. 0) print *,"PASSIVE: ", passive, "ACTIVE: ", active
 
   open(UNIT=14, FILE=input_path(:len_trim(input_path))//"/"//input_file, STATUS='OLD', form='formatted',iostat=istat)
 
@@ -277,29 +274,36 @@ end if
 
 	! now allocate variables
 
-	allocate(g_coeff(ngridx, ngridy,nlyr))
-	allocate(kexttot(ngridx, ngridy,nlyr))
-	allocate(kextcloud(ngridx, ngridy,nlyr))
-	allocate(kextrain(ngridx, ngridy,nlyr))
-	allocate(kextice(ngridx, ngridy,nlyr))
-	allocate(kextgraupel(ngridx, ngridy,nlyr))
-	allocate(kextsnow(ngridx, ngridy,nlyr))
-	allocate(salbtot(ngridx, ngridy,nlyr))
-	allocate(absorp(ngridx, ngridy,nlyr))
-	allocate(asymtot(ngridx, ngridy,nlyr))
-	allocate(back(ngridx, ngridy,nlyr))
+! 	allocate(g_coeff(ngridx, ngridy,nlyr))
+! 	allocate(kexttot(ngridx, ngridy,nlyr))
+! 	allocate(kextcloud(ngridx, ngridy,nlyr))
+! 	allocate(kextrain(ngridx, ngridy,nlyr))
+! 	allocate(kextice(ngridx, ngridy,nlyr))
+! 	allocate(kextgraupel(ngridx, ngridy,nlyr))
+! 	allocate(kextsnow(ngridx, ngridy,nlyr))
+! 	allocate(salbtot(ngridx, ngridy,nlyr))
+! 	allocate(absorp(ngridx, ngridy,nlyr))
+! 	allocate(asymtot(ngridx, ngridy,nlyr))
+! 
+	allocate(Ze(ngridx, ngridy,nlyr))
+	allocate(PIA_hydro(ngridx,ngridy,nlyr))
+	allocate(PIA_atmo(ngridx,ngridy,nlyr))
+	allocate(hgt(ngridx, ngridy,nlyr))
+! 	allocate(back(nlyr))
+! 	allocate(kexttot(nlyr))
+
 
 	allocate(ics(ngridx, ngridy))
 	allocate(tskin(ngridx, ngridy))
 
-	allocate(tau(ngridx, ngridy))
-	allocate(tau_hydro(ngridx, ngridy))
+! 	allocate(tau(ngridx, ngridy))
+! 	allocate(tau_hydro(ngridx, ngridy))
 
 
-	allocate(H_levs(nlyr+1))
+! 	allocate(H_levs(nlyr+1)) not needed
 	allocate(file_PH(nlyr))
 	allocate(file_PH2(nlyr))
-	allocate(KEXTATMO(nlyr))
+! 	allocate(KEXTATMO(nlyr))
 
   !    some inputs variable                                               
   QUAD_TYPE = 'L'                                             
@@ -314,8 +318,8 @@ end if
 
   ! initialize values
 
-  tau = 0.0d0
-  tau_hydro = 0.0d0 
+!   tau = 0.0d0
+!   tau_hydro = 0.0d0 
   file_ph2(:) = ''
 
 
@@ -367,6 +371,8 @@ end if
 
   close(14)
 
+
+
   if (verbose .gt. 0) print*, 'profile reading done!'
 
   if (write_nc) then
@@ -414,7 +420,7 @@ end if
        N0graustr//EM_grau//SD_rain//N0rainstr                            
 
 	
-  alpha = 0.0d0 
+  alpha = 0.0d0
 
   gamma = 1.0d0 ! always exponential SD
 
@@ -487,7 +493,8 @@ end if
 	! kextatmo   extinction by moist air [Np/m]
     !
     if (lgas_extinction) then
-      call get_atmosg(press, temp, vapor_pressure, rho_vap, nlyr, freq, gas_mod, kextatmo)!,abscoef_o2,abscoef_h2o,abscoef_n2)
+      !returns kextatmo!
+      call get_atmosg(freq)!,abscoef_o2,abscoef_h2o,abscoef_n2)
     else
       kextatmo = 0.0D0 ! for the whole column
     end if
@@ -533,12 +540,17 @@ end if
 
         !&&&&&&&&   I/O FILE NAMES for the MC&&&&&&&&&&&&&&&&&&                 
 
+        OUT_FILE_PAS = output_path(:LEN(trim(output_path)))//"/"//&
+           date_str//micro_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_passive"
 
-       FILEOUT1 = "/"//date_str//micro_str//'x'//xstr//'y'//&
-            ystr//'f'//frq_str
+        OUT_FILE_ACT = output_path(:LEN(trim(output_path)))//"/"//&
+           date_str//micro_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_active"
 
-        OUT_FILE = output_path(:LEN(trim(output_path)))//"/"//FILEOUT1
 
+	if (active .eqv. .true.) then
+		call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),Ze(nx,ny,:),PIA_atmo(nx,ny,:),PIA_hydro(nx,ny,:))
+				  
+	end if
 
 ! find the output level
 ! in rt3 layers are reversed
@@ -565,7 +577,7 @@ end if
       if (verbose .gt. 1) print*, nx,ny, "Entering rt3 ...."
   
       call RT3(NSTOKES, NUMMU, AZIORDER, MU_VALUES, src_code,     &
-	    FILE_profile, out_file, QUAD_TYPE, deltam, DIRECT_FLUX,     &
+	    FILE_profile, out_file_pas, QUAD_TYPE, deltam, DIRECT_FLUX,     &
 	    DIRECT_MU, GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO,         &
 	    GROUND_INDEX, SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,          &
 	    NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,&
@@ -576,8 +588,9 @@ end if
      end do grid_x
   end do grid_y
 
+
   if (write_nc) then
-    nc_out_file = output_path(:LEN(trim(output_path)))//"/"//trim(input_file(1:len_trim(input_file)-4))//'_'//frq_str//'_res.nc'
+    nc_out_file = output_path(1:len_trim(output_path))//"/"//trim(input_file(1:len_trim(input_file)-4))//'_'//frq_str//'_res.nc'
     if (verbose .gt. 0) print*,"writing: ", nc_out_file
     call write_nc_results(nc_out_file)
   end if
