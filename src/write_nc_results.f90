@@ -11,7 +11,8 @@ subroutine write_nc_results(nc_file)
   integer :: dlonID, dlatID, dangID, dfreID, doutID, dstokesID, dlayerID
   integer :: isVarID, jsVarID, lonVarID, latVarID, lfracVarID, t_gVarID, wind10uVarID, wind10vVarID, iwvVarID, cwpVarID,&
 	     iwpVarID, rwpVarID, swpVarID, gwpVarID, flux_upVarID, flux_downVarID, &
-	     tbVarID, heightVarID, ZeVarID, PiaAtmoVarID, PiaHydroVarID
+	     tbVarID, heightVarID, ZeVarID, PiaAtmoBUVarID, PiaHydroBUVarID, &
+	     PiaAtmoTDVarID, PiaHydroTDVarID
   
 
   integer :: nang = 32, nfre = 1, nout = 2, nstokes = 2
@@ -121,23 +122,33 @@ if (active) then
   call check(nf90_put_att(ncid, ZeVarID, "units", "dBz"))
   call check(nf90_put_att(ncid, ZeVarID, "missing_value", -9999))
 
-  call check(nf90_def_var(ncid,'PIA Hydrometeors', nf90_float,dim3d, PiaHydroVarID))
-  call check(nf90_put_att(ncid, PiaHydroVarID, "units", "dB"))
-  call check(nf90_put_att(ncid, PiaHydroVarID, "missing_value", -9999))
+  call check(nf90_def_var(ncid,'PIA_Hydrometeors_bottomUp', nf90_float,dim3d, PiaHydroBUVarID))
+  call check(nf90_put_att(ncid, PiaHydroBUVarID, "units", "dB"))
+  call check(nf90_put_att(ncid, PiaHydroBUVarID, "missing_value", -9999))
 
-  call check(nf90_def_var(ncid,'PIA Atmosphere', nf90_float,dim3d, PiaAtmoVarID))
-  call check(nf90_put_att(ncid, PiaAtmoVarID, "units", "dB"))
-  call check(nf90_put_att(ncid, PiaAtmoVarID, "missing_value", -9999))
+  call check(nf90_def_var(ncid,'PIA_Atmosphere_bottomUp', nf90_float,dim3d, PiaAtmoBUVarID))
+  call check(nf90_put_att(ncid, PiaAtmoBUVarID, "units", "dB"))
+  call check(nf90_put_att(ncid, PiaAtmoBUVarID, "missing_value", -9999))
+
+  call check(nf90_def_var(ncid,'PIA_Hydrometeors_topDown', nf90_float,dim3d, PiaHydroTDVarID))
+  call check(nf90_put_att(ncid, PiaHydroTDVarID, "units", "dB"))
+  call check(nf90_put_att(ncid, PiaHydroTDVarID, "missing_value", -9999))
+
+  call check(nf90_def_var(ncid,'PIA_Atmosphere_topDown', nf90_float,dim3d, PiaAtmoTDVarID))
+  call check(nf90_put_att(ncid, PiaAtmoTDVarID, "units", "dB"))
+  call check(nf90_put_att(ncid, PiaAtmoTDVarID, "missing_value", -9999))
 
 end if
 
+
+
   dim4d = (/dstokesID,doutID,dlatID,dlonID/)
   call check(nf90_def_var(ncid,'flux_up', nf90_double,dim4d, flux_upVarID))
-  call check(nf90_put_att(ncid, flux_upVarID, "units", "J s^−1 m^−2 sr^−1 m^−1"))
+  call check(nf90_put_att(ncid, flux_upVarID, "units", "J s^−1 m^−2 sr^−1 m^−1 (?)"))
   call check(nf90_put_att(ncid, flux_upVarID, "missing_value", -9999))
 
   call check(nf90_def_var(ncid,'flux_down', nf90_double,dim4d, flux_downVarID))
-  call check(nf90_put_att(ncid, flux_downVarID, "units", "J s^−1 m^−2 sr^−1 m^−1"))
+  call check(nf90_put_att(ncid, flux_downVarID, "units", "J s^−1 m^−2 sr^−1 m^−1 (?)"))
   call check(nf90_put_att(ncid, flux_downVarID, "missing_value", -9999))
 
   dim5d = (/dstokesID,dangID,doutID,dlatID,dlonID/)
@@ -170,13 +181,16 @@ end if
 if (active) then                             !reshapeing needed due to Fortran's crazy Netcdf handling...
   call check(nf90_put_var(ncid, heightVarID, RESHAPE( hgt, (/ nlyr, ngridy, ngridx/), ORDER = (/3,2,1/))))
   call check(nf90_put_var(ncid, ZeVarID, RESHAPE( Ze, (/ nlyr, ngridy, ngridx/), ORDER = (/3,2,1/))))
-  call check(nf90_put_var(ncid, PiaHydroVarID, RESHAPE( PIA_hydro, (/ nlyr, ngridy, ngridx/), ORDER = (/3,2,1/))))
-  call check(nf90_put_var(ncid, PiaAtmoVarID, RESHAPE( PIA_atmo, (/ nlyr, ngridy, ngridx/), ORDER = (/3,2,1/))))
+  call check(nf90_put_var(ncid, PiaHydroBUVarID, RESHAPE( PIA_hydro_bottomup, (/ nlyr, ngridy, ngridx/), ORDER = (/3,2,1/))))
+  call check(nf90_put_var(ncid, PiaAtmoBUVarID, RESHAPE( PIA_atmo_bottomup, (/ nlyr, ngridy, ngridx/), ORDER = (/3,2,1/))))
+  call check(nf90_put_var(ncid, PiaHydroTDVarID, RESHAPE( PIA_hydro_topdown, (/ nlyr, ngridy, ngridx/), ORDER = (/3,2,1/))))
+  call check(nf90_put_var(ncid, PiaAtmoTDVarID, RESHAPE( PIA_atmo_topdown, (/ nlyr, ngridy, ngridx/), ORDER = (/3,2,1/))))
 end if
 
   call check(nf90_close(ncid))
 
-  deallocate(lons,lats,lfracs,t_g,w10u,w10v,iwvs,cwps,iwps,rwps,swps,gwps,flux_up,flux_down,tb,hgt,Ze,PIA_atmo, PIA_hydro)
+  deallocate(lons,lats,lfracs,t_g,w10u,w10v,iwvs,cwps,iwps,rwps,swps,gwps,flux_up,flux_down,tb,hgt,Ze,PIA_atmo_bottomup,&
+		PIA_hydro_bottomup, PIA_atmo_topdown, PIA_hydro_topdown)
 
   return
 

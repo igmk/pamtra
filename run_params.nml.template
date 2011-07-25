@@ -11,6 +11,7 @@ tmp_path='/dev/shm/'
 obs_height=833000.
 units='T'
 outpol='VH' 
+creator='Name (mail@domain.com)'
 /
 &run_mode
 active=.true.

@@ -166,14 +166,7 @@ program pamtra
   character(len=64), allocatable, dimension(:) :: file_PH, file_PH2
 
 
-!!!!!!!!!
-  
-!end test max
-
-!!!!!!!!!!!!!1
-
-
-  ! name list declarations
+ ! name list declarations
  
   namelist / verbose_mode / verbose
   namelist / inoutput_mode / write_nc, input_path, output_path, tmp_path
@@ -269,8 +262,10 @@ end if
 ! 	allocate(asymtot(ngridx, ngridy,nlyr))
 ! 
 	allocate(Ze(ngridx, ngridy,nlyr))
-	allocate(PIA_hydro(ngridx,ngridy,nlyr))
-	allocate(PIA_atmo(ngridx,ngridy,nlyr))
+	allocate(PIA_hydro_bottomup(ngridx,ngridy,nlyr))
+	allocate(PIA_atmo_bottomup(ngridx,ngridy,nlyr))
+	allocate(PIA_hydro_topdown(ngridx,ngridy,nlyr))
+	allocate(PIA_atmo_topdown(ngridx,ngridy,nlyr))
 	allocate(hgt(ngridx, ngridy,nlyr))
 ! 	allocate(back(nlyr))
 ! 	allocate(kexttot(nlyr))
@@ -529,7 +524,8 @@ end if
 
 
 	if (active .eqv. .true.) then
-		call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),Ze(nx,ny,:),PIA_atmo(nx,ny,:),PIA_hydro(nx,ny,:))
+		call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),Ze(nx,ny,:),PIA_atmo_bottomup(nx,ny,:),PIA_hydro_bottomup(nx,ny,:),&
+			PIA_atmo_topdown(nx,ny,:),PIA_hydro_topdown(nx,ny,:))
 				  
 	end if
 
