@@ -3,7 +3,7 @@ module profile_type
 use kinds
 
 implicit none
-
+integer :: ngridx, ngridy
 type profile
   integer :: nlyr
   integer :: isamp
@@ -39,16 +39,6 @@ type profile
   real(kind=dbl), pointer :: vapor_pressure(:)
   real(kind=dbl), pointer :: rho_vap(:)
   real(kind=dbl), pointer :: q_hum(:)
-
-  real(kind=dbl), pointer :: kextatmo(:)
-  real(kind=dbl), pointer :: kexttot(:)
-  real(kind=dbl), pointer :: salbtot(:)
-  real(kind=dbl), pointer :: g_coeff(:)
-  real(kind=dbl), pointer :: back(:)
-  real(kind=dbl), pointer :: legen(:,:)
-  real(kind=dbl), pointer :: legen2(:,:)
-  real(kind=dbl), pointer :: legen3(:,:)
-  real(kind=dbl), pointer :: legen4(:,:)
 end type profile
 
 end module profile_type

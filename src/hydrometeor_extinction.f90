@@ -1,4 +1,4 @@
-subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
+subroutine hydrometeor_extinction(f,xstr,ystr,frq_str,file_ph)
 
   use kinds
   use vars_atmosphere
@@ -8,11 +8,9 @@ subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
 
   integer, parameter :: maxleg = 200
 
-  integer, intent(in) :: no_lyr
-
   integer :: jj, nz
 
-  integer :: nlegen, nlegencw, nlegenci, nlegenrr, nlegensn, nlegengr
+  integer :: nlegencw, nlegenci, nlegenrr, nlegensn, nlegengr
 
   real(kind=dbl) :: f
 
@@ -20,25 +18,20 @@ subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
        kextci, salbci, kextsn, salbsn, kextgr, salbgr,   &
        backcw, backrr, backci, backsn, backgr                   
 
-  real(kind=dbl), dimension(200) :: LEGEN, LEGEN2, LEGEN3, LEGEN4,&
-       LEGENcw, LEGENrr, LEGENci, LEGENgr, LEGENsn,       &
+  real(kind=dbl), dimension(maxleg) :: LEGENcw, LEGENrr, LEGENci, LEGENgr, LEGENsn,       &
        LEGEN2cw, LEGEN2rr, LEGEN2ci, LEGEN2gr, LEGEN2sn,  &
        LEGEN3cw, LEGEN3rr, LEGEN3ci, LEGEN3gr, LEGEN3sn,  &
        LEGEN4cw, LEGEN4rr, LEGEN4ci, LEGEN4gr, LEGEN4sn
 
   real(kind=dbl), dimension(2) :: P11, ang
 
-  real(kind=dbl), dimension(no_lyr) :: &
-       g_coeff,    &
-       kexttot,    &
+  real(kind=dbl), dimension(nlyr) :: &
        kextcloud,  &
        kextrain,   &
        kextice,    &
        kextgraupel,&
        kextsnow,   &
-       salbtot,    &
-       absorp,     & ! might be unnecessary
-       back        
+       absorp ! might be unnecessary
 
   real(kind=dbl) :: threshold ! threshold value for hydrometeor extinction as mass mixing ratio
 
@@ -48,7 +41,7 @@ subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
 
   character(6), intent(in) :: frq_str
 
-  character(64), intent(out) :: file_PH(no_lyr)
+  character(64), intent(out) :: file_PH(nlyr)
 
   if (verbose .gt. 1) print*, 'Entering hydrometeor_extinction'
 
@@ -56,7 +49,7 @@ subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
 
   if (verbose .gt. 1) print*, 'start loop over layer'
 
-  grid_z: do nz = 1, no_lyr  ! loop over all layers
+  grid_z: do nz = 1, nlyr  ! loop over all layers
 
       if (verbose .gt. 1) print*, 'Layer: ', nz
 
@@ -64,7 +57,7 @@ subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
 
       ! INITIALIZATION OF LEGENDRE COEFFICIENTS  
 
-      nlegen = 0 
+      nlegen(nz) = 0
       legen   = 0.d0
       legen2  = 0.d0
       legen3  = 0.d0
@@ -196,7 +189,7 @@ subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
 		backgr = 0.0d0
       endif
 
-      nlegen = max(nlegen,nlegencw,nlegenci,nlegenrr,nlegensn,nlegengr)
+      nlegen(nz) = max(nlegen(nz),nlegencw,nlegenci,nlegenrr,nlegensn,nlegengr)
 
       if (verbose .gt. 1) print*, 'End of scattering calc for layer: ', nz
 
@@ -208,11 +201,6 @@ subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
       !                                                                       
 
       kexttot(nz) = kextcw + kextrr + kextci + kextsn + kextgr
-      kextcloud(nz) = max(0.0d0, kextcw)
-      kextrain(nz) = max(0.0d0, kextrr)
-      kextice(nz) = max(0.0d0, kextci)
-      kextsnow(nz) = max(0.0d0, kextsn)
-      kextgraupel(nz) = max(0.0d0, kextgr)
       back(nz) = backcw + backrr + backci + backsn + backgr                                                     
 
 
@@ -249,36 +237,36 @@ subroutine hydrometeor_extinction(f,no_lyr,xstr,ystr,frq_str,file_ph)
 		write(21,*) kexttot(nz), '   EXINCTION'
 		write(21,*) kexttot(nz) * salbtot(nz), '   SCATTERING'
 		write(21,*) salbtot(nz), '   SINGLE SCATTERING ALBEDO'
-		write(21,*) Nlegen - 1, '      DEGREE OF LEGENDRE SERIES'
+		write(21,*) Nlegen(nz) - 1, '      DEGREE OF LEGENDRE SERIES'
 
-		do jj = 1, Nlegen
+		do jj = 1, Nlegen(nz)
 
-	    	legen (jj) = (legencw (jj) * salbcw * kextcw + legenrr ( &
+	    	legen (nz,jj) = (legencw (jj) * salbcw * kextcw + legenrr ( &
 				jj) * salbrr * kextrr + legenci (jj) * salbci * kextci + &
 			legensn (jj) * salbsn * kextsn + legengr (jj) * salbgr * &
 				kextgr) / (salbtot (nz) * kexttot (nz) )
 
-	    	legen2 (jj) = (legen2cw (jj) * salbcw * kextcw +         &
+	    	legen2 (nz,jj) = (legen2cw (jj) * salbcw * kextcw +         &
 				legen2rr (jj) * salbrr * kextrr + legen2ci (jj) * salbci &
 				* kextci + legen2sn (jj) * salbsn * kextsn + legen2gr (  &
 				jj) * salbgr * kextgr) / (salbtot (nz) * kexttot &
 				(nz) )
 
-		    legen3 (jj) = (legen3cw (jj) * salbcw * kextcw +         &
+		    legen3 (nz,jj) = (legen3cw (jj) * salbcw * kextcw +         &
 				legen3rr (jj) * salbrr * kextrr + legen3ci (jj) * salbci &
 				* kextci + legen3sn (jj) * salbsn * kextsn + legen3gr (  &
 				jj) * salbgr * kextgr) / (salbtot (nz) * kexttot &
 				(nz) )
 
-	    	legen4 (jj) = (legen4cw(jj) * salbcw * kextcw +         &
+	    	legen4 (nz,jj) = (legen4cw(jj) * salbcw * kextcw +         &
 				legen4rr (jj) * salbrr * kextrr + legen4ci (jj) * salbci &
 				* kextci + legen4sn (jj) * salbsn * kextsn + legen4gr (  &
 				jj) * salbgr * kextgr) / (salbtot(nz) * kexttot &
 				(nz))
 
-	   		write (21, 1005) jj - 1, legen (jj), legen2 (jj),        &
-				legen3 (jj), legen4 (jj), legen (jj), legen3 (jj)
-	    	g_coeff (nz) = legen (2) / 3.0d0
+	   		write (21, 1005) jj - 1, legen (nz,jj), legen2 (nz,jj),        &
+				legen3(nz,jj), legen4(nz,jj), legen(nz,jj), legen3(nz,jj)
+	    	g_coeff (nz) = legen (nz,2) / 3.0d0
 1005        format  (i3,6(1x,f10.7))
 
 	end do ! end of cycle over Legendre coefficient
