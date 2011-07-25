@@ -21,7 +21,9 @@ module nml_params
   logical :: lphase_flag, &        ! flag for phase function calculation
 	     lgas_extinction, &    ! gas extinction desired
 	     lhyd_extinction, &    ! hydrometeor extinction desired
-	     write_nc		   ! write netcdf output
+	     write_nc, &	   ! write netcdf output
+	     active, &  	   ! calculate active stuff
+	     passive		   ! calculate passive stuff (with RT3)
 
   character(5) :: EM_snow, EM_grau
   character(3) :: SD_snow, SD_grau, SD_rain

@@ -1,5 +1,5 @@
 &verbose_mode
-verbose=0
+verbose=2
 /
 &inoutput_mode
 write_nc=.false.
@@ -15,6 +15,10 @@ tmp_path='/tmp'
 obs_height=833000.
 units='T'
 outpol='VH' 
+/
+&run_mode
+active=.false.
+passive=.true.
 /
 &surface_params
 ground_type='L'

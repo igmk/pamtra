@@ -74,3 +74,13 @@ function eps_water(s,T,f)
   return
 
 end function eps_water
+
+!! refractive index
+!  ref_wat = sqrt(eps_water)
+!   refre = real(ref_wat)
+!   refim = aimag(ref_wat)
+  ! absind  absorptive index 
+  ! abscof  absorption coefficient    [1/m]
+
+!   absind = refim/refre
+!   abscoef = (4*pi*refim*f*1.e9/c)
