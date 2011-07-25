@@ -30,6 +30,6 @@ module nml_params
 
   character(3) :: gas_mod
 
-  character(100) :: input_path, output_path, tmp_path
+  character(100) :: input_path, output_path, tmp_path,creator
 
 end module nml_params

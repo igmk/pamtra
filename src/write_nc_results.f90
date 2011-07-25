@@ -4,7 +4,7 @@ subroutine write_nc_results(nc_file)
   use vars_output
   use vars_atmosphere, only: ngridx, ngridy,nlyr
   use netcdf
-  use nml_params, only: active, passive
+  use nml_params, only: active, passive, creator
   implicit none
 
   integer :: ncid
@@ -34,9 +34,8 @@ subroutine write_nc_results(nc_file)
   call itime(now)     ! now(1)=hour, (2)=minute, (3)=second
   write (timestring , "(i2.2, '/', i2.2, '/', i4.4, ' ',  i2.2, ':', i2.2, ':', i2.2)") &
 	today(2), today(1), today(3), now
-  call getlog(user)
   ! write meta data
-  call check(nf90_put_att(ncid,nf90_global, "history", "Created with Fortran by "//trim(user)//&
+  call check(nf90_put_att(ncid,nf90_global, "history", "Created with Fortran by "//trim(creator)//&
 	" (University of Cologne, IGMK) at "//timestring))
 
   !make dimensions

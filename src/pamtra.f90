@@ -177,7 +177,7 @@ program pamtra
  
   namelist / verbose_mode / verbose
   namelist / inoutput_mode / write_nc, input_path, output_path, tmp_path
-  namelist / output / obs_height,units,outpol
+  namelist / output / obs_height,units,outpol,creator
   namelist / run_mode / active, passive
   namelist / surface_params / ground_type,salinity, emissivity
   namelist / gas_abs_mod / lgas_extinction, gas_mod
