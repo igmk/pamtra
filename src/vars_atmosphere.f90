@@ -6,50 +6,41 @@ use profile_type
 implicit none
 save
 
-integer :: ngridx, ngridy, nlyr
+integer :: nlyr
+
+integer, allocatable, dimension(:) :: nlegen
 			  
 real(kind=dbl), allocatable, dimension(:) :: relhum_lev,&
-                                          press_lev, &
-                                          temp_lev, &
-					  hgt_lev
+                                             press_lev, &
+                                      	     temp_lev, &
+											 hgt_lev
 
 real(kind=dbl), allocatable, dimension(:) :: press, &
-					     temp,&
-					     relhum,&
+										     temp,&
+										     relhum,&
                                              vapor_pressure, &
                                              rho_vap, &
-					     q_hum
-
-!real(kind=dbl), dimension(:), allocatable :: lyr_temp, &
-!                                      lyr_pres
-
-!real(kind=dbl), dimension(:), allocatable :: rel_hum, &
-!                                      avgpressure, &
-!                                      vaporpressure
+										     q_hum
 
 real(kind=dbl), allocatable, dimension(:) :: cwc_q, &
-                                          iwc_q, &
-                                          rwc_q, &
-                                          swc_q, &
-                                          gwc_q
+                              	             iwc_q, &
+                              	             rwc_q, &
+                               	             swc_q, &
+                                             gwc_q
 
-! real, allocatable, dimension(:,:) :: lon, &
-!                                      lat, &
-!                                      lfrac, &
-!                                      wind10
+ real(kind=dbl), allocatable, dimension(:) :: kextatmo, &
+                                  		      kexttot, &
+                                      		  salbtot, &
+                                      		  back, &
+                                      		  g_coeff
 
-! real, allocatable, dimension(:,:) :: iwv,&
-!                                      cwp,&
-!                                      iwp,&
-!                                      rwp,&
-!                                      swp,&
-!                                      gwp
+ real(kind=dbl), allocatable, dimension(:,:) :: legen, &
+												legen2, &
+												legen3, &
+												legen4
 
   integer :: alloc_status
 
   type(profile), allocatable :: profiles(:,:)
-
-real(kind=dbl), allocatable, dimension(:) :: back, kexttot, kextatmo
-
 
 end module vars_atmosphere

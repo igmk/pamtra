@@ -25,7 +25,8 @@ program pamtra
 
   integer, parameter :: MAXV = 64,   &
        MAXA = 32,   &
-       MAXLAY = 200
+       MAXLAY = 200, &
+       maxleg = 200
 
   integer, parameter :: NSTOKES = 2
 
@@ -36,7 +37,7 @@ program pamtra
              inarg, &
              ise, imonth ! filehandle for the emissivity data
 
-  integer :: MAXLEG, NLEGEN, NUMRAD, NLEGENcw, NLEGENci, NLEGENgr, &
+  integer :: NUMRAD, NLEGENcw, NLEGENci, NLEGENgr, &
        NLEGENsn, NLEGENrr, aziorder, NUMAZIMUTHS
 
   integer :: SRC_CODE     ! describes the type of radiation 
@@ -90,8 +91,7 @@ program pamtra
        DH_bot_intersect, H_bot, H_top, DH_top_intersect, K_extbot,&
        K_exttop, T_bot, T_top                                            
 
-  real(kind=dbl), dimension(200) :: LEGEN, LEGEN2, LEGEN3, LEGEN4,&
-       LEGENcw, LEGENrr, LEGENci, LEGENgr, LEGENsn,       &
+  real(kind=dbl), dimension(maxleg) :: LEGENcw, LEGENrr, LEGENci, LEGENgr, LEGENsn,       &
        LEGEN2cw, LEGEN2rr, LEGEN2ci, LEGEN2gr, LEGEN2sn,  &
        LEGEN3cw, LEGEN3rr, LEGEN3ci, LEGEN3gr, LEGEN3sn,  &
        LEGEN4cw, LEGEN4rr, LEGEN4ci, LEGEN4gr, LEGEN4sn
@@ -147,12 +147,6 @@ program pamtra
 !  integer, dimension(ngridx,ngridy) :: isamp, jsamp ! temporary for naming output
 
   integer, allocatable, dimension(:,:) :: ics
-  real(kind=dbl), dimension(:,:), allocatable :: tskin ! surface temperature
-
-!   real(kind=dbl), allocatable, dimension(:) :: KEXTATMO!, &   ! atmospheric extinction due to gases
-! 					       kexttot!, & ! extinnction die to hydrometeors
-					      ! back !backscattering of hydrometeors
-!  real(kind=dbl), dimension(nlyr) :: abscoef_o2,abscoef_h2o,abscoef_n2
 
 ! 
 !   real(kind=dbl), allocatable, dimension(:,:,:) :: &
@@ -166,11 +160,6 @@ program pamtra
 !        salbtot,    &
 !        absorp,     & ! might be unnecessary
 !        asymtot
-
- 
-!   real(kind=dbl), allocatable, dimension(:,:) :: &
-!        tau,       &
-!        tau_hydro
 
 ! !   real(kind=dbl), allocatable, dimension(:) :: H_levs  not neededF
 
@@ -217,11 +206,6 @@ end if
    ! that's just cosmetic
 
    frq_str = formatted_frqstr(frq_str)!repeat('0', 6-len_trim(adjustl(frq_str)))//adjustl(frq_str)
-
-
-
-
-
 
   ! read name list parameter file
 
@@ -291,9 +275,7 @@ end if
 ! 	allocate(back(nlyr))
 ! 	allocate(kexttot(nlyr))
 
-
 	allocate(ics(ngridx, ngridy))
-	allocate(tskin(ngridx, ngridy))
 
 ! 	allocate(tau(ngridx, ngridy))
 ! 	allocate(tau_hydro(ngridx, ngridy))
@@ -312,7 +294,6 @@ end if
   SRC_CODE = 2 
   DIRECT_FLUX = 0.d0 
   DIRECT_MU = 0.0d0 
-  maxleg = 200 
   SKY_TEMP = 2.73d0
 
   ! initialize values
@@ -327,6 +308,7 @@ end if
   ! $## think about order of reading
   do i = 1, ngridx
      do j = 1, ngridy 
+     	profiles(i,j)%nlyr = nlyr
         read(14,*,iostat=istat) profiles(i,j)%isamp, profiles(i,j)%jsamp !
 	    if (istat .ne. 0) call error_msg(input_file, i, j)
         read(14,*,iostat=istat) &
@@ -508,7 +490,7 @@ end if
 	! hydrometeor extinction desired
 
 
-	if (lhyd_extinction) call hydrometeor_extinction(freq,nlyr,xstr,ystr,frq_str,file_ph)
+	if (lhyd_extinction) call hydrometeor_extinction(freq,xstr,ystr,frq_str,file_ph)
 
     !      Preparation of the PROFILE file  (needed by RT3)
     open(21, file = file_profile, form = 'FORMATTED', status =  &

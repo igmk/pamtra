@@ -2,7 +2,7 @@
 verbose=2
 /
 &inoutput_mode
-write_nc=.false.
+write_nc=.true.
 input_path='profiles'
 output_path='output'
 !input_path='/home/mech/models/pamtra/profiles'

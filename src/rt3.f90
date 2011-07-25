@@ -248,6 +248,13 @@
       integer :: verbose
       logical :: write_nc
 
+      ! initialization
+
+      height = 0.
+      temperatures = 0.
+      gas_extinction = 0.
+
+	  nlyr = profiles(nx,ny)%nlyr
       model_i = profiles(nx,ny)%isamp
       model_j = profiles(nx,ny)%jsamp
       lon = profiles(nx,ny)%longitude
@@ -277,7 +284,12 @@
                                                                         
       if (verbose .gt. 1) print*, "reading layers"                            
       CALL READ_LAYERS (LAYER_FILE, MAXLAY, NUM_LAYERS, HEIGHT,         &
-      TEMPERATURES, GAS_EXTINCT, SCAT_FILES)                            
+      TEMPERATURES, GAS_EXTINCT, SCAT_FILES)
+
+      height(1:nlyr+1) = profiles(nx,ny)%hgt_lev(nlyr:0:-1)
+      temperatures(1:nlyr+1) = profiles(nx,ny)%temp_lev(nlyr:0:-1)
+      gas_extinct(1:nlyr+1) = kextatmo(nlyr:0:-1)
+
       if (verbose .gt. 1) print*, "read layers,now calling RT "                       
                                                                         
       MAX_DELTA_TAU = 1.0E-6 
@@ -443,7 +455,7 @@
       ENDIF 
       GOTO 100 
   110 CONTINUE 
-      CLOSE (1, status='delete')
+      CLOSE (1)!, status='delete')
       NUM_LAYERS = I - 2 
       RETURN 
                                                                         
