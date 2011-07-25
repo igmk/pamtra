@@ -11,4 +11,8 @@ real(kind=dbl), allocatable, dimension(:,:) :: lons, lats, lfracs, t_g, w10u, w1
 real(kind=dbl), allocatable, dimension(:,:,:,:) :: flux_up, flux_down
 real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: tb
 
+!for active 
+real(kind=dbl), allocatable, dimension(:,:,:) ::      hgt, Ze, PIA_atmo, PIA_hydro
+
+
 end module vars_output

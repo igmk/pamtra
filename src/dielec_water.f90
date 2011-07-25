@@ -1,4 +1,4 @@
-subroutine dielec_water(s,T,f,K2)
+function dielec_water(s,T,f)
 
 ! This function calculates the dielectric constant of warter based on the relative permettivity
 ! for natural water including soluted salt.
@@ -15,7 +15,6 @@ subroutine dielec_water(s,T,f,K2)
 ! References:
 !      Paul L Smith, “Equivalent Radar Reflectivity Factors for Snow and Ice Particles,” Journal of Climate and Applied Meteorology 23, no. 8 (1984): 1258-1260.
 
-
   use kinds 
 
   implicit none
@@ -24,7 +23,7 @@ subroutine dielec_water(s,T,f,K2)
 				T,& ! temperature [°C]
 				f   ! frequency [GHz]
 
-  real(kind=dbl), intent(out) :: K2 !dielectric constant |K|^2
+  real(kind=dbl) :: dielec_water !dielectric constant |K|^2
 
 
   complex(kind=dbl) :: eps_water, epsi
@@ -34,8 +33,8 @@ subroutine dielec_water(s,T,f,K2)
   !complex permittivity of natural water
   epsi =  eps_water(s,T,f)
 
-  K2 = abs((epsi-1)/(epsi+2))**2
+  dielec_water = abs((epsi-1)/(epsi+2))**2
 
   return
 
-end subroutine dielec_water
+end function dielec_water

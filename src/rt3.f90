@@ -609,7 +609,7 @@
       IF (GROUND_TYPE.EQ.'S') GROUND_NAME = 'SPECULAR' 
                                                                        
       OPEN (UNIT = 3, FILE = OUT_FILE, STATUS = 'UNKNOWN') 
-                                                                        
+      if (verbose .gt. 1) print *,"writing... ", OUT_FILE                                                     
 !           Output the parameters                                       
       WRITE (3, '(A,I3,A,I3,A,I3,A,I1)') 'C  NUMMU=', NUMMU, '  NUMAZI='&
      &, NUMAZI, '  AZIORDER=', AZIORDER, '  NSTOKES=', NSTOKES          

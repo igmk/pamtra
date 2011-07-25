@@ -9,3 +9,5 @@ output/
 profiles/
 *~
 .nfs*
+run_LMRT*
+

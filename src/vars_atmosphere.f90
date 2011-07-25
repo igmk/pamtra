@@ -49,6 +49,7 @@ real(kind=dbl), allocatable, dimension(:) :: cwc_q, &
 
   type(profile), allocatable :: profiles(:,:)
 
+real(kind=dbl), allocatable, dimension(:) :: back, kexttot, kextatmo
 
 
 end module vars_atmosphere
