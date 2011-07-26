@@ -202,7 +202,7 @@ subroutine hydrometeor_extinction(f,xstr,ystr,frq_str,file_ph)
       !           input file of the scattering properties of each layer
       !                                                                       
 
-      kexttot(nz) = kextcw + kextrr + kextci + kextsn + kextgr
+      kexttot(nz) = kextsn + kextcw + kextrr + kextgr + kextci
       back(nz) = backcw + backrr + backci + backsn + backgr                                                     
 
   

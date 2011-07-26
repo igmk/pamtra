@@ -16,23 +16,24 @@ real(kind=dbl), dimension(nlyr), intent(out) ::      hgt, Ze, PIA_atmo_BU, PIA_h
 
 
 
-		wavelength = c / (freq*1.d3)   ! microns
+		wavelength = c / (freq*1.d9)   ! m
 		tau_hydro = 0.d0
 		tau_atmo = 0.d0
 		do nz = 1, nlyr
 			hgt(nz) = (hgt_lev(nz-1)+hgt_lev(nz))*0.5d0
 			d_hgt = hgt_lev(nz) - hgt_lev(nz-1)
 			K2 = dielec_water(0.D0,temp(nz),freq)
-			Ze(nz) = 10*log10(1d18* (1/ (pi*K2) ) * back(nz) * (wavelength*1d-6)**4)
-
+			Ze(nz) = 10*log10(1d18* (1/ (K2*pi**5) ) * back(nz) * (wavelength)**4)
 			if (abs(Ze(nz)) .gt. huge(Ze(nz))) Ze(nz) = -9999.d0
 			tau_hydro = tau_hydro + (kexttot(nz)*d_hgt)
 			tau_atmo = tau_atmo + (kextatmo(nz)*d_hgt)
-			PIA_atmo_BU(nz) = 10*log10(exp(2 * tau_atmo))
+			PIA_atmo_BU(nz)  =  10*log10(exp(2 * tau_atmo))
 			PIA_hydro_BU(nz) =  10*log10(exp(2 * tau_hydro))
 
 		end do
-
+		
+		
+		
  		tau_hydro = 0.d0
 		tau_atmo = 0.d0
 		do nz = nlyr,1,-1
