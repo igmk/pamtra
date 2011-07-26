@@ -1,8 +1,9 @@
 &verbose_mode
-verbose=2
+verbose=0
 /
 &inoutput_mode
-write_nc=.true.
+write_nc=.false.
+dump_to_file=.false.
 input_path='profiles'
 output_path='output'
 !input_path='/home/mech/models/pamtra/profiles'
@@ -17,7 +18,7 @@ units='T'
 outpol='VH' 
 /
 &run_mode
-active=.true.
+active=.false.
 passive=.true.
 /
 &surface_params

@@ -5,6 +5,7 @@ program pamtra
   use nml_params
   use vars_atmosphere
   use vars_output
+  use mod_io_strings
 
   !     Radiative transfer code to process COSMO-model derived profiles   
   !     The code reads a full COSMO grid and computes for each profile the  
@@ -107,26 +108,18 @@ program pamtra
 		epsi         ! result of function eps_water
   complex(kind=dbl) :: MINDEX, m_air, m_MG, m_ice
 
-  character(2) :: month, day
-  character(4) :: year, time
-  character(12) :: date_str
-
   character :: QUAD_TYPE*1, UNITS*1, OUTPOL*2, GROUND_TYPE*1,  &
        rLWC_str*4                                                      
 
   character(300) :: OUT_FILE_PAS, OUT_FILE_ACT, tmp_file1, nc_out_file, namelist_file
 
-  character(78) :: file_profile
-
   character :: ssstr*1, ttstr*1, Anglestr*4, FILEOUT3D*65
 
-  character :: Nzstr*2, xstr*3, ystr*3,&
-       frq_str*6, theta_str*3, H_str*3,&
-       surf_type*10,formatted_frqstr*6
+  character(6) :: formatted_frqstr
 
   character(99) :: input_file
 
-  character :: micro_str*31, SP_str*3, str1*1,  &
+  character :: micro_str*31, SP_str*3,  &
        DELTAM*1, file_profile2*78, &
         N0snowstr*3, N0graustr*3, N0rainstr*3
 
@@ -148,35 +141,10 @@ program pamtra
 
   integer, allocatable, dimension(:,:) :: ics
 
-! 
-!   real(kind=dbl), allocatable, dimension(:,:,:) :: &
-!        g_coeff,    &
-!        kexttot,    &
-!        kextcloud,  &
-!        kextrain,   &
-!        kextice,    &
-!        kextgraupel,&
-!        kextsnow,   &
-!        salbtot,    &
-!        absorp,     & ! might be unnecessary
-!        asymtot
-
-! !   real(kind=dbl), allocatable, dimension(:) :: H_levs  not neededF
-
-  character(len=64), allocatable, dimension(:) :: file_PH, file_PH2
-
-
-!!!!!!!!!
-  
-!end test max
-
-!!!!!!!!!!!!!1
-
-
   ! name list declarations
  
   namelist / verbose_mode / verbose
-  namelist / inoutput_mode / write_nc, input_path, output_path, tmp_path
+  namelist / inoutput_mode / write_nc, input_path, output_path, tmp_path, dump_to_file
   namelist / output / obs_height,units,outpol
   namelist / run_mode / active, passive
   namelist / surface_params / ground_type,salinity, emissivity
@@ -257,34 +225,13 @@ end if
 
 	! now allocate variables
 
-! 	allocate(g_coeff(ngridx, ngridy,nlyr))
-! 	allocate(kexttot(ngridx, ngridy,nlyr))
-! 	allocate(kextcloud(ngridx, ngridy,nlyr))
-! 	allocate(kextrain(ngridx, ngridy,nlyr))
-! 	allocate(kextice(ngridx, ngridy,nlyr))
-! 	allocate(kextgraupel(ngridx, ngridy,nlyr))
-! 	allocate(kextsnow(ngridx, ngridy,nlyr))
-! 	allocate(salbtot(ngridx, ngridy,nlyr))
-! 	allocate(absorp(ngridx, ngridy,nlyr))
-! 	allocate(asymtot(ngridx, ngridy,nlyr))
-! 
 	allocate(Ze(ngridx, ngridy,nlyr))
 	allocate(PIA_hydro(ngridx,ngridy,nlyr))
 	allocate(PIA_atmo(ngridx,ngridy,nlyr))
 	allocate(hgt(ngridx, ngridy,nlyr))
-! 	allocate(back(nlyr))
-! 	allocate(kexttot(nlyr))
 
 	allocate(ics(ngridx, ngridy))
-
-! 	allocate(tau(ngridx, ngridy))
-! 	allocate(tau_hydro(ngridx, ngridy))
-
-
-! 	allocate(H_levs(nlyr+1)) not needed
-	allocate(file_PH(nlyr))
-	allocate(file_PH2(nlyr))
-! 	allocate(KEXTATMO(nlyr))
+    allocate(file_ph(nlyr))
 
   !    some inputs variable                                               
   QUAD_TYPE = 'L'                                             
@@ -300,7 +247,6 @@ end if
 
 !   tau = 0.0d0
 !   tau_hydro = 0.0d0 
-  file_ph2(:) = ''
 
 
   call allocate_vars_atmosphere
@@ -308,7 +254,6 @@ end if
   ! $## think about order of reading
   do i = 1, ngridx
      do j = 1, ngridy 
-     	profiles(i,j)%nlyr = nlyr
         read(14,*,iostat=istat) profiles(i,j)%isamp, profiles(i,j)%jsamp !
 	    if (istat .ne. 0) call error_msg(input_file, i, j)
         read(14,*,iostat=istat) &
@@ -374,8 +319,6 @@ end if
   call get_atmosG0
   if (verbose .gt. 0) print*, 'variables filled up!'
 
-
-
   write (SP_str (1:3) , '(f3.1)') SP
 
   date_str = year//month//day//time
@@ -409,6 +352,8 @@ end if
 
   grid_y: do ny = 1, ngridy !ny_in, ny_fin  
     grid_x: do nx = 1, ngridx !nx_in, nx_fin   
+    write(xstr, '(i3.3)') profiles(nx,ny)%isamp
+    write(ystr, '(i3.3)') profiles(nx,ny)%jsamp
 
     if (verbose .gt. 0) print*, "Y:",ny, " of ", ngridy, "X:", nx, " of ", ngridx
 
@@ -475,62 +420,33 @@ end if
     !
     if (lgas_extinction) then
       !returns kextatmo!
-      call get_atmosg(freq)!,abscoef_o2,abscoef_h2o,abscoef_n2)
+      call get_atmosg(freq)
     else
       kextatmo = 0.0D0 ! for the whole column
     end if
 
 	if (verbose .gt. 1) print*, nx,ny, 'Gas absorption calculated'
 
-    write(xstr, '(i3.3)') profiles(nx,ny)%isamp
-    write(ystr, '(i3.3)') profiles(nx,ny)%jsamp
-
-    file_profile = tmp_path(:len_trim(tmp_path))//'/Profilex'//xstr//'y'//ystr//'f'//frq_str
 
 	! hydrometeor extinction desired
 
 
-	if (lhyd_extinction) call hydrometeor_extinction(freq,xstr,ystr,frq_str,file_ph)
+	if (lhyd_extinction) call hydrometeor_extinction(freq)
 
-    !      Preparation of the PROFILE file  (needed by RT3)
-    open(21, file = file_profile, form = 'FORMATTED', status =  &
-         'unknown',iostat=istat)
- 
-    do nz = nlyr, 1, - 1 !nlyr,1,-1
-       str1 = ''''
-       ! position of the first blank space
-       offset1 = index(FILE_PH(nz) , ' ')
-       tmp_file1 = FILE_PH(nz)
-       FILE_PH2(nz) = str1//tmp_file1(1:offset1 - 1)//str1
-       write(21,1013) hgt_lev(nz), temp_lev(nz), kextatmo(nz), FILE_PH2(nz)
-1013   format(f7.1,1x,f6.2,1x,E9.4,1x,a38)
-    end do !end of cycle over the vertical layers
-    write(21,1012) hgt_lev(0) , temp_lev(0), KEXTATMO (1) , ''' '''
-1012 format(f7.1,1x,f6.2,1x,E9.4,1x,a3)
-        close(21)
+!
+    if (dump_to_file) call dump_profile
 
+        !&&&&&&&&   I/O FILE NAMES   &&&&&&&&&&&&&&&&&&
 
-!         file_profile2 = micro_str//'date'//date_str//'x'//xstr//    &
-!              'y'//ystr//'f'//frq_str                                     
-
-
-1110    format   (i3,1x,i3,1x,4(1x,f7.3))
-1111    format   (i3,1x,i3,1x,i2,1x,f6.3,10(1x,e9.3),1x,e9.4,2(1x,f7.4),  &
-             & 1x,e9.3,1x,e9.4,1x,f5.1,1x,e9.3)                                 
-
-
-        !&&&&&&&&   I/O FILE NAMES for the MC&&&&&&&&&&&&&&&&&&                 
-
-        OUT_FILE_PAS = output_path(:LEN(trim(output_path)))//"/"//&
+        OUT_FILE_PAS = output_path(:len_trim(output_path))//"/"//&
            date_str//micro_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_passive"
 
-        OUT_FILE_ACT = output_path(:LEN(trim(output_path)))//"/"//&
+        OUT_FILE_ACT = output_path(:len_trim(output_path))//"/"//&
            date_str//micro_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_active"
 
 
-	if (active .eqv. .true.) then
+	if (active) then
 		call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),Ze(nx,ny,:),PIA_atmo(nx,ny,:),PIA_hydro(nx,ny,:))
-				  
 	end if
 
 ! find the output level
@@ -558,7 +474,7 @@ end if
       if (verbose .gt. 1) print*, nx,ny, "Entering rt3 ...."
   
       call RT3(NSTOKES, NUMMU, AZIORDER, MU_VALUES, src_code,     &
-	    FILE_profile, out_file_pas, QUAD_TYPE, deltam, DIRECT_FLUX,     &
+	    out_file_pas, QUAD_TYPE, deltam, DIRECT_FLUX,     &
 	    DIRECT_MU, GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO,         &
 	    GROUND_INDEX, SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,          &
 	    NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,&

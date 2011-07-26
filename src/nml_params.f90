@@ -18,6 +18,8 @@ module nml_params
 
   real(kind=dbl) :: N_0snowDsnow, N_0grauDgrau, N_0rainD, SP
 
+  logical :: dump_to_file   ! flag for profile and ssp dump
+
   logical :: lphase_flag, &        ! flag for phase function calculation
 	     lgas_extinction, &    ! gas extinction desired
 	     lhyd_extinction, &    ! hydrometeor extinction desired

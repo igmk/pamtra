@@ -3,12 +3,10 @@ module profile_type
 use kinds
 
 implicit none
-integer :: ngridx, ngridy
+
 type profile
-  integer :: nlyr
   integer :: isamp
   integer :: jsamp
-  integer, pointer :: nlegen(:)
   real :: latitude
   real :: longitude
   real :: land_fraction

@@ -211,14 +211,18 @@
 !
 !
       SUBROUTINE RT3 (NSTOKES, NUMMU, AZIORDER, MU_VALUES, SRC_CODE,    &
-      LAYER_FILE, OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU,  &
+      OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU,  &
       GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP,  &
       WAVELENGTH, UNITS, OUTPOL, NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,    &
       nx,ny,write_nc,verbose)
 
       use kinds
       use vars_atmosphere
-  
+
+      implicit none
+
+	  integer :: nx,ny
+
       INTEGER MAXV, MAXA, MAXLAY 
       PARAMETER (MAXV = 64, MAXA = 32) 
       PARAMETER (MAXLAY = 200) 
@@ -238,23 +242,24 @@
       MAXV)                                   
       CHARACTER QUAD_TYPE * 1, DELTAM * 1, UNITS * 1, OUTPOL * 2,       &
       GROUND_TYPE * 1                                                   
-      CHARACTER(68) LAYER_FILE 
       CHARACTER(100) OUT_FILE
-      CHARACTER(64) SCAT_FILES (MAXLAY) 
                                                                         
       integer :: model_i, model_j
-      real lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp
+      real :: lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp
 
       integer :: verbose
       logical :: write_nc
+
+
+      if (verbose .gt. 1) print*, "entered rt3"
 
       ! initialization
 
       height = 0.
       temperatures = 0.
-      gas_extinction = 0.
+      gas_extinct = 0.
+      MAX_DELTA_TAU = 1.0E-6
 
-	  nlyr = profiles(nx,ny)%nlyr
       model_i = profiles(nx,ny)%isamp
       model_j = profiles(nx,ny)%jsamp
       lon = profiles(nx,ny)%longitude
@@ -269,37 +274,29 @@
       rwp = profiles(nx,ny)%rwp
       swp = profiles(nx,ny)%swp
       gwp = profiles(nx,ny)%gwp
-!       write(27,*)'inputs rt3',NSTOKES, NUMMU,AZIORDER, MU_VALUES,     
-!     .                 SRC_CODE, LAYER_FILE, OUT_FILE,                 
-!     .                 QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU,      
-!     .                 GROUND_TEMP, GROUND_TYPE,                       
-!     .                 GROUND_ALBEDO, GROUND_INDEX,                    
-!     .                 SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,            
-!     .                 NOUTLEVELS, OUTLEVELS,NUMAZIMUTHS               
                                                                         
-      IF (1 + AZIORDER.GT.MAXA) THEN 
-         WRITE ( * , * ) 'Maximum number of azimuth modes exceeded.' 
-         STOP 
-      ENDIF 
-                                                                        
-      if (verbose .gt. 1) print*, "reading layers"                            
-      CALL READ_LAYERS (LAYER_FILE, MAXLAY, NUM_LAYERS, HEIGHT,         &
-      TEMPERATURES, GAS_EXTINCT, SCAT_FILES)
 
+	  num_layers = nlyr
       height(1:nlyr+1) = profiles(nx,ny)%hgt_lev(nlyr:0:-1)
       temperatures(1:nlyr+1) = profiles(nx,ny)%temp_lev(nlyr:0:-1)
-      gas_extinct(1:nlyr+1) = kextatmo(nlyr:0:-1)
+      gas_extinct(1:nlyr) = kextatmo(nlyr:1:-1)
+      rt3kexttot(1:nlyr) = kexttot(nlyr:1:-1)
+      rt3salbtot(1:nlyr) = salbtot(nlyr:1:-1)
+      rt3nlegen(1:nlyr) = nlegen(nlyr:1:-1)-1
+      rt3legen(1:nlyr,:) = legen(nlyr:1:-1,:)
+      rt3legen2(1:nlyr,:) = legen2(nlyr:1:-1,:)
+      rt3legen3(1:nlyr,:) = legen3(nlyr:1:-1,:)
+      rt3legen4(1:nlyr,:) = legen4(nlyr:1:-1,:)
 
-      if (verbose .gt. 1) print*, "read layers,now calling RT "                       
-                                                                        
-      MAX_DELTA_TAU = 1.0E-6 
-
-      if (verbose .gt. 1) print*, "Entering radtran ...."
+      IF (1 + AZIORDER.GT.MAXA) THEN
+         WRITE ( * , * ) 'Maximum number of azimuth modes exceeded.'
+         STOP
+      ENDIF
 
       CALL RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU, SRC_CODE,  &
       QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU, GROUND_TEMP,           &
       GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP, WAVELENGTH,   &
-      NUM_LAYERS, HEIGHT, TEMPERATURES, GAS_EXTINCT, SCAT_FILES,        &
+      NUM_LAYERS, HEIGHT, TEMPERATURES, GAS_EXTINCT, &
       NOUTLEVELS, OUTLEVELS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD,     &
       DOWN_RAD,dble(wind10u),dble(wind10v),verbose)
 
@@ -320,258 +317,27 @@
 	NUMAZIMUTHS, UP_FLUX, DOWN_FLUX, UP_RAD, DOWN_RAD,     &
 	lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,model_i,model_j,nx,ny)
       else
-	CALL OUTPUT_FILE (NSTOKES, NUMMU, AZIORDER, SRC_CODE, LAYER_FILE, &
+	CALL OUTPUT_FILE (NSTOKES, NUMMU, AZIORDER, SRC_CODE, &
 	OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU, GROUND_TEMP, &
 	GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP, WAVELENGTH,   &
 	UNITS, OUTPOL, NUM_LAYERS, HEIGHT, NOUTLEVELS, OUTLEVELS,         &
 	NUMAZIMUTHS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD, DOWN_RAD,     &
-	lon,lat,lfrac,wind10,iwv,cwp,iwp,rwp,swp,gwp)
+	lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp)
       end if
 
       if (verbose .gt. 1) print*, ".... done!"
                                                                         
       END SUBROUTINE RT3                            
                                                                         
-                                                                        
-      SUBROUTINE RT3_oneangle (angle_view, NSTOKES, NUMMU, AZIORDER,    &
-      MU_VALUES, SRC_CODE, LAYER_FILE, OUT_FILE, QUAD_TYPE, DELTAM,     &
-      DIRECT_FLUX, DIRECT_MU, GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO,  &
-      GROUND_INDEX, SKY_TEMP, WAVELENGTH, UNITS, OUTPOL, NOUTLEVELS,    &
-      OUTLEVELS, NUMAZIMUTHS, I1, I2, Upar, Vpar)                       
-                                                                        
-      use kinds
-  
-      INTEGER MAXV, MAXA, MAXLAY 
-      PARAMETER (MAXV = 64, MAXA = 32) 
-      PARAMETER (MAXLAY = 200) 
-                                                                        
-      INTEGER NSTOKES, NUMMU, AZIORDER 
-      INTEGER NUM_LAYERS, SRC_CODE 
-      INTEGER NOUTLEVELS, OUTLEVELS (MAXLAY), NUMAZIMUTHS 
-      REAL(kind=dbl) GROUND_TEMP, GROUND_ALBEDO, angle_view 
-      COMPLEX(kind=dbl) GROUND_INDEX 
-      REAL(kind=dbl) SKY_TEMP, WAVELENGTH, MAX_DELTA_TAU 
-      REAL(kind=dbl) DIRECT_FLUX, DIRECT_MU 
-      REAL(kind=dbl) MU_VALUES (MAXV) 
-      REAL(kind=dbl) HEIGHT (MAXLAY), TEMPERATURES (MAXLAY) 
-      REAL(kind=dbl) GAS_EXTINCT (MAXLAY) 
-      REAL(kind=dbl) UP_FLUX (4 * MAXLAY), DOWN_FLUX (4 * MAXLAY) 
-      REAL(kind=dbl) UP_RAD (MAXLAY * MAXA * MAXV), DOWN_RAD (MAXLAY * MAXA *  &
-      MAXV)                        
-      CHARACTER QUAD_TYPE * 1, DELTAM * 1, UNITS * 1, OUTPOL * 2,       &
-      GROUND_TYPE * 1                                                   
-      CHARACTER(68) LAYER_FILE 
-      CHARACTER(70) OUT_FILE
-      CHARACTER(64) SCAT_FILES (MAXLAY) 
-      REAL(kind=dbl) Field_1, field_2, I1, I2, Upar, Vpar 
-                                                                        
-                                                                        
-      IF (1 + AZIORDER.GT.MAXA) THEN 
-         WRITE ( * , * ) 'Maximum number of azimuth modes exceeded.' 
-         STOP 
-      ENDIF 
-                                                                        
-                                                                        
-      CALL READ_LAYERS (LAYER_FILE, MAXLAY, NUM_LAYERS, HEIGHT,         &
-      TEMPERATURES, GAS_EXTINCT, SCAT_FILES)                            
-                                                                        
-                                                                        
-      MAX_DELTA_TAU = 1.0E-6 
-      CALL RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU, SRC_CODE,  &
-      QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU, GROUND_TEMP,           &
-      GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP, WAVELENGTH,   &
-      NUM_LAYERS, HEIGHT, TEMPERATURES, GAS_EXTINCT, SCAT_FILES,        &
-      NOUTLEVELS, OUTLEVELS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD,     &
-      DOWN_RAD)                                                         
-                                                                        
-                                                                        
-      CALL OUTPUT_FILE (NSTOKES, NUMMU, AZIORDER, SRC_CODE, LAYER_FILE, &
-      OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU, GROUND_TEMP, &
-      GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP, WAVELENGTH,   &
-      UNITS, OUTPOL, NUM_LAYERS, HEIGHT, NOUTLEVELS, OUTLEVELS,         &
-      NUMAZIMUTHS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD, DOWN_RAD,    &
-      lon,lat,lfrac,wind10,iwv,cwp,iwp,rwp,swp,gwp)     
-                                                                        
-      CALL locate (mu_values, NUMMU, dcos (angle_view), i_loc) 
-                   !x is bet xx(j) and xx(j+1)                          
-      nshift = NSTOKES - 1 
-      Field_1 = DOWN_RAD (NSTOKES * nummu * (Noutlevels - 1) + Nstokes *&
-      i_loc - nshift)                                                   
-      Field_2 = DOWN_RAD (NSTOKES * nummu * (Noutlevels - 1) + Nstokes *&
-      (i_loc + 1) - nshift)                                             
-!       write(23,*)'field1',Field_1,field_2                             
-      nshift = NSTOKES - 2 
-      I1 = Field_1 + (Field_2 - Field_1) * (dcos (angle_view) -         &
-      mu_values (i_loc) ) / (mu_values (i_loc + 1) - mu_values (i_loc) )
-      Field_1 = DOWN_RAD (NSTOKES * nummu * (Noutlevels - 1) + Nstokes *&
-      i_loc - nshift)                                                   
-      Field_2 = DOWN_RAD (NSTOKES * nummu * (Noutlevels - 1) + Nstokes *&
-      (i_loc + 1) - nshift)                                             
-      I2 = Field_1 + (Field_2 - Field_1) * (dcos (angle_view) -         &
-      mu_values (i_loc) ) / (mu_values (i_loc + 1) - mu_values (i_loc) )
-      IF (Nstokes.gt.2) then 
-         nshift = NSTOKES - 3 
-         Field_1 = DOWN_RAD (NSTOKES * nummu * (Noutlevels - 1) +       &
-         Nstokes * i_loc - nshift)                                      
-         Field_2 = DOWN_RAD (NSTOKES * nummu * (Noutlevels - 1) +       &
-         Nstokes * (i_loc + 1) - nshift)                                
-         Upar = Field_1 + (Field_2 - Field_1) * (dcos (angle_view)      &
-         - mu_values (i_loc) ) / (mu_values (i_loc + 1) - mu_values (   &
-         i_loc) )                                                       
-         nshift = NSTOKES - 4 
-         Field_1 = DOWN_RAD (NSTOKES * nummu * (Noutlevels - 1) +       &
-         Nstokes * i_loc - nshift)                                      
-         Field_2 = DOWN_RAD (NSTOKES * nummu * (Noutlevels - 1) +       &
-         Nstokes * (i_loc + 1) - nshift)                                
-         Vpar = Field_1 + (Field_2 - Field_1) * (dcos (angle_view)      &
-         - mu_values (i_loc) ) / (mu_values (i_loc + 1) - mu_values (   &
-         i_loc) )                                                       
-      ENDIF 
-                                                                        
-      END SUBROUTINE RT3_oneangle                   
-                                                                        
-                                                                        
-      SUBROUTINE READ_LAYERS (LAYER_FILE, MAXLAY, NUM_LAYERS, HEIGHT,   &
-      TEMPERATURES, GAS_EXTINCT, SCAT_FILES)       
-  use kinds
-  
-      INTEGER MAXLAY, NUM_LAYERS 
-      REAL(kind=dbl) HEIGHT ( * ), TEMPERATURES ( * ) 
-      REAL(kind=dbl) GAS_EXTINCT ( * ) 
-      CHARACTER ( * ) LAYER_FILE, SCAT_FILES ( * ) 
-      INTEGER I 
-                                                                        
-!           Read in height, temperature, gaseous extinction, and        
-!                 scattering file for the layers                        
-      OPEN (UNIT = 1, FILE = LAYER_FILE, STATUS = 'OLD') 
-      I = 1 
-  100 CONTINUE 
-      READ (1, *, ERR = 990, END = 110) HEIGHT (I), TEMPERATURES (I),   &
-      GAS_EXTINCT (I), SCAT_FILES (I)
-      I = I + 1 
-      IF (I.EQ.MAXLAY) THEN 
-         WRITE ( * , * ) 'Too many layers' 
-         STOP 
-      ENDIF 
-      GOTO 100 
-  110 CONTINUE 
-      CLOSE (1)!, status='delete')
-      NUM_LAYERS = I - 2 
-      RETURN 
-                                                                        
-  990 CONTINUE 
-      WRITE ( * , * ) 'Error reading layers data file' 
-      RETURN 
-      END SUBROUTINE READ_LAYERS                    
-                                                                        
-                                                                        
-      SUBROUTINE USER_INPUT (NSTOKES, NUMMU, AZIORDER, MU_VALUES,       &
-      SRC_CODE, LAYER_FILE, OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX,   &
-      DIRECT_MU, GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, &
-      SKY_TEMP, WAVELENGTH, UNITS, OUTPOL, NOUTLEVELS, OUTLEVELS,       &
-      NUMAZIMUTHS)
-      
-      use kinds
-      
-      INTEGER NSTOKES, NUMMU, AZIORDER, SRC_CODE 
-      INTEGER NOUTLEVELS, OUTLEVELS ( * ), NUMAZIMUTHS
-      REAL(kind=dbl) MU_VALUES ( * ), GROUND_TEMP, GROUND_ALBEDO 
-      REAL(kind=dbl) SKY_TEMP, WAVELENGTH 
-      REAL(kind=dbl) DIRECT_FLUX, DIRECT_MU 
-      COMPLEX(kind=dbl) GROUND_INDEX 
-      CHARACTER QUAD_TYPE * 1, DELTAM * 1, UNITS * 1, OUTPOL * 2,       &
-      GROUND_TYPE * 1                                                   
-      CHARACTER ( * ) LAYER_FILE, OUT_FILE 
-      REAL(kind=dbl) THETA 
-      INTEGER I 
-                                                                        
-      WRITE ( * , '(1X,A)') 'Number of Stokes parameters (1 - 4) : ' 
-      READ ( *, * ) NSTOKES 
-      WRITE ( * , '(1X,A)') 'Number of quadrature directions : ' 
-      READ ( *, * ) NUMMU 
-      WRITE ( * , '(1X,A)') 'Type of quadrature : ' 
-      WRITE ( * , '(1X,A)') '(Gaussian, Double-Gauss, Lobatto, Extra-ang&
-     &les) : '                                                          
-      READ ( * , '(A)') QUAD_TYPE 
-      IF (QUAD_TYPE (1:1) .EQ.'E') THEN 
-      WRITE ( * ,  * ) 'Enter extra quadrature mu values (end with 0):' 
-         I = NUMMU 
-   50    CONTINUE 
-         WRITE ( * , '(1X,A)') 'Mu value : ' 
-         READ ( *, * ) MU_VALUES (I) 
-         I = I - 1 
-         IF (MU_VALUES (I + 1) .NE.0.0) GOTO 50 
-      ENDIF 
-                                                                        
-      WRITE ( * , '(1X,A)') 'Order of azimuth expansion (0,1,...) : ' 
-      READ ( *, * ) AZIORDER 
-                                                                        
-      WRITE ( * , '(1X,A)') 'Layers data file name : ' 
-      READ ( * , '(A)') LAYER_FILE 
-                                                                        
-      WRITE ( * , '(1X,A)') 'Delta-M scaling (Y or N) : ' 
-      READ ( * , '(A)') DELTAM 
-                                                                        
-      WRITE ( * , '(1X,A)') 'Source code (none=0, solar=1, thermal=2, bo&
-     &th=3) : '                                                         
-      READ ( *, * ) SRC_CODE 
-      SRC_CODE = MIN0 (MAX0 (SRC_CODE, 0), 3) 
-                                                                        
-      DIRECT_MU = 1.0 
-      IF (SRC_CODE.EQ.1.OR.SRC_CODE.EQ.3) THEN 
-         WRITE ( * , '(1X,A)') 'Direct flux (W/(m*m)/um or K) : ' 
-         READ ( *, * ) DIRECT_FLUX 
-      WRITE ( * , '(1X,A)') 'Direct flux direction (zenith angle) (deg) &
-     &: '                                                               
-         READ ( *, * ) THETA 
-         DIRECT_MU = DABS (DCOS (0.017453292D0 * (THETA) ) ) 
-      ENDIF 
-                                                                        
-      WRITE ( * , '(1X,A)') 'Ground temperature : ' 
-      READ ( *, * ) GROUND_TEMP 
-      WRITE ( * , '(1X,A)') 'Ground type (Lambertian or Fresnel) : ' 
-      READ ( * , '(A)') GROUND_TYPE 
-      IF (GROUND_TYPE (1:1) .EQ.'F') THEN 
-      WRITE ( * , '(1X,A)') 'Complex index of refraction of ground : ' 
-         READ ( *, * ) GROUND_INDEX 
-      ELSE 
-         WRITE ( * , '(1X,A)') 'Ground albedo : ' 
-         READ ( *, * ) GROUND_ALBEDO 
-      ENDIF 
-      WRITE ( * , '(1X,A)') 'Sky temperature : ' 
-      READ ( *, * ) SKY_TEMP 
-                                                                        
-      WRITE ( * , '(1X,A)') 'Wavelength (microns) : ' 
-      READ ( *, * ) WAVELENGTH 
-      WRITE ( * , '(1X,A)') 'Output radiance units :' 
-      WRITE ( * , '(1X,A,A)') '(W-W/m^2 um sr, ', 'T-EBB brightness temp&
-     &erature, R-Rayleigh-Jeans Tb) : '                                 
-      READ ( * , '(A)') UNITS 
-      WRITE ( * , '(1X,A)') 'Output polarization (IQ or VH) : ' 
-      READ ( * , '(A)') OUTPOL 
-                                                                        
-      WRITE ( * , '(1X,A)') 'Number of output levels : ' 
-      READ ( *, * ) NOUTLEVELS 
-      WRITE ( * , '(1X,A)') 'Output level numbers : ' 
-      READ ( *, * ) (OUTLEVELS (I), I = 1, NOUTLEVELS) 
-      WRITE ( * , '(1X,A)') 'Number of output azimuths : ' 
-      READ ( *, * ) NUMAZIMUTHS 
-                                                                        
-      WRITE ( * , '(1X,A)') 'Output data file name : ' 
-      READ ( * , '(A)') OUT_FILE 
-                                                                        
-      RETURN 
-      END SUBROUTINE USER_INPUT                     
-                                                                        
-                                                                        
       SUBROUTINE OUTPUT_FILE (NSTOKES, NUMMU, AZIORDER, SRC_CODE,       &
-      LAYER_FILE, OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU,  &
+      OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU,  &
       GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP,  &
       WAVELENGTH, UNITS, OUTPOL, NUM_LAYERS, HEIGHT, NOUTLEVELS,        &
       OUTLEVELS, NUMAZIMUTHS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD,    &
-      DOWN_RAD,lon,lat,lfrac,wind10,iwv,cwp,iwp,rwp,swp,gwp)
+      DOWN_RAD,lon,lat,lfrac,wind10u,windv,iwv,cwp,iwp,rwp,swp,gwp)
 
   use kinds
+  use mod_io_strings
   
       INTEGER NSTOKES, NUMMU, NUMAZI, AZIORDER, SRC_CODE, NUM_LAYERS 
       INTEGER NOUTLEVELS, OUTLEVELS ( * ), NUMAZIMUTHS 
@@ -585,7 +351,7 @@
       REAL(kind=dbl) UP_RAD (NSTOKES, NUMMU, AZIORDER + 1, NOUTLEVELS) 
       REAL(kind=dbl) DOWN_RAD (NSTOKES, NUMMU, AZIORDER + 1, NOUTLEVELS)
       COMPLEX(kind=dbl) GROUND_INDEX
-      CHARACTER ( * ) LAYER_FILE, OUT_FILE 
+      CHARACTER ( * ) OUT_FILE
       CHARACTER QUAD_TYPE * 1, DELTAM * 1, UNITS * 1, OUTPOL * 2,       &
       GROUND_TYPE * 1                                                   
       CHARACTER(32) QUAD_NAME, UNITS_NAME, GROUND_NAME 
@@ -594,7 +360,7 @@
       REAL OUT (4), PHI, PHID, PI 
       PARAMETER (PI = 3.1415926535897932384D0) 
                                                                         
-      real lon,lat,lfrac,wind10,iwv,cwp,iwp,rwp,swp,gwp
+      real lon,lat,lfrac,wind10u,windv,iwv,cwp,iwp,rwp,swp,gwp
                                                                         
       N = NUMMU * (AZIORDER + 1) * NOUTLEVELS 
       CALL CONVERT_OUTPUT (UNITS, OUTPOL, NSTOKES, N, WAVELENGTH, 0,    &
@@ -625,7 +391,7 @@
 !           Output the parameters                                       
       WRITE (3, '(A,I3,A,I3,A,I3,A,I1)') 'C  NUMMU=', NUMMU, '  NUMAZI='&
      &, NUMAZI, '  AZIORDER=', AZIORDER, '  NSTOKES=', NSTOKES          
-      WRITE (3, '(A,A32,A,A1)') 'C  LAYER_FILE=', LAYER_FILE, '   DELTA-&
+      WRITE (3, '(A,A32,A,A1)') 'C  LAYER_FILE=', file_profile, '   DELTA-&
      &M=', DELTAM                                                       
       WRITE (3, '(A,I1,A,A16)') 'C  SRC_CODE=', SRC_CODE, '   QUAD_TYPE=&
      &', QUAD_NAME                                                      
@@ -636,7 +402,7 @@
       write(3,'(A,F8.3,A,F8.3,A,F8.3)') 'C  LON=',lon,' LAT=',lat,&
       ' LFRAC=',lfrac
       WRITE (3, '(A,F8.2,A,A16,A,F8.3)') 'C  GROUND_TEMP=', GROUND_TEMP,&
-     & '   GROUND_TYPE=', GROUND_NAME,' W10=',wind10                                    
+     & '   GROUND_TYPE=', GROUND_NAME,' W10=',sqrt(wind10u**2+wind10v**2)
       IF (GROUND_TYPE (1:1) .EQ.'F' .OR. GROUND_TYPE (1:1) .EQ. 'O' ) THEN
       WRITE (3, '(A,2F9.4,A,F8.2)') 'C  GROUND_INDEX=', GROUND_INDEX, ' &
      &  SKY_TEMP=', SKY_TEMP                                            

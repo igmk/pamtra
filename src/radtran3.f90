@@ -93,14 +93,15 @@
 !  DOWN_RAD          REAL array    Downward radiances
 !                                    (NSTOKES,NUMMU,AZIORDER+1,NOUTLEVELS)
 
-SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
+SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
      SRC_CODE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU, GROUND_TEMP, &
      GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP, WAVELENGTH,   &
-     NUM_LAYERS, HEIGHT, TEMPERATURES, GAS_EXTINCT, SCAT_FILES,        &
+     NUM_LAYERS, HEIGHT, TEMPERATURES, GAS_EXTINCT,  &
      NOUTLEVELS, OUTLEVELS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD,     &
      DOWN_RAD,wind10u,wind10v,verbose)
 
   use kinds
+  use vars_atmosphere
 
   INTEGER NSTOKES, NUMMU, AZIORDER 
   INTEGER NUM_LAYERS, SRC_CODE 
@@ -115,8 +116,6 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   REAL(kind=dbl) UP_FLUX ( * ), DOWN_FLUX ( * ) 
   REAL(kind=dbl) UP_RAD ( * ), DOWN_RAD ( * ) 
   CHARACTER(1) QUAD_TYPE, DELTAM, GROUND_TYPE 
-  CHARACTER(64) SCAT_FILES ( * ) 
-
 
   INTEGER MAXV, MAXM, MAXLM, MAXLEG, MAXLAY, MAXSBUF, MAXDBUF 
   !      PARAMETER (MAXV=64, MAXM=4096, MAXLM=201*256)                    
@@ -155,7 +154,6 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   REAL(kind=dbl) TRANS (2 * MAXLM) 
   REAL(kind=dbl) SOURCE (2 * MAXV * (MAXLAY + 1) ) 
   REAL(kind=dbl) GND_RADIANCE (MAXV), SKY_RADIANCE (2 * MAXV) 
-  CHARACTER(64) SCAT_FILE 
   real(kind=dbl) wind10,wind10u,wind10v,windratio,windangle
   integer :: verbose,iquadrant
   REAL(KIND=dbl), PARAMETER :: quadcof  (4, 2  ) =      &
@@ -230,59 +228,46 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   ENDIF
   NLEGLIM = MAX (NLEGLIM, 1) 
 
-  if (verbose .gt. 1) print*, ".... done!"
-  !       Make all of the scattering matrices ahead of time               
-  !         and store them in memory                                      
-  SCAT_NUM = 0 
-  SCAT_FILE = '&&&' 
-  !           Loop through the layers                                     
-  DO LAYER = 1, NUM_LAYERS 
-     !                   Special case for a non-scattering layer             
-     IF (SCAT_FILES (LAYER) .EQ.' ') THEN 
-        SCAT_FILE = SCAT_FILES (LAYER) 
-        EXTINCT = 0.0 
-        SCATTER = 0.0 
-     ELSE 
-        !                   If there is a new scattering file then do it        
-        IF (SCAT_FILES (LAYER) .NE.SCAT_FILE) THEN 
-           SCAT_FILE = SCAT_FILES (LAYER) 
-           SCAT_NUM = SCAT_NUM + 1 
-           IF (SCAT_NUM * (AZIORDER + 1) * 2 * (NUMMU * NSTOKES) **    &
-                2.GT.MAXSBUF) THEN                                          
-              WRITE (*, '(1X,A,I3)') 'Scattering matrix buffer size exceeded.' 
-              STOP 
+if (verbose .gt. 1) print*, ".... done!"
+!       Make all of the scattering matrices ahead of time
+!         and store them in memory
+
+  SCAT_NUM = 0
+!           Loop through the layers
+  DO LAYER = 1, num_layers
+     if (rt3kexttot(layer) .gt. 0.0) then
+       SCAT_NUM = SCAT_NUM + 1
+       IF (SCAT_NUM * (AZIORDER + 1) * 2 * (NUMMU * NSTOKES) **2.GT.MAXSBUF) THEN
+          WRITE (*, '(1X,A,I3)') 'Scattering matrix buffer size exceeded.'
+          STOP
+       ENDIF
+       ! get scattering coefficients
+       CALL get_scat_coefs(layer, DELTAM, NUMMU, NUMLEGEN,LEGENDRE_COEF, EXTINCT, SCATTER)
+           IF (NUMLEGEN.GT.MAXLEG) THEN
+              WRITE (*, * ) 'Too many Legendre terms.'
+              STOP
            ENDIF
-           !                   Read scattering file in
-           CALL READ_SCAT_FILE (SCAT_FILE, DELTAM, NUMMU, NUMLEGEN,    &
-                LEGENDRE_COEF, EXTINCT, SCATTER)                            
-           IF (NUMLEGEN.GT.MAXLEG) THEN 
-              WRITE (*, * ) 'Too many Legendre terms.' 
-              STOP 
-           ENDIF
-           !                   Truncate the Legendre series to enforce normalization
-           IF (NUMLEGEN.GT.NLEGLIM) THEN 
+           ! Truncate the Legendre series to enforce normalization
+           IF (NUMLEGEN.GT.NLEGLIM) THEN
               WRITE ( * , * ) 'Truncating Legendre series for file:',  &
-                   SCAT_FILE, NUMLEGEN, NLEGLIM                             
-              NUMLEGEN = NLEGLIM 
+                   layer, NUMLEGEN, NLEGLIM
+              NUMLEGEN = NLEGLIM
            ENDIF
-           !                   Make the scattering matrix                          
-           CALL SCATTERING (NUMMU, AZIORDER, NSTOKES, MU_VALUES,       &
-                QUAD_WEIGHTS, NUMLEGEN, LEGENDRE_COEF, SCAT_NUM, SCATBUF)   
-           !                   Make the direct (solar) pseudo source               
-           IF (SRC_CODE.EQ.1.OR.SRC_CODE.EQ.3) THEN 
-              CALL DIRECT_SCATTERING (NUMMU, AZIORDER, NSTOKES,        &
-                   MU_VALUES, NUMLEGEN, LEGENDRE_COEF, DIRECT_MU, SCAT_NUM, &
-                   DIRECTBUF)                                               
-           ENDIF
-        ENDIF
+           ! Make the scattering matrix
+           CALL SCATTERING(NUMMU, AZIORDER, NSTOKES, MU_VALUES,       &
+                QUAD_WEIGHTS, NUMLEGEN, LEGENDRE_COEF, SCAT_NUM, SCATBUF)
+     else
+     ! Special case for a non-scattering layer
+        EXTINCT = 0.0
+        SCATTER = 0.0
      ENDIF
 
-     SCAT_NUMS (LAYER) = SCAT_NUM 
-     EXTINCTIONS (LAYER) = EXTINCT + MAX (GAS_EXTINCT (LAYER), 0.0D0) 
-     IF (EXTINCTIONS (LAYER) .GT.0.0) THEN 
-        ALBEDOS (LAYER) = SCATTER / EXTINCTIONS (LAYER) 
-     ELSE 
-        ALBEDOS (LAYER) = 0.0 
+     SCAT_NUMS (LAYER) = SCAT_NUM
+     EXTINCTIONS (LAYER) = EXTINCT + MAX (GAS_EXTINCT (LAYER), 0.0D0)
+     IF (EXTINCTIONS (LAYER) .GT.0.0) THEN
+        ALBEDOS (LAYER) = SCATTER / EXTINCTIONS (LAYER)
+     ELSE
+        ALBEDOS (LAYER) = 0.0
      ENDIF
   ENDDO
 

@@ -1,9 +1,10 @@
-subroutine hydrometeor_extinction(f,xstr,ystr,frq_str,file_ph)
+subroutine hydrometeor_extinction(f)
 
   use kinds
   use vars_atmosphere
-  use nml_params, only: verbose, tmp_path, active, passive
+  use nml_params, only: verbose, tmp_path, active, passive, dump_to_file
   use constants
+  use mod_io_strings
 
   implicit none
 
@@ -26,7 +27,6 @@ subroutine hydrometeor_extinction(f,xstr,ystr,frq_str,file_ph)
 
   real(kind=dbl), dimension(2) :: P11, ang
 
-
   real(kind=dbl), dimension(nlyr) :: &
        kextcloud,  &
        kextrain,   &
@@ -37,15 +37,16 @@ subroutine hydrometeor_extinction(f,xstr,ystr,frq_str,file_ph)
 
   real(kind=dbl) :: threshold ! threshold value for hydrometeor extinction as mass mixing ratio
 
-  character(2) :: nzstr
-
-  character(3), intent(in) :: xstr, ystr
-
-  character(6), intent(in) :: frq_str
-
-  character(64), intent(out) :: file_PH(nlyr)
-
   if (verbose .gt. 1) print*, 'Entering hydrometeor_extinction'
+
+  if (dump_to_file) file_ph = ''
+      ! INITIALIZATION OF LEGENDRE COEFFICIENTS
+
+  nlegen = 0
+  legen   = 0.d0
+  legen2  = 0.d0
+  legen3  = 0.d0
+  legen4  = 0.d0
 
   threshold = 1.d-5   ! [kg/kg]
 
@@ -54,19 +55,6 @@ subroutine hydrometeor_extinction(f,xstr,ystr,frq_str,file_ph)
   grid_z: do nz = 1, nlyr  ! loop over all layers
 
       if (verbose .gt. 1) print*, 'Layer: ', nz
-
-      write(nzstr, '(i2.2)') nz
-
-      ! INITIALIZATION OF LEGENDRE COEFFICIENTS  
-
-      nlegen(nz) = 0
-      legen   = 0.d0
-      legen2  = 0.d0
-      legen3  = 0.d0
-      legen4  = 0.d0
-
-      !strings with blank spaces            
-      FILE_PH(nz) = ''
 
 !---------------------------salinity------------------------------
 ! calculation of the single scattering properties
@@ -221,23 +209,21 @@ subroutine hydrometeor_extinction(f,xstr,ystr,frq_str,file_ph)
 
       !   summing up the Legendre coefficient                                 
 
-      if (kexttot(nz) .le. 0.0 .or.    &
-		  salbtot(nz) .le. 0.0) then
-		FILE_PH(nz) = ''
-	!    writing no file                                                                        
-      else ! there are hydrometeor present : a PH file is needed
+      if (kexttot(nz) .gt. 0.0 .or.    &
+		  salbtot(nz) .gt. 0.0) then ! there are hydrometeor present : a PH file is needed
+		if (dump_to_file) then
+  	      write(nzstr, '(i2.2)') nz
+	  	  FILE_PH(nz) = tmp_path(:len_trim(tmp_path))//'/PHx'//xstr//'y'//ystr//'lev'//Nzstr//'f'//frq_str
 
-		FILE_PH(nz) = tmp_path(:LEN(trim(tmp_path)))//'/PHx'//xstr//'y'//ystr//'lev'//Nzstr//'f'//frq_str
-
-		open(unit=21, file=file_PH(nz), STATUS='unknown', &
-	      form='FORMATTED')
-		write(21,*) kexttot(nz), '   EXINCTION'
-		write(21,*) kexttot(nz) * salbtot(nz), '   SCATTERING'
-		write(21,*) salbtot(nz), '   SINGLE SCATTERING ALBEDO'
-		write(21,*) Nlegen(nz) - 1, '      DEGREE OF LEGENDRE SERIES'
+          open(unit=21, file=file_PH(nz), STATUS='unknown', &
+	        form='FORMATTED')
+		  write(21,*) kexttot(nz), '   EXINCTION'
+		  write(21,*) kexttot(nz) * salbtot(nz), '   SCATTERING'
+		  write(21,*) salbtot(nz), '   SINGLE SCATTERING ALBEDO'
+		  write(21,*) Nlegen(nz) - 1, '      DEGREE OF LEGENDRE SERIES'
+        end if
 
 		do jj = 1, Nlegen(nz)
-
 	    	legen (nz,jj) = (legencw (jj) * salbcw * kextcw + legenrr ( &
 				jj) * salbrr * kextrr + legenci (jj) * salbci * kextci + &
 			legensn (jj) * salbsn * kextsn + legengr (jj) * salbgr * &
@@ -260,18 +246,20 @@ subroutine hydrometeor_extinction(f,xstr,ystr,frq_str,file_ph)
 				* kextci + legen4sn (jj) * salbsn * kextsn + legen4gr (  &
 				jj) * salbgr * kextgr) / (salbtot(nz) * kexttot &
 				(nz))
-
-	   		write (21, 1005) jj - 1, legen (nz,jj), legen2 (nz,jj),        &
-				legen3(nz,jj), legen4(nz,jj), legen(nz,jj), legen3(nz,jj)
+		if (dump_to_file) then
+		  write (21, 1005) jj - 1, legen (nz,jj), legen2 (nz,jj),        &
+			legen3(nz,jj), legen4(nz,jj), legen(nz,jj), legen3(nz,jj)
+		end if
 	    	g_coeff (nz) = legen (nz,2) / 3.0d0
-1005        format  (i3,6(1x,f10.7))
 
 	end do ! end of cycle over Legendre coefficient
-	close(21)
+    if (dump_to_file) close(21)
       end if
   end do grid_z !end of cycle over the vertical layers
 
   if (verbose .gt. 1) print*, 'Exiting hydrometeor_extinction'
+
+1005        format  (i3,6(1x,f10.7))
 
   return
 

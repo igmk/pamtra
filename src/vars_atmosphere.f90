@@ -7,8 +7,10 @@ implicit none
 save
 
 integer :: nlyr
+integer :: ngridx, ngridy
 
 integer, allocatable, dimension(:) :: nlegen
+integer, allocatable, dimension(:) :: rt3nlegen
 			  
 real(kind=dbl), allocatable, dimension(:) :: relhum_lev,&
                                              press_lev, &
@@ -30,7 +32,9 @@ real(kind=dbl), allocatable, dimension(:) :: cwc_q, &
 
  real(kind=dbl), allocatable, dimension(:) :: kextatmo, &
                                   		      kexttot, &
+                                  		      rt3kexttot,&
                                       		  salbtot, &
+                                      		  rt3salbtot,&
                                       		  back, &
                                       		  g_coeff
 
@@ -38,6 +42,11 @@ real(kind=dbl), allocatable, dimension(:) :: cwc_q, &
 												legen2, &
 												legen3, &
 												legen4
+
+ real(kind=dbl), allocatable, dimension(:,:) :: rt3legen, &
+												rt3legen2, &
+												rt3legen3, &
+												rt3legen4
 
   integer :: alloc_status
 
