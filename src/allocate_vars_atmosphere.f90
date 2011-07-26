@@ -43,6 +43,11 @@ integer :: i,j
   allocate(rt3legen3(nlyr,200), stat=alloc_status)
   allocate(rt3legen4(nlyr,200), stat=alloc_status)
 
+! set them to zero, just in case they are not calculated but used for Ze/PIA calculation
+kexttot(:) = 0d0
+kextatmo(:) = 0d0
+back(:) = 0d0
+
   allocate(profiles(ngridx,ngridy),stat=alloc_status)
   do i = 1, ngridx
      do j = 1, ngridy

@@ -198,7 +198,7 @@ subroutine hydrometeor_extinction(f)
       if (kexttot(nz) .le. 0.) then 
 		salbtot(nz) = 0.0
       else 
-		salbtot(nz) = (salbcw * kextcw + salbrr *       &
+	      salbtot(nz) = (salbcw * kextcw + salbrr *       &
 	      kextrr + salbci * kextci + salbsn * kextsn + salbgr *    &
 	      kextgr) / kexttot(nz)                           
       endif

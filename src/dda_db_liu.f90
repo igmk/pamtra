@@ -111,8 +111,7 @@ subroutine dda_db_liu(f, t, npt, mindex, rad1, rad2, numrad, maxleg,   &
       end do 
     end if 
   end do 
-								    
-								    
+ 
   !   multiply the sums by the integration delta and other constants
   !   put quadrature weights in angular array for later usage    
   if (numrad .eq. 0) delrad = 1.0d0 
