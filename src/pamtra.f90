@@ -141,11 +141,11 @@ program pamtra
 
   integer, allocatable, dimension(:,:) :: ics
 
-  ! name list declarations
+ ! name list declarations
  
   namelist / verbose_mode / verbose
   namelist / inoutput_mode / write_nc, input_path, output_path, tmp_path, dump_to_file
-  namelist / output / obs_height,units,outpol
+  namelist / output / obs_height,units,outpol,creator
   namelist / run_mode / active, passive
   namelist / surface_params / ground_type,salinity, emissivity
   namelist / gas_abs_mod / lgas_extinction, gas_mod
@@ -226,8 +226,10 @@ end if
 	! now allocate variables
 
 	allocate(Ze(ngridx, ngridy,nlyr))
-	allocate(PIA_hydro(ngridx,ngridy,nlyr))
-	allocate(PIA_atmo(ngridx,ngridy,nlyr))
+	allocate(PIA_hydro_bottomup(ngridx,ngridy,nlyr))
+	allocate(PIA_atmo_bottomup(ngridx,ngridy,nlyr))
+	allocate(PIA_hydro_topdown(ngridx,ngridy,nlyr))
+	allocate(PIA_atmo_topdown(ngridx,ngridy,nlyr))
 	allocate(hgt(ngridx, ngridy,nlyr))
 
 	allocate(ics(ngridx, ngridy))
@@ -309,6 +311,7 @@ end if
     allocate(flux_up(nstokes,noutlevels,ngridy,ngridx),flux_down(nstokes,noutlevels,ngridy,ngridx))
     allocate(tb(nstokes,2*nummu,noutlevels,ngridy,ngridx))
   end if
+
 
   !                                                                       
   !     This GCE model format does not have all the fields expected by    
@@ -446,7 +449,17 @@ end if
 
 
 	if (active) then
-		call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),Ze(nx,ny,:),PIA_atmo(nx,ny,:),PIA_hydro(nx,ny,:))
+		call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),Ze(nx,ny,:),PIA_atmo_bottomup(nx,ny,:),PIA_hydro_bottomup(nx,ny,:),&
+			PIA_atmo_topdown(nx,ny,:),PIA_hydro_topdown(nx,ny,:))
+	end if
+
+
+	if (write_nc) then
+		!      Output integrated quantities
+		call collect_boundary_output(ground_temp,lon,lat,lfrac,profiles(nx,ny)%wind_10u,profiles(nx,ny)%wind_10v,&
+			profiles(nx,ny)%iwv, profiles(nx,ny)%cwp,profiles(nx,ny)%iwp,profiles(nx,ny)%rwp,profiles(nx,ny)%swp, &
+			profiles(nx,ny)%gwp,profiles(nx,ny)%isamp,profiles(nx,ny)%jsamp,nx,ny)
+
 	end if
 
 ! find the output level
@@ -471,16 +484,20 @@ end if
 
       OUTLEVELS(2) = nlyr+1    ! this is the bottom
 
-      if (verbose .gt. 1) print*, nx,ny, "Entering rt3 ...."
-  
-      call RT3(NSTOKES, NUMMU, AZIORDER, MU_VALUES, src_code,     &
-	    out_file_pas, QUAD_TYPE, deltam, DIRECT_FLUX,     &
-	    DIRECT_MU, GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO,         &
-	    GROUND_INDEX, SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,          &
-	    NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,&
-	    nx,ny,write_nc,verbose)
+	if (passive .eqv. .true.) then
 
-      if (verbose .gt. 1) print*, nx,ny, "....rt3 finished"
+	if (verbose .gt. 1) print*, nx,ny, "Entering rt3 ...."
+	
+	call RT3(NSTOKES, NUMMU, AZIORDER, MU_VALUES, src_code,     &
+		out_file_pas, QUAD_TYPE, deltam, DIRECT_FLUX,     &
+		DIRECT_MU, GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO,         &
+		GROUND_INDEX, SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,          &
+		NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,&
+		nx,ny,write_nc,verbose)
+
+	if (verbose .gt. 1) print*, nx,ny, "....rt3 finished"
+
+	end if
 
      end do grid_x
   end do grid_y

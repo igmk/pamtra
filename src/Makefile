@@ -17,7 +17,8 @@ OBJECTS=mod_fastem4_coef.o mod_io_strings.o kinds.o nml_params.o constants.o pro
 	equcom.o land_emis.o equare.o diecon.o emissivity_correction.o ../external/scatdb.o dda_db_liu.o dielec_water.o ref_water.o \
 	ref_ice.o e_sat_gg_water.o spec2abs.o hydrometeor_extinction.o cloud_ssp.o ice_ssp.o rain_ssp.o snow_ssp.o grau_ssp.o legendre2phasefunction.o \
 	vars_output.o collect_output.o calculate_active.o write_nc_results.o fastem4.o specular_surface.o error_msg.o formatted_frqstr.o \
-	get_scat_coefs.o dump_profile.o
+	get_scat_coefs.o dump_profile.o collect_boundary_output.o
+
 
 BIN=pamtra
 

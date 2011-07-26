@@ -2,7 +2,7 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
       QUAD_TYPE, GROUND_TEMP, GROUND_TYPE, &
       WAVELENGTH, UNITS, OUTPOL,NOUTLEVELS,        &
       OUTLEVELS, NUMAZIMUTHS, UP_FLUX, DOWN_FLUX, UP_RAD,    &
-      DOWN_RAD,lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,model_i,model_j,a,b)
+      DOWN_RAD,a,b)
 
   use kinds
   use constants, only: pi
@@ -23,16 +23,18 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
       CHARACTER(32) QUAD_NAME, UNITS_NAME, GROUND_NAME 
       INTEGER I, J, K, L, LI, M, N 
       REAL OUT (4), PHI, PHID 
-                                                                        
-      integer :: model_i, model_j
-      real lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp
+
+
+!                                                             
+!       integer :: model_i, model_j
+!       real lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp
                                                                         
       N = NUMMU * (AZIORDER + 1) * NOUTLEVELS 
       CALL CONVERT_OUTPUT(UNITS, OUTPOL, NSTOKES, N, WAVELENGTH, 0,UP_RAD)
       CALL CONVERT_OUTPUT(UNITS, OUTPOL, NSTOKES, N, WAVELENGTH, 0,DOWN_RAD)
       CALL CONVERT_OUTPUT(UNITS, OUTPOL, NSTOKES, NOUTLEVELS,WAVELENGTH, 1, UP_FLUX)                                           
       CALL CONVERT_OUTPUT(UNITS, OUTPOL, NSTOKES, NOUTLEVELS,WAVELENGTH, 1, DOWN_FLUX)                                         
-                                                                        
+                                                         
       NUMAZI = 2 * AZIORDER + 1 
       IF (NSTOKES.LE.2) NUMAZI = AZIORDER + 1 
       QUAD_NAME = 'GAUSSIAN' 
@@ -46,22 +48,6 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
       IF (GROUND_TYPE.EQ.'F') GROUND_NAME = 'FRESNEL' 
                                                                        
 
-!      Output integrated quantities
-
-      is(b,a) = model_i
-      js(b,a) = model_j
-      lons(b,a) = lon
-      lats(b,a) = lat
-      lfracs(b,a) = lfrac
-      t_g(b,a) = GROUND_TEMP
-      w10u(b,a) = wind10u
-      w10v(b,a) = wind10v
-      iwvs(b,a) = iwv
-      cwps(b,a) = cwp
-      iwps(b,a) = iwp
-      rwps(b,a) = rwp
-      swps(b,a) = swp
-      gwps(b,a) = gwp
 
 
                                                                         
@@ -70,8 +56,8 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
 !   !               output fluxes at this level                             
 ! 	write (3, form1) height(li), 0., - 2.0, (sngl(up_flux (i, l) ),i = 1, nstokes)                                                   
 ! 	write (3, form1) height(li), 0., + 2.0, (sngl(down_flux (i, l) ), i = 1, nstokes)                                                
-
 	do i = 1, nstokes
+
 !	  flux_up(a,b,l,i) = sngl(up_flux(i, l))
 	  flux_up(i,l,b,a) = sngl(up_flux(i, l))
 !	  flux_down(a,b,l,i) = sngl(down_flux(i, l))
@@ -125,7 +111,6 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
 	  end do 
 	end do 
       end do 
-
   return
 
 end subroutine collect_output

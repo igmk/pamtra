@@ -4,7 +4,7 @@ bin
 pamtra
 .cproject
 .project
-run_params.nml
+*.nml
 output/
 profiles/
 *~
