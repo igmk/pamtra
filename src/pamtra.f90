@@ -360,6 +360,7 @@ end if
     allocate(tb(nstokes,2*nummu,noutlevels,ngridy,ngridx))
   end if
 
+
   !                                                                       
   !     This GCE model format does not have all the fields expected by    
   !     the radiative transfer code (i.e. total pressure, and water vapor 
@@ -527,6 +528,15 @@ end if
 		call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),Ze(nx,ny,:),PIA_atmo_bottomup(nx,ny,:),PIA_hydro_bottomup(nx,ny,:),&
 			PIA_atmo_topdown(nx,ny,:),PIA_hydro_topdown(nx,ny,:))
 				  
+	end if
+
+
+	if (write_nc) then
+		!      Output integrated quantities
+		call collect_boundary_output(ground_temp,lon,lat,lfrac,profiles(nx,ny)%wind_10u,profiles(nx,ny)%wind_10v,&
+			profiles(nx,ny)%iwv, profiles(nx,ny)%cwp,profiles(nx,ny)%iwp,profiles(nx,ny)%rwp,profiles(nx,ny)%swp, &
+			profiles(nx,ny)%gwp,profiles(nx,ny)%isamp,profiles(nx,ny)%jsamp,nx,ny)
+
 	end if
 
 ! find the output level

@@ -88,7 +88,7 @@ end if
   call check(nf90_put_att(ncid, wind10vVarID, "units", "m/s"))
   call check(nf90_put_att(ncid, wind10vVarID, "missing_value", -9999))
 
-if (passive) then
+
   call check(nf90_def_var(ncid,'iwv', nf90_float,dim2d, iwvVarID))
   call check(nf90_put_att(ncid, iwvVarID, "units", "kg/m^2"))
   call check(nf90_put_att(ncid, iwvVarID, "missing_value", -9999))
@@ -112,7 +112,7 @@ if (passive) then
   call check(nf90_def_var(ncid,'gwp', nf90_float,dim2d, gwpVarID))
   call check(nf90_put_att(ncid, gwpVarID, "units", "kg/m^2"))
   call check(nf90_put_att(ncid, gwpVarID, "missing_value", -9999))
-end if
+
 
 if (active) then
   dim3d = (/dlayerID,dlatID,dlonID/)
@@ -171,13 +171,13 @@ end if
   call check(nf90_put_var(ncid, t_gVarID, t_g))
   call check(nf90_put_var(ncid, wind10uVarID, w10u))
   call check(nf90_put_var(ncid, wind10vVarID, w10v))
-if (passive) then
   call check(nf90_put_var(ncid, iwvVarID, iwvs))
   call check(nf90_put_var(ncid, cwpVarID, cwps))
   call check(nf90_put_var(ncid, iwpVarID, iwps))
   call check(nf90_put_var(ncid, rwpVarID, rwps))
   call check(nf90_put_var(ncid, swpVarID, swps))
   call check(nf90_put_var(ncid, gwpVarID, gwps))
+if (passive) then
   call check(nf90_put_var(ncid, flux_upVarID, flux_up))
   call check(nf90_put_var(ncid, flux_downVarID, flux_down))
   call check(nf90_put_var(ncid, tbVarID, tb))
