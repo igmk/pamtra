@@ -14,6 +14,7 @@ function eps_water(s,T,f)
 ! 
 ! References:
 !      Maetzler 2006: Thermal microwave radiation: Application for remote sensing
+!      section 5.2.5.4
 
   use kinds 
 
@@ -74,3 +75,14 @@ function eps_water(s,T,f)
   return
 
 end function eps_water
+
+!! refractive index
+!  ref_wat = sqrt(eps_water)
+!   refre = real(ref_wat)
+!   refim = aimag(ref_wat)
+
+  ! absind  absorptive index 
+  ! abscof  absorption coefficient    [1/m]
+
+!   absind = refim/refre
+!   abscoef = (4*pi*refim*f*1.e9/c)

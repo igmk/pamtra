@@ -1,13 +1,13 @@
 subroutine double_moments( &
 	rohydro,ntot,nu_mass,mu_mass,alpha_dm,beta_dm, &		!IN
-	a_rad,lambda_rad,nu_rad,mu_rad,alpha_md,beta_md)		!OUT
+	a_dia,lambda_dia,nu_dia,mu_dia,alpha_md,beta_md)		!OUT
 
   !This routine convert the parameters of a drop size distribution as a function of MASS F(m)
   !		F(m)=A_mass * m ^ Nu_mass * exp(- Lambda_mass * m ^ Mu_mass)
-  !to the parameters of a drop size distribution as a function of RADIUS f(r)
-  ! 	F(r)=A_rad * r ^ Nu_rad * exp(- Lambda_rad * r ^ Mu_rad)
+  !to the parameters of a drop size distribution as a function of diameter f(d)
+  ! 	F(r)=A_dia * r ^ Nu_dia * exp(- Lambda_dia * d ^ Mu_dia)
   !
-  !As a reference for conversion from MASS to DIAMETER and from DIAMETER to RADIUS see table.2 and eq.51 in
+  !As a reference for conversion from MASS to DIAMETER see table.2 and eq.51 in
   !GW Petty and W Huang JAS, 2011
   !
   !As a reference for the calculation of a and lambda for F(m) see appendix.a Seifert and Beheng, 2006, MAP
@@ -21,10 +21,10 @@ subroutine double_moments( &
   !beta_dm		: beta parameter for diameter-mass relation
   !
   !OUTPUT
-  !a_rad		: A parameter of F(r)							[#/m^(nu_rad+4)]
-  !lambda_rad	: Lambda parameter of F(r)						[m^(-mu_rad)]
-  !nu_rad		: Nu parameter of F(r)
-  !mu_rad		: Mu parameter of F(r)
+  !a_dia		: A parameter of F(d)							[#/m^(nu_dia+4)]
+  !lambda_dia	: Lambda parameter of F(d)						[m^(-mu_dia)]
+  !nu_dia		: Nu parameter of F(d)
+  !mu_dia		: Mu parameter of F(d)
   !alpha_md		: alpha parameter for mass-diameter relation	[m*kb^(-beta_md)]
   !beta_md		: beta parameter for mass-diameter relation
 
@@ -33,12 +33,11 @@ use kinds
     implicit none
 
 	real (kind=dbl),intent(in)			:: 		rohydro,ntot,nu_mass,mu_mass,alpha_dm,beta_dm
-	real (kind=dbl),intent(out)			::		a_rad,lambda_rad,nu_rad,mu_rad, alpha_md, beta_md
+	real (kind=dbl),intent(out)			::		a_dia,lambda_dia,nu_dia,mu_dia, alpha_md, beta_md
 
 	real (kind=dbl)					::		a_temp, lambda_temp
 	real (kind=dbl)					::		gammln
 	real (kind=dbl)					::		arg1, arg2, gamma1, gamma2
-	real (kind=dbl)					::		a_diam, lambda_diam
 
 	arg1=(nu_mass+1.d0)/mu_mass
 	arg2=(nu_mass+2.d0)/mu_mass
@@ -54,19 +53,10 @@ use kinds
 	alpha_md=(1.d0/alpha_dm)**beta_md
 
 !a, lambda, nu, mu from the drop size distribution as a function of mass F(m) to DIAMETER F(D)
-	a_diam=a_temp*alpha_md**(nu_mass+1.)*beta_md
-	lambda_diam=lambda_temp*alpha_md**(mu_mass)
-	mu_rad=mu_mass*beta_md
-	nu_rad=beta_md*(nu_mass+1.d0)-1.d0
-
-!Now from the drop size distribution as a function of diameter F(D) to RADIUS F(r)
-	a_rad=a_diam*2.**(nu_rad+1)
-	lambda_rad=lambda_diam*2.**(mu_rad)
-	alpha_md=alpha_md*2.**beta_md
-!!nu, mu, beta do not change from F(D) to F(r)
-
-
-
+	a_dia=a_temp*alpha_md**(nu_mass+1.)*beta_md
+	lambda_dia=lambda_temp*alpha_md**(mu_mass)
+	mu_dia=mu_mass*beta_md
+	nu_dia=beta_md*(nu_mass+1.d0)-1.d0
 
 	return
 end subroutine double_moments

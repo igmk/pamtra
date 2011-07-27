@@ -1,4 +1,4 @@
-subroutine mie(f, mindex, rad1, rad2, numrad, maxleg,   &
+subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
   ad, bd, alpha, gamma, lphase_flag, extinction, albedo, back_scatt,  &
   nlegen, legen, legen2, legen3, legen4, aerodist)
                   
@@ -11,12 +11,12 @@ subroutine mie(f, mindex, rad1, rad2, numrad, maxleg,   &
 
   implicit none
 
-  integer :: maxleg, nlegen, numrad 
+  integer :: maxleg, nlegen, nbins
   logical :: lphase_flag 
 
   real(kind=dbl), intent(in) :: f  ! frequency [GHz]
 
-  real(kind=dbl) :: wavelength, rad1, rad2 
+  real(kind=dbl) :: wavelength, dia1, dia2
   real(kind=dbl) :: ad, bd, alpha, gamma 
   complex(kind=dbl) :: mindex 
   real(kind=dbl) :: extinction, albedo, back_scatt, &
@@ -25,7 +25,7 @@ subroutine mie(f, mindex, rad1, rad2, numrad, maxleg,   &
   real(kind=dbl), parameter :: pi = 3.14159265358979d0
   integer :: nterms, nquad, nmie, nleg 
   integer :: i, l, m, ir
-  real(kind=dbl) :: x, delrad, radius, ndens, tmp, tot_mass
+  real(kind=dbl) :: x, del_d, diameter, ndens, tmp, tot_mass
   real(kind=dbl) :: qext, qscat, qback, scatter 
   real(kind=dbl) :: distribution 
   real(kind=dbl) :: mu(maxn), wts(maxn) 
@@ -42,7 +42,7 @@ subroutine mie(f, mindex, rad1, rad2, numrad, maxleg,   &
 								    
   ! find the maximum number of terms required in the mie series,
   msphere = mindex
-  x = 2.0d0 * pi * rad2 / wavelength
+  x = pi * dia2 / wavelength
   nterms = 0 
   call miecalc(nterms, x, msphere, a, b) ! miecalc returns nterms
   nlegen = 2 * nterms 
@@ -63,24 +63,23 @@ subroutine mie(f, mindex, rad1, rad2, numrad, maxleg,   &
     sump4(i) = 0.0d0 
   end do 
 								    
-  !   integration loop over radius of spheres 
-  if (numrad .gt. 0) delrad = (rad2 - rad1) / numrad
+  !   integration loop over diameter of spheres
+  if (nbins .gt. 0) del_d = (dia2 - dia1) / nbins
   tot_mass = 0.
-  do ir = 1, numrad+1 
-    radius = rad1 + (ir - 1) * delrad
-    ndens = distribution(ad, bd, alpha, gamma, radius, aerodist)  ! number density
-    if ((ir .eq. 1 .or. ir .eq. numrad+1) .and. numrad .gt. 0) then 
-	ndens = 0.5 * ndens 
+  do ir = 1, nbins+1
+    diameter = dia1 + (ir - 1) * del_d
+    ndens = distribution(ad, bd, alpha, gamma, diameter, aerodist)  ! number density
+    if ((ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
+		ndens = 0.5 * ndens
     end if 
-    tot_mass = tot_mass +0.038*(2.*radius)**2*ndens*2.*delrad
-    x = 2.0d0 * pi * radius / wavelength ! size parameter
+    x = pi * diameter / wavelength ! size parameter
     nmie = 0 
     call miecalc(nmie, x, msphere, a, b) ! calculate a and b
     call miecross(nmie, x, a, b, qext, qscat, qback)
     ! sum up extinction, scattering, and backscattering as cross-sections/pi
-    sumqe = sumqe + qext * ndens * radius**2 
-    sumqs = sumqs + qscat * ndens * radius**2 
-    sumqback = sumqback + qback * ndens * radius**2 
+    sumqe = sumqe + qext * ndens * (diameter/2.)**2
+    sumqs = sumqs + qscat * ndens * (diameter/2.)**2
+    sumqback = sumqback + qback * ndens * (diameter/2.)**2
     if (lphase_flag) then 
       nmie = min(nmie, nterms) 
       do i = 1, nquad 
@@ -95,17 +94,17 @@ subroutine mie(f, mindex, rad1, rad2, numrad, maxleg,   &
 
   !   multiply the sums by the integration delta and other constants
   !   put quadrature weights in angular array for later usage    
-  if (numrad .eq. 0) delrad = 1.0d0 
+  if (nbins .eq. 0) del_d = 1.0d0
 
-  extinction = pi * sumqe * delrad      ! extinction [1/m]
-  scatter = pi * sumqs * delrad         ! scattering  [1/m]
-  back_scatt = pi * sumqback * delrad   ! back scattering [1/m]
-  albedo = scatter / extinction         ! single scattering albedo
+  extinction = pi * sumqe * del_d      ! extinction [1/m]
+  scatter = pi * sumqs * del_d         ! scattering  [1/m]
+  back_scatt = pi * sumqback * del_d   ! back scattering [1/m]
+  albedo = scatter / extinction        ! single scattering albedo
 								    
   ! if the phase function is not desired then leave now           
   if ( .not. lphase_flag) return 
 								    
-  tmp = (wavelength**2 / (pi * scatter)) * delrad 
+  tmp = (wavelength**2 / (pi * scatter)) * del_d
   do i = 1, nquad 
     sump1(i) = tmp * sump1(i) * wts(i) 
     sump2(i) = tmp * sump2(i) * wts(i) 

@@ -4,3 +4,11 @@ bin
 pamtra
 .cproject
 .project
+*.nml
+output/
+profiles/
+data/
+*~
+.nfs*
+run_LMRT*
+

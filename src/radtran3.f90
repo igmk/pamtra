@@ -93,14 +93,15 @@
 !  DOWN_RAD          REAL array    Downward radiances
 !                                    (NSTOKES,NUMMU,AZIORDER+1,NOUTLEVELS)
 
-SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
+SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
      SRC_CODE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU, GROUND_TEMP, &
      GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP, WAVELENGTH,   &
-     NUM_LAYERS, HEIGHT, TEMPERATURES, GAS_EXTINCT, SCAT_FILES,        &
+     NUM_LAYERS, HEIGHT, TEMPERATURES, GAS_EXTINCT,  &
      NOUTLEVELS, OUTLEVELS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD,     &
-     DOWN_RAD,wind10,verbose)      
+     DOWN_RAD,wind10u,wind10v,verbose)
 
   use kinds
+  use vars_atmosphere
 
   INTEGER NSTOKES, NUMMU, AZIORDER 
   INTEGER NUM_LAYERS, SRC_CODE 
@@ -115,8 +116,6 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   REAL(kind=dbl) UP_FLUX ( * ), DOWN_FLUX ( * ) 
   REAL(kind=dbl) UP_RAD ( * ), DOWN_RAD ( * ) 
   CHARACTER(1) QUAD_TYPE, DELTAM, GROUND_TYPE 
-  CHARACTER(64) SCAT_FILES ( * ) 
-
 
   INTEGER MAXV, MAXM, MAXLM, MAXLEG, MAXLAY, MAXSBUF, MAXDBUF 
   !      PARAMETER (MAXV=64, MAXM=4096, MAXLM=201*256)                    
@@ -155,12 +154,17 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   REAL(kind=dbl) TRANS (2 * MAXLM) 
   REAL(kind=dbl) SOURCE (2 * MAXV * (MAXLAY + 1) ) 
   REAL(kind=dbl) GND_RADIANCE (MAXV), SKY_RADIANCE (2 * MAXV) 
-  CHARACTER(64) SCAT_FILE 
-  real(kind=dbl) wind10
-  integer :: verbose
+  real(kind=dbl) wind10,wind10u,wind10v,windratio,windangle
+  integer :: verbose,iquadrant
+  REAL(KIND=dbl), PARAMETER :: quadcof  (4, 2  ) =      &
+    & Reshape((/0.0_dbl, 1.0_dbl, 1.0_dbl, 2.0_dbl, 1.0_dbl,  - 1.0_dbl, 1.0_dbl,  - 1.0_dbl/), (/4, 2/))
 
+  ! variables needed for fastem4
 
-  if (verbose .gt. 0) print*, "Entered radtran ...."
+  real(kind=dbl) :: rel_azimuth, salinity
+  real(kind=dbl), dimension(nummu) :: transmittance
+
+  if (verbose .gt. 1) print*, "Entered radtran ...."
 
   IF (SRC_CODE.EQ.1.OR.SRC_CODE.EQ.3) THEN 
      IF (GROUND_TYPE.NE.'L') THEN 
@@ -199,7 +203,7 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   ENDIF
 
   !   Make the desired quadrature abscissas and weights           
-  if (verbose .gt. 0) print*, "Make the desired quadrature abscissas and weights ...."
+  if (verbose .gt. 1) print*, "Make the desired quadrature abscissas and weights ...."
 
   IF (QUAD_TYPE (1:1) .EQ.'D') THEN 
      CALL DOUBLE_GAUSS_QUADRATURE (NUMMU, MU_VALUES, QUAD_WEIGHTS) 
@@ -224,59 +228,46 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   ENDIF
   NLEGLIM = MAX (NLEGLIM, 1) 
 
-  if (verbose .gt. 0) print*, ".... done!"
-  !       Make all of the scattering matrices ahead of time               
-  !         and store them in memory                                      
-  SCAT_NUM = 0 
-  SCAT_FILE = '&&&' 
-  !           Loop through the layers                                     
-  DO LAYER = 1, NUM_LAYERS 
-     !                   Special case for a non-scattering layer             
-     IF (SCAT_FILES (LAYER) .EQ.' ') THEN 
-        SCAT_FILE = SCAT_FILES (LAYER) 
-        EXTINCT = 0.0 
-        SCATTER = 0.0 
-     ELSE 
-        !                   If there is a new scattering file then do it        
-        IF (SCAT_FILES (LAYER) .NE.SCAT_FILE) THEN 
-           SCAT_FILE = SCAT_FILES (LAYER) 
-           SCAT_NUM = SCAT_NUM + 1 
-           IF (SCAT_NUM * (AZIORDER + 1) * 2 * (NUMMU * NSTOKES) **    &
-                2.GT.MAXSBUF) THEN                                          
-              WRITE (*, '(1X,A,I3)') 'Scattering matrix buffer size exceeded.' 
-              STOP 
+if (verbose .gt. 1) print*, ".... done!"
+!       Make all of the scattering matrices ahead of time
+!         and store them in memory
+
+  SCAT_NUM = 0
+!           Loop through the layers
+  DO LAYER = 1, num_layers
+     if (rt3kexttot(layer) .gt. 0.0) then
+       SCAT_NUM = SCAT_NUM + 1
+       IF (SCAT_NUM * (AZIORDER + 1) * 2 * (NUMMU * NSTOKES) **2.GT.MAXSBUF) THEN
+          WRITE (*, '(1X,A,I3)') 'Scattering matrix buffer size exceeded.'
+          STOP
+       ENDIF
+       ! get scattering coefficients
+       CALL get_scat_coefs(layer, DELTAM, NUMMU, NUMLEGEN,LEGENDRE_COEF, EXTINCT, SCATTER)
+           IF (NUMLEGEN.GT.MAXLEG) THEN
+              WRITE (*, * ) 'Too many Legendre terms.'
+              STOP
            ENDIF
-           !                   Read scattering file in
-           CALL READ_SCAT_FILE (SCAT_FILE, DELTAM, NUMMU, NUMLEGEN,    &
-                LEGENDRE_COEF, EXTINCT, SCATTER)                            
-           IF (NUMLEGEN.GT.MAXLEG) THEN 
-              WRITE (*, * ) 'Too many Legendre terms.' 
-              STOP 
-           ENDIF
-           !                   Truncate the Legendre series to enforce normalization
-           IF (NUMLEGEN.GT.NLEGLIM) THEN 
+           ! Truncate the Legendre series to enforce normalization
+           IF (NUMLEGEN.GT.NLEGLIM) THEN
               WRITE ( * , * ) 'Truncating Legendre series for file:',  &
-                   SCAT_FILE, NUMLEGEN, NLEGLIM                             
-              NUMLEGEN = NLEGLIM 
+                   layer, NUMLEGEN, NLEGLIM
+              NUMLEGEN = NLEGLIM
            ENDIF
-           !                   Make the scattering matrix                          
-           CALL SCATTERING (NUMMU, AZIORDER, NSTOKES, MU_VALUES,       &
-                QUAD_WEIGHTS, NUMLEGEN, LEGENDRE_COEF, SCAT_NUM, SCATBUF)   
-           !                   Make the direct (solar) pseudo source               
-           IF (SRC_CODE.EQ.1.OR.SRC_CODE.EQ.3) THEN 
-              CALL DIRECT_SCATTERING (NUMMU, AZIORDER, NSTOKES,        &
-                   MU_VALUES, NUMLEGEN, LEGENDRE_COEF, DIRECT_MU, SCAT_NUM, &
-                   DIRECTBUF)                                               
-           ENDIF
-        ENDIF
+           ! Make the scattering matrix
+           CALL SCATTERING(NUMMU, AZIORDER, NSTOKES, MU_VALUES,       &
+                QUAD_WEIGHTS, NUMLEGEN, LEGENDRE_COEF, SCAT_NUM, SCATBUF)
+     else
+     ! Special case for a non-scattering layer
+        EXTINCT = 0.0
+        SCATTER = 0.0
      ENDIF
 
-     SCAT_NUMS (LAYER) = SCAT_NUM 
-     EXTINCTIONS (LAYER) = EXTINCT + MAX (GAS_EXTINCT (LAYER), 0.0D0) 
-     IF (EXTINCTIONS (LAYER) .GT.0.0) THEN 
-        ALBEDOS (LAYER) = SCATTER / EXTINCTIONS (LAYER) 
-     ELSE 
-        ALBEDOS (LAYER) = 0.0 
+     SCAT_NUMS (LAYER) = SCAT_NUM
+     EXTINCTIONS (LAYER) = EXTINCT + MAX (GAS_EXTINCT (LAYER), 0.0D0)
+     IF (EXTINCTIONS (LAYER) .GT.0.0) THEN
+        ALBEDOS (LAYER) = SCATTER / EXTINCTIONS (LAYER)
+     ELSE
+        ALBEDOS (LAYER) = 0.0
      ENDIF
   ENDDO
 
@@ -295,12 +286,11 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   DO MODE = 0, AZIORDER 
      SCAT_NUM = 0 
      !     ------------------------------------------------------            
-     !           Loop through the layers                                     
-
-     DO LAYER = 1, NUM_LAYERS 
+     !           Loop through the layers
+     DO LAYER = 1, NUM_LAYERS
         !                   Calculate the layer thickness                       
         ZDIFF = ABS (HEIGHT (LAYER) - HEIGHT (LAYER + 1) ) 
-        EXTINCTION = EXTINCTIONS (LAYER) 
+        EXTINCTION = EXTINCTIONS (LAYER)
         ALBEDO = ALBEDOS (LAYER) 
 
         IF (SCAT_NUMS (LAYER) .NE.SCAT_NUM) THEN 
@@ -310,8 +300,7 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
                 SCATBUF, SCATTER_MATRIX)                                       
            !                   Check the normalization of the scattering matrix    
            IF (MODE.EQ.0) THEN 
-              CALL CHECK_NORM (NSTOKES, NUMMU, QUAD_WEIGHTS,              &
-                   SCATTER_MATRIX)                                             
+              CALL CHECK_NORM (NSTOKES, NUMMU, QUAD_WEIGHTS, SCATTER_MATRIX)
            ENDIF
            !                   Get the direct (solar) vector from the buffer       
            IF (SRC_CODE.EQ.1.OR.SRC_CODE.EQ.3) THEN 
@@ -342,10 +331,10 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
         IF (ALBEDO.EQ.ZERO) THEN 
            !                   If the layer is purely absorbing then quickly       
            !                     make the reflection and transmission matrices     
-           !                     and source vector instead of doubling.            
+           !                     and source vector instead of doubling.
            CALL NONSCATTER_LAYER (NSTOKES, NUMMU, MODE, ZDIFF *           &
                 EXTINCTION, MU_VALUES, PLANCK0, PLANCK1, REFLECT (KRT),        &
-                TRANS (KRT), SOURCE (KS) )                                     
+                TRANS (KRT), SOURCE (KS) )
         ELSE 
 
            !                   Find initial thickness of sublayer and              
@@ -389,19 +378,23 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
                 REFLECT (KRT), TRANS (KRT), SOURCE (KS) )                      
 
         ENDIF
-
      ENDDO
-     !            End of layer loop                                          
+     !            End of layer loop
+
+	! transmittance and ground level for all zenith angles (needed for fastem)
+
+	transmittance = trans(krt:krt + (nummu-1)*66:66)
 
      !           Get the surface reflection and transmission matrices        
      !             and the surface radiance                                  
      KRT = 1 + 2 * N * N * (NUM_LAYERS) 
      KS = 1 + 2 * N * (NUM_LAYERS) 
 
-     if (verbose .gt. 0) print*, "Calculating surface emissivity ...."
+     if (verbose .gt. 1) print*, "Calculating surface emissivity ...."
 
       IF (GROUND_TYPE.EQ.'F') THEN
-  ! For a Fresnel surface                                   
+  ! For a Fresnel surface
+    wind10 = sqrt(wind10u**2+wind10v**2)
 	CALL FRESNEL_SURFACE (NSTOKES, NUMMU, MU_VALUES, GROUND_INDEX, &
 	wavelength, wind10, REFLECT (KRT), TRANS (KRT), SOURCE (KS) )
   ! The radiance from the ground is thermal                
@@ -413,7 +406,47 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
              REFLECT (KRT), TRANS (KRT), SOURCE (KS) )
         ! The radiance from the ground is thermal                
         CALL specular_radiance(NSTOKES, NUMMU, MODE,       &
-             GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH, GND_RADIANCE)           
+             GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH, GND_RADIANCE)
+     ELSEIF(GROUND_TYPE .EQ. 'O') THEN
+	! call fastem4 ocean emissivity model. the correction due to transmittance is not necessary in
+	! our multi-stream model (?!)
+      wind10 = sqrt(wind10u**2+wind10v**2)
+      IF (wind10u >= 0.0 .AND. wind10v >= 0.0 ) iquadrant = 1
+      IF (wind10u >= 0.0 .AND. wind10v <  0.0 ) iquadrant = 2
+      IF (wind10u <  0.0 .AND. wind10v >= 0.0 ) iquadrant = 4
+      IF (wind10u <  0.0 .AND. wind10v <  0.0 ) iquadrant = 3
+      IF (abs(wind10v) >= 0.0001) THEN
+        windratio = wind10u / wind10v
+      ELSE
+        windratio = 0.0
+        IF (abs(wind10u) > 0.0001) THEN
+          windratio = 999999.0 * wind10u
+        ENDIF
+      ENDIF
+      windangle        = atan(abs(windratio))
+      rel_azimuth = (quadcof(iquadrant, 1) * pi + windangle * quadcof(iquadrant, 2))*180./pi
+
+  ! azimuthal component
+  !
+  ! the azimuthal component is ignored (rel_azimuth > 360°) when doing simulations for COSMO runs
+  ! since we do not know what direction does the satellite have in advance
+  !
+		rel_azimuth = 400.
+        transmittance(:) = 1.
+        salinity = 33.
+		call fastem4(wavelength   , &  ! Input
+                              mu_values, &  ! Input
+                              nummu, &
+                              ground_temp , &  ! Input
+                              Salinity    , &  ! Input
+                              wind10  ,&
+                              transmittance,&  ! Input, may not be used
+                              Rel_Azimuth, &  ! Input
+                              ground_index,&
+                              GND_RADIANCE, &  ! Output
+                              REFLECT(KRT), &  ! Output
+                              trans(krt),&
+                              source(ks))
      ELSE 
         ! For a Lambertian surface                                
         CALL LAMBERT_SURFACE (NSTOKES, NUMMU, MODE, MU_VALUES,         &
@@ -425,7 +458,7 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
              NUM_LAYERS + 1), GND_RADIANCE)                                 
      ENDIF
 
-     if (verbose .gt. 0) print*, ".... done!"
+     if (verbose .gt. 1) print*, ".... done!"
 
      ! Assume the radiation coming from above is blackbody radiation
      CALL THERMAL_RADIANCE (NSTOKES, NUMMU, MODE, SKY_TEMP, ZERO,      &
@@ -445,7 +478,7 @@ SUBROUTINE RADTRAN (NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
         CALL MZERO (2 * N, 1, DOWNSOURCE) 
         DO L = 1, LAYER - 1 
            KRT = 1 + 2 * N * N * (L - 1) 
-           KS = 1 + 2 * N * (L - 1) 
+           KS = 1 + 2 * N * (L - 1)
            IF (L.EQ.1) THEN 
               CALL MCOPY (2 * N, N, REFLECT (KRT), UPREFLECT) 
               CALL MCOPY (2 * N, N, TRANS (KRT), UPTRANS) 

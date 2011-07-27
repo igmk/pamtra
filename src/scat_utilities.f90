@@ -143,7 +143,7 @@ end subroutine mieangle
                                                                         
                                                                         
                                                                         
-function distribution(a, b, alpha, gamma, r, distflag) 
+function distribution(a, b, alpha, gamma, d, distflag)
 !   distribution returns the particle density for a given radius r 
 !   for a modified gamma distribution specified by a, b, alpha, gamma
 !      n(r) = a * r^alpha * exp(-b * r^gamma)     .                
@@ -154,20 +154,19 @@ function distribution(a, b, alpha, gamma, r, distflag)
 
   implicit none
 
-  real(kind=dbl) :: a, b, alpha, gamma, r 
+  real(kind=dbl) :: a, b, alpha, gamma, d
   character :: distflag*1 
   real(kind=dbl) :: distribution
 
   if (distflag .eq. 'G') then 
   !   modified gamma distribution                                  
-      distribution = a * r**alpha * exp( - b * r**gamma) 
+      distribution = a * d**alpha * exp( - b * d**gamma)
   elseif (distflag .eq. 'L') then 
   !   log-normal distribution                                      
-      distribution = a / r * exp( -0.5*(log(r / b) )**2 / alpha**2)
+      distribution = a / d * exp( -0.5*(log(d / b) )**2 / alpha**2)
   elseif (distflag .eq. 'C') then 
-  !   distribution according to cosmo-de model
-  !	  from drop-size distribution as a function of diameter to radius: a -> 2*a and b -> 2*b
-      distribution = 2.*a * exp(-b*2.*r)
+  !   distribution according to cosmo-de model                                  
+      distribution = a * exp(-b*d)
   else 
       write ( * , * ) 'unrecognized distflag in distribution' 
   end if 
@@ -1608,7 +1607,7 @@ end subroutine gausquad
       END SUBROUTINE snow_SS_param                  
                                                                         
                                                                         
-      SUBROUTINE get_atmosGlev (temp_lev, press_lev, relhum, mxlyr,     &
+      SUBROUTINE get_atmosGlev (temp_lev, press_lev, relhum,     &
       nlyr, vapor_pressure, freq, ABSCOEF)                              
                                                                         
 !     Calculate average air pressure and vapor pressure in specified    
@@ -1619,11 +1618,11 @@ end subroutine gausquad
 !+----------------------------------------------------------------------
   use kinds
       IMPLICIT none 
-      INTEGER mxlyr, nlyr, nz 
-      REAL(kind=dbl) press_lev (0:mxlyr) 
-      REAL(kind=dbl) temp_lev (0:mxlyr) 
-      REAL(kind=dbl) relhum (0:mxlyr), ABScoef (0:mxlyr) 
-      REAL(kind=dbl) vapor_pressure (0:mxlyr) 
+      INTEGER nlyr, nz 
+      REAL(kind=dbl) press_lev (0:nlyr) 
+      REAL(kind=dbl) temp_lev (0:nlyr) 
+      REAL(kind=dbl) relhum (0:nlyr), ABScoef (0:nlyr) 
+      REAL(kind=dbl) vapor_pressure (0:nlyr) 
                                                                         
       REAL(kind=dbl) freq, tc, es, a0, a1, a2, a3, a4, a5, a6 
                                                                         

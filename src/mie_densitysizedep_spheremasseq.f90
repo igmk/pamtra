@@ -1,5 +1,5 @@
 subroutine mie_densitysizedep_spheremasseq(f, m_ice,    &
-  a_mtox, bcoeff, rad1, rad2, numrad, maxleg, ad, bd, alpha, &
+  a_mtox, bcoeff, dia1, dia2, nbins, maxleg, ad, bd, alpha, &
   gamma, lphase_flag, extinction, albedo, back_scatt, nlegen, legen,  &
   legen2, legen3, legen4, aerodist)                                 
 !    computing the scattering properties according to                  
@@ -15,9 +15,9 @@ implicit none
 
 real(kind=dbl), intent(in) :: f  ! frequency [GHz]
 
-integer :: maxleg, nlegen, numrad 
+integer :: maxleg, nlegen, nbins
 logical :: lphase_flag 
-real(kind=dbl) :: wavelength, rad1, rad2 
+real(kind=dbl) :: wavelength, dia1, dia2
 real(kind=dbl), intent(in) :: ad, bd, alpha, gamma 
 complex(kind=dbl) :: m_ice
 real(kind=dbl) :: a_mtox, bcoeff
@@ -27,7 +27,7 @@ integer, parameter :: maxn  = 5000
 real(kind=dbl), parameter :: pi = 3.14159265358979d0
 integer :: nterms, nquad, nmie, nleg 
 integer :: i, l, m, ir
-real(kind=dbl) :: x, delrad, radius, ndens, tmp, radius_ice
+real(kind=dbl) :: x, del_d, diameter, ndens, tmp, diameter_ice
 real(kind=dbl) :: qext, qscat, qback, scatter 
 real(kind=dbl) :: distribution 
 real(kind=dbl) :: mu (maxn), wts (maxn) 
@@ -46,9 +46,9 @@ wavelength = c/(f*1.e9) !
 !           find the maximum number of terms required in the mie series,
 !       call density_ice(a_mtox, bcoeff, rad2, dens_graup) 
 !       rad2_ice = (dens_graup / 917.) **0.33333333 * rad2 
-radius_ice = 0.5*(6.*a_mtox*(2.*rad2)**bcoeff/(pi*917.))**(1./3.)
+diameter_ice = (6.*a_mtox*dia2**bcoeff/(pi*917.))**(1./3.)
 msphere = m_ice !conjg(m_ice) 
-x = 2.0d0 * pi * radius_ice / wavelength 
+x = pi * diameter_ice / wavelength
 nterms = 0 
 call miecalc (nterms, x, msphere, a, b) 
 nlegen = 2 * nterms 
@@ -56,7 +56,7 @@ nlegen = min(maxleg, nlegen)
 nquad = (nlegen + 2 * nterms + 2) / 2 
 if (nquad.gt.maxn) stop 'mie: maxn exceeded' 
 								  
-!           get the gauss-legendre quadrature abscissas and weights     
+! get the gauss-legendre quadrature abscissas and weights
 call gausquad(nquad, mu, wts) 
 								  
 sumqe = 0.0d0 
@@ -69,12 +69,12 @@ do i = 1, nquad
   sump4 (i) = 0.0d0 
 end do 
 								  
-!               integration loop over radius of spheres                 
-if (numrad .gt. 0) delrad = (rad2 - rad1) / numrad 
-do ir = 1, numrad+1 
-  radius = rad1 + (ir - 1) * delrad 
-  ndens = distribution (ad, bd, alpha, gamma, radius, aerodist)                                         
-  if ( (ir .eq. 1 .or. ir .eq. numrad+1) .and. numrad .gt. 0) then 
+!               integration loop over diameters of spheres
+if (nbins .gt. 0) del_d = (dia2 - dia1) / nbins
+do ir = 1, nbins+1
+  diameter = dia1 + (ir - 1) * del_d
+  ndens = distribution (ad, bd, alpha, gamma, diameter, aerodist)
+  if ( (ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
     ndens = 0.5 * ndens 
   end if 
 								    
@@ -84,14 +84,15 @@ do ir = 1, numrad+1
   ! !         write(18,*)'dens',dens_graup                                  
   !       radius_ice = (dens_graup / 917.) **0.33333333 * radius 
 
-  radius_ice = 0.5*(6.*a_mtox*(2.*radius)**bcoeff/(pi*917.))**(1./3.)
-  x = 2.0d0 * pi * radius_ice / wavelength 
+  diameter_ice = (6.*a_mtox*(diameter)**bcoeff/(pi*917.))**(1./3.)
+  x = pi * diameter_ice / wavelength
 								    
   call miecalc (nmie, x, msphere, a, b) 
-  call miecross (nmie, x, a, b, qext, qscat, qback) 
-  sumqe = sumqe+qext * ndens * radius_ice**2 
-  sumqs = sumqs + qscat * ndens * radius_ice**2 
-  sumqback = sumqback + qback * ndens * radius_ice**2 
+  call miecross (nmie, x, a, b, qext, qscat, qback)
+  !print*, x, real(msphere), imag(msphere),qext, qscat, qback
+  sumqe = sumqe+qext * ndens * (diameter_ice/2.)**2
+  sumqs = sumqs + qscat * ndens * (diameter_ice/2.)**2
+  sumqback = sumqback + qback * ndens * (diameter_ice/2.)**2
   !          write(*,*)'mie in',qext,qscat,ndens,radius,x,nmie            
   if (lphase_flag) then 
     nmie = min0(nmie, nterms) 
@@ -104,21 +105,21 @@ do ir = 1, numrad+1
     end do 
   end if 
 end do 
-								  
+!print*, ' '
 								  
 !           multiply the sums by the integration delta and other constan
 !             put quadrature weights in angular array for later         
-if (numrad.eq.0) delrad = 1.0d0 
+if (nbins .eq. 0) del_d = 1.0d0
 								  
-extinction = pi * sumqe * delrad 
-scatter = pi * sumqs * delrad 
-back_scatt = pi * sumqback * delrad 
+extinction = pi * sumqe * del_d
+scatter = pi * sumqs * del_d
+back_scatt = pi * sumqback * del_d
 albedo = scatter / extinction 
 								  
 !         if the phase function is not desired then leave now           
 if ( .not. lphase_flag) return 
 								  
-tmp = (wavelength**2 / (pi * scatter) ) * delrad 
+tmp = (wavelength**2 / (pi * scatter) ) * del_d
 do i = 1, nquad 
   sump1 (i) = tmp * sump1 (i) * wts (i) 
   sump2 (i) = tmp * sump2 (i) * wts (i) 

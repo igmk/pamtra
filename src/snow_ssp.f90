@@ -5,13 +5,14 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
 	nlegen, legen, legen2, legen3, legen4, ns)
   
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_0snowDsnow, EM_snow, n_moments
+  use nml_params, only: verbose, lphase_flag, n_0snowDsnow, EM_snow, n_moments, isnow_n0
   use constants, only: pi, im
   use double_moments_module
 
   implicit none
 
-  integer :: numrad, nlegen, nn, isnow_n0temp
+  integer :: nbins, nlegen, nn
+
   integer, intent(in) :: maxleg
 
   real(kind=dbl), intent(in) :: &
@@ -25,7 +26,7 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
 
   real(kind=dbl) :: refre, refim
 
-  real(kind=dbl) :: rad1, rad2, swc, ad, bd, alpha, gamma, b_snow, a_msnow, ns_abs
+  real(kind=dbl) :: dia1, dia2, swc, ad, bd, alpha, gamma, b_snow, a_msnow, ns_abs
 
   real(kind=dbl), intent(out) :: &
     kext,&
@@ -52,17 +53,19 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
 	swc =  spec2abs(qs,t,p,q) ! [kg/m^3]
 
   if (n_moments .eq. 1) then
-	b_snow = 2.0d0     ! MKS system
-	a_msnow = 0.038d0
-	rad1 = 1.d-6 ! minimum maximum diameter [m] after kneifel
-	rad2 = 2.d-2 ! maximum maximum diameter [m] after kneifel
+!	b_snow = 2.0d0
+!	a_msnow = 0.038d0
+	b_snow = 2.2850d0
+	a_msnow = 0.2124d0
 
-	!option isnow_n0temp as in COSMO-de 1 moment scheme
+	dia1 = 0.51d-5 ! minimum maximum diameter [m] after kneifel
+	dia2 = 1.d-2 ! maximum maximum diameter [m] after kneifel
+
+	!option isnow_n0 as in COSMO-de 1 moment scheme
 	!isnow_n0temp = 2 intercept parameter of snow depend on T and qs (snow mixing ratio) Field 2005
 	!isnow_n0temp = 1 intercept parameter of snow depend on T  	Field 2005
-	isnow_n0temp=2
 
-	if (isnow_n0temp .eq. 2) then
+	if (isnow_n0 .eq. 2) then
 !//taken from COSMO-de routine hydci_pp_gr in src_gscp.f90
     ! Coeffs for moment relation based on 2nd moment (Field 2005)
 		mma = (/   5.065339, -0.062659, -3.032362, 0.029469, -0.000285, &
@@ -95,10 +98,11 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
 	else
 		! Field param. ! multiplied by 10^6 is 1/m^4
 		ad = n_0snowDsnow * 1.d6 * exp(-0.107d0 * (t - 273.15))
+		ad = 1.d6
 	endif
 	bd = (exp(gammln(b_snow + 1)) * a_msnow * ad/swc)**(1.0d0/(1.0d0 + b_snow))  ! [m**-1]   
 	!formula 3.12 Mario Mech´s but for radii and units converted
-	numrad = 100 
+	nbins = 100
     alpha = 0.d0 ! exponential SD
     gamma = 1.d0
     dist_name='C'
@@ -107,9 +111,9 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
     ns_abs = spec2abs(ns,t,p,q) 							! [#/m^3]
     call double_moments(swc,ns_abs,gamma_snow(1),gamma_snow(2),gamma_snow(3),gamma_snow(4), &
     	ad,bd,alpha,gamma,a_msnow,b_snow)
-    numrad = 100
-	rad1 = 1.d-6 ! minimum maximum diameter [m] after kneifel
-	rad2 = 2.d-2 ! maximum maximum diameter [m] after kneifel
+    nbins = 100
+	dia1 = 1.d-6 ! minimum maximum diameter [m] after kneifel
+	dia2 = 2.d-2 ! maximum maximum diameter [m] after kneifel
     dist_name='G'
   else
     stop'Number of moments is not specified'
@@ -117,19 +121,19 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
 
 	if (EM_snow .eq. 'icesf') then 
 	  call mie_densitysizedep_spheremasseq(f, mindex,      &
-		a_msnow, b_snow, rad1/2., rad2/2., numrad, maxleg,   &
+		a_msnow, b_snow, dia1, dia2, nbins, maxleg,   &
 		ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
 		back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
 		LEGEN4, dist_name)
 	elseif (EM_snow .eq. 'surus') then 
 	  call mie_icefactor(f, t,mindex,      &
-		a_msnow, b_snow, rad1/2., rad2/2., numrad, maxleg,   &
+		a_msnow, b_snow, dia1, dia2, nbins, maxleg,   &
 		ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
 		back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
 		LEGEN4, dist_name,0.863*1.e-3*f+0.115,42)
 	elseif (EM_snow(1:3) .eq. 'liu') then
 	    call dda_db_liu(f,t,9,mindex, &
-		rad1/2.,rad2/2.,numrad,maxleg,ad,&
+		dia1,dia2,nbins,maxleg,ad,&
 		bd, alpha, gamma, lphase_flag,kext, salb,&
 		back, nlegen, legen, legen2, legen3,&
 		legen4, dist_name)

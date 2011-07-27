@@ -1,80 +1,55 @@
-subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
+subroutine hydrometeor_extinction(f)
 
   use kinds
   use vars_atmosphere
-  use nml_params, only: verbose, n_moments
+  use nml_params, only: verbose, tmp_path, active, passive, dump_to_file, n_moments
+  use constants
+  use mod_io_strings
 
   implicit none
 
-  integer, parameter :: &
-    mxlyr = 50, &      ! max grid dimension in z
-    maxleg = 200
+  integer, parameter :: maxleg = 200
 
-  integer :: jj, nz, n_lay_cut
+  integer :: jj, nz
 
-  integer :: nlegen, nlegencw, nlegenci, nlegenrr, nlegensn, nlegengr, nlegenha
+  integer :: nlegencw, nlegenci, nlegenrr, nlegensn, nlegengr, nlegenha
 
-  real(kind=dbl) :: f
+  real(kind=dbl) :: f, wavelength
 
   real(kind=dbl) :: kextcw, salbcw, kextrr, salbrr,  &
        kextci, salbci, kextsn, salbsn, kextgr, salbgr,  kextha, salbha, &
        backcw, backrr, backci, backsn, backgr, backha
 
-  real(kind=dbl), dimension(200) :: LEGEN, LEGEN2, LEGEN3, LEGEN4,&
-       LEGENcw, LEGENrr, LEGENci, LEGENgr, LEGENsn, LEGENha,      &
+  real(kind=dbl), dimension(200) ::  LEGENcw, LEGENrr, LEGENci, LEGENgr, LEGENsn, LEGENha,      &
        LEGEN2cw, LEGEN2rr, LEGEN2ci, LEGEN2gr, LEGEN2sn, LEGEN2ha,  &
        LEGEN3cw, LEGEN3rr, LEGEN3ci, LEGEN3gr, LEGEN3sn, LEGEN3ha,  &
        LEGEN4cw, LEGEN4rr, LEGEN4ci, LEGEN4gr, LEGEN4sn, LEGEN4ha
 
-  real(kind=dbl), dimension(2) :: P11, ang
 
-  real(kind=dbl), dimension(mxlyr) :: &
-       g_coeff,    &
-       kexttot,    &
-       kextcloud,  &
-       kextrain,   &
-       kextice,    &
-       kextgraupel,&
-       kextsnow,   &
-       kexthail,   &
-       salbtot,    &
-       absorp,     & ! might be unnecessary
-       back        
+  real(kind=dbl), dimension(2) :: P11, ang
 
   real(kind=dbl) :: threshold ! threshold value for hydrometeor extinction as mass mixing ratio
 
-  character(2) :: nzstr
-
-  character(3), intent(in) :: xstr, ystr
-
-  character(6), intent(in) :: frq_str
-
-  character(64), intent(out) :: file_PH(mxlyr)
-
   if (verbose .gt. 1) print*, 'Entering hydrometeor_extinction'
 
-  threshold = 1.e-5   ! [kg/kg]
+  if (dump_to_file) file_ph = ''
+      ! INITIALIZATION OF LEGENDRE COEFFICIENTS
 
-  if (verbose .gt. 0) print*, 'start loop over layer'
+  nlegen = 0
+  legen   = 0.d0
+  legen2  = 0.d0
+  legen3  = 0.d0
+  legen4  = 0.d0
 
-  grid_z: do nz = 1, N_lay_cut  ! loop over all layers
+  threshold = 1.d-5   ! [kg/kg]
 
-      if (verbose .gt. 0) print*, 'Layer: ', nz
+  if (verbose .gt. 1) print*, 'start loop over layer'
 
-      write(nzstr, '(i2.2)') nz
+  grid_z: do nz = 1, nlyr  ! loop over all layers
 
-      ! INITIALIZATION OF LEGENDRE COEFFICIENTS  
+      if (verbose .gt. 1) print*, 'Layer: ', nz
 
-      nlegen = 0 
-      legen   = 0.d0
-      legen2  = 0.d0
-      legen3  = 0.d0
-      legen4  = 0.d0
-
-      !strings with blank spaces            
-      FILE_PH(nz) = ''
-
-!---------------------------------------------------------
+!---------------------------salinity------------------------------
 ! calculation of the single scattering properties
 ! of hydrometeors. cloud water and cloud ice are 
 ! with respect to radius. whereas the distribution 
@@ -108,7 +83,6 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
 	    salbcw = 0.0d0
 	    backcw = 0.0d0
       end if
-
 !---------------------------------------------------------
 !       single scattering properties of rain
 !---------------------------------------------------------
@@ -232,7 +206,7 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
       legen4ha = 0.0d0
 
 	  if (n_moments .eq. 2) then
-        if (hwc_q(nz) .ge. threshold) then
+        if (hwc_q(nz) .ge. 1000.) then
 		  call hail_ssp(f,hwc_q(nz),temp(nz),press(nz),q_hum(nz),&
 			  maxleg,kextha, salbha, backha,  &
               nlegenha, legenha, legen2ha, legen3ha, legen4ha, hwc_n(nz))
@@ -249,9 +223,9 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
 		backha = 0.0d0
       endif
 
-      nlegen = max(nlegen,nlegencw,nlegenci,nlegenrr,nlegensn,nlegengr,nlegenha)
+      nlegen(nz) = max(nlegen(nz),nlegencw,nlegenci,nlegenrr,nlegensn,nlegengr,nlegenha)
 
-      if (verbose .gt. 0) print*, 'End of scattering calc for layer: ', nz
+      if (verbose .gt. 1) print*, 'End of scattering calc for layer: ', nz
 
       !CCCCCCCCCCCCC   END OF SINGLE SCATTERING PROPERTY COMPUTATIONS  CCCCCCC
 
@@ -260,15 +234,9 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
       !           input file of the scattering properties of each layer
       !                                                                       
 
-      kexttot(nz) = kextcw + kextrr + kextci + kextsn + kextgr + kextha
-      kextcloud(nz) = max(0.0d0, kextcw)
-      kextrain(nz) = max(0.0d0, kextrr)
-      kextice(nz) = max(0.0d0, kextci)
-      kextsnow(nz) = max(0.0d0, kextsn)
-      kextgraupel(nz) = max(0.0d0, kextgr)
-      kexthail(nz) = max(0.0d0, kextha)
+      kexttot(nz) = kextsn + kextcw + kextrr + kextgr + kextci + kextha
       back(nz) = backcw + backrr + backci + backsn + backgr + backha
-
+  
       if (kexttot(nz) .lt. 0.) write(*,*) 'something wrong'
       if (kexttot(nz) .le. 0.) then 
 		salbtot(nz) = 0.0
@@ -277,66 +245,66 @@ subroutine hydrometeor_extinction(f,n_lay_cut,xstr,ystr,frq_str,file_ph)
 	      kextrr + salbci * kextci + salbsn * kextsn + salbgr *    &
 	      kextgr + salbha * kextha) / kexttot(nz)
       endif
-
-      absorp(nz) = (1.0 - salbtot(nz) ) * kexttot(nz)                                                 
+!
+!      absorp(nz) = (1.0 - salbtot(nz) ) * kexttot(nz)
 
 !!!!!!!!!!!!!!!!! check whether hgt_lev needs to be km or m !!!!!!!!!!!!!!!!!
 
       !   summing up the Legendre coefficient                                 
 
-      if (kexttot(nz) .le. 0.0 .or.    &
-		  salbtot(nz) .le. 0.0) then
-		FILE_PH(nz) = ''
-	!    writing no file                                                                        
-      else ! there are hydrometeor present : a PH file is needed
+      if (kexttot(nz) .gt. 0.0 .or.    &
+		  salbtot(nz) .gt. 0.0) then ! there are hydrometeor present : a PH file is needed
+		if (dump_to_file) then
+  	      write(nzstr, '(i2.2)') nz
+	  	  FILE_PH(nz) = tmp_path(:len_trim(tmp_path))//'/PHx'//xstr//'y'//ystr//'lev'//Nzstr//'f'//frq_str
 
-		FILE_PH(nz) = '/tmp/PHx'//xstr//'y'//ystr//'lev'//Nzstr//'f'//frq_str
+          open(unit=21, file=file_PH(nz), STATUS='unknown', &
+	        form='FORMATTED')
+		  write(21,*) kexttot(nz), '   EXINCTION'
+		  write(21,*) kexttot(nz) * salbtot(nz), '   SCATTERING'
+		  write(21,*) salbtot(nz), '   SINGLE SCATTERING ALBEDO'
+		  write(21,*) Nlegen(nz) - 1, '      DEGREE OF LEGENDRE SERIES'
+        end if
 
-		open(unit=21, file=file_PH(nz), STATUS='unknown', &
-	      form='FORMATTED')
-		write(21,*) kexttot(nz), '   EXINCTION'
-		write(21,*) kexttot(nz) * salbtot(nz), '   SCATTERING'
-		write(21,*) salbtot(nz), '   SINGLE SCATTERING ALBEDO'
-		write(21,*) Nlegen - 1, '      DEGREE OF LEGENDRE SERIES'
-
-		do jj = 1, Nlegen
-
-	    	legen (jj) = (legencw (jj) * salbcw * kextcw + legenrr ( &
+		do jj = 1, Nlegen(nz)
+	    	legen (nz,jj) = (legencw (jj) * salbcw * kextcw + legenrr ( &
 				jj) * salbrr * kextrr + legenci (jj) * salbci * kextci + &
 			legensn (jj) * salbsn * kextsn + legengr (jj) * salbgr * &
 				kextgr + legenha (jj) * salbha * kextha) / (salbtot (nz) &
 				* kexttot (nz) )
 
-	    	legen2 (jj) = (legen2cw (jj) * salbcw * kextcw +         &
+	    	legen2 (nz,jj) = (legen2cw (jj) * salbcw * kextcw +         &
 				legen2rr (jj) * salbrr * kextrr + legen2ci (jj) * salbci &
 				* kextci + legen2sn (jj) * salbsn * kextsn + legen2gr (  &
 				jj) * salbgr * kextgr + legen2ha (jj) * salbha * kextha ) &
 				/ (salbtot (nz) * kexttot (nz) )
 
-		    legen3 (jj) = (legen3cw (jj) * salbcw * kextcw +         &
+		    legen3 (nz,jj) = (legen3cw (jj) * salbcw * kextcw +         &
 				legen3rr (jj) * salbrr * kextrr + legen3ci (jj) * salbci &
 				* kextci + legen3sn (jj) * salbsn * kextsn + legen3gr (  &
 				jj) * salbgr * kextgr + legen3ha (jj) * salbha * kextha) &
 				/ (salbtot (nz) * kexttot (nz) )
 
-	    	legen4 (jj) = (legen4cw(jj) * salbcw * kextcw +         &
+	    	legen4 (nz,jj) = (legen4cw(jj) * salbcw * kextcw +         &
 				legen4rr (jj) * salbrr * kextrr + legen4ci (jj) * salbci &
 				* kextci + legen4sn (jj) * salbsn * kextsn + legen4gr (  &
 				jj) * salbgr * kextgr + legen4ha (jj) * salbha * kextha) &
 				/ (salbtot(nz) * kexttot &
 				(nz))
-
-	   		write (21, 1005) jj - 1, legen (jj), legen2 (jj),        &
-				legen3 (jj), legen4 (jj), legen (jj), legen3 (jj)
-	    	g_coeff (nz) = legen (2) / 3.0d0
-1005        format  (i3,6(1x,f10.7))
+		if (dump_to_file) then
+		  write (21, 1005) jj - 1, legen (nz,jj), legen2 (nz,jj),        &
+			legen3(nz,jj), legen4(nz,jj), legen(nz,jj), legen3(nz,jj)
+		end if
+	    	g_coeff (nz) = legen (nz,2) / 3.0d0
 
 	end do ! end of cycle over Legendre coefficient
-	close(21)
+    if (dump_to_file) close(21)
       end if
   end do grid_z !end of cycle over the vertical layers
 
   if (verbose .gt. 1) print*, 'Exiting hydrometeor_extinction'
+
+1005        format  (i3,6(1x,f10.7))
 
   return
 

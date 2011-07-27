@@ -8,7 +8,8 @@ subroutine ice_ssp(f,qi,t,p,q,maxleg,kext, salb, back,  &
 
   implicit none
 
-  integer :: numrad, nlegen, ice_flag
+  integer :: nbins, nlegen, ice_flag
+
   integer, intent(in) :: maxleg
 
   real(kind=dbl), intent(in) :: &
@@ -22,7 +23,7 @@ subroutine ice_ssp(f,qi,t,p,q,maxleg,kext, salb, back,  &
 
   real(kind=dbl) :: refre, refim
 
-  real(kind=dbl) :: rad1, rad2, del_r, den_ice, drop_mass, b_ice, a_mice
+  real(kind=dbl) :: dia1, dia2, del_d, den_ice, drop_mass, b_ice, a_mice
   real(kind=dbl) :: iwc, ad, bd, alpha, gamma, number_concentration,  ni_abs
 
   real(kind=dbl), intent(out) :: &
@@ -42,6 +43,7 @@ subroutine ice_ssp(f,qi,t,p,q,maxleg,kext, salb, back,  &
 
     call ref_ice(t,f, refre, refim)
     mindex = refre-im*refim  ! mimicking a
+
 	iwc = spec2abs(qi,t,p,q) 								! [kg/m^3]
   if (n_moments .eq. 1) then
     ice_flag=0
@@ -53,22 +55,22 @@ subroutine ice_ssp(f,qi,t,p,q,maxleg,kext, salb, back,  &
 	  !	 a=130 kg/m^3 (hexagonal plates with aspect ratio of 0.2 -> thickness=0.2*Diameter)
 	  number_concentration = 1.0d2*DEXP(0.2d0*(273.15d0-t)) 	! [1/m^3]
 	  drop_mass = iwc/number_concentration 					! [kg]
-	  del_r = 1.d-8											! [m]
-	  rad1 = (drop_mass/130.0d0)**(1.0d0/3.0d0)				! [m]
-	  rad2 = rad1 + del_r
+	  del_d = 1.d-8											! [m]
+	  dia1 = (drop_mass/130.0d0)**(1.0d0/3.0d0)				! [m]
+	  dia2 = dia1 + del_d
     else
       ! monodisperse distribution
-      ! Fixed RADIUS
-	  del_r = 1.d-8    ! [m]
-      rad1 = 5.d-5     ! [m] 50 micron radius
-      rad2 = rad1 + del_r
+      ! Fixed diameter
+	  del_d = 1.d-8    ! [m]
+      dia1 = 1.d-4     ! [m] 100 micron diameter
+      dia2 = dia1 + del_d
       den_ice = 917.d0  ! [kg/m^3]
-      drop_mass = 4./3. * pi * rad1**3 * den_ice
+      drop_mass = pi/6.d0 * dia1**3 * den_ice
     endif
 
-    ad = iwc/(drop_mass*del_r) 	!intercept parameter [1/m^4]
+    ad = iwc/(drop_mass*del_d) 	!intercept parameter [1/m^4]
     bd = 0.0d0
-    numrad = 2
+    nbins = 2
     alpha = 0.0d0     ! exponential SD
     gamma = 1.0d0 
     dist_name='C'
@@ -77,15 +79,16 @@ subroutine ice_ssp(f,qi,t,p,q,maxleg,kext, salb, back,  &
     ni_abs = spec2abs(ni,t,p,q) 							! [#/m^3]
     call double_moments(iwc,ni_abs,gamma_ice(1),gamma_ice(2),gamma_ice(3),gamma_ice(4), &
     	ad,bd,alpha,gamma,a_mice,b_ice)
-    numrad = 100
-    rad1 = 1.d-6	! minimum diameter [m]
-    rad2 = 1.d-3	! maximum diameter [m]
+    nbins = 100
+    dia1 = 1.d-6	! minimum diameter [m]
+    dia2 = 1.d-3	! maximum diameter [m]
     dist_name='G'
   else
     stop 'Number of moments is not specified'
   end if
 
-    call mie(f, mindex, rad1, rad2, numrad, maxleg, ad,    &
+
+    call mie(f, mindex, dia1, dia2, nbins, maxleg, ad,    &
 	  bd, alpha, gamma, lphase_flag, kext, salb, back,     &
 	  nlegen, legen, legen2, legen3, legen4, dist_name)
   if (verbose .gt. 1) print*, 'Exiting ice_ssp'
