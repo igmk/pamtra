@@ -2,6 +2,7 @@ subroutine calculate_active(OUT_FILE_ACT,freq,hgt,Ze, PIA_atmo_BU, PIA_hydro_BU,
 ! This function computes and writes Ze and PIA
 ! PIA is calculated bottom (BU) up AND top down (TD) for hydrometeors and gaseous extinction seperately.
 
+
 use kinds 
 use vars_atmosphere !gives kextatmo, kexttot, temp, nlyr
 use constants
@@ -15,16 +16,14 @@ character(300), intent(in) ::OUT_FILE_ACT
 real(kind=dbl), intent(in) :: freq
 real(kind=dbl), dimension(nlyr), intent(out) ::      hgt, Ze, PIA_atmo_BU, PIA_hydro_BU, PIA_atmo_TD, PIA_hydro_TD
 
-
-
 		wavelength = c / (freq*1.d9)   ! m
 		tau_hydro = 0.d0
 		tau_atmo = 0.d0
 		do nz = 1, nlyr
 			hgt(nz) = (hgt_lev(nz-1)+hgt_lev(nz))*0.5d0
 			d_hgt = hgt_lev(nz) - hgt_lev(nz-1)
-			K2 = dielec_water(0.D0,temp(nz),freq)
-			Ze(nz) = 10*log10(1d18* (1/ (K2*pi**5) ) * back(nz) * (wavelength)**4)
+			K2 = dielec_water(0.D0,temp(nz)-t_abs,freq)
+			Ze(nz) = 10*log10(1d18* (1d0/ (K2*pi**5) ) * back(nz) * (wavelength)**4)
 			if (abs(Ze(nz)) .gt. huge(Ze(nz))) Ze(nz) = -9999.d0
 			tau_hydro = tau_hydro + (kexttot(nz)*d_hgt)
 			tau_atmo = tau_atmo + (kextatmo(nz)*d_hgt)

@@ -191,7 +191,7 @@ subroutine hydrometeor_extinction(f)
       !                                                                       
 
       kexttot(nz) = kextsn + kextcw + kextrr + kextgr + kextci
-      back(nz) = backcw + backrr + backci + backsn + backgr                                                     
+      back(nz) = backcw + backrr + backci + backsn + backgr
 
   
       if (kexttot(nz) .lt. 0.) write(*,*) 'something wrong'
