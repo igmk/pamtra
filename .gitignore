@@ -10,4 +10,4 @@ profiles/
 *~
 .nfs*
 run_LMRT*
-
+*.prefs
