@@ -12,7 +12,5 @@ data/
 .nfs*
 run_LMRT*
 *.prefs
-<<<<<<< HEAD
 Debug
-=======
->>>>>>> branch 'master' of /home/mech/projects/repos/pamtra.git
+

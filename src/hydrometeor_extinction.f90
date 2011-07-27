@@ -234,14 +234,10 @@ subroutine hydrometeor_extinction(f)
       !           input file of the scattering properties of each layer
       !                                                                       
 
-<<<<<<< HEAD
-      kexttot(nz) = kextsn + kextcw + kextrr + kextgr + kextci
-      back(nz) = backcw + backrr + backci + backsn + backgr
 
-=======
       kexttot(nz) = kextsn + kextcw + kextrr + kextgr + kextci + kextha
       back(nz) = backcw + backrr + backci + backsn + backgr + backha
->>>>>>> branch 'master' of /home/mech/projects/repos/pamtra.git
+
   
       if (kexttot(nz) .lt. 0.) write(*,*) 'something wrong'
       if (kexttot(nz) .le. 0.) then 
