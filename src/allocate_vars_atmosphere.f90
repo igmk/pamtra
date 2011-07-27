@@ -1,6 +1,7 @@
 subroutine allocate_vars_atmosphere
 
 use vars_atmosphere
+use nml_params
 
 implicit none
 
@@ -19,11 +20,20 @@ integer :: i,j
       allocate(rho_vap(nlyr),stat=alloc_status)
       allocate(q_hum(nlyr),stat=alloc_status)
 
-      allocate(cwc_q(nlyr),stat=alloc_status)
-      allocate(iwc_q(nlyr),stat=alloc_status)
-      allocate(rwc_q(nlyr),stat=alloc_status)
-      allocate(swc_q(nlyr),stat=alloc_status)
-      allocate(gwc_q(nlyr),stat=alloc_status)
+      allocate(cwc_q(nlyr))
+      allocate(iwc_q(nlyr))
+      allocate(rwc_q(nlyr))
+      allocate(swc_q(nlyr))
+      allocate(gwc_q(nlyr))
+      if (n_moments .eq. 2) then
+        allocate(hwc_q(nlyr))
+        allocate(cwc_n(nlyr))
+        allocate(iwc_n(nlyr))
+        allocate(rwc_n(nlyr))
+        allocate(swc_n(nlyr))
+        allocate(gwc_n(nlyr))
+        allocate(hwc_n(nlyr))
+	  end if
 
   allocate(nlegen(nlyr),stat=alloc_status)
   allocate(rt3nlegen(nlyr),stat=alloc_status)
@@ -63,6 +73,15 @@ back(:) = 0d0
 	allocate(profiles(i,j)%rain_q(nlyr), stat=alloc_status)
 	allocate(profiles(i,j)%snow_q(nlyr), stat=alloc_status)
 	allocate(profiles(i,j)%graupel_q(nlyr), stat=alloc_status)
+	if (n_moments .eq. 2) then
+	  allocate(profiles(i,j)%hail_q(nlyr), stat=alloc_status)
+	  allocate(profiles(i,j)%cloud_water_n(nlyr), stat=alloc_status)
+	  allocate(profiles(i,j)%cloud_ice_n(nlyr), stat=alloc_status)
+	  allocate(profiles(i,j)%rain_n(nlyr), stat=alloc_status)
+	  allocate(profiles(i,j)%snow_n(nlyr), stat=alloc_status)
+	  allocate(profiles(i,j)%graupel_n(nlyr), stat=alloc_status)
+	  allocate(profiles(i,j)%hail_n(nlyr), stat=alloc_status)
+	end if
 	allocate(profiles(i,j)%vapor_pressure(nlyr), stat=alloc_status)
 	allocate(profiles(i,j)%rho_vap(nlyr), stat=alloc_status)
 	allocate(profiles(i,j)%q_hum(nlyr), stat=alloc_status)

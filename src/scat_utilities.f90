@@ -154,16 +154,16 @@ function distribution(a, b, alpha, gamma, d, distflag)
 
   implicit none
 
-  real(kind=dbl) :: a, b, alpha, gamma, d,r
+  real(kind=dbl) :: a, b, alpha, gamma, d
   character :: distflag*1 
   real(kind=dbl) :: distribution
 
   if (distflag .eq. 'G') then 
   !   modified gamma distribution                                  
-      distribution = a * r**alpha * exp( - b * r**gamma) 
+      distribution = a * d**alpha * exp( - b * d**gamma)
   elseif (distflag .eq. 'L') then 
   !   log-normal distribution                                      
-      distribution = a / r * exp( -0.5*(log(r / b) )**2 / alpha**2)
+      distribution = a / d * exp( -0.5*(log(d / b) )**2 / alpha**2)
   elseif (distflag .eq. 'C') then 
   !   distribution according to cosmo-de model                                  
       distribution = a * exp(-b*d)

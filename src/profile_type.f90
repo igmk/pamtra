@@ -17,6 +17,7 @@ type profile
   real :: rwp
   real :: swp
   real :: gwp
+  real :: hwp
 !  real(kind=dbl) :: ground_albedo
 !  real(kind=dbl) :: ground_index
 !  real(kind=dbl) :: ground_temperature
@@ -30,6 +31,14 @@ type profile
   real(kind=dbl), pointer :: rain_q(:)
   real(kind=dbl), pointer :: snow_q(:)
   real(kind=dbl), pointer :: graupel_q(:)
+  real(kind=dbl), pointer :: hail_q(:)
+
+  real(kind=dbl), pointer :: cloud_water_n(:)
+  real(kind=dbl), pointer :: cloud_ice_n(:)
+  real(kind=dbl), pointer :: rain_n(:)
+  real(kind=dbl), pointer :: snow_n(:)
+  real(kind=dbl), pointer :: graupel_n(:)
+  real(kind=dbl), pointer :: hail_n(:)
 
   real(kind=dbl), pointer :: press(:)
   real(kind=dbl), pointer :: temp(:)

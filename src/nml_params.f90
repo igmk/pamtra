@@ -10,7 +10,7 @@ module nml_params
  
   implicit none
 
-  integer :: verbose
+  integer :: verbose, n_moments, isnow_n0
 
   real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
 
@@ -31,6 +31,8 @@ module nml_params
   character(3) :: SD_snow, SD_grau, SD_rain
 
   character(3) :: gas_mod
+
+  character(20) :: moments_file
 
   character(100) :: input_path, output_path, tmp_path,creator
 

@@ -5,6 +5,7 @@ program pamtra
   use nml_params
   use vars_atmosphere
   use vars_output
+  use double_moments_module
   use mod_io_strings
 
   !     Radiative transfer code to process COSMO-model derived profiles   
@@ -62,7 +63,7 @@ program pamtra
   real(kind=dbl) :: E1, E2
 
   real(kind=dbl) :: RAD1, RAD2, refre, refim,&
-       N_0sr, Coeff_corr, AD, BD, ALPHA, GAMMA,  &
+       N_0sr, Coeff_corr, AD, BD,  &
        n0S, lambda_D, tmp, N_0snowD, N_0grauD,              &
        Coeff_snow, a_mgraup, b_g, b_snow,        &
        a_msnow, Coeff_grau, den_liq, drop_mass, del_r, den_ice,&
@@ -125,7 +126,10 @@ program pamtra
 
   character(80) :: femis ! filename for the emissivity databases
 
+  character(20) :: dummy
+
   integer :: istat
+
 
 ! temporary variables
 
@@ -150,9 +154,10 @@ program pamtra
   namelist / surface_params / ground_type,salinity, emissivity
   namelist / gas_abs_mod / lgas_extinction, gas_mod
   namelist / hyd_opts / lhyd_extinction, lphase_flag
-  namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, SP
+  namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, SP, isnow_n0
   namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau
   namelist / rain_params / SD_rain, N_0rainD
+  namelist / moments / n_moments, moments_file
 
 
 inarg = iargc()
@@ -188,9 +193,24 @@ end if
   read(7,nml=snow_params)
   read(7,nml=graupel_params)
   read(7,nml=rain_params)
+  read(7,nml=moments)
   close(7)
 
   wavelength = c / (freq*1.d3)   ! microns
+
+  if (n_moments .eq. 2) then
+    open(118,file=moments_file)
+    !read NU & Mu parameter of the drop size distr. as a function of MASS
+    !and Alpha & Beta parameter of Diameter-Mass function
+    !gamma_xxx(1)=nu	gamma_xxx(2)=mu		gamma_xxx(3)=alpha		gamma_xxx(4)=beta
+    read(118,'(a20,4(x,d13.6))') dummy,gamma_cloud
+    read(118,'(a20,4(x,d13.6))') dummy,gamma_rain
+    read(118,'(a20,4(x,d13.6))') dummy,gamma_ice
+    read(118,'(a20,4(x,d13.6))') dummy,gamma_snow
+    read(118,'(a20,4(x,d13.6))') dummy,gamma_graupel
+    read(118,'(a20,4(x,d13.6))') dummy,gamma_hail
+	close(118)
+  end if
 
   !                                                                       
   !     read atmospheric profiles                 
@@ -266,14 +286,28 @@ end if
 		   profiles(i,j)%wind_10v            ! m/s
 	    if (istat .ne. 0) call error_msg(input_file, i, j)
         ! integrated quantities
-        read(14,*,iostat=istat) &
+        if (n_moments .eq. 1) then
+           read(14,*) &
            profiles(i,j)%iwv,&               ! kg/m^2
 		   profiles(i,j)%cwp,&               ! kg/m^2
 		   profiles(i,j)%iwp,&               ! kg/m^2
 		   profiles(i,j)%rwp,&               ! kg/m^2
 		   profiles(i,j)%swp,&               ! kg/m^2
 		   profiles(i,j)%gwp                 ! kg/m^2
+		end if
+		if (n_moments .eq. 2) then
+           read(14,*,iostat=istat) &
+           profiles(i,j)%iwv,&               ! kg/m^2
+		   profiles(i,j)%cwp,&               ! kg/m^2
+		   profiles(i,j)%iwp,&               ! kg/m^2
+		   profiles(i,j)%rwp,&               ! kg/m^2
+		   profiles(i,j)%swp,&               ! kg/m^2
+		   profiles(i,j)%gwp,&               ! kg/m^2
+		   profiles(i,j)%hwp                 ! kg/m^2
+		end if
+
 	    if (istat .ne. 0) call error_msg(input_file, i, j)
+
         ! surface values
         read(14,*,iostat=istat) &
            profiles(i,j)%hgt_lev(0),&
@@ -282,7 +316,9 @@ end if
 		   profiles(i,j)%relhum_lev(0)
 	    if (istat .ne. 0) call error_msg(input_file, i, j)
         do k = 1, nlyr 
-           read(14,*,iostat=istat) &
+		   if (n_moments .eq. 1) then
+              read(14,*,iostat=istat) &
+
               profiles(i,j)%hgt_lev(k), &             ! m
 		      profiles(i,j)%press_lev(k), &           ! Pa
 		      profiles(i,j)%temp_lev(k), &            ! K
@@ -292,7 +328,28 @@ end if
 		      profiles(i,j)%rain_q(k), &              ! kg/kg
 		      profiles(i,j)%snow_q(k), &              ! kg/kg
 		      profiles(i,j)%graupel_q(k)              ! kg/kg
+		    end if
+			if (n_moments .eq. 2) then
+		      read(14,*,iostat=istat) &
+              profiles(i,j)%hgt_lev(k), &             ! m
+		      profiles(i,j)%press_lev(k), &           ! Pa
+		      profiles(i,j)%temp_lev(k), &            ! K
+		      profiles(i,j)%relhum_lev(k), &          ! %
+		      profiles(i,j)%cloud_water_q(k), &       ! kg/kg
+		      profiles(i,j)%cloud_ice_q(k), &         ! kg/kg
+		      profiles(i,j)%rain_q(k), &              ! kg/kg
+		      profiles(i,j)%snow_q(k), &              ! kg/kg
+		      profiles(i,j)%graupel_q(k), &           ! kg/kg
+		      profiles(i,j)%hail_q(k), &       		  ! kg/kg
+		      profiles(i,j)%cloud_water_n(k), &       ! #/kg
+		      profiles(i,j)%cloud_ice_n(k), &         ! #/kg
+		      profiles(i,j)%rain_n(k), &              ! #/kg
+		      profiles(i,j)%snow_n(k), &              ! #/kg
+		      profiles(i,j)%graupel_n(k), &           ! #/kg
+		      profiles(i,j)%hail_n(k)                 ! #/kg
+	        end if
 	    if (istat .ne. 0) call error_msg(input_file, i, j,k)
+
 		end do
      end do
   end do
@@ -346,11 +403,6 @@ end if
   micro_str = SD_snow//N0snowstr//EM_snow//SP_str//SD_grau//        &
        N0graustr//EM_grau//SD_rain//N0rainstr                            
 
-	
-  alpha = 0.0d0
-
-  gamma = 1.0d0 ! always exponential SD
-
   if (verbose .gt. 1) print*, 'Start loop over profiles!'
 
   grid_y: do ny = 1, ngridy !ny_in, ny_fin  
@@ -374,6 +426,16 @@ end if
 	rwc_q = profiles(nx,ny)%rain_q                  ! kg/kg
 	swc_q = profiles(nx,ny)%snow_q                  ! kg/kg
 	gwc_q = profiles(nx,ny)%graupel_q               ! kg/kg
+
+	if (n_moments .eq. 2) then
+	  hwc_q = profiles(nx,ny)%hail_q				! kg/kg
+	  cwc_n = profiles(nx,ny)%cloud_water_n			! #/kg
+	  iwc_n = profiles(nx,ny)%cloud_ice_n			! #/kg
+	  rwc_n = profiles(nx,ny)%rain_n				! #/kg
+	  swc_n = profiles(nx,ny)%snow_n				! #/kg
+	  gwc_n = profiles(nx,ny)%graupel_n				! #/kg
+	  hwc_n = profiles(nx,ny)%hail_n				! #/kg
+	end if
 
 	press = profiles(nx,ny)%press                   ! Pa
 	temp = profiles(nx,ny)%temp                     ! K
@@ -402,6 +464,7 @@ end if
                 access='direct',recl=28)
 	  ! land_emis could give polarized reflectivities
       call land_emis(ise,lon,lat,real(freq),emissivity)
+
 	  close(ise)
 	  ground_albedo = 1.d0 - emissivity
 	else if (lfrac .ge. 0.0 .and. lfrac .lt. 0.5) then

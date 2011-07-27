@@ -28,7 +28,15 @@ real(kind=dbl), allocatable, dimension(:) :: cwc_q, &
                               	             iwc_q, &
                               	             rwc_q, &
                                	             swc_q, &
-                                             gwc_q
+                                             gwc_q, &
+                                          		hwc_q
+
+ real(kind=dbl), allocatable, dimension(:) ::	cwc_n, &
+                                          		iwc_n, &
+                                          		rwc_n, &
+                                          		swc_n, &
+                                          		gwc_n, &
+                                          		hwc_n
 
  real(kind=dbl), allocatable, dimension(:) :: kextatmo, &
                                   		      kexttot, &
