@@ -11,4 +11,4 @@ data/
 *~
 .nfs*
 run_LMRT*
-
+*.prefs
