@@ -10,7 +10,7 @@ subroutine write_nc_results(nc_file)
   integer :: ncid
   integer :: dlonID, dlatID, dangID, dfreID, doutID, dstokesID, dlayerID
   integer :: isVarID, jsVarID, lonVarID, latVarID, lfracVarID, t_gVarID, wind10uVarID, wind10vVarID, iwvVarID, cwpVarID,&
-	     iwpVarID, rwpVarID, swpVarID, gwpVarID, flux_upVarID, flux_downVarID, &
+	     iwpVarID, rwpVarID, swpVarID, gwpVarID, hwpVarID, flux_upVarID, flux_downVarID, &
 	     tbVarID, heightVarID, ZeVarID, PiaAtmoBUVarID, PiaHydroBUVarID, &
 	     PiaAtmoTDVarID, PiaHydroTDVarID
   
@@ -28,7 +28,6 @@ subroutine write_nc_results(nc_file)
 
 
   call check(nf90_create(path=nc_file,cmode=nf90_noclobber,ncid=ncid))
-
 
   ! for netcdf history get meta data
   call idate(today)   ! today(1)=day, (2)=month, (3)=year
@@ -113,6 +112,10 @@ end if
   call check(nf90_put_att(ncid, gwpVarID, "units", "kg/m^2"))
   call check(nf90_put_att(ncid, gwpVarID, "missing_value", -9999))
 
+  call check(nf90_def_var(ncid,'hwp', nf90_float,dim2d, hwpVarID))
+  call check(nf90_put_att(ncid, hwpVarID, "units", "kg/m^2"))
+  call check(nf90_put_att(ncid, hwpVarID, "missing_value", -9999))
+
 
 if (active) then
   dim3d = (/dlayerID,dlatID,dlonID/)
@@ -177,6 +180,7 @@ end if
   call check(nf90_put_var(ncid, rwpVarID, rwps))
   call check(nf90_put_var(ncid, swpVarID, swps))
   call check(nf90_put_var(ncid, gwpVarID, gwps))
+  call check(nf90_put_var(ncid, hwpVarID, hwps))
 if (passive) then
   call check(nf90_put_var(ncid, flux_upVarID, flux_up))
   call check(nf90_put_var(ncid, flux_downVarID, flux_down))
@@ -194,7 +198,7 @@ end if
 
   call check(nf90_close(ncid))
 
-  deallocate(lons,lats,lfracs,t_g,w10u,w10v,iwvs,cwps,iwps,rwps,swps,gwps,flux_up,flux_down,tb,hgt,Ze,PIA_atmo_bottomup,&
+  deallocate(lons,lats,lfracs,t_g,w10u,w10v,iwvs,cwps,iwps,rwps,swps,gwps,hwps,flux_up,flux_down,tb,hgt,Ze,PIA_atmo_bottomup,&
 		PIA_hydro_bottomup, PIA_atmo_topdown, PIA_hydro_topdown)
 
   return
