@@ -195,6 +195,8 @@ end if
   read(7,nml=rain_params)
   read(7,nml=moments)
   close(7)
+  
+  if (n_moments .ne. 1 .and. n_moments .ne. 2) stop "n_moments is not 1 or 2"
 
   wavelength = c / (freq*1.d3)   ! microns
 
@@ -377,7 +379,7 @@ end if
   !
 
   call get_atmosG0
-  if (verbose .gt. 0) print*, 'variables filled up!'
+  if (verbose .gt. 1) print*, 'variables filled up!'
 
   write (SP_str (1:3) , '(f3.1)') SP
 
@@ -410,7 +412,7 @@ end if
     write(xstr, '(i3.3)') profiles(nx,ny)%isamp
     write(ystr, '(i3.3)') profiles(nx,ny)%jsamp
 
-    if (verbose .gt. 0) print*, "Y:",ny, " of ", ngridy, "X:", nx, " of ", ngridx
+    if (verbose .gt. 0) print*, "calculating Y:",ny, " of ", ngridy, "X:", nx, " of ", ngridx
 
     ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
 	lat = profiles(nx,ny)%latitude                  ! °
@@ -443,6 +445,7 @@ end if
 	vapor_pressure = profiles(nx,ny)%vapor_pressure ! Pa
 	rho_vap = profiles(nx,ny)%rho_vap               ! kg/m^3
 	q_hum = profiles(nx,ny)%q_hum                   ! kg/kg
+
 
 	if (verbose .gt. 1) print*, nx,ny, 'type to local variables done' 
 

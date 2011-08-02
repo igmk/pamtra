@@ -5,6 +5,7 @@ pamtra
 .cproject
 .project
 *.nml
+fort*
 output/
 profiles/
 data/
