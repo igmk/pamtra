@@ -201,7 +201,6 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   IF ( (NUM_LAYERS + 1) * N * N.GT.MAXLM) THEN 
      WRITE (*, '(1X,A,A,I3)') 'Matrix layer size exceeded.', '  Maximu&
           &m number :', MAXLM   
-                          
      STOP 
   ENDIF
 
