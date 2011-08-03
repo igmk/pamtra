@@ -241,10 +241,18 @@ end if
    if (verbose .gt. 0) print *,"opening: ",input_path(:len_trim(input_path))//"/"//input_file
 
   open(UNIT=14, FILE=input_path(:len_trim(input_path))//"/"//input_file, STATUS='OLD', form='formatted',iostat=istat)
+ 
+ if (istat .ne. 0) then
+    call error_msg(input_file,0,0)
+    stop "Read error 1: Cannot open file"
+    end if
 
   read(14,*,iostat=istat) year, month, day, time, ngridx, ngridy, nlyr, deltax, deltay
-  if (istat .ne. 0) call error_msg(input_file,0,0)
 
+  if (istat .ne. 0) then
+    call error_msg(input_file,0,0)
+    stop "Read error 2: Cannot read first line of file"
+    end if
 	! now allocate variables
 
 	allocate(Ze(ngridx, ngridy,nlyr))
@@ -279,17 +287,24 @@ end if
   do i = 1, ngridx
      do j = 1, ngridy 
         read(14,*,iostat=istat) profiles(i,j)%isamp, profiles(i,j)%jsamp !
-	    if (istat .ne. 0) call error_msg(input_file, i, j)
+        if (istat .ne. 0) then
+            call error_msg(input_file,i,j)
+            stop "Read error 3: Cannot read profile index i,j"
+        end if
+
         read(14,*,iostat=istat) &
            profiles(i,j)%latitude, &	     ! degree
 		   profiles(i,j)%longitude,&         ! degree
 		   profiles(i,j)%land_fraction,&     !
 		   profiles(i,j)%wind_10u,&          ! m/s
 		   profiles(i,j)%wind_10v            ! m/s
-	    if (istat .ne. 0) call error_msg(input_file, i, j)
+        if (istat .ne. 0) then
+            call error_msg(input_file,i,j)
+            stop "Read error 4: Cannot read profile lat/lon/lfrac/wind"
+        end if
         ! integrated quantities
         if (n_moments .eq. 1) then
-           read(14,*) &
+           read(14,*,iostat=istat) &
            profiles(i,j)%iwv,&               ! kg/m^2
 		   profiles(i,j)%cwp,&               ! kg/m^2
 		   profiles(i,j)%iwp,&               ! kg/m^2
@@ -308,7 +323,10 @@ end if
 		   profiles(i,j)%hwp                 ! kg/m^2
 		end if
 
-	    if (istat .ne. 0) call error_msg(input_file, i, j)
+        if (istat .ne. 0) then
+            call error_msg(input_file,i,j)
+            stop "Read error 5: Cannot read profile integrated quantities"
+        end if
 
         ! surface values
         read(14,*,iostat=istat) &
@@ -350,8 +368,11 @@ end if
 		      profiles(i,j)%graupel_n(k), &           ! #/kg
 		      profiles(i,j)%hail_n(k)                 ! #/kg
 	        end if
-	    if (istat .ne. 0) call error_msg(input_file, i, j,k)
-
+        if (istat .ne. 0) then
+            call error_msg(input_file,i,j,k)
+            print *,"Error at layer", k
+            stop "Read error 6: Cannot read profile values"
+        end if
 		end do
      end do
   end do
