@@ -160,6 +160,7 @@ program pamtra
   namelist / hyd_opts / lhyd_extinction, lphase_flag
   namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, SP, isnow_n0
   namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau
+  namelist / ice_params / EM_ice
   namelist / rain_params / SD_rain, N_0rainD
   namelist / moments / n_moments, moments_file
 
@@ -200,6 +201,7 @@ end do
   read(7,nml=hyd_opts)
   read(7,nml=snow_params)
   read(7,nml=graupel_params)
+  read(7,nml=ice_params)
   read(7,nml=rain_params)
   read(7,nml=moments)
   close(7)

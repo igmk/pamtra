@@ -42,6 +42,8 @@ isnow_n0=1
 SD_grau='Exp' 
 N_0grauDgrau=4.0 
 EM_grau='surus'
+/&ice_params
+EM_ice='surus'
 /
 &rain_params
 SD_rain='Exp' 

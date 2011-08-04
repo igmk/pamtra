@@ -2,7 +2,7 @@ subroutine ice_ssp(f,qi,t,p,q,maxleg,kext, salb, back,  &
 	nlegen, legen, legen2, legen3, legen4, ni)
   
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_moments
+  use nml_params, only: verbose, lphase_flag, n_moments, EM_ice
   use constants, only: pi, im
   use double_moments_module
 
