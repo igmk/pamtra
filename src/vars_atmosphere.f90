@@ -6,11 +6,15 @@ use profile_type
 implicit none
 save
 
-integer :: nlyr
+integer :: nlyr, nfrq
 integer :: ngridx, ngridy
 
 integer, allocatable, dimension(:) :: nlegen
 integer, allocatable, dimension(:) :: rt3nlegen
+
+!is allocated in pamtra.f90!
+real(kind=dbl),allocatable,dimension(:)  :: freqs
+
 			  
 real(kind=dbl), allocatable, dimension(:) :: relhum_lev,&
                                              press_lev, &

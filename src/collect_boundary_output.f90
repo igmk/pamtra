@@ -10,7 +10,7 @@ subroutine collect_boundary_output(GROUND_TEMP,lon,lat,lfrac,wind10u,wind10v,iwv
       integer :: model_i, model_j
       real lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp
                                                                         
-                                                                        
+
 
 !      Output integrated quantities
 
