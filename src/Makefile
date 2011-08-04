@@ -2,6 +2,7 @@ ARCH=$(shell uname -s)
 HOME=/home/mech
 FC=gfortran
 FCFLAGS=-c -fdefault-real-8 -fdefault-double-8
+# -g
 
 ifeq ($(ARCH),Darwin)
 	NCFLAGS=-I/opt/local/include/ #-g
