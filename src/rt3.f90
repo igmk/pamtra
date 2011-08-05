@@ -214,14 +214,14 @@
       OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU,  &
       GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP,  &
       WAVELENGTH, UNITS, OUTPOL, NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,    &
-      nx,ny,write_nc,verbose)
+      nx,ny,fi,write_nc,verbose)
 
       use kinds
       use vars_atmosphere
 
       implicit none
 
-	  integer :: nx,ny
+	  integer :: nx,ny,fi
 
       INTEGER MAXV, MAXA, MAXLAY 
       PARAMETER (MAXV = 64, MAXA = 32) 
@@ -316,7 +316,8 @@
 	WAVELENGTH,   &
 	UNITS, OUTPOL,NOUTLEVELS, OUTLEVELS,         &
 	NUMAZIMUTHS,UP_RAD, DOWN_RAD,     &
-	nx,ny)
+	nx,ny,fi)
+
       else
 	CALL OUTPUT_FILE (NSTOKES, NUMMU, AZIORDER, SRC_CODE, &
 	OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU, GROUND_TEMP, &

@@ -5,6 +5,7 @@ pamtra
 .cproject
 .project
 *.nml
+fort*
 output/
 profiles/
 data/
@@ -12,3 +13,5 @@ data/
 .nfs*
 run_LMRT*
 *.prefs
+Debug
+

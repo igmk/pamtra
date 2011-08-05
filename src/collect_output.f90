@@ -1,20 +1,22 @@
 subroutine collect_output(NSTOKES, NUMMU, AZIORDER,   &
       WAVELENGTH, UNITS, OUTPOL,NOUTLEVELS,        &
       OUTLEVELS, NUMAZIMUTHS,UP_RAD,    &
-      DOWN_RAD,a,b)
+      DOWN_RAD,a,b,fi)
+
 
   use kinds
   use constants, only: pi
   use vars_output
-  use vars_atmosphere, only: ngridx, ngridy
+                            !   use vars_atmosphere, only: ngridx, ngridy
 
-  integer, intent(in) :: a,b
+  integer, intent(in) :: a,b,fi
 
-      INTEGER NSTOKES, NUMMU, NUMAZI, AZIORDER 
+      INTEGER NSTOKES, NUMMU, AZIORDER  !,NUMAZI
       INTEGER NOUTLEVELS, OUTLEVELS ( * ), NUMAZIMUTHS
       REAL(kind=dbl) WAVELENGTH 
       REAL(kind=dbl) UP_RAD (NSTOKES, NUMMU, AZIORDER + 1, NOUTLEVELS) 
       REAL(kind=dbl) DOWN_RAD (NSTOKES, NUMMU, AZIORDER + 1, NOUTLEVELS)
+
       INTEGER I, J, K, L, LI, M, N 
       REAL OUT (4), PHI, PHID 
 
@@ -55,7 +57,7 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,   &
 	    end do 
 	    do i = 1, nstokes
 !	      tb_up(a,b,l,j,i) = out(i)
-	      tb(i,(nummu+1)-j,l,b,a) = out(i)
+	      tb(i,fi,(nummu+1)-j,l,b,a) = out(i)
 	    end do
 !	    write (3, form1) height (li), phid, - mu_values (j), (out (i),i = 1, nstokes)                                                   
 	  end do 
@@ -73,7 +75,7 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,   &
 	    end do 
 	    do i = 1, nstokes
 !	      tb_down(a,b,l,j,i) = out(i)
-	      tb(i,nummu+j,l,b,a) = out(i)
+	      tb(i,fi,nummu+j,l,b,a) = out(i)
 	    end do
 !	    write (3, form1) height (li), phid, mu_values(j), (out(i),i = 1, nstokes)                                                   
 	  end do 

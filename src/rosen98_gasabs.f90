@@ -47,13 +47,18 @@ subroutine gasabsR98(f,Tk,Rhowv,Pa,absair,abswv)
 
 ! check for "reasonable" input values
 
-      if (f .le. 0.0 .or. F .gt. 800.0) &
-          stop 'Frequency out of range in GasabsR98'
-      if (Tk .lt. 100.0) &
-          stop 'Temperature out of range in GasabsR98'
-      if (pa .lt. 10.0 .or. pa .gt. 1.2e5) &
-          stop 'Pressure out of range in GasabsR98'
-
+      if (f .le. 0.0 .or. F .gt. 800.0) then
+          print*, 'Frequency out of range in GasabsR98:', F
+          stop
+      endif
+      if (Tk .lt. 100.0) then
+          print *, 'Temperature out of range in GasabsR98: ', Tk
+          stop
+      endif
+      if (pa .lt. 10.0 .or. pa .gt. 1.2e5) then
+          print *, 'Pressure out of range in GasabsR98: ', pa
+          stop
+      endif
 ! convert pressure from Pa to Mb
       pmb = pa/100.0
 

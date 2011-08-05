@@ -10,6 +10,7 @@ implicit none
                                                                         
       integer, intent(in) :: model_i, model_j
       real(kind=sgl), intent(in) :: lon,lat,lfrac,iwv,cwp,iwp,rwp,swp,gwp,hwp
+
 !      Output integrated quantities
       is(b,a) = model_i
       js(b,a) = model_j
