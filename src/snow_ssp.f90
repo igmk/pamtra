@@ -131,8 +131,10 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
 		ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
 		back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
 		LEGEN4, dist_name,0.863*1.e-3*f+0.115,42)
-	elseif (EM_snow(1:3) .eq. 'liu') then
-	    call dda_db_liu(f,t,9,mindex, &
+	elseif (EM_snow .eq. 'liudb') then
+	    dia1 = 1.02d-4
+	    dia2 = 2.d-2
+	    call dda_db_liu(f,t,8,mindex, &
 		dia1,dia2,nbins,maxleg,ad,&
 		bd, alpha, gamma, lphase_flag,kext, salb,&
 		back, nlegen, legen, legen2, legen3,&

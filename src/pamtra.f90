@@ -369,6 +369,7 @@ end if
     allocate(tb(nstokes,2*nummu,noutlevels,ngridy,ngridx))
   end if
 
+if (verbose .gt. 0) print*, 'write_nc variables allocated!'
 
   !                                                                       
   !     This GCE model format does not have all the fields expected by    
@@ -556,7 +557,7 @@ end if
 		DIRECT_MU, GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO,         &
 		GROUND_INDEX, SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,          &
 		NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,&
-		nx,ny,write_nc,verbose)
+		nx,ny)
 
 	if (verbose .gt. 1) print*, nx,ny, "....rt3 finished"
 

@@ -98,10 +98,11 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
      GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP, WAVELENGTH,   &
      NUM_LAYERS, HEIGHT, TEMPERATURES, GAS_EXTINCT,  &
      NOUTLEVELS, OUTLEVELS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD,     &
-     DOWN_RAD,wind10u,wind10v,verbose)
+     DOWN_RAD,wind10u,wind10v)
 
   use kinds
   use vars_atmosphere
+  use nml_params, only: verbose
 
   INTEGER NSTOKES, NUMMU, AZIORDER 
   INTEGER NUM_LAYERS, SRC_CODE 
@@ -155,7 +156,7 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   REAL(kind=dbl) SOURCE (2 * MAXV * (MAXLAY + 1) ) 
   REAL(kind=dbl) GND_RADIANCE (MAXV), SKY_RADIANCE (2 * MAXV) 
   real(kind=dbl) wind10,wind10u,wind10v,windratio,windangle
-  integer :: verbose,iquadrant
+  integer :: iquadrant
   REAL(KIND=dbl), PARAMETER :: quadcof  (4, 2  ) =      &
     & Reshape((/0.0_dbl, 1.0_dbl, 1.0_dbl, 2.0_dbl, 1.0_dbl,  - 1.0_dbl, 1.0_dbl,  - 1.0_dbl/), (/4, 2/))
 

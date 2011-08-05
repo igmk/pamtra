@@ -10,6 +10,7 @@ subroutine mie_icefactor(f, t, m_ice,    &
 ! note that mindex has the convention with negative imaginary part      
 
 use kinds
+use constants, only: pi,c
 
 implicit none
 
@@ -25,7 +26,6 @@ real(kind=dbl) :: a_mtox, bcoeff
 real(kind=dbl) :: extinction, albedo, back_scatt, legen (200), legen2 (200),&
   legen3 (200), legen4 (200)                                        
 integer, parameter :: maxn  = 5000
-real(kind=dbl), parameter :: pi = 3.14159265358979d0
 integer :: nterms, nquad, nmie, nleg 
 integer :: i, l, m, ir
 real(kind=dbl) :: x, del_d, diameter, ndens, tmp, diameter_ice, density
@@ -40,8 +40,6 @@ complex(kind=dbl), dimension(maxn) :: a, b
 complex(kind=dbl) :: msphere 
 character :: aerodist * 1
 
-real(kind=dbl), parameter :: c = 299792458.d0
-							      
 wavelength = c/(f*1.e9) !
 																  
 !           find the maximum number of terms required in the mie series,
@@ -93,11 +91,12 @@ do ir = 1, nbins+1
   call epsi(msphere,f,t,ice_type,density) 
 								    
   call miecalc (nmie, x, msphere, a, b) 
-  call miecross (nmie, x, a, b, qext, qscat, qback) 
-  sumqe = sumqe+qext * ndens * (diameter_ice/2.)**2
-  sumqs = sumqs + qscat * ndens * (diameter_ice/2.)**2
-  sumqback = sumqback + qback * ndens * (diameter_ice/2.)**2
-  !          write(*,*)'mie in',qext,qscat,ndens,radius,x,nmie            
+  call miecross (nmie, x, a, b, qext, qscat, qback)
+! sum up extinction, scattering, and backscattering as cross-sections/pi
+  sumqe = sumqe+qext * ndens * (diameter_ice/2.)**2         ! [1/m^2]
+  sumqs = sumqs + qscat * ndens * (diameter_ice/2.)**2      ! [1/m^2]
+  sumqback = sumqback + qback * ndens * (diameter_ice/2.)**2! [1/m^2]
+
   if (lphase_flag) then 
     nmie = min0(nmie, nterms) 
     do i = 1, nquad 
@@ -109,7 +108,6 @@ do ir = 1, nbins+1
     end do 
   end if 
 end do 
-								  
 								  
 !           multiply the sums by the integration delta and other constan
 !             put quadrature weights in angular array for later         
