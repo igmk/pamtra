@@ -1,7 +1,6 @@
-subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
-      QUAD_TYPE, GROUND_TEMP, GROUND_TYPE, &
+subroutine collect_output(NSTOKES, NUMMU, AZIORDER,   &
       WAVELENGTH, UNITS, OUTPOL,NOUTLEVELS,        &
-      OUTLEVELS, NUMAZIMUTHS, UP_FLUX, DOWN_FLUX, UP_RAD,    &
+      OUTLEVELS, NUMAZIMUTHS,UP_RAD,    &
       DOWN_RAD,a,b)
 
   use kinds
@@ -14,13 +13,8 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
       INTEGER NSTOKES, NUMMU, NUMAZI, AZIORDER 
       INTEGER NOUTLEVELS, OUTLEVELS ( * ), NUMAZIMUTHS
       REAL(kind=dbl) WAVELENGTH 
-      REAL(kind=dbl) GROUND_TEMP
-      REAL(kind=dbl) UP_FLUX (NSTOKES, NOUTLEVELS) 
-      REAL(kind=dbl) DOWN_FLUX (NSTOKES, NOUTLEVELS) 
       REAL(kind=dbl) UP_RAD (NSTOKES, NUMMU, AZIORDER + 1, NOUTLEVELS) 
       REAL(kind=dbl) DOWN_RAD (NSTOKES, NUMMU, AZIORDER + 1, NOUTLEVELS)
-      CHARACTER QUAD_TYPE * 1, UNITS * 1, OUTPOL * 2,GROUND_TYPE * 1                                                   
-      CHARACTER(32) QUAD_NAME, UNITS_NAME, GROUND_NAME 
       INTEGER I, J, K, L, LI, M, N 
       REAL OUT (4), PHI, PHID 
 
@@ -32,37 +26,11 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,       &
       N = NUMMU * (AZIORDER + 1) * NOUTLEVELS 
       CALL CONVERT_OUTPUT(UNITS, OUTPOL, NSTOKES, N, WAVELENGTH, 0,UP_RAD)
       CALL CONVERT_OUTPUT(UNITS, OUTPOL, NSTOKES, N, WAVELENGTH, 0,DOWN_RAD)
-      CALL CONVERT_OUTPUT(UNITS, OUTPOL, NSTOKES, NOUTLEVELS,WAVELENGTH, 1, UP_FLUX)                                           
-      CALL CONVERT_OUTPUT(UNITS, OUTPOL, NSTOKES, NOUTLEVELS,WAVELENGTH, 1, DOWN_FLUX)                                         
                                                          
       NUMAZI = 2 * AZIORDER + 1 
-      IF (NSTOKES.LE.2) NUMAZI = AZIORDER + 1 
-      QUAD_NAME = 'GAUSSIAN' 
-      IF (QUAD_TYPE.EQ.'D') QUAD_NAME = 'DOUBLEGAUSS' 
-      IF (QUAD_TYPE.EQ.'L') QUAD_NAME = 'LOBATTO' 
-      IF (QUAD_TYPE.EQ.'E') QUAD_NAME = 'EXTRA-ANGLES' 
-      UNITS_NAME = 'WATTS/(M^2 MICRON STER)' 
-      IF (UNITS.EQ.'T') UNITS_NAME = 'KELVINS - EBB' 
-      IF (UNITS.EQ.'R') UNITS_NAME = 'KELVINS - RJ' 
-      GROUND_NAME = 'LAMBERTIAN' 
-      IF (GROUND_TYPE.EQ.'F') GROUND_NAME = 'FRESNEL' 
-                                                                       
-
-
-
                                                                         
       do l = 1, noutlevels 
 	li = outlevels (l) 
-!   !               output fluxes at this level                             
-! 	write (3, form1) height(li), 0., - 2.0, (sngl(up_flux (i, l) ),i = 1, nstokes)                                                   
-! 	write (3, form1) height(li), 0., + 2.0, (sngl(down_flux (i, l) ), i = 1, nstokes)                                                
-	do i = 1, nstokes
-
-!	  flux_up(a,b,l,i) = sngl(up_flux(i, l))
-	  flux_up(i,l,b,a) = sngl(up_flux(i, l))
-!	  flux_down(a,b,l,i) = sngl(down_flux(i, l))
-	  flux_down(i,l,b,a) = sngl(down_flux(i, l))
-	end do
   !    For each azimuth and zenith at this level sum the Fourier
   !    azimuth series appropriate for the particular Stokes parameter
   !    and output the radiance.                                

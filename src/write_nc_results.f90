@@ -9,8 +9,8 @@ subroutine write_nc_results(nc_file)
 
   integer :: ncid
   integer :: dlonID, dlatID, dangID, dfreID, doutID, dstokesID, dlayerID
-  integer :: isVarID, jsVarID, lonVarID, latVarID, lfracVarID, t_gVarID, wind10uVarID, wind10vVarID, iwvVarID, cwpVarID,&
-	     iwpVarID, rwpVarID, swpVarID, gwpVarID, hwpVarID, flux_upVarID, flux_downVarID, &
+  integer :: isVarID, jsVarID, lonVarID, latVarID, lfracVarID, iwvVarID, cwpVarID,&
+	     iwpVarID, rwpVarID, swpVarID, gwpVarID, hwpVarID, &
 	     tbVarID, heightVarID, ZeVarID, PiaAtmoBUVarID, PiaHydroBUVarID, &
 	     PiaAtmoTDVarID, PiaHydroTDVarID
   
@@ -19,7 +19,6 @@ subroutine write_nc_results(nc_file)
 
   integer, dimension(2) :: dim2d
   integer, dimension(3) :: dim3d
-  integer, dimension(4) :: dim4d
   integer, dimension(5) :: dim5d
 
   integer :: today(3), now(3)
@@ -73,20 +72,6 @@ end if
   call check(nf90_def_var(ncid,'lfrac', nf90_float,dim2d, lfracVarID))
   call check(nf90_put_att(ncid, lfracVarID, "units", "-"))
   call check(nf90_put_att(ncid, lfracVarID, "missing_value", -9999))
-
-  call check(nf90_def_var(ncid,'t_g', nf90_float,dim2d, t_gVarID))
-  call check(nf90_put_att(ncid, t_gVarID, "units", "K"))
-  call check(nf90_put_att(ncid, t_gVarID, "missing_value", -9999))
-
-
-  call check(nf90_def_var(ncid,'wind10u', nf90_float,dim2d, wind10uVarID))
-  call check(nf90_put_att(ncid, wind10uVarID, "units", "m/s"))
-  call check(nf90_put_att(ncid, wind10uVarID, "missing_value", -9999))
-
-  call check(nf90_def_var(ncid,'wind10v', nf90_float,dim2d, wind10vVarID))
-  call check(nf90_put_att(ncid, wind10vVarID, "units", "m/s"))
-  call check(nf90_put_att(ncid, wind10vVarID, "missing_value", -9999))
-
 
   call check(nf90_def_var(ncid,'iwv', nf90_float,dim2d, iwvVarID))
   call check(nf90_put_att(ncid, iwvVarID, "units", "kg/m^2"))
@@ -147,15 +132,6 @@ end if
 
 
 if (passive) then
-  dim4d = (/dstokesID,doutID,dlatID,dlonID/)
-  call check(nf90_def_var(ncid,'flux_up', nf90_double,dim4d, flux_upVarID))
-  call check(nf90_put_att(ncid, flux_upVarID, "units", "J s^−1 m^−2 sr^−1 m^−1 (?)"))
-  call check(nf90_put_att(ncid, flux_upVarID, "missing_value", -9999))
-
-  call check(nf90_def_var(ncid,'flux_down', nf90_double,dim4d, flux_downVarID))
-  call check(nf90_put_att(ncid, flux_downVarID, "units", "J s^−1 m^−2 sr^−1 m^−1 (?)"))
-  call check(nf90_put_att(ncid, flux_downVarID, "missing_value", -9999))
-
   dim5d = (/dstokesID,dangID,doutID,dlatID,dlonID/)
   call check(nf90_def_var(ncid,'tb', nf90_double,dim5d, tbVarID))
   call check(nf90_put_att(ncid, tbVarID, "units", "K"))
@@ -171,9 +147,6 @@ end if
   call check(nf90_put_var(ncid, lonVarID, lons))
   call check(nf90_put_var(ncid, latVarID, lats))
   call check(nf90_put_var(ncid, lfracVarID, lfracs))
-  call check(nf90_put_var(ncid, t_gVarID, t_g))
-  call check(nf90_put_var(ncid, wind10uVarID, w10u))
-  call check(nf90_put_var(ncid, wind10vVarID, w10v))
   call check(nf90_put_var(ncid, iwvVarID, iwvs))
   call check(nf90_put_var(ncid, cwpVarID, cwps))
   call check(nf90_put_var(ncid, iwpVarID, iwps))
@@ -182,8 +155,7 @@ end if
   call check(nf90_put_var(ncid, gwpVarID, gwps))
   call check(nf90_put_var(ncid, hwpVarID, hwps))
 if (passive) then
-  call check(nf90_put_var(ncid, flux_upVarID, flux_up))
-  call check(nf90_put_var(ncid, flux_downVarID, flux_down))
+
   call check(nf90_put_var(ncid, tbVarID, tb))
 end if
 
@@ -198,7 +170,7 @@ end if
 
   call check(nf90_close(ncid))
 
-  deallocate(lons,lats,lfracs,t_g,w10u,w10v,iwvs,cwps,iwps,rwps,swps,gwps,hwps,flux_up,flux_down,tb,hgt,Ze,PIA_atmo_bottomup,&
+  deallocate(lons,lats,lfracs,iwvs,cwps,iwps,rwps,swps,gwps,hwps,tb,hgt,Ze,PIA_atmo_bottomup,&
 		PIA_hydro_bottomup, PIA_atmo_topdown, PIA_hydro_topdown)
 
   return

@@ -6,10 +6,9 @@ implicit none
 save
 
 integer, allocatable, dimension(:,:) :: is, js
-real, allocatable, dimension(:,:) :: lons, lats, lfracs, t_g, w10u, w10v, iwvs, cwps, &
+real(kind=sgl), allocatable, dimension(:,:) :: lons, lats, lfracs, iwvs, cwps, &
 						iwps, rwps, swps, gwps,hwps
 
-real(kind=dbl), allocatable, dimension(:,:,:,:) :: flux_up, flux_down
 real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: tb
 
 !for active 
