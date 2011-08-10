@@ -47,3 +47,22 @@ write_nc_results.o: write_nc_results.f90
 	
 clean:
 	rm -rf $(OBJECTS) $(BIN) *.mod *~
+
+test:
+	@echo "=== TEST 1 ==="
+	../pamtra rt_comp_trio.dat ../test/nmls/test1.nml 24 90 150
+	cat ../test/tmp/* > ../test/testResult.txt
+	diff ../test/testResult.txt ../test/referenceOutput/test1.txt
+	rm ../test/testResult.txt ../test/tmp/*
+
+	@echo "=== TEST 2 active only === "
+	../pamtra rt_comp_trio.dat ../test/nmls/test2.nml 35
+	cat ../test/tmp/* > ../test/testResult.txt
+	diff ../test/testResult.txt ../test/referenceOutput/test2.txt
+	rm ../test/testResult.txt ../test/tmp/*
+
+	@echo "=== TEST 3 passive only === "
+	../pamtra rt_comp_trio.dat ../test/nmls/test3.nml 35
+	cat ../test/tmp/* > ../test/testResult.txt
+	diff ../test/testResult.txt ../test/referenceOutput/test3.txt
+	rm ../test/testResult.txt ../test/tmp/*
