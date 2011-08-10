@@ -182,6 +182,7 @@ end if
 
 nfrq = inarg - 2
 allocate(freqs(nfrq))
+allocate(angles_deg(2*NUMMU))
 
 do fi = 1, inarg-2
     call getarg(fi+2,frqs_str(fi))
@@ -610,6 +611,10 @@ grid_f: do fi =1, nfrq
         GROUND_INDEX, SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,          &
         NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,&
         nx,ny,fi,write_nc,verbose)
+
+    !calculate human readable angles!
+    angles_deg(1:NUMMU) = 180-(180.*acos(MU_VALUES(NUMMU:1:-1))/pi)
+    angles_deg(1+NUMMU:2*NUMMU) = (180.*acos(MU_VALUES(1:NUMMU))/pi)
 
     if (verbose .gt. 1) print*, nx,ny, "....rt3 finished"
 

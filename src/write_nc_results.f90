@@ -13,7 +13,7 @@ subroutine write_nc_results(nc_file)
   integer :: isVarID, jsVarID, lonVarID, latVarID, lfracVarID, iwvVarID, cwpVarID,&
 	     iwpVarID, rwpVarID, swpVarID, gwpVarID, hwpVarID, &
 	     tbVarID, heightVarID, ZeVarID, AttAtmoVarID, AttHydroVarID, &
-	     frequencyVarID
+	     frequencyVarID, anglesVarID
 
   integer :: nang = 32, nout = 2, nstokes = 2
 
@@ -25,6 +25,7 @@ subroutine write_nc_results(nc_file)
   integer :: today(3), now(3)
 
   character(100) :: nc_file, timestring, user
+
 
 
   call check(nf90_create(path=nc_file,cmode=nf90_noclobber,ncid=ncid))
@@ -52,6 +53,10 @@ if (active) then
 end if
 
   !1dim
+  call check(nf90_def_var(ncid,'angle', nf90_float,(/dangID/), anglesVarID))
+  call check(nf90_put_att(ncid, anglesVarID, "units", "deg"))
+  call check(nf90_put_att(ncid, anglesVarID, "missing_value", -9999))
+
   call check(nf90_def_var(ncid,'frequency', nf90_float,(/dfrqID/), frequencyVarID))
   call check(nf90_put_att(ncid, frequencyVarID, "units", "GHz"))
   call check(nf90_put_att(ncid, frequencyVarID, "missing_value", -9999))
@@ -141,6 +146,9 @@ end if
 
   call check(nf90_enddef(ncid))
 !  call check(nf90_inq_varid(ncid, 'longitude', VarId))
+
+
+  call check(nf90_put_var(ncid, anglesVarID, angles_deg))
   call check(nf90_put_var(ncid, frequencyVarID, freqs))
   call check(nf90_put_var(ncid, isVarID, is))
   call check(nf90_put_var(ncid, jsVarID, js))
