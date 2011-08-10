@@ -14,4 +14,4 @@ data/
 run_LMRT*
 *.prefs
 Debug
-
+*.kate-swp

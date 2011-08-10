@@ -14,7 +14,6 @@ real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: tb
 
 !for active 
 real(kind=dbl), allocatable, dimension(:,:,:) :: hgt
-real(kind=dbl), allocatable, dimension(:,:,:,:) :: Ze, PIA_atmo_bottomup, PIA_hydro_bottomup, &
-                        PIA_atmo_topdown, PIA_hydro_topdown
+real(kind=dbl), allocatable, dimension(:,:,:,:) :: Ze, Attenuation_atmo, Attenuation_hydro!, &
 
 end module vars_output

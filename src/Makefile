@@ -47,3 +47,4 @@ write_nc_results.o: write_nc_results.f90
 	
 clean:
 	rm -rf $(OBJECTS) $(BIN) *.mod *~
+

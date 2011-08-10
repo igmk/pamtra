@@ -401,10 +401,8 @@ end do
 
 if (active) then
     allocate(Ze(ngridx,ngridy,nlyr,nfrq))
-    allocate(PIA_hydro_bottomup(ngridx,ngridy,nlyr,nfrq))
-    allocate(PIA_atmo_bottomup(ngridx,ngridy,nlyr,nfrq))
-    allocate(PIA_hydro_topdown(ngridx,ngridy,nlyr,nfrq))
-    allocate(PIA_atmo_topdown(ngridx,ngridy,nlyr,nfrq))
+    allocate(Attenuation_hydro(ngridx,ngridy,nlyr,nfrq))
+    allocate(Attenuation_atmo(ngridx,ngridy,nlyr,nfrq))
     allocate(hgt(ngridx,ngridy,nlyr))
 end if
   !                                                                       
@@ -562,8 +560,8 @@ grid_f: do fi =1, nfrq
 
 
     if (active) then
-        call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),Ze(nx,ny,:,fi),PIA_atmo_bottomup(nx,ny,:,fi),&
-            PIA_hydro_bottomup(nx,ny,:,fi), PIA_atmo_topdown(nx,ny,:,fi),PIA_hydro_topdown(nx,ny,:,fi))
+        call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),Ze(nx,ny,:,fi),Attenuation_atmo(nx,ny,:,fi),&
+            Attenuation_hydro(nx,ny,:,fi))
         if (verbose .gt. 1) print*, nx,ny, 'calculate_active done'
     end if
 
