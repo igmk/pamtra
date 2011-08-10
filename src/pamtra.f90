@@ -137,7 +137,8 @@ program pamtra
 
 ! temporary variables
 
-  real :: lat, lon, lfrac, wind10u, wind10v
+  real(kind=sgl) :: lat, lon, lfrac
+  real(kind=dbl) ::  wind10u, wind10v
 
   real(kind=dbl) :: lwc, iwc, rwc, gwc, swc
 
@@ -318,6 +319,7 @@ end do
 		   profiles(i,j)%rwp,&               ! kg/m^2
 		   profiles(i,j)%swp,&               ! kg/m^2
 		   profiles(i,j)%gwp                 ! kg/m^2
+		   profiles(i,j)%hwp = 0.
 		end if
 		if (n_moments .eq. 2) then
            read(14,*,iostat=istat) &
@@ -393,10 +395,14 @@ end do
   if (write_nc) then
     allocate(is(ngridy,ngridx),js(ngridy,ngridx))
     allocate(lons(ngridy,ngridx),lats(ngridy,ngridx),lfracs(ngridy,ngridx))
-    allocate(t_g(ngridy,ngridx),w10u(ngridy,ngridx),w10v(ngridy,ngridx),iwvs(ngridy,ngridx))
-    allocate(cwps(ngridy,ngridx),iwps(ngridy,ngridx),rwps(ngridy,ngridx),swps(ngridy,ngridx),gwps(ngridy,ngridx))
-!     allocate(flux_up(nstokes,noutlevels,ngridy,ngridx),flux_down(nstokes,noutlevels,ngridy,ngridx))
+    allocate(iwvs(ngridy,ngridx))
+    allocate(cwps(ngridy,ngridx),iwps(ngridy,ngridx),rwps(ngridy,ngridx),&
+    swps(ngridy,ngridx),gwps(ngridy,ngridx),hwps(ngridy,ngridx))
     allocate(tb(nstokes,nfrq,2*nummu,noutlevels,ngridy,ngridx))
+    lons = 0.; lats = 0.; lfracs = 0.;
+    iwvs = 0.; cwps = 0.; iwps = 0.; rwps = 0.; swps = 0.; gwps = 0.; hwps = 0.;
+    tb = 0.
+
   end if
 
 if (active) then
@@ -510,23 +516,22 @@ grid_f: do fi =1, nfrq
     end if
     open(ise,file=trim(femis),status='old',form='unformatted',&
                 access='direct',recl=28)
-    ! land_emis could give polarized reflectivities
-    call land_emis(ise,lon,lat,real(freq),emissivity)
+	  ! land_emis could give polarized reflectivities
+      call land_emis(ise,lon,lat,real(freq),emissivity)
+	  close(ise)
+	  ground_albedo = 1.d0 - emissivity
+	else if (lfrac .ge. 0.0 .and. lfrac .lt. 0.5) then
+      ! computing the refractive index of the sea (Fresnel) surface
+	  ground_type = 'O'
+	  ground_albedo = 1.0d0
+	  epsi = eps_water(salinity, ground_temp - 273.15d0, freq)
+	  ground_index = dconjg(sqrt(epsi))
+	else
+	! this is for ground_type specified in run_params.nml
+	  ground_albedo = 1.d0 - emissivity
+	end if
 
-    close(ise)
-    ground_albedo = 1.d0 - emissivity
-    else if (lfrac .ge. 0.0 .and. lfrac .lt. 0.5) then
-    ! computing the refractive index of the sea (Fresnel) surface
-    ground_type = 'O'
-    ground_albedo = 1.0d0
-    epsi = eps_water(salinity, ground_temp - 273.15d0, freq)
-    ground_index = dconjg(sqrt(epsi))
-    else
-    ! this is for ground_type specified in run_params.nml
-    ground_albedo = 1.d0 - emissivity
-    end if
-
-    if (verbose .gt. 1) print*, nx,ny, 'Surface emissivity calculated!'
+	if (verbose .gt. 1) print*, nx,ny, 'Surface emissivity calculated!'
 
     ! gaseous absorption
     ! 
@@ -565,12 +570,11 @@ grid_f: do fi =1, nfrq
         if (verbose .gt. 1) print*, nx,ny, 'calculate_active done'
     end if
 
-
-    if (write_nc) then
-        !      Output integrated quantities
-        call collect_boundary_output(ground_temp,lon,lat,lfrac,profiles(nx,ny)%wind_10u,profiles(nx,ny)%wind_10v,&
-            profiles(nx,ny)%iwv, profiles(nx,ny)%cwp,profiles(nx,ny)%iwp,profiles(nx,ny)%rwp,profiles(nx,ny)%swp, &
-            profiles(nx,ny)%gwp,profiles(nx,ny)%isamp,profiles(nx,ny)%jsamp,nx,ny)
+	if (write_nc) then
+		!      Output integrated quantities
+		call collect_boundary_output(lon,lat,lfrac,&
+			profiles(nx,ny)%iwv, profiles(nx,ny)%cwp,profiles(nx,ny)%iwp,profiles(nx,ny)%rwp,profiles(nx,ny)%swp, &
+			profiles(nx,ny)%gwp,profiles(nx,ny)%hwp,profiles(nx,ny)%isamp,profiles(nx,ny)%jsamp,nx,ny)
         if (verbose .gt. 1) print*, nx,ny, 'collect_boundary_output done'
     end if
 

@@ -245,7 +245,7 @@
       CHARACTER(100) OUT_FILE
                                                                         
       integer :: model_i, model_j
-      real :: lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp
+      real :: lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,hwp
 
       integer :: verbose
       logical :: write_nc
@@ -274,6 +274,7 @@
       rwp = profiles(nx,ny)%rwp
       swp = profiles(nx,ny)%swp
       gwp = profiles(nx,ny)%gwp
+      hwp = profiles(nx,ny)%hwp
                                                                         
 
 	  num_layers = nlyr
@@ -312,17 +313,18 @@
 
       if (write_nc) then 
 	call collect_output(NSTOKES, NUMMU, AZIORDER, &
-	QUAD_TYPE, GROUND_TEMP, GROUND_TYPE, WAVELENGTH,   &
+	WAVELENGTH,   &
 	UNITS, OUTPOL,NOUTLEVELS, OUTLEVELS,         &
-	NUMAZIMUTHS, UP_FLUX, DOWN_FLUX, UP_RAD, DOWN_RAD,     &
+	NUMAZIMUTHS,UP_RAD, DOWN_RAD,     &
 	nx,ny,fi)
+
       else
 	CALL OUTPUT_FILE (NSTOKES, NUMMU, AZIORDER, SRC_CODE, &
 	OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU, GROUND_TEMP, &
 	GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP, WAVELENGTH,   &
 	UNITS, OUTPOL, NUM_LAYERS, HEIGHT, NOUTLEVELS, OUTLEVELS,         &
 	NUMAZIMUTHS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD, DOWN_RAD,     &
-	lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp)
+	lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,hwp)
       end if
 
       if (verbose .gt. 1) print*, ".... done!"
@@ -334,7 +336,7 @@
       GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP,  &
       WAVELENGTH, UNITS, OUTPOL, NUM_LAYERS, HEIGHT, NOUTLEVELS,        &
       OUTLEVELS, NUMAZIMUTHS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD,    &
-      DOWN_RAD,lon,lat,lfrac,wind10u,windv,iwv,cwp,iwp,rwp,swp,gwp)
+      DOWN_RAD,lon,lat,lfrac,wind10u,windv,iwv,cwp,iwp,rwp,swp,gwp,hwp)
 
   use kinds
   use mod_io_strings
@@ -420,6 +422,7 @@
       write(3,'(A,ES12.6)') 'C  RWP= ', rwp
       write(3,'(A,ES12.6)') 'C  SWP= ', swp
       write(3,'(A,ES12.6)') 'C  GWP= ', gwp
+      write(3,'(A,ES12.6)') 'C  HWP= ', hwp
 
       IF (UNITS (1:1) .EQ.'T') THEN 
 !         FORM1 = '(F8.3,1X,F5.1,1X,F8.5,4(1X,F7.2),:)' 

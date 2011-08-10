@@ -7,17 +7,17 @@ implicit none
 type profile
   integer :: isamp
   integer :: jsamp
-  real :: latitude
-  real :: longitude
-  real :: land_fraction
-  real :: wind_10u, wind_10v
-  real :: iwv
-  real :: cwp
-  real :: iwp
-  real :: rwp
-  real :: swp
-  real :: gwp
-  real :: hwp
+  real(kind=sgl) :: latitude
+  real(kind=sgl) :: longitude
+  real(kind=sgl) :: land_fraction
+  real(kind=sgl) :: wind_10u, wind_10v
+  real(kind=sgl) :: iwv
+  real(kind=sgl) :: cwp
+  real(kind=sgl) :: iwp
+  real(kind=sgl) :: rwp
+  real(kind=sgl) :: swp
+  real(kind=sgl) :: gwp
+  real(kind=sgl) :: hwp
 !  real(kind=dbl) :: ground_albedo
 !  real(kind=dbl) :: ground_index
 !  real(kind=dbl) :: ground_temperature

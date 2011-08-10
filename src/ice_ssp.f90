@@ -87,7 +87,13 @@ subroutine ice_ssp(f,qi,t,p,q,maxleg,kext, salb, back,  &
     stop 'Number of moments is not specified'
   end if
 
-	if (EM_ice .eq. 'icesf') then
+	if (EM_ice .eq. 'mieic') then
+	  call mie(f, mindex,      &
+		dia1, dia2, nbins, maxleg,   &
+		ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
+		back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
+		LEGEN4, dist_name)
+	elseif (EM_ice .eq. 'icesf') then
 	  call mie_densitysizedep_spheremasseq(f, mindex,      &
 		a_mice, b_ice, dia1, dia2, nbins, maxleg,   &
 		ad, bd, alpha, gamma, lphase_flag, kext, salb,      &

@@ -9,8 +9,9 @@ subroutine write_nc_results(nc_file)
 
   integer :: ncid
   integer :: dlonID, dlatID, dangID, dfrqID, doutID, dstokesID, dlayerID
-  integer :: isVarID, jsVarID, lonVarID, latVarID, lfracVarID, t_gVarID, wind10uVarID, wind10vVarID, iwvVarID, cwpVarID,&
-	     iwpVarID, rwpVarID, swpVarID, gwpVarID, &
+
+  integer :: isVarID, jsVarID, lonVarID, latVarID, lfracVarID, iwvVarID, cwpVarID,&
+	     iwpVarID, rwpVarID, swpVarID, gwpVarID, hwpVarID, &
 	     tbVarID, heightVarID, ZeVarID, AttAtmoVarID, AttHydroVarID, &
 	     frequencyVarID
 
@@ -27,7 +28,6 @@ subroutine write_nc_results(nc_file)
 
 
   call check(nf90_create(path=nc_file,cmode=nf90_noclobber,ncid=ncid))
-
 
   ! for netcdf history get meta data
   call idate(today)   ! today(1)=day, (2)=month, (3)=year
@@ -79,19 +79,6 @@ end if
   call check(nf90_put_att(ncid, lfracVarID, "units", "-"))
   call check(nf90_put_att(ncid, lfracVarID, "missing_value", -9999))
 
-  call check(nf90_def_var(ncid,'t_g', nf90_float,dim2d, t_gVarID))
-  call check(nf90_put_att(ncid, t_gVarID, "units", "K"))
-  call check(nf90_put_att(ncid, t_gVarID, "missing_value", -9999))
-
-
-  call check(nf90_def_var(ncid,'wind10u', nf90_float,dim2d, wind10uVarID))
-  call check(nf90_put_att(ncid, wind10uVarID, "units", "m/s"))
-  call check(nf90_put_att(ncid, wind10uVarID, "missing_value", -9999))
-
-  call check(nf90_def_var(ncid,'wind10v', nf90_float,dim2d, wind10vVarID))
-  call check(nf90_put_att(ncid, wind10vVarID, "units", "m/s"))
-  call check(nf90_put_att(ncid, wind10vVarID, "missing_value", -9999))
-
   call check(nf90_def_var(ncid,'iwv', nf90_float,dim2d, iwvVarID))
   call check(nf90_put_att(ncid, iwvVarID, "units", "kg/m^2"))
   call check(nf90_put_att(ncid, iwvVarID, "missing_value", -9999))
@@ -116,6 +103,10 @@ end if
   call check(nf90_put_att(ncid, gwpVarID, "units", "kg/m^2"))
   call check(nf90_put_att(ncid, gwpVarID, "missing_value", -9999))
 
+  call check(nf90_def_var(ncid,'hwp', nf90_float,dim2d, hwpVarID))
+  call check(nf90_put_att(ncid, hwpVarID, "units", "kg/m^2"))
+  call check(nf90_put_att(ncid, hwpVarID, "missing_value", -9999))
+
 
 if (active) then
 
@@ -126,7 +117,7 @@ if (active) then
 
   dim4d = (/dfrqID,dlayerID,dlatID,dlonID/)
 
-  call check(nf90_def_var(ncid,'Ze', nf90_float,dim4d, ZeVarID))
+  call check(nf90_def_var(ncid,'Ze', nf90_double,dim4d, ZeVarID))
   call check(nf90_put_att(ncid, ZeVarID, "units", "dBz"))
   call check(nf90_put_att(ncid, ZeVarID, "missing_value", -9999))
 
@@ -138,9 +129,8 @@ if (active) then
   call check(nf90_put_att(ncid, AttAtmoVarID, "units", "dB"))
   call check(nf90_put_att(ncid, AttAtmoVarID, "missing_value", -9999))
 
+
 end if
-
-
 
 if (passive) then
   dim6d = (/dstokesID,dfrqID,dangID,doutID,dlatID,dlonID/)
@@ -151,22 +141,19 @@ end if
 
   call check(nf90_enddef(ncid))
 !  call check(nf90_inq_varid(ncid, 'longitude', VarId))
-
   call check(nf90_put_var(ncid, frequencyVarID, freqs))
   call check(nf90_put_var(ncid, isVarID, is))
   call check(nf90_put_var(ncid, jsVarID, js))
   call check(nf90_put_var(ncid, lonVarID, lons))
   call check(nf90_put_var(ncid, latVarID, lats))
   call check(nf90_put_var(ncid, lfracVarID, lfracs))
-  call check(nf90_put_var(ncid, t_gVarID, t_g))
-  call check(nf90_put_var(ncid, wind10uVarID, w10u))
-  call check(nf90_put_var(ncid, wind10vVarID, w10v))
   call check(nf90_put_var(ncid, iwvVarID, iwvs))
   call check(nf90_put_var(ncid, cwpVarID, cwps))
   call check(nf90_put_var(ncid, iwpVarID, iwps))
   call check(nf90_put_var(ncid, rwpVarID, rwps))
   call check(nf90_put_var(ncid, swpVarID, swps))
   call check(nf90_put_var(ncid, gwpVarID, gwps))
+  call check(nf90_put_var(ncid, hwpVarID, hwps))
 if (passive) then
 
   call check(nf90_put_var(ncid, tbVarID, tb))
@@ -184,9 +171,6 @@ if (active) then                             !reshapeing needed due to Fortran's
 end if
 
   call check(nf90_close(ncid))
-
-!   deallocate(lons,lats,lfracs,t_g,w10u,w10v,iwvs,cwps,iwps,rwps,swps,gwps,tb,hgt,Ze,PIA_atmo_bottomup,&
-! 		PIA_hydro_bottomup, PIA_atmo_topdown, PIA_hydro_topdown)             !flux_up,flux_down,
 
   return
 
