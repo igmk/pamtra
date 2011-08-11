@@ -134,6 +134,7 @@ program pamtra
 
   integer :: istat
 
+  character(40) :: gitHash, gitVersion
 
 ! temporary variables
 
@@ -165,6 +166,9 @@ program pamtra
   namelist / rain_params / SD_rain, N_0rainD
   namelist / moments / n_moments, moments_file
 
+!get git data
+call versionNumber(gitVersion,gitHash)
+
 !parse command line parameters
 inarg = iargc()
 
@@ -172,6 +176,9 @@ if (inarg .lt. 3) then
    print *,'Usage: pamtra profile_file namelist_file (list of frequencies)'
    print *,'Example: ./pamtra rt_comp_single.dat run_params.nml 35 94'
    print *,'See namelist file for further pamtra options'
+   print *,''
+   print *,'Version:  '//gitVersion
+   print *,'Git Hash: '//gitHash
    stop
 else if (inarg .gt. maxfreq + 2) then
    print *,'Too many frequencies! Increase maxfreq!'
