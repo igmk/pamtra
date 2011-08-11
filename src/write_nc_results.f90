@@ -25,8 +25,11 @@ subroutine write_nc_results(nc_file)
   integer :: today(3), now(3)
 
   character(300) :: nc_file, timestring, user
+  character(40) ::gitVersion,gitHash
 
 
+  !get git data
+  call versionNumber(gitVersion,gitHash)
 
   call check(nf90_create(path=nc_file,cmode=nf90_noclobber,ncid=ncid))
 
@@ -36,8 +39,8 @@ subroutine write_nc_results(nc_file)
   write (timestring , "(i2.2, '/', i2.2, '/', i4.4, ' ',  i2.2, ':', i2.2, ':', i2.2)") &
 	today(2), today(1), today(3), now
   ! write meta data
-  call check(nf90_put_att(ncid,nf90_global, "history", "Created with Fortran by "//trim(creator)//&
-	" (University of Cologne, IGMK) at "//timestring))
+  call check(nf90_put_att(ncid,nf90_global, "history", "Created with Pamtra (Version: "//trim(gitVersion)// &
+   "Git Hash: "//trim(gitHash)//")  by "//trim(creator)//" (University of Cologne, IGMK) at "//timestring))
 
   !make dimensions
   call check(nf90_def_dim(ncid, 'nlon', ngridx, dlonID))
