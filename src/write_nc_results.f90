@@ -24,7 +24,7 @@ subroutine write_nc_results(nc_file)
 
   integer :: today(3), now(3)
 
-  character(100) :: nc_file, timestring, user
+  character(300) :: nc_file, timestring, user
 
 
 
