@@ -1,4 +1,5 @@
 !edit versionNumber.template.f90 only!!!!
+
 subroutine versionNumber(gitVersion,gitHash)
 implicit none
 
