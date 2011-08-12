@@ -3,7 +3,7 @@ FC=gfortran
 FCFLAGS=-c -fdefault-real-8 -fdefault-double-8
 
 gitHash    := $(shell git show -s --pretty=format:%H)
-gitVersion := $(shell git describe)
+gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 
 # -g
