@@ -45,7 +45,7 @@ precompile:
 	echo "gitHash = '$(gitHash)'" >> versionNumber.auto.f90
 	echo "return" >> versionNumber.auto.f90
 	echo "end subroutine versionNumber" >> versionNumber.auto.f90
-
+	$(FC) $(FCFLAGS) versionNumber.auto.f90 #otherwise error on first make run!
 
 %.o: %.f90
 	$(FC) $(FCFLAGS) $<
