@@ -197,7 +197,53 @@ do fi = 1, inarg-2
     read(frqs_str(fi),*) freqs(fi)
     frqs_str(fi) = formatted_frqstr(frqs_str(fi))
 end do
+  
 
+  !set namelist defaults!
+   verbose=0
+
+   write_nc=.true.
+   dump_to_file=.false.
+   input_path='profile'
+   output_path='output'
+   tmp_path='/tmp/'
+   data_path='/home/mech/models/pamtra/data/'
+
+   obs_height=833000.
+   units='T'
+   outpol='VH' 
+   creator='Pamtra'
+
+   active=.true.
+   passive=.true.
+
+   ground_type='S'
+   salinity=33.0
+   emissivity=0.6
+
+   lgas_extinction=.true.
+   gas_mod='R98'
+
+   lhyd_extinction=.true.
+   lphase_flag = .true.
+
+   SD_snow='Exp' 
+   N_0snowDsnow=7.628 
+   EM_snow='surus' 
+   SP=0.2 
+   isnow_n0=1
+
+   SD_grau='Exp' 
+   N_0grauDgrau=4.0 
+   EM_grau='surus'
+
+   EM_ice='surus'
+
+   SD_rain='Exp' 
+   N_0rainD=8.0
+
+   n_moments=1
+   moments_file='snowCRYSTAL'
 
   ! read name list parameter file
 
