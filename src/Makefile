@@ -37,8 +37,15 @@ pamtra: pamtra.f90 $(OBJECTS)
 	mv $(BIN) ../
 
 precompile: 
-	cat versionNumber.template.f90 | sed -e "s/XgitVersionX/$(gitVersion)/" > versionNumber.auto.f90
-	cat versionNumber.auto.f90 | sed -e "s/XgitHashX/$(gitHash)/" > versionNumber.auto.f90
+	echo "!edit in makefile only!" > versionNumber.auto.f90
+	echo "subroutine versionNumber(gitVersion,gitHash)" >> versionNumber.auto.f90
+	echo "implicit none" >> versionNumber.auto.f90
+	echo "character(40), intent(out) ::gitVersion,gitHash" >> versionNumber.auto.f90
+	echo "gitVersion = '$(gitVersion)'" >> versionNumber.auto.f90
+	echo "gitHash = '$(gitHash)'" >> versionNumber.auto.f90
+	echo "return" >> versionNumber.auto.f90
+	echo "end subroutine versionNumber" >> versionNumber.auto.f90
+
 
 %.o: %.f90
 	$(FC) $(FCFLAGS) $<

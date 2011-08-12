@@ -154,7 +154,8 @@ program pamtra
  ! name list declarations
  
   namelist / verbose_mode / verbose
-  namelist / inoutput_mode / write_nc, input_path, output_path, tmp_path, dump_to_file
+  namelist / inoutput_mode / write_nc, input_path, output_path,&
+      tmp_path, dump_to_file, data_path
   namelist / output / obs_height,units,outpol,creator
   namelist / run_mode / active, passive
   namelist / surface_params / ground_type,salinity, emissivity
@@ -515,9 +516,9 @@ grid_f: do fi =1, nfrq
     ise=13
     read(month,'(i2)') imonth
     if (imonth .ge. 7 .and. imonth .le. 12) then
-        femis = 'data/emissivity/ssmi_mean_emis_92'//month//'_direct'
+        femis = data_path(:len_trim(data_path))//'/emissivity/ssmi_mean_emis_92'//month//'_direct'
     else if (imonth .ge. 1 .and. imonth .lt. 7) then
-        femis = 'data/emissivity/ssmi_mean_emis_93'//month//'_direct'
+        femis = data_path(:len_trim(data_path))//'emissivity/ssmi_mean_emis_93'//month//'_direct'
     else
         print*, nx,ny, "Warning: No emissivity data found!"
         stop
