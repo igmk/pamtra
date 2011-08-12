@@ -229,7 +229,7 @@ end do
 
    SD_snow='Exp' 
    N_0snowDsnow=7.628 
-   EM_snow='surus' 
+   EM_snow='icesf' 
    SP=0.2 
    isnow_n0=1
 
