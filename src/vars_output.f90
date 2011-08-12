@@ -6,15 +6,16 @@ implicit none
 save
 
 integer, allocatable, dimension(:,:) :: is, js
-real(kind=dbl), allocatable, dimension(:,:) :: lons, lats, lfracs, t_g, w10u, w10v, iwvs, cwps, &
-						iwps, rwps, swps, gwps
+real(kind=sgl), allocatable, dimension(:,:) :: lons, lats, lfracs, iwvs, cwps, &
+						iwps, rwps, swps, gwps,hwps
 
-                                            ! real(kind=dbl), allocatable, dimension(:,:,:,:) :: flux_up, flux_down
+!for passive
 real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: tb
+real(kind=dbl), allocatable, dimension(:) :: angles_deg
 
 !for active 
 real(kind=dbl), allocatable, dimension(:,:,:) :: hgt
-real(kind=dbl), allocatable, dimension(:,:,:,:) :: Ze, PIA_atmo_bottomup, PIA_hydro_bottomup, &
-                        PIA_atmo_topdown, PIA_hydro_topdown
+real(kind=dbl), allocatable, dimension(:,:,:,:) :: Ze, Attenuation_atmo, Attenuation_hydro!, &
+
 
 end module vars_output

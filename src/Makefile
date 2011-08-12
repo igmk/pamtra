@@ -1,6 +1,11 @@
 ARCH=$(shell uname -s)
 FC=gfortran
 FCFLAGS=-c -fdefault-real-8 -fdefault-double-8
+
+gitHash    := $(shell git show -s --pretty=format:%H)
+gitVersion := $(shell git describe)
+
+
 # -g
 
 ifeq ($(ARCH),Darwin)
@@ -21,17 +26,26 @@ OBJECTS=mod_fastem4_coef.o mod_io_strings.o kinds.o nml_params.o constants.o pro
 	ref_ice.o e_sat_gg_water.o spec2abs.o\
 	hydrometeor_extinction.o cloud_ssp.o ice_ssp.o rain_ssp.o snow_ssp.o grau_ssp.o hail_ssp.o legendre2phasefunction.o \
 	vars_output.o collect_output.o calculate_active.o write_nc_results.o fastem4.o specular_surface.o error_msg.o formatted_frqstr.o \
-	get_scat_coefs.o dump_profile.o collect_boundary_output.o double_moments.o
+	get_scat_coefs.o dump_profile.o collect_boundary_output.o double_moments.o versionNumber.auto.o
 
 BIN=pamtra
 
-all: pamtra.f90 $(OBJECTS)
-	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS)
-	mv $(BIN) ../
+all: precompile pamtra
 	
 pamtra: pamtra.f90 $(OBJECTS)
 	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS)
 	mv $(BIN) ../
+
+precompile: 
+	echo "!edit in makefile only!" > versionNumber.auto.f90
+	echo "subroutine versionNumber(gitVersion,gitHash)" >> versionNumber.auto.f90
+	echo "implicit none" >> versionNumber.auto.f90
+	echo "character(40), intent(out) ::gitVersion,gitHash" >> versionNumber.auto.f90
+	echo "gitVersion = '$(gitVersion)'" >> versionNumber.auto.f90
+	echo "gitHash = '$(gitHash)'" >> versionNumber.auto.f90
+	echo "return" >> versionNumber.auto.f90
+	echo "end subroutine versionNumber" >> versionNumber.auto.f90
+
 
 %.o: %.f90
 	$(FC) $(FCFLAGS) $<
@@ -66,3 +80,5 @@ test:
 	cat ../test/tmp/* > ../test/testResult.txt
 	diff ../test/testResult.txt ../test/referenceOutput/test3.txt
 	rm ../test/testResult.txt ../test/tmp/*
+
+

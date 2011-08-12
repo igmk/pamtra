@@ -6,6 +6,7 @@ write_nc=.true.
 dump_to_file=.false.
 input_path='/path/to/profiles/'
 output_path='/path/to/output/'
+data_path='data'
 tmp_path='/dev/shm/'
 /
 &output

@@ -134,10 +134,12 @@ program pamtra
 
   integer :: istat
 
+  character(40) :: gitHash, gitVersion
 
 ! temporary variables
 
-  real :: lat, lon, lfrac, wind10u, wind10v
+  real(kind=sgl) :: lat, lon, lfrac
+  real(kind=dbl) ::  wind10u, wind10v
 
   real(kind=dbl) :: lwc, iwc, rwc, gwc, swc
 
@@ -152,7 +154,8 @@ program pamtra
  ! name list declarations
  
   namelist / verbose_mode / verbose
-  namelist / inoutput_mode / write_nc, input_path, output_path, tmp_path, dump_to_file
+  namelist / inoutput_mode / write_nc, input_path, output_path,&
+      tmp_path, dump_to_file, data_path
   namelist / output / obs_height,units,outpol,creator
   namelist / run_mode / active, passive
   namelist / surface_params / ground_type,salinity, emissivity
@@ -164,6 +167,9 @@ program pamtra
   namelist / rain_params / SD_rain, N_0rainD
   namelist / moments / n_moments, moments_file
 
+!get git data
+call versionNumber(gitVersion,gitHash)
+
 !parse command line parameters
 inarg = iargc()
 
@@ -171,6 +177,9 @@ if (inarg .lt. 3) then
    print *,'Usage: pamtra profile_file namelist_file (list of frequencies)'
    print *,'Example: ./pamtra rt_comp_single.dat run_params.nml 35 94'
    print *,'See namelist file for further pamtra options'
+   print *,''
+   print *,'Version:  '//gitVersion
+   print *,'Git Hash: '//gitHash
    stop
 else if (inarg .gt. maxfreq + 2) then
    print *,'Too many frequencies! Increase maxfreq!'
@@ -181,6 +190,7 @@ end if
 
 nfrq = inarg - 2
 allocate(freqs(nfrq))
+allocate(angles_deg(2*NUMMU))
 
 do fi = 1, inarg-2
     call getarg(fi+2,frqs_str(fi))
@@ -318,6 +328,7 @@ end do
 		   profiles(i,j)%rwp,&               ! kg/m^2
 		   profiles(i,j)%swp,&               ! kg/m^2
 		   profiles(i,j)%gwp                 ! kg/m^2
+		   profiles(i,j)%hwp = 0.
 		end if
 		if (n_moments .eq. 2) then
            read(14,*,iostat=istat) &
@@ -393,18 +404,20 @@ end do
   if (write_nc) then
     allocate(is(ngridy,ngridx),js(ngridy,ngridx))
     allocate(lons(ngridy,ngridx),lats(ngridy,ngridx),lfracs(ngridy,ngridx))
-    allocate(t_g(ngridy,ngridx),w10u(ngridy,ngridx),w10v(ngridy,ngridx),iwvs(ngridy,ngridx))
-    allocate(cwps(ngridy,ngridx),iwps(ngridy,ngridx),rwps(ngridy,ngridx),swps(ngridy,ngridx),gwps(ngridy,ngridx))
-!     allocate(flux_up(nstokes,noutlevels,ngridy,ngridx),flux_down(nstokes,noutlevels,ngridy,ngridx))
+    allocate(iwvs(ngridy,ngridx))
+    allocate(cwps(ngridy,ngridx),iwps(ngridy,ngridx),rwps(ngridy,ngridx),&
+    swps(ngridy,ngridx),gwps(ngridy,ngridx),hwps(ngridy,ngridx))
     allocate(tb(nstokes,nfrq,2*nummu,noutlevels,ngridy,ngridx))
+    lons = 0.; lats = 0.; lfracs = 0.;
+    iwvs = 0.; cwps = 0.; iwps = 0.; rwps = 0.; swps = 0.; gwps = 0.; hwps = 0.;
+    tb = 0.
+
   end if
 
 if (active) then
     allocate(Ze(ngridx,ngridy,nlyr,nfrq))
-    allocate(PIA_hydro_bottomup(ngridx,ngridy,nlyr,nfrq))
-    allocate(PIA_atmo_bottomup(ngridx,ngridy,nlyr,nfrq))
-    allocate(PIA_hydro_topdown(ngridx,ngridy,nlyr,nfrq))
-    allocate(PIA_atmo_topdown(ngridx,ngridy,nlyr,nfrq))
+    allocate(Attenuation_hydro(ngridx,ngridy,nlyr,nfrq))
+    allocate(Attenuation_atmo(ngridx,ngridy,nlyr,nfrq))
     allocate(hgt(ngridx,ngridy,nlyr))
 end if
   !                                                                       
@@ -503,32 +516,31 @@ grid_f: do fi =1, nfrq
     ise=13
     read(month,'(i2)') imonth
     if (imonth .ge. 7 .and. imonth .le. 12) then
-        femis = 'data/emissivity/ssmi_mean_emis_92'//month//'_direct'
+        femis = data_path(:len_trim(data_path))//'/emissivity/ssmi_mean_emis_92'//month//'_direct'
     else if (imonth .ge. 1 .and. imonth .lt. 7) then
-        femis = 'data/emissivity/ssmi_mean_emis_93'//month//'_direct'
+        femis = data_path(:len_trim(data_path))//'emissivity/ssmi_mean_emis_93'//month//'_direct'
     else
         print*, nx,ny, "Warning: No emissivity data found!"
         stop
     end if
     open(ise,file=trim(femis),status='old',form='unformatted',&
                 access='direct',recl=28)
-    ! land_emis could give polarized reflectivities
-    call land_emis(ise,lon,lat,real(freq),emissivity)
+	  ! land_emis could give polarized reflectivities
+      call land_emis(ise,lon,lat,real(freq),emissivity)
+	  close(ise)
+	  ground_albedo = 1.d0 - emissivity
+	else if (lfrac .ge. 0.0 .and. lfrac .lt. 0.5) then
+      ! computing the refractive index of the sea (Fresnel) surface
+	  ground_type = 'O'
+	  ground_albedo = 1.0d0
+	  epsi = eps_water(salinity, ground_temp - 273.15d0, freq)
+	  ground_index = dconjg(sqrt(epsi))
+	else
+	! this is for ground_type specified in run_params.nml
+	  ground_albedo = 1.d0 - emissivity
+	end if
 
-    close(ise)
-    ground_albedo = 1.d0 - emissivity
-    else if (lfrac .ge. 0.0 .and. lfrac .lt. 0.5) then
-    ! computing the refractive index of the sea (Fresnel) surface
-    ground_type = 'O'
-    ground_albedo = 1.0d0
-    epsi = eps_water(salinity, ground_temp - 273.15d0, freq)
-    ground_index = dconjg(sqrt(epsi))
-    else
-    ! this is for ground_type specified in run_params.nml
-    ground_albedo = 1.d0 - emissivity
-    end if
-
-    if (verbose .gt. 1) print*, nx,ny, 'Surface emissivity calculated!'
+	if (verbose .gt. 1) print*, nx,ny, 'Surface emissivity calculated!'
 
     ! gaseous absorption
     ! 
@@ -562,17 +574,16 @@ grid_f: do fi =1, nfrq
 
 
     if (active) then
-        call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),Ze(nx,ny,:,fi),PIA_atmo_bottomup(nx,ny,:,fi),&
-            PIA_hydro_bottomup(nx,ny,:,fi), PIA_atmo_topdown(nx,ny,:,fi),PIA_hydro_topdown(nx,ny,:,fi))
+        call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),Ze(nx,ny,:,fi),Attenuation_atmo(nx,ny,:,fi),&
+            Attenuation_hydro(nx,ny,:,fi))
         if (verbose .gt. 1) print*, nx,ny, 'calculate_active done'
     end if
 
-
-    if (write_nc) then
-        !      Output integrated quantities
-        call collect_boundary_output(ground_temp,lon,lat,lfrac,profiles(nx,ny)%wind_10u,profiles(nx,ny)%wind_10v,&
-            profiles(nx,ny)%iwv, profiles(nx,ny)%cwp,profiles(nx,ny)%iwp,profiles(nx,ny)%rwp,profiles(nx,ny)%swp, &
-            profiles(nx,ny)%gwp,profiles(nx,ny)%isamp,profiles(nx,ny)%jsamp,nx,ny)
+	if (write_nc) then
+		!      Output integrated quantities
+		call collect_boundary_output(lon,lat,lfrac,&
+			profiles(nx,ny)%iwv, profiles(nx,ny)%cwp,profiles(nx,ny)%iwp,profiles(nx,ny)%rwp,profiles(nx,ny)%swp, &
+			profiles(nx,ny)%gwp,profiles(nx,ny)%hwp,profiles(nx,ny)%isamp,profiles(nx,ny)%jsamp,nx,ny)
         if (verbose .gt. 1) print*, nx,ny, 'collect_boundary_output done'
     end if
 
@@ -608,6 +619,10 @@ grid_f: do fi =1, nfrq
         GROUND_INDEX, SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,          &
         NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,&
         nx,ny,fi,write_nc,verbose)
+
+    !calculate human readable angles!
+    angles_deg(1:NUMMU) = 180-(180.*acos(MU_VALUES(NUMMU:1:-1))/pi)
+    angles_deg(1+NUMMU:2*NUMMU) = (180.*acos(MU_VALUES(1:NUMMU))/pi)
 
     if (verbose .gt. 1) print*, nx,ny, "....rt3 finished"
 
