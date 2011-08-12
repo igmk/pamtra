@@ -3,7 +3,7 @@ FC=gfortran
 FCFLAGS=-c -fdefault-real-8 -fdefault-double-8
 
 gitHash    := $(shell git show -s --pretty=format:%H)
-gitVersion := $(shell git describe)
+gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 
 # -g
@@ -45,7 +45,7 @@ precompile:
 	echo "gitHash = '$(gitHash)'" >> versionNumber.auto.f90
 	echo "return" >> versionNumber.auto.f90
 	echo "end subroutine versionNumber" >> versionNumber.auto.f90
-
+	$(FC) $(FCFLAGS) versionNumber.auto.f90 #otherwise error on first make run!
 
 %.o: %.f90
 	$(FC) $(FCFLAGS) $<
