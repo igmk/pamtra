@@ -143,12 +143,13 @@ subroutine dda_db_liu(f, t, mindex, dia1, dia2, nbins, maxleg,   &
 !		ndens = 0.5d0 * ndens
 !    end if
     ntot = ntot + ndens*weights(ir)
+
   if (diameter .gt. dmax(liu_type)) diameter = dmax(liu_type)
   if (diameter .lt. dmin(liu_type)) diameter = dmin(liu_type)
   if (verbose .gt. 2) print*, ir, ' with: ',f_liu,t_liu,liu_type,diameter*1.e6
     call scatdb(f_liu,t_liu,liu_type,diameter*1.e6,abs_liu,sca_liu,bsc_liu,g,p_liu,r_ice_eq,iret,is_loaded)
   if (verbose .gt. 2) print*, 'got: ',iret, abs_liu,sca_liu,bsc_liu,g
-	if (iret .ne. 0) print*, iret,f_liu,t_liu,liu_type,diameter*1.e6, abs_liu,sca_liu,bsc_liu
+  if (iret .ne. 0) print*, iret,f_liu,t_liu,liu_type,diameter*1.e6, abs_liu,sca_liu,bsc_liu
 
     qext = (abs_liu+sca_liu)
     qscat = sca_liu

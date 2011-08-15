@@ -120,7 +120,9 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
 
   INTEGER MAXV, MAXM, MAXLM, MAXLEG, MAXLAY, MAXSBUF, MAXDBUF 
   !      PARAMETER (MAXV=64, MAXM=4096, MAXLM=201*256)                    
-  PARAMETER (MAXV = 64, MAXM = 4096, MAXLM = 201 * 512) 
+!   PARAMETER (MAXV = 64, MAXM = 4096, MAXLM = 201 * 512) 
+!                                    maxlm = layer*(stokes*angles)**2
+  PARAMETER (MAXV = 64, MAXM = 4096, MAXLM = 201 * (2*32)**2)
   PARAMETER (MAXLEG = 256, MAXLAY = 200) 
   PARAMETER (MAXSBUF = MAXLAY * 2 * MAXM, MAXDBUF = MAXLAY * 2 *    &
        MAXV)                                                             
@@ -199,7 +201,7 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   ENDIF
   IF ( (NUM_LAYERS + 1) * N * N.GT.MAXLM) THEN 
      WRITE (*, '(1X,A,A,I3)') 'Matrix layer size exceeded.', '  Maximu&
-          &m number :', MAXLM                                                
+          &m number :', MAXLM   
      STOP 
   ENDIF
 

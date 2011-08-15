@@ -2,7 +2,7 @@ subroutine ice_ssp(f,qi,t,p,q,maxleg,kext, salb, back,  &
 	nlegen, legen, legen2, legen3, legen4, ni)
   
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_moments
+  use nml_params, only: verbose, lphase_flag, n_moments, EM_ice
   use constants, only: pi, im
   use double_moments_module
 
@@ -87,10 +87,34 @@ subroutine ice_ssp(f,qi,t,p,q,maxleg,kext, salb, back,  &
     stop 'Number of moments is not specified'
   end if
 
-
-    call mie(f, mindex, dia1, dia2, nbins, maxleg, ad,    &
-	  bd, alpha, gamma, lphase_flag, kext, salb, back,     &
-	  nlegen, legen, legen2, legen3, legen4, dist_name)
+	if (EM_ice .eq. 'mieic') then
+	  call mie(f, mindex,      &
+		dia1, dia2, nbins, maxleg,   &
+		ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
+		back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
+		LEGEN4, dist_name)
+	elseif (EM_ice .eq. 'icesf') then
+	  call mie_densitysizedep_spheremasseq(f, mindex,      &
+		a_mice, b_ice, dia1, dia2, nbins, maxleg,   &
+		ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
+		back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
+		LEGEN4, dist_name)
+	elseif (EM_ice .eq. 'surus') then
+	  call mie_icefactor(f, t,mindex,      &
+		a_mice, b_ice, dia1, dia2, nbins, maxleg,   &
+		ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
+		back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
+		LEGEN4, dist_name,0.863*1.e-3*f+0.115,42)
+	elseif (EM_ice(1:3) .eq. 'liu') then
+	    call dda_db_liu(f,t,9,mindex, &
+		dia1,dia2,nbins,maxleg,ad,&
+		bd, alpha, gamma, lphase_flag,kext, salb,&
+		back, nlegen, legen, legen2, legen3,&
+		legen4, dist_name)
+	else
+	    write (*, *) 'no em mod', EM_ice
+	    stop
+	endif
   if (verbose .gt. 1) print*, 'Exiting ice_ssp'
 
   return

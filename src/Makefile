@@ -1,7 +1,7 @@
 ARCH=$(shell uname -s)
-HOME=/home/mech
 FC=gfortran
 FCFLAGS=-c
+
 
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran

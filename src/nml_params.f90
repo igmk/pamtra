@@ -27,7 +27,7 @@ module nml_params
 	     active, &  	   ! calculate active stuff
 	     passive		   ! calculate passive stuff (with RT3)
 
-  character(5) :: EM_snow, EM_grau
+  character(5) :: EM_snow, EM_grau, EM_ice
   character(3) :: SD_snow, SD_grau, SD_rain
 
   character(3) :: gas_mod
