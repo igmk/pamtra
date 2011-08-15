@@ -134,6 +134,7 @@ program pamtra
 
   integer :: istat
 
+  character(40) :: gitHash, gitVersion
 
 ! temporary variables
 
@@ -153,7 +154,8 @@ program pamtra
  ! name list declarations
  
   namelist / verbose_mode / verbose
-  namelist / inoutput_mode / write_nc, input_path, output_path, tmp_path, dump_to_file
+  namelist / inoutput_mode / write_nc, input_path, output_path,&
+      tmp_path, dump_to_file, data_path
   namelist / output / obs_height,units,outpol,creator
   namelist / run_mode / active, passive
   namelist / surface_params / ground_type,salinity, emissivity
@@ -165,6 +167,9 @@ program pamtra
   namelist / rain_params / SD_rain, N_0rainD
   namelist / moments / n_moments, moments_file
 
+!get git data
+call versionNumber(gitVersion,gitHash)
+
 !parse command line parameters
 inarg = iargc()
 
@@ -172,6 +177,9 @@ if (inarg .lt. 3) then
    print *,'Usage: pamtra profile_file namelist_file (list of frequencies)'
    print *,'Example: ./pamtra rt_comp_single.dat run_params.nml 35 94'
    print *,'See namelist file for further pamtra options'
+   print *,''
+   print *,'Version:  '//gitVersion
+   print *,'Git Hash: '//gitHash
    stop
 else if (inarg .gt. maxfreq + 2) then
    print *,'Too many frequencies! Increase maxfreq!'
@@ -182,6 +190,7 @@ end if
 
 nfrq = inarg - 2
 allocate(freqs(nfrq))
+allocate(angles_deg(2*NUMMU))
 
 do fi = 1, inarg-2
     call getarg(fi+2,frqs_str(fi))
@@ -407,10 +416,8 @@ end do
 
 if (active) then
     allocate(Ze(ngridx,ngridy,nlyr,nfrq))
-    allocate(PIA_hydro_bottomup(ngridx,ngridy,nlyr,nfrq))
-    allocate(PIA_atmo_bottomup(ngridx,ngridy,nlyr,nfrq))
-    allocate(PIA_hydro_topdown(ngridx,ngridy,nlyr,nfrq))
-    allocate(PIA_atmo_topdown(ngridx,ngridy,nlyr,nfrq))
+    allocate(Attenuation_hydro(ngridx,ngridy,nlyr,nfrq))
+    allocate(Attenuation_atmo(ngridx,ngridy,nlyr,nfrq))
     allocate(hgt(ngridx,ngridy,nlyr))
 end if
 
@@ -510,9 +517,9 @@ grid_f: do fi =1, nfrq
     ise=13
     read(month,'(i2)') imonth
     if (imonth .ge. 7 .and. imonth .le. 12) then
-        femis = 'data/emissivity/ssmi_mean_emis_92'//month//'_direct'
+        femis = data_path(:len_trim(data_path))//'/emissivity/ssmi_mean_emis_92'//month//'_direct'
     else if (imonth .ge. 1 .and. imonth .lt. 7) then
-        femis = 'data/emissivity/ssmi_mean_emis_93'//month//'_direct'
+        femis = data_path(:len_trim(data_path))//'emissivity/ssmi_mean_emis_93'//month//'_direct'
     else
         print*, nx,ny, "Warning: No emissivity data found!"
         stop
@@ -568,8 +575,8 @@ grid_f: do fi =1, nfrq
 
 
     if (active) then
-        call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),Ze(nx,ny,:,fi),PIA_atmo_bottomup(nx,ny,:,fi),&
-            PIA_hydro_bottomup(nx,ny,:,fi), PIA_atmo_topdown(nx,ny,:,fi),PIA_hydro_topdown(nx,ny,:,fi))
+        call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),Ze(nx,ny,:,fi),Attenuation_atmo(nx,ny,:,fi),&
+            Attenuation_hydro(nx,ny,:,fi))
         if (verbose .gt. 1) print*, nx,ny, 'calculate_active done'
     end if
 
@@ -614,6 +621,10 @@ grid_f: do fi =1, nfrq
         NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,&
         nx,ny,fi)
 
+
+    !calculate human readable angles!
+    angles_deg(1:NUMMU) = 180-(180.*acos(MU_VALUES(NUMMU:1:-1))/pi)
+    angles_deg(1+NUMMU:2*NUMMU) = (180.*acos(MU_VALUES(1:NUMMU))/pi)
 
     if (verbose .gt. 1) print*, nx,ny, "....rt3 finished"
 
