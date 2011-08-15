@@ -27,7 +27,7 @@ subroutine write_nc_results(nc_file)
   character(300) :: nc_file, timestring, user
   character(40) ::gitVersion,gitHash
 
-
+  if (verbose .gt. 0) print*,"writing: ", nc_file
   !get git data
   call versionNumber(gitVersion,gitHash)
 
