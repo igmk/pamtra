@@ -94,6 +94,9 @@
 
 /* Ver2.1  2010.3.22 add 5 GHz*/
 /* Ver2.2  2010.7.9  add 3, 9, 24.1*/
+/* Ver2.3  correct minor error near 1000 um*/
+/* Ver2.4  2011.3.22 add 10,15,19,60,70,80,90 GHz*/
+/* Ver2.5  2011.4.9 add 50 GHz*/
 
 #include <stdio.h>
 #include <string.h>
@@ -105,7 +108,7 @@
 
 #define NSHAP		11   /* number of shapes */
 #define NTEMP		5    /* number of temps  */
-#define NFREQ		14   /* number of frequencies */
+#define NFREQ		22   /* number of frequencies */
 #define NSIZE		20   /* max number of sizes */
 #define NQ		37   /* number of anges in PF */
 

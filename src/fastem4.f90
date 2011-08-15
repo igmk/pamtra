@@ -220,13 +220,12 @@ subroutine fastem4( wavelength   , &  ! Input
   ! for observation angles larger than 70 degree (Mario Mech), we assume the large scale correction at 70°
   ! -> model crash
 
-	if (zenith_angle < 70.) then
-		seczen = ONE/cos_z
-	else
-	    seczen = ONE/cos(70./180.*pi)
-	    zenith_angle = 70.
-	end if
-	    ! compute fitting coefficients for a given frequency
+        if (zenith_angle < 70.) then
+                seczen = ONE/cos_z
+        else
+            seczen = ONE/cos(70./180.*pi)
+            zenith_angle = 70.
+        end if	    ! compute fitting coefficients for a given frequency
 	    DO j = 1, 12
 	      zc(j) = Lcoef(j*3-2) + Lcoef(j*3-1)*frequency + Lcoef(j*3)*frequency**2
 	    END DO
@@ -301,7 +300,7 @@ subroutine fastem4( wavelength   , &  ! Input
 
   ! azimuthal component
   !
-  ! the azimuthal component is ignored when doing simulations for COSMO runs
+  ! the azimuthal component is ignpred when doing simulations for COSMO runs
   ! since we do not know what direction does the satellite have in advance
   !
   ! --------------------------------

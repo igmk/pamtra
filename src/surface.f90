@@ -88,7 +88,8 @@
       END SUBROUTINE LAMBERT_RADIANCE               
                                                                         
                                                                         
-      SUBROUTINE FRESNEL_SURFACE (NSTOKES, NUMMU, MU_VALUES, INDEX, REFLECT, TRANS, SOURCE)
+      SUBROUTINE FRESNEL_SURFACE (NSTOKES, NUMMU, MU_VALUES, INDEX,     &
+      WAVELENGTH, wind10, REFLECT, TRANS, SOURCE)                                           
 !         FRESNEL_REFLECT makes the reflection matrix for a             
 !      plane surface with index of refraction (INDEX) using             
 !      the Fresnel reflection formulae.  Also makes the diagonal        
@@ -104,6 +105,14 @@
       INTEGER J, N 
       REAL(kind=dbl) COSI, R1, R2, R3, R4 
       COMPLEX(kind=dbl) EPSILON, D, RH, RV
+      real(kind=dbl) :: wavelength, freq, wind10, c1, ffoam
+      real(kind=dbl) :: c2(2)
+      
+      logical :: emissivity_correction = .false.
+      
+      c1 = 1.
+      c2 = 0.
+      ffoam = 0.
                                                                   
       N = NSTOKES * NUMMU 
       CALL MZERO (2 * N, N, REFLECT) 
@@ -116,8 +125,16 @@
       D = CDSQRT (EPSILON - 1.0D0 + COSI**2) 
       RH = (COSI - D) / (COSI + D) 
       RV = (EPSILON * COSI - D) / (EPSILON * COSI + D)
-      R1 = (cdABS(RV)**2+cdABS(RH)**2)/ 2.0D0
-      R2 = (cdABS(RV)**2-cdABS(RH)**2)/ 2.0D0
+      ! apply correction due to small and large scale roughness and foam
+      ! the corrections are applied to abs(Rv)**2 and abs(Rh)**2 respectively
+      if (emissivity_correction) then
+	freq = 299792.5/wavelength
+	call small_scale(cosi, freq, wind10, c1)
+	call large_scale(cosi, freq, wind10, c2)
+	call foam(wind10, ffoam)
+      end if
+      R1 = ((cdABS(RV)**2)*c1-c2(1)+(cdABS(RH)**2)*c1-c2(2))*(1-ffoam) / 2.0D0 
+      R2 = ((cdABS(RV)**2)*c1-c2(1)-(cdABS(RH)**2)*c1+c2(2))*(1-ffoam) / 2.0D0
       R3 = DREAL (RV * CONJG (RH) ) 
       R4 = DIMAG (RV * CONJG (RH) )
       REFLECT (1, J, 1, J, 2) = R1 
@@ -134,6 +151,7 @@
          REFLECT (4, J, 3, J, 2) = R4 
          REFLECT (4, J, 4, J, 2) = R3 
       ENDIF 
+!         print*, cosi,R1,R2
       ENDDO 
 
       RETURN 
@@ -141,7 +159,7 @@
                                                                         
                                                                         
       SUBROUTINE FRESNEL_RADIANCE (NSTOKES, NUMMU, MODE, MU_VALUES,     &
-      INDEX, GROUND_TEMP, WAVELENGTH, RADIANCE)
+      INDEX, GROUND_TEMP, WAVELENGTH, wind10, RADIANCE)                         
 !        FRESNEL_RADIANCE calculates the ground radiance of a plane     
 !      surface using the Fresnel formulae.  The radiance is due only to 
 !      thermal radiation (this subroutine cannot do specular reflection)
@@ -154,6 +172,14 @@
       REAL(kind=dbl) ZERO, PLANCK, COSI, R1, R2 
       COMPLEX(kind=dbl) EPSILON, D, RH, RV 
       PARAMETER (ZERO = 0.0D0) 
+      real(kind=dbl) :: freq, wind10, c1, ffoam
+      real(kind=dbl) :: c2(2)
+      
+      logical :: emissivity_correction = .false.
+
+      c1 = 1.
+      c2 = 0.
+      ffoam = 0.
 
 ! Thermal radiation going up                                  
       N = NSTOKES * NUMMU 
@@ -166,10 +192,17 @@
          D = CDSQRT (EPSILON - 1.0D0 + COSI**2) 
          RH = (COSI - D) / (COSI + D) 
          RV = (EPSILON * COSI - D) / (EPSILON * COSI + D)
-         R1 = (cdABS(RV)**2+cdABS(RH)**2) / 2.0D0
-         R2 = (cdABS(RV)**2-cdABS(RH)**2) / 2.0D0
+	 ! apply correction due to small and large scale roughness and foam
+	 ! the corrections are applied to abs(Rv)**2 and abs(Rh)**2 respectively
+	 if (emissivity_correction) then
+	   freq = 299792.5/wavelength
+	   call small_scale(cosi, freq, wind10, c1)
+	   call large_scale(cosi, freq, wind10, c2)
+           call foam(wind10, ffoam)
+	 end if
+         R1 = ((cdABS(RV)**2)*c1-c2(1)+(cdABS(RH)**2)*c1-c2(2))*(1-ffoam) / 2.0D0 
+         R2 = ((cdABS(RV)**2)*c1-c2(1)-(cdABS(RH)**2)*c1+c2(2))*(1-ffoam) / 2.0D0
          RADIANCE (1, J) = (1.0 - R1) * PLANCK 
-         print*, RH,RV
          IF (NSTOKES.GT.1) RADIANCE (2, J) = - R2 * PLANCK 
          ENDDO 
       ENDIF 

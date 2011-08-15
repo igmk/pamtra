@@ -37,12 +37,14 @@ N_0snowDsnow=7.628
 EM_snow='surus' 
 SP=0.2 
 isnow_n0=1
+liu_type=8
 /
 &graupel_params
 SD_grau='Exp' 
 N_0grauDgrau=4.0 
 EM_grau='surus'
-/&ice_params
+/
+&ice_params
 EM_ice='surus'
 /
 &rain_params
