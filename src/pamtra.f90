@@ -102,9 +102,7 @@ program pamtra
   character :: ssstr*1, ttstr*1, Anglestr*4, FILEOUT3D*65
 
 
-  character :: micro_str*31, SP_str*3,  &
-       file_profile2*78, &
-        N0snowstr*3, N0graustr*3, N0rainstr*3
+
 
   character(80) :: femis ! filename for the emissivity databases
 
@@ -120,13 +118,6 @@ program pamtra
 
   real(kind=dbl) :: spec2abs
 
-  real(kind=dbl), dimension(2) :: P11, ang
-
-!  integer, dimension(ngridx,ngridy) :: isamp, jsamp ! temporary for naming output
-
-
-
-
 !!! INTERNAL "HANDLE COMMAND LINE PARAMETERS" !!! 
 
   integer :: inarg, ff
@@ -139,6 +130,12 @@ program pamtra
   character(300) :: namelist_file
   character(6), dimension(maxfreq) :: frqs_str !from commandline
   character(5*7) :: frq_str_list ! for the filename only!
+
+
+!!! SET BY mod_io_strings_get_file_name !!!
+
+
+
 
 
 !!! HANDLE COMMAND LINE PARAMETERS !!!
@@ -200,29 +197,7 @@ call allocate_vars
   !make layer averages
   call get_atmosG0
 
-  write (SP_str (1:3) , '(f3.1)') SP
-
-  date_str = year//month//day//time
-
-  if (N_0snowDsnow .le. 9.95) then 
-     write (N0snowstr, '(f3.1)') N_0snowDsnow 
-  else 
-     write (N0snowstr, '(f3.0)') N_0snowDsnow 
-  end if
-
-  if (N_0rainD .le. 9.95) then 
-     write (N0rainstr, '(f3.1)') N_0rainD 
-  else 
-     write (N0rainstr, '(f3.0)') N_0rainD 
-  end if
-  if (N_0grauDgrau .le. 9.95) then 
-     write (N0graustr, '(f3.1)') N_0grauDgrau 
-  else 
-     write (N0graustr, '(f3.0)') N_0grauDgrau 
-  end if
-
-  micro_str = SD_snow//N0snowstr//EM_snow//SP_str//SD_grau//        &
-       N0graustr//EM_grau//SD_rain//N0rainstr                            
+  if (write_nc .eqv. .false.) call mod_io_strings_get_filename()
 
   if (verbose .gt. 1) print*, 'Start loop over frequencies!'
 
@@ -336,10 +311,10 @@ grid_f: do fi =1, nfrq
         !&&&&&&&&   I/O FILE NAMES   &&&&&&&&&&&&&&&&&&
 
         OUT_FILE_PAS = output_path(:len_trim(output_path))//"/"//&
-        date_str//micro_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_passive"
+        micro_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_passive"
 
         OUT_FILE_ACT = output_path(:len_trim(output_path))//"/"//&
-        date_str//micro_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_active"
+        micro_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_active"
 
 
     if (active) then
