@@ -10,6 +10,28 @@ module nml_params
  
   implicit none
 
+!!Global Stettings
+   integer, parameter :: MAXV = 64,   &
+         MAXLAY = 200, &
+         maxleg = 200, &
+         maxfreq = 40, &
+         nummu = 16, & ! no. of observation angles
+         NSTOKES = 2, &
+         NOUTLEVELS = 2
+   integer, parameter :: SRC_CODE = 2,&
+         NUMAZIMUTHS =1,&
+         Aziorder = 0
+
+   real(kind=dbl), parameter :: SKY_TEMP    = 2.73d0,  &    ! cosmic background
+         DIRECT_FLUX = 0.d0 ,&
+         DIRECT_MU   = 0.0d0 
+
+   character(1), parameter :: QUAD_TYPE = 'L',&
+         DELTAM = 'N'
+
+
+
+
   integer :: verbose, n_moments, isnow_n0
 
   real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
@@ -39,9 +61,15 @@ module nml_params
   character :: OUTPOL*2, GROUND_TYPE*1, UNITS*1
 
   real(kind=dbl) :: salinity         ! sea surface salinity
+
+
+
+
+
+
   contains
     
-    subroutine read_namelist(namelist_file)
+    subroutine nml_params_read(namelist_file)
 
     character(300), intent(in) ::namelist_file
 
@@ -129,7 +157,6 @@ module nml_params
 
       if (verbose .gt. 1) print *,"PASSIVE: ", passive, "ACTIVE: ", active
 
-
       return
-    end subroutine read_namelist
+    end subroutine nml_params_read
 end module nml_params

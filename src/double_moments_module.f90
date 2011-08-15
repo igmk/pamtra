@@ -14,7 +14,7 @@ real (kind=dbl), dimension(4) :: 	gamma_cloud,&
 
      contains
 
-      subroutine read_double_moments(moments_file)
+      subroutine double_moments_module_read(moments_file)
          character(20) :: dummy
          character(20) :: moments_file
 
@@ -31,6 +31,6 @@ real (kind=dbl), dimension(4) :: 	gamma_cloud,&
          close(118)
 
          return
-      end subroutine read_double_moments
+      end subroutine double_moments_module_read
 
 end module double_moments_module

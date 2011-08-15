@@ -55,7 +55,7 @@ subroutine get_atmosg(freq)!, kextatmo_o2,kextatmo_h2o,kextatmo_n2)
 	    stop
       end if
     end do
-                                                                        
+   if (verbose .gt. 1) print*, 'variables filled up!'                                                            
  return 
 
 end subroutine get_atmosg                     

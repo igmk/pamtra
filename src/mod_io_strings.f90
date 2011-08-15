@@ -12,8 +12,7 @@ character(78) :: file_profile
 
 character(64), allocatable, dimension(:) :: file_PH
 
-character(2) :: month, day
-character(4) :: year, time
+
 character(12) :: date_str
 
 end module mod_io_strings

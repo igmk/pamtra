@@ -2,10 +2,10 @@ program pamtra
 
   use kinds
   use constants
-  use nml_params
-  use vars_atmosphere
-  use vars_output
-  use double_moments_module
+  use nml_params !all settings go here
+  use vars_atmosphere !input variables and reading routine
+  use vars_output !output variables
+  use double_moments_module 
   use mod_io_strings
 
   !     Radiative transfer code to process COSMO-model derived profiles   
@@ -22,29 +22,18 @@ program pamtra
   implicit none
 
 
-!!! realy GLOBAL Variables
 
-  integer, parameter :: MAXV = 64,   &
-       MAXLAY = 200, &
-       maxleg = 200, &
-       maxfreq = 40, &
-       nummu = 16, & ! no. of observation angles
-       NSTOKES = 2, &
-       NOUTLEVELS = 2
 
 
 !!! NOT YET SORTED STUFF
 
-  integer :: i, j, k, jj, nf, nx, ny, nz, nlev, fi,&
+  integer :: jj, nf, nx, ny, nz, nlev, fi,&
              offset1,offset2, length1, length2,&
              ise, imonth ! filehandle for the emissivity data
 
   integer :: NUMRAD, NLEGENcw, NLEGENci, NLEGENgr, &
-       NLEGENsn, NLEGENrr, aziorder, NUMAZIMUTHS
+       NLEGENsn, NLEGENrr
 
-  integer :: SRC_CODE     ! describes the type of radiation 
-  ! 1: 
-  ! 2: 
 
   integer :: NP_LUT, N_temp
 
@@ -55,7 +44,7 @@ program pamtra
 
   integer, dimension(maxlay) :: OUTLEVELS
 
-  real(kind=dbl) :: DIRECT_FLUX, DIRECT_MU
+
 
    real(kind=dbl) :: freq,   & ! frequency [GHz]
               gammln
@@ -72,7 +61,7 @@ program pamtra
        a_msnow, Coeff_grau, den_liq, drop_mass, del_r, den_ice,&
        densnow, fvol_ice
 
-  real(kind=dbl) :: deltax, deltay, ABSIND, ABSCOF
+  real(kind=dbl) ::  ABSIND, ABSCOF
 
   real(kind=dbl) :: atm_ext, kextcw, salbcw, asymcw, kextrr, salbrr, asymrr,  &
        kextci, salbci, asymci, kextsn, salbsn, asymsn, kextgr, salbgr,   &
@@ -83,7 +72,6 @@ program pamtra
 
   real(kind=dbl) :: GROUND_TEMP, ground_albedo
 
-  real(kind=dbl) :: SKY_TEMP         ! cosmic background
 
   real(kind=dbl) :: wavelength       ! microns
 
@@ -107,25 +95,19 @@ program pamtra
 		epsi         ! result of function eps_water
   complex(kind=dbl) :: MINDEX, m_air, m_MG, m_ice
 
-  character :: QUAD_TYPE*1, rLWC_str*4                                                      
+  character :: rLWC_str*4                                                      
 
   character(300) :: OUT_FILE_PAS, OUT_FILE_ACT, tmp_file1, nc_out_file
 
   character :: ssstr*1, ttstr*1, Anglestr*4, FILEOUT3D*65
 
 
-
-
-
   character :: micro_str*31, SP_str*3,  &
-       DELTAM*1, file_profile2*78, &
+       file_profile2*78, &
         N0snowstr*3, N0graustr*3, N0rainstr*3
 
   character(80) :: femis ! filename for the emissivity databases
 
-
-
-  integer :: istat
 
 
 
@@ -142,7 +124,6 @@ program pamtra
 
 !  integer, dimension(ngridx,ngridy) :: isamp, jsamp ! temporary for naming output
 
-  integer, allocatable, dimension(:,:) :: ics
 
 
 
@@ -199,198 +180,18 @@ if (verbose .gt. 1) print *,"input_file: ",input_file(:len_trim(input_file)),&
                            " namelist file: ",namelist_file," freq: ",frqs_str
 
 !!! READ NAMELIST FILE !!!
-call read_namelist(namelist_file) !from nml_params.f90
+call nml_params_read(namelist_file) !from nml_params.f90
 
 !!! READ MOMENTS FILE !!!
-if (n_moments .eq. 2) call read_double_moments(moments_file) !from double_moments_module.f90
+if (n_moments .eq. 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
+
+!!! READ PROFILES !!!
+call vars_atmosphere_read_profile(input_file)
+
+! now allocate variables
+call allocate_vars
 
 
-  !                                                                       
-  !     read atmospheric profiles                 
-  !  
-  !     quantities followed  
-  !     by "_lev" are given at the layer heights while the quantitites    
-  !     w/o "_lev" are layer average quantities
-  !
-  !  Variables:
-  !     name           unit        description
-  !     hgt_lev         m
-  !     press_lev       Pa
-  !     temp_lev        K
-  !     relhum_lev      %
-  !
-  !     cloud_water_q kg/kg
-  !     cloud_ice_q   kg/kg 
-  !     rain_q        kg/kg
-  !     snow_q        kg/kg
-  !     graupel_q     kg/kg
-
-  ! Perform calculation through dispatch or not
-
-
-
-
-   if (verbose .gt. 0) print *,"opening: ",input_path(:len_trim(input_path))//"/"//input_file
-
-  open(UNIT=14, FILE=input_path(:len_trim(input_path))//"/"//input_file, STATUS='OLD', form='formatted',iostat=istat)
- 
- if (istat .ne. 0) then
-    call error_msg(input_file,0,0)
-    stop "Read error 1: Cannot open file"
-    end if
-
-  read(14,*,iostat=istat) year, month, day, time, ngridx, ngridy, nlyr, deltax, deltay
-
-  if (istat .ne. 0) then
-    call error_msg(input_file,0,0)
-    stop "Read error 2: Cannot read first line of file"
-    end if
-	! now allocate variables
-
-
-
-	allocate(ics(ngridx, ngridy))
-    allocate(file_ph(nlyr))
-
-  !    some inputs variable                                               
-  QUAD_TYPE = 'L'                                             
-  Aziorder = 0 
-  NUMAZIMUTHS = 1 
-  DELTAM = 'N' 
-  SRC_CODE = 2 
-  DIRECT_FLUX = 0.d0 
-  DIRECT_MU = 0.0d0 
-  SKY_TEMP = 2.73d0
-
-  ! initialize values
-
-!   tau = 0.0d0
-!   tau_hydro = 0.0d0 
-
-
-  call allocate_vars_atmosphere
-
-  ! $## think about order of reading
-  do i = 1, ngridx
-     do j = 1, ngridy 
-        read(14,*,iostat=istat) profiles(i,j)%isamp, profiles(i,j)%jsamp !
-        if (istat .ne. 0) then
-            call error_msg(input_file,i,j)
-            stop "Read error 3: Cannot read profile index i,j"
-        end if
-
-        read(14,*,iostat=istat) &
-           profiles(i,j)%latitude, &	     ! degree
-		   profiles(i,j)%longitude,&         ! degree
-		   profiles(i,j)%land_fraction,&     !
-		   profiles(i,j)%wind_10u,&          ! m/s
-		   profiles(i,j)%wind_10v            ! m/s
-        if (istat .ne. 0) then
-            call error_msg(input_file,i,j)
-            stop "Read error 4: Cannot read profile lat/lon/lfrac/wind"
-        end if
-        ! integrated quantities
-        if (n_moments .eq. 1) then
-           read(14,*,iostat=istat) &
-           profiles(i,j)%iwv,&               ! kg/m^2
-		   profiles(i,j)%cwp,&               ! kg/m^2
-		   profiles(i,j)%iwp,&               ! kg/m^2
-		   profiles(i,j)%rwp,&               ! kg/m^2
-		   profiles(i,j)%swp,&               ! kg/m^2
-		   profiles(i,j)%gwp                 ! kg/m^2
-		   profiles(i,j)%hwp = 0.
-		end if
-		if (n_moments .eq. 2) then
-           read(14,*,iostat=istat) &
-           profiles(i,j)%iwv,&               ! kg/m^2
-		   profiles(i,j)%cwp,&               ! kg/m^2
-		   profiles(i,j)%iwp,&               ! kg/m^2
-		   profiles(i,j)%rwp,&               ! kg/m^2
-		   profiles(i,j)%swp,&               ! kg/m^2
-		   profiles(i,j)%gwp,&               ! kg/m^2
-		   profiles(i,j)%hwp                 ! kg/m^2
-		end if
-
-        if (istat .ne. 0) then
-            call error_msg(input_file,i,j)
-            stop "Read error 5: Cannot read profile integrated quantities"
-        end if
-
-        ! surface values
-        read(14,*,iostat=istat) &
-           profiles(i,j)%hgt_lev(0),&
-		   profiles(i,j)%press_lev(0),&
-		   profiles(i,j)%temp_lev(0),&
-		   profiles(i,j)%relhum_lev(0)
-	    if (istat .ne. 0) call error_msg(input_file, i, j)
-        do k = 1, nlyr 
-		   if (n_moments .eq. 1) then
-              read(14,*,iostat=istat) &
-
-              profiles(i,j)%hgt_lev(k), &             ! m
-		      profiles(i,j)%press_lev(k), &           ! Pa
-		      profiles(i,j)%temp_lev(k), &            ! K
-		      profiles(i,j)%relhum_lev(k), &          ! %
-		      profiles(i,j)%cloud_water_q(k), &       ! kg/kg
-		      profiles(i,j)%cloud_ice_q(k), &         ! kg/kg
-		      profiles(i,j)%rain_q(k), &              ! kg/kg
-		      profiles(i,j)%snow_q(k), &              ! kg/kg
-		      profiles(i,j)%graupel_q(k)              ! kg/kg
-		    end if
-			if (n_moments .eq. 2) then
-		      read(14,*,iostat=istat) &
-              profiles(i,j)%hgt_lev(k), &             ! m
-		      profiles(i,j)%press_lev(k), &           ! Pa
-		      profiles(i,j)%temp_lev(k), &            ! K
-		      profiles(i,j)%relhum_lev(k), &          ! %
-		      profiles(i,j)%cloud_water_q(k), &       ! kg/kg
-		      profiles(i,j)%cloud_ice_q(k), &         ! kg/kg
-		      profiles(i,j)%rain_q(k), &              ! kg/kg
-		      profiles(i,j)%snow_q(k), &              ! kg/kg
-		      profiles(i,j)%graupel_q(k), &           ! kg/kg
-		      profiles(i,j)%hail_q(k), &       		  ! kg/kg
-		      profiles(i,j)%cloud_water_n(k), &       ! #/kg
-		      profiles(i,j)%cloud_ice_n(k), &         ! #/kg
-		      profiles(i,j)%rain_n(k), &              ! #/kg
-		      profiles(i,j)%snow_n(k), &              ! #/kg
-		      profiles(i,j)%graupel_n(k), &           ! #/kg
-		      profiles(i,j)%hail_n(k)                 ! #/kg
-	        end if
-        if (istat .ne. 0) then
-            call error_msg(input_file,i,j,k)
-            print *,"Error at layer", k
-            stop "Read error 6: Cannot read profile values"
-        end if
-		end do
-     end do
-  end do
-
-  close(14)
-
-
-
-  if (verbose .gt. 0) print*, 'profile reading done!'
-
-  if (write_nc) then
-    allocate(is(ngridy,ngridx),js(ngridy,ngridx))
-    allocate(lons(ngridy,ngridx),lats(ngridy,ngridx),lfracs(ngridy,ngridx))
-    allocate(iwvs(ngridy,ngridx))
-    allocate(cwps(ngridy,ngridx),iwps(ngridy,ngridx),rwps(ngridy,ngridx),&
-    swps(ngridy,ngridx),gwps(ngridy,ngridx),hwps(ngridy,ngridx))
-    allocate(tb(nstokes,nfrq,2*nummu,noutlevels,ngridy,ngridx))
-    lons = 0.; lats = 0.; lfracs = 0.;
-    iwvs = 0.; cwps = 0.; iwps = 0.; rwps = 0.; swps = 0.; gwps = 0.; hwps = 0.;
-    tb = 0.
-
-  end if
-
-allocate(angles_deg(2*NUMMU))
-if (active) then
-    allocate(Ze(ngridx,ngridy,nlyr,nfrq))
-    allocate(Attenuation_hydro(ngridx,ngridy,nlyr,nfrq))
-    allocate(Attenuation_atmo(ngridx,ngridy,nlyr,nfrq))
-    allocate(hgt(ngridx,ngridy,nlyr))
-end if
   !                                                                       
   !     This GCE model format does not have all the fields expected by    
   !     the radiative transfer code (i.e. total pressure, and water vapor 
@@ -399,7 +200,6 @@ end if
 
   !make layer averages
   call get_atmosG0
-  if (verbose .gt. 1) print*, 'variables filled up!'
 
   write (SP_str (1:3) , '(f3.1)') SP
 
