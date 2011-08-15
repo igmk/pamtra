@@ -9,11 +9,11 @@ subroutine write_nc_results(nc_file)
 
   integer :: ncid
   integer :: dlonID, dlatID, dangID, dfrqID, doutID, dstokesID, dlayerID
+
   integer :: isVarID, jsVarID, lonVarID, latVarID, lfracVarID, iwvVarID, cwpVarID,&
 	     iwpVarID, rwpVarID, swpVarID, gwpVarID, hwpVarID, &
-	     tbVarID, heightVarID, ZeVarID, PiaAtmoBUVarID, PiaHydroBUVarID, &
-	     PiaAtmoTDVarID, PiaHydroTDVarID,frequencyVarID
-                 !, flux_upVarID, flux_downVarID, &
+	     tbVarID, heightVarID, ZeVarID, AttAtmoVarID, AttHydroVarID, &
+	     frequencyVarID, anglesVarID
 
   integer :: nang = 32, nout = 2, nstokes = 2
 
@@ -24,8 +24,12 @@ subroutine write_nc_results(nc_file)
 
   integer :: today(3), now(3)
 
-  character(100) :: nc_file, timestring, user
+  character(300) :: nc_file, timestring, user
+  character(40) ::gitVersion,gitHash
 
+
+  !get git data
+  call versionNumber(gitVersion,gitHash)
 
   call check(nf90_create(path=nc_file,cmode=nf90_noclobber,ncid=ncid))
 
@@ -35,8 +39,8 @@ subroutine write_nc_results(nc_file)
   write (timestring , "(i2.2, '/', i2.2, '/', i4.4, ' ',  i2.2, ':', i2.2, ':', i2.2)") &
 	today(2), today(1), today(3), now
   ! write meta data
-  call check(nf90_put_att(ncid,nf90_global, "history", "Created with Fortran by "//trim(creator)//&
-	" (University of Cologne, IGMK) at "//timestring))
+  call check(nf90_put_att(ncid,nf90_global, "history", "Created with Pamtra (Version: "//trim(gitVersion)// &
+   "Git Hash: "//trim(gitHash)//")  by "//trim(creator)//" (University of Cologne, IGMK) at "//timestring))
 
   !make dimensions
   call check(nf90_def_dim(ncid, 'nlon', ngridx, dlonID))
@@ -52,6 +56,10 @@ if (active) then
 end if
 
   !1dim
+  call check(nf90_def_var(ncid,'angle', nf90_float,(/dangID/), anglesVarID))
+  call check(nf90_put_att(ncid, anglesVarID, "units", "deg"))
+  call check(nf90_put_att(ncid, anglesVarID, "missing_value", -9999))
+
   call check(nf90_def_var(ncid,'frequency', nf90_float,(/dfrqID/), frequencyVarID))
   call check(nf90_put_att(ncid, frequencyVarID, "units", "GHz"))
   call check(nf90_put_att(ncid, frequencyVarID, "missing_value", -9999))
@@ -121,21 +129,14 @@ if (active) then
   call check(nf90_put_att(ncid, ZeVarID, "units", "dBz"))
   call check(nf90_put_att(ncid, ZeVarID, "missing_value", -9999))
 
-  call check(nf90_def_var(ncid,'PIA_Hydrometeors_bottomUp', nf90_double,dim4d, PiaHydroBUVarID))
-  call check(nf90_put_att(ncid, PiaHydroBUVarID, "units", "dB"))
-  call check(nf90_put_att(ncid, PiaHydroBUVarID, "missing_value", -9999))
+  call check(nf90_def_var(ncid,'Attenuation_Hydrometeors', nf90_float,dim4d, AttHydroVarID))
+  call check(nf90_put_att(ncid, AttHydroVarID, "units", "dB"))
+  call check(nf90_put_att(ncid, AttHydroVarID, "missing_value", -9999))
 
-  call check(nf90_def_var(ncid,'PIA_Atmosphere_bottomUp', nf90_double,dim4d, PiaAtmoBUVarID))
-  call check(nf90_put_att(ncid, PiaAtmoBUVarID, "units", "dB"))
-  call check(nf90_put_att(ncid, PiaAtmoBUVarID, "missing_value", -9999))
+  call check(nf90_def_var(ncid,'Attenuation_Atmosphere', nf90_float,dim4d, AttAtmoVarID))
+  call check(nf90_put_att(ncid, AttAtmoVarID, "units", "dB"))
+  call check(nf90_put_att(ncid, AttAtmoVarID, "missing_value", -9999))
 
-  call check(nf90_def_var(ncid,'PIA_Hydrometeors_topDown', nf90_double,dim4d, PiaHydroTDVarID))
-  call check(nf90_put_att(ncid, PiaHydroTDVarID, "units", "dB"))
-  call check(nf90_put_att(ncid, PiaHydroTDVarID, "missing_value", -9999))
-
-  call check(nf90_def_var(ncid,'PIA_Atmosphere_topDown', nf90_double,dim4d, PiaAtmoTDVarID))
-  call check(nf90_put_att(ncid, PiaAtmoTDVarID, "units", "dB"))
-  call check(nf90_put_att(ncid, PiaAtmoTDVarID, "missing_value", -9999))
 
 end if
 
@@ -148,6 +149,9 @@ end if
 
   call check(nf90_enddef(ncid))
 !  call check(nf90_inq_varid(ncid, 'longitude', VarId))
+
+
+  call check(nf90_put_var(ncid, anglesVarID, angles_deg))
   call check(nf90_put_var(ncid, frequencyVarID, freqs))
   call check(nf90_put_var(ncid, isVarID, is))
   call check(nf90_put_var(ncid, jsVarID, js))
@@ -171,14 +175,10 @@ if (active) then                             !reshapeing needed due to Fortran's
         RESHAPE( hgt, (/ nlyr, ngridy, ngridx/), ORDER = (/3,2,1/))))
   call check(nf90_put_var(ncid, ZeVarID, &
         RESHAPE( Ze, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-  call check(nf90_put_var(ncid, PiaHydroBUVarID, &
-        RESHAPE( PIA_hydro_bottomup, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-  call check(nf90_put_var(ncid, PiaAtmoBUVarID, &
-        RESHAPE( PIA_atmo_bottomup, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-  call check(nf90_put_var(ncid, PiaHydroTDVarID, &
-        RESHAPE( PIA_hydro_topdown, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-  call check(nf90_put_var(ncid, PiaAtmoTDVarID, &
-        RESHAPE( PIA_atmo_topdown, (/nfrq,  nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+  call check(nf90_put_var(ncid, AttHydroVarID, &
+        RESHAPE( Attenuation_hydro, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+  call check(nf90_put_var(ncid, AttAtmoVarID, &
+        RESHAPE( Attenuation_atmo, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
 end if
 
   call check(nf90_close(ncid))

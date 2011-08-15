@@ -34,6 +34,6 @@ module nml_params
 
   character(20) :: moments_file
 
-  character(100) :: input_path, output_path, tmp_path,creator
+  character(100) :: input_path, output_path, tmp_path,creator, data_path
 
 end module nml_params
