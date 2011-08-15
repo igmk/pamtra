@@ -11,10 +11,10 @@ for fname in $(ls tmp)
    fname=$(basename tmp/$fname .txt)
    strings tmp/$fname > tmp/$fname.txt
    status=$[$?+$status]
-    echo "diff tmp/$fname.txt referenceOutput/$1/$fname.txt"
+#     echo "diff tmp/$fname.txt referenceOutput/$1/$fname.txt"
    diff tmp/$fname.txt referenceOutput/$1/$fname.txt # > /dev/null
    status=$[$?+$status]
-    echo $status
+#     echo $status
 done
 
 

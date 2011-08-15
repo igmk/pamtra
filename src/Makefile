@@ -33,7 +33,7 @@ BIN=pamtra
 all: precompile pamtra
 	
 pamtra: pamtra.f90 $(OBJECTS)
-	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS)
+	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS) -fdefault-real-8 -fdefault-double-8
 	mv $(BIN) ../
 
 precompile: 
@@ -62,9 +62,9 @@ write_nc_results.o: write_nc_results.f90
 clean:
 	rm -rf $(OBJECTS) $(BIN) *.mod *~
 
-test: cleanup test1 test2 test3 test4
+test: cleantest test1 test2 test3 test4
 
-cleanup:
+cleantest:
 	@echo "=== Clean up tmp ==="
 	rm -fr ../test/tmp/*
 

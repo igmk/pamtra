@@ -7,8 +7,11 @@ subroutine run_rt3(nx,ny,fi,frqs_str)
   use double_moments_module 
   use mod_io_strings
 
+implicit none
+
 integer, intent(in) :: nx,ny,fi 
  character(6), dimension(maxfreq), intent(in) :: frqs_str !from commandline
+
 
 integer, dimension(maxlay) :: OUTLEVELS
 integer :: ise, imonth ! filehandle for the emissivity data
@@ -91,11 +94,10 @@ character(80) :: femis ! filename for the emissivity databases
     open(ise,file=trim(femis),status='old',form='unformatted',&
                 access='direct',recl=28)
       ! land_emis could give polarized reflectivities
-      call land_emis(ise,lon,lat,real(freq),land_emissivity)
+
+      call land_emis(ise,lon,lat,freq,land_emissivity)
       close(ise)
       ground_albedo = 1.d0 - land_emissivity
-
-print *,"aaaaa",lfrac,ground_albedo,ise,lon,lat,real(freq),land_emissivity
 
     else if (lfrac .ge. 0.0 .and. lfrac .lt. 0.5) then
       ! computing the refractive index of the sea (Fresnel) surface
@@ -103,11 +105,9 @@ print *,"aaaaa",lfrac,ground_albedo,ise,lon,lat,real(freq),land_emissivity
       ground_albedo = 1.0d0
       epsi = eps_water(salinity, ground_temp - 273.15d0, freq)
       ground_index = dconjg(sqrt(epsi))
-print *,"bbbbb",lfrac,ground_albedo
     else
     ! this is for ground_type specified in run_params.nml
       ground_albedo = 1.d0 - emissivity
-print *,"ccccccc",lfrac,ground_albedo
     end if
 
     if (verbose .gt. 1) print*, nx,ny, 'Surface emissivity calculated!'

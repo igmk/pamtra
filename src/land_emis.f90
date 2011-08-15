@@ -4,7 +4,7 @@ subroutine land_emis (&
      ise, & ! in
      lon, & ! in
      lat, & ! in
-     freq,& ! in
+     freqdbl,& ! in
      emissivity)  ! out
   !
   ! Description:
@@ -27,7 +27,6 @@ subroutine land_emis (&
   use kinds
 
   implicit none
-
   !subroutine arguments:
   integer, intent(in) :: ise
 
@@ -44,7 +43,8 @@ subroutine land_emis (&
 
   real(kind=sgl) :: alat,alon,alat3,alon3,alat4,alon4
   real(kind=sgl) :: emiv,emih,theta,ff
-  real(kind=sgl), intent(in) :: freq ! frequency in [GHz]
+  real(kind=dbl), intent(in) :: freqdbl ! frequency in [GHz]
+  real(kind=sgl) :: freq ! frequency in [GHz]
 
   real(kind=sgl), dimension(4) :: a
   real(kind=sgl), dimension(7) :: emis
@@ -54,7 +54,10 @@ subroutine land_emis (&
 
   ! Equal area computations
 
-  call equare
+freq = real(freqdbl)
+
+call equare
+
 
   !-------------------------------------------
   ! 1. Get and interpolate emissivities
@@ -86,7 +89,6 @@ subroutine land_emis (&
   ! get emissivities
 
   read(ise,rec=cellnum) (emis(i), i= 1,7)
-
   !----------------------------------
   ! 1.2 Check if we have emissivities
   !----------------------------------
