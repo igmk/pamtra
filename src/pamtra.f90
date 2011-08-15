@@ -21,23 +21,22 @@ program pamtra
 
   implicit none
 
-  integer, parameter :: nummu = 16,         & ! no. of observation angles
-       ntheta_i = 2*nummu, &
-       ntheta_s = 2*nummu
+
+!!! realy GLOBAL Variables
 
   integer, parameter :: MAXV = 64,   &
-       MAXA = 32,   &
        MAXLAY = 200, &
        maxleg = 200, &
-       maxfreq = 40
+       maxfreq = 40, &
+       nummu = 16, & ! no. of observation angles
+       NSTOKES = 2, &
+       NOUTLEVELS = 2
 
-  integer, parameter :: NSTOKES = 2
 
-  integer, parameter :: NOUTLEVELS = 2
+!!! NOT YET SORTED STUFF
 
-  integer :: i, j, k, jj, nf, nx, ny, nz, nlev,&
+  integer :: i, j, k, jj, nf, nx, ny, nz, nlev, fi,&
              offset1,offset2, length1, length2,&
-             inarg, fi, &
              ise, imonth ! filehandle for the emissivity data
 
   integer :: NUMRAD, NLEGENcw, NLEGENci, NLEGENgr, &
@@ -59,8 +58,8 @@ program pamtra
   real(kind=dbl) :: DIRECT_FLUX, DIRECT_MU
 
    real(kind=dbl) :: freq,   & ! frequency [GHz]
- 	             gammln
-  character(6), dimension(maxfreq) :: frqs_str
+              gammln
+
 
 
 
@@ -103,9 +102,6 @@ program pamtra
 
   real(kind=dbl), dimension(maxv) :: MU_VALUES
 
-  real(kind=dbl), dimension(ntheta_i) :: TTheta_i, TTheta_s
-
-
   complex(kind=dbl) :: GROUND_INDEX
   complex(kind=dbl) :: eps_water, & ! function to calculate the dielectic properties of (salt)water
 		epsi         ! result of function eps_water
@@ -113,13 +109,13 @@ program pamtra
 
   character :: QUAD_TYPE*1, rLWC_str*4                                                      
 
-  character(300) :: OUT_FILE_PAS, OUT_FILE_ACT, tmp_file1, nc_out_file, namelist_file
+  character(300) :: OUT_FILE_PAS, OUT_FILE_ACT, tmp_file1, nc_out_file
 
   character :: ssstr*1, ttstr*1, Anglestr*4, FILEOUT3D*65
 
-  character(6) :: formatted_frqstr
-  character(5*7) :: frq_str_list
-  character(99) :: input_file
+
+
+
 
   character :: micro_str*31, SP_str*3,  &
        DELTAM*1, file_profile2*78, &
@@ -127,11 +123,11 @@ program pamtra
 
   character(80) :: femis ! filename for the emissivity databases
 
-  character(20) :: dummy
+
 
   integer :: istat
 
-  character(40) :: gitHash, gitVersion
+
 
 ! temporary variables
 
@@ -148,10 +144,28 @@ program pamtra
 
   integer, allocatable, dimension(:,:) :: ics
 
+
+
+!!! INTERNAL "HANDLE COMMAND LINE PARAMETERS" !!! 
+
+  integer :: inarg, ff
+  character(40) :: gitHash, gitVersion
+  character(6) :: formatted_frqstr !function call
+
+!!! SET BY "HANDLE COMMAND LINE PARAMETERS" !!! 
+
+  character(99)  :: input_file !name of profile
+  character(300) :: namelist_file
+  character(6), dimension(maxfreq) :: frqs_str !from commandline
+  character(5*7) :: frq_str_list ! for the filename only!
+
+
+!!! HANDLE COMMAND LINE PARAMETERS !!!
+
 !get git data
 call versionNumber(gitVersion,gitHash)
 
-!parse command line parameters
+!get command line parameters
 inarg = iargc()
 
 if (inarg .lt. 3) then
@@ -171,35 +185,25 @@ end if
 
 nfrq = inarg - 2
 allocate(freqs(nfrq))
-allocate(angles_deg(2*NUMMU))
 
-do fi = 1, inarg-2
-    call getarg(fi+2,frqs_str(fi))
-    read(frqs_str(fi),*) freqs(fi)
-    frqs_str(fi) = formatted_frqstr(frqs_str(fi))
+frq_str_list = "" 
+!get integer and character frequencies
+do ff = 1, inarg-2
+    call getarg(ff+2,frqs_str(ff))
+    read(frqs_str(ff),*) freqs(ff)
+    frqs_str(ff) = formatted_frqstr(frqs_str(ff))
+    frq_str_list = frq_str_list(:len_trim(frq_str_list)) // "_" //  frqs_str(ff)
 end do
-  
 
-call read_namelist(namelist_file)
+if (verbose .gt. 1) print *,"input_file: ",input_file(:len_trim(input_file)),&
+                           " namelist file: ",namelist_file," freq: ",frqs_str
 
-  
-  if (n_moments .ne. 1 .and. n_moments .ne. 2) stop "n_moments is not 1 or 2"
+!!! READ NAMELIST FILE !!!
+call read_namelist(namelist_file) !from nml_params.f90
 
+!!! READ MOMENTS FILE !!!
+if (n_moments .eq. 2) call read_double_moments(moments_file) !from double_moments_module.f90
 
-
-  if (n_moments .eq. 2) then
-    open(118,file=moments_file)
-    !read NU & Mu parameter of the drop size distr. as a function of MASS
-    !and Alpha & Beta parameter of Diameter-Mass function
-    !gamma_xxx(1)=nu	gamma_xxx(2)=mu		gamma_xxx(3)=alpha		gamma_xxx(4)=beta
-    read(118,'(a20,4(x,d13.6))') dummy,gamma_cloud
-    read(118,'(a20,4(x,d13.6))') dummy,gamma_rain
-    read(118,'(a20,4(x,d13.6))') dummy,gamma_ice
-    read(118,'(a20,4(x,d13.6))') dummy,gamma_snow
-    read(118,'(a20,4(x,d13.6))') dummy,gamma_graupel
-    read(118,'(a20,4(x,d13.6))') dummy,gamma_hail
-	close(118)
-  end if
 
   !                                                                       
   !     read atmospheric profiles                 
@@ -223,9 +227,8 @@ call read_namelist(namelist_file)
 
   ! Perform calculation through dispatch or not
 
-   if (verbose .gt. 1) print *,"input_file: ",input_file(:len_trim(input_file))," namelist file: ",namelist_file," freq: ",frqs_str
 
-   if (verbose .gt. 1) print *,"PASSIVE: ", passive, "ACTIVE: ", active
+
 
    if (verbose .gt. 0) print *,"opening: ",input_path(:len_trim(input_path))//"/"//input_file
 
@@ -381,6 +384,7 @@ call read_namelist(namelist_file)
 
   end if
 
+allocate(angles_deg(2*NUMMU))
 if (active) then
     allocate(Ze(ngridx,ngridy,nlyr,nfrq))
     allocate(Attenuation_hydro(ngridx,ngridy,nlyr,nfrq))
@@ -421,14 +425,13 @@ end if
   micro_str = SD_snow//N0snowstr//EM_snow//SP_str//SD_grau//        &
        N0graustr//EM_grau//SD_rain//N0rainstr                            
 
-  frq_str_list = ""
   if (verbose .gt. 1) print*, 'Start loop over frequencies!'
 
 grid_f: do fi =1, nfrq
 
   freq = freqs(fi)
   frq_str = frqs_str(fi)
-  frq_str_list = frq_str_list(:len_trim(frq_str_list)) // "_" // frq_str
+
   wavelength = c / (freq*1.d3)   ! microns
 
   if (verbose .gt. 1) print*, 'Start loop over profiles!'

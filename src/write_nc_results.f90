@@ -4,7 +4,7 @@ subroutine write_nc_results(nc_file)
   use vars_output
   use vars_atmosphere, only: ngridx, ngridy,nlyr,freqs,nfrq
   use netcdf
-  use nml_params, only: active, passive, creator
+  use nml_params, only: active, passive, creator, verbose
   implicit none
 
   integer :: ncid

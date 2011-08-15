@@ -92,7 +92,7 @@ module nml_params
 
       SD_snow='Exp' 
       N_0snowDsnow=7.628 
-      EM_snow='surus' 
+      EM_snow='icesf' 
       SP=0.2 
       isnow_n0=1
 
@@ -124,5 +124,12 @@ module nml_params
       read(7,nml=rain_params)
       read(7,nml=moments)
       close(7)
+
+      if (n_moments .ne. 1 .and. n_moments .ne. 2) stop "n_moments is not 1 or 2"
+
+      if (verbose .gt. 1) print *,"PASSIVE: ", passive, "ACTIVE: ", active
+
+
+      return
     end subroutine read_namelist
 end module nml_params
