@@ -250,7 +250,7 @@ if (verbose .gt. 1) print*, ".... done!"
            ENDIF
            ! Truncate the Legendre series to enforce normalization
            IF (NUMLEGEN.GT.NLEGLIM) THEN
-              WRITE ( * , * ) 'Truncating Legendre series for file:',  &
+              WRITE ( * , * ) 'Truncating Legendre series for layer:',  &
                    layer, NUMLEGEN, NLEGLIM
               NUMLEGEN = NLEGLIM
            ENDIF

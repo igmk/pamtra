@@ -103,7 +103,7 @@ end do
 
 !print*, ' '
 								  
-!           multiply the sums by the integration delta and other constan
+!           multiply the sums by the integration delta and other constants
 !             put quadrature weights in angular array for later         
 if (nbins .eq. 0) del_d = 1.0d0
 								  
@@ -111,7 +111,6 @@ extinction = pi * sumqe * del_d
 scatter = pi * sumqs * del_d
 back_scatt = pi * sumqback * del_d
 albedo = scatter / extinction 
-print*, extinction, scatter, albedo
 								  
 !         if the phase function is not desired then leave now           
 if ( .not. lphase_flag) return 

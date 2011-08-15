@@ -94,6 +94,9 @@
 
 /* Ver2.1  2010.3.22 add 5 GHz*/
 /* Ver2.2  2010.7.9  add 3, 9, 24.1*/
+/* Ver2.3  correct minor error near 1000 um*/
+/* Ver2.4  2011.3.22 add 10,15,19,60,70,80,90 GHz*/
+/* Ver2.5  2011.4.9 add 50 GHz*/
 
 #include <stdio.h>
 #include <string.h>
@@ -105,7 +108,7 @@
 
 #define NSHAP		11   /* number of shapes */
 #define NTEMP		5    /* number of temps  */
-#define NFREQ		14   /* number of frequencies */
+#define NFREQ		22   /* number of frequencies */
 #define NSIZE		20   /* max number of sizes */
 #define NQ		37   /* number of anges in PF */
 
@@ -153,7 +156,7 @@ void reverse(void *v, int n) {
 
 int scatdb(float f, float t, int nshape, float dmax, float *cabs, float *csca, float *cbsc, float *g, float *p, float *re, int *is_loaded) {
        	char scat_db_dir[180]={"."};
-	const char scat_db_fn[]={"data/scat_db2.dda"};
+	const char scat_db_fn[]={"scat_db2.dda"};
 	FILE *fp;
 	static float fs[NFREQ],ts[NTEMP],szs[NSIZE][NSHAP],abss[NFREQ][NTEMP][NSHAP][NSIZE],scas[NFREQ][NTEMP][NSHAP][NSIZE],
 		     bscs[NFREQ][NTEMP][NSHAP][NSIZE],gs[NFREQ][NTEMP][NSHAP][NSIZE],reff[NSIZE][NSHAP],pqs[NFREQ][NTEMP][NSHAP][NSIZE][NQ];

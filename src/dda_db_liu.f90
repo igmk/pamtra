@@ -1,4 +1,4 @@
-subroutine dda_db_liu(f, t, npt, mindex, dia1, dia2, nbins, maxleg,   &
+subroutine dda_db_liu(f, t, mindex, dia1, dia2, nbins, maxleg,   &
   ad, bd, alpha, gamma, lphase_flag, extinction, albedo, back_scatt,  &
   nlegen, legen, legen2, legen3, legen4, aerodist)
                   
@@ -8,7 +8,7 @@ subroutine dda_db_liu(f, t, npt, mindex, dia1, dia2, nbins, maxleg,   &
                                        
   use kinds
   use constants, only: pi,c
-  use nml_params, only: verbose
+  use nml_params, only: verbose, liu_type
 
   implicit none
 
@@ -16,12 +16,10 @@ subroutine dda_db_liu(f, t, npt, mindex, dia1, dia2, nbins, maxleg,   &
 
   logical :: lphase_flag
 
-  integer, intent(in) :: npt    ! id of particle in db
-
   real(kind=dbl), intent(in) :: f,  &! frequency [GHz]
  				t    ! temperature [K]
 
-  real(kind=dbl) :: wavelength, dia1, dia2
+  real(kind=dbl) :: wavelength, dia1, dia2,mass_eq_dia
   real(kind=dbl) :: ad, bd, alpha, gamma 
   complex(kind=dbl) :: mindex 
   real(kind=dbl) :: extinction, albedo, back_scatt
@@ -45,22 +43,31 @@ subroutine dda_db_liu(f, t, npt, mindex, dia1, dia2, nbins, maxleg,   &
 
   real(kind=dbl), dimension(nbins) :: xi, weights
 
-  real(kind=dbl) :: ntot
+  real(kind=dbl) :: ntot, swc
 
 ! variables communicating with the database. need to be single precission !!!
 
   integer :: iret, is_loaded
   integer, parameter :: nang_db = 37
-  real(4) :: t_liu, f_liu
-  real(4) :: diameter
-  real(4) :: abs_liu,sca_liu,bsc_liu,g, r_ice_eq
-  real(4), dimension(nang_db) :: p_liu
-  real(4), dimension(nang_db) :: ang_db
+  real(kind=sgl) :: t_liu, f_liu
+  real(kind=sgl) :: diameter
+  real(kind=sgl) :: abs_liu,sca_liu,bsc_liu,g, r_ice_eq
+  real(kind=sgl), dimension(nang_db) :: p_liu
+  real(kind=sgl), dimension(nang_db) :: ang_db
+  real(kind=sgl), parameter, dimension(0:10) :: dmax = (/4835.,3304.,2632.,3246.,5059.,&
+  												10000.,10000.,10000.,10000.,10000.,12454./)*1.e-6
+  real(kind=sgl), parameter, dimension(0:10) :: dmin = (/121.,83.,66.,81.,127.,&
+  												50.,50.,50.,50.,50.,75./)*1.e-6
+  real(kind=sgl), parameter, dimension(0:10) :: a_m = (/33.996,106.526,210.529,112.290,29.680,&
+  												0.183,0.1287,0.1680,0.2124,1.191e-3,5.666e-3/)
+  real(kind=sgl), parameter, dimension(0:10) :: b_m = (/3.,3.,3.,3.,3.,&
+  												2.274,2.264,2.274,2.285,1.511,1.82/)
 
   real(kind=dbl), allocatable, dimension(:) :: ang_quad, mu, wts, P1_quad
 
   if (verbose .gt. 1) print*, 'Entering dda_db_liu'
 
+  ! initialize database phase function angles
   do i = 0,36
    ang_db(i+1) = i*5.
   end do
@@ -91,7 +98,9 @@ subroutine dda_db_liu(f, t, npt, mindex, dia1, dia2, nbins, maxleg,   &
   ! probably this should be the mass equivalent sphere diameter
   if (verbose .gt. 2) print*, 'find maximum number for the mie series'
   msphere = mindex
-  x = pi * dia2 / wavelength
+  mass_eq_dia = (6.*a_m(liu_type)*dia2**b_m(liu_type)/(pi*917.))**(1./3.)
+!  x = pi * dia2 / wavelength
+  x = pi * mass_eq_dia / wavelength
   nterms = 0 
   call miecalc(nterms, x, msphere, a, b) ! miecalc returns nterms
   nlegen = 2 * nterms 
@@ -124,57 +133,56 @@ subroutine dda_db_liu(f, t, npt, mindex, dia1, dia2, nbins, maxleg,   &
 								    
   !   integration loop over radius of spheres 
   if (nbins .gt. 0) del_d = (dia2 - dia1) / nbins
-
   if (verbose .gt. 3) print*, 'Doing database search for diameter intervall: '
-  do ir = 1, nbins+1
-    diameter = dia1 + (ir - 1) * del_d
-!	diameter = (dia2-dia1)/2.d0*xi(ir)+(dia1+dia2)/2.d0
+!  do ir = 1, nbins+1
+  do ir = 1, nbins
+!    diameter = dia1 + (ir - 1) * del_d
+	diameter = (dia2-dia1)/2.d0*xi(ir)+(dia1+dia2)/2.d0
     ndens = distribution(ad, bd, alpha, gamma, dble(diameter), aerodist)  ! number density
-    if ((ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
-		ndens = 0.5d0 * ndens
-    end if 
-    ntot = ntot + ndens*del_d
-  if (verbose .gt. 2) print*, ir, ' with: ',f_liu,t_liu,npt,diameter*1.e6
-    call scatdb(f_liu,t_liu,npt,diameter*1.e6,abs_liu,sca_liu,bsc_liu,g,p_liu,r_ice_eq,iret,is_loaded)
+!    if ((ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
+!		ndens = 0.5d0 * ndens
+!    end if
+    ntot = ntot + ndens*weights(ir)
+  if (diameter .gt. dmax(liu_type)) diameter = dmax(liu_type)
+  if (diameter .lt. dmin(liu_type)) diameter = dmin(liu_type)
+  if (verbose .gt. 2) print*, ir, ' with: ',f_liu,t_liu,liu_type,diameter*1.e6
+    call scatdb(f_liu,t_liu,liu_type,diameter*1.e6,abs_liu,sca_liu,bsc_liu,g,p_liu,r_ice_eq,iret,is_loaded)
   if (verbose .gt. 2) print*, 'got: ',iret, abs_liu,sca_liu,bsc_liu,g
+	if (iret .ne. 0) print*, iret,f_liu,t_liu,liu_type,diameter*1.e6, abs_liu,sca_liu,bsc_liu
 
-	if (iret .ne. 0) print*, iret,f_liu,t_liu,npt,diameter*1.e6, abs_liu,sca_liu,bsc_liu
-
-!    qext = (abs_liu+sca_liu)/(pi*(diameter/.2)**2)
-!    qscat = sca_liu/(pi*(diameter/.2)**2)
-!    qback = bsc_liu/(pi*(diameter/.2)**2)
-!  write(36,*) pi*diameter/wavelength, abs_liu/(pi*(diameter/.2)**2),qscat,qback
-    qext = (abs_liu+sca_liu)/(pi*(r_ice_eq*1.e-6)**2)
-    qscat = sca_liu/(pi*(r_ice_eq*1.e-6)**2)
-    qback = bsc_liu/(pi*(r_ice_eq*1.e-6)**2)
+    qext = (abs_liu+sca_liu)
+    qscat = sca_liu
+    qback = bsc_liu
     ! sum up extinction, scattering, and backscattering as cross-sections/pi
-!    sumqe = sumqe + qext * ndens * (diameter/.2)**2
-!    sumqs = sumqs + qscat * ndens * (diameter/.2)**2
-!    sumqback = sumqback + qback * ndens * (diameter/.2)**2
-    sumqe = sumqe + qext * ndens * (r_ice_eq*1.e-6)**2
-    sumqs = sumqs + qscat * ndens * (r_ice_eq*1.e-6)**2
-    sumqback = sumqback + qback * ndens * (r_ice_eq*1.e-6)**2
+
+    sumqe = sumqe + qext * ndens * weights(ir)
+    sumqs = sumqs + qscat * ndens * weights(ir)
+    sumqback = sumqback + qback * ndens * weights(ir)
     if (lphase_flag) then
       ang_quad = acos(mu(nquad:1:-1))*180.d0/pi
 	  call interpolation(nang_db,nquad,dble(ang_db),dble(p_liu),ang_quad,P1_quad)
 	  fac = sum(P1_quad*wts)
 	  P1_quad = P1_quad*(2.d0/fac)
       do i = 1, nquad 
-		sump1(i) = sump1(i) + P1_quad(i) * ndens * del_d
+		sump1(i) = sump1(i) + P1_quad(i) * ndens  * weights(ir)!* del_d
 !		sump2(i) = sump2(i) + p2 * ndens
 !		sump3(i) = sump3(i) + p3 * ndens
 !		sump4(i) = sump4(i) + p4 * ndens
       end do 
     end if 
   end do 
- 
+sumqe = sumqe*(dia2-dia1)/2.d0
+sumqs = sumqs*(dia2-dia1)/2.d0
+sumqback = sumqback*(dia2-dia1)/2.d0
+sump1 = sump1*(dia2-dia1)/2.d0
+ntot = ntot*(dia2-dia1)/2.d0
   !   multiply the sums by the integration delta and other constants
   !   put quadrature weights in angular array for later usage    
   if (nbins .eq. 0) del_d = 1.0d0
 
-  extinction = pi * sumqe * del_d      ! [1/m]
-  scatter = pi * sumqs * del_d         ! [1/m]
-  back_scatt = pi * sumqback * del_d   ! [1/m]
+  extinction = sumqe !* del_d      ! [1/m]
+  scatter = sumqs !* del_d       ! [1/m]
+  back_scatt = sumqback !* del_d   ! [1/m]
   albedo = scatter / extinction 
 
   ! if the phase function is not desired then leave now           

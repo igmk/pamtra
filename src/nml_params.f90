@@ -10,7 +10,7 @@ module nml_params
  
   implicit none
 
-  integer :: verbose, n_moments, isnow_n0
+  integer :: verbose, n_moments, isnow_n0, liu_type
 
   real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
 
