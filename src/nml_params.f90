@@ -36,4 +36,93 @@ module nml_params
 
   character(100) :: input_path, output_path, tmp_path,creator, data_path
 
+  character :: OUTPOL*2, GROUND_TYPE*1, UNITS*1
+
+  real(kind=dbl) :: salinity         ! sea surface salinity
+  contains
+    
+    subroutine read_namelist(namelist_file)
+
+    character(300), intent(in) ::namelist_file
+
+      ! name list declarations
+
+      namelist / verbose_mode / verbose
+      namelist / inoutput_mode / write_nc, input_path, output_path,&
+         tmp_path, dump_to_file, data_path
+      namelist / output / obs_height,units,outpol,creator
+      namelist / run_mode / active, passive
+      namelist / surface_params / ground_type,salinity, emissivity
+      namelist / gas_abs_mod / lgas_extinction, gas_mod
+      namelist / hyd_opts / lhyd_extinction, lphase_flag
+      namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, SP, isnow_n0
+      namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau
+      namelist / ice_params / EM_ice
+      namelist / rain_params / SD_rain, N_0rainD
+      namelist / moments / n_moments, moments_file
+
+
+      !set namelist defaults!
+      verbose=0
+
+      write_nc=.true.
+      dump_to_file=.false.
+      input_path='profile'
+      output_path='output'
+      tmp_path='/tmp/'
+      data_path='/home/mech/models/pamtra/data/'
+
+      obs_height=833000.
+      units='T'
+      outpol='VH' 
+      creator='Pamtra'
+
+      active=.true.
+      passive=.true.
+
+      ground_type='S'
+      salinity=33.0
+      emissivity=0.6
+
+      lgas_extinction=.true.
+      gas_mod='R98'
+
+      lhyd_extinction=.true.
+      lphase_flag = .true.
+
+      SD_snow='Exp' 
+      N_0snowDsnow=7.628 
+      EM_snow='surus' 
+      SP=0.2 
+      isnow_n0=1
+
+      SD_grau='Exp' 
+      N_0grauDgrau=4.0 
+      EM_grau='surus'
+
+      EM_ice='icesf'
+
+      SD_rain='Exp' 
+      N_0rainD=8.0
+
+      n_moments=1
+      moments_file='snowCRYSTAL'
+
+      ! read name list parameter file
+
+      open(7, file=namelist_file,delim='APOSTROPHE')
+      read(7,nml=verbose_mode)
+      read(7,nml=inoutput_mode)
+      read(7,nml=output)
+      read(7,nml=run_mode)
+      read(7,nml=surface_params)
+      read(7,nml=gas_abs_mod)
+      read(7,nml=hyd_opts)
+      read(7,nml=snow_params)
+      read(7,nml=graupel_params)
+      read(7,nml=ice_params)
+      read(7,nml=rain_params)
+      read(7,nml=moments)
+      close(7)
+    end subroutine read_namelist
 end module nml_params
