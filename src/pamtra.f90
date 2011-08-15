@@ -154,7 +154,7 @@ program pamtra
   namelist / surface_params / ground_type,salinity, emissivity
   namelist / gas_abs_mod / lgas_extinction, gas_mod
   namelist / hyd_opts / lhyd_extinction, lphase_flag
-  namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, SP, isnow_n0
+  namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, SP, isnow_n0, liu_type
   namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau
   namelist / rain_params / SD_rain, N_0rainD
   namelist / moments / n_moments, moments_file

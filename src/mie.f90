@@ -77,9 +77,9 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
     call miecalc(nmie, x, msphere, a, b) ! calculate a and b
     call miecross(nmie, x, a, b, qext, qscat, qback)
     ! sum up extinction, scattering, and backscattering as cross-sections/pi
-    sumqe = sumqe + qext * ndens * (diameter/2.)**2
-    sumqs = sumqs + qscat * ndens * (diameter/2.)**2
-    sumqback = sumqback + qback * ndens * (diameter/2.)**2
+    sumqe = sumqe + qext * ndens * (diameter/2.)**2         ! [1/m^2]
+    sumqs = sumqs + qscat * ndens * (diameter/2.)**2        ! [1/m^2]
+    sumqback = sumqback + qback * ndens * (diameter/2.)**2  ! [1/m^2]
     if (lphase_flag) then 
       nmie = min(nmie, nterms) 
       do i = 1, nquad 

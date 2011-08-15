@@ -10,6 +10,7 @@ subroutine mie_densitysizedep_spheremasseq(f, m_ice,    &
 ! note that mindex has the convention with negative imaginary part      
 
 use kinds
+use constants, only: c,pi
 
 implicit none
 
@@ -24,7 +25,6 @@ real(kind=dbl) :: a_mtox, bcoeff
 real(kind=dbl) :: extinction, albedo, back_scatt, legen (200), legen2 (200),&
   legen3 (200), legen4 (200)                                        
 integer, parameter :: maxn  = 5000
-real(kind=dbl), parameter :: pi = 3.14159265358979d0
 integer :: nterms, nquad, nmie, nleg 
 integer :: i, l, m, ir
 real(kind=dbl) :: x, del_d, diameter, ndens, tmp, diameter_ice
@@ -38,8 +38,6 @@ sump3, coef3, sump4, coef4
 complex(kind=dbl), dimension(maxn) :: a, b
 complex(kind=dbl) :: msphere 
 character :: aerodist * 1
-
-real(kind=dbl), parameter :: c = 299792458.d0
 							      
 wavelength = c/(f*1.e9) !
 																  
@@ -79,20 +77,17 @@ do ir = 1, nbins+1
   end if 
 								    
   nmie = 0 
-								    
-  !       call density_ice(a_mtox, bcoeff, radius, dens_graup) 
-  ! !         write(18,*)'dens',dens_graup                                  
-  !       radius_ice = (dens_graup / 917.) **0.33333333 * radius 
 
   diameter_ice = (6.*a_mtox*(diameter)**bcoeff/(pi*917.))**(1./3.)
   x = pi * diameter_ice / wavelength
 								    
   call miecalc (nmie, x, msphere, a, b) 
   call miecross (nmie, x, a, b, qext, qscat, qback)
-  !print*, x, real(msphere), imag(msphere),qext, qscat, qback
-  sumqe = sumqe+qext * ndens * (diameter_ice/2.)**2
-  sumqs = sumqs + qscat * ndens * (diameter_ice/2.)**2
-  sumqback = sumqback + qback * ndens * (diameter_ice/2.)**2
+! sum up extinction, scattering, and backscattering as cross-sections/pi
+  sumqe = sumqe+qext * ndens * (diameter_ice/2.)**2         ! [1/m^2]
+  sumqs = sumqs + qscat * ndens * (diameter_ice/2.)**2      ! [1/m^2]
+  sumqback = sumqback + qback * ndens * (diameter_ice/2.)**2! [1/m^2]
+!  write(35,*) x, qext-qscat,qscat,qback
   !          write(*,*)'mie in',qext,qscat,ndens,radius,x,nmie            
   if (lphase_flag) then 
     nmie = min0(nmie, nterms) 
@@ -105,9 +100,10 @@ do ir = 1, nbins+1
     end do 
   end if 
 end do 
+
 !print*, ' '
 								  
-!           multiply the sums by the integration delta and other constan
+!           multiply the sums by the integration delta and other constants
 !             put quadrature weights in angular array for later         
 if (nbins .eq. 0) del_d = 1.0d0
 								  

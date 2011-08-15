@@ -214,10 +214,12 @@
       OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU,  &
       GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP,  &
       WAVELENGTH, UNITS, OUTPOL, NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,    &
-      nx,ny,fi,write_nc,verbose)
+      nx,ny)
+
 
       use kinds
       use vars_atmosphere
+      use nml_params, only: verbose, write_nc
 
       implicit none
 
@@ -245,10 +247,8 @@
       CHARACTER(100) OUT_FILE
                                                                         
       integer :: model_i, model_j
-      real :: lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,hwp
 
-      integer :: verbose
-      logical :: write_nc
+      real :: lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,hwp
 
 
       if (verbose .gt. 1) print*, "entered rt3"
@@ -299,7 +299,7 @@
       GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP, WAVELENGTH,   &
       NUM_LAYERS, HEIGHT, TEMPERATURES, GAS_EXTINCT, &
       NOUTLEVELS, OUTLEVELS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD,     &
-      DOWN_RAD,dble(wind10u),dble(wind10v),verbose)
+      DOWN_RAD,dble(wind10u),dble(wind10v))
 
       if (verbose .gt. 1) print*, ".... radtran done!"
 
