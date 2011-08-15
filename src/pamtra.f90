@@ -237,7 +237,7 @@ end do
    N_0grauDgrau=4.0 
    EM_grau='surus'
 
-   EM_ice='surus'
+   EM_ice='mieic'
 
    SD_rain='Exp' 
    N_0rainD=8.0
