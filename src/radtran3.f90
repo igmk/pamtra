@@ -396,19 +396,14 @@ if (verbose .gt. 1) print*, ".... done!"
 
       IF (GROUND_TYPE.EQ.'F') THEN
   ! For a Fresnel surface
-    wind10 = sqrt(wind10u**2+wind10v**2)
-	CALL FRESNEL_SURFACE (NSTOKES, NUMMU, MU_VALUES, GROUND_INDEX, &
-	wavelength, wind10, REFLECT (KRT), TRANS (KRT), SOURCE (KS) )
-  ! The radiance from the ground is thermal                
-	CALL FRESNEL_RADIANCE (NSTOKES, NUMMU, MODE, MU_VALUES,        &
-	GROUND_INDEX, GROUND_TEMP, WAVELENGTH, wind10, GND_RADIANCE)           
+	CALL FRESNEL_SURFACE (NSTOKES, NUMMU, MU_VALUES, GROUND_INDEX, REFLECT (KRT), TRANS (KRT), SOURCE (KS) )
+  ! The radiance from the ground is thermal
+	CALL FRESNEL_RADIANCE (NSTOKES, NUMMU, MODE, MU_VALUES, GROUND_INDEX, GROUND_TEMP, WAVELENGTH, GND_RADIANCE)
       ELSEIF (GROUND_TYPE.EQ.'S') THEN
         ! For a specular surface                                   
-        CALL specular_surface(NSTOKES, NUMMU, GROUND_ALBEDO, &
-             REFLECT (KRT), TRANS (KRT), SOURCE (KS) )
+        CALL specular_surface(NSTOKES, NUMMU, GROUND_ALBEDO, REFLECT (KRT), TRANS (KRT), SOURCE (KS) )
         ! The radiance from the ground is thermal                
-        CALL specular_radiance(NSTOKES, NUMMU, MODE,       &
-             GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH, GND_RADIANCE)
+        CALL specular_radiance(NSTOKES, NUMMU, MODE, GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH, GND_RADIANCE)
      ELSEIF(GROUND_TYPE .EQ. 'O') THEN
 	! call fastem4 ocean emissivity model. the correction due to transmittance is not necessary in
 	! our multi-stream model (?!)
@@ -431,11 +426,11 @@ if (verbose .gt. 1) print*, ".... done!"
   ! azimuthal component
   !
   ! the azimuthal component is ignored (rel_azimuth > 360°) when doing simulations for COSMO runs
-  ! since we do not know what direction does the satellite have in advance
+  ! s	ince we do not know what direction does the satellite have in advance
   !
 		rel_azimuth = 400.
         transmittance(:) = 1.
-        salinity = 33.
+
 		call fastem4(wavelength   , &  ! Input
                               mu_values, &  ! Input
                               nummu, &

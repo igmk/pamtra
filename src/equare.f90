@@ -23,7 +23,7 @@ subroutine equare
   hezon = rearth*sin(rcelat)                                          
   aezon = 2*pi*rearth*hezon                                          
   aecell = (aezon*dlat)/360.                                          
-  maxlt2 = maxlat/2                                                   
+  maxlt2 = maxlat/2
   do lat = 1, maxlt2                                               
      xlatb = (lat-1)*dlat                                                
      xlate = xlatb+dlat                                                  
