@@ -23,11 +23,11 @@ subroutine land_emis (&
   ! 
   ! Modules used:
 
-  use equcom
+!   use equcom
   use kinds
 
   implicit none
-
+ real(kind=sgl), dimension(720) :: ncells
   !subroutine arguments:
   integer, intent(in) :: ise
 
@@ -54,7 +54,7 @@ subroutine land_emis (&
 
   ! Equal area computations
 
-  call equare
+  call equare(ncells)
 
   !-------------------------------------------
   ! 1. Get and interpolate emissivities

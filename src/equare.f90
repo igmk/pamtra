@@ -1,10 +1,11 @@
-subroutine equare
+subroutine equare(ncells)
 
-  use equcom
+!   use equcom
   use kinds
 
   implicit none
 
+  real(kind=sgl), dimension(720), intent(out) :: ncells
   real(kind=sgl), parameter :: dlat=0.25
 
   integer, parameter :: maxlat=180./dlat,maxlon=360./dlat
