@@ -95,7 +95,7 @@ character(80) :: femis ! filename for the emissivity databases
       close(ise)
       ground_albedo = 1.d0 - land_emissivity
 
-print *,"aaaaa",lfrac,ground_albedo
+print *,"aaaaa",lfrac,ground_albedo,ise,lon,lat,real(freq),land_emissivity
 
     else if (lfrac .ge. 0.0 .and. lfrac .lt. 0.5) then
       ! computing the refractive index of the sea (Fresnel) surface

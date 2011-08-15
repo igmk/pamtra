@@ -92,6 +92,7 @@ integer ::  fi,nx, ny!, &nlev,
 ! !   complex(kind=dbl) :: GROUND_INDEX
 !   complex(kind=dbl) :: MINDEX, m_air, m_MG, m_ice
 
+
 !   character :: rLWC_str*4                                                      
 
 !   character(300) :: OUT_FILE_PAS, OUT_FILE_ACT, tmp_file1, 
@@ -199,12 +200,7 @@ grid_f: do fi =1, nfrq
   grid_y: do ny = 1, ngridy !ny_in, ny_fin  
     grid_x: do nx = 1, ngridx !nx_in, nx_fin   
 
-
-
 call run_rt3(nx,ny,fi,frqs_str)
-
-
-
 
     end do grid_x
   end do grid_y
