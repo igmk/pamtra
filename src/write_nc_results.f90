@@ -40,7 +40,7 @@ subroutine write_nc_results(nc_file)
 	today(2), today(1), today(3), now
   ! write meta data
   call check(nf90_put_att(ncid,nf90_global, "history", "Created with Pamtra (Version: "//trim(gitVersion)// &
-   "Git Hash: "//trim(gitHash)//")  by "//trim(creator)//" (University of Cologne, IGMK) at "//timestring))
+   ", Git Hash: "//trim(gitHash)//")  by "//trim(creator)//" (University of Cologne, IGMK) at "//timestring))
 
   !make dimensions
   call check(nf90_def_dim(ncid, 'nlon', ngridx, dlonID))

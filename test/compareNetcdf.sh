@@ -6,12 +6,12 @@ cd $DIR
 
 status=0
 
-for fname in $(ls referenceOutput/$1/$fname)
+for fname in $(ls tmp)
    do
    fname=$(basename tmp/$fname .txt)
-   python dumpNetcdf.py tmp/$fname > tmp/tmpFile
+   python dumpNetcdf.py tmp/$fname > tmp/$fname.txt
    status=$[$?+$status]
-   diff tmp/tmpFile referenceOutput/$1/$fname.txt
+   diff tmp/$fname.txt referenceOutput/$1/$fname.txt
    status=$[$?+$status]
 done
 

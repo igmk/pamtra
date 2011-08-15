@@ -1,11 +1,9 @@
 module nml_params
   ! Description:
   ! Definition of all name list paramters for pamtra
-  !
-  ! History:
-  ! Version   Date     Comment
-  ! -------   ----     -------
-  !  0.1   17/11/2009    creation of file 
+  !and global settings!
+
+
   use kinds
  
   implicit none
@@ -61,11 +59,6 @@ module nml_params
   character :: OUTPOL*2, GROUND_TYPE*1, UNITS*1
 
   real(kind=dbl) :: salinity         ! sea surface salinity
-
-
-
-
-
 
   contains
     
@@ -128,7 +121,7 @@ module nml_params
       N_0grauDgrau=4.0 
       EM_grau='surus'
 
-      EM_ice='icesf'
+      EM_ice='mieic'
 
       SD_rain='Exp' 
       N_0rainD=8.0

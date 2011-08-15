@@ -176,6 +176,7 @@ do ff = 1, inarg-2
     frq_str_list = frq_str_list(:len_trim(frq_str_list)) // "_" //  frqs_str(ff)
 end do
 
+
 if (verbose .gt. 1) print *,"input_file: ",input_file(:len_trim(input_file)),&
                            " namelist file: ",namelist_file," freq: ",frqs_str
 
@@ -196,8 +197,6 @@ call allocate_vars
   !     This GCE model format does not have all the fields expected by    
   !     the radiative transfer code (i.e. total pressure, and water vapor 
   !     pressure for this model).  Assign/compute the missing fields first
-  !
-
   !make layer averages
   call get_atmosG0
 
