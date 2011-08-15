@@ -62,7 +62,7 @@ program pamtra
  	             gammln
   character(6), dimension(maxfreq) :: frqs_str
 
-
+real(kind=dbl) :: land_emissivity
 
   real(kind=dbl) :: E1, E2
 
@@ -572,9 +572,9 @@ grid_f: do fi =1, nfrq
     open(ise,file=trim(femis),status='old',form='unformatted',&
                 access='direct',recl=28)
 	  ! land_emis could give polarized reflectivities
-      call land_emis(ise,lon,lat,real(freq),emissivity)
+      call land_emis(ise,lon,lat,real(freq),land_emissivity)
 	  close(ise)
-	  ground_albedo = 1.d0 - emissivity
+	  ground_albedo = 1.d0 - land_emissivity
 	else if (lfrac .ge. 0.0 .and. lfrac .lt. 0.5) then
       ! computing the refractive index of the sea (Fresnel) surface
 	  ground_type = 'O'
