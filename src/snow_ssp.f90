@@ -100,8 +100,7 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
 		ad = n_0snowDsnow * 1.d6 * exp(-0.107d0 * (t - 273.15))
 		ad = 1.d6
 	endif
-	bd = (exp(gammln(b_snow + 1)) * a_msnow * ad/swc)**(1.0d0/(1.0d0 + b_snow))  ! [m**-1]   
-	!formula 3.12 Mario Mech´s but for radii and units converted
+	bd = (exp(gammln(b_snow + 1)) * a_msnow * ad/swc)**(1.0d0/(1.0d0 + b_snow))  ! [m**-1]
 	nbins = 100
     alpha = 0.d0 ! exponential SD
     gamma = 1.d0
@@ -131,8 +130,10 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
 		ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
 		back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
 		LEGEN4, dist_name,0.863*1.e-3*f+0.115,42)
-	elseif (EM_snow(1:3) .eq. 'liu') then
-	    call dda_db_liu(f,t,9,mindex, &
+	elseif (EM_snow .eq. 'liudb') then
+	    dia1 = 1.02d-4
+	    dia2 = 2.d-2
+	    call dda_db_liu(f,t,mindex, &
 		dia1,dia2,nbins,maxleg,ad,&
 		bd, alpha, gamma, lphase_flag,kext, salb,&
 		back, nlegen, legen, legen2, legen3,&

@@ -100,14 +100,15 @@ call get_atmosG0
 
 if (write_nc .eqv. .false.) call mod_io_strings_get_filename()
 
+
 if (verbose .gt. 1) print*, 'Start loop over frequencies & profiles!'
 
 grid_f: do fi =1, nfrq
   grid_y: do ny = 1, ngridy !ny_in, ny_fin  
     grid_x: do nx = 1, ngridx !nx_in, nx_fin   
 
-!run the model
-call run_rt3(nx,ny,fi,frqs_str)
+      !run the model
+      call run_rt3(nx,ny,fi,frqs_str)
 
     end do grid_x
   end do grid_y

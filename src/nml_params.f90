@@ -30,7 +30,7 @@ module nml_params
 
 
 
-  integer :: verbose, n_moments, isnow_n0
+  integer :: verbose, n_moments, isnow_n0, liu_type
 
   real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
 
@@ -76,7 +76,7 @@ module nml_params
       namelist / surface_params / ground_type,salinity, emissivity
       namelist / gas_abs_mod / lgas_extinction, gas_mod
       namelist / hyd_opts / lhyd_extinction, lphase_flag
-      namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, SP, isnow_n0
+      namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, SP, isnow_n0, liu_type
       namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau
       namelist / ice_params / EM_ice
       namelist / rain_params / SD_rain, N_0rainD
@@ -116,6 +116,7 @@ module nml_params
       EM_snow='icesf' 
       SP=0.2 
       isnow_n0=1
+      liu_type=8
 
       SD_grau='Exp' 
       N_0grauDgrau=4.0 

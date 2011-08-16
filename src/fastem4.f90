@@ -217,12 +217,15 @@ subroutine fastem4( wavelength   , &  ! Input
 
   ! Large Scale Correction Calculation
   ! ----------------------------------
-  ! large scale correction is only applied for zenith angles smaller than
-  ! 75 degree (Mario Mech)
+  ! for observation angles larger than 70 degree (Mario Mech), we assume the large scale correction at 70°
+  ! -> model crash
 
-	if (zenith_angle < 75.) then
-		seczen = ONE/cos_z
-	    ! compute fitting coefficients for a given frequency
+        if (zenith_angle < 70.) then
+                seczen = ONE/cos_z
+        else
+            seczen = ONE/cos(70./180.*pi)
+            zenith_angle = 70.
+        end if	    ! compute fitting coefficients for a given frequency
 	    DO j = 1, 12
 	      zc(j) = Lcoef(j*3-2) + Lcoef(j*3-1)*frequency + Lcoef(j*3)*frequency**2
 	    END DO
@@ -231,10 +234,7 @@ subroutine fastem4( wavelength   , &  ! Input
 	       + zc(5)*Wind_Speed**2 + zc(6)*Wind_Speed*seczen
 	    RhL = zc(7) + zc(8)*seczen + zc(9)*seczen**2 + zc(10)*Wind_Speed &
 	       + zc(11)*Wind_Speed**2 + zc(12)*Wind_Speed*seczen
-	else
-		RvL = 0.
-		RhL = 0.
-	end if
+
     ! Compute foam coverage after Tang, 1974
 
     Foam_Cover = 7.75E-06_fp * Wind_Speed ** 3.231_fp

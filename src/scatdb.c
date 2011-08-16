@@ -94,6 +94,9 @@
 
 /* Ver2.1  2010.3.22 add 5 GHz*/
 /* Ver2.2  2010.7.9  add 3, 9, 24.1*/
+/* Ver2.3  correct minor error near 1000 um*/
+/* Ver2.4  2011.3.22 add 10,15,19,60,70,80,90 GHz*/
+/* Ver2.5  2011.4.9 add 50 GHz*/
 
 #include <stdio.h>
 #include <string.h>
@@ -105,18 +108,21 @@
 
 #define NSHAP		11   /* number of shapes */
 #define NTEMP		5    /* number of temps  */
-#define NFREQ		14   /* number of frequencies */
+#define NFREQ		22   /* number of frequencies */
 #define NSIZE		20   /* max number of sizes */
 #define NQ		37   /* number of anges in PF */
 
 typedef char bool;
 int little_endian();
 void reverse(void*,int);
-void scatdb_(float*,float*,int*,float*,float*,float*,float*,float*,float*,float*,int*,int*);
-int scatdb(float,float,int,float,float*,float*,float*,float*,float*,float*,int*);
+void scatdb_(float*,float*,int*,float*,float*,float*,float*,float*,float*,float*,int*,int*, char[180]); //scat_db_dir added!  (Max, 16.8.11)
+int scatdb(float,float,int,float,float*,float*,float*,float*,float*,float*,int*, char[180]); //scat_db_dir added!  (Max, 16.8.11)
+// void scatdb_(float*,float*,int*,float*,float*,float*,float*,float*,float*,float*,int*,int*);
+// int scatdb(float,float,int,float,float*,float*,float*,float*,float*,float*,int*);
 float linear_interp(float,float,float,float,float);
 
-void scatdb_(float *f,float *t,int *nshape,float *dmax,float *cabs,float *csca,float *cbsc,float *g,float *p,float *re,int *iret, int *is_loaded) {
+// void scatdb_(float *f,float *t,int *nshape,float *dmax,float *cabs,float *csca,float *cbsc,float *g,float *p,float *re,int *iret, int *is_loaded) { 
+void scatdb_(float *f,float *t,int *nshape,float *dmax,float *cabs,float *csca,float *cbsc,float *g,float *p,float *re,int *iret, int *is_loaded, char scat_db_dir[180]) { //scat_db_dir added!  (Max, 16.8.11)
 /* wrapper for fortran interface */
 	float f1, t1, dmax1;
 	int n1;
@@ -124,7 +130,8 @@ void scatdb_(float *f,float *t,int *nshape,float *dmax,float *cabs,float *csca,f
 	t1 = *t;
 	n1 = *nshape;
 	dmax1 = *dmax;
-	*iret = scatdb(f1,t1,n1,dmax1,cabs,csca,cbsc,g,p,re,is_loaded);
+	*iret = scatdb(f1,t1,n1,dmax1,cabs,csca,cbsc,g,p,re,is_loaded, scat_db_dir); //scat_db_dir added!  (Max, 16.8.11)
+//     *iret = scatdb(f1,t1,n1,dmax1,cabs,csca,cbsc,g,p,re,is_loaded);
 }
 
 float linear_interp(float x,float x1,float x2,float y1,float y2) {
@@ -151,8 +158,9 @@ void reverse(void *v, int n) {
         ;
 }
 
-int scatdb(float f, float t, int nshape, float dmax, float *cabs, float *csca, float *cbsc, float *g, float *p, float *re, int *is_loaded) {
-       	char scat_db_dir[180]={"."};
+// int scatdb(float f, float t, int nshape, float dmax, float *cabs, float *csca, float *cbsc, float *g, float *p, float *re, int *is_loaded) {
+   int scatdb(float f, float t, int nshape, float dmax, float *cabs, float *csca, float *cbsc, float *g, float *p, float *re, int *is_loaded, char scat_db_dir[180]) { //scat_db_dir added! (Max, 16.8.11)
+       	/*char scat_db_dir[180]={"."};*/ //removed because of scat_db_dir! (Max, 16.8.11)
 	const char scat_db_fn[]={"scat_db2.dda"};
 	FILE *fp;
 	static float fs[NFREQ],ts[NTEMP],szs[NSIZE][NSHAP],abss[NFREQ][NTEMP][NSHAP][NSIZE],scas[NFREQ][NTEMP][NSHAP][NSIZE],
@@ -163,8 +171,8 @@ int scatdb(float f, float t, int nshape, float dmax, float *cabs, float *csca, f
 	int i,j,k,m,n;
 	char *db_dir, wk[180];
 	if(*is_loaded != TRUE) {
-		if((db_dir=getenv("SCATDB_DATA")))
-		  strcpy(scat_db_dir,db_dir);
+/*		if((db_dir=getenv("SCATDB_DATA"))) //removed because of scat_db_dir! (Max, 16.8.11)
+		  strcpy(scat_db_dir,db_dir);*/ //removed because of scat_db_dir! (Max, 16.8.11)
 		sprintf(wk,"%s/%s",scat_db_dir,scat_db_fn);
 		if(!(fp=fopen(wk,"rb")))	{
 			fprintf(stderr,"Cannot find scat_db2.dda file. %s\n",wk);
