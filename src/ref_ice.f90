@@ -1,37 +1,37 @@
 subroutine ref_ice(T,freq,refre,refim)
 
-! This function calculates the components (Re,Im) of the complex index of refraction 
-! of ice. No explicit freq. dependence for Re(RI), const. value for T < 240.
-!
-! Input:
-!	T  temperature in Kelvin
-!	f  frequency in GHz
-!
-! Output:
-!	refre real part of complex index of refraction n_r
-!	refim imaginary part of complex index of refraction n_i
-! 
-! References:
-!      Maetzler 2006: Thermal microwave radiation: Application for remote sensing
-!      Personal communication with Maetzler
+  ! This function calculates the components (Re,Im) of the complex index of refraction 
+  ! of ice. No explicit freq. dependence for Re(RI), const. value for T < 240.
+  !
+  ! Input:
+  !	T  temperature in Kelvin
+  !	f  frequency in GHz
+  !
+  ! Output:
+  !	refre real part of complex index of refraction n_r
+  !	refim imaginary part of complex index of refraction n_i
+  ! 
+  ! References:
+  !      Maetzler 2006: Thermal microwave radiation: Application for remote sensing
+  !      Personal communication with Maetzler
 
   use kinds
 
   implicit none
 
   real(kind=dbl), intent(in) :: T, &
-				freq
+       freq
 
   real(kind=dbl), intent(out) :: refre,& ! real part of complex index of refraction n_r []
-				 refim   ! imaginary part of complex index of refraction n_i []
+       refim   ! imaginary part of complex index of refraction n_i []
 
   real(kind=dbl) :: eps_real,  &
-		    mit,       &
-		    alpha,     &
-		    beta,     &
-		    beta_m,    &
-		    delta_beta,&
-		    eps_imag
+       mit,       &
+       alpha,     &
+       beta,     &
+       beta_m,    &
+       delta_beta,&
+       eps_imag
 
   complex(kind=dbl) :: eps
 

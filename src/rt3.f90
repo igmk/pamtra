@@ -210,341 +210,341 @@
 !                       MIDENTITY, MTRANSPOSE, MMULT, MINVERT
 !
 !
-      SUBROUTINE RT3 (NSTOKES, NUMMU, AZIORDER, MU_VALUES, SRC_CODE,    &
-      OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU,  &
-      GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP,  &
-      WAVELENGTH, UNITS, OUTPOL, NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,    &
-      nx,ny,fi)
+SUBROUTINE RT3 (NSTOKES, NUMMU, AZIORDER, MU_VALUES, SRC_CODE,    &
+     OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU,  &
+     GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP,  &
+     WAVELENGTH, UNITS, OUTPOL, NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,    &
+     nx,ny,fi)
 
 
-      use kinds
-      use vars_atmosphere
-      use nml_params, only: verbose, write_nc
+  use kinds
+  use vars_atmosphere
+  use nml_params, only: verbose, write_nc
 
-      implicit none
+  implicit none
 
-	  integer :: nx,ny,fi
+  integer :: nx,ny,fi
 
-      INTEGER MAXV, MAXA, MAXLAY 
-      PARAMETER (MAXV = 64, MAXA = 32) 
-      PARAMETER (MAXLAY = 200) 
-                                                                        
-      INTEGER NSTOKES, NUMMU, AZIORDER
-      INTEGER NUM_LAYERS, SRC_CODE 
-      INTEGER NOUTLEVELS, OUTLEVELS (MAXLAY), NUMAZIMUTHS 
-      REAL(kind=dbl) GROUND_TEMP, GROUND_ALBEDO 
-      COMPLEX(kind=dbl) GROUND_INDEX 
-      REAL(kind=dbl) SKY_TEMP, WAVELENGTH, MAX_DELTA_TAU 
-      REAL(kind=dbl) DIRECT_FLUX, DIRECT_MU 
-      REAL(kind=dbl) MU_VALUES (MAXV) 
-      REAL(kind=dbl) HEIGHT (MAXLAY), TEMPERATURES (MAXLAY) 
-      REAL(kind=dbl) GAS_EXTINCT (MAXLAY) 
-      REAL(kind=dbl) UP_FLUX (4 * MAXLAY), DOWN_FLUX (4 * MAXLAY) 
-      REAL(kind=dbl) UP_RAD (MAXLAY * MAXA * MAXV), DOWN_RAD (MAXLAY * MAXA *  &
-      MAXV)                                   
-      CHARACTER QUAD_TYPE * 1, DELTAM * 1, UNITS * 1, OUTPOL * 2,       &
-      GROUND_TYPE * 1                                                   
-      CHARACTER(100) OUT_FILE
-                                                                        
-      integer :: model_i, model_j
+  INTEGER MAXV, MAXA, MAXLAY 
+  PARAMETER (MAXV = 64, MAXA = 32) 
+  PARAMETER (MAXLAY = 200) 
 
-      real :: lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,hwp
+  INTEGER NSTOKES, NUMMU, AZIORDER
+  INTEGER NUM_LAYERS, SRC_CODE 
+  INTEGER NOUTLEVELS, OUTLEVELS (MAXLAY), NUMAZIMUTHS 
+  REAL(kind=dbl) GROUND_TEMP, GROUND_ALBEDO 
+  COMPLEX(kind=dbl) GROUND_INDEX 
+  REAL(kind=dbl) SKY_TEMP, WAVELENGTH, MAX_DELTA_TAU 
+  REAL(kind=dbl) DIRECT_FLUX, DIRECT_MU 
+  REAL(kind=dbl) MU_VALUES (MAXV) 
+  REAL(kind=dbl) HEIGHT (MAXLAY), TEMPERATURES (MAXLAY) 
+  REAL(kind=dbl) GAS_EXTINCT (MAXLAY) 
+  REAL(kind=dbl) UP_FLUX (4 * MAXLAY), DOWN_FLUX (4 * MAXLAY) 
+  REAL(kind=dbl) UP_RAD (MAXLAY * MAXA * MAXV), DOWN_RAD (MAXLAY * MAXA *  &
+       MAXV)                                   
+  CHARACTER QUAD_TYPE * 1, DELTAM * 1, UNITS * 1, OUTPOL * 2,       &
+       GROUND_TYPE * 1                                                   
+  CHARACTER(100) OUT_FILE
+
+  integer :: model_i, model_j
+
+  real :: lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,hwp
 
 
-      if (verbose .gt. 1) print*, "entered rt3"
+  if (verbose .gt. 1) print*, "entered rt3"
 
-      ! initialization
+  ! initialization
 
-      height = 0.
-      temperatures = 0.
-      gas_extinct = 0.
-      MAX_DELTA_TAU = 1.0E-6
+  height = 0.
+  temperatures = 0.
+  gas_extinct = 0.
+  MAX_DELTA_TAU = 1.0E-6
 
-      model_i = profiles(nx,ny)%isamp
-      model_j = profiles(nx,ny)%jsamp
-      lon = profiles(nx,ny)%longitude
-      lat = profiles(nx,ny)%latitude
-      lfrac = profiles(nx,ny)%land_fraction
-      wind10u = profiles(nx,ny)%wind_10u
-      wind10v = profiles(nx,ny)%wind_10v
+  model_i = profiles(nx,ny)%isamp
+  model_j = profiles(nx,ny)%jsamp
+  lon = profiles(nx,ny)%longitude
+  lat = profiles(nx,ny)%latitude
+  lfrac = profiles(nx,ny)%land_fraction
+  wind10u = profiles(nx,ny)%wind_10u
+  wind10v = profiles(nx,ny)%wind_10v
 
-      iwv = profiles(nx,ny)%iwv
-      cwp = profiles(nx,ny)%cwp
-      iwp = profiles(nx,ny)%iwp
-      rwp = profiles(nx,ny)%rwp
-      swp = profiles(nx,ny)%swp
-      gwp = profiles(nx,ny)%gwp
-      hwp = profiles(nx,ny)%hwp
-                                                                        
+  iwv = profiles(nx,ny)%iwv
+  cwp = profiles(nx,ny)%cwp
+  iwp = profiles(nx,ny)%iwp
+  rwp = profiles(nx,ny)%rwp
+  swp = profiles(nx,ny)%swp
+  gwp = profiles(nx,ny)%gwp
+  hwp = profiles(nx,ny)%hwp
 
-	  num_layers = nlyr
-      height(1:nlyr+1) = profiles(nx,ny)%hgt_lev(nlyr:0:-1)
-      temperatures(1:nlyr+1) = profiles(nx,ny)%temp_lev(nlyr:0:-1)
-      gas_extinct(1:nlyr) = kextatmo(nlyr:1:-1)
-      rt3kexttot(1:nlyr) = kexttot(nlyr:1:-1)
-      rt3salbtot(1:nlyr) = salbtot(nlyr:1:-1)
-      rt3nlegen(1:nlyr) = nlegen(nlyr:1:-1)-1
-      rt3legen(1:nlyr,:) = legen(nlyr:1:-1,:)
-      rt3legen2(1:nlyr,:) = legen2(nlyr:1:-1,:)
-      rt3legen3(1:nlyr,:) = legen3(nlyr:1:-1,:)
-      rt3legen4(1:nlyr,:) = legen4(nlyr:1:-1,:)
 
-      IF (1 + AZIORDER.GT.MAXA) THEN
-         WRITE ( * , * ) 'Maximum number of azimuth modes exceeded.'
-         STOP
-      ENDIF
+  num_layers = nlyr
+  height(1:nlyr+1) = profiles(nx,ny)%hgt_lev(nlyr:0:-1)
+  temperatures(1:nlyr+1) = profiles(nx,ny)%temp_lev(nlyr:0:-1)
+  gas_extinct(1:nlyr) = kextatmo(nlyr:1:-1)
+  rt3kexttot(1:nlyr) = kexttot(nlyr:1:-1)
+  rt3salbtot(1:nlyr) = salbtot(nlyr:1:-1)
+  rt3nlegen(1:nlyr) = nlegen(nlyr:1:-1)-1
+  rt3legen(1:nlyr,:) = legen(nlyr:1:-1,:)
+  rt3legen2(1:nlyr,:) = legen2(nlyr:1:-1,:)
+  rt3legen3(1:nlyr,:) = legen3(nlyr:1:-1,:)
+  rt3legen4(1:nlyr,:) = legen4(nlyr:1:-1,:)
 
-      CALL RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU, SRC_CODE,  &
-      QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU, GROUND_TEMP,           &
-      GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP, WAVELENGTH,   &
-      NUM_LAYERS, HEIGHT, TEMPERATURES, GAS_EXTINCT, &
-      NOUTLEVELS, OUTLEVELS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD,     &
-      DOWN_RAD,dble(wind10u),dble(wind10v))
+  IF (1 + AZIORDER.GT.MAXA) THEN
+     WRITE ( * , * ) 'Maximum number of azimuth modes exceeded.'
+     STOP
+  ENDIF
 
-      if (verbose .gt. 1) print*, ".... radtran done!"
+  CALL RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU, SRC_CODE,  &
+       QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU, GROUND_TEMP,           &
+       GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP, WAVELENGTH,   &
+       NUM_LAYERS, HEIGHT, TEMPERATURES, GAS_EXTINCT, &
+       NOUTLEVELS, OUTLEVELS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD,     &
+       DOWN_RAD,dble(wind10u),dble(wind10v))
 
-!            write(27,*)'RT done'                                       
-!       N = NUMMU*(AZIORDER+1)*NOUTLEVELS                               
-!      CALL CONVERT_OUTPUT (UNITS, OUTPOL, NSTOKES, N,                  
-!     .                     WAVELENGTH, 0, UP_RAD)                      
-                                                                        
+  if (verbose .gt. 1) print*, ".... radtran done!"
 
-      if (verbose .gt. 1) print*, "Writing output ...."
+  !            write(27,*)'RT done'                                       
+  !       N = NUMMU*(AZIORDER+1)*NOUTLEVELS                               
+  !      CALL CONVERT_OUTPUT (UNITS, OUTPOL, NSTOKES, N,                  
+  !     .                     WAVELENGTH, 0, UP_RAD)                      
 
-      if (write_nc) then 
-	call collect_output(NSTOKES, NUMMU, AZIORDER, &
-	WAVELENGTH,   &
-	UNITS, OUTPOL,NOUTLEVELS, OUTLEVELS,         &
-	NUMAZIMUTHS,UP_RAD, DOWN_RAD,     &
-	nx,ny,fi)
 
-      else
-	CALL OUTPUT_FILE (NSTOKES, NUMMU, AZIORDER, SRC_CODE, &
-	OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU, GROUND_TEMP, &
-	GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP, WAVELENGTH,   &
-	UNITS, OUTPOL, NUM_LAYERS, HEIGHT, NOUTLEVELS, OUTLEVELS,         &
-	NUMAZIMUTHS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD, DOWN_RAD,     &
-	lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,hwp)
-      end if
+  if (verbose .gt. 1) print*, "Writing output ...."
 
-      if (verbose .gt. 1) print*, ".... done!"
-                                                                        
-      END SUBROUTINE RT3                            
-                                                                        
-      SUBROUTINE OUTPUT_FILE (NSTOKES, NUMMU, AZIORDER, SRC_CODE,       &
-      OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU,  &
-      GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP,  &
-      WAVELENGTH, UNITS, OUTPOL, NUM_LAYERS, HEIGHT, NOUTLEVELS,        &
-      OUTLEVELS, NUMAZIMUTHS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD,    &
-      DOWN_RAD,lon,lat,lfrac,wind10u,windv,iwv,cwp,iwp,rwp,swp,gwp,hwp)
+  if (write_nc) then 
+     call collect_output(NSTOKES, NUMMU, AZIORDER, &
+          WAVELENGTH,   &
+          UNITS, OUTPOL,NOUTLEVELS, OUTLEVELS,         &
+          NUMAZIMUTHS,UP_RAD, DOWN_RAD,     &
+          nx,ny,fi)
+
+  else
+     CALL OUTPUT_FILE (NSTOKES, NUMMU, AZIORDER, SRC_CODE, &
+          OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU, GROUND_TEMP, &
+          GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP, WAVELENGTH,   &
+          UNITS, OUTPOL, NUM_LAYERS, HEIGHT, NOUTLEVELS, OUTLEVELS,         &
+          NUMAZIMUTHS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD, DOWN_RAD,     &
+          lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,hwp)
+  end if
+
+  if (verbose .gt. 1) print*, ".... done!"
+
+END SUBROUTINE RT3
+
+SUBROUTINE OUTPUT_FILE (NSTOKES, NUMMU, AZIORDER, SRC_CODE,       &
+     OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU,  &
+     GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP,  &
+     WAVELENGTH, UNITS, OUTPOL, NUM_LAYERS, HEIGHT, NOUTLEVELS,        &
+     OUTLEVELS, NUMAZIMUTHS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD,    &
+     DOWN_RAD,lon,lat,lfrac,wind10u,windv,iwv,cwp,iwp,rwp,swp,gwp,hwp)
 
   use kinds
   use mod_io_strings
-  
-      INTEGER NSTOKES, NUMMU, NUMAZI, AZIORDER, SRC_CODE, NUM_LAYERS 
-      INTEGER NOUTLEVELS, OUTLEVELS ( * ), NUMAZIMUTHS 
-      REAL(kind=dbl) GROUND_TEMP, GROUND_ALBEDO 
-      REAL(kind=dbl) SKY_TEMP, WAVELENGTH 
-      REAL(kind=dbl) DIRECT_FLUX, DIRECT_MU 
-      REAL(kind=dbl) HEIGHT (NUM_LAYERS + 1) 
-      REAL(kind=dbl) MU_VALUES (NUMMU) 
-      REAL(kind=dbl) UP_FLUX (NSTOKES, NOUTLEVELS) 
-      REAL(kind=dbl) DOWN_FLUX (NSTOKES, NOUTLEVELS) 
-      REAL(kind=dbl) UP_RAD (NSTOKES, NUMMU, AZIORDER + 1, NOUTLEVELS) 
-      REAL(kind=dbl) DOWN_RAD (NSTOKES, NUMMU, AZIORDER + 1, NOUTLEVELS)
-      COMPLEX(kind=dbl) GROUND_INDEX
-      CHARACTER ( * ) OUT_FILE
-      CHARACTER QUAD_TYPE * 1, DELTAM * 1, UNITS * 1, OUTPOL * 2,       &
-      GROUND_TYPE * 1                                                   
-      CHARACTER(32) QUAD_NAME, UNITS_NAME, GROUND_NAME 
-      CHARACTER(64) FORM1 
-      INTEGER I, J, K, L, LI, M, N 
-      REAL OUT (4), PHI, PHID, PI 
-      PARAMETER (PI = 3.1415926535897932384D0) 
-                                                                        
-      real lon,lat,lfrac,wind10u,windv,iwv,cwp,iwp,rwp,swp,gwp
-                                                                        
-      N = NUMMU * (AZIORDER + 1) * NOUTLEVELS 
-      CALL CONVERT_OUTPUT (UNITS, OUTPOL, NSTOKES, N, WAVELENGTH, 0,    &
-      UP_RAD)                                                           
-      CALL CONVERT_OUTPUT (UNITS, OUTPOL, NSTOKES, N, WAVELENGTH, 0,    &
-      DOWN_RAD)                                                         
-      CALL CONVERT_OUTPUT (UNITS, OUTPOL, NSTOKES, NOUTLEVELS,          &
-      WAVELENGTH, 1, UP_FLUX)                                           
-      CALL CONVERT_OUTPUT (UNITS, OUTPOL, NSTOKES, NOUTLEVELS,          &
-      WAVELENGTH, 1, DOWN_FLUX)                                         
-                                                                        
-      NUMAZI = 2 * AZIORDER + 1 
-      IF (NSTOKES.LE.2) NUMAZI = AZIORDER + 1 
-      QUAD_NAME = 'GAUSSIAN' 
-      IF (QUAD_TYPE.EQ.'D') QUAD_NAME = 'DOUBLEGAUSS' 
-      IF (QUAD_TYPE.EQ.'L') QUAD_NAME = 'LOBATTO' 
-      IF (QUAD_TYPE.EQ.'E') QUAD_NAME = 'EXTRA-ANGLES' 
-      UNITS_NAME = 'WATTS/(M^2 MICRON STER)' 
-      IF (UNITS.EQ.'T') UNITS_NAME = 'KELVINS - EBB' 
-      IF (UNITS.EQ.'R') UNITS_NAME = 'KELVINS - RJ' 
-      GROUND_NAME = 'LAMBERTIAN' 
-      IF (GROUND_TYPE.EQ.'F') GROUND_NAME = 'FRESNEL' 
-      IF (GROUND_TYPE.EQ.'O') GROUND_NAME = 'OCEAN'
-      IF (GROUND_TYPE.EQ.'S') GROUND_NAME = 'SPECULAR' 
-                                                                       
-      OPEN (UNIT = 3, FILE = OUT_FILE, STATUS = 'UNKNOWN') 
-      if (verbose .gt. 1) print *,"writing... ", OUT_FILE                                                     
-!           Output the parameters                                       
-      WRITE (3, '(A,I3,A,I3,A,I3,A,I1)') 'C  NUMMU=', NUMMU, '  NUMAZI='&
-     &, NUMAZI, '  AZIORDER=', AZIORDER, '  NSTOKES=', NSTOKES          
-      WRITE (3, '(A,A32,A,A1)') 'C  LAYER_FILE=', file_profile, '   DELTA-&
-     &M=', DELTAM                                                       
-      WRITE (3, '(A,I1,A,A16)') 'C  SRC_CODE=', SRC_CODE, '   QUAD_TYPE=&
-     &', QUAD_NAME                                                      
-      IF (SRC_CODE.EQ.1.OR.SRC_CODE.EQ.3) THEN 
-      WRITE (3, '(A,E11.5,A,F8.6)') 'C  DIRECT_FLUX=', DIRECT_FLUX, '   &
-     &DIRECT_MU=', DIRECT_MU                                            
-      ENDIF 
-      write(3,'(A,F8.3,A,F8.3,A,F8.3)') 'C  LON=',lon,' LAT=',lat,&
-      ' LFRAC=',lfrac
-      WRITE (3, '(A,F8.2,A,A16,A,F8.3)') 'C  GROUND_TEMP=', GROUND_TEMP,&
-     & '   GROUND_TYPE=', GROUND_NAME,' W10=',sqrt(wind10u**2+wind10v**2)
-      IF (GROUND_TYPE (1:1) .EQ.'F' .OR. GROUND_TYPE (1:1) .EQ. 'O' ) THEN
-      WRITE (3, '(A,2F9.4,A,F8.2)') 'C  GROUND_INDEX=', GROUND_INDEX, ' &
-     &  SKY_TEMP=', SKY_TEMP                                            
-      ELSE 
-      WRITE (3, '(A,F8.5,A,F8.2)') 'C  GROUND_ALBEDO=', GROUND_ALBEDO, '&
-     &   SKY_TEMP=', SKY_TEMP                                           
-      ENDIF 
-      WRITE (3, '(A,E12.6)') 'C  WAVELENGTH=', WAVELENGTH 
-      WRITE (3, '(A,A25,A,A2)') 'C  UNITS=', UNITS_NAME, '   OUTPUT_POLA&
-     &RIZATION=', OUTPOL                                                
-!      Output integrated quantities
-      write(3,'(A,ES12.6)') 'C  IWV= ', iwv
-      write(3,'(A,ES12.6)') 'C  CWP= ', cwp
-      write(3,'(A,ES12.6)') 'C  IWP= ', iwp
-      write(3,'(A,ES12.6)') 'C  RWP= ', rwp
-      write(3,'(A,ES12.6)') 'C  SWP= ', swp
-      write(3,'(A,ES12.6)') 'C  GWP= ', gwp
-      write(3,'(A,ES12.6)') 'C  HWP= ', hwp
 
-      IF (UNITS (1:1) .EQ.'T') THEN 
-!         FORM1 = '(F8.3,1X,F5.1,1X,F8.5,4(1X,F7.2),:)' 
-         FORM1 = '(F8.1,1X,F5.1,1X,F8.5,4(1X,F7.2),:)' 
-      ELSE 
-!         FORM1 = '(F8.3,1X,F5.1,1X,F8.5,4(1X,E13.6),:)' 
-         FORM1 = '(F8.1,1X,F5.1,1X,F8.5,4(1X,E13.6),:)' 
-      ENDIF 
-                                                                        
-      IF (OUTPOL.EQ.'VH') THEN 
-      WRITE (3, '(A)') 'C    Z      PHI     MU    FLUX/RADIANCE (V,H,U,V&
-     &)'                                                                
-      ELSE 
-      WRITE (3, '(A)') 'C    Z      PHI     MU    FLUX/RADIANCE (I,Q,U,V&
-     &)'                                                                
-      ENDIF 
-                                                                        
-      DO L = 1, NOUTLEVELS 
-      LI = OUTLEVELS (L) 
-!               Output fluxes at this level                             
-      WRITE (3, FORM1) HEIGHT(LI), 0., - 2.0, (SNGL (UP_FLUX (I, L) ), &
-      I = 1, NSTOKES)                                                   
-      WRITE (3, FORM1) HEIGHT(LI), 0., + 2.0, (SNGL (DOWN_FLUX (I, L) )&
-      , I = 1, NSTOKES)                                                 
-                                                                        
-!    For each azimuth and zenith at this level sum the Fourier
-!    azimuth series appropriate for the particular Stokes parameter
-!    and output the radiance.                                
-      DO K = 1, NUMAZIMUTHS 
-      IF (NUMAZIMUTHS.EQ.1) THEN 
-         PHID = 0.0 
-      ELSE 
-         PHID = 180.0 * FLOAT (K - 1) / (NUMAZIMUTHS - 1) 
-      ENDIF 
-      PHI = PI * PHID / 180.0 
-!               Output upwelling radiance: -1 < mu < 0                  
-      DO J = NUMMU, 1, - 1 
-      DO I = 1, NSTOKES 
-      OUT (I) = 0.0 
-      DO M = 0, AZIORDER 
-      IF (I.LE.2) THEN 
-         OUT (I) = OUT (I) + COS (M * PHI) * UP_RAD (I, J, M + 1, L) 
-      ELSE 
-         OUT (I) = OUT (I) + SIN (M * PHI) * UP_RAD (I, J, M + 1, L) 
-      ENDIF 
-      ENDDO 
-      ENDDO 
-      WRITE (3, FORM1) HEIGHT (LI), PHID, - MU_VALUES (J), (OUT (I),    &
-      I = 1, NSTOKES)                                                   
-      ENDDO 
-!               Output downwelling radiance: 0 < mu < 1                 
-      DO J = 1, NUMMU 
-      DO I = 1, NSTOKES 
-      OUT (I) = 0.0 
-      DO M = 0, AZIORDER 
-      IF (I.LE.2) THEN 
-         OUT (I) = OUT (I) + COS (M * PHI) * DOWN_RAD (I, J, M + 1, L) 
-      ELSE 
-         OUT (I) = OUT (I) + SIN (M * PHI) * DOWN_RAD (I, J, M + 1, L) 
-      ENDIF 
-      ENDDO 
-      ENDDO 
-      WRITE (3, FORM1) HEIGHT (LI), PHID, MU_VALUES (J), (OUT (I),      &
-      I = 1, NSTOKES)                                                   
-      ENDDO 
-      ENDDO 
-      ENDDO 
-                                                                        
-      CLOSE (3) 
-                                                                        
-      RETURN 
-      END SUBROUTINE OUTPUT_FILE                    
-                                                                        
-                                                                        
-      SUBROUTINE CONVERT_OUTPUT (UNITS, OUTPOL, NSTOKES, NOUT, WAVELEN, &
-      FLUXCODE, OUTPUT)                                                 
-!       Converts the output radiance or flux arrays to VH polarization  
-!     and effective blackbody temperature if desired.  OUTPOL='VH'      
-!     converts the polarization basis of the first two Stokes parameters
-!     to vertical/horizontal polarization.  If UNITS='T' the radiance is
-!     converted to effective blackbody brightness temperature, and if   
-!     UNITS='R' the radiance is converted to Rayleigh-Jeans brightness  
-!     temperature.  If the output is flux then FLUXCODE=1, and the flux 
-!     is divided by pi before converting to brightness temperature.     
-use kinds
+  INTEGER NSTOKES, NUMMU, NUMAZI, AZIORDER, SRC_CODE, NUM_LAYERS 
+  INTEGER NOUTLEVELS, OUTLEVELS ( * ), NUMAZIMUTHS 
+  REAL(kind=dbl) GROUND_TEMP, GROUND_ALBEDO 
+  REAL(kind=dbl) SKY_TEMP, WAVELENGTH 
+  REAL(kind=dbl) DIRECT_FLUX, DIRECT_MU 
+  REAL(kind=dbl) HEIGHT (NUM_LAYERS + 1) 
+  REAL(kind=dbl) MU_VALUES (NUMMU) 
+  REAL(kind=dbl) UP_FLUX (NSTOKES, NOUTLEVELS) 
+  REAL(kind=dbl) DOWN_FLUX (NSTOKES, NOUTLEVELS) 
+  REAL(kind=dbl) UP_RAD (NSTOKES, NUMMU, AZIORDER + 1, NOUTLEVELS) 
+  REAL(kind=dbl) DOWN_RAD (NSTOKES, NUMMU, AZIORDER + 1, NOUTLEVELS)
+  COMPLEX(kind=dbl) GROUND_INDEX
+  CHARACTER ( * ) OUT_FILE
+  CHARACTER QUAD_TYPE * 1, DELTAM * 1, UNITS * 1, OUTPOL * 2,       &
+       GROUND_TYPE * 1                                                   
+  CHARACTER(32) QUAD_NAME, UNITS_NAME, GROUND_NAME 
+  CHARACTER(64) FORM1 
+  INTEGER I, J, K, L, LI, M, N 
+  REAL OUT (4), PHI, PHID, PI 
+  PARAMETER (PI = 3.1415926535897932384D0) 
 
-      INTEGER NSTOKES, NOUT, FLUXCODE 
-      REAL(kind=dbl) WAVELEN, OUTPUT (NSTOKES, NOUT) 
-      CHARACTER UNITS * 1, OUTPOL * 2 
-      INTEGER I, J 
-      REAL(kind=dbl) IV, IH, RAD, TEMP 
-                                                                        
-      DO J = 1, NOUT 
-!           Convert to Vertical and Horizontal polarization if desired  
-      IF (OUTPOL.EQ.'VH') THEN 
-         IV = 0.5 * (OUTPUT (1, J) + OUTPUT (2, J) ) 
-         IH = 0.5 * (OUTPUT (1, J) - OUTPUT (2, J) ) 
-         OUTPUT (1, J) = IV 
-         OUTPUT (2, J) = IH 
-      ENDIF 
-!           Convert to brightness temperature                           
-      IF (UNITS.EQ.'T'.OR.UNITS.EQ.'R') THEN 
-         DO I = 1, NSTOKES 
-         RAD = OUTPUT (I, J) 
-         IF (OUTPOL.EQ.'VH'.AND.I.LE.2) RAD = 2.0 * RAD 
-         IF (FLUXCODE.EQ.1) RAD = RAD / ACOS ( - 1.0) 
-         IF (UNITS.EQ.'R') THEN 
-            TEMP = RAD * WAVELEN**4 * 1.4388D4 / 1.1911D8 
-         ELSE 
-            IF (RAD.GT.0.0) THEN 
-               TEMP = 1.4388D4 / (WAVELEN * DLOG (1.0 + 1.1911D8 /      &
-               (RAD * WAVELEN**5) ) )                                   
-            ELSEIF (RAD.EQ.0.0) THEN 
-               TEMP = 0.0D0 
-            ELSE 
-               TEMP = - 1.4388D4 / (WAVELEN * DLOG (1.0 + 1.1911D8 /    &
-               ( - RAD * WAVELEN**5) ) )                                
-            ENDIF 
-         ENDIF 
-         OUTPUT (I, J) = TEMP 
-         ENDDO 
-      ENDIF 
-      ENDDO 
-      RETURN 
-      END SUBROUTINE CONVERT_OUTPUT                 
+  real lon,lat,lfrac,wind10u,windv,iwv,cwp,iwp,rwp,swp,gwp
+
+  N = NUMMU * (AZIORDER + 1) * NOUTLEVELS 
+  CALL CONVERT_OUTPUT (UNITS, OUTPOL, NSTOKES, N, WAVELENGTH, 0,    &
+       UP_RAD)                                                           
+  CALL CONVERT_OUTPUT (UNITS, OUTPOL, NSTOKES, N, WAVELENGTH, 0,    &
+       DOWN_RAD)                                                         
+  CALL CONVERT_OUTPUT (UNITS, OUTPOL, NSTOKES, NOUTLEVELS,          &
+       WAVELENGTH, 1, UP_FLUX)                                           
+  CALL CONVERT_OUTPUT (UNITS, OUTPOL, NSTOKES, NOUTLEVELS,          &
+       WAVELENGTH, 1, DOWN_FLUX)                                         
+
+  NUMAZI = 2 * AZIORDER + 1 
+  IF (NSTOKES.LE.2) NUMAZI = AZIORDER + 1 
+  QUAD_NAME = 'GAUSSIAN' 
+  IF (QUAD_TYPE.EQ.'D') QUAD_NAME = 'DOUBLEGAUSS' 
+  IF (QUAD_TYPE.EQ.'L') QUAD_NAME = 'LOBATTO' 
+  IF (QUAD_TYPE.EQ.'E') QUAD_NAME = 'EXTRA-ANGLES' 
+  UNITS_NAME = 'WATTS/(M^2 MICRON STER)' 
+  IF (UNITS.EQ.'T') UNITS_NAME = 'KELVINS - EBB' 
+  IF (UNITS.EQ.'R') UNITS_NAME = 'KELVINS - RJ' 
+  GROUND_NAME = 'LAMBERTIAN' 
+  IF (GROUND_TYPE.EQ.'F') GROUND_NAME = 'FRESNEL' 
+  IF (GROUND_TYPE.EQ.'O') GROUND_NAME = 'OCEAN'
+  IF (GROUND_TYPE.EQ.'S') GROUND_NAME = 'SPECULAR' 
+
+  OPEN (UNIT = 3, FILE = OUT_FILE, STATUS = 'UNKNOWN') 
+  if (verbose .gt. 1) print *,"writing... ", OUT_FILE                                                     
+  !           Output the parameters                                       
+  WRITE (3, '(A,I3,A,I3,A,I3,A,I1)') 'C  NUMMU=', NUMMU, '  NUMAZI='&
+       &, NUMAZI, '  AZIORDER=', AZIORDER, '  NSTOKES=', NSTOKES          
+  WRITE (3, '(A,A32,A,A1)') 'C  LAYER_FILE=', file_profile, '   DELTA-&
+       &M=', DELTAM                                                       
+  WRITE (3, '(A,I1,A,A16)') 'C  SRC_CODE=', SRC_CODE, '   QUAD_TYPE=&
+       &', QUAD_NAME                                                      
+  IF (SRC_CODE.EQ.1.OR.SRC_CODE.EQ.3) THEN 
+     WRITE (3, '(A,E11.5,A,F8.6)') 'C  DIRECT_FLUX=', DIRECT_FLUX, '   &
+          &DIRECT_MU=', DIRECT_MU                                            
+  ENDIF
+  write(3,'(A,F8.3,A,F8.3,A,F8.3)') 'C  LON=',lon,' LAT=',lat,&
+       ' LFRAC=',lfrac
+  WRITE (3, '(A,F8.2,A,A16,A,F8.3)') 'C  GROUND_TEMP=', GROUND_TEMP,&
+       & '   GROUND_TYPE=', GROUND_NAME,' W10=',sqrt(wind10u**2+wind10v**2)
+  IF (GROUND_TYPE (1:1) .EQ.'F' .OR. GROUND_TYPE (1:1) .EQ. 'O' ) THEN
+     WRITE (3, '(A,2F9.4,A,F8.2)') 'C  GROUND_INDEX=', GROUND_INDEX, ' &
+          &  SKY_TEMP=', SKY_TEMP                                            
+  ELSE 
+     WRITE (3, '(A,F8.5,A,F8.2)') 'C  GROUND_ALBEDO=', GROUND_ALBEDO, '&
+          &   SKY_TEMP=', SKY_TEMP                                           
+  ENDIF
+  WRITE (3, '(A,E12.6)') 'C  WAVELENGTH=', WAVELENGTH 
+  WRITE (3, '(A,A25,A,A2)') 'C  UNITS=', UNITS_NAME, '   OUTPUT_POLA&
+       &RIZATION=', OUTPOL                                                
+  !      Output integrated quantities
+  write(3,'(A,ES12.6)') 'C  IWV= ', iwv
+  write(3,'(A,ES12.6)') 'C  CWP= ', cwp
+  write(3,'(A,ES12.6)') 'C  IWP= ', iwp
+  write(3,'(A,ES12.6)') 'C  RWP= ', rwp
+  write(3,'(A,ES12.6)') 'C  SWP= ', swp
+  write(3,'(A,ES12.6)') 'C  GWP= ', gwp
+  write(3,'(A,ES12.6)') 'C  HWP= ', hwp
+
+  IF (UNITS (1:1) .EQ.'T') THEN 
+     !         FORM1 = '(F8.3,1X,F5.1,1X,F8.5,4(1X,F7.2),:)' 
+     FORM1 = '(F8.1,1X,F5.1,1X,F8.5,4(1X,F7.2),:)' 
+  ELSE 
+     !         FORM1 = '(F8.3,1X,F5.1,1X,F8.5,4(1X,E13.6),:)' 
+     FORM1 = '(F8.1,1X,F5.1,1X,F8.5,4(1X,E13.6),:)' 
+  ENDIF
+
+  IF (OUTPOL.EQ.'VH') THEN 
+     WRITE (3, '(A)') 'C    Z      PHI     MU    FLUX/RADIANCE (V,H,U,V&
+          &)'                                                                
+  ELSE 
+     WRITE (3, '(A)') 'C    Z      PHI     MU    FLUX/RADIANCE (I,Q,U,V&
+          &)'                                                                
+  ENDIF
+
+  DO L = 1, NOUTLEVELS 
+     LI = OUTLEVELS (L) 
+     !               Output fluxes at this level                             
+     WRITE (3, FORM1) HEIGHT(LI), 0., - 2.0, (SNGL (UP_FLUX (I, L) ), &
+          I = 1, NSTOKES)                                                   
+     WRITE (3, FORM1) HEIGHT(LI), 0., + 2.0, (SNGL (DOWN_FLUX (I, L) )&
+          , I = 1, NSTOKES)                                                 
+
+     !    For each azimuth and zenith at this level sum the Fourier
+     !    azimuth series appropriate for the particular Stokes parameter
+     !    and output the radiance.                                
+     DO K = 1, NUMAZIMUTHS 
+        IF (NUMAZIMUTHS.EQ.1) THEN 
+           PHID = 0.0 
+        ELSE 
+           PHID = 180.0 * FLOAT (K - 1) / (NUMAZIMUTHS - 1) 
+        ENDIF
+        PHI = PI * PHID / 180.0 
+        !               Output upwelling radiance: -1 < mu < 0                  
+        DO J = NUMMU, 1, - 1 
+           DO I = 1, NSTOKES 
+              OUT (I) = 0.0 
+              DO M = 0, AZIORDER 
+                 IF (I.LE.2) THEN 
+                    OUT (I) = OUT (I) + COS (M * PHI) * UP_RAD (I, J, M + 1, L) 
+                 ELSE 
+                    OUT (I) = OUT (I) + SIN (M * PHI) * UP_RAD (I, J, M + 1, L) 
+                 ENDIF
+              ENDDO
+           ENDDO
+           WRITE (3, FORM1) HEIGHT (LI), PHID, - MU_VALUES (J), (OUT (I),    &
+                I = 1, NSTOKES)                                                   
+        ENDDO
+        !               Output downwelling radiance: 0 < mu < 1                 
+        DO J = 1, NUMMU 
+           DO I = 1, NSTOKES 
+              OUT (I) = 0.0 
+              DO M = 0, AZIORDER 
+                 IF (I.LE.2) THEN 
+                    OUT (I) = OUT (I) + COS (M * PHI) * DOWN_RAD (I, J, M + 1, L) 
+                 ELSE 
+                    OUT (I) = OUT (I) + SIN (M * PHI) * DOWN_RAD (I, J, M + 1, L) 
+                 ENDIF
+              ENDDO
+           ENDDO
+           WRITE (3, FORM1) HEIGHT (LI), PHID, MU_VALUES (J), (OUT (I),      &
+                I = 1, NSTOKES)                                                   
+        ENDDO
+     ENDDO
+  ENDDO
+
+  CLOSE (3) 
+
+  RETURN 
+END SUBROUTINE OUTPUT_FILE
+
+
+SUBROUTINE CONVERT_OUTPUT (UNITS, OUTPOL, NSTOKES, NOUT, WAVELEN, &
+     FLUXCODE, OUTPUT)                                                 
+  !       Converts the output radiance or flux arrays to VH polarization  
+  !     and effective blackbody temperature if desired.  OUTPOL='VH'      
+  !     converts the polarization basis of the first two Stokes parameters
+  !     to vertical/horizontal polarization.  If UNITS='T' the radiance is
+  !     converted to effective blackbody brightness temperature, and if   
+  !     UNITS='R' the radiance is converted to Rayleigh-Jeans brightness  
+  !     temperature.  If the output is flux then FLUXCODE=1, and the flux 
+  !     is divided by pi before converting to brightness temperature.     
+  use kinds
+
+  INTEGER NSTOKES, NOUT, FLUXCODE 
+  REAL(kind=dbl) WAVELEN, OUTPUT (NSTOKES, NOUT) 
+  CHARACTER UNITS * 1, OUTPOL * 2 
+  INTEGER I, J 
+  REAL(kind=dbl) IV, IH, RAD, TEMP 
+
+  DO J = 1, NOUT 
+     !           Convert to Vertical and Horizontal polarization if desired  
+     IF (OUTPOL.EQ.'VH') THEN 
+        IV = 0.5 * (OUTPUT (1, J) + OUTPUT (2, J) ) 
+        IH = 0.5 * (OUTPUT (1, J) - OUTPUT (2, J) ) 
+        OUTPUT (1, J) = IV 
+        OUTPUT (2, J) = IH 
+     ENDIF
+     !           Convert to brightness temperature                           
+     IF (UNITS.EQ.'T'.OR.UNITS.EQ.'R') THEN 
+        DO I = 1, NSTOKES 
+           RAD = OUTPUT (I, J) 
+           IF (OUTPOL.EQ.'VH'.AND.I.LE.2) RAD = 2.0 * RAD 
+           IF (FLUXCODE.EQ.1) RAD = RAD / ACOS ( - 1.0) 
+           IF (UNITS.EQ.'R') THEN 
+              TEMP = RAD * WAVELEN**4 * 1.4388D4 / 1.1911D8 
+           ELSE 
+              IF (RAD.GT.0.0) THEN 
+                 TEMP = 1.4388D4 / (WAVELEN * DLOG (1.0 + 1.1911D8 /      &
+                      (RAD * WAVELEN**5) ) )                                   
+              ELSEIF (RAD.EQ.0.0) THEN 
+                 TEMP = 0.0D0 
+              ELSE 
+                 TEMP = - 1.4388D4 / (WAVELEN * DLOG (1.0 + 1.1911D8 /    &
+                      ( - RAD * WAVELEN**5) ) )                                
+              ENDIF
+           ENDIF
+           OUTPUT (I, J) = TEMP 
+        ENDDO
+     ENDIF
+  ENDDO
+  RETURN 
+END SUBROUTINE CONVERT_OUTPUT

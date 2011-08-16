@@ -120,8 +120,8 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
 
   INTEGER MAXV, MAXM, MAXLM, MAXLEG, MAXLAY, MAXSBUF, MAXDBUF 
   !      PARAMETER (MAXV=64, MAXM=4096, MAXLM=201*256)                    
-!   PARAMETER (MAXV = 64, MAXM = 4096, MAXLM = 201 * 512) 
-!                                    maxlm = layer*(stokes*angles)**2
+  !   PARAMETER (MAXV = 64, MAXM = 4096, MAXLM = 201 * 512) 
+  !                                    maxlm = layer*(stokes*angles)**2
   PARAMETER (MAXV = 64, MAXM = 4096, MAXLM = 201 * (2*32)**2)
   PARAMETER (MAXLEG = 256, MAXLAY = 200) 
   PARAMETER (MAXSBUF = MAXLAY * 2 * MAXM, MAXDBUF = MAXLAY * 2 *    &
@@ -160,7 +160,7 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   real(kind=dbl) wind10,wind10u,wind10v,windratio,windangle
   integer :: iquadrant
   REAL(KIND=dbl), PARAMETER :: quadcof  (4, 2  ) =      &
-    & Reshape((/0.0_dbl, 1.0_dbl, 1.0_dbl, 2.0_dbl, 1.0_dbl,  - 1.0_dbl, 1.0_dbl,  - 1.0_dbl/), (/4, 2/))
+       & Reshape((/0.0_dbl, 1.0_dbl, 1.0_dbl, 2.0_dbl, 1.0_dbl,  - 1.0_dbl, 1.0_dbl,  - 1.0_dbl/), (/4, 2/))
 
   ! variables needed for fastem4
 
@@ -231,36 +231,36 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   ENDIF
   NLEGLIM = MAX (NLEGLIM, 1) 
 
-if (verbose .gt. 1) print*, ".... done!"
-!       Make all of the scattering matrices ahead of time
-!         and store them in memory
+  if (verbose .gt. 1) print*, ".... done!"
+  !       Make all of the scattering matrices ahead of time
+  !         and store them in memory
 
   SCAT_NUM = 0
-!           Loop through the layers
+  !           Loop through the layers
   DO LAYER = 1, num_layers
      if (rt3kexttot(layer) .gt. 0.0) then
-       SCAT_NUM = SCAT_NUM + 1
-       IF (SCAT_NUM * (AZIORDER + 1) * 2 * (NUMMU * NSTOKES) **2.GT.MAXSBUF) THEN
-          WRITE (*, '(1X,A,I3)') 'Scattering matrix buffer size exceeded.'
-          STOP
-       ENDIF
-       ! get scattering coefficients
-       CALL get_scat_coefs(layer, DELTAM, NUMMU, NUMLEGEN,LEGENDRE_COEF, EXTINCT, SCATTER)
-           IF (NUMLEGEN.GT.MAXLEG) THEN
-              WRITE (*, * ) 'Too many Legendre terms.'
-              STOP
-           ENDIF
-           ! Truncate the Legendre series to enforce normalization
-           IF (NUMLEGEN.GT.NLEGLIM) THEN
-              WRITE ( * , * ) 'Truncating Legendre series for layer:',  &
-                   layer, NUMLEGEN, NLEGLIM
-              NUMLEGEN = NLEGLIM
-           ENDIF
-           ! Make the scattering matrix
-           CALL SCATTERING(NUMMU, AZIORDER, NSTOKES, MU_VALUES,       &
-                QUAD_WEIGHTS, NUMLEGEN, LEGENDRE_COEF, SCAT_NUM, SCATBUF)
+        SCAT_NUM = SCAT_NUM + 1
+        IF (SCAT_NUM * (AZIORDER + 1) * 2 * (NUMMU * NSTOKES) **2.GT.MAXSBUF) THEN
+           WRITE (*, '(1X,A,I3)') 'Scattering matrix buffer size exceeded.'
+           STOP
+        ENDIF
+        ! get scattering coefficients
+        CALL get_scat_coefs(layer, DELTAM, NUMMU, NUMLEGEN,LEGENDRE_COEF, EXTINCT, SCATTER)
+        IF (NUMLEGEN.GT.MAXLEG) THEN
+           WRITE (*, * ) 'Too many Legendre terms.'
+           STOP
+        ENDIF
+        ! Truncate the Legendre series to enforce normalization
+        IF (NUMLEGEN.GT.NLEGLIM) THEN
+           WRITE ( * , * ) 'Truncating Legendre series for layer:',  &
+                layer, NUMLEGEN, NLEGLIM
+           NUMLEGEN = NLEGLIM
+        ENDIF
+        ! Make the scattering matrix
+        CALL SCATTERING(NUMMU, AZIORDER, NSTOKES, MU_VALUES,       &
+             QUAD_WEIGHTS, NUMLEGEN, LEGENDRE_COEF, SCAT_NUM, SCATBUF)
      else
-     ! Special case for a non-scattering layer
+        ! Special case for a non-scattering layer
         EXTINCT = 0.0
         SCATTER = 0.0
      ENDIF
@@ -384,9 +384,9 @@ if (verbose .gt. 1) print*, ".... done!"
      ENDDO
      !            End of layer loop
 
-	! transmittance and ground level for all zenith angles (needed for fastem)
+     ! transmittance and ground level for all zenith angles (needed for fastem)
 
-	transmittance = trans(krt:krt + (nummu-1)*66:66)
+     transmittance = trans(krt:krt + (nummu-1)*66:66)
 
      !           Get the surface reflection and transmission matrices        
      !             and the surface radiance                                  
@@ -395,15 +395,15 @@ if (verbose .gt. 1) print*, ".... done!"
 
      if (verbose .gt. 1) print*, "Calculating surface emissivity ...."
 
-      IF (GROUND_TYPE.EQ.'F') THEN
-  ! For a Fresnel surface
-    wind10 = sqrt(wind10u**2+wind10v**2)
+     IF (GROUND_TYPE.EQ.'F') THEN
+        ! For a Fresnel surface
+        wind10 = sqrt(wind10u**2+wind10v**2)
 	CALL FRESNEL_SURFACE (NSTOKES, NUMMU, MU_VALUES, GROUND_INDEX, &
-	wavelength, wind10, REFLECT (KRT), TRANS (KRT), SOURCE (KS) )
-  ! The radiance from the ground is thermal                
+             wavelength, REFLECT (KRT), TRANS (KRT), SOURCE (KS) )
+ ! The radiance from the ground is thermal                
 	CALL FRESNEL_RADIANCE (NSTOKES, NUMMU, MODE, MU_VALUES,        &
-	GROUND_INDEX, GROUND_TEMP, WAVELENGTH, wind10, GND_RADIANCE)           
-      ELSEIF (GROUND_TYPE.EQ.'S') THEN
+             GROUND_INDEX, GROUND_TEMP, WAVELENGTH, GND_RADIANCE)
+     ELSEIF (GROUND_TYPE.EQ.'S') THEN
         ! For a specular surface                                   
         CALL specular_surface(NSTOKES, NUMMU, GROUND_ALBEDO, &
              REFLECT (KRT), TRANS (KRT), SOURCE (KS) )
@@ -413,43 +413,43 @@ if (verbose .gt. 1) print*, ".... done!"
      ELSEIF(GROUND_TYPE .EQ. 'O') THEN
 	! call fastem4 ocean emissivity model. the correction due to transmittance is not necessary in
 	! our multi-stream model (?!)
-      wind10 = sqrt(wind10u**2+wind10v**2)
-      IF (wind10u >= 0.0 .AND. wind10v >= 0.0 ) iquadrant = 1
-      IF (wind10u >= 0.0 .AND. wind10v <  0.0 ) iquadrant = 2
-      IF (wind10u <  0.0 .AND. wind10v >= 0.0 ) iquadrant = 4
-      IF (wind10u <  0.0 .AND. wind10v <  0.0 ) iquadrant = 3
-      IF (abs(wind10v) >= 0.0001) THEN
-        windratio = wind10u / wind10v
-      ELSE
-        windratio = 0.0
-        IF (abs(wind10u) > 0.0001) THEN
-          windratio = 999999.0 * wind10u
+        wind10 = sqrt(wind10u**2+wind10v**2)
+        IF (wind10u >= 0.0 .AND. wind10v >= 0.0 ) iquadrant = 1
+        IF (wind10u >= 0.0 .AND. wind10v <  0.0 ) iquadrant = 2
+        IF (wind10u <  0.0 .AND. wind10v >= 0.0 ) iquadrant = 4
+        IF (wind10u <  0.0 .AND. wind10v <  0.0 ) iquadrant = 3
+        IF (abs(wind10v) >= 0.0001) THEN
+           windratio = wind10u / wind10v
+        ELSE
+           windratio = 0.0
+           IF (abs(wind10u) > 0.0001) THEN
+              windratio = 999999.0 * wind10u
+           ENDIF
         ENDIF
-      ENDIF
-      windangle        = atan(abs(windratio))
-      rel_azimuth = (quadcof(iquadrant, 1) * pi + windangle * quadcof(iquadrant, 2))*180./pi
+        windangle        = atan(abs(windratio))
+        rel_azimuth = (quadcof(iquadrant, 1) * pi + windangle * quadcof(iquadrant, 2))*180./pi
 
-  ! azimuthal component
-  !
-  ! the azimuthal component is ignored (rel_azimuth > 360°) when doing simulations for COSMO runs
-  ! since we do not know what direction does the satellite have in advance
-  !
-		rel_azimuth = 400.
+        ! azimuthal component
+        !
+        ! the azimuthal component is ignored (rel_azimuth > 360°) when doing simulations for COSMO runs
+        ! since we do not know what direction does the satellite have in advance
+        !
+        rel_azimuth = 400.
         transmittance(:) = 1.
         salinity = 33.
-		call fastem4(wavelength   , &  ! Input
-                              mu_values, &  ! Input
-                              nummu, &
-                              ground_temp , &  ! Input
-                              Salinity    , &  ! Input
-                              wind10  ,&
-                              transmittance,&  ! Input, may not be used
-                              Rel_Azimuth, &  ! Input
-                              ground_index,&
-                              GND_RADIANCE, &  ! Output
-                              REFLECT(KRT), &  ! Output
-                              trans(krt),&
-                              source(ks))
+        call fastem4(wavelength   , &  ! Input
+             mu_values, &  ! Input
+             nummu, &
+             ground_temp , &  ! Input
+             Salinity    , &  ! Input
+             wind10  ,&
+             transmittance,&  ! Input, may not be used
+             Rel_Azimuth, &  ! Input
+             ground_index,&
+             GND_RADIANCE, &  ! Output
+             REFLECT(KRT), &  ! Output
+             trans(krt),&
+             source(ks))
      ELSE 
         ! For a Lambertian surface                                
         CALL LAMBERT_SURFACE (NSTOKES, NUMMU, MODE, MU_VALUES,         &

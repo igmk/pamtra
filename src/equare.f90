@@ -45,7 +45,7 @@ subroutine equare
      ncells(lat1)=icellr                                               
      ncells(lat2)=icellr                                               
   end do
-  
+
   return                                                            
-  
+
 end subroutine equare

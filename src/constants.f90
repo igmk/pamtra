@@ -7,7 +7,7 @@ module constants
   ! -------   ----     -------
   !  0.1   17/11/2009    creation of file 
   use kinds
- 
+
   implicit none
 
   real(kind=dbl), parameter :: c = 299792458_dbl

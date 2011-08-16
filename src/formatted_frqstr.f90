@@ -1,25 +1,25 @@
 function formatted_frqstr(input_string)
 
-implicit none
+  implicit none
 
-integer :: pos
+  integer :: pos
 
-character(2) :: tail
-character(3) :: head
-character(6) :: input_string, formatted_frqstr
+  character(2) :: tail
+  character(3) :: head
+  character(6) :: input_string, formatted_frqstr
 
-pos = index(input_string,'.')
+  pos = index(input_string,'.')
 
-if (pos == 0) then
-	input_string = input_string//'.'
-	pos = len_trim(input_string)+1
-end if
+  if (pos == 0) then
+     input_string = input_string//'.'
+     pos = len_trim(input_string)+1
+  end if
 
-head = repeat('0', 3-len_trim(adjustl(input_string(:pos-1))))//input_string(:pos-1)
-tail = trim(input_string(pos+1:))//repeat('0', 2-len_trim(input_string(pos+1:)))
+  head = repeat('0', 3-len_trim(adjustl(input_string(:pos-1))))//input_string(:pos-1)
+  tail = trim(input_string(pos+1:))//repeat('0', 2-len_trim(input_string(pos+1:)))
 
-formatted_frqstr = head//'.'//tail
+  formatted_frqstr = head//'.'//tail
 
-return
+  return
 
 end function formatted_frqstr

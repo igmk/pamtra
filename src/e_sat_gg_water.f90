@@ -1,14 +1,14 @@
 function e_sat_gg_water(T)
-!
-!    Calculates the saturation pressure over water after Goff and Gratch (1946).
-!    It is the most accurate that you can get for a temperture range from -90°C to +80°C.
-!    Source: Smithsonian Tables 1984, after Goff and Gratch 1946
-!    http://cires.colorado.edu/~voemel/vp.html
-!    http://hurri.kean.edu/~yoh/calculations/satvap/satvap.html
-!
-!    Input T in Kelvin.
-!    Output e_sat_gg_water in hPa.
-!    
+  !
+  !    Calculates the saturation pressure over water after Goff and Gratch (1946).
+  !    It is the most accurate that you can get for a temperture range from -90°C to +80°C.
+  !    Source: Smithsonian Tables 1984, after Goff and Gratch 1946
+  !    http://cires.colorado.edu/~voemel/vp.html
+  !    http://hurri.kean.edu/~yoh/calculations/satvap/satvap.html
+  !
+  !    Input T in Kelvin.
+  !    Output e_sat_gg_water in hPa.
+  !    
 
   use kinds
 
@@ -19,9 +19,9 @@ function e_sat_gg_water(T)
   real(kind=dbl) :: e_sat_gg_water
 
   e_sat_gg_water = 1013.246 * 10**( -7.90298*(373.16/T-1) &
-		 + 5.02808*log10(373.16/T) &
-		 - 1.3816e-7*(10**(11.344*(1-T/373.16))-1) &
-		 + 8.1328e-3 * (10**(-3.49149*(373.16/T-1))-1) )
+       + 5.02808*log10(373.16/T) &
+       - 1.3816e-7*(10**(11.344*(1-T/373.16))-1) &
+       + 8.1328e-3 * (10**(-3.49149*(373.16/T-1))-1) )
 
   return
 end function e_sat_gg_water

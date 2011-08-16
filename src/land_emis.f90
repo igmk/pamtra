@@ -54,9 +54,9 @@ subroutine land_emis (&
 
   ! Equal area computations
 
-freq = real(freqdbl)
+  freq = real(freqdbl)
 
-call equare
+  call equare
 
 
   !-------------------------------------------
@@ -73,7 +73,7 @@ call equare
   else
      alon=lon
   end if
-  
+
   alat = lat
 
   cellnum=0
@@ -150,7 +150,7 @@ call equare
            cell(3)=ncells(ii)+cell(3)
         end do
         cell(3)=cell(3)+ilon3 
-        
+
         alat4=alat-2*dlat
         alon4=alon
         if (alon4.le.0) alon4=alon4+360.
@@ -161,7 +161,7 @@ call equare
            cell(4)=ncells(ii)+cell(4)
         end do
         cell(4)=cell(4)+ilon4 
-        
+
         nb=0
         do i=1,4
            read(ise,rec=cell(i)) (emis_p(i,ii),ii=1,7)
@@ -179,54 +179,54 @@ call equare
         end do
      end if
   end if
-  
+
   !------------------------------------
   ! 1.3 Interpolate to used frequencies
   !------------------------------------
-     if (freq .lt. 19.35) then
-        emiv=emis(1)
-        emih=emis(2)
-     end if
-     if (freq .ge. 19.35 .and. freq .lt. 37.) then
-        emiv=emis(1)+(freq-19.35)*(emis(1)-emis(4))/(19.35-37.)
-        emih=emis(2)+(freq-19.35)*(emis(2)-emis(5))/(19.35-37.)
-     end if
-     if (freq .ge. 37. .and. freq .lt. 85.5) then
-        emiv=emis(4)+(freq-37.)*(emis(4)-emis(6))/(37.-85.5)
-        emih=emis(5)+(freq-37.)*(emis(5)-emis(7))/(37.-85.5)
-     end if
-     if (freq .ge. 85.5) then 
-        emiv=emis(6)
-        emih=emis(7)
-     end if
+  if (freq .lt. 19.35) then
+     emiv=emis(1)
+     emih=emis(2)
+  end if
+  if (freq .ge. 19.35 .and. freq .lt. 37.) then
+     emiv=emis(1)+(freq-19.35)*(emis(1)-emis(4))/(19.35-37.)
+     emih=emis(2)+(freq-19.35)*(emis(2)-emis(5))/(19.35-37.)
+  end if
+  if (freq .ge. 37. .and. freq .lt. 85.5) then
+     emiv=emis(4)+(freq-37.)*(emis(4)-emis(6))/(37.-85.5)
+     emih=emis(5)+(freq-37.)*(emis(5)-emis(7))/(37.-85.5)
+  end if
+  if (freq .ge. 85.5) then 
+     emiv=emis(6)
+     emih=emis(7)
+  end if
 
-     if (freq .lt. 85.5) then
-        ff=freq
-     else
-        ff=85.5
-     end if
+  if (freq .lt. 85.5) then
+     ff=freq
+  else
+     ff=85.5
+  end if
 
-! We are not dealing with that, do we?
-!
-!     if (ipol(freq).eq.2) then
-!        ! * case H at nadir
-        a(1)=.00327*ff+0.08
-        a(2)=-3.90e-5*ff-0.00421
-        a(3)=3.02e-6*ff-0.000046
-        a(4)=-6.6e-8*ff+1.8e-6
-!     else
-        ! * case V at nadir
-!        a(1)=.00327*ff+0.08
-!        a(2)=-4.74e-5*ff-0.00529
-!        a(3)=3.26e-6*ff+0.000475
-!        a(4)=-6.6e-8*ff-7.7e-6
-!     end if
+  ! We are not dealing with that, do we?
+  !
+  !     if (ipol(freq).eq.2) then
+  !        ! * case H at nadir
+  a(1)=.00327*ff+0.08
+  a(2)=-3.90e-5*ff-0.00421
+  a(3)=3.02e-6*ff-0.000046
+  a(4)=-6.6e-8*ff+1.8e-6
+  !     else
+  ! * case V at nadir
+  !        a(1)=.00327*ff+0.08
+  !        a(2)=-4.74e-5*ff-0.00529
+  !        a(3)=3.26e-6*ff+0.000475
+  !        a(4)=-6.6e-8*ff-7.7e-6
+  !     end if
 
-     emiv=(emiv+emih)/2.+(emiv-emih)*(a(1)+a(2)*theta+&
-         a(3)*theta*theta+a(4)*theta*theta*theta)
-     emih=emiv
+  emiv=(emiv+emih)/2.+(emiv-emih)*(a(1)+a(2)*theta+&
+       a(3)*theta*theta+a(4)*theta*theta*theta)
+  emih=emiv
 
-     emissivity = dble((emiv+emih)/2.d0)
+  emissivity = dble((emiv+emih)/2.d0)
 
   return
 
