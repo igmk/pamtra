@@ -5,7 +5,7 @@ verbose=0
 write_nc=.false.
 input_path='../test/referenceProfile'
 output_path='../test/tmp'
-data_path='/home/mech/models/pamtra/data/'
+data_path='/home/mech/models/pamtra/data//'
 /
 &output
 /

@@ -1,0 +1,22 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module pyPamtra ! in 
+    interface  ! in :pyPamtra
+        subroutine pamtra(input_file,namelist_file,freqspy) ! in :pyPamtra:pyPamtra.f90
+            use mod_io_strings
+            use kinds
+            use double_moments_module
+            use vars_atmosphere
+            use nml_params
+            use vars_output
+            use constants
+            character*99 intent(in) :: input_file
+            character*300 intent(in) :: namelist_file
+            real dimension(3),intent(in) :: freqspy
+        end subroutine pamtra
+    end interface 
+end python module pyPamtra
+
+! This file was auto-generated with f2py (version:1).
+! See http://cens.ioc.ee/projects/f2py2e/

@@ -18,3 +18,4 @@ Debug
 test/tmp/*
 *.kate-swp
 *.auto.f90
+*.so
