@@ -134,13 +134,13 @@ character(80) :: femis ! filename for the emissivity databases
 !
     if (dump_to_file) call dump_profile
 
-        !&&&&&&&&   I/O FILE NAMES   &&&&&&&&&&&&&&&&&&
+   !&&&&&&&&   I/O FILE NAMES   &&&&&&&&&&&&&&&&&&
 
-        OUT_FILE_PAS = output_path(:len_trim(output_path))//"/"//&
-        micro_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_passive"
+   OUT_FILE_PAS = output_path(:len_trim(output_path))//"/"//&
+   micro_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_passive"
 
-        OUT_FILE_ACT = output_path(:len_trim(output_path))//"/"//&
-        micro_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_active"
+   OUT_FILE_ACT = output_path(:len_trim(output_path))//"/"//&
+   micro_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_active"
 
 
     if (active) then
@@ -181,26 +181,21 @@ character(80) :: femis ! filename for the emissivity databases
 
     if (passive .eqv. .true.) then
 
-    if (verbose .gt. 1) print*, nx,ny, "Entering rt3 ...."
-    
-    call RT3(NSTOKES, NUMMU, AZIORDER, MU_VALUES, src_code,     &
-        out_file_pas, QUAD_TYPE, deltam, DIRECT_FLUX,     &
-        DIRECT_MU, GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO,         &
-        GROUND_INDEX, SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,          &
-        NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,&
-        nx,ny,fi,write_nc,verbose)
+      if (verbose .gt. 1) print*, nx,ny, "Entering rt3 ...."
+      
+      call RT3(NSTOKES, NUMMU, AZIORDER, MU_VALUES, src_code,     &
+         out_file_pas, QUAD_TYPE, deltam, DIRECT_FLUX,     &
+         DIRECT_MU, GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO,         &
+         GROUND_INDEX, SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,          &
+         NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,&
+         nx,ny,fi,write_nc,verbose)
 
-    !calculate human readable angles!
-    angles_deg(1:NUMMU) = 180-(180.*acos(MU_VALUES(NUMMU:1:-1))/pi)
-    angles_deg(1+NUMMU:2*NUMMU) = (180.*acos(MU_VALUES(1:NUMMU))/pi)
+      !calculate human readable angles!
+      angles_deg(1:NUMMU) = 180-(180.*acos(MU_VALUES(NUMMU:1:-1))/pi)
+      angles_deg(1+NUMMU:2*NUMMU) = (180.*acos(MU_VALUES(1:NUMMU))/pi)
 
-    if (verbose .gt. 1) print*, nx,ny, "....rt3 finished"
+      if (verbose .gt. 1) print*, nx,ny, "....rt3 finished"
 
     end if
-
-
-
-
-
 
 end subroutine run_rt3
