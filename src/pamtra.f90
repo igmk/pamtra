@@ -1,12 +1,13 @@
 program pamtra
 
   use kinds
-  use constants
+  use constants !physical constants live here
   use nml_params !all settings go here
   use vars_atmosphere !input variables and reading routine
   use vars_output !output variables
-  use double_moments_module 
-  use mod_io_strings
+  use double_moments_module !double moments variables are stored here
+  use mod_io_strings !some strings for nice filenames
+
 
   !     Radiative transfer code to process COSMO-model derived profiles   
   !     The code reads a full COSMO grid and computes for each profile the  
@@ -22,13 +23,13 @@ program pamtra
   implicit none
 
 
-!!! INTERNAL "HANDLE COMMAND LINE PARAMETERS" !!! 
+!!! internal "handle command line parameters" !!! 
 
 integer :: inarg, ff
 character(40) :: gitHash, gitVersion
 character(6) :: formatted_frqstr !function call
 
-!!! SET BY "HANDLE COMMAND LINE PARAMETERS" !!! 
+!!! set by "handle command line parameters" !!! 
 
 character(99)  :: input_file !name of profile
 character(300) :: namelist_file
@@ -40,8 +41,6 @@ integer ::  fi,nx, ny
 
 !!!output variables
 character(300) ::nc_out_file
-
-!!! HANDLE COMMAND LINE PARAMETERS !!!
 
 !get git data
 call versionNumber(gitVersion,gitHash)
@@ -86,7 +85,7 @@ call nml_params_read(namelist_file) !from nml_params.f90
 if (n_moments .eq. 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
 
 !!! read the data
-call vars_atmosphere_read_profile(input_file)
+call vars_atmosphere_read_profile(input_file) !from vars_atmosphere.f90
 
 ! now allocate variables
 call allocate_vars

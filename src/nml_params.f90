@@ -27,19 +27,15 @@ module nml_params
    character(1), parameter :: QUAD_TYPE = 'L',&
          DELTAM = 'N'
 
-
-
-
+!!Set by namelist file
   integer :: verbose, n_moments, isnow_n0, liu_type
 
   real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
-
   real(kind=dbl) :: emissivity
-
   real(kind=dbl) :: N_0snowDsnow, N_0grauDgrau, N_0rainD, SP
+  real(kind=dbl) :: salinity         ! sea surface salinity
 
   logical :: dump_to_file   ! flag for profile and ssp dump
-
   logical :: lphase_flag, &        ! flag for phase function calculation
 	     lgas_extinction, &    ! gas extinction desired
 	     lhyd_extinction, &    ! hydrometeor extinction desired
@@ -48,17 +44,13 @@ module nml_params
 	     passive		   ! calculate passive stuff (with RT3)
 
   character(5) :: EM_snow, EM_grau, EM_ice
-  character(3) :: SD_snow, SD_grau, SD_rain
-
-  character(3) :: gas_mod
-
+  character(3) :: SD_snow, SD_grau, SD_rain, gas_mod
   character(20) :: moments_file
-
   character(100) :: input_path, output_path, tmp_path,creator, data_path
+  character(2) :: OUTPOL
+  character(1) :: GROUND_TYPE, UNITS
 
-  character :: OUTPOL*2, GROUND_TYPE*1, UNITS*1
 
-  real(kind=dbl) :: salinity         ! sea surface salinity
 
   contains
     
@@ -96,7 +88,7 @@ module nml_params
       obs_height=833000.
       units='T'
       outpol='VH' 
-      creator='Pamtra'
+      creator='Pamtrauser'
 
       active=.true.
       passive=.true.
