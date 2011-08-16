@@ -17,7 +17,6 @@ program pamtra
   !     "_lev" are layer average quantities                           
   !                                                                       
 
-
   implicit none
 
 
