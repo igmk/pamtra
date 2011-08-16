@@ -88,10 +88,10 @@ module nml_params
 
       write_nc=.true.
       dump_to_file=.false.
-      input_path='profile'
-      output_path='output'
+      input_path='profile/'
+      output_path='output/'
       tmp_path='/tmp/'
-      data_path='/home/mech/models/pamtra/data/'
+      data_path='data/'
 
       obs_height=833000.
       units='T'

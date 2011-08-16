@@ -115,8 +115,8 @@ grid_f: do fi =1, nfrq
 end do grid_f
 
 if (write_nc) then
-   nc_out_file = output_path(1:len_trim(output_path))//"/"//trim(input_file(1:len_trim(input_file)-4))//&
-                  frq_str_list(1:len_trim(frq_str_list))//'_res.nc'
+   nc_out_file = trim(output_path)//"/"//trim(input_file(1:len_trim(input_file)-4))//&
+                  trim(frq_str_list)//'_res.nc'
    call write_nc_results(nc_out_file)
 end if
 
