@@ -8,7 +8,7 @@ subroutine dda_db_liu(f, t, mindex, dia1, dia2, nbins, maxleg,   &
                                        
   use kinds
   use constants, only: pi,c
-  use nml_params, only: verbose, liu_type
+  use nml_params, only: verbose, liu_type, data_path
 
   implicit none
 
@@ -85,12 +85,12 @@ subroutine dda_db_liu(f, t, mindex, dia1, dia2, nbins, maxleg,   &
   ntot = 0.d0
 
   if (t_liu .lt. 234.) then
-    print*, "temperature to low for database"
+    if (verbose .gt. 1) print*, "temperature to low for database"
   	t_liu = 234. ! lowest value in database
   end if
 
   if (t_liu .gt. 273.15) then
-    print*, "temperature to high for database"
+    if (verbose .gt. 1) print*, "temperature to high for database"
   	t_liu = 273.15 ! highest value in database
   end if
 								    
@@ -147,9 +147,10 @@ subroutine dda_db_liu(f, t, mindex, dia1, dia2, nbins, maxleg,   &
   if (diameter .gt. dmax(liu_type)) diameter = dmax(liu_type)
   if (diameter .lt. dmin(liu_type)) diameter = dmin(liu_type)
   if (verbose .gt. 2) print*, ir, ' with: ',f_liu,t_liu,liu_type,diameter*1.e6
-    call scatdb(f_liu,t_liu,liu_type,diameter*1.e6,abs_liu,sca_liu,bsc_liu,g,p_liu,r_ice_eq,iret,is_loaded)
-  if (verbose .gt. 2) print*, 'got: ',iret, abs_liu,sca_liu,bsc_liu,g
-  if (iret .ne. 0) print*, iret,f_liu,t_liu,liu_type,diameter*1.e6, abs_liu,sca_liu,bsc_liu
+    call scatdb(f_liu,t_liu,liu_type,diameter*1.e6,abs_liu,sca_liu,bsc_liu,g,p_liu,r_ice_eq,iret,is_loaded,&
+            trim(data_path))
+!   if (verbose .gt. 2) print*, 'got: ',iret, abs_liu,sca_liu,bsc_liu,g
+  if (verbose .gt. 2) print*, iret,f_liu,t_liu,liu_type,diameter*1.e6, abs_liu,sca_liu,bsc_liu
 
     qext = (abs_liu+sca_liu)
     qscat = sca_liu

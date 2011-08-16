@@ -1,11 +1,11 @@
-subroutine allocate_vars_atmosphere
+subroutine allocate_vars
 
 use vars_atmosphere
+use vars_output
 use nml_params
+use mod_io_strings
 
 implicit none
-
-integer :: i,j
 
 
       allocate(hgt_lev(0:nlyr),stat=alloc_status)
@@ -53,39 +53,35 @@ integer :: i,j
   allocate(rt3legen3(nlyr,200), stat=alloc_status)
   allocate(rt3legen4(nlyr,200), stat=alloc_status)
 
+    allocate(ics(ngridx, ngridy))
+    allocate(file_ph(nlyr))
+
+ if (write_nc) then
+    allocate(is(ngridy,ngridx),js(ngridy,ngridx))
+    allocate(lons(ngridy,ngridx),lats(ngridy,ngridx),lfracs(ngridy,ngridx))
+    allocate(iwvs(ngridy,ngridx))
+    allocate(cwps(ngridy,ngridx),iwps(ngridy,ngridx),rwps(ngridy,ngridx),&
+    swps(ngridy,ngridx),gwps(ngridy,ngridx),hwps(ngridy,ngridx))
+    allocate(tb(nstokes,nfrq,2*nummu,noutlevels,ngridy,ngridx))
+    lons = 0.; lats = 0.; lfracs = 0.;
+    iwvs = 0.; cwps = 0.; iwps = 0.; rwps = 0.; swps = 0.; gwps = 0.; hwps = 0.;
+    tb = 0.
+
+  end if
+
+if (active) then
+    allocate(Ze(ngridx,ngridy,nlyr,nfrq))
+    allocate(Attenuation_hydro(ngridx,ngridy,nlyr,nfrq))
+    allocate(Attenuation_atmo(ngridx,ngridy,nlyr,nfrq))
+    allocate(hgt(ngridx,ngridy,nlyr))
+end if
+
+allocate(angles_deg(2*NUMMU))
+
 ! set them to zero, just in case they are not calculated but used for Ze/PIA calculation
 kexttot(:) = 0d0
 kextatmo(:) = 0d0
 back(:) = 0d0
 
-  allocate(profiles(ngridx,ngridy),stat=alloc_status)
-  do i = 1, ngridx
-     do j = 1, ngridy
-	allocate(profiles(i,j)%hgt_lev(0:nlyr), stat=alloc_status)
-	allocate(profiles(i,j)%press_lev(0:nlyr), stat=alloc_status)
-	allocate(profiles(i,j)%press(nlyr), stat=alloc_status)
-	allocate(profiles(i,j)%temp_lev(0:nlyr), stat=alloc_status)
-	allocate(profiles(i,j)%temp(nlyr), stat=alloc_status)
-	allocate(profiles(i,j)%relhum_lev(0:nlyr), stat=alloc_status)
-	allocate(profiles(i,j)%relhum(nlyr), stat=alloc_status)
-	allocate(profiles(i,j)%cloud_water_q(nlyr), stat=alloc_status)
-	allocate(profiles(i,j)%cloud_ice_q(nlyr), stat=alloc_status)
-	allocate(profiles(i,j)%rain_q(nlyr), stat=alloc_status)
-	allocate(profiles(i,j)%snow_q(nlyr), stat=alloc_status)
-	allocate(profiles(i,j)%graupel_q(nlyr), stat=alloc_status)
-	if (n_moments .eq. 2) then
-	  allocate(profiles(i,j)%hail_q(nlyr), stat=alloc_status)
-	  allocate(profiles(i,j)%cloud_water_n(nlyr), stat=alloc_status)
-	  allocate(profiles(i,j)%cloud_ice_n(nlyr), stat=alloc_status)
-	  allocate(profiles(i,j)%rain_n(nlyr), stat=alloc_status)
-	  allocate(profiles(i,j)%snow_n(nlyr), stat=alloc_status)
-	  allocate(profiles(i,j)%graupel_n(nlyr), stat=alloc_status)
-	  allocate(profiles(i,j)%hail_n(nlyr), stat=alloc_status)
-	end if
-	allocate(profiles(i,j)%vapor_pressure(nlyr), stat=alloc_status)
-	allocate(profiles(i,j)%rho_vap(nlyr), stat=alloc_status)
-	allocate(profiles(i,j)%q_hum(nlyr), stat=alloc_status)
-	end do
-  end do
 
-end subroutine allocate_vars_atmosphere
+end subroutine allocate_vars

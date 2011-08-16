@@ -2,9 +2,9 @@ subroutine write_nc_results(nc_file)
 
   use kinds
   use vars_output
-  use vars_atmosphere, only: ngridx, ngridy,nlyr,freqs,nfrq
+  use vars_atmosphere, only: ngridx, ngridy,nlyr,freqs,nfrq, year, month, day, time
   use netcdf
-  use nml_params, only: active, passive, creator
+  use nml_params, only: active, passive, creator, verbose
   implicit none
 
   integer :: ncid
@@ -27,7 +27,7 @@ subroutine write_nc_results(nc_file)
   character(300) :: nc_file, timestring, user
   character(40) ::gitVersion,gitHash
 
-
+  if (verbose .gt. 0) print*,"writing: ", nc_file
   !get git data
   call versionNumber(gitVersion,gitHash)
 
@@ -40,7 +40,8 @@ subroutine write_nc_results(nc_file)
 	today(2), today(1), today(3), now
   ! write meta data
   call check(nf90_put_att(ncid,nf90_global, "history", "Created with Pamtra (Version: "//trim(gitVersion)// &
-   "Git Hash: "//trim(gitHash)//")  by "//trim(creator)//" (University of Cologne, IGMK) at "//timestring))
+   ", Git Hash: "//trim(gitHash)//")  by "//trim(creator)//" (University of Cologne, IGMK) at "//timestring))
+  call check(nf90_put_att(ncid,nf90_global, "data_time",year//"/"//month//"/"//day//"-"//time(1:2)//":"//time(3:4)))
 
   !make dimensions
   call check(nf90_def_dim(ncid, 'nlon', ngridx, dlonID))
