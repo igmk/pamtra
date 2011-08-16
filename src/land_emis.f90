@@ -226,7 +226,7 @@ call equare
          a(3)*theta*theta+a(4)*theta*theta*theta)
      emih=emiv
 
-     emissivity = dble((emiv+emih)/2.)
+     emissivity = dble((emiv+emih)/2.d0)
 
   return
 

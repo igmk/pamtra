@@ -1,7 +1,7 @@
 ARCH=$(shell uname -s)
 FC=gfortran
 
-FCFLAGS=-c -fdefault-real-8 -fdefault-double-8
+FCFLAGS=-c
 
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
@@ -35,7 +35,7 @@ all: precompile pamtra
 
 	
 pamtra: pamtra.f90 $(OBJECTS)
-	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS) -fdefault-real-8 -fdefault-double-8
+	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS)
 	mv $(BIN) ../
  
 scatdb.o:

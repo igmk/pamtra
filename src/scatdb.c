@@ -161,7 +161,7 @@ void reverse(void *v, int n) {
 // int scatdb(float f, float t, int nshape, float dmax, float *cabs, float *csca, float *cbsc, float *g, float *p, float *re, int *is_loaded) {
    int scatdb(float f, float t, int nshape, float dmax, float *cabs, float *csca, float *cbsc, float *g, float *p, float *re, int *is_loaded, char scat_db_dir[180]) { //scat_db_dir added! (Max, 16.8.11)
        	/*char scat_db_dir[180]={"."};*/ //removed because of scat_db_dir! (Max, 16.8.11)
-	const char scat_db_fn[]={"scat_db2.dda"};
+	const char scat_db_fn[]={"scatdb/scat_db2.dda"};
 	FILE *fp;
 	static float fs[NFREQ],ts[NTEMP],szs[NSIZE][NSHAP],abss[NFREQ][NTEMP][NSHAP][NSIZE],scas[NFREQ][NTEMP][NSHAP][NSIZE],
 		     bscs[NFREQ][NTEMP][NSHAP][NSIZE],gs[NFREQ][NTEMP][NSHAP][NSIZE],reff[NSIZE][NSHAP],pqs[NFREQ][NTEMP][NSHAP][NSIZE][NQ];

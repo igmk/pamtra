@@ -111,7 +111,7 @@ real(kind=dbl), allocatable, dimension(:) :: cwc_q, &
 
 character(2) :: month, day
 character(4) :: year, time
-real(kind=dbl) :: deltax, deltay
+real(kind=sgl) :: deltax, deltay
    contains
 
       subroutine vars_atmosphere_read_profile(input_file)

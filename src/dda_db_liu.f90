@@ -150,7 +150,7 @@ subroutine dda_db_liu(f, t, mindex, dia1, dia2, nbins, maxleg,   &
     call scatdb(f_liu,t_liu,liu_type,diameter*1.e6,abs_liu,sca_liu,bsc_liu,g,p_liu,r_ice_eq,iret,is_loaded,&
             trim(data_path))
 !   if (verbose .gt. 2) print*, 'got: ',iret, abs_liu,sca_liu,bsc_liu,g
-  if (verbose .gt. 2) print*, iret,f_liu,t_liu,liu_type,diameter*1.e6, abs_liu,sca_liu,bsc_liu
+  if (verbose .gt. 0) print*, iret,f_liu,t_liu,liu_type,diameter*1.e6, abs_liu,sca_liu,bsc_liu
 
     qext = (abs_liu+sca_liu)
     qscat = sca_liu

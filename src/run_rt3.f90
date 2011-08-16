@@ -86,7 +86,7 @@ character(80) :: femis ! filename for the emissivity databases
     if (imonth .ge. 7 .and. imonth .le. 12) then
         femis = data_path(:len_trim(data_path))//'/emissivity/ssmi_mean_emis_92'//month//'_direct'
     else if (imonth .ge. 1 .and. imonth .lt. 7) then
-        femis = data_path(:len_trim(data_path))//'emissivity/ssmi_mean_emis_93'//month//'_direct'
+        femis = data_path(:len_trim(data_path))//'/emissivity/ssmi_mean_emis_93'//month//'_direct'
     else
         print*, nx,ny, "Warning: No emissivity data found!"
         stop
@@ -188,7 +188,7 @@ character(80) :: femis ! filename for the emissivity databases
          DIRECT_MU, GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO,         &
          GROUND_INDEX, SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,          &
          NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,&
-         nx,ny,fi,write_nc,verbose)
+         nx,ny,fi)
 
       !calculate human readable angles!
       angles_deg(1:NUMMU) = 180-(180.*acos(MU_VALUES(NUMMU:1:-1))/pi)

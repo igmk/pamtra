@@ -15,6 +15,6 @@ data/
 run_LMRT*
 *.prefs
 Debug
-test/tmp
+test/tmp/*
 *.kate-swp
 *.auto.f90
