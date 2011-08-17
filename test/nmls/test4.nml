@@ -18,6 +18,7 @@ data_path='/home/mech/models/pamtra/data/'
 /
 &snow_params
 EM_snow='icesf' 
+isnow_n0=2
 /
 &graupel_params
 EM_grau='icesf'

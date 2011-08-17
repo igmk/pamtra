@@ -95,10 +95,15 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
         ad = MIN(ad,1e9)
         ad = MAX(ad,1e6)
         !//end of COSMO code
-     else
+     else if (isnow_n0 .eq. 1) then
         ! Field param. ! multiplied by 10^6 is 1/m^4
         ad = n_0snowDsnow * 1.d6 * exp(-0.107d0 * (t - 273.15))
+     else if (isnow_n0 .eq. 0) then
+        !fixed N0
         ad = 1.d6
+     else
+        print *, "isnow_n0: ", isnow_n0
+        stop "Wrong isnow_n0 value"
      endif
      bd = (exp(gammln(b_snow + 1)) * a_msnow * ad/swc)**(1.0d0/(1.0d0 + b_snow))  ! [m**-1]
      nbins = 100
