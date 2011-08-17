@@ -12,7 +12,9 @@ tmp_path='/dev/shm/'
 &output
 obs_height=833000.
 units='T'
-outpol='VH' 
+outpol='VH'
+freq_str=''
+file_desc=''
 creator='Name (mail@domain.com)'
 /
 &run_mode

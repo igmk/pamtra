@@ -107,7 +107,7 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
      dist_name='C'
   else if (n_moments .eq. 2) then
      if (.not. present(ns)) stop 'STOP in routine snow_ssp'
-     ns_abs = spec2abs(ns,t,p,q) 							! [#/m^3]
+     ns_abs = spec2abs(ns,t,p,q) ! [#/m^3]
      call double_moments(swc,ns_abs,gamma_snow(1),gamma_snow(2),gamma_snow(3),gamma_snow(4), &
           ad,bd,alpha,gamma,a_msnow,b_snow)
      nbins = 100
