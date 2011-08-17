@@ -61,7 +61,7 @@ write_nc_results.o: write_nc_results.f90
 clean:
 	rm -rf $(OBJECTS) $(BIN) *.mod *~
 
-test: cleantest test1 test2 test3 test4
+test: test1 test2 test3 test4 cleantest
 
 cleantest:
 	@echo "=== Clean up tmp ==="
@@ -69,28 +69,29 @@ cleantest:
 
 test1:
 	@echo "=== TEST 1 ==="
+	rm -fr ../test/tmp/*
 	../pamtra testProfiles.dat ../test/nmls/test1.nml 24 90 150
 	../test/compareAscii.sh 1
-	rm ../test/tmp/*
 	@echo "TEST 1 OK"
 
 test2:
 	@echo "=== TEST 2 active only === "
+	rm -fr ../test/tmp/*
 	../pamtra testProfiles.dat ../test/nmls/test2.nml 35
 	../test/compareAscii.sh 2
-	rm ../test/tmp/*
 	@echo "TEST 2 OK"
 
 test3:
 	@echo "=== TEST 3 passive only === "
+	rm -fr ../test/tmp/*
 	../pamtra testProfiles.dat ../test/nmls/test3.nml 35
 	../test/compareAscii.sh 3
-	rm ../test/tmp/*
 	@echo "TEST 3 OK"
 
 test4:
 	@echo "=== TEST 4 Netcdf Data === "
+	rm -fr ../test/tmp/*
 	../pamtra testProfiles.dat ../test/nmls/test4.nml 35
 	../test/compareNetcdf.sh 4
-	rm ../test/tmp/*
 	@echo "TEST 4 OK"
+

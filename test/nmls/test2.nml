@@ -1,5 +1,5 @@
 &verbose_mode
-verbose=1
+verbose=0
 /
 &inoutput_mode
 write_nc=.false.

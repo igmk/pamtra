@@ -9,16 +9,13 @@ program pamtra
   use mod_io_strings !some strings for nice filenames
 
 
-  !     Radiative transfer code to process COSMO-model derived profiles   
-  !     The code reads a full COSMO grid and computes for each profile the  
-  !     radiative transfer for the given frequency                        
+  !     The code reads a full (e.g. COSMO) grid and computes for each 
+  !     profile the radiative transfer for the given frequencies                       
   !                                                                      
-  !     This code is completely self contained and needs no databases     
-  !     or lookup tables to run.  By convention, the quantities followed  
-  !     by "_lev" are given at the layer heights while the quantitites
-  !     w/o "_lev" are layer average quantities                           
+  !     By convention, the quantities followed  by "_lev"
+  !     are given at the layer heights while the quantitites w/o
+  !     "_lev" are layer average quantities                           
   !                                                                       
-  !                    **  RADTRAN I/O SPECIFICATIONS  **
 
   implicit none
 
