@@ -31,7 +31,7 @@ subroutine write_nc_results(nc_file)
   !get git data
   call versionNumber(gitVersion,gitHash)
 
-  call check(nf90_create(path=nc_file,cmode=nf90_noclobber,ncid=ncid))
+  call check(nf90_create(path=nc_file,cmode=nf90_clobber,ncid=ncid))
 
   ! for netcdf history get meta data
   call idate(today)   ! today(1)=day, (2)=month, (3)=year
