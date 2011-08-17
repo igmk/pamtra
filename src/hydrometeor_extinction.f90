@@ -1,4 +1,4 @@
-subroutine hydrometeor_extinction(f)
+subroutine hydrometeor_extinction(f,frq_str)
 
   use kinds
   use vars_atmosphere
@@ -29,6 +29,8 @@ subroutine hydrometeor_extinction(f)
   real(kind=dbl), dimension(2) :: P11, ang
 
   real(kind=dbl) :: threshold ! threshold value for hydrometeor extinction as mass mixing ratio
+
+  character(6), intent(in) :: frq_str !from commandline
 
   if (verbose .gt. 1) print*, 'Entering hydrometeor_extinction'
 

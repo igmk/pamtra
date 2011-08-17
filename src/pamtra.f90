@@ -34,7 +34,7 @@ program pamtra
   character(99)  :: input_file !name of profile
   character(300) :: namelist_file
   character(6), dimension(maxfreq) :: frqs_str !from commandline
-  character(5*7) :: frq_str_list ! for the filename only!
+  character(7) :: frq_str_s,frq_str_e
 
 !!!loop variables
   integer ::  fi,nx, ny
@@ -66,20 +66,30 @@ program pamtra
   nfrq = inarg - 2
   allocate(freqs(nfrq))
 
-  frq_str_list = "" 
-  !get integer and character frequencies
-  do ff = 1, inarg-2
-     call getarg(ff+2,frqs_str(ff))
-     read(frqs_str(ff),*) freqs(ff)
-     frqs_str(ff) = formatted_frqstr(frqs_str(ff))
-     frq_str_list = frq_str_list(:len_trim(frq_str_list)) // "_" //  frqs_str(ff)
+  do ff = 1, nfrq
+  	call getarg(ff+2,frqs_str(ff))
+    read(frqs_str(ff),*) freqs(ff)
+  	frqs_str(ff) = formatted_frqstr(frqs_str(ff))
   end do
-
-  if (verbose .gt. 1) print *,"input_file: ",input_file(:len_trim(input_file)),&
-       " namelist file: ",namelist_file," freq: ",frqs_str
 
 !!! read variables from namelist file
   call nml_params_read(namelist_file) !from nml_params.f90
+
+  ! create frequency string of not set in pamtra
+  if (freq_str .eq. "") then
+  	! get integer and character frequencies
+    frq_str_s = "_"//frqs_str(1)
+  	if (nfrq .eq. 1) then
+  	  frq_str_e = ""
+  	else
+  	  frq_str_e = "-"//frqs_str(nfrq)
+  	end if
+  	freq_str = frq_str_s//frq_str_e
+  end if
+!      frq_str_list = frq_str_list(:len_trim(frq_str_list)) // "_" //  frqs_str(ff)
+
+  if (verbose .gt. 1) print *,"input_file: ",input_file(:len_trim(input_file)),&
+       " namelist file: ",namelist_file," freq: ",freq_str
 
 !!! read n-moments file
   if (n_moments .eq. 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
@@ -107,7 +117,7 @@ program pamtra
         grid_x: do nx = 1, ngridx !nx_in, nx_fin   
 
            !run the model
-           call run_rt3(nx,ny,fi,frqs_str)
+           call run_rt3(nx,ny,fi,freqs(fi),frqs_str(fi))
 
         end do grid_x
      end do grid_y
@@ -115,7 +125,7 @@ program pamtra
 
   if (write_nc) then
      nc_out_file = trim(output_path)//"/"//trim(input_file(1:len_trim(input_file)-4))//&
-          trim(frq_str_list)//'_res.nc'
+          trim(freq_str)//trim(file_desc)//'.nc'
      call write_nc_results(nc_out_file)
   end if
 

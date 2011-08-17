@@ -45,8 +45,9 @@ module nml_params
 
   character(5) :: EM_snow, EM_grau, EM_ice
   character(3) :: SD_snow, SD_grau, SD_rain, gas_mod
-  character(20) :: moments_file
+  character(20) :: moments_file,file_desc
   character(100) :: input_path, output_path, tmp_path,creator, data_path
+  character(13) :: freq_str
   character(2) :: OUTPOL
   character(1) :: GROUND_TYPE, UNITS
 
@@ -63,7 +64,7 @@ contains
     namelist / verbose_mode / verbose
     namelist / inoutput_mode / write_nc, input_path, output_path,&
          tmp_path, dump_to_file, data_path
-    namelist / output / obs_height,units,outpol,creator
+    namelist / output / obs_height,units,outpol,freq_str,file_desc,creator
     namelist / run_mode / active, passive
     namelist / surface_params / ground_type,salinity, emissivity
     namelist / gas_abs_mod / lgas_extinction, gas_mod
@@ -87,7 +88,9 @@ contains
 
     obs_height=833000.
     units='T'
-    outpol='VH' 
+    outpol='VH'
+    freq_str=''
+    file_desc=''
     creator='Pamtrauser'
 
     active=.true.
