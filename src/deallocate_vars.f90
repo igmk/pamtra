@@ -28,7 +28,7 @@ subroutine deallocate_vars
      deallocate(Ze,Attenuation_hydro,Attenuation_atmo,hgt)
   end if
 
-  deallocate(angles_deg)
+!   deallocate(angles_deg)
 !   deallocate(profiles)
 
 

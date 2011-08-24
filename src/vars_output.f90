@@ -1,7 +1,7 @@
 module vars_output
 
   use kinds
-
+  use nml_params, only: NUMMU
   implicit none
   save
 
@@ -11,11 +11,10 @@ module vars_output
 
   !for passive
   real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: tb
-  real(kind=dbl), allocatable, dimension(:) :: angles_deg
+  real(kind=dbl), dimension(2*NUMMU) :: angles_deg
 
   !for active 
   real(kind=dbl), allocatable, dimension(:,:,:) :: hgt
   real(kind=dbl), allocatable, dimension(:,:,:,:) :: Ze, Attenuation_atmo, Attenuation_hydro!, &
-
 
 end module vars_output

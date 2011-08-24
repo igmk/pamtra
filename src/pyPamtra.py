@@ -6,65 +6,73 @@ class pyPamtra:
 	
 	def __init__(self,inputFile,frequency,userSettings):
 
-		defaultSettings = dict()
-		defaultSettings["verbose"]=0
-		defaultSettings["write_nc"]=True
-		defaultSettings["dump_to_file"]=False
-		defaultSettings["tmp_path"]='/tmp/'
-		defaultSettings["write_nc"]=False
-		defaultSettings["input_path"]='../test/referenceProfile'
-		defaultSettings["output_path"]='../test/tmp'
-		defaultSettings["data_path"]='/home/mech/models/pamtra/data/'
+		settings = dict()
+		settings["verbose"]=0
+		settings["write_nc"]=True
+		settings["dump_to_file"]=False
+		settings["tmp_path"]='/tmp/'
+		settings["write_nc"]=False
+		settings["input_path"]='../test/referenceProfile'
+		settings["output_path"]='../test/tmp'
+		settings["data_path"]='/home/mech/models/pamtra/data/'
 
-		defaultSettings["obs_height"]=833000.
-		defaultSettings["units"]='T'
-		defaultSettings["outpol"]='VH'
-		defaultSettings["freq_str"]=''
-		defaultSettings["file_desc"]=''
-		defaultSettings["creator"]='Pamtrauser'
+		settings["obs_height"]=833000.
+		settings["units"]='T'
+		settings["outpol"]='VH'
+		settings["freq_str"]=''
+		settings["file_desc"]=''
+		settings["creator"]='Pamtrauser'
 
-		defaultSettings["active"]=True
-		defaultSettings["passive"]=True
+		settings["active"]=True
+		settings["passive"]=True
 
-		defaultSettings["ground_type"]='S'
-		defaultSettings["salinity"]=33.0
-		defaultSettings["emissivity"]=0.6
+		settings["ground_type"]='S'
+		settings["salinity"]=33.0
+		settings["emissivity"]=0.6
 
-		defaultSettings["lgas_extinction"]=True
-		defaultSettings["gas_mod"]='R98'
+		settings["lgas_extinction"]=True
+		settings["gas_mod"]='R98'
 
-		defaultSettings["lhyd_extinction"]=True
-		defaultSettings["lphase_flag"]= True
+		settings["lhyd_extinction"]=True
+		settings["lphase_flag"]= True
 
-		defaultSettings["SD_snow"]='Exp' 
-		defaultSettings["N_0snowDsnow"]=7.628 
-		defaultSettings["EM_snow"]='icesf' 
-		defaultSettings["SP"]=0.2 
-		defaultSettings["isnow_n0"]=1
-		defaultSettings["liu_type"]=8
+		settings["SD_snow"]='Exp' 
+		settings["N_0snowDsnow"]=7.628 
+		settings["EM_snow"]='icesf' 
+		settings["SP"]=0.2 
+		settings["isnow_n0"]=1
+		settings["liu_type"]=8
 
-		defaultSettings["SD_grau"]='Exp' 
-		defaultSettings["N_0grauDgrau"]=4.0 
-		defaultSettings["EM_grau"]='surus'
+		settings["SD_grau"]='Exp' 
+		settings["N_0grauDgrau"]=4.0 
+		settings["EM_grau"]='surus'
 
-		defaultSettings["EM_ice"]='mieic'
+		settings["EM_ice"]='mieic'
 
-		defaultSettings["SD_rain"]='Exp' 
-		defaultSettings["N_0rainD"]=8.0
+		settings["SD_rain"]='Exp' 
+		settings["N_0rainD"]=8.0
 
-		defaultSettings["n_moments"]=1
-		defaultSettings["moments_file"]='snowCRYSTAL'
+		settings["n_moments"]=1
+		settings["moments_file"]='snowCRYSTAL'
 
 		for key in userSettings:
-			try: defaultSettings[key] = userSettings[key]
+			try: settings[key] = userSettings[key]
 			except: "Could not parse ",key
 		
 		nlyr = 50
 		ngridx = 4
 		ngridy = 1
-		nfreqs = 2
 		freqs = [frequency,10]
-		self.pamtraVersion,self.pamtraHash,self.Ze,self.attenuationHydro,self.attenuationAtmo,self.hgt = pyPamtraLib.pypamtralib(inputFile,defaultSettings["verbose"], defaultSettings["write_nc"], defaultSettings["dump_to_file"], defaultSettings["input_path"], defaultSettings["output_path"], defaultSettings["tmp_path"], defaultSettings["data_path"], defaultSettings["obs_height"], defaultSettings["units"], defaultSettings["outpol"], defaultSettings["freq_str"], defaultSettings["file_desc"], defaultSettings["creator"], defaultSettings["active"], defaultSettings["passive"], defaultSettings["ground_type"], defaultSettings["salinity"], defaultSettings["emissivity"], defaultSettings["lgas_extinction"], defaultSettings["gas_mod"], defaultSettings["lhyd_extinction"], defaultSettings["lphase_flag"], defaultSettings["SD_snow"], defaultSettings["N_0snowDsnow"], defaultSettings["EM_snow"], defaultSettings["SP"], defaultSettings["isnow_n0"], defaultSettings["liu_type"], defaultSettings["SD_grau"], defaultSettings["N_0grauDgrau"], defaultSettings["EM_grau"], defaultSettings["EM_ice"], defaultSettings["SD_rain"], defaultSettings["N_0rainD"], defaultSettings["n_moments"], defaultSettings["moments_file"],nlyr,ngridx,ngridy,nfreqs,freqs)
+		nfreqs = len(freqs)
+		
+		#output
+		self.pamtraVersion,self.pamtraHash,\
+		self.Ze,self.attenuationHydro,self.attenuationAtmo,self.hgt = \
+		pyPamtraLib.pypamtralib(inputFile,
+		#settings
+		settings["verbose"], settings["write_nc"], settings["dump_to_file"], settings["input_path"], settings["output_path"], settings["tmp_path"], settings["data_path"], settings["obs_height"], settings["units"], settings["outpol"], settings["freq_str"], settings["file_desc"], settings["creator"], settings["active"], settings["passive"], settings["ground_type"], settings["salinity"], settings["emissivity"], settings["lgas_extinction"], settings["gas_mod"], settings["lhyd_extinction"], settings["lphase_flag"], settings["SD_snow"], settings["N_0snowDsnow"], settings["EM_snow"], settings["SP"], settings["isnow_n0"], settings["liu_type"], settings["SD_grau"], settings["N_0grauDgrau"], settings["EM_grau"], settings["EM_ice"], settings["SD_rain"], settings["N_0rainD"], settings["n_moments"], settings["moments_file"],
+		#input
+		nlyr,ngridx,ngridy,nfreqs,freqs)
 		
 		for key in self.__dict__.keys():
 			print key

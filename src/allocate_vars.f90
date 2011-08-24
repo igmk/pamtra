@@ -76,7 +76,7 @@ subroutine allocate_vars
      allocate(hgt(ngridx,ngridy,nlyr))
   end if
 
-  allocate(angles_deg(2*NUMMU))
+!   allocate(angles_deg(2*NUMMU))
 
   ! set them to zero, just in case they are not calculated but used for Ze/PIA calculation
   kexttot(:) = 0d0
