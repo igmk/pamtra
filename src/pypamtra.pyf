@@ -3,18 +3,19 @@
 
 python module pyPamtra ! in 
     interface  ! in :pyPamtra
-        subroutine pamtra(input_file,namelist_file,freqspy) ! in :pyPamtra:pyPamtra.f90
+        subroutine pypamtra(input_file,namelist_file,frequency) ! in :pyPamtra:pyPamtra.f90
             use mod_io_strings
             use kinds
-            use double_moments_module
-            use vars_atmosphere
-            use nml_params
             use vars_output
+            use vars_atmosphere
+            use vars_profile
+            use nml_params
+            use double_moments_module
             use constants
             character*99 intent(in) :: input_file
             character*300 intent(in) :: namelist_file
-            real dimension(3),intent(in) :: freqspy
-        end subroutine pamtra
+            real intent(in) :: frequency
+        end subroutine pypamtra
     end interface 
 end python module pyPamtra
 

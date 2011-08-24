@@ -142,9 +142,6 @@ contains
     read(7,nml=moments)
     close(7)
 
-write_nc=.false.
-n_moments=0
-
     if (n_moments .ne. 1 .and. n_moments .ne. 2) stop "n_moments is not 1 or 2"
 
     if (verbose .gt. 1) print *,"PASSIVE: ", passive, "ACTIVE: ", active

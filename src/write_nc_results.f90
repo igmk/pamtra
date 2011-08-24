@@ -154,7 +154,7 @@ subroutine write_nc_results(nc_file)
 
 
   call check(nf90_put_var(ncid, anglesVarID, angles_deg))
-  call check(nf90_put_var(ncid, frequencyVarID, freqs))
+  call check(nf90_put_var(ncid, frequencyVarID, freqs(1:nfrq)))
   call check(nf90_put_var(ncid, isVarID, is))
   call check(nf90_put_var(ncid, jsVarID, js))
   call check(nf90_put_var(ncid, lonVarID, lons))

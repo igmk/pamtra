@@ -62,7 +62,6 @@ program pamtra
   call getarg(2,namelist_file)
 
   nfrq = inarg - 2
-  allocate(freqs(nfrq))
 
   do ff = 1, nfrq
      call getarg(ff+2,frqs_str(ff))

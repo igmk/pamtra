@@ -29,15 +29,16 @@ OBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_atmosphere.o vars_profile.o
 	collect_output.o calculate_active.o write_nc_results.o fastem4.o specular_surface.o error_msg.o formatted_frqstr.o \
 	get_scat_coefs.o dump_profile.o collect_boundary_output.o double_moments.o versionNumber.auto.o
 
-pyOBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_atmosphere.o mod_io_strings.o constants.o double_moments_module.o\
+pyOBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_atmosphere.o vars_profile.o mod_io_strings.o constants.o double_moments_module.o\
 	vars_output.o run_rt3.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o radmat.o \
 	scat_utilities.o dsd_utilities.o mpm93.o get_atmosG0.o get_atmosG.o mie.o mie_densitysizedep_spheremasseq.o\
 	slant_profile.o  allocate_vars.o rosen98_gasabs.o surface.o eps_water.o mie_icefactor.o epsi.o \
 	equcom.o land_emis.o equare.o scatdb.o dda_db_liu.o dielec_water.o ref_water.o \
 	ref_ice.o e_sat_gg_water.o spec2abs.o interpolation.o deallocate_vars.o\
 	hydrometeor_extinction.o cloud_ssp.o ice_ssp.o rain_ssp.o snow_ssp.o grau_ssp.o hail_ssp.o legendre2phasefunction.o \
-	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o \
+	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o formatted_frqstr.o \
 	get_scat_coefs.o dump_profile.o collect_boundary_output.o double_moments.o versionNumber.auto.o
+
 
 noPyObjects= formatted_frqstr.o write_nc_results.o 
 
