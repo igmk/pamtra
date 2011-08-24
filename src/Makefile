@@ -60,6 +60,7 @@ prepython:
 python: 
 	f2py -c --fcompiler=gnu95 pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90
 	cp pyPamtraLib.so ~/lib/python/
+	cp pyPamtra.py ~/lib/python/
 
 
 precompile: 

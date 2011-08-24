@@ -3,7 +3,7 @@
 
 python module pyPamtraLib ! in 
     interface  ! in :pyPamtraLib
-        subroutine pypamtralib(input_file,namelist_file,frequency) ! in :pyPamtraLib:pyPamtraLib.f90
+        subroutine unknown_subroutine ! in :pyPamtraLib:pyPamtraLib.f90
             use mod_io_strings
             use kinds
             use vars_output
@@ -12,10 +12,7 @@ python module pyPamtraLib ! in
             use nml_params
             use double_moments_module
             use constants
-            character*99 intent(in) :: input_file
-            character*300 intent(in) :: namelist_file
-            real intent(in) :: frequency
-        end subroutine pypamtralib
+        end subroutine unknown_subroutine
     end interface 
 end python module pyPamtraLib
 

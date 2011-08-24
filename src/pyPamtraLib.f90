@@ -1,4 +1,12 @@
-subroutine pyPamtraLib(input_file,namelist_file,frequency)
+subroutine pyPamtraLib(input_file,frequency, &
+!settings
+set_verbose,set_write_nc,set_dump_to_file,set_input_path,set_output_path,set_tmp_path,&
+set_data_path,set_obs_height,set_units,set_outpol,set_freq_str,set_file_desc,set_creator,&
+set_active,set_passive,set_ground_type,set_salinity,set_emissivity,set_lgas_extinction,&
+set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_SD_snow,set_N_0snowDsnow,set_EM_snow,&
+set_SP,set_isnow_n0,set_liu_type,set_SD_grau,set_N_0grauDgrau,set_EM_grau,set_EM_ice,set_SD_rain,&
+set_N_0rainD,set_n_moments,set_moments_file &
+)
 
 ! ,&
 ! in_year,in_month,in_day,in_time,in_ngridx,in_ngridy,in_nlyr,in_deltax,in_deltay,in_&
@@ -28,7 +36,6 @@ subroutine pyPamtraLib(input_file,namelist_file,frequency)
 
   implicit none
 
-
 !!! internal "handle command line parameters" !!! 
 
   integer :: inarg, ff
@@ -38,10 +45,44 @@ subroutine pyPamtraLib(input_file,namelist_file,frequency)
 !!! set by "handle command line parameters" !!! 
 
   character(99),intent(in)  :: input_file !name of profile
-  character(300),intent(in) :: namelist_file
   real, intent(in) :: frequency
 
-!f2py intent(in) :: input_file,namelist_file,frequency
+  !!Set by namelist file
+  integer :: set_verbose, set_n_moments, set_isnow_n0, set_liu_type
+
+  real(kind=sgl) :: set_obs_height     ! upper level output height [m] (> 100000. for satellite)
+  real(kind=sgl) :: set_emissivity
+  real(kind=sgl) :: set_N_0snowDsnow, set_N_0grauDgrau, set_N_0rainD, set_SP
+  real(kind=sgl) :: set_salinity         ! sea surface salinity
+
+  logical :: set_dump_to_file   ! flag for profile and ssp dump
+  logical :: set_lphase_flag, &        ! flag for phase function calculation
+       set_lgas_extinction, &    ! gas extinction desired
+       set_lhyd_extinction, &    ! hydrometeor extinction desired
+       set_write_nc, &	   ! write netcdf output
+       set_active, &  	   ! calculate active stuff
+       set_passive		   ! calculate passive stuff (with RT3)
+
+  character(5) :: set_EM_snow, set_EM_grau, set_EM_ice
+  character(3) :: set_SD_snow, set_SD_grau, set_SD_rain, set_gas_mod
+  character(20) :: set_moments_file,set_file_desc
+  character(100) :: set_input_path, set_output_path, set_tmp_path,set_creator, set_data_path
+  character(13) :: set_freq_str
+  character(2) :: set_OUTPOL
+  character(1) :: set_GROUND_TYPE, set_UNITS
+
+
+
+
+!f2py intent(in) :: input_file,frequency
+!settings
+!f2py intent(in) :: set_verbose,set_write_nc,set_dump_to_file,set_input_path,set_output_path,set_tmp_path
+!f2py intent(in) :: set_data_path,set_obs_height,set_units,set_outpol,set_freq_str,set_file_desc,set_creator
+!f2py intent(in) :: set_active,set_passive,set_ground_type,set_salinity,set_emissivity,set_lgas_extinction
+!f2py intent(in) :: set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_SD_snow,set_N_0snowDsnow,set_EM_snow
+!f2py intent(in) :: set_SP,set_isnow_n0,set_liu_type,set_SD_grau,set_N_0grauDgrau,set_EM_grau,set_EM_ice,set_SD_rain
+!f2py intent(in) :: set_N_0rainD,set_n_moments,set_moments_file
+
 
   character(6), dimension(maxfreq) :: frqs_str !from commandline
   character(7) :: frq_str_s,frq_str_e
@@ -53,13 +94,13 @@ subroutine pyPamtraLib(input_file,namelist_file,frequency)
   character(300) ::nc_out_file
 
 print *,"Hello"
-print *,input_file,namelist_file,frequency
+print *,input_file,frequency
+
 
   !get git data
   call versionNumber(gitVersion,gitHash)
 
 print *,gitVersion,gitHash
-
 
 nfrq = 1
 
@@ -68,67 +109,47 @@ freqs(1) = frequency
 
 print *,frqs_str, freqs
 
-
-! !!! read variables from namelist file
-!   call nml_params_read(namelist_file) !from nml_params.f90
-
-    !set namelist defaults!
-    verbose=2
-
-!     write_nc=.true.
-    dump_to_file=.false.
-!     input_path='profile/'
-!     output_path='output/'
-    tmp_path='/tmp/'
-!     data_path='data/'
-write_nc=.false.
-input_path='../test/referenceProfile'
-output_path='../test/tmp'
-data_path='/home/mech/models/pamtra/data/'
-
-    obs_height=833000.
-    units='T'
-    outpol='VH'
-    freq_str=''
-    file_desc=''
-    creator='Pamtrauser'
-
-    active=.true.
-    passive=.true.
-
-    ground_type='S'
-    salinity=33.0
-    emissivity=0.6
-
-    lgas_extinction=.true.
-    gas_mod='R98'
-
-    lhyd_extinction=.true.
-    lphase_flag = .true.
-
-    SD_snow='Exp' 
-    N_0snowDsnow=7.628 
-    EM_snow='icesf' 
-    SP=0.2 
-    isnow_n0=1
-    liu_type=8
-
-    SD_grau='Exp' 
-    N_0grauDgrau=4.0 
-    EM_grau='surus'
-
-    EM_ice='mieic'
-
-    SD_rain='Exp' 
-    N_0rainD=8.0
-
-    n_moments=1
-    moments_file='snowCRYSTAL'
+!load settings, uggly but neccessary!
+verbose = set_verbose
+write_nc = set_write_nc
+dump_to_file = set_dump_to_file
+input_path = set_input_path
+output_path = set_output_path
+tmp_path = set_tmp_path
+data_path = set_data_path
+obs_height = set_obs_height
+units = set_units
+outpol = set_outpol
+freq_str = set_freq_str
+file_desc = set_file_desc
+creator = set_creator
+active = set_active
+passive = set_passive
+ground_type = set_ground_type
+salinity = set_salinity
+emissivity = set_emissivity
+lgas_extinction = set_lgas_extinction
+gas_mod = set_gas_mod
+lhyd_extinction = set_lhyd_extinction
+lphase_flag = set_lphase_flag
+SD_snow = set_SD_snow
+N_0snowDsnow = set_N_0snowDsnow
+EM_snow = set_EM_snow
+SP = set_SP
+isnow_n0 = set_isnow_n0
+liu_type = set_liu_type
+SD_grau = set_SD_grau
+N_0grauDgrau = set_N_0grauDgrau
+EM_grau = set_EM_grau
+EM_ice = set_EM_ice
+SD_rain = set_SD_rain
+N_0rainD = set_N_0rainD
+n_moments = set_n_moments
+moments_file = set_moments_file
 
 
 
 
-print *,"read namelist"
 
   ! create frequency string of not set in pamtra
   if (freq_str .eq. "") then
@@ -144,7 +165,7 @@ print *,"read namelist"
 !      frq_str_list = frq_str_list(:len_trim(frq_str_list)) // "_" //  frqs_str(ff)
 
   if (verbose .gt. 1) print *,"input_file: ",input_file(:len_trim(input_file)),&
-       " namelist file: ",namelist_file," freq: ",freq_str
+       " freq: ",freq_str
 
 !!! read n-moments file
   if (n_moments .eq. 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
