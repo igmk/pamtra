@@ -1,4 +1,9 @@
-subroutine run_rt3(nx,ny,fi,freq,frq_str)
+subroutine run_rt3(nx,ny,fi,freq,frq_str,&
+model_i,model_j,ground_temp,lat,lon,lfrac,relhum_lev,press_lev,&
+temp_lev,hgt_lev,cwc_q,iwc_q,rwc_q,swc_q,gwc_q,hwc_q,cwc_n,&
+iwc_n,rwc_n,swc_n,gwc_n,hwc_n,press,temp,relhum,vapor_pressure,&
+rho_vap,q_hum)
+
   use kinds
   use constants
   use nml_params !all settings go here
@@ -33,42 +38,11 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
 
   wavelength = c / (freq*1.d3)   ! microns
 
-  write(xstr, '(i3.3)') profiles(nx,ny)%isamp
-  write(ystr, '(i3.3)') profiles(nx,ny)%jsamp
-
   if (verbose .gt. 0) print*, "calculating: ", frq_str, " Y:",ny, " of ", ngridy, "X:", nx, " of ", ngridx
 
-  ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
-  lat = profiles(nx,ny)%latitude                  ! °
-  lon = profiles(nx,ny)%longitude                 ! °
-  lfrac = profiles(nx,ny)%land_fraction
-  relhum_lev = profiles(nx,ny)%relhum_lev         ! %
-  press_lev = profiles(nx,ny)%press_lev           ! Pa
-  temp_lev = profiles(nx,ny)%temp_lev             ! K
-  hgt_lev = profiles(nx,ny)%hgt_lev               ! m
+  write(xstr, '(i3.3)') model_i
+  write(ystr, '(i3.3)') model_j
 
-  cwc_q = profiles(nx,ny)%cloud_water_q           ! kg/kg
-  iwc_q = profiles(nx,ny)%cloud_ice_q             ! kg/kg
-  rwc_q = profiles(nx,ny)%rain_q                  ! kg/kg
-  swc_q = profiles(nx,ny)%snow_q                  ! kg/kg
-  gwc_q = profiles(nx,ny)%graupel_q               ! kg/kg
-
-  if (n_moments .eq. 2) then
-     hwc_q = profiles(nx,ny)%hail_q              ! kg/kg
-     cwc_n = profiles(nx,ny)%cloud_water_n       ! #/kg
-     iwc_n = profiles(nx,ny)%cloud_ice_n         ! #/kg
-     rwc_n = profiles(nx,ny)%rain_n              ! #/kg
-     swc_n = profiles(nx,ny)%snow_n              ! #/kg
-     gwc_n = profiles(nx,ny)%graupel_n           ! #/kg
-     hwc_n = profiles(nx,ny)%hail_n              ! #/kg
-  end if
-
-  press = profiles(nx,ny)%press                   ! Pa
-  temp = profiles(nx,ny)%temp                     ! K
-  relhum = profiles(nx,ny)%relhum                 ! %
-  vapor_pressure = profiles(nx,ny)%vapor_pressure ! Pa
-  rho_vap = profiles(nx,ny)%rho_vap               ! kg/m^3
-  q_hum = profiles(nx,ny)%q_hum                   ! kg/kg
 
 
   if (verbose .gt. 1) print*, nx,ny, 'type to local variables done' 

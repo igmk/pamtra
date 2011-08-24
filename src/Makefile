@@ -19,7 +19,7 @@ else
 endif
 
 
-OBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_atmosphere.o mod_io_strings.o constants.o double_moments_module.o\
+OBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_atmosphere.o vars_atmosphere2.o mod_io_strings.o constants.o double_moments_module.o\
 	vars_output.o run_rt3.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o radmat.o \
 	scat_utilities.o dsd_utilities.o mpm93.o get_atmosG0.o get_atmosG.o mie.o mie_densitysizedep_spheremasseq.o\
 	slant_profile.o  allocate_vars.o rosen98_gasabs.o surface.o eps_water.o mie_icefactor.o epsi.o \
