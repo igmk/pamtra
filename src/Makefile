@@ -55,11 +55,11 @@ scatdb.o:
 	gcc -O  -fPIC -c scatdb.c 
 
 prepython: 
-	f2py --overwrite-signature -m pyPamtra -h pypamtra.pyf $(pyOBJECTS) pyPamtra.f90
+	f2py --overwrite-signature -m pyPamtraLib -h pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90
 
 python: 
-	f2py -c --fcompiler=gnu95 pypamtra.pyf $(pyOBJECTS) pyPamtra.f90
-	cp pyPamtra.so ~/lib/python/
+	f2py -c --fcompiler=gnu95 pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90
+	cp pyPamtraLib.so ~/lib/python/
 
 
 precompile: 

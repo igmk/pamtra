@@ -1,9 +1,9 @@
 !    -*- f90 -*-
 ! Note: the context of this file is case sensitive.
 
-python module pyPamtra ! in 
-    interface  ! in :pyPamtra
-        subroutine pypamtra(input_file,namelist_file,frequency) ! in :pyPamtra:pyPamtra.f90
+python module pyPamtraLib ! in 
+    interface  ! in :pyPamtraLib
+        subroutine pypamtralib(input_file,namelist_file,frequency) ! in :pyPamtraLib:pyPamtraLib.f90
             use mod_io_strings
             use kinds
             use vars_output
@@ -15,9 +15,9 @@ python module pyPamtra ! in
             character*99 intent(in) :: input_file
             character*300 intent(in) :: namelist_file
             real intent(in) :: frequency
-        end subroutine pypamtra
+        end subroutine pypamtralib
     end interface 
-end python module pyPamtra
+end python module pyPamtraLib
 
 ! This file was auto-generated with f2py (version:1).
 ! See http://cens.ioc.ee/projects/f2py2e/

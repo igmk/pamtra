@@ -1,4 +1,4 @@
-subroutine pyPamtra(input_file,namelist_file,frequency)
+subroutine pyPamtraLib(input_file,namelist_file,frequency)
 
 ! ,&
 ! in_year,in_month,in_day,in_time,in_ngridx,in_ngridy,in_nlyr,in_deltax,in_deltay,in_&
@@ -62,7 +62,7 @@ print *,gitVersion,gitHash
 
 
 nfrq = 1
-allocate(freqs(nfrq))
+
 frqs_str(1) = "024.00"
 freqs(1) = frequency
 
@@ -222,4 +222,4 @@ deltay = profiles_deltay
         end do grid_x
      end do grid_y
   end do grid_f
-end subroutine pyPamtra
+end subroutine pyPamtraLib
