@@ -13,7 +13,7 @@ python module pyPamtraLib ! in
             use double_moments_module
             use constants
             character*99 intent(in) :: input_file
-            real intent(in) :: frequency
+            real(kind=sgl) intent(in) :: frequency
             integer intent(in) :: set_verbose
             logical intent(in) :: set_write_nc
             logical intent(in) :: set_dump_to_file

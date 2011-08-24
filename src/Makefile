@@ -34,13 +34,13 @@ pyOBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_atmosphere.o vars_profile
 	scat_utilities.o dsd_utilities.o mpm93.o get_atmosG0.o get_atmosG.o mie.o mie_densitysizedep_spheremasseq.o\
 	slant_profile.o  allocate_vars.o rosen98_gasabs.o surface.o eps_water.o mie_icefactor.o epsi.o \
 	equcom.o land_emis.o equare.o scatdb.o dda_db_liu.o dielec_water.o ref_water.o \
-	ref_ice.o e_sat_gg_water.o spec2abs.o interpolation.o deallocate_vars.o\
+	ref_ice.o e_sat_gg_water.o spec2abs.o interpolation.o deallocate_vars.o \
 	hydrometeor_extinction.o cloud_ssp.o ice_ssp.o rain_ssp.o snow_ssp.o grau_ssp.o hail_ssp.o legendre2phasefunction.o \
-	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o formatted_frqstr.o \
+	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o \
 	get_scat_coefs.o dump_profile.o collect_boundary_output.o double_moments.o versionNumber.auto.o
 
 
-noPyObjects= formatted_frqstr.o write_nc_results.o 
+noPyObjects=  write_nc_results.o formatted_frqstr.o
 
 BIN=pamtra
 

@@ -47,8 +47,8 @@ gitVersion,gitHash &
 !!! set by "handle command line parameters" !!! 
 
   character(99),intent(in)  :: input_file !name of profile
-  real, intent(in) :: frequency
-
+  real(kind=sgl), intent(in) :: frequency
+  real(kind=sgl) :: freq
   !!Set by namelist file
   integer :: set_verbose, set_n_moments, set_isnow_n0, set_liu_type
 
@@ -87,8 +87,6 @@ gitVersion,gitHash &
 !meta out
 !f2py intent(out) :: gitVersion,gitHash
 
-  character(6), dimension(maxfreq) :: frqs_str !from commandline
-  character(7) :: frq_str_s,frq_str_e
 
 !!!loop variables
   integer ::  fi,nx, ny
@@ -106,11 +104,10 @@ print *,input_file,frequency
 print *,gitVersion,gitHash
 
 nfrq = 1
+fi = 1
 
-frqs_str(1) = "024.00"
-freqs(1) = frequency
 
-print *,frqs_str, freqs
+print *,frequency
 
 !load settings, uggly but neccessary!
 verbose = set_verbose
@@ -152,20 +149,14 @@ moments_file = set_moments_file
 
 
 
-
+  freq = frequency
 
   ! create frequency string of not set in pamtra
   if (freq_str .eq. "") then
-     ! get integer and character frequencies
-    frq_str_s = "_"//frqs_str(1)
-     if (nfrq .eq. 1) then
-       frq_str_e = ""
-     else
-       frq_str_e = "-"//frqs_str(nfrq)
-     end if
-     freq_str = frq_str_s//frq_str_e
+     read(freq_str,"(f3.2)") freq
   end if
-!      frq_str_list = frq_str_list(:len_trim(frq_str_list)) // "_" //  frqs_str(ff)
+
+print*, frequency, freq_str
 
   if (verbose .gt. 1) print *,"input_file: ",input_file(:len_trim(input_file)),&
        " freq: ",freq_str
@@ -196,8 +187,6 @@ deltay = profiles_deltay
 
 
 
-
-  grid_f: do fi =1, nfrq
      grid_y: do ny = 1, ngridy !ny_in, ny_fin  
         grid_x: do nx = 1, ngridx !nx_in, nx_fin   
 
@@ -241,9 +230,9 @@ deltay = profiles_deltay
          end if
 
            !run the model
-           call run_rt3(nx,ny,fi,freqs(fi),frqs_str(fi))
+           call run_rt3(nx,ny,fi,frequency,freq_str)
 
         end do grid_x
      end do grid_y
-  end do grid_f
+
 end subroutine pyPamtraLib
