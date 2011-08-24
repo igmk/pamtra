@@ -29,7 +29,7 @@ subroutine deallocate_vars
   end if
 
   deallocate(angles_deg)
-  deallocate(profiles)
+!   deallocate(profiles)
   deallocate(freqs)
 
 print *,"DEALLOCATED"

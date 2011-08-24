@@ -31,53 +31,14 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
   character(80) :: femis ! filename for the emissivity databases
 
   wavelength = c / (freq*1.d3)   ! microns
-
+  GROUND_TEMP = temp_lev(0)
 
   if (verbose .gt. 0) print*, "calculating: ", frq_str, " Y:",ny, " of ", ngridy, "X:", nx, " of ", ngridx
 
-  ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
-  lat = profiles(nx,ny)%latitude                  ! °
-  lon = profiles(nx,ny)%longitude                 ! °
-  lfrac = profiles(nx,ny)%land_fraction
-  relhum_lev = profiles(nx,ny)%relhum_lev         ! %
-  press_lev = profiles(nx,ny)%press_lev           ! Pa
-  temp_lev = profiles(nx,ny)%temp_lev             ! K
-  hgt_lev = profiles(nx,ny)%hgt_lev               ! m
-
-  model_i = profiles(nx,ny)%isamp
-  model_j = profiles(nx,ny)%jsamp
-  wind10u = profiles(nx,ny)%wind_10u
-  wind10v = profiles(nx,ny)%wind_10v
-
-  iwv = profiles(nx,ny)%iwv
-  cwp = profiles(nx,ny)%cwp
-  iwp = profiles(nx,ny)%iwp
-  rwp = profiles(nx,ny)%rwp
-  swp = profiles(nx,ny)%swp
-  gwp = profiles(nx,ny)%gwp
-  hwp = profiles(nx,ny)%hwp
 
 
-  cwc_q = profiles(nx,ny)%cloud_water_q           ! kg/kg
-  iwc_q = profiles(nx,ny)%cloud_ice_q             ! kg/kg
-  rwc_q = profiles(nx,ny)%rain_q                  ! kg/kg
-  swc_q = profiles(nx,ny)%snow_q                  ! kg/kg
-  gwc_q = profiles(nx,ny)%graupel_q               ! kg/kg
-
-  if (n_moments .eq. 2) then
-     hwc_q = profiles(nx,ny)%hail_q              ! kg/kg
-     cwc_n = profiles(nx,ny)%cloud_water_n       ! #/kg
-     iwc_n = profiles(nx,ny)%cloud_ice_n         ! #/kg
-     rwc_n = profiles(nx,ny)%rain_n              ! #/kg
-     swc_n = profiles(nx,ny)%snow_n              ! #/kg
-     gwc_n = profiles(nx,ny)%graupel_n           ! #/kg
-     hwc_n = profiles(nx,ny)%hail_n              ! #/kg
-  end if
-
-  temp_lev = profiles(nx,ny)%temp_lev
-
-  write(xstr, '(i3.3)') profiles(nx,ny)%isamp
-  write(ystr, '(i3.3)') profiles(nx,ny)%jsamp
+  write(xstr, '(i3.3)') model_i
+  write(ystr, '(i3.3)') model_j
 
   ! This GCE model format does not have all the fields expected by    
   ! the radiative transfer code (i.e. total pressure, and water vapor 
@@ -163,8 +124,8 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
   if (write_nc) then
      !      Output integrated quantities
      call collect_boundary_output(lon,lat,lfrac,&
-          profiles(nx,ny)%iwv, profiles(nx,ny)%cwp,profiles(nx,ny)%iwp,profiles(nx,ny)%rwp,profiles(nx,ny)%swp, &
-          profiles(nx,ny)%gwp,profiles(nx,ny)%hwp,profiles(nx,ny)%isamp,profiles(nx,ny)%jsamp,nx,ny)
+          iwv, cwp,iwp,rwp,swp, &
+          gwp,hwp,model_i,model_j,nx,ny)
      if (verbose .gt. 1) print*, nx,ny, 'collect_boundary_output done'
   end if
 

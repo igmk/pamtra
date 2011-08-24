@@ -5,6 +5,7 @@ program pamtra
   use nml_params !all settings go here
   use vars_atmosphere !input variables and reading routine
   use vars_output !output variables
+  use vars_profile
   use double_moments_module !double moments variables are stored here
   use mod_io_strings !some strings for nice filenames
 
@@ -64,9 +65,9 @@ program pamtra
   allocate(freqs(nfrq))
 
   do ff = 1, nfrq
-  	call getarg(ff+2,frqs_str(ff))
+     call getarg(ff+2,frqs_str(ff))
     read(frqs_str(ff),*) freqs(ff)
-  	frqs_str(ff) = formatted_frqstr(frqs_str(ff))
+     frqs_str(ff) = formatted_frqstr(frqs_str(ff))
   end do
 
 !!! read variables from namelist file
@@ -74,14 +75,14 @@ program pamtra
 
   ! create frequency string of not set in pamtra
   if (freq_str .eq. "") then
-  	! get integer and character frequencies
+     ! get integer and character frequencies
     frq_str_s = "_"//frqs_str(1)
-  	if (nfrq .eq. 1) then
-  	  frq_str_e = ""
-  	else
-  	  frq_str_e = "-"//frqs_str(nfrq)
-  	end if
-  	freq_str = frq_str_s//frq_str_e
+     if (nfrq .eq. 1) then
+       frq_str_e = ""
+     else
+       frq_str_e = "-"//frqs_str(nfrq)
+     end if
+     freq_str = frq_str_s//frq_str_e
   end if
 !      frq_str_list = frq_str_list(:len_trim(frq_str_list)) // "_" //  frqs_str(ff)
 
@@ -92,8 +93,17 @@ program pamtra
   if (n_moments .eq. 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
 
 !!! read the data
-  call vars_atmosphere_read_profile(input_file) !from vars_atmosphere.f90
+  call vars_profile_read_profile(input_file) !from vars_atmosphere.f90
 
+year = profiles_year
+month = profiles_month
+day = profiles_day
+time = profiles_time
+ngridx = profiles_ngridx
+ngridy = profiles_ngridy
+nlyr = profiles_nlyr
+deltax = profiles_deltax
+deltay = profiles_deltay
   ! now allocate variables
   call allocate_vars
 
@@ -103,9 +113,51 @@ program pamtra
 
   if (verbose .gt. 1) print*, 'Start loop over frequencies & profiles!'
 
+
+
+
   grid_f: do fi =1, nfrq
      grid_y: do ny = 1, ngridy !ny_in, ny_fin  
         grid_x: do nx = 1, ngridx !nx_in, nx_fin   
+
+         !   ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
+         lat = profiles(nx,ny)%latitude                  ! °
+         lon = profiles(nx,ny)%longitude                 ! °
+         lfrac = profiles(nx,ny)%land_fraction
+         relhum_lev = profiles(nx,ny)%relhum_lev         ! %
+         press_lev = profiles(nx,ny)%press_lev           ! Pa
+         temp_lev = profiles(nx,ny)%temp_lev             ! K
+         hgt_lev = profiles(nx,ny)%hgt_lev               ! m
+
+         model_i = profiles(nx,ny)%isamp
+         model_j = profiles(nx,ny)%jsamp
+         wind10u = profiles(nx,ny)%wind_10u
+         wind10v = profiles(nx,ny)%wind_10v
+
+         iwv = profiles(nx,ny)%iwv
+         cwp = profiles(nx,ny)%cwp
+         iwp = profiles(nx,ny)%iwp
+         rwp = profiles(nx,ny)%rwp
+         swp = profiles(nx,ny)%swp
+         gwp = profiles(nx,ny)%gwp
+         hwp = profiles(nx,ny)%hwp
+
+
+         cwc_q = profiles(nx,ny)%cloud_water_q           ! kg/kg
+         iwc_q = profiles(nx,ny)%cloud_ice_q             ! kg/kg
+         rwc_q = profiles(nx,ny)%rain_q                  ! kg/kg
+         swc_q = profiles(nx,ny)%snow_q                  ! kg/kg
+         gwc_q = profiles(nx,ny)%graupel_q               ! kg/kg
+
+         if (n_moments .eq. 2) then
+            hwc_q = profiles(nx,ny)%hail_q              ! kg/kg
+            cwc_n = profiles(nx,ny)%cloud_water_n       ! #/kg
+            iwc_n = profiles(nx,ny)%cloud_ice_n         ! #/kg
+            rwc_n = profiles(nx,ny)%rain_n              ! #/kg
+            swc_n = profiles(nx,ny)%snow_n              ! #/kg
+            gwc_n = profiles(nx,ny)%graupel_n           ! #/kg
+            hwc_n = profiles(nx,ny)%hail_n              ! #/kg
+         end if
 
            !run the model
            call run_rt3(nx,ny,fi,freqs(fi),frqs_str(fi))
