@@ -1,11 +1,13 @@
-subroutine pyPamtraLib(input_file,frequency, &
-!settings
+subroutine pyPamtraLib(input_file,frequency&
+, & !settings
 set_verbose,set_write_nc,set_dump_to_file,set_input_path,set_output_path,set_tmp_path,&
 set_data_path,set_obs_height,set_units,set_outpol,set_freq_str,set_file_desc,set_creator,&
 set_active,set_passive,set_ground_type,set_salinity,set_emissivity,set_lgas_extinction,&
 set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_SD_snow,set_N_0snowDsnow,set_EM_snow,&
 set_SP,set_isnow_n0,set_liu_type,set_SD_grau,set_N_0grauDgrau,set_EM_grau,set_EM_ice,set_SD_rain,&
-set_N_0rainD,set_n_moments,set_moments_file &
+set_N_0rainD,set_n_moments,set_moments_file&
+,& !meta out
+gitVersion,gitHash &
 )
 
 ! ,&
@@ -39,7 +41,7 @@ set_N_0rainD,set_n_moments,set_moments_file &
 !!! internal "handle command line parameters" !!! 
 
   integer :: inarg, ff
-  character(40) :: gitHash, gitVersion
+  character(40),intent(out) :: gitHash, gitVersion
   character(6) :: formatted_frqstr !function call
 
 !!! set by "handle command line parameters" !!! 
@@ -82,7 +84,7 @@ set_N_0rainD,set_n_moments,set_moments_file &
 !f2py intent(in) :: set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_SD_snow,set_N_0snowDsnow,set_EM_snow
 !f2py intent(in) :: set_SP,set_isnow_n0,set_liu_type,set_SD_grau,set_N_0grauDgrau,set_EM_grau,set_EM_ice,set_SD_rain
 !f2py intent(in) :: set_N_0rainD,set_n_moments,set_moments_file
-
+!f2py intent(out) :: gitVersion,gitHash
 
   character(6), dimension(maxfreq) :: frqs_str !from commandline
   character(7) :: frq_str_s,frq_str_e
