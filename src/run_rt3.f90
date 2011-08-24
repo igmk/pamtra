@@ -163,7 +163,6 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
      !calculate human readable angles!
      angles_deg(1:NUMMU) = 180-(180.*acos(MU_VALUES(NUMMU:1:-1))/pi)
      angles_deg(1+NUMMU:2*NUMMU) = (180.*acos(MU_VALUES(1:NUMMU))/pi)
-
      if (verbose .gt. 1) print*, nx,ny, "....rt3 finished"
 
   end if

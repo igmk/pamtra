@@ -11,7 +11,8 @@ in_nlyr, in_ngridx, in_ngridy,in_nfreq, in_freqs&
 ,& !meta out
 out_gitVersion,out_gitHash &
 ,& !data_out
-out_Ze, out_Attenuation_hydro,out_Attenuation_atmo,out_hgt&
+out_Ze, out_Attenuation_hydro,out_Attenuation_atmo,out_hgt,&
+out_angles&
 )
 
 ! ,&
@@ -85,7 +86,7 @@ real(kind=sgl), dimension(*), intent(in) :: in_freqs
 real(kind=sgl), dimension(in_ngridx,in_ngridy,in_nlyr,in_nfreq),intent(out) :: out_Ze,&
            out_Attenuation_hydro,out_Attenuation_atmo
 real(kind=sgl), dimension(in_ngridx,in_ngridy,in_nlyr),intent(out) :: out_hgt
-
+real(kind=sgl), dimension(32),intent(out) :: out_angles !2*NUMMU instead of 32 does not work, because f2py does not know f2py!
 
 
 !f2py intent(in) :: input_file
@@ -103,6 +104,7 @@ real(kind=sgl), dimension(in_ngridx,in_ngridy,in_nlyr),intent(out) :: out_hgt
 !f2py intent(out) :: out_gitVersion,out_gitHash
 !data out
 !f2py intent(out) :: out_Ze,out_Attenuation_hydro,out_Attenuation_atmo,out_hgt
+!f2py intent(out) :: out_angles
 
 
 
@@ -259,6 +261,8 @@ out_Ze = Ze(:,:,:,:)
 out_Attenuation_hydro = Attenuation_hydro(:,:,:,:)
 out_Attenuation_atmo = Attenuation_atmo(:,:,:,:)
 out_hgt = hgt(:,:,:)
-! out_angles
+out_angles = angles_deg(:)
+
+print*,"GG",angles_deg
 
 end subroutine pyPamtraLib

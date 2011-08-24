@@ -67,7 +67,7 @@ class pyPamtra:
 		
 		#output
 		self.pamtraVersion,self.pamtraHash,\
-		self.Ze,self.attenuationHydro,self.attenuationAtmo,self.hgt = \
+		self.Ze,self.attenuationHydro,self.attenuationAtmo,self.hgt, self.angles = \
 		pyPamtraLib.pypamtralib(inputFile,
 		#settings
 		settings["verbose"], settings["write_nc"], settings["dump_to_file"], settings["input_path"], settings["output_path"], settings["tmp_path"], settings["data_path"], settings["obs_height"], settings["units"], settings["outpol"], settings["freq_str"], settings["file_desc"], settings["creator"], settings["active"], settings["passive"], settings["ground_type"], settings["salinity"], settings["emissivity"], settings["lgas_extinction"], settings["gas_mod"], settings["lhyd_extinction"], settings["lphase_flag"], settings["SD_snow"], settings["N_0snowDsnow"], settings["EM_snow"], settings["SP"], settings["isnow_n0"], settings["liu_type"], settings["SD_grau"], settings["N_0grauDgrau"], settings["EM_grau"], settings["EM_ice"], settings["SD_rain"], settings["N_0rainD"], settings["n_moments"], settings["moments_file"],
