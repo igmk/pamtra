@@ -57,8 +57,7 @@ module vars_atmosphere
   integer, allocatable, dimension(:) :: rt3nlegen
 
   !is allocated in pamtra.f90!
-  real(kind=dbl),allocatable,dimension(:)  :: freqs
-
+  real(kind=dbl), allocatable, dimension(:) :: freqs
 
   real(kind=dbl), allocatable, dimension(:) :: relhum_lev,&
        press_lev, &

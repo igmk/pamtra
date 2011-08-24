@@ -1,4 +1,4 @@
-subroutine dump_profile
+subroutine dump_profile(frq_str)
 
   use vars_atmosphere
   use mod_io_strings
@@ -8,6 +8,7 @@ subroutine dump_profile
 
   integer :: nz
   character(1) :: str1
+  character(6), intent(in) :: frq_str !from commandline
 
   !      Preparation of the PROFILE file
   str1 = ''''

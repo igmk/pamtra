@@ -1,4 +1,4 @@
-subroutine run_rt3(nx,ny,fi,frqs_str)
+subroutine run_rt3(nx,ny,fi,freq,frq_str)
   use kinds
   use constants
   use nml_params !all settings go here
@@ -10,15 +10,14 @@ subroutine run_rt3(nx,ny,fi,frqs_str)
   implicit none
 
   integer, intent(in) :: nx,ny,fi 
-  character(6), dimension(maxfreq), intent(in) :: frqs_str !from commandline
-
+  real(kind=dbl), intent(in) :: freq ! frequency [GHz]
+  character(6), intent(in) :: frq_str !from commandline
 
   integer, dimension(maxlay) :: OUTLEVELS
   integer :: ise, imonth ! filehandle for the emissivity data
   integer :: nz
 
   real(kind=dbl), dimension(maxv) :: MU_VALUES
-  real(kind=dbl) :: freq ! frequency [GHz]
   real(kind=dbl) :: wavelength       ! microns
   real(kind=dbl) :: GROUND_TEMP, ground_albedo
   real(kind=sgl) :: lat, lon, lfrac
@@ -31,9 +30,6 @@ subroutine run_rt3(nx,ny,fi,frqs_str)
 
   character(300) :: OUT_FILE_PAS, OUT_FILE_ACT !file names if no nc
   character(80) :: femis ! filename for the emissivity databases
-
-  freq = freqs(fi)
-  frq_str = frqs_str(fi)
 
   wavelength = c / (freq*1.d3)   ! microns
 
@@ -129,10 +125,10 @@ subroutine run_rt3(nx,ny,fi,frqs_str)
   ! hydrometeor extinction desired
 
 
-  if (lhyd_extinction) call hydrometeor_extinction(freq)
+  if (lhyd_extinction) call hydrometeor_extinction(freq,frq_str)
 
   !
-  if (dump_to_file) call dump_profile
+  if (dump_to_file) call dump_profile(frq_str)
 
   !&&&&&&&&   I/O FILE NAMES   &&&&&&&&&&&&&&&&&&
 

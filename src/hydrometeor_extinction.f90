@@ -1,4 +1,4 @@
-subroutine hydrometeor_extinction(f)
+subroutine hydrometeor_extinction(f,frq_str)
 
   use kinds
   use vars_atmosphere
@@ -29,6 +29,8 @@ subroutine hydrometeor_extinction(f)
   real(kind=dbl), dimension(2) :: P11, ang
 
   real(kind=dbl) :: threshold ! threshold value for hydrometeor extinction as mass mixing ratio
+
+  character(6), intent(in) :: frq_str !from commandline
 
   if (verbose .gt. 1) print*, 'Entering hydrometeor_extinction'
 
@@ -154,13 +156,11 @@ subroutine hydrometeor_extinction(f)
              maxleg,kextsn, salbsn, backsn,  &
              nlegensn, legensn, legen2sn, legen3sn, legen4sn)
         call legendre2phasefunction(legensn, nlegensn, 2, 200,p11, ang)
-        backsn = kextsn * salbsn * P11 (2)
      else if (swc_q(nz) .ge. threshold .and. n_moments .eq. 2) then
       	call snow_ssp(f,swc_q(nz),temp(nz),press(nz),q_hum(nz),&
              maxleg,kextsn, salbsn, backsn,  &
              nlegensn, legensn, legen2sn, legen3sn, legen4sn, swc_n(nz))
         call legendre2phasefunction(legensn, nlegensn, 2, 200,p11, ang)
-        backsn = kextsn * salbsn * P11 (2)
      else
         kextsn = 0.0d0
         salbsn = 0.0d0
@@ -182,13 +182,11 @@ subroutine hydrometeor_extinction(f)
              maxleg,kextgr, salbgr, backgr,  &
              nlegengr, legengr, legen2gr, legen3gr, legen4gr)
         call legendre2phasefunction(legengr, nlegengr, 2, 200, p11, ang)
-        backgr = kextgr * salbgr * p11 (2)
      else if (gwc_q(nz) .ge. threshold .and. n_moments .eq. 2) then
       	call grau_ssp(f,gwc_q(nz),temp(nz),press(nz),q_hum(nz),&
              maxleg,kextgr, salbgr, backgr,  &
              nlegengr, legengr, legen2gr, legen3gr, legen4gr, gwc_n(nz))
       	call legendre2phasefunction(legengr, nlegengr, 2, 200, p11, ang)
-        backgr = kextgr * salbgr * p11 (2)
      else
         kextgr = 0.0d0
         salbgr = 0.0d0
@@ -211,7 +209,6 @@ subroutine hydrometeor_extinction(f)
                 maxleg,kextha, salbha, backha,  &
                 nlegenha, legenha, legen2ha, legen3ha, legen4ha, hwc_n(nz))
            call legendre2phasefunction(legenha, nlegenha, 2, 200, p11, ang)
-           backha = kextha * salbha * p11 (2)
         else
            kextha = 0.0d0
            salbha = 0.0d0

@@ -13,8 +13,8 @@ ifeq ($(ARCH),Darwin)
 	LFLAGS=-L/opt/local/lib/
 	LDFLAGS=-lnetcdf -lnetcdff
 else
-	NCFLAGS=-I$(HOME)/include
-	LFLAGS=-L$(HOME)/lib
+	NCFLAGS=-I/home/mech/include
+	LFLAGS=-L/home/mech/lib
 	LDFLAGS=-lnetcdf -static
 endif
 
