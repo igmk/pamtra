@@ -36,7 +36,6 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
   if (verbose .gt. 0) print*, "calculating: ", frq_str, " Y:",ny, " of ", ngridy, "X:", nx, " of ", ngridx
 
 
-
   write(xstr, '(i3.3)') model_i
   write(ystr, '(i3.3)') model_j
 
@@ -113,7 +112,6 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
 
   OUT_FILE_ACT = output_path(:len_trim(output_path))//"/"//&
        micro_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_active"
-
 
   if (active) then
      call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),Ze(nx,ny,:,fi),Attenuation_atmo(nx,ny,:,fi),&

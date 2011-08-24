@@ -1,5 +1,9 @@
 import pyPamtraLib
+import numpy as np
+
 class pyPamtra:
+
+	
 	def __init__(self,inputFile,frequency,userSettings):
 
 		defaultSettings = dict()
@@ -55,8 +59,16 @@ class pyPamtra:
 			try: defaultSettings[key] = userSettings[key]
 			except: "Could not parse ",key
 		
-		self.pamtraVersion,self.pamtraHash = pyPamtraLib.pypamtralib(inputFile,frequency, defaultSettings["verbose"], defaultSettings["write_nc"], defaultSettings["dump_to_file"], defaultSettings["input_path"], defaultSettings["output_path"], defaultSettings["tmp_path"], defaultSettings["data_path"], defaultSettings["obs_height"], defaultSettings["units"], defaultSettings["outpol"], defaultSettings["freq_str"], defaultSettings["file_desc"], defaultSettings["creator"], defaultSettings["active"], defaultSettings["passive"], defaultSettings["ground_type"], defaultSettings["salinity"], defaultSettings["emissivity"], defaultSettings["lgas_extinction"], defaultSettings["gas_mod"], defaultSettings["lhyd_extinction"], defaultSettings["lphase_flag"], defaultSettings["SD_snow"], defaultSettings["N_0snowDsnow"], defaultSettings["EM_snow"], defaultSettings["SP"], defaultSettings["isnow_n0"], defaultSettings["liu_type"], defaultSettings["SD_grau"], defaultSettings["N_0grauDgrau"], defaultSettings["EM_grau"], defaultSettings["EM_ice"], defaultSettings["SD_rain"], defaultSettings["N_0rainD"], defaultSettings["n_moments"], defaultSettings["moments_file"])
-		print "pyPamtraLib Version Number", self.pamtraVersion,self.pamtraHash
+		nlyr = 50
+		ngridx = 4
+		ngridy = 1
+		nfreqs = 2
+		freqs = [frequency,10]
+		self.pamtraVersion,self.pamtraHash,self.Ze,self.attenuationHydro,self.attenuationAtmo,self.hgt = pyPamtraLib.pypamtralib(inputFile,defaultSettings["verbose"], defaultSettings["write_nc"], defaultSettings["dump_to_file"], defaultSettings["input_path"], defaultSettings["output_path"], defaultSettings["tmp_path"], defaultSettings["data_path"], defaultSettings["obs_height"], defaultSettings["units"], defaultSettings["outpol"], defaultSettings["freq_str"], defaultSettings["file_desc"], defaultSettings["creator"], defaultSettings["active"], defaultSettings["passive"], defaultSettings["ground_type"], defaultSettings["salinity"], defaultSettings["emissivity"], defaultSettings["lgas_extinction"], defaultSettings["gas_mod"], defaultSettings["lhyd_extinction"], defaultSettings["lphase_flag"], defaultSettings["SD_snow"], defaultSettings["N_0snowDsnow"], defaultSettings["EM_snow"], defaultSettings["SP"], defaultSettings["isnow_n0"], defaultSettings["liu_type"], defaultSettings["SD_grau"], defaultSettings["N_0grauDgrau"], defaultSettings["EM_grau"], defaultSettings["EM_ice"], defaultSettings["SD_rain"], defaultSettings["N_0rainD"], defaultSettings["n_moments"], defaultSettings["moments_file"],nlyr,ngridx,ngridy,nfreqs,freqs)
+		
+		for key in self.__dict__.keys():
+			print key
+			print self.__dict__[key]
 		
 		
 		

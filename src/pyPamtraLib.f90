@@ -1,4 +1,4 @@
-subroutine pyPamtraLib(input_file,frequency&
+subroutine pyPamtraLib(input_file&
 , & !settings
 set_verbose,set_write_nc,set_dump_to_file,set_input_path,set_output_path,set_tmp_path,&
 set_data_path,set_obs_height,set_units,set_outpol,set_freq_str,set_file_desc,set_creator,&
@@ -6,8 +6,12 @@ set_active,set_passive,set_ground_type,set_salinity,set_emissivity,set_lgas_exti
 set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_SD_snow,set_N_0snowDsnow,set_EM_snow,&
 set_SP,set_isnow_n0,set_liu_type,set_SD_grau,set_N_0grauDgrau,set_EM_grau,set_EM_ice,set_SD_rain,&
 set_N_0rainD,set_n_moments,set_moments_file&
+,& !in
+in_nlyr, in_ngridx, in_ngridy,in_nfreq, in_freqs&
 ,& !meta out
-gitVersion,gitHash &
+out_gitVersion,out_gitHash &
+,& !data_out
+out_Ze, out_Attenuation_hydro,out_Attenuation_atmo,out_hgt&
 )
 
 ! ,&
@@ -40,43 +44,51 @@ gitVersion,gitHash &
 
 !!! internal "handle command line parameters" !!! 
 
-  integer :: inarg, ff
-  character(40),intent(out) :: gitHash, gitVersion
-  character(6) :: formatted_frqstr !function call
+  integer :: nfreq
+  character(40),intent(out) :: out_gitHash, out_gitVersion
+!   character(6) :: formatted_frqstr !function call
 
 !!! set by "handle command line parameters" !!! 
 
   character(99),intent(in)  :: input_file !name of profile
-  real(kind=sgl), intent(in) :: frequency
-  real(kind=sgl) :: freq
-  !!Set by namelist file
-  integer :: set_verbose, set_n_moments, set_isnow_n0, set_liu_type
 
-  real(kind=sgl) :: set_obs_height     ! upper level output height [m] (> 100000. for satellite)
-  real(kind=sgl) :: set_emissivity
-  real(kind=sgl) :: set_N_0snowDsnow, set_N_0grauDgrau, set_N_0rainD, set_SP
-  real(kind=sgl) :: set_salinity         ! sea surface salinity
+  real(kind=dbl) :: freq
+ 
+ !!Settings
+  integer,intent(in) :: set_verbose, set_n_moments, set_isnow_n0, set_liu_type
 
-  logical :: set_dump_to_file   ! flag for profile and ssp dump
-  logical :: set_lphase_flag, &        ! flag for phase function calculation
+  real(kind=sgl),intent(in) :: set_obs_height     ! upper level output height [m] (> 100000. for satellite)
+  real(kind=sgl),intent(in) :: set_emissivity
+  real(kind=sgl),intent(in) :: set_N_0snowDsnow, set_N_0grauDgrau, set_N_0rainD, set_SP
+  real(kind=sgl),intent(in) :: set_salinity         ! sea surface salinity
+
+  logical,intent(in) :: set_dump_to_file   ! flag for profile and ssp dump
+  logical,intent(in) :: set_lphase_flag, &        ! flag for phase function calculation
        set_lgas_extinction, &    ! gas extinction desired
        set_lhyd_extinction, &    ! hydrometeor extinction desired
        set_write_nc, &	   ! write netcdf output
        set_active, &  	   ! calculate active stuff
        set_passive		   ! calculate passive stuff (with RT3)
 
-  character(5) :: set_EM_snow, set_EM_grau, set_EM_ice
-  character(3) :: set_SD_snow, set_SD_grau, set_SD_rain, set_gas_mod
-  character(20) :: set_moments_file,set_file_desc
-  character(100) :: set_input_path, set_output_path, set_tmp_path,set_creator, set_data_path
-  character(13) :: set_freq_str
-  character(2) :: set_OUTPOL
-  character(1) :: set_GROUND_TYPE, set_UNITS
+  character(5),intent(in) :: set_EM_snow, set_EM_grau, set_EM_ice
+  character(3),intent(in) :: set_SD_snow, set_SD_grau, set_SD_rain, set_gas_mod
+  character(20),intent(in) :: set_moments_file,set_file_desc
+  character(100),intent(in) :: set_input_path, set_output_path, set_tmp_path,set_creator, set_data_path
+  character(13),intent(in) :: set_freq_str
+  character(2),intent(in) :: set_OUTPOL
+  character(1),intent(in) :: set_GROUND_TYPE, set_UNITS
+!Input
+
+integer, intent(in) :: in_nfreq, in_nlyr, in_ngridx, in_ngridy
+real(kind=sgl), dimension(*), intent(in) :: in_freqs
+!Output
+real(kind=sgl), dimension(in_ngridx,in_ngridy,in_nlyr,in_nfreq),intent(out) :: out_Ze,&
+           out_Attenuation_hydro,out_Attenuation_atmo
+real(kind=sgl), dimension(in_ngridx,in_ngridy,in_nlyr),intent(out) :: out_hgt
 
 
 
-
-!f2py intent(in) :: input_file,frequency
+!f2py intent(in) :: input_file
 !settings
 !f2py intent(in) :: set_verbose,set_write_nc,set_dump_to_file,set_input_path,set_output_path,set_tmp_path
 !f2py intent(in) :: set_data_path,set_obs_height,set_units,set_outpol,set_freq_str,set_file_desc,set_creator
@@ -84,8 +96,14 @@ gitVersion,gitHash &
 !f2py intent(in) :: set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_SD_snow,set_N_0snowDsnow,set_EM_snow
 !f2py intent(in) :: set_SP,set_isnow_n0,set_liu_type,set_SD_grau,set_N_0grauDgrau,set_EM_grau,set_EM_ice,set_SD_rain
 !f2py intent(in) :: set_N_0rainD,set_n_moments,set_moments_file
+!input
+!f2py intent(in) ::  in_nlyr, in_ngridx, in_ngridy,in_nfreq
+!f2py intent(in) ::  in_freqs
 !meta out
-!f2py intent(out) :: gitVersion,gitHash
+!f2py intent(out) :: out_gitVersion,out_gitHash
+!data out
+!f2py intent(out) :: out_Ze,out_Attenuation_hydro,out_Attenuation_atmo,out_hgt
+
 
 
 !!!loop variables
@@ -94,20 +112,22 @@ gitVersion,gitHash &
 !!!output variables
   character(300) ::nc_out_file
 
+
+
 print *,"Hello"
-print *,input_file,frequency
+print *,input_file
+print*,in_freqs(1),in_freqs(2)
 
 
   !get git data
-  call versionNumber(gitVersion,gitHash)
+  call versionNumber(out_gitVersion,out_gitHash)
 
-print *,gitVersion,gitHash
+print *,out_gitVersion,out_gitHash
 
 nfrq = 1
 fi = 1
 
 
-print *,frequency
 
 !load settings, uggly but neccessary!
 verbose = set_verbose
@@ -147,16 +167,16 @@ N_0rainD = set_N_0rainD
 n_moments = set_n_moments
 moments_file = set_moments_file
 
+ngridx = in_ngridx
+ngridy = in_ngridy
+nfreq = in_nfreq
+freqs = in_freqs(1:nfreq)
 
-
-  freq = frequency
 
   ! create frequency string of not set in pamtra
   if (freq_str .eq. "") then
-     read(freq_str,"(f3.2)") freq
+     freq_str = "python"
   end if
-
-print*, frequency, freq_str
 
   if (verbose .gt. 1) print *,"input_file: ",input_file(:len_trim(input_file)),&
        " freq: ",freq_str
@@ -171,8 +191,6 @@ year = profiles_year
 month = profiles_month
 day = profiles_day
 time = profiles_time
-ngridx = profiles_ngridx
-ngridy = profiles_ngridy
 nlyr = profiles_nlyr
 deltax = profiles_deltax
 deltay = profiles_deltay
@@ -186,9 +204,11 @@ deltay = profiles_deltay
   if (verbose .gt. 1) print*, 'Start loop over frequencies & profiles!'
 
 
-
+  grid_f: do fi =1, nfrq
      grid_y: do ny = 1, ngridy !ny_in, ny_fin  
         grid_x: do nx = 1, ngridx !nx_in, nx_fin   
+
+         freq = freqs(fi)
 
          !   ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
          lat = profiles(nx,ny)%latitude                  ! °
@@ -230,9 +250,15 @@ deltay = profiles_deltay
          end if
 
            !run the model
-           call run_rt3(nx,ny,fi,frequency,freq_str)
-
+           call run_rt3(nx,ny,fi,freq,freq_str)
         end do grid_x
      end do grid_y
+  end do grid_f
+
+out_Ze = Ze(:,:,:,:)
+out_Attenuation_hydro = Attenuation_hydro(:,:,:,:)
+out_Attenuation_atmo = Attenuation_atmo(:,:,:,:)
+out_hgt = hgt(:,:,:)
+
 
 end subroutine pyPamtraLib
