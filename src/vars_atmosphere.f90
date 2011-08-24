@@ -105,6 +105,9 @@ module vars_atmosphere
 
   integer :: alloc_status
 
+  integer :: model_i, model_j
+  real(kind=sgl) :: lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,hwp
+
   type(profile), allocatable :: profiles(:,:)
   integer, allocatable, dimension(:,:) :: ics
 

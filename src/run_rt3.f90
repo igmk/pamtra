@@ -20,8 +20,7 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
   real(kind=dbl), dimension(maxv) :: MU_VALUES
   real(kind=dbl) :: wavelength       ! microns
   real(kind=dbl) :: GROUND_TEMP, ground_albedo
-  real(kind=sgl) :: lat, lon, lfrac
-  real(kind=dbl) :: wind10u, wind10v
+
   real(kind=dbl) :: land_emissivity
 
   complex(kind=dbl) :: eps_water, & ! function to calculate the dielectic properties of (salt)water
@@ -33,8 +32,6 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
 
   wavelength = c / (freq*1.d3)   ! microns
 
-  write(xstr, '(i3.3)') profiles(nx,ny)%isamp
-  write(ystr, '(i3.3)') profiles(nx,ny)%jsamp
 
   if (verbose .gt. 0) print*, "calculating: ", frq_str, " Y:",ny, " of ", ngridy, "X:", nx, " of ", ngridx
 
@@ -46,6 +43,20 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
   press_lev = profiles(nx,ny)%press_lev           ! Pa
   temp_lev = profiles(nx,ny)%temp_lev             ! K
   hgt_lev = profiles(nx,ny)%hgt_lev               ! m
+
+  model_i = profiles(nx,ny)%isamp
+  model_j = profiles(nx,ny)%jsamp
+  wind10u = profiles(nx,ny)%wind_10u
+  wind10v = profiles(nx,ny)%wind_10v
+
+  iwv = profiles(nx,ny)%iwv
+  cwp = profiles(nx,ny)%cwp
+  iwp = profiles(nx,ny)%iwp
+  rwp = profiles(nx,ny)%rwp
+  swp = profiles(nx,ny)%swp
+  gwp = profiles(nx,ny)%gwp
+  hwp = profiles(nx,ny)%hwp
+
 
   cwc_q = profiles(nx,ny)%cloud_water_q           ! kg/kg
   iwc_q = profiles(nx,ny)%cloud_ice_q             ! kg/kg
@@ -63,12 +74,16 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
      hwc_n = profiles(nx,ny)%hail_n              ! #/kg
   end if
 
-  press = profiles(nx,ny)%press                   ! Pa
-  temp = profiles(nx,ny)%temp                     ! K
-  relhum = profiles(nx,ny)%relhum                 ! %
-  vapor_pressure = profiles(nx,ny)%vapor_pressure ! Pa
-  rho_vap = profiles(nx,ny)%rho_vap               ! kg/m^3
-  q_hum = profiles(nx,ny)%q_hum                   ! kg/kg
+  temp_lev = profiles(nx,ny)%temp_lev
+
+  write(xstr, '(i3.3)') profiles(nx,ny)%isamp
+  write(ystr, '(i3.3)') profiles(nx,ny)%jsamp
+
+  ! This GCE model format does not have all the fields expected by    
+  ! the radiative transfer code (i.e. total pressure, and water vapor 
+  ! pressure for this model).  Assign/compute the missing fields first
+  ! make layer averages
+  call get_atmosG0
 
 
   if (verbose .gt. 1) print*, nx,ny, 'type to local variables done' 

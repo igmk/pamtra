@@ -98,12 +98,6 @@ program pamtra
   call allocate_vars
 
 
-  ! This GCE model format does not have all the fields expected by    
-  ! the radiative transfer code (i.e. total pressure, and water vapor 
-  ! pressure for this model).  Assign/compute the missing fields first
-  ! make layer averages
-  call get_atmosG0
-
   if (write_nc .eqv. .false.) call mod_io_strings_get_filename()
 
 
