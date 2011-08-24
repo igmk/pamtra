@@ -84,6 +84,7 @@ gitVersion,gitHash &
 !f2py intent(in) :: set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_SD_snow,set_N_0snowDsnow,set_EM_snow
 !f2py intent(in) :: set_SP,set_isnow_n0,set_liu_type,set_SD_grau,set_N_0grauDgrau,set_EM_grau,set_EM_ice,set_SD_rain
 !f2py intent(in) :: set_N_0rainD,set_n_moments,set_moments_file
+!meta out
 !f2py intent(out) :: gitVersion,gitHash
 
   character(6), dimension(maxfreq) :: frqs_str !from commandline
