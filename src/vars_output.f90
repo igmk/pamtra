@@ -1,7 +1,6 @@
 module vars_output
 
   use kinds
-  use nml_params, only: NUMMU
   implicit none
   save
 
@@ -11,7 +10,7 @@ module vars_output
 
   !for passive
   real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: tb
-  real(kind=dbl), dimension(2*NUMMU) :: angles_deg
+  real(kind=dbl), dimension(32) :: angles_deg !2*NUMMU=32
 
   !for active 
   real(kind=dbl), allocatable, dimension(:,:,:) :: hgt

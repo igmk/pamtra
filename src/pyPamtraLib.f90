@@ -11,7 +11,7 @@ in_nlyr, in_ngridx, in_ngridy,in_nfreq, in_freqs&
 ,& !meta out
 out_gitVersion,out_gitHash &
 ,& !data_out
-out_Ze, out_Attenuation_hydro,out_Attenuation_atmo,out_hgt,&
+out_Ze, out_Attenuation_hydro,out_Attenuation_atmo,out_hgt,out_tb,&
 out_angles&
 )
 
@@ -29,7 +29,6 @@ out_angles&
   use vars_profile
   use double_moments_module !double moments variables are stored here
   use mod_io_strings !some strings for nice filenames
-
 
 
 
@@ -67,9 +66,9 @@ out_angles&
   logical,intent(in) :: set_lphase_flag, &        ! flag for phase function calculation
        set_lgas_extinction, &    ! gas extinction desired
        set_lhyd_extinction, &    ! hydrometeor extinction desired
-       set_write_nc, &	   ! write netcdf output
-       set_active, &  	   ! calculate active stuff
-       set_passive		   ! calculate passive stuff (with RT3)
+       set_write_nc, &     ! write netcdf output
+       set_active, &       ! calculate active stuff
+       set_passive         ! calculate passive stuff (with RT3)
 
   character(5),intent(in) :: set_EM_snow, set_EM_grau, set_EM_ice
   character(3),intent(in) :: set_SD_snow, set_SD_grau, set_SD_rain, set_gas_mod
@@ -87,7 +86,7 @@ real(kind=sgl), dimension(in_ngridx,in_ngridy,in_nlyr,in_nfreq),intent(out) :: o
            out_Attenuation_hydro,out_Attenuation_atmo
 real(kind=sgl), dimension(in_ngridx,in_ngridy,in_nlyr),intent(out) :: out_hgt
 real(kind=sgl), dimension(32),intent(out) :: out_angles !2*NUMMU instead of 32 does not work, because f2py does not know f2py!
-
+real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: out_tb !same here: noutlevels=2, 2*NUMMU = 32, NSTOKES = 2
 
 !f2py intent(in) :: input_file
 !settings
@@ -103,16 +102,13 @@ real(kind=sgl), dimension(32),intent(out) :: out_angles !2*NUMMU instead of 32 d
 !meta out
 !f2py intent(out) :: out_gitVersion,out_gitHash
 !data out
-!f2py intent(out) :: out_Ze,out_Attenuation_hydro,out_Attenuation_atmo,out_hgt
+!f2py intent(out) :: out_Ze,out_Attenuation_hydro,out_Attenuation_atmo,out_hgt,out_tb
 !f2py intent(out) :: out_angles
 
 
 
 !!!loop variables
   integer ::  fi,nx, ny
-
-!!!output variables
-  character(300) ::nc_out_file
 
 
 
@@ -122,9 +118,8 @@ print*,in_freqs(1),in_freqs(2)
 
 
   !get git data
-  call versionNumber(out_gitVersion,out_gitHash)
+call versionNumber(out_gitVersion,out_gitHash)
 
-print *,out_gitVersion,out_gitHash
 
 nfrq = 1
 fi = 1
@@ -173,12 +168,6 @@ ngridx = in_ngridx
 ngridy = in_ngridy
 nfreq = in_nfreq
 freqs = in_freqs(1:nfreq)
-
-
-  ! create frequency string of not set in pamtra
-  if (freq_str .eq. "") then
-     freq_str = "python"
-  end if
 
   if (verbose .gt. 1) print *,"input_file: ",input_file(:len_trim(input_file)),&
        " freq: ",freq_str
@@ -262,7 +251,8 @@ out_Attenuation_hydro = Attenuation_hydro(:,:,:,:)
 out_Attenuation_atmo = Attenuation_atmo(:,:,:,:)
 out_hgt = hgt(:,:,:)
 out_angles = angles_deg(:)
+out_tb = RESHAPE( tb, (/ngridx, ngridy, noutlevels, 2*nummu, nfrq,nstokes /),&
+         ORDER = (/6,5,4,3,2,1/))
 
-print*,"GG",angles_deg
 
 end subroutine pyPamtraLib
