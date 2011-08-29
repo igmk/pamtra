@@ -1,154 +1,238 @@
 # -*- coding: utf-8 -*-
 
-#import numpy as np
-
+import numpy as np
+import datetime
 import pyPamtraLib
+import csv
 
 
 class pyPamtra:
-		#def __init__(self,z,p,t,rh,qv,cwc,iwc,rwc,swc,gwc,year,month,day,time,lat,lon):
-		##print yyyy, mm, dd, hhmm, nx, ny, nz, dx, dy
-		##print lat, lon, lfrac, wind10
-		#self.levels = len(z[0,:])
-		#self.nprof =  len(z[:,0])
-		#shape = (self.nprof,self.levels)
-		#shape1 = (self.nprof,self.levels-1)
-		#self.year = year
-		#self.mon = month
-		#self.day = day
-		#self.time = time
-		#self.nx = self.nprof
-		#self.ny = 1
-		#self.nz = self.levels - 1
-		#self.dx = 0.
-		#self.dy = 0.
-		#self.lat = lat
-		#self.lon = lon
-		#self.lfrac = -1.0
-		#self.windu = 0.0
-		#self.windv = 0.0
-		#self.z = z.reshape(shape).astype(float)
-		#self.p = p.reshape(shape).astype(float)
-		#self.t = t.reshape(shape).astype(float)
-		#self.rh = rh.reshape(shape).astype(float)
-		#self.qv = qv.reshape(shape).astype(float)
-		#self.cwc = cwc.reshape(shape1).astype(float)
-		#self.iwc = iwc.reshape(shape1).astype(float)
-		#self.rwc = rwc.reshape(shape1).astype(float)
-		#self.swc = swc.reshape(shape1).astype(float)
-		#self.gwc = gwc.reshape(shape1).astype(float)
-		## Calculate additional values
-		#self.cwc_q = np.zeros(shape1)
-		#self.iwc_q = np.zeros(shape1)
-		#self.rwc_q = np.zeros(shape1)
-		#self.swc_q = np.zeros(shape1)
-		#self.gwc_q = np.zeros(shape1)
-		#self.delz = np.zeros(shape1)
-		#self.wvc = np.zeros(shape1)
+	
+	def __init__(self):
 		
-		#for i in range(self.levels-1):
-		## end for
-	## end def __init__
-	#for j in range(self.nprof):
-		#self.delz[j,i] = self.z[j,i+1]-self.z[j,i]
-		#zbar = (self.z[j,i+1]+self.z[j,i])/2.
-		#tbar = (self.t[j,i+1]+self.t[j,i])/2.
-		#rhbar = (self.rh[j,i+1]+self.rh[j,i])/2.
-		#xp = -1.*np.log(self.p[j,i+1]/self.p[j,i])/self.delz[j,i]
-		#pbar = -1.*self.p[j,i]/xp*(np.exp(-xp*self.delz[j,i])-1.)/self.delz[j,i]
-		#rho_m = moist_rho(pbar,tbar,rh2q(rhbar,tbar,pbar))
-		##import pdb; pdb.set_trace()
-		#self.cwc_q[j,i] = self.cwc[j,i]/rho_m
-		#self.iwc_q[j,i] = self.iwc[j,i]/rho_m
-		#self.rwc_q[j,i] = self.rwc[j,i]/rho_m
-		#self.swc_q[j,i] = self.swc[j,i]/rho_m
-		#self.gwc_q[j,i] = self.gwc[j,i]/rho_m
-		#self.wvc[j,i] = (self.qv[j,i+1]+self.qv[j,i])/2.*rho_m
+		self.settings = dict()
+		self.settings["verbose"]=0
+		self.settings["write_nc"]=True
+		self.settings["dump_to_file"]=False
+		self.settings["tmp_path"]='/tmp/'
+		self.settings["input_path"]=''
+		self.settings["output_path"]='../test/tmp'
+		self.settings["data_path"]='/home/mech/models/pamtra/data/'
+
+		self.settings["obs_height"]=833000.
+		self.settings["units"]='T'
+		self.settings["outpol"]='VH'
+		self.settings["freq_str"]=''
+		self.settings["file_desc"]=''
+		self.settings["creator"]='Pamtrauser'
+
+		self.settings["active"]=True
+		self.settings["passive"]=True
+
+		self.settings["ground_type"]='S'
+		self.settings["salinity"]=33.0
+		self.settings["emissivity"]=0.6
+
+		self.settings["lgas_extinction"]=True
+		self.settings["gas_mod"]='R98'
+
+		self.settings["lhyd_extinction"]=True
+		self.settings["lphase_flag"]= True
+
+		self.settings["SD_snow"]='Exp' 
+		self.settings["N_0snowDsnow"]=7.628 
+		self.settings["EM_snow"]='icesf' 
+		self.settings["SP"]=0.2 
+		self.settings["isnow_n0"]=1
+		self.settings["liu_type"]=8
+
+		self.settings["SD_grau"]='Exp' 
+		self.settings["N_0grauDgrau"]=4.0 
+		self.settings["EM_grau"]='surus'
+
+		self.settings["EM_ice"]='mieic'
+
+		self.settings["SD_rain"]='Exp' 
+		self.settings["N_0rainD"]=8.0
+
+		self.settings["n_moments"]=1
+		self.settings["moments_file"]='snowCRYSTAL'
+		
+		self.settingsDefaultKeys = self.settings.keys()
+		
+	
+	def readProfile(self,inputFile):
+		f = open(inputFile,"r")
+		g = csv.reader(f,delimiter=" ",skipinitialspace=True)
+		self.year, self.month, self.day, self.time, self.ngridx, self.ngridy, self.nlyr, self.deltax, self.deltay = g.next()
+		
+		self.ngridx = int(self.ngridx)
+		self.ngridy = int(self.ngridy)
+		self.nlyr = int(self.nlyr)
+		
+		shape2D = (self.ngridx,self.ngridy,)
+		shape3D = (self.ngridx,self.ngridy,self.nlyr,)
+		shape3Dplus = (self.ngridx,self.ngridy,self.nlyr+1,)
+		
+		self.model_i = np.zeros(shape2D)
+		self.model_j = np.zeros(shape2D)
+		self.lat = np.zeros(shape2D)
+		self.lon = np.zeros(shape2D)
+		self.lfrac = np.zeros(shape2D)
+		self.wind10u = np.zeros(shape2D)
+		self.wind10v = np.zeros(shape2D)
+		
+		self.iwv = np.zeros(shape2D)
+		self.cwp = np.zeros(shape2D)
+		self.iwp = np.zeros(shape2D)
+		self.rwp = np.zeros(shape2D)
+		self.swp = np.zeros(shape2D)
+		self.gwp = np.zeros(shape2D)
+		
+		self.hgt_lev = np.zeros(shape3Dplus)
+		self.temp_lev = np.zeros(shape3Dplus)
+		self.press_lev = np.zeros(shape3Dplus)
+		self.relhum_lev = np.zeros(shape3Dplus)
+		
+		self.cwc_q = np.zeros(shape3D)
+		self.iwc_q = np.zeros(shape3D)
+		self.rwc_q = np.zeros(shape3D)
+		self.swc_q = np.zeros(shape3D)
+		self.gwc_q = np.zeros(shape3D)
+		
+		
+		for x in np.arange(self.ngridx):
+			for y in np.arange(self.ngridy):
+				print x,y
+				self.model_i[x,y], self.model_j[x,y] = np.array(g.next(),dtype=int)
+				self.lat[x,y], self.lon[x,y], self.lfrac[x,y],self.wind10u[x,y],self.wind10v[x,y]  = np.array(g.next(),dtype=float)
+				self.iwv[x,y],self.cwp[x,y],self.iwp[x,y],self.rwp[x,y],self.swp[x,y],self.gwp[x,y] = np.array(g.next(),dtype=float)
+				self.hgt_lev[x,y,0],self.press_lev[x,y,0],self.temp_lev[x,y,0],self.relhum_lev[x,y,0] = np.array(g.next(),dtype=float)
+				for z in np.arange(self.nlyr):
+					self.hgt_lev[x,y,z+1],self.press_lev[x,y,z+1],self.temp_lev[x,y,z+1],self.relhum_lev[x,y,z+1],self.cwc_q[x,y,z],self.iwc_q[x,y,z],self.rwc_q[x,y,z],self.swc_q[x,y,z],self.gwc_q[x,y,z] = np.array(g.next(),dtype=float)
+
+		f.close()
+		for key in self.__dict__.keys():
+			print key,type(self.__dict__[key]),self.__dict__[key]
 
 	
-	def runPamtra(self,inputFile,frequencies,userSettings):
-
-		if (type(freqs) == int) or ((type(freqs) == float): freqs = [freqs]
-
-		settings = dict()
-		settings["verbose"]=0
-		settings["write_nc"]=True
-		settings["dump_to_file"]=False
-		settings["tmp_path"]='/tmp/'
-		settings["write_nc"]=True
-		settings["input_path"]='../test/referenceProfile'
-		settings["output_path"]='../test/tmp'
-		settings["data_path"]='/home/mech/models/pamtra/data/'
-
-		settings["obs_height"]=833000.
-		settings["units"]='T'
-		settings["outpol"]='VH'
-		settings["freq_str"]=''
-		settings["file_desc"]=''
-		settings["creator"]='Pamtrauser'
-
-		settings["active"]=True
-		settings["passive"]=True
-
-		settings["ground_type"]='S'
-		settings["salinity"]=33.0
-		settings["emissivity"]=0.6
-
-		settings["lgas_extinction"]=True
-		settings["gas_mod"]='R98'
-
-		settings["lhyd_extinction"]=True
-		settings["lphase_flag"]= True
-
-		settings["SD_snow"]='Exp' 
-		settings["N_0snowDsnow"]=7.628 
-		settings["EM_snow"]='icesf' 
-		settings["SP"]=0.2 
-		settings["isnow_n0"]=1
-		settings["liu_type"]=8
-
-		settings["SD_grau"]='Exp' 
-		settings["N_0grauDgrau"]=4.0 
-		settings["EM_grau"]='surus'
-
-		settings["EM_ice"]='mieic'
-
-		settings["SD_rain"]='Exp' 
-		settings["N_0rainD"]=8.0
-
-		settings["n_moments"]=1
-		settings["moments_file"]='snowCRYSTAL'
-
-		for key in userSettings:
-			try: settings[key] = userSettings[key]
-			except: "Could not parse ",key
+	
+	def createProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
+			iwv,cwp,iwp,rwp,swp,gwp,
+			hgt_lev,press_lev,temp_lev,relhum_lev,
+			cwc_q,iwc_q,rwc_q,swc_q,gwc_q):
 		
-		if settings["write_nc"] == False:
+		noDims = len(np.shape(hgt_lev))
+		
+		if noDims == 1:
+			self.ngridx = 1
+			self.ngridy = 1
+		elif noDims == 2:
+			self.ngridx = np.shape(hgt_lev)[0]
+			self.ngridy = 1
+		elif noDims == 3:
+			self.ngridx = np.shape(hgt_lev)[0]
+			self.ngridy = np.shape(hgt_lev)[1]
+		else:
+			print "Too many dimensions!"
+			raise IOError
+		self.nlyr = np.shape(hgt_lev)[-1]
+		shape2D = (self.ngridx,self.ngridy,)
+		shape3D = (self.ngridx,self.ngridy,self.nlyr,)
+		shape3Dplus = (self.ngridx,self.ngridy,self.nlyr+1,)
+		
+		if (type(timestamp) == int) or (type(timestamp) == float) :
+			timestamp = datetime.datetime.utcfromtimestamp(timestamp)
+		self.year = timestamp.strftime("%Y")
+		self.month = timestamp.strftime("%m")
+		self.day = timestamp.strftime("%d")
+		self.time = timestamp.strftime("%H%M")
+		self.deltax = 0.
+		self.deltay = 0.
+		self.lat = lat.reshape(shape2D)
+		self.lon = lon.reshape(shape2D)
+		self.lfrac = lfrac.reshape(shape2D)
+		self.model_i = np.where(hgt_lev.reshape(shape3D))[0]
+		self.model_j = np.where(hgt_lev.reshape(shape3D))[1]
+		self.wind10u = wind10u.reshape(shape2D)
+		self.wind10v = wind10v.reshape(shape2D)
+
+		self.iwv = iwv.reshape(shape2D)
+		self.cwp = cwp.reshape(shape2D)
+		self.iwp = iwp.reshape(shape2D)
+		self.rwp = rwp.reshape(shape2D)
+		self.swp = swp.reshape(shape2D)
+		self.gwp = gwp.reshape(shape2D)
+		
+		self.hgt_lev = hgt_lev.reshape(shape3Dplus)
+		self.temp_lev = temp_lev.reshape(shape3Dplus)
+		self.press_lev = press_lev.reshape(shape3Dplus)
+		self.relhum_lev = relhum_lev.reshape(shape3Dplus)
+		
+		self.cwc_q = cwc_q.reshape(shape3D)
+		self.iwc_q = iwc_q.reshape(shape3D)
+		self.rwc_q = rwc_q.reshape(shape3D)
+		self.swc_q = swc_q.reshape(shape3D)
+		self.gwc_q = gwc_q.reshape(shape3D)
+
+	def runPamtra(self,freqs):
+
+		if (type(freqs) == int) or (type(freqs) == float): freqs = [freqs]
+		
+		self.freqs = freqs
+		
+
+		for key in self.settings:
+			if key not in self.settingsDefaultKeys:
+				print "Warning Could not parse ",key
+		
+		if self.settings["write_nc"] == False:
 			raise ValueError("write_nc must be set true for historical reasons")
 		
 		
-		nlyr = 50
-		ngridx = 4
-		ngridy = 1
-		nfreqs = len(freqs)
+		#self.nlyr = 50
+		#self.ngridx = 4
+		#self.ngridy = 1
+		self.nfreqs = len(freqs)
+		
+		#self.year = "2010"
+		#self.month = "05"
+		#self.day = "02"
+		#self.time ="1200"
+
+		#test = np.array([[ 1], [ 2], [ 3], [ 4]])
+
+		#self.deltax=self.deltay= 2
+		#self.lat=self.lon=self.model_i=self.model_j=test
+		#self.wind10u=self.wind10v=self.lfrac=test*2
+		#self.relhum_lev=self.press_lev=self.temp_lev=self.hgt_lev = np.random.random((self.ngridx,self.ngridy,self.nlyr+1))
+		#self.iwv=self.cwp=self.iwp=self.rwp=self.swp=self.gwp = np.random.random((self.ngridx,self.ngridy))
+		#self.cwc_q = self.iwc_q = self.rwc_q = self.swc_q = self.gwc_q = np.random.random((self.ngridx,self.ngridy,self.nlyr))
+
 		
 		#output
 		self.pamtraVersion,self.pamtraHash,\
 		self.Ze,self.attenuationHydro,self.attenuationAtmo,self.hgt, self.tb, self.angles = \
-		pyPamtraLib.pypamtralib(inputFile,
-		#settings
-		settings["verbose"], settings["write_nc"], settings["dump_to_file"], settings["input_path"], settings["output_path"], settings["tmp_path"], settings["data_path"], settings["obs_height"], settings["units"], settings["outpol"], settings["freq_str"], settings["file_desc"], settings["creator"], settings["active"], settings["passive"], settings["ground_type"], settings["salinity"], settings["emissivity"], settings["lgas_extinction"], settings["gas_mod"], settings["lhyd_extinction"], settings["lphase_flag"], settings["SD_snow"], settings["N_0snowDsnow"], settings["EM_snow"], settings["SP"], settings["isnow_n0"], settings["liu_type"], settings["SD_grau"], settings["N_0grauDgrau"], settings["EM_grau"], settings["EM_ice"], settings["SD_rain"], settings["N_0rainD"], settings["n_moments"], settings["moments_file"],
+		pyPamtraLib.pypamtralib(
+		#self.settings
+		self.settings["verbose"], self.settings["write_nc"], self.settings["dump_to_file"], self.settings["input_path"], self.settings["output_path"], self.settings["tmp_path"], self.settings["data_path"], self.settings["obs_height"], self.settings["units"], self.settings["outpol"], self.settings["freq_str"], self.settings["file_desc"], self.settings["creator"], self.settings["active"], self.settings["passive"], self.settings["ground_type"], self.settings["salinity"], self.settings["emissivity"], self.settings["lgas_extinction"], self.settings["gas_mod"], self.settings["lhyd_extinction"], self.settings["lphase_flag"], self.settings["SD_snow"], self.settings["N_0snowDsnow"], self.settings["EM_snow"], self.settings["SP"], self.settings["isnow_n0"], self.settings["liu_type"], self.settings["SD_grau"], self.settings["N_0grauDgrau"], self.settings["EM_grau"], self.settings["EM_ice"], self.settings["SD_rain"], self.settings["N_0rainD"], self.settings["n_moments"], self.settings["moments_file"],
 		#input
-		nlyr,ngridx,ngridy,nfreqs,freqs)
+		self.nlyr,self.ngridx,self.ngridy,self.nfreqs,self.freqs,
+		self.year,self.month,self.day,self.time,
+		self.deltax,self.deltay, self.lat,self.lon,self.model_i,self.model_j,
+		self.wind10u,self.wind10v,self.lfrac,
+		self.relhum_lev,self.press_lev,self.temp_lev,self.hgt_lev,
+		self.iwv,self.cwp,self.iwp,self.rwp,self.swp,self.gwp,
+		self.cwc_q,self.iwc_q,self.rwc_q,self.swc_q,self.gwc_q)
 		
 		self.Ze_dimensions = ["gridx","gridy","lyr","frequency"]
 		self.attenuationHydro_dimensions = ["gridx","gridy","lyr","frequency"]
 		self.attenuationAtmo_dimensions = ["gridx","gridy","lyr","frequency"]
 		self.tb_dimensions = ["gridx","gridy","outlevels","angles","frequency","stokes"]
 		
-		for key in self.__dict__.keys():
-			print key
-			print self.__dict__[key]
+		#for key in self.__dict__.keys():
+			#print key
+			#print self.__dict__[key]
 		
 		
 		

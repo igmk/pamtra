@@ -32,6 +32,4 @@ subroutine deallocate_vars
 !   deallocate(profiles)
 
 
-print *,"DEALLOCATED"
-
 end subroutine deallocate_vars

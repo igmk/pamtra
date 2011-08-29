@@ -15,7 +15,7 @@ ifeq ($(ARCH),Darwin)
 else
 	NCFLAGS=-I/home/mech/include
 	LFLAGS=-L/home/mech/lib
-	LDFLAGS=-lnetcdf -static
+	LDFLAGS=-lnetcdf -static 
 endif
 
 
@@ -36,11 +36,11 @@ pyOBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_atmosphere.o vars_profile
 	equcom.o land_emis.o equare.o scatdb.o dda_db_liu.o dielec_water.o ref_water.o \
 	ref_ice.o e_sat_gg_water.o spec2abs.o interpolation.o deallocate_vars.o \
 	hydrometeor_extinction.o cloud_ssp.o ice_ssp.o rain_ssp.o snow_ssp.o grau_ssp.o hail_ssp.o legendre2phasefunction.o \
-	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o \
+	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o   \
 	get_scat_coefs.o dump_profile.o collect_boundary_output.o double_moments.o versionNumber.auto.o
 
 
-noPyObjects=  write_nc_results.o formatted_frqstr.o
+noPyObjects=   formatted_frqstr.o
 
 BIN=pamtra
 
@@ -54,14 +54,28 @@ pamtra: pamtra.f90 $(OBJECTS)
 scatdb.o:
 	gcc -O  -fPIC -c scatdb.c 
 
+%.o: %.f90
+	$(FC) $(FCFLAGS) $<
+	
+write_nc_results.o: write_nc_results.f90
+	$(FC) $(FCFLAGS) $(NCFLAGS) write_nc_results.f90
+	
+
+
 prepython: 
-	f2py --overwrite-signature -m pyPamtraLib -h pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90
+	@echo "Make backup before deleting old signature file, auto creating will most likely fail."
+	@echo "####################################################################################"
+	f2py -m pyPamtraLib -h pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90
 
 python: 
-	f2py -c --fcompiler=gnu95 pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90
+	f2py -c --fcompiler=gnu95 pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ~/lib/python/
 	cp pyPamtra.py ~/lib/python/
 
+
+# f2py -c --noarch --f90exec=/opt/intel_fcc_80/bin/ifort
+# --fcompiler=intel hello.pyf hello.o /mypath-to-static-lib/lib.a
+# /mypath-to-static-lib/lib2.a
 
 precompile: 
 	echo "!edit in makefile only!" > versionNumber.auto.f90
@@ -73,13 +87,6 @@ precompile:
 	echo "return" >> versionNumber.auto.f90
 	echo "end subroutine versionNumber" >> versionNumber.auto.f90
 	$(FC) $(FCFLAGS) versionNumber.auto.f90 #otherwise error on first make run!
-
-%.o: %.f90
-	$(FC) $(FCFLAGS) $<
-	
-write_nc_results.o: write_nc_results.f90
-	$(FC) $(FCFLAGS) $(NCFLAGS) write_nc_results.f90
-	
 clean:
 	rm -rf $(OBJECTS) $(BIN) *.mod *~
 
