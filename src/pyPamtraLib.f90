@@ -119,7 +119,7 @@ real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: ou
 
 !!!loop variables
   integer ::  fi,nx, ny
-  integer :: nfreq
+
 
 
 
@@ -129,10 +129,6 @@ real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: ou
 
   !get git data
 call versionNumber(out_gitVersion,out_gitHash)
-
-
-nfrq = 1
-fi = 1
 
 
 
@@ -178,8 +174,8 @@ moments_file = set_moments_file
 
 ngridx = in_ngridx
 ngridy = in_ngridy
-nfreq = in_nfreq
-freqs = in_freqs(1:nfreq)
+nfrq = in_nfreq
+freqs = in_freqs(1:nfrq)
 
 year = in_year
 month = in_month

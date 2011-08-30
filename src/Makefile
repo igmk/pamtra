@@ -124,3 +124,23 @@ test4:
 	../test/compareNetcdf.sh 4
 	@echo "TEST 4 OK"
 
+pythontest1:
+	@echo "=== Python TEST 1 ==="
+	rm -fr ../test/tmp/*
+	python ../test/runPythonTest1.py
+	../test/compareAscii.sh 1
+	@echo "TEST 1 OK"
+
+pythontest2:
+	@echo "=== Python TEST 2 active only === "
+	rm -fr ../test/tmp/*
+	python ../test/runPythonTest2.py
+	../test/compareAscii.sh 2
+	@echo "TEST 2 OK"
+
+pythontest3:
+	@echo "=== Python TEST 3 passive only === "
+	rm -fr ../test/tmp/*
+	python ../test/runPythonTest3.py
+	../test/compareAscii.sh 3
+	@echo "TEST 3 OK"

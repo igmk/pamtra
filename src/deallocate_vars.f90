@@ -20,13 +20,10 @@ subroutine deallocate_vars
 
   deallocate(ics,file_ph)
 
-  if (write_nc) then
-     deallocate(is,js,lons,lats,lfracs,iwvs,cwps,iwps,rwps,swps,gwps,hwps,tb)
-   end if
 
-  if (active) then
+     deallocate(is,js,lons,lats,lfracs,iwvs,cwps,iwps,rwps,swps,gwps,hwps,tb)
      deallocate(Ze,Attenuation_hydro,Attenuation_atmo,hgt)
-  end if
+
 
 !   deallocate(angles_deg)
 !   deallocate(profiles)

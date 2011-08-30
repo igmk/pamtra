@@ -56,7 +56,7 @@ subroutine allocate_vars
   allocate(ics(ngridx, ngridy))
   allocate(file_ph(nlyr))
 
-  if (write_nc) then
+
      allocate(is(ngridy,ngridx),js(ngridy,ngridx))
      allocate(lons(ngridy,ngridx),lats(ngridy,ngridx),lfracs(ngridy,ngridx))
      allocate(iwvs(ngridy,ngridx))
@@ -66,15 +66,11 @@ subroutine allocate_vars
      lons = 0.; lats = 0.; lfracs = 0.;
      iwvs = 0.; cwps = 0.; iwps = 0.; rwps = 0.; swps = 0.; gwps = 0.; hwps = 0.;
      tb = 0.
-
-  end if
-
-  if (active) then
      allocate(Ze(ngridx,ngridy,nlyr,nfrq))
      allocate(Attenuation_hydro(ngridx,ngridy,nlyr,nfrq))
      allocate(Attenuation_atmo(ngridx,ngridy,nlyr,nfrq))
      allocate(hgt(ngridx,ngridy,nlyr))
-  end if
+
 
 !   allocate(angles_deg(2*NUMMU))
 
