@@ -197,7 +197,7 @@ deltay = in_deltay
   call allocate_vars
 
 
-  if (write_nc .eqv. .false.) call mod_io_strings_get_filename()
+!   if (write_nc .eqv. .false.) call mod_io_strings_get_filename()
 
 
   if (verbose .gt. 1) print*, 'Start loop over frequencies & profiles!'
@@ -253,14 +253,26 @@ deltay = in_deltay
      end do grid_y
   end do grid_f
 
-out_Ze = Ze(:,:,:,:)
-out_Attenuation_hydro = Attenuation_hydro(:,:,:,:)
-out_Attenuation_atmo = Attenuation_atmo(:,:,:,:)
-out_hgt = hgt(:,:,:)
-out_angles = angles_deg(:)
-out_tb = RESHAPE( tb, (/ngridx, ngridy, noutlevels, 2*nummu, nfrq,nstokes /),&
-         ORDER = (/6,5,4,3,2,1/))
+if (active) then
+	out_Ze = Ze(:,:,:,:)
+	out_Attenuation_hydro = Attenuation_hydro(:,:,:,:)
+	out_Attenuation_atmo = Attenuation_atmo(:,:,:,:)
+	out_hgt = hgt(:,:,:)
+else
+	out_Ze = -9999.
+	out_Attenuation_hydro = -9999.
+	out_Attenuation_atmo = -9999.
+	out_hgt = -9999.
+end if
 
+if (passive) then
+	out_angles = angles_deg(:)
+	out_tb = RESHAPE( tb, (/ngridx, ngridy, noutlevels, 2*nummu, nfrq,nstokes /),&
+         ORDER = (/6,5,4,3,2,1/))
+else
+	out_angles = -9999.
+	out_tb = -9999
+end if
 call deallocate_vars()
 
 end subroutine pyPamtraLib

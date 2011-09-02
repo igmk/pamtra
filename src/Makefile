@@ -122,6 +122,8 @@ test4:
 	../test/compareNetcdf.sh 4
 	@echo "TEST 4 OK"
 
+pythontest: pythontest1 pythontest2 pythontest3
+
 pythontest1:
 	@echo "=== Python TEST 1 ==="
 	rm -fr ../test/tmp/*

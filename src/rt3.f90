@@ -219,7 +219,7 @@ SUBROUTINE RT3 (NSTOKES, NUMMU, AZIORDER, MU_VALUES, SRC_CODE,    &
 
   use kinds
   use vars_atmosphere
-  use nml_params, only: verbose, write_nc
+  use nml_params, only: verbose, write_nc, in_python
 
   implicit none
 
@@ -296,7 +296,7 @@ SUBROUTINE RT3 (NSTOKES, NUMMU, AZIORDER, MU_VALUES, SRC_CODE,    &
 
   if (verbose .gt. 1) print*, "Writing output ...."
 
-  if (write_nc) then 
+  if (write_nc .or. in_python) then 
      call collect_output(NSTOKES, NUMMU, AZIORDER, &
           WAVELENGTH,   &
           UNITS, OUTPOL,NOUTLEVELS, OUTLEVELS,         &

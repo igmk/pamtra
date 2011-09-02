@@ -21,7 +21,7 @@ active=.false.
 &snow_params
 EM_snow='liudb'
 isnow_n0=0
-liu_type=8
+liu_type=4
 /
 &graupel_params
 /

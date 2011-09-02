@@ -98,7 +98,6 @@ class pyPamtra:
 		
 		for x in np.arange(self.ngridx):
 			for y in np.arange(self.ngridy):
-				print x,y
 				self.model_i[x,y], self.model_j[x,y] = np.array(g.next(),dtype=int)
 				self.lat[x,y], self.lon[x,y], self.lfrac[x,y],self.wind10u[x,y],self.wind10v[x,y]  = np.array(g.next(),dtype=float)
 				self.iwv[x,y],self.cwp[x,y],self.iwp[x,y],self.rwp[x,y],self.swp[x,y],self.gwp[x,y] = np.array(g.next(),dtype=float)
@@ -178,6 +177,9 @@ class pyPamtra:
 		for key in self.settings:
 			if key not in self.settingsDefaultKeys:
 				print "Warning Could not parse ",key
+				
+		if self.settings["n_moments"]==2:
+			raise IOError("multi moments not implemented yet!"
 
 		#self.year = "2010"
 		#self.month = "05"

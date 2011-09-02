@@ -79,7 +79,7 @@ contains
     in_python = .false. ! we are _not_ in python
 
     !set namelist defaults!
-    verbose=4
+    verbose=0
     write_nc=.true.
     dump_to_file=.false.
     input_path='profile/'
