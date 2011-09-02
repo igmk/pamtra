@@ -130,6 +130,7 @@ void scatdb_(float *f,float *t,int *nshape,float *dmax,float *cabs,float *csca,f
 	t1 = *t;
 	n1 = *nshape;
 	dmax1 = *dmax;
+	printf(scat_db_dir);
 	*iret = scatdb(f1,t1,n1,dmax1,cabs,csca,cbsc,g,p,re,is_loaded, scat_db_dir); //scat_db_dir added!  (Max, 16.8.11)
 //     *iret = scatdb(f1,t1,n1,dmax1,cabs,csca,cbsc,g,p,re,is_loaded);
 }
