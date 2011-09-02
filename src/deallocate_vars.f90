@@ -18,10 +18,11 @@ subroutine deallocate_vars
   deallocate(nlegen,rt3nlegen,kextatmo,kexttot,salbtot,rt3kexttot,rt3salbtot,g_coeff,&
     back,legen,legen2,legen3,legen4,rt3legen,rt3legen2,rt3legen3,rt3legen4)
 
-  deallocate(ics,file_ph)
+  deallocate(file_ph)
+! deallocate(ics)
 
-
-    if (write_nc) deallocate(is,js,lons,lats,lfracs,iwvs,cwps,iwps,rwps,swps,gwps,hwps,tb)
+   deallocate(is,js,lons,lats,lfracs,iwvs,cwps,iwps,rwps,swps,gwps,hwps)
+   if (write_nc .or. in_python) deallocate(tb)
      deallocate(Ze,Attenuation_hydro,Attenuation_atmo,hgt)
 
 

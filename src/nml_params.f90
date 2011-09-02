@@ -35,8 +35,10 @@ module nml_params
   real(kind=dbl) :: N_0snowDsnow, N_0grauDgrau, N_0rainD, SP
   real(kind=dbl) :: salinity         ! sea surface salinity
 
-  logical :: dump_to_file   ! flag for profile and ssp dump
-  logical :: lphase_flag, &        ! flag for phase function calculation
+  logical ::  in_python !are we in python
+
+  logical :: dump_to_file, &   ! flag for profile and ssp dump
+       lphase_flag, &        ! flag for phase function calculation
        lgas_extinction, &    ! gas extinction desired
        lhyd_extinction, &    ! hydrometeor extinction desired
        write_nc, &  ! write netcdf or ascii output
@@ -74,11 +76,10 @@ contains
     namelist / rain_params / SD_rain, N_0rainD
     namelist / moments / n_moments, moments_file
 
-
+    in_python = .false. ! we are _not_ in python
 
     !set namelist defaults!
-    verbose=0
-
+    verbose=4
     write_nc=.true.
     dump_to_file=.false.
     input_path='profile/'

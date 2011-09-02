@@ -43,7 +43,7 @@ subroutine calculate_active(OUT_FILE_ACT,freq,hgt,Ze, Attenuation_atmo, Attenuat
   ! 
   ! 		end do
 
-  if (write_nc .eqv. .false.) then
+  if ((write_nc .eqv. .false.) .and. (in_python .eqv. .false.)) then
      open (unit=22, file=OUT_FILE_ACT, status='unknown')
      write (22,*) "C           z[m]           Ze[dBz] Attenuation_hydro[dB] Attenuation_atmo[dB]"
      do nz = 1, nlyr

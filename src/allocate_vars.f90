@@ -53,25 +53,33 @@ subroutine allocate_vars
   allocate(rt3legen3(nlyr,200), stat=alloc_status)
   allocate(rt3legen4(nlyr,200), stat=alloc_status)
 
-  allocate(ics(ngridx, ngridy))
-  allocate(file_ph(nlyr))
+!   allocate(ics(ngridx, ngridy))
+  if (dump_to_file) allocate(file_ph(nlyr))
 
-if (write_nc) then
+!  if (write_nc) then
      allocate(is(ngridy,ngridx),js(ngridy,ngridx))
      allocate(lons(ngridy,ngridx),lats(ngridy,ngridx),lfracs(ngridy,ngridx))
      allocate(iwvs(ngridy,ngridx))
      allocate(cwps(ngridy,ngridx),iwps(ngridy,ngridx),rwps(ngridy,ngridx),&
           swps(ngridy,ngridx),gwps(ngridy,ngridx),hwps(ngridy,ngridx))
-     allocate(tb(nstokes,nfrq,2*nummu,noutlevels,ngridy,ngridx))
+     
       lons = 0.; lats = 0.; lfracs = 0.;
       iwvs = 0.; cwps = 0.; iwps = 0.; rwps = 0.; swps = 0.; gwps = 0.; hwps = 0.;
-      tb = 0.
-end if
+      
+!  end if
+ 
+! if (write_nc .or. in_python) then
+! print*,"allocate(tb(nstokes,nfrq,2*nummu,noutlevels,ngridy,ngridx))"
+     allocate(tb(nstokes,nfrq,2*nummu,noutlevels,ngridy,ngridx))
+     tb = 0.
+! end if
 
      allocate(Ze(ngridx,ngridy,nlyr,nfrq))
      allocate(Attenuation_hydro(ngridx,ngridy,nlyr,nfrq))
      allocate(Attenuation_atmo(ngridx,ngridy,nlyr,nfrq))
      allocate(hgt(ngridx,ngridy,nlyr))
+
+
 
 
 !   allocate(angles_deg(2*NUMMU))

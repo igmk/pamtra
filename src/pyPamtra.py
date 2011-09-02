@@ -107,8 +107,6 @@ class pyPamtra:
 					self.hgt_lev[x,y,z+1],self.press_lev[x,y,z+1],self.temp_lev[x,y,z+1],self.relhum_lev[x,y,z+1],self.cwc_q[x,y,z],self.iwc_q[x,y,z],self.rwc_q[x,y,z],self.swc_q[x,y,z],self.gwc_q[x,y,z] = np.array(g.next(),dtype=float)
 
 		f.close()
-		for key in self.__dict__.keys():
-			print key,type(self.__dict__[key]),self.__dict__[key]
 
 	
 	
@@ -224,23 +222,22 @@ class pyPamtra:
 			#print key
 			#print self.__dict__[key]
 
-
-def writeToNumpy(self,fname):
-	try: 
-		self.r
-		self.r["pamtraVersion"]
-	except:
-		raise IOError ("run runPamtra first!")
-		
-	f = open(fname, "w")
-	pickle.dump(self.r, f)
-	f.close()
-
-def loadFromNumpy(self,fname):
-	try: 
-		f = open(fname, "r")
-		self.r = pickle.load(f)
+	def writeResultsToNumpy(self,fname):
+		try: 
+			self.r
+			self.r["pamtraVersion"]
+		except:
+			raise IOError ("run runPamtra first!")
+			
+		f = open(fname, "w")
+		pickle.dump(self.r, f)
 		f.close()
-	except:
-		raise IOError ("Could not read data")
+
+	def loadResultsFromNumpy(self,fname):
+		try: 
+			f = open(fname, "r")
+			self.r = pickle.load(f)
+			f.close()
+		except:
+			raise IOError ("Could not read data")
 

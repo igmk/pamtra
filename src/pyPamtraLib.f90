@@ -129,13 +129,14 @@ real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: ou
 call versionNumber(out_gitVersion,out_gitHash)
 
 
+in_python = .true.
 !write_nc must be true to collect the results
-write_nc = .true.
+write_nc = .false.
 
 !these are not(?) needed any more
 input_path = ""
-output_path = ""
-freq_str = ""
+output_path = "/tmp"
+freq_str = "pythonFrequen"
 file_desc = ""
 
 

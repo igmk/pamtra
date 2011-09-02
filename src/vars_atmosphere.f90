@@ -67,7 +67,7 @@ module vars_atmosphere
   real(kind=sgl) :: lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,hwp
 
 
-  integer, allocatable, dimension(:,:) :: ics
+!   integer, allocatable, dimension(:,:) :: ics
 
 
 
