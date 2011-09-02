@@ -4,7 +4,7 @@ import numpy as np
 import datetime
 import pyPamtraLib
 import csv
-
+import pickle
 
 class pyPamtra:
 	
@@ -12,18 +12,13 @@ class pyPamtra:
 		
 		self.settings = dict()
 		self.settings["verbose"]=0
-		self.settings["write_nc"]=True
 		self.settings["dump_to_file"]=False
 		self.settings["tmp_path"]='/tmp/'
-		self.settings["input_path"]=''
-		self.settings["output_path"]='../test/tmp'
 		self.settings["data_path"]='/home/mech/models/pamtra/data/'
 
 		self.settings["obs_height"]=833000.
 		self.settings["units"]='T'
 		self.settings["outpol"]='VH'
-		self.settings["freq_str"]=''
-		self.settings["file_desc"]=''
 		self.settings["creator"]='Pamtrauser'
 
 		self.settings["active"]=True
@@ -180,21 +175,12 @@ class pyPamtra:
 		if (type(freqs) == int) or (type(freqs) == float): freqs = [freqs]
 		
 		self.freqs = freqs
+		self.nfreqs = len(freqs)
 		
-
 		for key in self.settings:
 			if key not in self.settingsDefaultKeys:
 				print "Warning Could not parse ",key
-		
-		if self.settings["write_nc"] == False:
-			raise ValueError("write_nc must be set true for historical reasons")
-		
-		
-		#self.nlyr = 50
-		#self.ngridx = 4
-		#self.ngridy = 1
-		self.nfreqs = len(freqs)
-		
+
 		#self.year = "2010"
 		#self.month = "05"
 		#self.day = "02"
@@ -208,14 +194,16 @@ class pyPamtra:
 		#self.relhum_lev=self.press_lev=self.temp_lev=self.hgt_lev = np.random.random((self.ngridx,self.ngridy,self.nlyr+1))
 		#self.iwv=self.cwp=self.iwp=self.rwp=self.swp=self.gwp = np.random.random((self.ngridx,self.ngridy))
 		#self.cwc_q = self.iwc_q = self.rwc_q = self.swc_q = self.gwc_q = np.random.random((self.ngridx,self.ngridy,self.nlyr))
+	
+		self.r = dict()
 
 		
 		#output
-		self.pamtraVersion,self.pamtraHash,\
-		self.Ze,self.attenuationHydro,self.attenuationAtmo,self.hgt, self.tb, self.angles = \
+		self.r["pamtraVersion"],self.r["pamtraHash"],\
+		self.r["Ze"],self.r["attenuationHydro"],self.r["attenuationAtmo"],self.r["hgt"], self.r["tb"], self.r["angles"] = \
 		pyPamtraLib.pypamtralib(
 		#self.settings
-		self.settings["verbose"], self.settings["write_nc"], self.settings["dump_to_file"], self.settings["input_path"], self.settings["output_path"], self.settings["tmp_path"], self.settings["data_path"], self.settings["obs_height"], self.settings["units"], self.settings["outpol"], self.settings["freq_str"], self.settings["file_desc"], self.settings["creator"], self.settings["active"], self.settings["passive"], self.settings["ground_type"], self.settings["salinity"], self.settings["emissivity"], self.settings["lgas_extinction"], self.settings["gas_mod"], self.settings["lhyd_extinction"], self.settings["lphase_flag"], self.settings["SD_snow"], self.settings["N_0snowDsnow"], self.settings["EM_snow"], self.settings["SP"], self.settings["isnow_n0"], self.settings["liu_type"], self.settings["SD_grau"], self.settings["N_0grauDgrau"], self.settings["EM_grau"], self.settings["EM_ice"], self.settings["SD_rain"], self.settings["N_0rainD"], self.settings["n_moments"], self.settings["moments_file"],
+		self.settings["verbose"], self.settings["dump_to_file"], self.settings["tmp_path"], self.settings["data_path"], self.settings["obs_height"], self.settings["units"], self.settings["outpol"], self.settings["creator"], self.settings["active"], self.settings["passive"], self.settings["ground_type"], self.settings["salinity"], self.settings["emissivity"], self.settings["lgas_extinction"], self.settings["gas_mod"], self.settings["lhyd_extinction"], self.settings["lphase_flag"], self.settings["SD_snow"], self.settings["N_0snowDsnow"], self.settings["EM_snow"], self.settings["SP"], self.settings["isnow_n0"], self.settings["liu_type"], self.settings["SD_grau"], self.settings["N_0grauDgrau"], self.settings["EM_grau"], self.settings["EM_ice"], self.settings["SD_rain"], self.settings["N_0rainD"], self.settings["n_moments"], self.settings["moments_file"],
 		#input
 		self.nlyr,self.ngridx,self.ngridy,self.nfreqs,self.freqs,
 		self.year,self.month,self.day,self.time,
@@ -225,14 +213,34 @@ class pyPamtra:
 		self.iwv,self.cwp,self.iwp,self.rwp,self.swp,self.gwp,
 		self.cwc_q,self.iwc_q,self.rwc_q,self.swc_q,self.gwc_q)
 		
-		self.Ze_dimensions = ["gridx","gridy","lyr","frequency"]
-		self.attenuationHydro_dimensions = ["gridx","gridy","lyr","frequency"]
-		self.attenuationAtmo_dimensions = ["gridx","gridy","lyr","frequency"]
-		self.tb_dimensions = ["gridx","gridy","outlevels","angles","frequency","stokes"]
+		self.r["Ze_dimensions"] = ["gridx","gridy","lyr","frequency"]
+		self.r["attenuationHydro_dimensions"] = ["gridx","gridy","lyr","frequency"]
+		self.r["attenuationAtmo_dimensions"] = ["gridx","gridy","lyr","frequency"]
+		self.r["tb_dimensions"] = ["gridx","gridy","outlevels","angles","frequency","stokes"]
+		
+		self.r["settings"] = self.settings
 		
 		#for key in self.__dict__.keys():
 			#print key
 			#print self.__dict__[key]
+
+
+def writeToNumpy(self,fname):
+	try: 
+		self.r
+		self.r["pamtraVersion"]
+	except:
+		raise IOError ("run runPamtra first!")
 		
-		
-		
+	f = open(fname, "w")
+	pickle.dump(self.r, f)
+	f.close()
+
+def loadFromNumpy(self,fname):
+	try: 
+		f = open(fname, "r")
+		self.r = pickle.load(f)
+		f.close()
+	except:
+		raise IOError ("Could not read data")
+

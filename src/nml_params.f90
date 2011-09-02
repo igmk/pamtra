@@ -39,10 +39,9 @@ module nml_params
   logical :: lphase_flag, &        ! flag for phase function calculation
        lgas_extinction, &    ! gas extinction desired
        lhyd_extinction, &    ! hydrometeor extinction desired
-       write_nc, write_ascii,&   ! write netcdf or ascii output
+       write_nc, &  ! write netcdf or ascii output
        active, &  	   ! calculate active stuff
-       passive, &		   ! calculate passive stuff (with RT3)
-       in_python        !in_python?
+       passive		   ! calculate passive stuff (with RT3)
 
   character(5) :: EM_snow, EM_grau, EM_ice
   character(3) :: SD_snow, SD_grau, SD_rain, gas_mod
@@ -61,7 +60,6 @@ contains
     character(300), intent(in) ::namelist_file
 
     ! name list declarations
-
     namelist / verbose_mode / verbose
     namelist / inoutput_mode / write_nc, input_path, output_path,&
          tmp_path, dump_to_file, data_path
@@ -76,9 +74,6 @@ contains
     namelist / rain_params / SD_rain, N_0rainD
     namelist / moments / n_moments, moments_file
 
-    !we are not in python
-
-    in_python=.false.
 
 
     !set namelist defaults!
@@ -146,9 +141,6 @@ contains
     read(7,nml=rain_params)
     read(7,nml=moments)
     close(7)
-
-    write_ascii=.true.
-    if (write_nc) write_ascii=.false.
 
     if (n_moments .ne. 1 .and. n_moments .ne. 2) stop "n_moments is not 1 or 2"
 

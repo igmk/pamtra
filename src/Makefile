@@ -65,17 +65,15 @@ write_nc_results.o: write_nc_results.f90
 prepython: 
 	@echo "Make backup before deleting old signature file, auto creating will most likely fail."
 	@echo "####################################################################################"
+	@echo ""
 	f2py -m pyPamtraLib -h pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90
 
-python: 
+python: pyPamtraLib.f90 $(pyOBJECTS)
 	f2py -c --fcompiler=gnu95 pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ~/lib/python/
 	cp pyPamtra.py ~/lib/python/
 
 
-# f2py -c --noarch --f90exec=/opt/intel_fcc_80/bin/ifort
-# --fcompiler=intel hello.pyf hello.o /mypath-to-static-lib/lib.a
-# /mypath-to-static-lib/lib2.a
 
 precompile: 
 	echo "!edit in makefile only!" > versionNumber.auto.f90
@@ -127,20 +125,20 @@ test4:
 pythontest1:
 	@echo "=== Python TEST 1 ==="
 	rm -fr ../test/tmp/*
-	python ../test/runPythonTest1.py
+	python ../test/runPythonTest.py 1
 	../test/compareAscii.sh 1
 	@echo "TEST 1 OK"
 
 pythontest2:
 	@echo "=== Python TEST 2 active only === "
 	rm -fr ../test/tmp/*
-	python ../test/runPythonTest2.py
+	python ../test/runPythonTest.py 2
 	../test/compareAscii.sh 2
 	@echo "TEST 2 OK"
 
 pythontest3:
 	@echo "=== Python TEST 3 passive only === "
 	rm -fr ../test/tmp/*
-	python ../test/runPythonTest3.py
+	python ../test/runPythonTest.py 3
 	../test/compareAscii.sh 3
 	@echo "TEST 3 OK"

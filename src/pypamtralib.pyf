@@ -3,7 +3,7 @@
 
 python module pyPamtraLib ! in 
     interface  ! in :pyPamtraLib
-        subroutine pypamtralib(set_verbose,set_write_nc,set_dump_to_file,set_input_path,set_output_path,set_tmp_path,set_data_path,set_obs_height,set_units,set_outpol,set_freq_str,set_file_desc,set_creator,set_active,set_passive,set_ground_type,set_salinity,set_emissivity,set_lgas_extinction,set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_sd_snow,set_n_0snowdsnow,set_em_snow,set_sp,set_isnow_n0,set_liu_type,set_sd_grau,set_n_0graudgrau,set_em_grau,set_em_ice,set_sd_rain,set_n_0raind,set_n_moments,set_moments_file,in_nlyr,in_ngridx,in_ngridy,in_nfreq,in_freqs,in_year,in_month,in_day,in_time,in_deltax,in_deltay,in_lat,in_lon,in_model_i,in_model_j,in_wind10u,in_wind10v,in_lfrac,in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev,in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp,in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q,out_gitversion,out_githash,out_ze,out_attenuation_hydro,out_attenuation_atmo,out_hgt,out_tb,out_angles) ! in :pyPamtraLib:pyPamtraLib.f90
+        subroutine pypamtralib(set_verbose,set_dump_to_file,set_tmp_path,set_data_path,set_obs_height,set_units,set_outpol,set_creator,set_active,set_passive,set_ground_type,set_salinity,set_emissivity,set_lgas_extinction,set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_sd_snow,set_n_0snowdsnow,set_em_snow,set_sp,set_isnow_n0,set_liu_type,set_sd_grau,set_n_0graudgrau,set_em_grau,set_em_ice,set_sd_rain,set_n_0raind,set_n_moments,set_moments_file,in_nlyr,in_ngridx,in_ngridy,in_nfreq,in_freqs,in_year,in_month,in_day,in_time,in_deltax,in_deltay,in_lat,in_lon,in_model_i,in_model_j,in_wind10u,in_wind10v,in_lfrac,in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev,in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp,in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q,out_gitversion,out_githash,out_ze,out_attenuation_hydro,out_attenuation_atmo,out_hgt,out_tb,out_angles) ! in :pyPamtraLib:pyPamtraLib.f90
             use mod_io_strings
             use kinds
             use vars_output
@@ -13,17 +13,12 @@ python module pyPamtraLib ! in
             use double_moments_module
             use constants
             integer intent(in) :: set_verbose
-            logical intent(in) :: set_write_nc
             logical intent(in) :: set_dump_to_file
-            character*100 intent(in) :: set_input_path
-            character*100 intent(in) :: set_output_path
             character*100 intent(in) :: set_tmp_path
             character*100 intent(in) :: set_data_path
             real(kind=sgl) intent(in) :: set_obs_height
             character*1 intent(in) :: set_units
             character*2 intent(in) :: set_outpol
-            character*13 intent(in) :: set_freq_str
-            character*20 intent(in) :: set_file_desc
             character*100 intent(in) :: set_creator
             logical intent(in) :: set_active
             logical intent(in) :: set_passive

@@ -21,7 +21,7 @@ subroutine deallocate_vars
   deallocate(ics,file_ph)
 
 
-     deallocate(is,js,lons,lats,lfracs,iwvs,cwps,iwps,rwps,swps,gwps,hwps,tb)
+    if (write_nc) deallocate(is,js,lons,lats,lfracs,iwvs,cwps,iwps,rwps,swps,gwps,hwps,tb)
      deallocate(Ze,Attenuation_hydro,Attenuation_atmo,hgt)
 
 

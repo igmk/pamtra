@@ -1,6 +1,6 @@
 subroutine pyPamtraLib(&!settings
-set_verbose,set_write_nc,set_dump_to_file,set_input_path,set_output_path,set_tmp_path,&
-set_data_path,set_obs_height,set_units,set_outpol,set_freq_str,set_file_desc,set_creator,&
+set_verbose,set_dump_to_file,set_tmp_path,&
+set_data_path,set_obs_height,set_units,set_outpol,set_creator,&
 set_active,set_passive,set_ground_type,set_salinity,set_emissivity,set_lgas_extinction,&
 set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_SD_snow,set_N_0snowDsnow,set_EM_snow,&
 set_SP,set_isnow_n0,set_liu_type,set_SD_grau,set_N_0grauDgrau,set_EM_grau,set_EM_ice,set_SD_rain,&
@@ -59,15 +59,13 @@ out_angles&
   logical,intent(in) :: set_lphase_flag, &        ! flag for phase function calculation
        set_lgas_extinction, &    ! gas extinction desired
        set_lhyd_extinction, &    ! hydrometeor extinction desired
-       set_write_nc, &     ! write netcdf output
        set_active, &       ! calculate active stuff
        set_passive         ! calculate passive stuff (with RT3)
 
   character(5),intent(in) :: set_EM_snow, set_EM_grau, set_EM_ice
   character(3),intent(in) :: set_SD_snow, set_SD_grau, set_SD_rain, set_gas_mod
-  character(20),intent(in) :: set_moments_file,set_file_desc
-  character(100),intent(in) :: set_input_path, set_output_path, set_tmp_path,set_creator, set_data_path
-  character(13),intent(in) :: set_freq_str
+  character(20),intent(in) :: set_moments_file
+  character(100),intent(in) :: set_tmp_path,set_creator, set_data_path
   character(2),intent(in) :: set_OUTPOL
   character(1),intent(in) :: set_GROUND_TYPE, set_UNITS
 !Input
@@ -95,8 +93,8 @@ real(kind=sgl), dimension(32),intent(out) :: out_angles !2*NUMMU instead of 32 d
 real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: out_tb !same here: noutlevels=2, 2*NUMMU = 32, NSTOKES = 2
 
 !settings
-!f2py intent(in) :: set_verbose,set_write_nc,set_dump_to_file,set_input_path,set_output_path,set_tmp_path
-!f2py intent(in) :: set_data_path,set_obs_height,set_units,set_outpol,set_freq_str,set_file_desc,set_creator
+!f2py intent(in) :: set_verbose,set_dump_to_file,set_tmp_path
+!f2py intent(in) :: set_data_path,set_obs_height,set_units,set_outpol,set_creator
 !f2py intent(in) :: set_active,set_passive,set_ground_type,set_salinity,set_emissivity,set_lgas_extinction
 !f2py intent(in) :: set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_SD_snow,set_N_0snowDsnow,set_EM_snow
 !f2py intent(in) :: set_SP,set_isnow_n0,set_liu_type,set_SD_grau,set_N_0grauDgrau,set_EM_grau,set_EM_ice,set_SD_rain
@@ -131,22 +129,25 @@ real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: ou
 call versionNumber(out_gitVersion,out_gitHash)
 
 
+!write_nc must be true to collect the results
+write_nc = .true.
+
+!these are not(?) needed any more
+input_path = ""
+output_path = ""
+freq_str = ""
+file_desc = ""
 
 
 
 !load settings, uggly but neccessary!
 verbose = set_verbose
-write_nc = set_write_nc
 dump_to_file = set_dump_to_file
-input_path = set_input_path
-output_path = set_output_path
 tmp_path = set_tmp_path
 data_path = set_data_path
 obs_height = set_obs_height
 units = set_units
 outpol = set_outpol
-freq_str = set_freq_str
-file_desc = set_file_desc
 creator = set_creator
 active = set_active
 passive = set_passive
