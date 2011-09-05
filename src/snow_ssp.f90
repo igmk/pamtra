@@ -100,7 +100,7 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
         ad = n_0snowDsnow * 1.d6 * exp(-0.107d0 * (t - 273.15))
      else if (isnow_n0 .eq. 0) then
         !fixed N0
-        ad = 1.d6
+        ad = n_0snowDsnow * 1.d6
      else
         print *, "isnow_n0: ", isnow_n0
         stop "Wrong isnow_n0 value"
