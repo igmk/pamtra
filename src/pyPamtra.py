@@ -2,10 +2,39 @@
 
 import numpy as np
 import datetime
+from pyPamtraLib import pypamtralib
 import pyPamtraLib
 import csv
 import pickle
 import time,calendar, datetime
+
+def PamtraFortranWrapper(set_verbose, set_dump_to_file, set_tmp_path, set_data_path, set_obs_height, set_units, set_outpol, set_creator, set_active, set_passive, set_ground_type, set_salinity, set_emissivity, set_lgas_extinction, set_gas_mod, set_lhyd_extinction, set_lphase_flag, set_SD_snow, set_N_0snowDsnow, set_EM_snow, set_SP, set_isnow_n0, set_liu_type, set_SD_grau, set_N_0grauDgrau, set_EM_grau, set_EM_ice, set_SD_rain, set_N_0rainD, set_n_moments, set_moments_file,
+	#input
+	profile_nlyr,profile_ngridx,profile_ngridy,nfreqs,freqs,
+	profile_year,profile_month,profile_day,profile_time,
+	profile_deltax,profile_deltay, profile_lat,profile_lon,profile_model_i,profile_model_j,
+	profile_wind10u,profile_wind10v,profile_lfrac,
+	profile_relhum_lev,profile_press_lev,profile_temp_lev,profile_hgt_lev,
+	profile_iwv,profile_cwp,profile_iwp,profile_rwp,profile_swp,profile_gwp,
+	profile_cwc_q,profile_iwc_q,profile_rwc_q,profile_swc_q,profile_gwc_q):
+	
+	
+	result_pamtraVersion, result_pamtraHash,\
+	result_Ze, result_attenuationHydro, result_attenuationAtmo, result_hgt, result_tb, result_angles = \
+	pypamtralib(
+	#self.set
+	set_verbose, set_dump_to_file, set_tmp_path, set_data_path, set_obs_height, set_units, set_outpol, set_creator, set_active, set_passive, set_ground_type, set_salinity, set_emissivity, set_lgas_extinction, set_gas_mod, set_lhyd_extinction, set_lphase_flag, set_SD_snow, set_N_0snowDsnow, set_EM_snow, set_SP, set_isnow_n0, set_liu_type, set_SD_grau, set_N_0grauDgrau, set_EM_grau, set_EM_ice, set_SD_rain, set_N_0rainD, set_n_moments, set_moments_file,
+	#input
+	profile_nlyr,profile_ngridx,profile_ngridy,nfreqs,freqs,
+	profile_year,profile_month,profile_day,profile_time,
+	profile_deltax,profile_deltay, profile_lat,profile_lon,profile_model_i,profile_model_j,
+	profile_wind10u,profile_wind10v,profile_lfrac,
+	profile_relhum_lev,profile_press_lev,profile_temp_lev,profile_hgt_lev,
+	profile_iwv,profile_cwp,profile_iwp,profile_rwp,profile_swp,profile_gwp,
+	profile_cwc_q,profile_iwc_q,profile_rwc_q,profile_swc_q,profile_gwc_q)
+	
+	return result_pamtraVersion, result_pamtraHash, result_Ze, result_attenuationHydro, result_attenuationAtmo, result_hgt, result_tb, result_angles
+
 
 class pyPamtra:
 	
@@ -172,6 +201,63 @@ class pyPamtra:
 		self.p["swc_q"] = swc_q.reshape(shape3D)
 		self.p["gwc_q"] = gwc_q.reshape(shape3D)
 
+	def runParallelPamtra(self,freqs):
+		import pp
+
+		
+		ppservers=("localhost",)
+		job_server = pp.Server(ppservers=ppservers) 
+		print "Starting pp with", job_server.get_ncpus(), "workers"
+		
+		
+
+		if (type(freqs) == int) or (type(freqs) == float): freqs = [freqs]
+		
+		self.freqs = freqs
+		self.nfreqs = len(freqs)
+		
+		for key in self.set:
+			if key not in self.setDefaultKeys:
+				print "Warning Could not parse ",key
+				
+		if self.set["n_moments"]==2:
+			raise IOError("multi moments not implemented yet!")
+
+		self.r = dict()
+
+		job1 = job_server.submit(PamtraFortranWrapper, (
+		#self.set
+		self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["emissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["n_moments"], self.set["moments_file"],
+		#input
+		self.p["nlyr"],self.p["ngridx"],self.p["ngridy"],self.nfreqs,self.freqs,
+		self.p["year"],self.p["month"],self.p["day"],self.p["time"],
+		self.p["deltax"],self.p["deltay"], self.p["lat"],self.p["lon"],self.p["model_i"],self.p["model_j"],
+		self.p["wind10u"],self.p["wind10v"],self.p["lfrac"],
+		self.p["relhum_lev"],self.p["press_lev"],self.p["temp_lev"],self.p["hgt_lev"],
+		self.p["iwv"],self.p["cwp"],self.p["iwp"],self.p["rwp"],self.p["swp"],self.p["gwp"],
+		self.p["cwc_q"],self.p["iwc_q"],self.p["rwc_q"],self.p["swc_q"],self.p["gwc_q"],), tuple(), ("pyPamtraLib","import numpy as np",))
+		
+		test = job1()
+		
+		print test
+		
+		self.r["pamtraVersion"],self.r["pamtraHash"],\
+		self.r["Ze"],self.r["attenuationHydro"],self.r["attenuationAtmo"],self.r["hgt"], self.r["tb"], self.r["angles"] = test
+		
+		self.r["Ze_dimensions"] = ["gridx","gridy","lyr","frequency"]
+		self.r["attenuationHydro_dimensions"] = ["gridx","gridy","lyr","frequency"]
+		self.r["attenuationAtmo_dimensions"] = ["gridx","gridy","lyr","frequency"]
+		self.r["tb_dimensions"] = ["gridx","gridy","outlevels","angles","frequency","stokes"]
+		
+		self.r["settings"] = self.set
+		
+		self.r["pamtraVersion"] = self.r["pamtraVersion"].strip()
+		self.r["pamtraHash"] = self.r["pamtraHash"].strip()
+		
+		#for key in self.__dict__.keys():
+			#print key
+			#print self.__dict__[key]
+
 	def runPamtra(self,freqs):
 
 		if (type(freqs) == int) or (type(freqs) == float): freqs = [freqs]
@@ -191,7 +277,7 @@ class pyPamtra:
 		#output
 		self.r["pamtraVersion"],self.r["pamtraHash"],\
 		self.r["Ze"],self.r["attenuationHydro"],self.r["attenuationAtmo"],self.r["hgt"], self.r["tb"], self.r["angles"] = \
-		pyPamtraLib.pypamtralib(
+		PamtraFortranWrapper(
 		#self.set
 		self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["emissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["n_moments"], self.set["moments_file"],
 		#input
@@ -216,6 +302,8 @@ class pyPamtra:
 		#for key in self.__dict__.keys():
 			#print key
 			#print self.__dict__[key]
+
+
 
 	def writeResultsToNumpy(self,fname):
 		try: 
@@ -266,6 +354,7 @@ class pyPamtra:
 		if (self.r["settings"]["active"]):
 			cdfFile.createDimension('nlyr',self.p["nlyr"])
 		
+		#create variables
 		nc_angle = cdfFile.createVariable('angle','f4',('nang',),fill_value= -9999)
 		nc_angle.units = 'deg'
 		
@@ -331,7 +420,7 @@ class pyPamtra:
 			nc_tb = cdfFile.createVariable('tb', 'f4',dim6d,fill_value= -9999)
 			nc_tb.units = "K"
 
-
+		#save data
 		nc_angle[:] = self.r["angles"]
 		nc_frequency[:] = self.freqs
 		nc_model_i[:] = self.p["model_i"]
@@ -356,3 +445,5 @@ class pyPamtra:
 			nc_Attenuation_Atmosphere[:] = self.r["attenuationAtmo"]
 			
 		cdfFile.close()
+		
+		

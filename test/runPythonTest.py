@@ -27,7 +27,7 @@ elif testNo == "2":
 	t.set["liu_type"]=4
 
 
-	t.runPamtra(35)
+	t.runParallelPamtra(35)
 
 elif testNo == "3":
 
