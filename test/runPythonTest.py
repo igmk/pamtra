@@ -24,6 +24,7 @@ elif testNo == "2":
 	t.set["active"]=True
 	t.set["EM_snow"]='liudb'
 	t.set["isnow_n0"]=0
+	t.set["N_0snowDsnow"]=1
 	t.set["liu_type"]=4
 
 
@@ -35,6 +36,7 @@ elif testNo == "3":
 	t.set["active"]=False
 	t.set["EM_snow"]='liudb'
 	t.set["isnow_n0"]=0
+	t.set["N_0snowDsnow"]=1
 	t.set["liu_type"]=8
 	
 	t.runPamtra(35)
