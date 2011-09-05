@@ -254,24 +254,24 @@ deltay = in_deltay
   end do grid_f
 
 if (active) then
-	out_Ze = Ze(:,:,:,:)
-	out_Attenuation_hydro = Attenuation_hydro(:,:,:,:)
-	out_Attenuation_atmo = Attenuation_atmo(:,:,:,:)
-	out_hgt = hgt(:,:,:)
+   out_Ze = Ze(:,:,:,:)
+   out_Attenuation_hydro = Attenuation_hydro(:,:,:,:)
+   out_Attenuation_atmo = Attenuation_atmo(:,:,:,:)
+   out_hgt = hgt(:,:,:)
 else
-	out_Ze = -9999.
-	out_Attenuation_hydro = -9999.
-	out_Attenuation_atmo = -9999.
-	out_hgt = -9999.
+   out_Ze = -9999.
+   out_Attenuation_hydro = -9999.
+   out_Attenuation_atmo = -9999.
+   out_hgt = -9999.
 end if
 
 if (passive) then
-	out_angles = angles_deg(:)
-	out_tb = RESHAPE( tb, (/ngridx, ngridy, noutlevels, 2*nummu, nfrq,nstokes /),&
+   out_angles = angles_deg(:)
+   out_tb = RESHAPE( tb, (/ngridx, ngridy, noutlevels, 2*nummu, nfrq,nstokes /),&
          ORDER = (/6,5,4,3,2,1/))
 else
-	out_angles = -9999.
-	out_tb = -9999
+   out_angles = -9999.
+   out_tb = -9999
 end if
 call deallocate_vars()
 

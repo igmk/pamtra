@@ -115,22 +115,26 @@
 typedef char bool;
 int little_endian();
 void reverse(void*,int);
-void scatdb_(float*,float*,int*,float*,float*,float*,float*,float*,float*,float*,int*,int*, char[180]); //scat_db_dir added!  (Max, 16.8.11)
+// when passing characters to from Fortran to C. character AND length have to be collected by C.
+void scatdb_(float*,float*,int*,float*,float*,float*,float*,float*,float*,float*,int*,int*, char*,int); //scat_db_dir added: , char*,int  (Max, 16.8.11)
 int scatdb(float,float,int,float,float*,float*,float*,float*,float*,float*,int*, char[180]); //scat_db_dir added!  (Max, 16.8.11)
 // void scatdb_(float*,float*,int*,float*,float*,float*,float*,float*,float*,float*,int*,int*);
 // int scatdb(float,float,int,float,float*,float*,float*,float*,float*,float*,int*);
 float linear_interp(float,float,float,float,float);
 
 // void scatdb_(float *f,float *t,int *nshape,float *dmax,float *cabs,float *csca,float *cbsc,float *g,float *p,float *re,int *iret, int *is_loaded) { 
-void scatdb_(float *f,float *t,int *nshape,float *dmax,float *cabs,float *csca,float *cbsc,float *g,float *p,float *re,int *iret, int *is_loaded, char scat_db_dir[180]) { //scat_db_dir added!  (Max, 16.8.11)
+void scatdb_(float *f,float *t,int *nshape,float *dmax,float *cabs,float *csca,float *cbsc,float *g,float *p,float *re,int *iret, int *is_loaded, char *scat_db_dir, int scat_db_dir_len) { //scat_db_dir added!  (Max, 16.8.11)
 /* wrapper for fortran interface */
 	float f1, t1, dmax1;
 	int n1;
+	char scat_db_dir1[scat_db_dir_len+1]; //scat_db_dir added!  (Max, 2.9.11)
 	f1 = *f;
 	t1 = *t;
 	n1 = *nshape;
 	dmax1 = *dmax;
-	*iret = scatdb(f1,t1,n1,dmax1,cabs,csca,cbsc,g,p,re,is_loaded, scat_db_dir); //scat_db_dir added!  (Max, 16.8.11)
+	strncpy(scat_db_dir1,scat_db_dir,scat_db_dir_len); //scat_db_dir added!  (Max, 2.9.11)
+   scat_db_dir1[scat_db_dir_len]='\0'; //scat_db_dir added!  (Max, 2.9.11)
+	*iret = scatdb(f1,t1,n1,dmax1,cabs,csca,cbsc,g,p,re,is_loaded, scat_db_dir1); //scat_db_dir added!  (Max, 16.8.11)
 //     *iret = scatdb(f1,t1,n1,dmax1,cabs,csca,cbsc,g,p,re,is_loaded);
 }
 

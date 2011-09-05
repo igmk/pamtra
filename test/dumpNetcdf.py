@@ -1,10 +1,22 @@
-import scipy.io.netcdf as nc
+#try: 
+	#import scipy.io.netcdf as nc
+	#ncOpen = nc.NetCDFFile
+#except: 
+import netCDF4 as nc
+ncOpen = nc.Dataset
+
 import numpy as np
 import sys
 #dump all netcdf values to stdout.
 
 fnameIn =sys.argv[1]
 
-N = nc.NetCDFFile(fnameIn)
-for var in N.variables:
-   print np.around(N.variables[var][:],4)
+N = ncOpen(fnameIn)
+
+vars = N.variables.keys()
+vars.sort()
+
+for var in vars:
+	print var
+	print np.around(np.array(N.variables[var][:],dtype=float),decimals=4)
+N.close()

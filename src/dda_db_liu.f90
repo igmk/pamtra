@@ -14,6 +14,7 @@ subroutine dda_db_liu(f, t, mindex, dia1, dia2, nbins, maxleg,   &
 
   integer :: maxleg, nlegen, nbins
 
+
   logical :: lphase_flag
 
   real(kind=dbl), intent(in) :: f,  &! frequency [GHz]
@@ -151,6 +152,7 @@ subroutine dda_db_liu(f, t, mindex, dia1, dia2, nbins, maxleg,   &
 ! 
      call scatdb(f_liu,t_liu,liu_type,diameter*1.e6,abs_liu,sca_liu,bsc_liu,g,p_liu,r_ice_eq,iret,is_loaded,&
           trim(data_path))
+
      !   if (verbose .gt. 2) print*, 'got: ',iret, abs_liu,sca_liu,bsc_liu,g
      if (verbose .gt. 1) print*, iret,f_liu,t_liu,liu_type,diameter*1.e6, abs_liu,sca_liu,bsc_liu
 

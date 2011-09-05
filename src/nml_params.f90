@@ -48,7 +48,7 @@ module nml_params
   character(5) :: EM_snow, EM_grau, EM_ice
   character(3) :: SD_snow, SD_grau, SD_rain, gas_mod
   character(20) :: moments_file,file_desc
-  character(100) :: input_path, output_path, tmp_path,creator, data_path
+  character(180) :: input_path, output_path, tmp_path,creator, data_path
   character(13) :: freq_str
   character(2) :: OUTPOL
   character(1) :: GROUND_TYPE, UNITS

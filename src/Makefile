@@ -90,6 +90,8 @@ clean:
 
 test: test1 test2 test3 test4 cleantest
 
+alltest: test pythontest
+
 cleantest:
 	@echo "=== Clean up tmp ==="
 	rm -fr ../test/tmp/*
@@ -122,25 +124,29 @@ test4:
 	../test/compareNetcdf.sh 4
 	@echo "TEST 4 OK"
 
-pythontest: pythontest1 pythontest2 pythontest3
+pythontest: pythontest1 pythontest2 pythontest3 pythontest4 cleantest
 
 pythontest1:
 	@echo "=== Python TEST 1 ==="
 	rm -fr ../test/tmp/*
 	python ../test/runPythonTest.py 1
-	../test/compareAscii.sh 1
 	@echo "TEST 1 OK"
 
 pythontest2:
 	@echo "=== Python TEST 2 active only === "
 	rm -fr ../test/tmp/*
 	python ../test/runPythonTest.py 2
-	../test/compareAscii.sh 2
 	@echo "TEST 2 OK"
 
 pythontest3:
 	@echo "=== Python TEST 3 passive only === "
 	rm -fr ../test/tmp/*
 	python ../test/runPythonTest.py 3
-	../test/compareAscii.sh 3
 	@echo "TEST 3 OK"
+
+pythontest4:
+	@echo "=== Python TEST 4 Netcdf Data  === "
+	rm -fr ../test/tmp/*
+	python ../test/runPythonTest.py 4
+	../test/compareNetcdf.sh 4
+	@echo "TEST 4 OK"

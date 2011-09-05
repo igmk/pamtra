@@ -16,74 +16,74 @@ python module pyPamtraLib ! in
             logical intent(in) :: set_dump_to_file
             character*100 intent(in) :: set_tmp_path
             character*100 intent(in) :: set_data_path
-            real(kind=sgl) intent(in) :: set_obs_height
+            real intent(in) :: set_obs_height
             character*1 intent(in) :: set_units
             character*2 intent(in) :: set_outpol
             character*100 intent(in) :: set_creator
             logical intent(in) :: set_active
             logical intent(in) :: set_passive
             character*1 intent(in) :: set_ground_type
-            real(kind=sgl) intent(in) :: set_salinity
-            real(kind=sgl) intent(in) :: set_emissivity
+            real intent(in) :: set_salinity
+            real intent(in) :: set_emissivity
             logical intent(in) :: set_lgas_extinction
             character*3 intent(in) :: set_gas_mod
             logical intent(in) :: set_lhyd_extinction
             logical intent(in) :: set_lphase_flag
             character*3 intent(in) :: set_sd_snow
-            real(kind=sgl) intent(in) :: set_n_0snowdsnow
+            real intent(in) :: set_n_0snowdsnow
             character*5 intent(in) :: set_em_snow
-            real(kind=sgl) intent(in) :: set_sp
+            real intent(in) :: set_sp
             integer intent(in) :: set_isnow_n0
             integer intent(in) :: set_liu_type
             character*3 intent(in) :: set_sd_grau
-            real(kind=sgl) intent(in) :: set_n_0graudgrau
+            real intent(in) :: set_n_0graudgrau
             character*5 intent(in) :: set_em_grau
             character*5 intent(in) :: set_em_ice
             character*3 intent(in) :: set_sd_rain
-            real(kind=sgl) intent(in) :: set_n_0raind
+            real intent(in) :: set_n_0raind
             integer intent(in) :: set_n_moments
             character*20 intent(in) :: set_moments_file
             integer intent(in) :: in_nlyr
             integer intent(in) :: in_ngridx
             integer intent(in) :: in_ngridy
             integer intent(in) :: in_nfreq
-            real(kind=sgl) dimension(in_nfreq),intent(in),depend(in_nfreq) :: in_freqs
+            real dimension(in_nfreq),intent(in),depend(in_nfreq) :: in_freqs
             character*4 intent(in) :: in_year
             character*2 intent(in) :: in_month
             character*2 intent(in) :: in_day
             character*4 intent(in) :: in_time
-            real(kind=sgl) intent(in) :: in_deltax
-            real(kind=sgl) intent(in) :: in_deltay
-            real(kind=sgl) dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_lat
-            real(kind=sgl) dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_lon
-            real(kind=sgl) dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_model_i
-            real(kind=sgl) dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_model_j
-            real(kind=sgl) dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_wind10u
-            real(kind=sgl) dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_wind10v
-            real(kind=sgl) dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_lfrac
-            real(kind=sgl) dimension(in_ngridx,in_ngridy,in_nlyr + 1),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_relhum_lev
-            real(kind=sgl) dimension(in_ngridx,in_ngridy,in_nlyr + 1),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_press_lev
-            real(kind=sgl) dimension(in_ngridx,in_ngridy,in_nlyr + 1),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_temp_lev
-            real(kind=sgl) dimension(in_ngridx,in_ngridy,in_nlyr + 1),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_hgt_lev
-            real(kind=sgl) dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_iwv
-            real(kind=sgl) dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_cwp
-            real(kind=sgl) dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_iwp
-            real(kind=sgl) dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_rwp
-            real(kind=sgl) dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_swp
-            real(kind=sgl) dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_gwp
-            real(kind=sgl) dimension(in_ngridx,in_ngridy,in_nlyr),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_cwc_q
-            real(kind=sgl) dimension(in_ngridx,in_ngridy,in_nlyr),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_iwc_q
-            real(kind=sgl) dimension(in_ngridx,in_ngridy,in_nlyr),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_rwc_q
-            real(kind=sgl) dimension(in_ngridx,in_ngridy,in_nlyr),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_swc_q
-            real(kind=sgl) dimension(in_ngridx,in_ngridy,in_nlyr),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_gwc_q
+            real intent(in) :: in_deltax
+            real intent(in) :: in_deltay
+            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_lat
+            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_lon
+            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_model_i
+            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_model_j
+            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_wind10u
+            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_wind10v
+            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_lfrac
+            real dimension(in_ngridx,in_ngridy,in_nlyr + 1),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_relhum_lev
+            real dimension(in_ngridx,in_ngridy,in_nlyr + 1),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_press_lev
+            real dimension(in_ngridx,in_ngridy,in_nlyr + 1),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_temp_lev
+            real dimension(in_ngridx,in_ngridy,in_nlyr + 1),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_hgt_lev
+            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_iwv
+            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_cwp
+            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_iwp
+            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_rwp
+            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_swp
+            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_gwp
+            real dimension(in_ngridx,in_ngridy,in_nlyr),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_cwc_q
+            real dimension(in_ngridx,in_ngridy,in_nlyr),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_iwc_q
+            real dimension(in_ngridx,in_ngridy,in_nlyr),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_rwc_q
+            real dimension(in_ngridx,in_ngridy,in_nlyr),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_swc_q
+            real dimension(in_ngridx,in_ngridy,in_nlyr),intent(in),depend(in_ngridx,in_ngridy,in_nlyr) :: in_gwc_q
             character*40 intent(out) :: out_gitversion
             character*40 intent(out) :: out_githash
-            real(kind=sgl) dimension(in_ngridx,in_ngridy,in_nlyr,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,in_nlyr,in_nfreq) :: out_ze
-            real(kind=sgl) dimension(in_ngridx,in_ngridy,in_nlyr,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,in_nlyr,in_nfreq) :: out_attenuation_hydro
-            real(kind=sgl) dimension(in_ngridx,in_ngridy,in_nlyr,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,in_nlyr,in_nfreq) :: out_attenuation_atmo
-            real(kind=sgl) dimension(in_ngridx,in_ngridy,in_nlyr),intent(out),depend(in_ngridx,in_ngridy,in_nlyr) :: out_hgt
-            real(kind=sgl) dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out),depend(in_ngridx,in_ngridy,in_nfreq) :: out_tb
-            real(kind=sgl) dimension(32),intent(out) :: out_angles
+            real dimension(in_ngridx,in_ngridy,in_nlyr,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,in_nlyr,in_nfreq) :: out_ze
+            real dimension(in_ngridx,in_ngridy,in_nlyr,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,in_nlyr,in_nfreq) :: out_attenuation_hydro
+            real dimension(in_ngridx,in_ngridy,in_nlyr,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,in_nlyr,in_nfreq) :: out_attenuation_atmo
+            real dimension(in_ngridx,in_ngridy,in_nlyr),intent(out),depend(in_ngridx,in_ngridy,in_nlyr) :: out_hgt
+            real dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out),depend(in_ngridx,in_ngridy,in_nfreq) :: out_tb
+            real dimension(32),intent(out) :: out_angles
         end subroutine pypamtralib
     end interface 
 end python module pyPamtraLib
