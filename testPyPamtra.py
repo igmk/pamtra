@@ -10,7 +10,7 @@ job_server = pp.Server(ppservers= ("*",))
 print "Starting pp with", job_server.get_ncpus(), "workers"
 
 jobs = []
-for i in xrange(5):
+for i in xrange(500):
     jobs.append(job_server.submit(get_val,
                                   (),
                                   (),
