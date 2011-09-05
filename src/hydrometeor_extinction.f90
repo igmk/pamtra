@@ -48,7 +48,7 @@ subroutine hydrometeor_extinction(f,frq_str)
   if (verbose .gt. 1) print*, 'start loop over layer'
 
   grid_z: do nz = 1, nlyr  ! loop over all layers
-
+! print *,temp(nz)
      if (verbose .gt. 1) print*, 'Layer: ', nz
 
      !---------------------------salinity------------------------------
