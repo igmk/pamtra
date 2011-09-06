@@ -1,13 +1,21 @@
 # -*- coding: utf-8 -*-
 
+#http://www.parallelpython.com/component/option,com_smf/Itemid,29/topic,407.0
+
 import numpy as np
 import datetime
 import csv
 import pickle
 import time,calendar, datetime
+import warnings
 
+try:
+	import pp
+except:
+	warnings.warn("parallel python not available", Warning)
 
 def PamtraFortranWrapper(*args):
+	#is needed because pp cannot work with fortran modules directly
 	import pyPamtraLib
 	code = ""
 	for ii in range(len(args)):
@@ -180,47 +188,131 @@ class pyPamtra:
 		self.p["swc_q"] = swc_q.reshape(shape3D)
 		self.p["gwc_q"] = gwc_q.reshape(shape3D)
 
-	def runParallelPamtra(self,freqs):
-		import pp
-
-		ppservers=("roumet",)
-		job_server = pp.Server(0,ppservers=ppservers) 
-		print "Starting pp with", job_server.get_ncpus(), "workers"
-	
+	def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers=0,pp_deltaF=0,pp_deltaX=0,pp_deltaY = 0):
+		
+		if pp_local_workers == "auto":
+			job_server = pp.Server(ppservers=pp_servers) 
+		else:
+			job_server = pp.Server(pp_local_workers,ppservers=pp_servers) 
+		print "Starting pp with: "
+		
+		pp_nodes = job_server.get_active_nodes()
+		for key in pp_nodes.keys():
+			print key+": "+pp_nodes[key]+" nodes"
+		
 		if (type(freqs) == int) or (type(freqs) == float): freqs = [freqs]
 		
 		self.freqs = freqs
 		self.nfreqs = len(freqs)
 		
+		self.nstokes = 2
+		self.noutlevels = 2
+		self.nangles = 32
+
+		
 		for key in self.set:
 			if key not in self.setDefaultKeys:
-				print "Warning Could not parse ",key
+				warnings.warn("Warning can not parse setting: ",key, Warning)
 				
 		if self.set["n_moments"]==2:
 			raise IOError("multi moments not implemented yet!")
 
 		self.r = dict()
 
-		job1 = job_server.submit(PamtraFortranWrapper, (
-		#self.set
-		self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["emissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["n_moments"], self.set["moments_file"],
-		#input
-		self.p["nlyr"],self.p["ngridx"],self.p["ngridy"],self.nfreqs,self.freqs,
-		self.p["year"],self.p["month"],self.p["day"],self.p["time"],
-		self.p["deltax"],self.p["deltay"], self.p["lat"],self.p["lon"],self.p["model_i"],self.p["model_j"],
-		self.p["wind10u"],self.p["wind10v"],self.p["lfrac"],
-		self.p["relhum_lev"],self.p["press_lev"],self.p["temp_lev"],self.p["hgt_lev"],
-		self.p["iwv"],self.p["cwp"],self.p["iwp"],self.p["rwp"],self.p["swp"],self.p["gwp"],
-		self.p["cwc_q"],self.p["iwc_q"],self.p["rwc_q"],self.p["swc_q"],self.p["gwc_q"],), tuple(), ("pyPamtraLib","numpy",))
 		
-
-		self.r["pamtraVersion"],self.r["pamtraHash"],\
-		self.r["Ze"],self.r["attenuationHydro"],self.r["attenuationAtmo"],self.r["hgt"], self.r["tb"], self.r["angles"] = job1()
+		if pp_deltaF==0: pp_deltaF = self.nfreqs
+		if pp_deltaX==0: pp_deltaX = self.p["ngridx"]
+		if pp_deltaY==0: pp_deltaY = self.p["ngridy"]
+		
+		pp_ii = -1
+		pp_jobs = dict()
+		
+		self.r["Ze"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["nlyr"],self.nfreqs,))*-9999
+		self.r["attenuationHydro"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["nlyr"],self.nfreqs,))*-9999
+		self.r["attenuationAtmo"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["nlyr"],self.nfreqs,))*-9999
+		self.r["hgt"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["nlyr"],))*-9999
+		self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.noutlevels,self.nangles,self.nfreqs,self.nstokes))*-9999
 		
 		self.r["Ze_dimensions"] = ["gridx","gridy","lyr","frequency"]
 		self.r["attenuationHydro_dimensions"] = ["gridx","gridy","lyr","frequency"]
 		self.r["attenuationAtmo_dimensions"] = ["gridx","gridy","lyr","frequency"]
+		self.r["hgt_dimensions"] = ["gridx","gridy","lyr"]
 		self.r["tb_dimensions"] = ["gridx","gridy","outlevels","angles","frequency","stokes"]
+
+		
+		for pp_startF in np.arange(0,self.nfreqs,pp_deltaF):
+			pp_endF = pp_startF + pp_deltaF
+			if pp_endF > self.nfreqs: pp_endF = self.nfreqs
+			pp_nfreqs = pp_endF - pp_startF
+			for pp_startX in np.arange(0,self.p["ngridx"],pp_deltaX):
+				pp_endX = pp_startX + pp_deltaX
+				if pp_endX > self.p["ngridx"]: pp_endX = self.p["ngridx"]
+				pp_ngridx = pp_endX - pp_startX
+				for pp_startY in np.arange(0,self.p["ngridy"],pp_deltaY):
+					pp_endY = pp_startY + pp_deltaY
+					if pp_endY > self.p["ngridy"]: pp_endY = self.p["ngridy"]
+					pp_ngridy = pp_endY - pp_startY
+					
+					pp_ii+=1
+					
+					pp_jobs[pp_ii] = job_server.submit(PamtraFortranWrapper, (
+					#self.set
+					self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["emissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["n_moments"], self.set["moments_file"],
+					#input
+					self.p["nlyr"],
+					pp_ngridx,
+					pp_ngridy,
+					pp_nfreqs,
+					self.freqs[pp_startF:pp_endF],
+					self.p["year"],self.p["month"],self.p["day"],self.p["time"],
+					self.p["deltax"],self.p["deltay"],
+					self.p["lat"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["lon"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["model_i"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["model_j"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["wind10u"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["wind10v"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["lfrac"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["relhum_lev"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["press_lev"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["temp_lev"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["hgt_lev"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["iwv"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["cwp"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["iwp"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["rwp"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["swp"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["gwp"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["cwc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["iwc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["rwc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["swc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["gwc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
+					),tuple(), ("pyPamtraLib","numpy",))
+										
+		job_server.wait()
+		pp_ii = -1
+
+		for pp_startF in np.arange(0,self.nfreqs,pp_deltaF):
+			pp_endF = pp_startF + pp_deltaF
+			if pp_endF > self.nfreqs: pp_endF = self.nfreqs
+			for pp_startX in np.arange(0,self.p["ngridx"],pp_deltaX):
+				pp_endX = pp_startX + pp_deltaX
+				if pp_endX > self.p["ngridx"]: pp_endX = self.p["ngridx"]
+				for pp_startY in np.arange(0,self.p["ngridy"],pp_deltaY):
+					pp_endY = pp_startY + pp_deltaY
+					if pp_endY > self.p["ngridy"]: pp_endY = self.p["ngridy"]
+					pp_ii +=1
+
+					(self.r["pamtraVersion"],self.r["pamtraHash"],
+					self.r["Ze"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
+					self.r["attenuationHydro"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
+					self.r["attenuationAtmo"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
+					self.r["hgt"][pp_startX:pp_endX,pp_startY:pp_endY,:], 
+					self.r["tb"][pp_startX:pp_endX,pp_startY:pp_endY,:,:,pp_startF:pp_endF,:], 
+					self.r["angles"] ) = pp_jobs[pp_ii]()
+		
+
 		
 		self.r["settings"] = self.set
 		

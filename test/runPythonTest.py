@@ -16,7 +16,7 @@ testNo = sys.argv[1]
 if testNo == "1":
 
 
-	t.runPamtra([24,90,150])
+	t.runParallelPamtra([24,90,150])
 	
 elif testNo == "2":
 
@@ -29,7 +29,6 @@ elif testNo == "2":
 
 
 	t.runParallelPamtra(35)
-
 elif testNo == "3":
 
 	t.set["passive"]=True
@@ -39,13 +38,13 @@ elif testNo == "3":
 	t.set["N_0snowDsnow"]=1
 	t.set["liu_type"]=8
 	
-	t.runPamtra(35)
+	t.runParallelPamtra(35)
 elif testNo == "4":
 
 	t.set["EM_snow"]='icesf'
 	t.set["isnow_n0"]=2
 	t.set["EM_grau"]='icesf'
-	t.runPamtra(35)
+	t.runParallelPamtra(35)
 	t.writeResultsToNetCDF("../test/tmp/pythontest4.nc")
 	
 else:
@@ -59,8 +58,8 @@ if testNo != "4":
 
 	reference = pyPamtra.pyPamtra()
 	reference.loadResultsFromNumpy("../test/referenceOutput/"+testNo+"/python"+testNo+".pickle")
-
-	for key in ["Ze","attenuationAtmo","attenuationHydro","angles","tb","hgt"]:
+	#import pdb; pdb.set_trace()
+	for key in ["angles","tb","hgt","Ze","attenuationAtmo","attenuationHydro"]:
 		if np.any(reference.r[key] != t.r[key]):
 			raise IOError(key+" does not match")
 		#else:
@@ -68,3 +67,4 @@ if testNo != "4":
 
 			#for key in self.__dict__.keys():
 				#print key,type(self.__dict__[key]),self.__dict__[key]
+
