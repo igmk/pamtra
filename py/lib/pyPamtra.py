@@ -9,6 +9,8 @@ import pickle
 import time,calendar, datetime
 import warnings
 
+import meteoSI
+
 try:
 	import pp
 except:
@@ -72,6 +74,85 @@ class pyPamtra:
 		
 		self.setDefaultKeys = self.set.keys()
 		
+		self.dimensions = dict()
+		
+		self.dimensions["year"] = []
+		self.dimensions["month"] = []
+		self.dimensions["day"] = []
+		self.dimensions["time"] = []
+		
+		self.dimensions["ngridx"] = []
+		self.dimensions["ngridy"] = []
+		self.dimensions["nlyr"] = []
+		
+		self.dimensions["model_i"] = ["ngridx","ngridy"]
+		self.dimensions["model_j"] = ["ngridx","ngridy"]
+		self.dimensions["lat"] = ["ngridx","ngridy"]
+		self.dimensions["lon"] = ["ngridx","ngridy"]
+		self.dimensions["lfrac"] = ["ngridx","ngridy"]
+		self.dimensions["wind10u"] = ["ngridx","ngridy"]
+		self.dimensions["wind10v"] = ["ngridx","ngridy"]
+		
+		self.dimensions["iwv"] = ["ngridx","ngridy"]
+		self.dimensions["cwp"] = ["ngridx","ngridy"]
+		self.dimensions["iwp"] = ["ngridx","ngridy"]
+		self.dimensions["rwp"] = ["ngridx","ngridy"]
+		self.dimensions["swp"] = ["ngridx","ngridy"]
+		self.dimensions["gwp"] = ["ngridx","ngridy"]
+		
+		self.dimensions["hgt_lev"] = ["ngridx","ngridy","nlyr+1"]
+		self.dimensions["temp_lev"] = ["ngridx","ngridy","nlyr+1"]
+		self.dimensions["p_lev"] = ["ngridx","ngridy","nlyr+1"]
+		self.dimensions["relhum_lev"] = ["ngridx","ngridy","nlyr+1"]
+		
+		self.dimensions["cwc_q"] = ["ngridx","ngridy","nlyr"]
+		self.dimensions["iwc_q"] = ["ngridx","ngridy","nlyr"]
+		self.dimensions["rwc_q"] = ["ngridx","ngridy","nlyr"]
+		self.dimensions["swc_q"] = ["ngridx","ngridy","nlyr"]
+		self.dimensions["gwc_q"] = ["ngridx","ngridy","nlyr"]
+
+		
+		self.units = dict()
+		
+		
+		self.units["year"] = "yyyy"
+		self.units["month"] = "mm"
+		self.units["day"] = "dd"
+		self.units["time"] = "HHMM"
+		
+		self.units["ngridx"] = "-"
+		self.units["ngridy"] = "-"
+		self.units["nlyr"] = "-"
+		
+		self.units["model_i"] = "-"
+		self.units["model_j"] = "-"
+		self.units["lat"] = "deg.dec"
+		self.units["lon"] = "deg.dec"
+		self.units["lfrac"] = "-"
+		self.units["wind10u"] = "m/s"
+		self.units["wind10v"] = "m/s"
+		
+		self.units["iwv"] = "kg/m^2"
+		self.units["cwp"] = "kg/m^2"
+		self.units["iwp"] = "kg/m^2"
+		self.units["rwp"] = "kg/m^2"
+		self.units["swp"] = "kg/m^2"
+		self.units["gwp"] = "kg/m^2"
+		
+		self.units["hgt_lev"] = "m"
+		self.units["temp_lev"] = "K"
+		self.units["p_lev"] = "Pa"
+		self.units["relhum_lev"] = "1"
+		
+		self.units["cwc_q"] = "kg/kg"
+		self.units["iwc_q"] = "kg/kg"
+		self.units["rwc_q"] = "kg/kg"
+		self.units["swc_q"] = "kg/kg"
+		self.units["gwc_q"] = "kg/kg"
+
+		
+		
+		
 	
 	def readProfile(self,inputFile):
 		
@@ -125,11 +206,40 @@ class pyPamtra:
 				for z in np.arange(self.p["nlyr"]):
 					self.p["hgt_lev"][x,y,z+1],self.p["press_lev"][x,y,z+1],self.p["temp_lev"][x,y,z+1],self.p["relhum_lev"][x,y,z+1],self.p["cwc_q"][x,y,z],self.p["iwc_q"][x,y,z],self.p["rwc_q"][x,y,z],self.p["swc_q"][x,y,z],self.p["gwc_q"][x,y,z] = np.array(g.next(),dtype=float)
 
+		self.p["relhum_lev"] = self.p["relhum_lev"]/100.
+
 		f.close()
 
-	
-	
+
 	def createProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
+			hgt_lev,press_lev,temp_lev,relhum_lev,
+			cwc_q,iwc_q,rwc_q,swc_q,gwc_q):
+			
+			q_lev = rh2q(rh_lev,temp_lev,press_lev)
+			q = (q_lev[...,0:-1] + q_lev[...,1:])/2.
+			
+			rho_moist_lev = rho_moist_q(press_lev,temp_lev,q_lev)
+			rho_moist = (rho_moist_lev[...,0:-1] + rho_moist_lev[...,1:])/2.
+	
+			dz = np.diff(hgt_lev)
+
+			iwv = meteoSI.integrate_xq_xwp(q,rho_moist,hgt_lev)
+			cwp = meteoSI.integrate_xq_xwp(cwc_q,rho_moist,hgt_lev)
+			iwp = meteoSI.integrate_xq_xwp(iwc_q,rho_moist,hgt_lev)
+			rwp = meteoSI.integrate_xq_xwp(rwc_q,rho_moist,hgt_lev)
+			swp = meteoSI.integrate_xq_xwp(swc_q,rho_moist,hgt_lev)
+			gwp = meteoSI.integrate_xq_xwp(gwc_q,rho_moist,hgt_lev)
+			
+			
+			return createFullProfile(timestamp,lat,lon,lfrac,wind10u,wind10v,
+			iwv,cwp,iwp,rwp,swp,gwp,
+			hgt_lev,press_lev,temp_lev,relhum_lev,
+			cwc_q,iwc_q,rwc_q,swc_q,gwc_q)
+
+
+
+	
+	def createFullProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
 			iwv,cwp,iwp,rwp,swp,gwp,
 			hgt_lev,press_lev,temp_lev,relhum_lev,
 			cwc_q,iwc_q,rwc_q,swc_q,gwc_q):
@@ -188,7 +298,7 @@ class pyPamtra:
 		self.p["swc_q"] = swc_q.reshape(shape3D)
 		self.p["gwc_q"] = gwc_q.reshape(shape3D)
 
-	def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers=0,pp_deltaF=0,pp_deltaX=0,pp_deltaY = 0):
+	def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers=1,pp_deltaF=0,pp_deltaX=0,pp_deltaY = 0):
 		
 		if pp_local_workers == "auto":
 			job_server = pp.Server(ppservers=pp_servers) 
@@ -198,7 +308,7 @@ class pyPamtra:
 		
 		pp_nodes = job_server.get_active_nodes()
 		for key in pp_nodes.keys():
-			print key+": "+pp_nodes[key]+" nodes"
+			print key+": "+str(pp_nodes[key])+" nodes"
 		
 		if (type(freqs) == int) or (type(freqs) == float): freqs = [freqs]
 		
@@ -337,7 +447,10 @@ class pyPamtra:
 				
 		if self.set["n_moments"]==2:
 			raise IOError("multi moments not implemented yet!")
-
+		
+		if np.max(self.p["relhum_lev"])>1.5:
+			raise IOError("relative humidity is _not_ in %!")
+		
 		self.r = dict()
 
 		#output
@@ -355,10 +468,10 @@ class pyPamtra:
 		self.p["iwv"],self.p["cwp"],self.p["iwp"],self.p["rwp"],self.p["swp"],self.p["gwp"],
 		self.p["cwc_q"],self.p["iwc_q"],self.p["rwc_q"],self.p["swc_q"],self.p["gwc_q"])
 		
-		self.r["Ze_dimensions"] = ["gridx","gridy","lyr","frequency"]
-		self.r["attenuationHydro_dimensions"] = ["gridx","gridy","lyr","frequency"]
-		self.r["attenuationAtmo_dimensions"] = ["gridx","gridy","lyr","frequency"]
-		self.r["tb_dimensions"] = ["gridx","gridy","outlevels","angles","frequency","stokes"]
+		self.dimensions["Ze"] = ["gridx","gridy","lyr","frequency"]
+		self.dimensions["attenuationHydros"] = ["gridx","gridy","lyr","frequency"]
+		self.dimensions["attenuationAtmo"] = ["gridx","gridy","lyr","frequency"]
+		self.dimensions["tb"] = ["gridx","gridy","outlevels","angles","frequency","stokes"]
 		
 		self.r["settings"] = self.set
 		
@@ -504,12 +617,12 @@ class pyPamtra:
 		
 		if (self.r["settings"]["passive"]):
 			nc_tb[:] = self.r["tb"]
-		if (self.r["settings"]["active"]):          
+		if (self.r["settings"]["active"]):
 			nc_height[:] = self.r["hgt"]
 			nc_Ze[:] = self.r["Ze"]
 			nc_Attenuation_Hydrometeors[:] = self.r["attenuationHydro"]
 			nc_Attenuation_Atmosphere[:] = self.r["attenuationAtmo"]
 			
 		cdfFile.close()
-		
-		
+
+
