@@ -218,7 +218,7 @@ deltay = in_deltay
 
 
 
-         relhum_lev = in_relhum_lev(nx,ny,:)         ! %
+         relhum_lev = 100.*in_relhum_lev(nx,ny,:)         ! %
          press_lev = in_press_lev(nx,ny,:)           ! Pa
          temp_lev = in_temp_lev(nx,ny,:)             ! K
          hgt_lev = in_hgt_lev(nx,ny,:)               ! m

@@ -170,5 +170,4 @@ deltay = profiles_deltay
           trim(freq_str)//trim(file_desc)//'.nc'
      call write_nc_results(nc_out_file)
   end if
-
 end program pamtra
