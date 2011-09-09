@@ -114,7 +114,7 @@ class pyPamtra:
 		
 		self.units = dict()
 		
-		
+		self.units["timestamp"] = "seconds since 1970-01-01"
 		self.units["year"] = "yyyy"
 		self.units["month"] = "mm"
 		self.units["day"] = "dd"
@@ -214,27 +214,27 @@ class pyPamtra:
 	def createProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
 			hgt_lev,press_lev,temp_lev,relhum_lev,
 			cwc_q,iwc_q,rwc_q,swc_q,gwc_q):
-			
-			q_lev = rh2q(rh_lev,temp_lev,press_lev)
-			q = (q_lev[...,0:-1] + q_lev[...,1:])/2.
-			
-			rho_moist_lev = rho_moist_q(press_lev,temp_lev,q_lev)
-			rho_moist = (rho_moist_lev[...,0:-1] + rho_moist_lev[...,1:])/2.
-	
-			dz = np.diff(hgt_lev)
+		
+		q_lev = meteoSI.rh2q(relhum_lev,temp_lev,press_lev)
+		q = (q_lev[...,0:-1] + q_lev[...,1:])/2.
+		
+		rho_moist_lev = meteoSI.moist_rho_q(press_lev,temp_lev,q_lev)
+		rho_moist = (rho_moist_lev[...,0:-1] + rho_moist_lev[...,1:])/2.
 
-			iwv = meteoSI.integrate_xq_xwp(q,rho_moist,hgt_lev)
-			cwp = meteoSI.integrate_xq_xwp(cwc_q,rho_moist,hgt_lev)
-			iwp = meteoSI.integrate_xq_xwp(iwc_q,rho_moist,hgt_lev)
-			rwp = meteoSI.integrate_xq_xwp(rwc_q,rho_moist,hgt_lev)
-			swp = meteoSI.integrate_xq_xwp(swc_q,rho_moist,hgt_lev)
-			gwp = meteoSI.integrate_xq_xwp(gwc_q,rho_moist,hgt_lev)
-			
-			
-			return createFullProfile(timestamp,lat,lon,lfrac,wind10u,wind10v,
-			iwv,cwp,iwp,rwp,swp,gwp,
-			hgt_lev,press_lev,temp_lev,relhum_lev,
-			cwc_q,iwc_q,rwc_q,swc_q,gwc_q)
+		dz = np.diff(hgt_lev)
+
+		iwv = meteoSI.integrate_xq_xwp(q,rho_moist,hgt_lev)
+		cwp = meteoSI.integrate_xq_xwp(cwc_q,rho_moist,hgt_lev)
+		iwp = meteoSI.integrate_xq_xwp(iwc_q,rho_moist,hgt_lev)
+		rwp = meteoSI.integrate_xq_xwp(rwc_q,rho_moist,hgt_lev)
+		swp = meteoSI.integrate_xq_xwp(swc_q,rho_moist,hgt_lev)
+		gwp = meteoSI.integrate_xq_xwp(gwc_q,rho_moist,hgt_lev)
+		
+		
+		return self.createFullProfile(timestamp,lat,lon,lfrac,wind10u,wind10v,
+		iwv,cwp,iwp,rwp,swp,gwp,
+		hgt_lev,press_lev,temp_lev,relhum_lev,
+		cwc_q,iwc_q,rwc_q,swc_q,gwc_q)
 
 
 
@@ -259,24 +259,36 @@ class pyPamtra:
 		else:
 			print "Too many dimensions!"
 			raise IOError
-		self.p["nlyr"] = np.shape(hgt_lev)[-1]
+		self.p["nlyr"] = np.shape(hgt_lev)[-1] -1
 		shape2D = (self.p["ngridx"],self.p["ngridy"],)
 		shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyr"],)
 		shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyr"]+1,)
 		
-		if (type(timestamp) == int) or (type(timestamp) == float) :
-			timestamp = datetime.datetime.utcfromtimestamp(timestamp)
-		self.p["year"] = timestamp.strftime("%Y")
-		self.p["month"] = timestamp.strftime("%m")
-		self.p["day"] = timestamp.strftime("%d")
-		self.p["time"] = timestamp.strftime("%H%M")
+		
+		if (type(timestamp) == str):
+			self.p["year"] = timestamp[0:4]
+			self.p["month"] = timestamp[4:6]
+			self.p["day"] = timestamp[6:8]
+			self.p["time"] = timestamp[8:12]
+		else:
+			if (type(timestamp) == int) or (type(timestamp) == float) :
+				timestamp = datetime.datetime.utcfromtimestamp(timestamp)
+			elif (type(timestamp) == datetime):
+				pass
+			else:
+				raise TypeError("tiemstamp has to be int or float or string")
+			self.p["year"] = timestamp.strftime("%Y")
+			self.p["month"] = timestamp.strftime("%m")
+			self.p["day"] = timestamp.strftime("%d")
+			self.p["time"] = timestamp.strftime("%H%M")
+				
 		self.p["deltax"] = 0.
 		self.p["deltay"] = 0.
 		self.p["lat"] = lat.reshape(shape2D)
 		self.p["lon"] = lon.reshape(shape2D)
 		self.p["lfrac"] = lfrac.reshape(shape2D)
-		self.p["model_i"] = np.where(hgt_lev.reshape(shape3D))[0]
-		self.p["model_j"] = np.where(hgt_lev.reshape(shape3D))[1]
+		self.p["model_i"] = np.array(np.where(lat.reshape(shape2D))[0]).reshape(shape2D) +1
+		self.p["model_j"] = np.array(np.where(lon.reshape(shape2D))[1]).reshape(shape2D) +1
 		self.p["wind10u"] = wind10u.reshape(shape2D)
 		self.p["wind10v"] = wind10v.reshape(shape2D)
 
@@ -433,9 +445,10 @@ class pyPamtra:
 			#print key
 			#print self.__dict__[key]
 		job_server.print_stats()
+		job_server.destroy()
 		
 	def runPamtra(self,freqs):
-
+		tttt = time.time()
 		if (type(freqs) == int) or (type(freqs) == float): freqs = [freqs]
 		
 		self.freqs = freqs
@@ -481,6 +494,8 @@ class pyPamtra:
 		#for key in self.__dict__.keys():
 			#print key
 			#print self.__dict__[key]
+		
+		print "time:", time.time() - tttt
 
 
 

@@ -16,7 +16,7 @@ testNo = sys.argv[1]
 if testNo == "1":
 
 
-	t.runParallelPamtra([24,90,150])
+	t.runPamtra([24,90,150])
 	
 elif testNo == "2":
 
@@ -59,9 +59,13 @@ if testNo != "4":
 	reference = pyPamtra.pyPamtra()
 	reference.loadResultsFromNumpy("../test/referenceOutput/"+testNo+"/python"+testNo+".pickle")
 	#import pdb; pdb.set_trace()
+	error = 0
 	for key in ["angles","tb","hgt","Ze","attenuationAtmo","attenuationHydro"]:
 		if np.any(reference.r[key] != t.r[key]):
-			raise IOError(key+" does not match")
+			error += 1
+			print key
+	if error > 0:
+		raise IOError("do not match")
 		#else:
 			#print key, "OK"
 
