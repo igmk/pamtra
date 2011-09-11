@@ -65,7 +65,8 @@ else:
 if testNo != "4":
 
 	#uncomment if test should be defined again
-	t.writeResultsToNumpy("../test/referenceOutput/"+testNo+"/python"+testNo+".pickle")
+	#print "warning, rewrting tests!!"
+	#t.writeResultsToNumpy("../test/referenceOutput/"+testNo+"/python"+testNo+".pickle")
 
 
 	reference = pyPamtra.pyPamtra()

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-#http://www.parallelpython.com/component/option,com_smf/Itemid,29/topic,407.0
+#todo: function to calculate PIA?
 
 import numpy as np
 import datetime
@@ -234,20 +234,32 @@ class pyPamtra:
 			hgt_lev,press_lev,temp_lev,relhum_lev,
 			cwc_q,iwc_q,rwc_q,swc_q,gwc_q):
 		
-		q_lev = meteoSI.rh2q(relhum_lev,temp_lev,press_lev)
-		q = (q_lev[...,0:-1] + q_lev[...,1:])/2.
-		print "can I average p linearly?"
-		rho_moist_lev = meteoSI.moist_rho_q(press_lev,temp_lev,q_lev)
-		rho_moist = (rho_moist_lev[...,0:-1] + rho_moist_lev[...,1:])/2.
+		dz = np.diff(hgt_lev,axis=-1)
+		relhum = (relhum_lev[...,0:-1] + relhum_lev[...,1:])/2.
+		temp = (temp_lev[...,0:-1] + temp_lev[...,1:])/2.
 
-		dz = np.diff(hgt_lev)
+		xp = -1.*np.log(press_lev[...,1:]/press_lev[...,0:-1])/dz
+		press = -1.*press_lev[...,0:-1]/xp*(np.exp(-xp*dz)-1.)/dz
 
-		iwv = meteoSI.integrate_xq_xwp(q,rho_moist,hgt_lev)
-		cwp = meteoSI.integrate_xq_xwp(cwc_q,rho_moist,hgt_lev)
-		iwp = meteoSI.integrate_xq_xwp(iwc_q,rho_moist,hgt_lev)
-		rwp = meteoSI.integrate_xq_xwp(rwc_q,rho_moist,hgt_lev)
-		swp = meteoSI.integrate_xq_xwp(swc_q,rho_moist,hgt_lev)
-		gwp = meteoSI.integrate_xq_xwp(gwc_q,rho_moist,hgt_lev)
+		q = meteoSI.rh2q(relhum,temp,press)
+		rho_moist = meteoSI.moist_rho_q(press,temp,q)
+
+		
+		#necessary for varying nlyr:
+		q[q==missingNumber] = 0
+		cwc_q[cwc_q==missingNumber] = 0
+		iwc_q[iwc_q==missingNumber] = 0
+		rwc_q[rwc_q==missingNumber] = 0
+		swc_q[swc_q==missingNumber] = 0
+		gwc_q[gwc_q==missingNumber] = 0
+		
+		#integrate
+		iwv = np.sum(q*rho_moist*dz)
+		cwp = np.sum(cwc_q*rho_moist*dz)
+		iwp = np.sum(iwc_q*rho_moist*dz)
+		rwp = np.sum(rwc_q*rho_moist*dz)
+		swp = np.sum(swc_q*rho_moist*dz)
+		gwp = np.sum(gwc_q*rho_moist*dz)
 		
 		
 		return self.createFullProfile(timestamp,lat,lon,lfrac,wind10u,wind10v,

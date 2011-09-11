@@ -110,7 +110,7 @@ def e_sat_gg_water(T):
 	'''
 	return 100 * 1013.246 * 10**( -7.90298*(373.16/T-1) + 5.02808*np.log10(373.16/T) - 1.3816e-7*(10**(11.344*(1-T/373.16))-1) + 8.1328e-3 * (10**(-3.49149*(373.16/T-1))-1) )
 
-def rh_to_iwv(rh_lev,temp_lev,press_lev,hgt_lev):
+def rh_to_iwv(relhum_lev,temp_lev,press_lev,hgt_lev):
 	'''
 	Calculate the integrated water vapour
 
@@ -123,18 +123,16 @@ def rh_to_iwv(rh_lev,temp_lev,press_lev,hgt_lev):
 	Output
 	iwv in kg/m^2
 	'''
-	
-	q_lev = rh2q(rh_lev,temp_lev,press_lev)
-	q = (q_lev[...,0:-1] + q_lev[...,1:])/2.
-	
-	rho_moist_lev = moist_rho_q(press_lev,temp_lev,q_lev)
-	rho_moist = (rho_moist_lev[...,0:-1] + rho_moist_lev[...,1:])/2.
-	
-	dz = np.diff(hgt_lev)
+	dz = np.diff(hgt_lev,axis=-1)
+	relhum = (relhum_lev[...,0:-1] + relhum_lev[...,1:])/2.
+	temp = (temp_lev[...,0:-1] + temp_lev[...,1:])/2.
+
+	xp = -1.*np.log(press_lev[...,1:]/press_lev[...,0:-1])/dz
+	press = -1.*press_lev[...,0:-1]/xp*(np.exp(-xp*dz)-1.)/dz
+
+	q = meteoSI.rh2q(relhum,temp,press)
+	rho_moist = meteoSI.moist_rho_q(press,temp,q)
 
 	return np.sum(q*rho_moist*dz)
 
-def integrate_xq_xwp(xq,rho_moist,hgt_lev):
-	dz = np.diff(hgt_lev)
-	return np.sum(xq*rho_moist*dz)
 
