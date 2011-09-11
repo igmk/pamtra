@@ -31,8 +31,10 @@ class pyPamtra:
 	
 	def __init__(self):
 		
+		#set setting default values
 		self.set = dict()
 		self.set["verbose"]=0
+		self.set["pyVerbose"] = 0 #not passed to Pamtra!
 		self.set["dump_to_file"]=False
 		self.set["tmp_path"]='/tmp/'
 		self.set["data_path"]='/home/mech/models/pamtra/data/'
@@ -322,11 +324,11 @@ class pyPamtra:
 			job_server = pp.Server(ppservers=pp_servers) 
 		else:
 			job_server = pp.Server(pp_local_workers,ppservers=pp_servers) 
-		print "Starting pp with: "
-		
-		pp_nodes = job_server.get_active_nodes()
-		for key in pp_nodes.keys():
-			print key+": "+str(pp_nodes[key])+" nodes"
+		if self.set["pyVerbose"] > = 0: 
+			print "Starting pp with: "
+			pp_nodes = job_server.get_active_nodes()
+			for key in pp_nodes.keys():
+				print key+": "+str(pp_nodes[key])+" nodes"
 		
 		if (type(freqs) == int) or (type(freqs) == float): freqs = [freqs]
 		
@@ -451,11 +453,11 @@ class pyPamtra:
 		#for key in self.__dict__.keys():
 			#print key
 			#print self.__dict__[key]
-		job_server.print_stats()
+		if self.set["pyVerbose"] > = 0: job_server.print_stats()
 		job_server.destroy()
 		
 	def runPamtra(self,freqs):
-		tttt = time.time()
+		
 		if (type(freqs) == int) or (type(freqs) == float): freqs = [freqs]
 		
 		self.freqs = freqs
@@ -471,6 +473,7 @@ class pyPamtra:
 		if np.max(self.p["relhum_lev"])>1.5:
 			raise IOError("relative humidity is _not_ in %!")
 		
+		tttt = time.time()
 		self.r = dict()
 
 		#output
@@ -502,7 +505,7 @@ class pyPamtra:
 			#print key
 			#print self.__dict__[key]
 		
-		print "runtime:", time.time() - tttt
+		if self.set["pyVerbose"] > = 0: print "pyPamtra runtime:", time.time() - tttt
 
 
 
