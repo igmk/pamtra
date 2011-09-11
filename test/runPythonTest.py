@@ -1,11 +1,17 @@
 import sys
-import pyPamtra
 import numpy as np
+
+#ensure that you take the lib from the build directory!!
+sys.path.insert(0,"../py/lib/")
+import pyPamtra
+
+
+
 
 inputFile="../test/referenceProfile/testProfiles.dat"
 
 t = pyPamtra.pyPamtra()
-t.readProfile(inputFile)
+t.readPamtraProfile(inputFile)
 
 t.set["data_path"]='/home/mech/models/pamtra/data/'
 t.set["verbose"]=0
@@ -28,7 +34,7 @@ elif testNo == "2":
 	t.set["liu_type"]=4
 
 
-	t.runParallelPamtra(35)
+	t.runPamtra(35)
 elif testNo == "3":
 
 	t.set["passive"]=True
@@ -44,17 +50,23 @@ elif testNo == "4":
 	t.set["EM_snow"]='icesf'
 	t.set["isnow_n0"]=2
 	t.set["EM_grau"]='icesf'
-	t.runParallelPamtra(35)
+	
+	#make artificially less levels!
+	#t.p["nlyrs"][3,0] = 25
+	
+	t.runPamtra(35)
 	t.writeResultsToNetCDF("../test/tmp/pythontest4.nc")
 	
 else:
 	sys.exit("unknown test number "+testNo)
 	
 
-#uncomment if test should be defined again
-#t.writeResultsToNumpy("../test/referenceOutput/"+testNo+"/python"+testNo+".pickle")
 
 if testNo != "4":
+
+	#uncomment if test should be defined again
+	t.writeResultsToNumpy("../test/referenceOutput/"+testNo+"/python"+testNo+".pickle")
+
 
 	reference = pyPamtra.pyPamtra()
 	reference.loadResultsFromNumpy("../test/referenceOutput/"+testNo+"/python"+testNo+".pickle")

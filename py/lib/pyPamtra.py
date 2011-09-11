@@ -16,6 +16,8 @@ try:
 except:
 	warnings.warn("parallel python not available", Warning)
 
+missingNumber=-9999
+
 def PamtraFortranWrapper(*args):
 	#is needed because pp cannot work with fortran modules directly
 	import pyPamtraLib
@@ -83,7 +85,7 @@ class pyPamtra:
 		
 		self.dimensions["ngridx"] = []
 		self.dimensions["ngridy"] = []
-		self.dimensions["nlyr"] = []
+		self.dimensions["nlyrs"] = ["ngridx","ngridy"]
 		
 		self.dimensions["model_i"] = ["ngridx","ngridy"]
 		self.dimensions["model_j"] = ["ngridx","ngridy"]
@@ -100,16 +102,16 @@ class pyPamtra:
 		self.dimensions["swp"] = ["ngridx","ngridy"]
 		self.dimensions["gwp"] = ["ngridx","ngridy"]
 		
-		self.dimensions["hgt_lev"] = ["ngridx","ngridy","nlyr+1"]
-		self.dimensions["temp_lev"] = ["ngridx","ngridy","nlyr+1"]
-		self.dimensions["p_lev"] = ["ngridx","ngridy","nlyr+1"]
-		self.dimensions["relhum_lev"] = ["ngridx","ngridy","nlyr+1"]
+		self.dimensions["hgt_lev"] = ["ngridx","ngridy","max_nlyrs+1"]
+		self.dimensions["temp_lev"] = ["ngridx","ngridy","max_nlyrs+1"]
+		self.dimensions["p_lev"] = ["ngridx","ngridy","max_nlyrs+1"]
+		self.dimensions["relhum_lev"] = ["ngridx","ngridy","max_nlyrs+1"]
 		
-		self.dimensions["cwc_q"] = ["ngridx","ngridy","nlyr"]
-		self.dimensions["iwc_q"] = ["ngridx","ngridy","nlyr"]
-		self.dimensions["rwc_q"] = ["ngridx","ngridy","nlyr"]
-		self.dimensions["swc_q"] = ["ngridx","ngridy","nlyr"]
-		self.dimensions["gwc_q"] = ["ngridx","ngridy","nlyr"]
+		self.dimensions["cwc_q"] = ["ngridx","ngridy","max_nlyrs"]
+		self.dimensions["iwc_q"] = ["ngridx","ngridy","max_nlyrs"]
+		self.dimensions["rwc_q"] = ["ngridx","ngridy","max_nlyrs"]
+		self.dimensions["swc_q"] = ["ngridx","ngridy","max_nlyrs"]
+		self.dimensions["gwc_q"] = ["ngridx","ngridy","max_nlyrs"]
 
 		
 		self.units = dict()
@@ -122,7 +124,7 @@ class pyPamtra:
 		
 		self.units["ngridx"] = "-"
 		self.units["ngridy"] = "-"
-		self.units["nlyr"] = "-"
+		self.units["nlyrs"] = "-"
 		
 		self.units["model_i"] = "-"
 		self.units["model_j"] = "-"
@@ -154,21 +156,21 @@ class pyPamtra:
 		
 		
 	
-	def readProfile(self,inputFile):
+	def readPamtraProfile(self,inputFile):
 		
 		self.p = dict()
 		
 		f = open(inputFile,"r")
 		g = csv.reader(f,delimiter=" ",skipinitialspace=True)
-		self.p["year"], self.p["month"], self.p["day"], self.p["time"], self.p["ngridx"], self.p["ngridy"], self.p["nlyr"], self.p["deltax"], self.p["deltay"] = g.next()
+		self.p["year"], self.p["month"], self.p["day"], self.p["time"], self.p["ngridx"], self.p["ngridy"], self.p["nlyrs"], self.p["deltax"], self.p["deltay"] = g.next()
 		
 		self.p["ngridx"] = int(self.p["ngridx"])
 		self.p["ngridy"] = int(self.p["ngridy"])
-		self.p["nlyr"] = int(self.p["nlyr"])
+		self.p["nlyrs"] = int(self.p["nlyrs"])
 		
 		shape2D = (self.p["ngridx"],self.p["ngridy"],)
-		shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyr"],)
-		shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyr"]+1,)
+		shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],)
+		shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"]+1,)
 		
 		self.p["model_i"] = np.zeros(shape2D)
 		self.p["model_j"] = np.zeros(shape2D)
@@ -203,10 +205,14 @@ class pyPamtra:
 				self.p["lat"][x,y], self.p["lon"][x,y], self.p["lfrac"][x,y],self.p["wind10u"][x,y],self.p["wind10v"][x,y]  = np.array(g.next(),dtype=float)
 				self.p["iwv"][x,y],self.p["cwp"][x,y],self.p["iwp"][x,y],self.p["rwp"][x,y],self.p["swp"][x,y],self.p["gwp"][x,y] = np.array(g.next(),dtype=float)
 				self.p["hgt_lev"][x,y,0],self.p["press_lev"][x,y,0],self.p["temp_lev"][x,y,0],self.p["relhum_lev"][x,y,0] = np.array(g.next(),dtype=float)
-				for z in np.arange(self.p["nlyr"]):
+				for z in np.arange(self.p["nlyrs"]):
 					self.p["hgt_lev"][x,y,z+1],self.p["press_lev"][x,y,z+1],self.p["temp_lev"][x,y,z+1],self.p["relhum_lev"][x,y,z+1],self.p["cwc_q"][x,y,z],self.p["iwc_q"][x,y,z],self.p["rwc_q"][x,y,z],self.p["swc_q"][x,y,z],self.p["gwc_q"][x,y,z] = np.array(g.next(),dtype=float)
 
+		#in PyPamtra I want relhum not in %
 		self.p["relhum_lev"] = self.p["relhum_lev"]/100.
+
+		#finally make an array from nlyrs
+		self.p["nlyrs"] = np.ones(shape2D,dtype=int)*self.p["nlyrs"]
 
 		f.close()
 
@@ -217,7 +223,7 @@ class pyPamtra:
 		
 		q_lev = meteoSI.rh2q(relhum_lev,temp_lev,press_lev)
 		q = (q_lev[...,0:-1] + q_lev[...,1:])/2.
-		
+		print "can I average p linearly?"
 		rho_moist_lev = meteoSI.moist_rho_q(press_lev,temp_lev,q_lev)
 		rho_moist = (rho_moist_lev[...,0:-1] + rho_moist_lev[...,1:])/2.
 
@@ -234,7 +240,7 @@ class pyPamtra:
 		return self.createFullProfile(timestamp,lat,lon,lfrac,wind10u,wind10v,
 		iwv,cwp,iwp,rwp,swp,gwp,
 		hgt_lev,press_lev,temp_lev,relhum_lev,
-		cwc_q,iwc_q,rwc_q,swc_q,gwc_q)
+		cwc_q,iwc_q,rwc_q,swc_q,gwc_q,missingNumber=missingNumber)
 
 
 
@@ -261,8 +267,8 @@ class pyPamtra:
 			raise IOError
 		self.p["nlyr"] = np.shape(hgt_lev)[-1] -1
 		shape2D = (self.p["ngridx"],self.p["ngridy"],)
-		shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyr"],)
-		shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyr"]+1,)
+		shape3D = (self.p["ngridx"],self.p["ngridy"],np.max(self.p["nlyrs"]),)
+		shape3Dplus = (self.p["ngridx"],self.p["ngridy"],p.max(self.p["nlyrs"])+1,)
 		
 		
 		if (type(timestamp) == str):
@@ -349,11 +355,11 @@ class pyPamtra:
 		pp_ii = -1
 		pp_jobs = dict()
 		
-		self.r["Ze"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["nlyr"],self.nfreqs,))*-9999
-		self.r["attenuationHydro"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["nlyr"],self.nfreqs,))*-9999
-		self.r["attenuationAtmo"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["nlyr"],self.nfreqs,))*-9999
-		self.r["hgt"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["nlyr"],))*-9999
-		self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.noutlevels,self.nangles,self.nfreqs,self.nstokes))*-9999
+		self.r["Ze"] = np.ones((self.p["ngridx"],self.p["ngridy"],np.max(self.p["nlyrs"]),self.nfreqs,))*missingNumber
+		self.r["attenuationHydro"] = np.ones((self.p["ngridx"],self.p["ngridy"],np.max(self.p["nlyrs"]),self.nfreqs,))*missingNumber
+		self.r["attenuationAtmo"] = np.ones((self.p["ngridx"],self.p["ngridy"],np.max(self.p["nlyrs"]),self.nfreqs,))*missingNumber
+		self.r["hgt"] = np.ones((self.p["ngridx"],self.p["ngridy"],np.max(self.p["nlyrs"]),))*missingNumber
+		self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.noutlevels,self.nangles,self.nfreqs,self.nstokes))*missingNumber
 		
 		self.r["Ze_dimensions"] = ["gridx","gridy","lyr","frequency"]
 		self.r["attenuationHydro_dimensions"] = ["gridx","gridy","lyr","frequency"]
@@ -381,9 +387,10 @@ class pyPamtra:
 					#self.set
 					self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["emissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["n_moments"], self.set["moments_file"],
 					#input
-					self.p["nlyr"],
 					pp_ngridx,
 					pp_ngridy,
+					np.max(self.p["nlyrs"]),
+					self.p["nlyrs"][pp_startX:pp_endX,pp_startY:pp_endY],
 					pp_nfreqs,
 					self.freqs[pp_startF:pp_endF],
 					self.p["year"],self.p["month"],self.p["day"],self.p["time"],
@@ -473,7 +480,7 @@ class pyPamtra:
 		#self.set
 		self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["emissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["n_moments"], self.set["moments_file"],
 		#input
-		self.p["nlyr"],self.p["ngridx"],self.p["ngridy"],self.nfreqs,self.freqs,
+		self.p["ngridx"],self.p["ngridy"],np.max(self.p["nlyrs"]),self.p["nlyrs"],self.nfreqs,self.freqs,
 		self.p["year"],self.p["month"],self.p["day"],self.p["time"],
 		self.p["deltax"],self.p["deltay"], self.p["lat"],self.p["lon"],self.p["model_i"],self.p["model_j"],
 		self.p["wind10u"],self.p["wind10v"],self.p["lfrac"],
@@ -546,77 +553,81 @@ class pyPamtra:
 			cdfFile.createDimension('nout',np.shape(self.r["tb"])[2])
 			cdfFile.createDimension('nstokes',np.shape(self.r["tb"])[-1])
 		if (self.r["settings"]["active"]):
-			cdfFile.createDimension('nlyr',self.p["nlyr"])
+			cdfFile.createDimension('nlyr',np.max(self.p["nlyrs"]))
 		
 		#create variables
-		nc_angle = cdfFile.createVariable('angle','f4',('nang',),fill_value= -9999)
+		nc_angle = cdfFile.createVariable('angle','f4',('nang',),fill_value= missingNumber)
 		nc_angle.units = 'deg'
 		
-		nc_frequency = cdfFile.createVariable('frequency','f4',('nfreq',),fill_value= -9999)
+		nc_frequency = cdfFile.createVariable('frequency','f4',('nfreq',),fill_value= missingNumber)
 		nc_frequency.units = 'GHz'
 
 		dim2d = ("nlon","nlat",)
-		nc_model_i = cdfFile.createVariable('model_i', 'i4',dim2d,fill_value= -9999)
+		nc_model_i = cdfFile.createVariable('model_i', 'i4',dim2d,fill_value= missingNumber)
 		nc_model_i.units = "-"
 
-		nc_model_j = cdfFile.createVariable('model_j', 'i4',dim2d,fill_value= -9999)
+		nc_model_j = cdfFile.createVariable('model_j', 'i4',dim2d,fill_value= missingNumber)
 		nc_model_j.units = "-"
 
-		nc_longitude = cdfFile.createVariable('longitude', 'f4',dim2d,fill_value= -9999)
+		nc_nlyrs = cdfFile.createVariable('nlyrs', 'i4',dim2d,fill_value= missingNumber)
+		nc_nlyrs.units = "-"
+
+		nc_longitude = cdfFile.createVariable('longitude', 'f4',dim2d,fill_value= missingNumber)
 		nc_longitude.units = "deg.dec"
 
-		nc_latitude = cdfFile.createVariable('latitude', 'f4',dim2d,fill_value= -9999)
+		nc_latitude = cdfFile.createVariable('latitude', 'f4',dim2d,fill_value= missingNumber)
 		nc_latitude.units = "deg.dec"
 
-		nc_lfrac = cdfFile.createVariable('lfrac', 'f4',dim2d,fill_value= -9999)
+		nc_lfrac = cdfFile.createVariable('lfrac', 'f4',dim2d,fill_value= missingNumber)
 		nc_lfrac.units = "-"
 
-		nc_iwv = cdfFile.createVariable('iwv', 'f4',dim2d,fill_value= -9999)
+		nc_iwv = cdfFile.createVariable('iwv', 'f4',dim2d,fill_value= missingNumber)
 		nc_iwv.units = "kg/m^2"
 
-		nc_cwp= cdfFile.createVariable('cwp', 'f4',dim2d,fill_value= -9999)
+		nc_cwp= cdfFile.createVariable('cwp', 'f4',dim2d,fill_value= missingNumber)
 		nc_cwp.units = "kg/m^2"
 
-		nc_iwp = cdfFile.createVariable('iwp', 'f4',dim2d,fill_value= -9999)
+		nc_iwp = cdfFile.createVariable('iwp', 'f4',dim2d,fill_value= missingNumber)
 		nc_iwp.units = "kg/m^2"
 
-		nc_rwp = cdfFile.createVariable('rwp', 'f4',dim2d,fill_value= -9999)
+		nc_rwp = cdfFile.createVariable('rwp', 'f4',dim2d,fill_value= missingNumber)
 		nc_rwp.units = "kg/m^2"
 
-		nc_swp = cdfFile.createVariable('swp', 'f4',dim2d,fill_value= -9999)
+		nc_swp = cdfFile.createVariable('swp', 'f4',dim2d,fill_value= missingNumber)
 		nc_swp.units = "kg/m^2"
 
-		nc_gwp = cdfFile.createVariable('gwp', 'f4',dim2d,fill_value= -9999)
+		nc_gwp = cdfFile.createVariable('gwp', 'f4',dim2d,fill_value= missingNumber)
 		nc_gwp.units = "kg/m^2"
 
-		nc_hwp = cdfFile.createVariable('hwp', 'f4',dim2d,fill_value= -9999)
-		nc_hwp.units = "kg/m^2"
+		#nc_hwp = cdfFile.createVariable('hwp', 'f4',dim2d,fill_value= missingNumber)
+		#nc_hwp.units = "kg/m^2"
 
 		if (self.r["settings"]["active"]):
 
 			dim3d = ("nlon","nlat","nlyr",)
-			nc_height = cdfFile.createVariable('height', 'f4',dim3d,fill_value= -9999)
+			nc_height = cdfFile.createVariable('height', 'f4',dim3d,fill_value= missingNumber)
 			nc_height.units = "m"
 
 			dim4d = ("nlon","nlat","nlyr","nfreq")
-			nc_Ze = cdfFile.createVariable('Ze', 'f4',dim4d,fill_value= -9999)
+			nc_Ze = cdfFile.createVariable('Ze', 'f4',dim4d,fill_value= missingNumber)
 			nc_Ze.units = "dBz"
 
-			nc_Attenuation_Hydrometeors = cdfFile.createVariable('Attenuation_Hydrometeors', 'f4',dim4d,fill_value= -9999)
+			nc_Attenuation_Hydrometeors = cdfFile.createVariable('Attenuation_Hydrometeors', 'f4',dim4d,fill_value= missingNumber)
 			nc_Attenuation_Hydrometeors.units = "dB"
 
-			nc_Attenuation_Atmosphere = cdfFile.createVariable('Attenuation_Atmosphere', 'f4',dim4d,fill_value= -9999)
+			nc_Attenuation_Atmosphere = cdfFile.createVariable('Attenuation_Atmosphere', 'f4',dim4d,fill_value= missingNumber)
 			nc_Attenuation_Atmosphere.units = "dB"
 
 
 		if (self.r["settings"]["passive"]):
 			dim6d = ("nlon","nlat","nout","nang","nfreq","nstokes")
-			nc_tb = cdfFile.createVariable('tb', 'f4',dim6d,fill_value= -9999)
+			nc_tb = cdfFile.createVariable('tb', 'f4',dim6d,fill_value= missingNumber)
 			nc_tb.units = "K"
 
 		#save data
 		nc_angle[:] = self.r["angles"]
 		nc_frequency[:] = self.freqs
+		nc_nlyrs[:] = self.p["nlyrs"]
 		nc_model_i[:] = self.p["model_i"]
 		nc_model_j[:] = self.p["model_j"]
 		nc_longitude[:] = self.p["lon"]
@@ -628,7 +639,7 @@ class pyPamtra:
 		nc_rwp[:] = self.p["rwp"]
 		nc_swp[:] = self.p["swp"]
 		nc_gwp[:] = self.p["gwp"]
-		if (self.r["settings"]["n_moments"] == 2): nc_hwp[:] = self.p["hwp"]
+		#if (self.r["settings"]["n_moments"] == 2): nc_hwp[:] = self.p["hwp"]
 		
 		if (self.r["settings"]["passive"]):
 			nc_tb[:] = self.r["tb"]

@@ -244,7 +244,7 @@ p96
 tp97
 bsS'pamtraHash'
 p98
-S'795c2a6d4f33d3b7492a7cc266c8faae5ae40513'
+S'962ed92360f0d3fc35cd76e5091311f47817f2f5'
 p99
 sS'attenuationHydro_dimensions'
 p100
@@ -306,6 +306,6 @@ p118
 tp119
 bsS'pamtraVersion'
 p120
-S'v0.2-53-g795c2a6-parallelpython'
+S'v0.2-54-g962ed92-parallelpython'
 p121
 s.

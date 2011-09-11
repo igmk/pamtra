@@ -6,7 +6,7 @@ set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_SD_snow,set_N_0snowDsnow,set
 set_SP,set_isnow_n0,set_liu_type,set_SD_grau,set_N_0grauDgrau,set_EM_grau,set_EM_ice,set_SD_rain,&
 set_N_0rainD,set_n_moments,set_moments_file&
 ,& !in
-in_nlyr, in_ngridx, in_ngridy,in_nfreq, in_freqs,&
+in_ngridx, in_ngridy, max_in_nlyrs, in_nlyrs, in_nfreq, in_freqs,&
 in_year,in_month,in_day,in_time,&
 in_deltax,in_deltay, in_lat,in_lon,in_model_i,in_model_j,&
 in_wind10u,in_wind10v,in_lfrac,&
@@ -26,7 +26,7 @@ out_angles&
 
 ! 1) PyPamtra expects relative humidity in Pa/Pa, Pamtra wants relative humidity in % for backwards compatibility
 ! 2) n-moments is not implemented in PyPamtra yet (there is no technical reason not to do it!)
-
+! 3) Only PyPamtra can deal with variing height numbers (Pamtra file format has to be changed for that, otherwise implementation is easy!)
 
   use kinds
   use constants !physical constants live here
@@ -69,26 +69,27 @@ out_angles&
   character(1),intent(in) :: set_GROUND_TYPE, set_UNITS
 !Input
 
-integer, intent(in) :: in_nfreq, in_nlyr, in_ngridx, in_ngridy
+integer, intent(in) :: in_nfreq, max_in_nlyrs, in_ngridx, in_ngridy
 real(kind=sgl), dimension(in_nfreq), intent(in) :: in_freqs
 
 character(2), intent(in) :: in_month, in_day
 character(4), intent(in) :: in_year, in_time
 real(kind=sgl), intent(in) :: in_deltax, in_deltay
 
+integer, dimension(in_ngridx,in_ngridy), intent(in) :: in_nlyrs
 
 real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_lat,in_lon,in_model_i,in_model_j
 real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_wind10u,in_wind10v,in_lfrac
-real(kind=sgl), dimension(in_ngridx,in_ngridy,1+in_nlyr), intent(in) :: in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev
+real(kind=sgl), dimension(in_ngridx,in_ngridy,1+max_in_nlyrs), intent(in) :: in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev
 real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp
-real(kind=sgl), dimension(in_ngridx,in_ngridy,in_nlyr), intent(in) :: in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q
+real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs), intent(in) :: in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q
   character(40),intent(out) :: out_gitHash, out_gitVersion
 
 !Output
-real(kind=sgl), dimension(in_ngridx,in_ngridy,in_nlyr,in_nfreq),intent(out) :: out_Ze,&
+real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out) :: out_Ze,&
            out_Attenuation_hydro,out_Attenuation_atmo
-real(kind=sgl), dimension(in_ngridx,in_ngridy,in_nlyr),intent(out) :: out_hgt
-real(kind=sgl), dimension(32),intent(out) :: out_angles !2*NUMMU instead of 32 does not work, because f2py does not know f2py!
+real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(out) :: out_hgt
+real(kind=sgl), dimension(32),intent(out) :: out_angles !2*NUMMU instead of 32 does not work, because f2py does not know dimensions!
 real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: out_tb !same here: noutlevels=2, 2*NUMMU = 32, NSTOKES = 2
 
 !settings
@@ -99,7 +100,7 @@ real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: ou
 !f2py intent(in) :: set_SP,set_isnow_n0,set_liu_type,set_SD_grau,set_N_0grauDgrau,set_EM_grau,set_EM_ice,set_SD_rain
 !f2py intent(in) :: set_N_0rainD,set_n_moments,set_moments_file
 !input
-!f2py intent(in) :: in_nlyr, in_ngridx, in_ngridy,in_nfreq, in_freqs
+!f2py intent(in) :: max_in_nlyrs, in_nlyrs, in_ngridx, in_ngridy,in_nfreq, in_freqs
 !f2py intent(in) :: in_year,in_month,in_day,in_time
 !f2py intent(in) :: in_deltax,in_deltay, in_lat,in_lon,in_model_i,in_model_j
 !f2py intent(in) :: in_wind10u,in_wind10v,in_lfrac
@@ -121,7 +122,7 @@ real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: ou
 
 
 
-  if (verbose .gt. 1) print*,in_freqs
+  if (verbose .gt. 1) print*,in_freqs, in_nlyrs, max_in_nlyrs
 
 
   !get git data
@@ -182,7 +183,7 @@ year = in_year
 month = in_month
 day = in_day
 time = in_time
-nlyr = in_nlyr
+
 deltax = in_deltax
 deltay = in_deltay
 
@@ -211,11 +212,20 @@ deltay = in_deltay
   end if
 
   if (active) then
-     allocate(Ze(ngridx,ngridy,nlyr,nfrq))
-     allocate(Attenuation_hydro(ngridx,ngridy,nlyr,nfrq))
-     allocate(Attenuation_atmo(ngridx,ngridy,nlyr,nfrq))
-     allocate(hgt(ngridx,ngridy,nlyr))
+     allocate(Ze(ngridx,ngridy,max_in_nlyrs,nfrq))
+     allocate(Attenuation_hydro(ngridx,ngridy,max_in_nlyrs,nfrq))
+     allocate(Attenuation_atmo(ngridx,ngridy,max_in_nlyrs,nfrq))
+     allocate(hgt(ngridx,ngridy,max_in_nlyrs))
+
+
   end if
+
+   out_Ze = -9999.
+   out_Attenuation_hydro = -9999.
+   out_Attenuation_atmo = -9999.
+   out_hgt = -9999.
+   out_angles = -9999.
+   out_tb = -9999
 
 
 !   if (write_nc .eqv. .false.) call mod_io_strings_get_filename()
@@ -227,7 +237,7 @@ deltay = in_deltay
   grid_f: do fi =1, nfrq
      grid_y: do ny = 1, ngridy !ny_in, ny_fin  
         grid_x: do nx = 1, ngridx !nx_in, nx_fin   
-
+nlyr = in_nlyrs(nx,ny)  
   call allocate_vars
 
 
@@ -242,10 +252,10 @@ deltay = in_deltay
 
 
 
-         relhum_lev = 100.*in_relhum_lev(nx,ny,:)         ! %
-         press_lev = in_press_lev(nx,ny,:)           ! Pa
-         temp_lev = in_temp_lev(nx,ny,:)             ! K
-         hgt_lev = in_hgt_lev(nx,ny,:)               ! m
+         relhum_lev = 100.*in_relhum_lev(nx,ny,1:nlyr+1)         ! %
+         press_lev = in_press_lev(nx,ny,1:nlyr+1)           ! Pa
+         temp_lev = in_temp_lev(nx,ny,1:nlyr+1)             ! K
+         hgt_lev = in_hgt_lev(nx,ny,1:nlyr+1)               ! m
 
          iwv = in_iwv(nx,ny)
          cwp = in_cwp(nx,ny)
@@ -255,11 +265,11 @@ deltay = in_deltay
          gwp = in_gwp(nx,ny)
 !          hwp = in_hwp(nx,ny)
 
-         cwc_q = in_cwc_q(nx,ny,:)           ! kg/kg
-         iwc_q = in_iwc_q(nx,ny,:)             ! kg/kg
-         rwc_q = in_rwc_q(nx,ny,:)                  ! kg/kg
-         swc_q = in_swc_q(nx,ny,:)                  ! kg/kg
-         gwc_q = in_gwc_q(nx,ny,:)               ! kg/kg
+         cwc_q = in_cwc_q(nx,ny,1:nlyr)           ! kg/kg
+         iwc_q = in_iwc_q(nx,ny,1:nlyr)             ! kg/kg
+         rwc_q = in_rwc_q(nx,ny,1:nlyr)                  ! kg/kg
+         swc_q = in_swc_q(nx,ny,1:nlyr)                  ! kg/kg
+         gwc_q = in_gwc_q(nx,ny,1:nlyr)               ! kg/kg
 
 !          if (n_moments .eq. 2) then
 !             hwc_q = profiles(nx,ny)%hail_q              ! kg/kg
@@ -276,33 +286,32 @@ deltay = in_deltay
 
            call deallocate_vars()
 
+if (active) then
+   out_Ze(nx,ny,1:nlyr,:) = Ze(nx,ny,1:nlyr,:)
+   out_Attenuation_hydro(nx,ny,1:nlyr,:) = Attenuation_hydro(nx,ny,1:nlyr,:)
+   out_Attenuation_atmo(nx,ny,1:nlyr,:) = Attenuation_atmo(nx,ny,1:nlyr,:)
+   out_hgt(nx,ny,1:nlyr) = hgt(nx,ny,1:nlyr)
+end if
+
+
 
         end do grid_x
      end do grid_y
   end do grid_f
 
-if (active) then
-   out_Ze = Ze(:,:,:,:)
-   out_Attenuation_hydro = Attenuation_hydro(:,:,:,:)
-   out_Attenuation_atmo = Attenuation_atmo(:,:,:,:)
-   out_hgt = hgt(:,:,:)
-else
-   out_Ze = -9999.
-   out_Attenuation_hydro = -9999.
-   out_Attenuation_atmo = -9999.
-   out_hgt = -9999.
-end if
+
 
 if (passive) then
    out_angles = angles_deg(:)
    out_tb = RESHAPE( tb, (/ngridx, ngridy, noutlevels, 2*nummu, nfrq,nstokes /),&
          ORDER = (/6,5,4,3,2,1/))
-else
-   out_angles = -9999.
-   out_tb = -9999
 end if
+
+
   if (write_nc)  deallocate(is,js,lons,lats,lfracs,iwvs,cwps,iwps,rwps,swps,gwps,hwps)
   if (write_nc .or. in_python) deallocate(tb)
   if (active) deallocate(Ze,Attenuation_hydro,Attenuation_atmo,hgt)
+
+print*,"189"
 
 end subroutine pyPamtraLib
