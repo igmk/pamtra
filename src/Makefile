@@ -39,12 +39,9 @@ pyOBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_atmosphere.o vars_profile
 	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o   \
 	get_scat_coefs.o dump_profile.o collect_boundary_output.o double_moments.o versionNumber.auto.o
 
-
-noPyObjects=   formatted_frqstr.o
-
 BIN=pamtra
 
-all: precompile pamtra
+all: precompile pamtra py
 
 	
 pamtra: pamtra.f90 $(OBJECTS)
@@ -62,17 +59,17 @@ write_nc_results.o: write_nc_results.f90
 	
 
 
-prepython: 
+pyprecompile: 
 	@echo "Make backup before deleting old signature file, auto creating will most likely fail."
 	@echo "####################################################################################"
 	@echo ""
 	f2py -m pyPamtraLib -h pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90
 
-python: pyPamtraLib.f90 $(pyOBJECTS)
+py: pyPamtraLib.f90 $(pyOBJECTS) precompile
 	f2py -c --fcompiler=gnu95 pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ../py/lib/
 
-pythoninstall:
+pyinstall: py
 	cp ../py/lib/* ~/lib/python/
 
 
@@ -92,7 +89,7 @@ clean:
 
 test: test1 test2 test3 test4 cleantest
 
-alltest: test pythontest
+alltest: test pytest
 
 cleantest:
 	@echo "=== Clean up tmp ==="
@@ -126,27 +123,27 @@ test4:
 	../test/compareNetcdf.sh 4
 	@echo "TEST 4 OK"
 
-pythontest: pythontest1 pythontest2 pythontest3 pythontest4 cleantest
+pytest: pytest1 pytest2 pytest3 pytest4 cleantest
 
-pythontest1:
+pytest1:
 	@echo "=== Python TEST 1 ==="
 	rm -fr ../test/tmp/*
 	python ../test/runPythonTest.py 1
 	@echo "TEST 1 OK"
 
-pythontest2:
+pytest2:
 	@echo "=== Python TEST 2 active only === "
 	rm -fr ../test/tmp/*
 	python ../test/runPythonTest.py 2
 	@echo "TEST 2 OK"
 
-pythontest3:
+pytest3:
 	@echo "=== Python TEST 3 passive only === "
 	rm -fr ../test/tmp/*
 	python ../test/runPythonTest.py 3
 	@echo "TEST 3 OK"
 
-pythontest4:
+pytest4:
 	@echo "=== Python TEST 4 Netcdf Data  === "
 	rm -fr ../test/tmp/*
 	python ../test/runPythonTest.py 4
