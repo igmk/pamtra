@@ -114,6 +114,12 @@ class pyPamtra:
 		self.dimensions["rwc_q"] = ["ngridx","ngridy","max_nlyrs"]
 		self.dimensions["swc_q"] = ["ngridx","ngridy","max_nlyrs"]
 		self.dimensions["gwc_q"] = ["ngridx","ngridy","max_nlyrs"]
+		
+		self.dimensions["hgt"] = ["ngridx","ngridy","max_nlyrs"]
+		self.dimensions["Ze"] = ["gridx","gridy","lyr","frequency"]
+		self.dimensions["attenuationHydros"] = ["gridx","gridy","lyr","frequency"]
+		self.dimensions["attenuationAtmo"] = ["gridx","gridy","lyr","frequency"]
+		self.dimensions["tb"] = ["gridx","gridy","outlevels","angles","frequency","stokes"]
 
 		
 		self.units = dict()
@@ -154,7 +160,12 @@ class pyPamtra:
 		self.units["swc_q"] = "kg/kg"
 		self.units["gwc_q"] = "kg/kg"
 
-		
+		self.units["hgt"] = "m"
+		self.units["Ze"] = "dBz"
+		self.units["attenuationHydros"] = "-"
+		self.units["attenuationAtmo"] = "-"
+		self.units["tb"] = "K"
+	
 		
 		
 	
@@ -324,7 +335,7 @@ class pyPamtra:
 			job_server = pp.Server(ppservers=pp_servers) 
 		else:
 			job_server = pp.Server(pp_local_workers,ppservers=pp_servers) 
-		if self.set["pyVerbose"] > = 0: 
+		if self.set["pyVerbose"] >= 0: 
 			print "Starting pp with: "
 			pp_nodes = job_server.get_active_nodes()
 			for key in pp_nodes.keys():
@@ -453,7 +464,7 @@ class pyPamtra:
 		#for key in self.__dict__.keys():
 			#print key
 			#print self.__dict__[key]
-		if self.set["pyVerbose"] > = 0: job_server.print_stats()
+		if self.set["pyVerbose"] >= 0: job_server.print_stats()
 		job_server.destroy()
 		
 	def runPamtra(self,freqs):
@@ -490,12 +501,7 @@ class pyPamtra:
 		self.p["relhum_lev"],self.p["press_lev"],self.p["temp_lev"],self.p["hgt_lev"],
 		self.p["iwv"],self.p["cwp"],self.p["iwp"],self.p["rwp"],self.p["swp"],self.p["gwp"],
 		self.p["cwc_q"],self.p["iwc_q"],self.p["rwc_q"],self.p["swc_q"],self.p["gwc_q"])
-		
-		self.dimensions["Ze"] = ["gridx","gridy","lyr","frequency"]
-		self.dimensions["attenuationHydros"] = ["gridx","gridy","lyr","frequency"]
-		self.dimensions["attenuationAtmo"] = ["gridx","gridy","lyr","frequency"]
-		self.dimensions["tb"] = ["gridx","gridy","outlevels","angles","frequency","stokes"]
-		
+				
 		self.r["settings"] = self.set
 		
 		self.r["pamtraVersion"] = self.r["pamtraVersion"].strip()
@@ -505,7 +511,7 @@ class pyPamtra:
 			#print key
 			#print self.__dict__[key]
 		
-		if self.set["pyVerbose"] > = 0: print "pyPamtra runtime:", time.time() - tttt
+		if self.set["pyVerbose"] >= 0: print "pyPamtra runtime:", time.time() - tttt
 
 
 
