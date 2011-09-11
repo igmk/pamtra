@@ -312,6 +312,4 @@ end if
   if (write_nc .or. in_python) deallocate(tb)
   if (active) deallocate(Ze,Attenuation_hydro,Attenuation_atmo,hgt)
 
-print*,"189"
-
 end subroutine pyPamtraLib

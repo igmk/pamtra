@@ -2,9 +2,8 @@ import sys
 import numpy as np
 
 #ensure that you take the lib from the build directory!!
-sys.path.insert(0,"../py/lib/")
+#sys.path.insert(0,"../py/lib/") #doesn't have impact on pp, so discarded
 import pyPamtra
-
 
 
 
@@ -16,6 +15,8 @@ t.readPamtraProfile(inputFile)
 t.set["data_path"]='/home/mech/models/pamtra/data/'
 t.set["verbose"]=0
 
+#make artificially less levels for on eprofile!
+t.p["nlyrs"][2,0] = 25
 
 testNo = sys.argv[1]
 
@@ -34,7 +35,7 @@ elif testNo == "2":
 	t.set["liu_type"]=4
 
 
-	t.runPamtra(35)
+	t.runParallelPamtra(35)
 elif testNo == "3":
 
 	t.set["passive"]=True
@@ -44,15 +45,14 @@ elif testNo == "3":
 	t.set["N_0snowDsnow"]=1
 	t.set["liu_type"]=8
 	
-	t.runParallelPamtra(35)
+	t.runPamtra(35)
 elif testNo == "4":
 
 	t.set["EM_snow"]='icesf'
 	t.set["isnow_n0"]=2
 	t.set["EM_grau"]='icesf'
 	
-	#make artificially less levels!
-	#t.p["nlyrs"][3,0] = 25
+
 	
 	t.runPamtra(35)
 	t.writeResultsToNetCDF("../test/tmp/pythontest4.nc")

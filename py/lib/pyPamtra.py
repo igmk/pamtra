@@ -502,7 +502,7 @@ class pyPamtra:
 			#print key
 			#print self.__dict__[key]
 		
-		print "time:", time.time() - tttt
+		print "runtime:", time.time() - tttt
 
 
 
