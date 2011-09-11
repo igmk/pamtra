@@ -20,10 +20,6 @@ subroutine deallocate_vars
 
   if (dump_to_file) deallocate(file_ph)
 
-   if (write_nc)  deallocate(is,js,lons,lats,lfracs,iwvs,cwps,iwps,rwps,swps,gwps,hwps)
-   if (write_nc .or. in_python) deallocate(tb)
-    
-if (active) deallocate(Ze,Attenuation_hydro,Attenuation_atmo,hgt)
 
 
 !   deallocate(angles_deg)

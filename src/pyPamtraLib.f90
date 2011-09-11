@@ -20,10 +20,13 @@ out_Ze, out_Attenuation_hydro,out_Attenuation_atmo,out_hgt,out_tb,&
 out_angles&
 )
 
-! ,&in_hwp,
+! python Version of the Pamtra model.
 
+! differences between Pamtra and PyPamtraLib:
 
-! 
+! 1) PyPamtra expects relative humidity in Pa/Pa, Pamtra wants relative humidity in % for backwards compatibility
+! 2) n-moments is not implemented in PyPamtra yet (there is no technical reason not to do it!)
+
 
   use kinds
   use constants !physical constants live here
@@ -34,11 +37,7 @@ out_angles&
   use double_moments_module !double moments variables are stored here
   use mod_io_strings !some strings for nice filenames
 
-
-
-  !     The code reads a full (e.g. COSMO) grid and computes for each 
-  !     profile the radiative transfer for the given frequencies                       
-  !                                                                      
+ !                                                                      
   !     By convention, the quantities followed  by "_lev"
   !     are given at the layer heights while the quantitites w/o
   !     "_lev" are layer average quantities                           
@@ -193,8 +192,30 @@ deltay = in_deltay
   if (n_moments .eq. 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
 
 
-  ! now allocate variables
-  call allocate_vars
+  ! now allocate output variables
+  if (write_nc) then
+     allocate(is(ngridy,ngridx),js(ngridy,ngridx))
+     allocate(lons(ngridy,ngridx),lats(ngridy,ngridx),lfracs(ngridy,ngridx))
+     allocate(iwvs(ngridy,ngridx))
+     allocate(cwps(ngridy,ngridx),iwps(ngridy,ngridx),rwps(ngridy,ngridx),&
+          swps(ngridy,ngridx),gwps(ngridy,ngridx),hwps(ngridy,ngridx))
+     
+      lons = 0.; lats = 0.; lfracs = 0.;
+      iwvs = 0.; cwps = 0.; iwps = 0.; rwps = 0.; swps = 0.; gwps = 0.; hwps = 0.;
+      
+  end if
+ 
+  if (write_nc .or. in_python) then
+     allocate(tb(nstokes,nfrq,2*nummu,noutlevels,ngridy,ngridx))
+     tb = 0.
+  end if
+
+  if (active) then
+     allocate(Ze(ngridx,ngridy,nlyr,nfrq))
+     allocate(Attenuation_hydro(ngridx,ngridy,nlyr,nfrq))
+     allocate(Attenuation_atmo(ngridx,ngridy,nlyr,nfrq))
+     allocate(hgt(ngridx,ngridy,nlyr))
+  end if
 
 
 !   if (write_nc .eqv. .false.) call mod_io_strings_get_filename()
@@ -206,6 +227,9 @@ deltay = in_deltay
   grid_f: do fi =1, nfrq
      grid_y: do ny = 1, ngridy !ny_in, ny_fin  
         grid_x: do nx = 1, ngridx !nx_in, nx_fin   
+
+  call allocate_vars
+
 
          !   ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
          lat = in_lat(nx,ny)                  ! °
@@ -249,6 +273,10 @@ deltay = in_deltay
 
            !run the model
            call run_rt3(nx,ny,fi,freqs(fi),freq_str)
+
+           call deallocate_vars()
+
+
         end do grid_x
      end do grid_y
   end do grid_f
@@ -273,6 +301,8 @@ else
    out_angles = -9999.
    out_tb = -9999
 end if
-call deallocate_vars()
+  if (write_nc)  deallocate(is,js,lons,lats,lfracs,iwvs,cwps,iwps,rwps,swps,gwps,hwps)
+  if (write_nc .or. in_python) deallocate(tb)
+  if (active) deallocate(Ze,Attenuation_hydro,Attenuation_atmo,hgt)
 
 end subroutine pyPamtraLib

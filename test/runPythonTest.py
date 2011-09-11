@@ -52,7 +52,7 @@ else:
 	
 
 #uncomment if test should be defined again
-#t.writeResultsToNumpy("../test/referenceOutput/python"+testNo+".pickle")
+#t.writeResultsToNumpy("../test/referenceOutput/"+testNo+"/python"+testNo+".pickle")
 
 if testNo != "4":
 
@@ -63,7 +63,7 @@ if testNo != "4":
 	for key in ["angles","tb","hgt","Ze","attenuationAtmo","attenuationHydro"]:
 		if np.any(reference.r[key] != t.r[key]):
 			error += 1
-			print key
+			print key, "max. difference:", np.max(reference.r[key] - t.r[key])
 	if error > 0:
 		raise IOError("do not match")
 		#else:
