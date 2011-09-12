@@ -8,6 +8,7 @@ import csv
 import pickle
 import time,calendar, datetime
 import warnings
+from copy import deepcopy
 
 import meteoSI
 
@@ -175,6 +176,7 @@ class pyPamtra:
 		self.p["ngridx"] = int(self.p["ngridx"])
 		self.p["ngridy"] = int(self.p["ngridy"])
 		self.p["nlyrs"] = int(self.p["nlyrs"])
+		self.p["max_nlyrs"] = deepcopy(self.p["nlyrs"])
 		
 		shape2D = (self.p["ngridx"],self.p["ngridy"],)
 		shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],)
@@ -229,14 +231,20 @@ class pyPamtra:
 	def createProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
 			hgt_lev,press_lev,temp_lev,relhum_lev,
 			cwc_q,iwc_q,rwc_q,swc_q,gwc_q):
-		
+
+		#import pdb;pdb.set_trace()
 		dz = np.diff(hgt_lev,axis=-1)
+		dz[dz<=0]=9999
 		relhum = (relhum_lev[...,0:-1] + relhum_lev[...,1:])/2.
+		relhum[relhum<=0] = 1
 		temp = (temp_lev[...,0:-1] + temp_lev[...,1:])/2.
-
-		xp = -1.*np.log(press_lev[...,1:]/press_lev[...,0:-1])/dz
-		press = -1.*press_lev[...,0:-1]/xp*(np.exp(-xp*dz)-1.)/dz
-
+		temp[temp<=0] = 1
+		press_lev1 = deepcopy(press_lev)
+		press_lev1[press_lev==missingNumber]=1
+		xp = -1.*np.log(press_lev1[...,1:]/press_lev1[...,0:-1])/dz
+		xp[xp==0] = 9999
+		press = -1.*press_lev1[...,0:-1]/xp*(np.exp(-xp*dz)-1.)/dz
+		
 		q = meteoSI.rh2q(relhum,temp,press)
 		rho_moist = meteoSI.moist_rho_q(press,temp,q)
 
@@ -250,18 +258,18 @@ class pyPamtra:
 		gwc_q[gwc_q==missingNumber] = 0
 		
 		#integrate
-		iwv = np.sum(q*rho_moist*dz)
-		cwp = np.sum(cwc_q*rho_moist*dz)
-		iwp = np.sum(iwc_q*rho_moist*dz)
-		rwp = np.sum(rwc_q*rho_moist*dz)
-		swp = np.sum(swc_q*rho_moist*dz)
-		gwp = np.sum(gwc_q*rho_moist*dz)
+		iwv = np.sum(q*rho_moist*dz,axis=-1)
+		cwp = np.sum(cwc_q*rho_moist*dz,axis=-1)
+		iwp = np.sum(iwc_q*rho_moist*dz,axis=-1)
+		rwp = np.sum(rwc_q*rho_moist*dz,axis=-1)
+		swp = np.sum(swc_q*rho_moist*dz,axis=-1)
+		gwp = np.sum(gwc_q*rho_moist*dz,axis=-1)
 		
 		
 		return self.createFullProfile(timestamp,lat,lon,lfrac,wind10u,wind10v,
 		iwv,cwp,iwp,rwp,swp,gwp,
 		hgt_lev,press_lev,temp_lev,relhum_lev,
-		cwc_q,iwc_q,rwc_q,swc_q,gwc_q,missingNumber=missingNumber)
+		cwc_q,iwc_q,rwc_q,swc_q,gwc_q)
 
 
 
@@ -286,14 +294,21 @@ class pyPamtra:
 		else:
 			print "Too many dimensions!"
 			raise IOError
-		self.p["nlyr"] = np.shape(hgt_lev)[-1] -1
+		
+		if np.any(hgt_lev==missingNumber):
+			self.p["nlyrs"] = np.sum(hgt_lev!=missingNumber,axis=-1) -1
+		else:
+			self.p["nlyrs"] = np.shape(hgt_lev)[-1] -1
+		self.p["max_nlyrs"] = np.shape(hgt_lev)[-1] -1
+		
+		
 		shape2D = (self.p["ngridx"],self.p["ngridy"],)
-		shape3D = (self.p["ngridx"],self.p["ngridy"],np.max(self.p["nlyrs"]),)
-		shape3Dplus = (self.p["ngridx"],self.p["ngridy"],p.max(self.p["nlyrs"])+1,)
+		shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
+		shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
 		
 		if (type(timestamp) == int) or (type(timestamp) == float) :
 			self.p["unixtime"] = np.ones(shape2D,dtype=int)*timestamp
-		elif (type(timestamp) == numpy.ndarray):
+		elif (type(timestamp) == np.ndarray):
 			if (timestamp.dtype == int) or (timestamp.dtype == float):
 				self.p["unixtime"] = timestamp
 			else:
@@ -372,10 +387,10 @@ class pyPamtra:
 		pp_ii = -1
 		pp_jobs = dict()
 		
-		self.r["Ze"] = np.ones((self.p["ngridx"],self.p["ngridy"],np.max(self.p["nlyrs"]),self.nfreqs,))*missingNumber
-		self.r["attenuationHydro"] = np.ones((self.p["ngridx"],self.p["ngridy"],np.max(self.p["nlyrs"]),self.nfreqs,))*missingNumber
-		self.r["attenuationAtmo"] = np.ones((self.p["ngridx"],self.p["ngridy"],np.max(self.p["nlyrs"]),self.nfreqs,))*missingNumber
-		self.r["hgt"] = np.ones((self.p["ngridx"],self.p["ngridy"],np.max(self.p["nlyrs"]),))*missingNumber
+		self.r["Ze"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["attenuationHydro"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["attenuationAtmo"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["hgt"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],))*missingNumber
 		self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.noutlevels,self.nangles,self.nfreqs,self.nstokes))*missingNumber
 		
 		self.r["Ze_dimensions"] = ["gridx","gridy","lyr","frequency"]
@@ -406,11 +421,11 @@ class pyPamtra:
 					#input
 					pp_ngridx,
 					pp_ngridy,
-					np.max(self.p["nlyrs"]),
+					self.p["max_nlyrs"],
 					self.p["nlyrs"][pp_startX:pp_endX,pp_startY:pp_endY],
 					pp_nfreqs,
 					self.freqs[pp_startF:pp_endF],
-					self.p["unixtime"],
+					self.p["unixtime"][pp_startX:pp_endX,pp_startY:pp_endY],
 					self.p["deltax"],self.p["deltay"],
 					self.p["lat"][pp_startX:pp_endX,pp_startY:pp_endY],
 					self.p["lon"][pp_startX:pp_endX,pp_startY:pp_endY],
@@ -435,8 +450,9 @@ class pyPamtra:
 					self.p["swc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
 					self.p["gwc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
 					),tuple(), ("pyPamtraLib","numpy",))
+					if self.set["pyVerbose"] >= 0: print pp_ii, "submitted"
 										
-		job_server.wait()
+		#job_server.wait()
 		pp_ii = -1
 
 		for pp_startF in np.arange(0,self.nfreqs,pp_deltaF):
@@ -457,6 +473,7 @@ class pyPamtra:
 					self.r["hgt"][pp_startX:pp_endX,pp_startY:pp_endY,:], 
 					self.r["tb"][pp_startX:pp_endX,pp_startY:pp_endY,:,:,pp_startF:pp_endF,:], 
 					self.r["angles"] ) = pp_jobs[pp_ii]()
+					if self.set["pyVerbose"] >= 0: print pp_ii, "collected"
 		
 
 		
@@ -498,7 +515,7 @@ class pyPamtra:
 		#self.set
 		self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["emissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["n_moments"], self.set["moments_file"],
 		#input
-		self.p["ngridx"],self.p["ngridy"],np.max(self.p["nlyrs"]),self.p["nlyrs"],self.nfreqs,self.freqs,
+		self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.p["nlyrs"],self.nfreqs,self.freqs,
 		self.p["unixtime"],
 		self.p["deltax"],self.p["deltay"], self.p["lat"],self.p["lon"],self.p["model_i"],self.p["model_j"],
 		self.p["wind10u"],self.p["wind10v"],self.p["lfrac"],
@@ -566,7 +583,7 @@ class pyPamtra:
 			cdfFile.createDimension('nout',np.shape(self.r["tb"])[2])
 			cdfFile.createDimension('nstokes',np.shape(self.r["tb"])[-1])
 		if (self.r["settings"]["active"]):
-			cdfFile.createDimension('nlyr',np.max(self.p["nlyrs"]))
+			cdfFile.createDimension('nlyr',self.p["max_nlyrs"])
 		
 		#create variables
 		nc_angle = cdfFile.createVariable('angle','f4',('nang',),fill_value= missingNumber)
