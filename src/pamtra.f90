@@ -94,15 +94,15 @@ program pamtra
 !!! read the data
   call vars_profile_read_profile(input_file) !from vars_atmosphere.f90
 
-year = profiles_year
-month = profiles_month
-day = profiles_day
-time = profiles_time
-ngridx = profiles_ngridx
-ngridy = profiles_ngridy
-nlyr = profiles_nlyr
-deltax = profiles_deltax
-deltay = profiles_deltay
+  year = profiles_year
+  month = profiles_month
+  day = profiles_day
+  time = profiles_time
+  ngridx = profiles_ngridx
+  ngridy = profiles_ngridy
+  nlyr = profiles_nlyr
+  deltax = profiles_deltax
+  deltay = profiles_deltay
 
   ! now allocate variables
  call allocate_output_vars(nlyr)
@@ -177,6 +177,6 @@ deltay = profiles_deltay
      call write_nc_results(nc_out_file)
   end if
 
-call deallocate_output_vars()
+  call deallocate_output_vars()
 
 end program pamtra

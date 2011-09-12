@@ -70,53 +70,53 @@ out_angles&
   character(1),intent(in) :: set_GROUND_TYPE, set_UNITS
 !Input
 
-integer, intent(in) :: in_nfreq, max_in_nlyrs, in_ngridx, in_ngridy
-real(kind=sgl), dimension(in_nfreq), intent(in) :: in_freqs
+  integer, intent(in) :: in_nfreq, max_in_nlyrs, in_ngridx, in_ngridy
+  real(kind=sgl), dimension(in_nfreq), intent(in) :: in_freqs
 
 
-integer, dimension(in_ngridx,in_ngridy), intent(in) :: in_timestamp
-real(kind=sgl), intent(in) :: in_deltax, in_deltay
+  integer, dimension(in_ngridx,in_ngridy), intent(in) :: in_timestamp
+  real(kind=sgl), intent(in) :: in_deltax, in_deltay
 
-integer, dimension(in_ngridx,in_ngridy), intent(in) :: in_nlyrs
+  integer, dimension(in_ngridx,in_ngridy), intent(in) :: in_nlyrs
 
-real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_lat,in_lon,in_model_i,in_model_j
-real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_wind10u,in_wind10v,in_lfrac
-real(kind=sgl), dimension(in_ngridx,in_ngridy,1+max_in_nlyrs), intent(in) :: in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev
-real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp
-real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs), intent(in) :: in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q
-  character(40),intent(out) :: out_gitHash, out_gitVersion
+  real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_lat,in_lon,in_model_i,in_model_j
+  real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_wind10u,in_wind10v,in_lfrac
+  real(kind=sgl), dimension(in_ngridx,in_ngridy,1+max_in_nlyrs), intent(in) :: in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev
+  real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp
+  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs), intent(in) :: in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q
+    character(40),intent(out) :: out_gitHash, out_gitVersion
 
-!Output
-real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out) :: out_Ze,&
-           out_Attenuation_hydro,out_Attenuation_atmo
-real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(out) :: out_hgt
-real(kind=sgl), dimension(32),intent(out) :: out_angles !2*NUMMU instead of 32 does not work, because f2py does not know dimensions!
-real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: out_tb !same here: noutlevels=2, 2*NUMMU = 32, NSTOKES = 2
+  !Output
+  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out) :: out_Ze,&
+            out_Attenuation_hydro,out_Attenuation_atmo
+  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(out) :: out_hgt
+  real(kind=sgl), dimension(32),intent(out) :: out_angles !2*NUMMU instead of 32 does not work, because f2py does not know dimensions!
+  real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: out_tb !same here: noutlevels=2, 2*NUMMU = 32, NSTOKES = 2
 
-!settings
-!f2py intent(in) :: set_verbose,set_dump_to_file,set_tmp_path
-!f2py intent(in) :: set_data_path,set_obs_height,set_units,set_outpol,set_creator
-!f2py intent(in) :: set_active,set_passive,set_ground_type,set_salinity,set_emissivity,set_lgas_extinction
-!f2py intent(in) :: set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_SD_snow,set_N_0snowDsnow,set_EM_snow
-!f2py intent(in) :: set_SP,set_isnow_n0,set_liu_type,set_SD_grau,set_N_0grauDgrau,set_EM_grau,set_EM_ice,set_SD_rain
-!f2py intent(in) :: set_N_0rainD,set_n_moments,set_moments_file
-!input
-!f2py intent(in) :: max_in_nlyrs, in_nlyrs, in_ngridx, in_ngridy,in_nfreq, in_freqs
-!f2py intent(in) :: in_timestamp
-!f2py intent(in) :: in_deltax,in_deltay, in_lat,in_lon,in_model_i,in_model_j
-!f2py intent(in) :: in_wind10u,in_wind10v,in_lfrac
-!f2py intent(in) :: in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev
-!f2py intent(in) :: in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp
-!f2py intent(in) :: in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q
-!meta out
-!f2py intent(out) :: out_gitVersion,out_gitHash
-!data out
-!f2py intent(out) :: out_Ze,out_Attenuation_hydro,out_Attenuation_atmo,out_hgt,out_tb
-!f2py intent(out) :: out_angles
+  !settings
+  !f2py intent(in) :: set_verbose,set_dump_to_file,set_tmp_path
+  !f2py intent(in) :: set_data_path,set_obs_height,set_units,set_outpol,set_creator
+  !f2py intent(in) :: set_active,set_passive,set_ground_type,set_salinity,set_emissivity,set_lgas_extinction
+  !f2py intent(in) :: set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_SD_snow,set_N_0snowDsnow,set_EM_snow
+  !f2py intent(in) :: set_SP,set_isnow_n0,set_liu_type,set_SD_grau,set_N_0grauDgrau,set_EM_grau,set_EM_ice,set_SD_rain
+  !f2py intent(in) :: set_N_0rainD,set_n_moments,set_moments_file
+  !input
+  !f2py intent(in) :: max_in_nlyrs, in_nlyrs, in_ngridx, in_ngridy,in_nfreq, in_freqs
+  !f2py intent(in) :: in_timestamp
+  !f2py intent(in) :: in_deltax,in_deltay, in_lat,in_lon,in_model_i,in_model_j
+  !f2py intent(in) :: in_wind10u,in_wind10v,in_lfrac
+  !f2py intent(in) :: in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev
+  !f2py intent(in) :: in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp
+  !f2py intent(in) :: in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q
+  !meta out
+  !f2py intent(out) :: out_gitVersion,out_gitHash
+  !data out
+  !f2py intent(out) :: out_Ze,out_Attenuation_hydro,out_Attenuation_atmo,out_hgt,out_tb
+  !f2py intent(out) :: out_angles
 
 
 
-!!!loop variables
+  !!!loop variables
   integer ::  fi,nx, ny
 
   integer,dimension(9) :: timestamp
@@ -128,62 +128,62 @@ real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: ou
 
 
   !get git data
-call versionNumber(out_gitVersion,out_gitHash)
+  call versionNumber(out_gitVersion,out_gitHash)
 
 
-in_python = .true.
-!write_nc must be true to collect the results
-write_nc = .false.
+  in_python = .true.
+  !write_nc must be true to collect the results
+  write_nc = .false.
 
-!these are not(?) needed any more
-input_path = ""
-output_path = "/tmp"
-freq_str = "pythonFrequen"
-file_desc = ""
-
-
-
-!load settings, uggly but neccessary!
-verbose = set_verbose
-dump_to_file = set_dump_to_file
-tmp_path = set_tmp_path
-data_path = set_data_path
-obs_height = set_obs_height
-units = set_units
-outpol = set_outpol
-creator = set_creator
-active = set_active
-passive = set_passive
-ground_type = set_ground_type
-salinity = set_salinity
-emissivity = set_emissivity
-lgas_extinction = set_lgas_extinction
-gas_mod = set_gas_mod
-lhyd_extinction = set_lhyd_extinction
-lphase_flag = set_lphase_flag
-SD_snow = set_SD_snow
-N_0snowDsnow = set_N_0snowDsnow
-EM_snow = set_EM_snow
-SP = set_SP
-isnow_n0 = set_isnow_n0
-liu_type = set_liu_type
-SD_grau = set_SD_grau
-N_0grauDgrau = set_N_0grauDgrau
-EM_grau = set_EM_grau
-EM_ice = set_EM_ice
-SD_rain = set_SD_rain
-N_0rainD = set_N_0rainD
-n_moments = set_n_moments
-moments_file = set_moments_file
-
-ngridx = in_ngridx
-ngridy = in_ngridy
-nfrq = in_nfreq
-freqs = in_freqs(1:nfrq)
+  !these are not(?) needed any more
+  input_path = ""
+  output_path = "/tmp"
+  freq_str = "pythonFrequen"
+  file_desc = ""
 
 
-deltax = in_deltax
-deltay = in_deltay
+
+  !load settings, uggly but neccessary!
+  verbose = set_verbose
+  dump_to_file = set_dump_to_file
+  tmp_path = set_tmp_path
+  data_path = set_data_path
+  obs_height = set_obs_height
+  units = set_units
+  outpol = set_outpol
+  creator = set_creator
+  active = set_active
+  passive = set_passive
+  ground_type = set_ground_type
+  salinity = set_salinity
+  emissivity = set_emissivity
+  lgas_extinction = set_lgas_extinction
+  gas_mod = set_gas_mod
+  lhyd_extinction = set_lhyd_extinction
+  lphase_flag = set_lphase_flag
+  SD_snow = set_SD_snow
+  N_0snowDsnow = set_N_0snowDsnow
+  EM_snow = set_EM_snow
+  SP = set_SP
+  isnow_n0 = set_isnow_n0
+  liu_type = set_liu_type
+  SD_grau = set_SD_grau
+  N_0grauDgrau = set_N_0grauDgrau
+  EM_grau = set_EM_grau
+  EM_ice = set_EM_ice
+  SD_rain = set_SD_rain
+  N_0rainD = set_N_0rainD
+  n_moments = set_n_moments
+  moments_file = set_moments_file
+
+  ngridx = in_ngridx
+  ngridy = in_ngridy
+  nfrq = in_nfreq
+  freqs = in_freqs(1:nfrq)
+
+
+  deltax = in_deltax
+  deltay = in_deltay
 
 
 
@@ -213,48 +213,49 @@ deltay = in_deltay
      grid_y: do ny = 1, ngridy !ny_in, ny_fin  
         grid_x: do nx = 1, ngridx !nx_in, nx_fin   
 
-call GMTIME(in_timestamp(nx,ny),timestamp)
+          call GMTIME(in_timestamp(nx,ny),timestamp)
 
 
-write(year,"(i4.4)") timestamp(6)+1900
-write(month,"(i2.2)") timestamp(5)+1
-write(day,"(i2.2)") timestamp(4)
-write(time(1:2),"(i2.2)") timestamp(3)
-write(time(3:4),"(i2.2)") timestamp(2)
+          write(year,"(i4.4)") timestamp(6)+1900
+          write(month,"(i2.2)") timestamp(5)+1
+          write(day,"(i2.2)") timestamp(4)
+          write(time(1:2),"(i2.2)") timestamp(3)
+          write(time(3:4),"(i2.2)") timestamp(2)
 
-nlyr = in_nlyrs(nx,ny)  
-  call allocate_profile_vars
-
-
-         !   ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
-         lat = in_lat(nx,ny)                  ! °
-         lon = in_lon(nx,ny)                 ! °
-         lfrac = in_lfrac(nx,ny)
-         model_i = in_model_i (nx,ny)
-         model_j = in_model_j(nx,ny)
-         wind10u = in_wind10u(nx,ny)
-         wind10v = in_wind10v(nx,ny)
+          nlyr = in_nlyrs(nx,ny)  
+          
+          call allocate_profile_vars
 
 
+          !   ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
+          lat = in_lat(nx,ny)                  ! °
+          lon = in_lon(nx,ny)                 ! °
+          lfrac = in_lfrac(nx,ny)
+          model_i = in_model_i (nx,ny)
+          model_j = in_model_j(nx,ny)
+          wind10u = in_wind10u(nx,ny)
+          wind10v = in_wind10v(nx,ny)
 
-         relhum_lev = 100.*in_relhum_lev(nx,ny,1:nlyr+1)         ! %
-         press_lev = in_press_lev(nx,ny,1:nlyr+1)           ! Pa
-         temp_lev = in_temp_lev(nx,ny,1:nlyr+1)             ! K
-         hgt_lev = in_hgt_lev(nx,ny,1:nlyr+1)               ! m
 
-         iwv = in_iwv(nx,ny)
-         cwp = in_cwp(nx,ny)
-         iwp = in_iwp(nx,ny)
-         rwp = in_rwp(nx,ny)
-         swp = in_swp(nx,ny)
-         gwp = in_gwp(nx,ny)
-!          hwp = in_hwp(nx,ny)
 
-         cwc_q = in_cwc_q(nx,ny,1:nlyr)           ! kg/kg
-         iwc_q = in_iwc_q(nx,ny,1:nlyr)             ! kg/kg
-         rwc_q = in_rwc_q(nx,ny,1:nlyr)                  ! kg/kg
-         swc_q = in_swc_q(nx,ny,1:nlyr)                  ! kg/kg
-         gwc_q = in_gwc_q(nx,ny,1:nlyr)               ! kg/kg
+          relhum_lev = 100.*in_relhum_lev(nx,ny,1:nlyr+1)         ! %
+          press_lev = in_press_lev(nx,ny,1:nlyr+1)           ! Pa
+          temp_lev = in_temp_lev(nx,ny,1:nlyr+1)             ! K
+          hgt_lev = in_hgt_lev(nx,ny,1:nlyr+1)               ! m
+
+          iwv = in_iwv(nx,ny)
+          cwp = in_cwp(nx,ny)
+          iwp = in_iwp(nx,ny)
+          rwp = in_rwp(nx,ny)
+          swp = in_swp(nx,ny)
+          gwp = in_gwp(nx,ny)
+  !          hwp = in_hwp(nx,ny)
+
+          cwc_q = in_cwc_q(nx,ny,1:nlyr)           ! kg/kg
+          iwc_q = in_iwc_q(nx,ny,1:nlyr)             ! kg/kg
+          rwc_q = in_rwc_q(nx,ny,1:nlyr)                  ! kg/kg
+          swc_q = in_swc_q(nx,ny,1:nlyr)                  ! kg/kg
+          gwc_q = in_gwc_q(nx,ny,1:nlyr)               ! kg/kg
 
 !          if (n_moments .eq. 2) then
 !             hwc_q = profiles(nx,ny)%hail_q              ! kg/kg
@@ -269,16 +270,16 @@ nlyr = in_nlyrs(nx,ny)
            !run the model
            call run_rt3(nx,ny,fi,freqs(fi),freq_str)
 
-           call deallocate_profile_vars()
-
-if (active) then
-   out_Ze(nx,ny,1:nlyr,:) = Ze(nx,ny,1:nlyr,:)
-   out_Attenuation_hydro(nx,ny,1:nlyr,:) = Attenuation_hydro(nx,ny,1:nlyr,:)
-   out_Attenuation_atmo(nx,ny,1:nlyr,:) = Attenuation_atmo(nx,ny,1:nlyr,:)
-   out_hgt(nx,ny,1:nlyr) = hgt(nx,ny,1:nlyr)
-end if
 
 
+          if (active) then
+            out_Ze(nx,ny,1:nlyr,:) = Ze(nx,ny,1:nlyr,:)
+            out_Attenuation_hydro(nx,ny,1:nlyr,:) = Attenuation_hydro(nx,ny,1:nlyr,:)
+            out_Attenuation_atmo(nx,ny,1:nlyr,:) = Attenuation_atmo(nx,ny,1:nlyr,:)
+            out_hgt(nx,ny,1:nlyr) = hgt(nx,ny,1:nlyr)
+          end if
+
+          call deallocate_profile_vars()
 
         end do grid_x
      end do grid_y
@@ -286,12 +287,13 @@ end if
 
 
 
-if (passive) then
-   out_angles = angles_deg(:)
-   out_tb = RESHAPE( tb, (/ngridx, ngridy, noutlevels, 2*nummu, nfrq,nstokes /),&
-         ORDER = (/6,5,4,3,2,1/))
-end if
+  if (passive) then
+    out_angles = angles_deg(:)
+    out_tb = RESHAPE( tb, (/ngridx, ngridy, noutlevels, 2*nummu, nfrq,nstokes /),&
+          ORDER = (/6,5,4,3,2,1/))
+  end if
 
 
   call deallocate_output_vars()
+
 end subroutine pyPamtraLib
