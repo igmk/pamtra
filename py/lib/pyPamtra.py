@@ -80,10 +80,7 @@ class pyPamtra:
 		
 		self.dimensions = dict()
 		
-		self.dimensions["year"] = []
-		self.dimensions["month"] = []
-		self.dimensions["day"] = []
-		self.dimensions["time"] = []
+		self.dimensions["unixtime"] = []
 		
 		self.dimensions["ngridx"] = []
 		self.dimensions["ngridy"] = []
@@ -124,11 +121,7 @@ class pyPamtra:
 		
 		self.units = dict()
 		
-		self.units["timestamp"] = "seconds since 1970-01-01"
-		self.units["year"] = "yyyy"
-		self.units["month"] = "mm"
-		self.units["day"] = "dd"
-		self.units["time"] = "HHMM"
+		self.units["unixtime"] = "seconds since 1970-01-01 00:00"
 		
 		self.units["ngridx"] = "-"
 		self.units["ngridy"] = "-"
@@ -175,7 +168,9 @@ class pyPamtra:
 		
 		f = open(inputFile,"r")
 		g = csv.reader(f,delimiter=" ",skipinitialspace=True)
-		self.p["year"], self.p["month"], self.p["day"], self.p["time"], self.p["ngridx"], self.p["ngridy"], self.p["nlyrs"], self.p["deltax"], self.p["deltay"] = g.next()
+		year,month,day,time, self.p["ngridx"], self.p["ngridy"], self.p["nlyrs"], self.p["deltax"], self.p["deltay"] = g.next()
+		
+		self.p["unixtime"] = calendar.timegm(datetime.datetime(year = int(year), month = int(month), day = int(day), hour = int(time[0:2]), minute = int(time[2:4]), second = 0).timetuple())
 		
 		self.p["ngridx"] = int(self.p["ngridx"])
 		self.p["ngridy"] = int(self.p["ngridy"])
@@ -295,23 +290,17 @@ class pyPamtra:
 		shape3D = (self.p["ngridx"],self.p["ngridy"],np.max(self.p["nlyrs"]),)
 		shape3Dplus = (self.p["ngridx"],self.p["ngridy"],p.max(self.p["nlyrs"])+1,)
 		
-		
-		if (type(timestamp) == str):
-			self.p["year"] = timestamp[0:4]
-			self.p["month"] = timestamp[4:6]
-			self.p["day"] = timestamp[6:8]
-			self.p["time"] = timestamp[8:12]
-		else:
-			if (type(timestamp) == int) or (type(timestamp) == float) :
-				timestamp = datetime.datetime.utcfromtimestamp(timestamp)
-			elif (type(timestamp) == datetime):
-				pass
+		if (type(timestamp) == int) or (type(timestamp) == float) :
+			self.p["unixtime"] = timestamp
+		elif (type(timestamp) == numpy.ndarray):
+			if (timestamp.dtype == int) or (timestamp.dtype == float):
+				self.p["unixtime"] = timestamp
 			else:
-				raise TypeError("tiemstamp has to be int or float or string")
-			self.p["year"] = timestamp.strftime("%Y")
-			self.p["month"] = timestamp.strftime("%m")
-			self.p["day"] = timestamp.strftime("%d")
-			self.p["time"] = timestamp.strftime("%H%M")
+				raise TypeError("timestamp entries have to be int or float objects")
+		elif (type(timestamp) == datetime):
+			self.p["unixtime"] = calendar.timegm(timestamp.timetuple())
+		else:
+			raise TypeError("timestamp has to be int, float or datetime object")
 				
 		self.p["deltax"] = 0.
 		self.p["deltay"] = 0.
@@ -340,6 +329,8 @@ class pyPamtra:
 		self.p["rwc_q"] = rwc_q.reshape(shape3D)
 		self.p["swc_q"] = swc_q.reshape(shape3D)
 		self.p["gwc_q"] = gwc_q.reshape(shape3D)
+		
+
 
 	def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers=1,pp_deltaF=0,pp_deltaX=0,pp_deltaY = 0):
 		
@@ -418,7 +409,7 @@ class pyPamtra:
 					self.p["nlyrs"][pp_startX:pp_endX,pp_startY:pp_endY],
 					pp_nfreqs,
 					self.freqs[pp_startF:pp_endF],
-					self.p["year"],self.p["month"],self.p["day"],self.p["time"],
+					self.p["unixtime"],
 					self.p["deltax"],self.p["deltay"],
 					self.p["lat"][pp_startX:pp_endX,pp_startY:pp_endY],
 					self.p["lon"][pp_startX:pp_endX,pp_startY:pp_endY],
@@ -507,7 +498,7 @@ class pyPamtra:
 		self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["emissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["n_moments"], self.set["moments_file"],
 		#input
 		self.p["ngridx"],self.p["ngridy"],np.max(self.p["nlyrs"]),self.p["nlyrs"],self.nfreqs,self.freqs,
-		self.p["year"],self.p["month"],self.p["day"],self.p["time"],
+		self.p["unixtime"],
 		self.p["deltax"],self.p["deltay"], self.p["lat"],self.p["lon"],self.p["model_i"],self.p["model_j"],
 		self.p["wind10u"],self.p["wind10v"],self.p["lfrac"],
 		self.p["relhum_lev"],self.p["press_lev"],self.p["temp_lev"],self.p["hgt_lev"],
@@ -562,7 +553,7 @@ class pyPamtra:
 		
 		#write meta data
 		cdfFile.history = "Created with pyPamtra (Version: "+self.r["pamtraVersion"]+", Git Hash: "+self.r["pamtraHash"]+") by "+self.set["creator"]+" (University of Cologne, IGMK) at " + datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-		cdfFile.data_time = self.p["year"]+"/"+self.p["month"]+"/"+self.p["day"]+"-"+self.p["time"][0:2]+":"+self.p["time"][2:4]
+		#cdfFile.data_time = self.p["unixtime"]+"/"+self.p["month"]+"/"+self.p["day"]+"-"+self.p["time"][0:2]+":"+self.p["time"][2:4]
 
 		#make dimesnions
 		

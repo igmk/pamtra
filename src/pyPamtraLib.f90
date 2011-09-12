@@ -7,7 +7,7 @@ set_SP,set_isnow_n0,set_liu_type,set_SD_grau,set_N_0grauDgrau,set_EM_grau,set_EM
 set_N_0rainD,set_n_moments,set_moments_file&
 ,& !in
 in_ngridx, in_ngridy, max_in_nlyrs, in_nlyrs, in_nfreq, in_freqs,&
-in_year,in_month,in_day,in_time,&
+in_timestamp,&
 in_deltax,in_deltay, in_lat,in_lon,in_model_i,in_model_j,&
 in_wind10u,in_wind10v,in_lfrac,&
 in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev,&
@@ -72,8 +72,8 @@ out_angles&
 integer, intent(in) :: in_nfreq, max_in_nlyrs, in_ngridx, in_ngridy
 real(kind=sgl), dimension(in_nfreq), intent(in) :: in_freqs
 
-character(2), intent(in) :: in_month, in_day
-character(4), intent(in) :: in_year, in_time
+
+integer, intent(in) :: in_timestamp
 real(kind=sgl), intent(in) :: in_deltax, in_deltay
 
 integer, dimension(in_ngridx,in_ngridy), intent(in) :: in_nlyrs
@@ -101,7 +101,7 @@ real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: ou
 !f2py intent(in) :: set_N_0rainD,set_n_moments,set_moments_file
 !input
 !f2py intent(in) :: max_in_nlyrs, in_nlyrs, in_ngridx, in_ngridy,in_nfreq, in_freqs
-!f2py intent(in) :: in_year,in_month,in_day,in_time
+!f2py intent(in) :: in_timestamp
 !f2py intent(in) :: in_deltax,in_deltay, in_lat,in_lon,in_model_i,in_model_j
 !f2py intent(in) :: in_wind10u,in_wind10v,in_lfrac
 !f2py intent(in) :: in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev
@@ -118,6 +118,7 @@ real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: ou
 !!!loop variables
   integer ::  fi,nx, ny
 
+  integer,dimension(9) :: timestamp
 
 
 
@@ -179,10 +180,27 @@ ngridy = in_ngridy
 nfrq = in_nfreq
 freqs = in_freqs(1:nfrq)
 
-year = in_year
-month = in_month
-day = in_day
-time = in_time
+! year = in_year
+! month = in_month
+! day = in_day
+! time = in_timestamp
+
+call GMTIME(in_timestamp,timestamp)
+
+
+write(year,"(i4.4)") timestamp(6)+1900
+write(month,"(i2.2)") timestamp(5)+1
+write(day,"(i2.2)") timestamp(4)
+write(time(1:2),"(i2.2)") timestamp(3)
+write(time(3:4),"(i2.2)") timestamp(2)
+
+! 
+! 
+!   year = "2010"
+!   month = "05"
+!   day = "05"
+!   time = "0000"
+print*,in_timestamp,timestamp,";", year,",",month,",",day,",",time
 
 deltax = in_deltax
 deltay = in_deltay
