@@ -1,4 +1,4 @@
-subroutine allocate_vars
+subroutine allocate_profile_vars
 
   use vars_atmosphere
   use vars_output
@@ -66,4 +66,4 @@ end if
   back(:) = 0d0
 
 
-end subroutine allocate_vars
+end subroutine allocate_profile_vars

@@ -103,33 +103,9 @@ ngridy = profiles_ngridy
 nlyr = profiles_nlyr
 deltax = profiles_deltax
 deltay = profiles_deltay
+
   ! now allocate variables
- 
-
-  if (write_nc) then
-     allocate(is(ngridy,ngridx),js(ngridy,ngridx))
-     allocate(lons(ngridy,ngridx),lats(ngridy,ngridx),lfracs(ngridy,ngridx))
-     allocate(iwvs(ngridy,ngridx))
-     allocate(cwps(ngridy,ngridx),iwps(ngridy,ngridx),rwps(ngridy,ngridx),&
-          swps(ngridy,ngridx),gwps(ngridy,ngridx),hwps(ngridy,ngridx))
-     
-      lons = 0.; lats = 0.; lfracs = 0.;
-      iwvs = 0.; cwps = 0.; iwps = 0.; rwps = 0.; swps = 0.; gwps = 0.; hwps = 0.;
-      
-  end if
- 
-  if (write_nc .or. in_python) then
-     allocate(tb(nstokes,nfrq,2*nummu,noutlevels,ngridy,ngridx))
-     tb = 0.
-  end if
-
-  if (active) then
-     allocate(Ze(ngridx,ngridy,nlyr,nfrq))
-     allocate(Attenuation_hydro(ngridx,ngridy,nlyr,nfrq))
-     allocate(Attenuation_atmo(ngridx,ngridy,nlyr,nfrq))
-     allocate(hgt(ngridx,ngridy,nlyr))
-  end if
-
+ call allocate_output_vars(nlyr)
 
 
 
@@ -145,7 +121,7 @@ deltay = profiles_deltay
      grid_y: do ny = 1, ngridy !ny_in, ny_fin  
         grid_x: do nx = 1, ngridx !nx_in, nx_fin   
          
-         call allocate_vars
+         call allocate_profile_vars
          
          !   ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
          lat = profiles(nx,ny)%latitude                  ! °
@@ -189,7 +165,7 @@ deltay = profiles_deltay
            !run the model
            call run_rt3(nx,ny,fi,freqs(fi),frqs_str(fi))
            
-           call deallocate_vars()
+           call deallocate_profile_vars()
 
         end do grid_x
      end do grid_y
@@ -201,9 +177,6 @@ deltay = profiles_deltay
      call write_nc_results(nc_out_file)
   end if
 
-  if (write_nc)  deallocate(is,js,lons,lats,lfracs,iwvs,cwps,iwps,rwps,swps,gwps,hwps)
-  if (write_nc .or. in_python) deallocate(tb)
-  if (active) deallocate(Ze,Attenuation_hydro,Attenuation_atmo,hgt)
-
+call deallocate_output_vars()
 
 end program pamtra

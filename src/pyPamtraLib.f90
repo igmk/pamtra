@@ -192,33 +192,10 @@ deltay = in_deltay
 !!! read n-moments file
   if (n_moments .eq. 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
 
-
   ! now allocate output variables
-  if (write_nc) then
-     allocate(is(ngridy,ngridx),js(ngridy,ngridx))
-     allocate(lons(ngridy,ngridx),lats(ngridy,ngridx),lfracs(ngridy,ngridx))
-     allocate(iwvs(ngridy,ngridx))
-     allocate(cwps(ngridy,ngridx),iwps(ngridy,ngridx),rwps(ngridy,ngridx),&
-          swps(ngridy,ngridx),gwps(ngridy,ngridx),hwps(ngridy,ngridx))
-     
-      lons = 0.; lats = 0.; lfracs = 0.;
-      iwvs = 0.; cwps = 0.; iwps = 0.; rwps = 0.; swps = 0.; gwps = 0.; hwps = 0.;
-      
-  end if
- 
-  if (write_nc .or. in_python) then
-     allocate(tb(nstokes,nfrq,2*nummu,noutlevels,ngridy,ngridx))
-     tb = 0.
-  end if
-
-  if (active) then
-     allocate(Ze(ngridx,ngridy,max_in_nlyrs,nfrq))
-     allocate(Attenuation_hydro(ngridx,ngridy,max_in_nlyrs,nfrq))
-     allocate(Attenuation_atmo(ngridx,ngridy,max_in_nlyrs,nfrq))
-     allocate(hgt(ngridx,ngridy,max_in_nlyrs))
+   call allocate_output_vars(max_in_nlyrs)
 
 
-  end if
 
    out_Ze = -9999.
    out_Attenuation_hydro = -9999.
@@ -238,7 +215,7 @@ deltay = in_deltay
      grid_y: do ny = 1, ngridy !ny_in, ny_fin  
         grid_x: do nx = 1, ngridx !nx_in, nx_fin   
 nlyr = in_nlyrs(nx,ny)  
-  call allocate_vars
+  call allocate_profile_vars
 
 
          !   ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
@@ -284,7 +261,7 @@ nlyr = in_nlyrs(nx,ny)
            !run the model
            call run_rt3(nx,ny,fi,freqs(fi),freq_str)
 
-           call deallocate_vars()
+           call deallocate_profile_vars()
 
 if (active) then
    out_Ze(nx,ny,1:nlyr,:) = Ze(nx,ny,1:nlyr,:)
@@ -308,8 +285,5 @@ if (passive) then
 end if
 
 
-  if (write_nc)  deallocate(is,js,lons,lats,lfracs,iwvs,cwps,iwps,rwps,swps,gwps,hwps)
-  if (write_nc .or. in_python) deallocate(tb)
-  if (active) deallocate(Ze,Attenuation_hydro,Attenuation_atmo,hgt)
-
+  call deallocate_output_vars()
 end subroutine pyPamtraLib

@@ -1,4 +1,4 @@
-subroutine deallocate_vars
+subroutine deallocate_profile_vars
 
   use vars_atmosphere
   use vars_output
@@ -26,4 +26,4 @@ subroutine deallocate_vars
 !   deallocate(profiles)
 
 
-end subroutine deallocate_vars
+end subroutine deallocate_profile_vars

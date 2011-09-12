@@ -22,30 +22,22 @@ endif
 OBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_atmosphere.o vars_profile.o mod_io_strings.o constants.o double_moments_module.o\
 	vars_output.o run_rt3.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o radmat.o \
 	scat_utilities.o dsd_utilities.o mpm93.o get_atmosG0.o get_atmosG.o mie.o mie_densitysizedep_spheremasseq.o\
-	slant_profile.o  allocate_vars.o rosen98_gasabs.o surface.o eps_water.o mie_icefactor.o epsi.o \
+	slant_profile.o  allocate_profile_vars.o allocate_output_vars.o rosen98_gasabs.o surface.o eps_water.o mie_icefactor.o epsi.o \
 	equcom.o land_emis.o equare.o scatdb.o dda_db_liu.o dielec_water.o ref_water.o \
-	ref_ice.o e_sat_gg_water.o spec2abs.o interpolation.o deallocate_vars.o\
+	ref_ice.o e_sat_gg_water.o spec2abs.o interpolation.o deallocate_profile_vars.o deallocate_output_vars.o\
 	hydrometeor_extinction.o cloud_ssp.o ice_ssp.o rain_ssp.o snow_ssp.o grau_ssp.o hail_ssp.o legendre2phasefunction.o \
-	collect_output.o calculate_active.o write_nc_results.o fastem4.o specular_surface.o error_msg.o formatted_frqstr.o \
+	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o  \
 	get_scat_coefs.o dump_profile.o collect_boundary_output.o double_moments.o versionNumber.auto.o
 
-pyOBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_atmosphere.o vars_profile.o mod_io_strings.o constants.o double_moments_module.o\
-	vars_output.o run_rt3.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o radmat.o \
-	scat_utilities.o dsd_utilities.o mpm93.o get_atmosG0.o get_atmosG.o mie.o mie_densitysizedep_spheremasseq.o\
-	slant_profile.o  allocate_vars.o rosen98_gasabs.o surface.o eps_water.o mie_icefactor.o epsi.o \
-	equcom.o land_emis.o equare.o scatdb.o dda_db_liu.o dielec_water.o ref_water.o \
-	ref_ice.o e_sat_gg_water.o spec2abs.o interpolation.o deallocate_vars.o \
-	hydrometeor_extinction.o cloud_ssp.o ice_ssp.o rain_ssp.o snow_ssp.o grau_ssp.o hail_ssp.o legendre2phasefunction.o \
-	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o   \
-	get_scat_coefs.o dump_profile.o collect_boundary_output.o double_moments.o versionNumber.auto.o
+pamtraOBJECTS=formatted_frqstr.o write_nc_results.o
 
 BIN=pamtra
 
 all: precompile pamtra py
 
 	
-pamtra: pamtra.f90 $(OBJECTS)
-	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS)
+pamtra: pamtra.f90 $(OBJECTS) $(pamtraOBJECTS)
+	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS)  $(pamtraOBJECTS) $(LFLAGS) $(LDFLAGS)
 	mv $(BIN) ../
  
 scatdb.o:
@@ -65,8 +57,8 @@ pyprecompile:
 	@echo ""
 	f2py -m pyPamtraLib -h pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90
 
-py: pyPamtraLib.f90 $(pyOBJECTS) precompile
-	f2py -c --fcompiler=gnu95 pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90 
+py: pyPamtraLib.f90 precompile $(OBJECTS) 
+	f2py -c --fcompiler=gnu95 pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ../py/lib/
 
 pyinstall:
@@ -123,7 +115,7 @@ test4:
 	../test/compareNetcdf.sh 4
 	@echo "TEST 4 OK"
 
-pytest: pytest1 pytest2 pytest3 pytest4 cleantest
+pytest: pyinstall pytest1 pytest2 pytest3 pytest4 cleantest
 
 pytest1:
 	@echo "=== Python TEST 1 ==="
