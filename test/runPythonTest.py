@@ -17,6 +17,9 @@ t.set["verbose"]=0
 
 #make artificially less levels for on eprofile!
 t.p["nlyrs"][2,0] = 25
+#change atrificially one timestamp
+
+t.p["unixtime"][0,0] = 600 #1970-01-01 00:10
 
 testNo = sys.argv[1]
 

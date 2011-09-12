@@ -49,7 +49,7 @@ python module pyPamtraLib ! in
             integer dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_nlyrs
             integer intent(in) :: in_nfreq
             real dimension(in_nfreq),intent(in),depend(in_nfreq) :: in_freqs
-            integer intent(in) :: in_timestamp
+            integer dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_timestamp
             real intent(in) :: in_deltax
             real intent(in) :: in_deltay
             real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_lat

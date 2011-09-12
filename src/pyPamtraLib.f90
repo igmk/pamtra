@@ -27,6 +27,7 @@ out_angles&
 ! 1) PyPamtra expects relative humidity in Pa/Pa, Pamtra wants relative humidity in % for backwards compatibility
 ! 2) n-moments is not implemented in PyPamtra yet (there is no technical reason not to do it!)
 ! 3) Only PyPamtra can deal with variing height numbers (Pamtra file format has to be changed for that, otherwise implementation is easy!)
+! 4) PyPamtra wants the time as unix timestamp (seconds since 1070) and can handle different times per gridpoint
 
   use kinds
   use constants !physical constants live here
@@ -73,7 +74,7 @@ integer, intent(in) :: in_nfreq, max_in_nlyrs, in_ngridx, in_ngridy
 real(kind=sgl), dimension(in_nfreq), intent(in) :: in_freqs
 
 
-integer, intent(in) :: in_timestamp
+integer, dimension(in_ngridx,in_ngridy), intent(in) :: in_timestamp
 real(kind=sgl), intent(in) :: in_deltax, in_deltay
 
 integer, dimension(in_ngridx,in_ngridy), intent(in) :: in_nlyrs
@@ -180,27 +181,6 @@ ngridy = in_ngridy
 nfrq = in_nfreq
 freqs = in_freqs(1:nfrq)
 
-! year = in_year
-! month = in_month
-! day = in_day
-! time = in_timestamp
-
-call GMTIME(in_timestamp,timestamp)
-
-
-write(year,"(i4.4)") timestamp(6)+1900
-write(month,"(i2.2)") timestamp(5)+1
-write(day,"(i2.2)") timestamp(4)
-write(time(1:2),"(i2.2)") timestamp(3)
-write(time(3:4),"(i2.2)") timestamp(2)
-
-! 
-! 
-!   year = "2010"
-!   month = "05"
-!   day = "05"
-!   time = "0000"
-print*,in_timestamp,timestamp,";", year,",",month,",",day,",",time
 
 deltax = in_deltax
 deltay = in_deltay
@@ -208,7 +188,7 @@ deltay = in_deltay
 
 
 !!! read n-moments file
-  if (n_moments .eq. 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
+!   if (n_moments .eq. 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
 
   ! now allocate output variables
    call allocate_output_vars(max_in_nlyrs)
@@ -232,6 +212,16 @@ deltay = in_deltay
   grid_f: do fi =1, nfrq
      grid_y: do ny = 1, ngridy !ny_in, ny_fin  
         grid_x: do nx = 1, ngridx !nx_in, nx_fin   
+
+call GMTIME(in_timestamp(nx,ny),timestamp)
+
+
+write(year,"(i4.4)") timestamp(6)+1900
+write(month,"(i2.2)") timestamp(5)+1
+write(day,"(i2.2)") timestamp(4)
+write(time(1:2),"(i2.2)") timestamp(3)
+write(time(3:4),"(i2.2)") timestamp(2)
+
 nlyr = in_nlyrs(nx,ny)  
   call allocate_profile_vars
 

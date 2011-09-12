@@ -80,7 +80,7 @@ class pyPamtra:
 		
 		self.dimensions = dict()
 		
-		self.dimensions["unixtime"] = []
+		self.dimensions["unixtime"] = ["ngridx","ngridy"]
 		
 		self.dimensions["ngridx"] = []
 		self.dimensions["ngridy"] = []
@@ -219,8 +219,9 @@ class pyPamtra:
 		#in PyPamtra I want relhum not in %
 		self.p["relhum_lev"] = self.p["relhum_lev"]/100.
 
-		#finally make an array from nlyrs
+		#finally make an array from nlyrs and unixtime
 		self.p["nlyrs"] = np.ones(shape2D,dtype=int)*self.p["nlyrs"]
+		self.p["unixtime"] = np.ones(shape2D,dtype=int)*self.p["unixtime"]
 
 		f.close()
 
@@ -291,14 +292,14 @@ class pyPamtra:
 		shape3Dplus = (self.p["ngridx"],self.p["ngridy"],p.max(self.p["nlyrs"])+1,)
 		
 		if (type(timestamp) == int) or (type(timestamp) == float) :
-			self.p["unixtime"] = timestamp
+			self.p["unixtime"] = np.ones(shape2D,dtype=int)*timestamp
 		elif (type(timestamp) == numpy.ndarray):
 			if (timestamp.dtype == int) or (timestamp.dtype == float):
 				self.p["unixtime"] = timestamp
 			else:
 				raise TypeError("timestamp entries have to be int or float objects")
 		elif (type(timestamp) == datetime):
-			self.p["unixtime"] = calendar.timegm(timestamp.timetuple())
+			self.p["unixtime"] = np.ones(shape2D,dtype=int)*calendar.timegm(timestamp.timetuple())
 		else:
 			raise TypeError("timestamp has to be int, float or datetime object")
 				
@@ -584,6 +585,9 @@ class pyPamtra:
 		nc_nlyrs = cdfFile.createVariable('nlyrs', 'i4',dim2d,fill_value= missingNumber)
 		nc_nlyrs.units = "-"
 
+		nc_time = cdfFile.createVariable('datatime', 'i4',dim2d,fill_value= missingNumber)
+		nc_time.units = "seconds since 1970-01-01 00:00:00"
+
 		nc_longitude = cdfFile.createVariable('longitude', 'f4',dim2d,fill_value= missingNumber)
 		nc_longitude.units = "deg.dec"
 
@@ -642,6 +646,7 @@ class pyPamtra:
 		nc_nlyrs[:] = self.p["nlyrs"]
 		nc_model_i[:] = self.p["model_i"]
 		nc_model_j[:] = self.p["model_j"]
+		nc_time[:] = self.p["unixtime"]
 		nc_longitude[:] = self.p["lon"]
 		nc_latitude[:] = self.p["lat"]
 		nc_lfrac[:] = self.p["lfrac"]
