@@ -8,6 +8,7 @@ import csv
 import pickle
 import time,calendar, datetime
 import warnings
+import sys
 from copy import deepcopy
 
 import meteoSI
@@ -28,7 +29,7 @@ def PamtraFortranWrapper(*args):
 	return eval("pyPamtraLib.pypamtralib("+code[0:-1]+")")
 
 
-class pyPamtra:
+class pyPamtra(object):
 	
 	def __init__(self):
 		
@@ -450,7 +451,9 @@ class pyPamtra:
 					self.p["swc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
 					self.p["gwc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
 					),tuple(), ("pyPamtraLib","numpy",))
-					if self.set["pyVerbose"] >= 0: print pp_ii, "submitted"
+		
+		pp_noJobs = pp_ii+1
+		if self.set["pyVerbose"] >= 0: print pp_noJobs, "jobs submitted"
 										
 		#job_server.wait()
 		pp_ii = -1
@@ -473,8 +476,9 @@ class pyPamtra:
 					self.r["hgt"][pp_startX:pp_endX,pp_startY:pp_endY,:], 
 					self.r["tb"][pp_startX:pp_endX,pp_startY:pp_endY,:,:,pp_startF:pp_endF,:], 
 					self.r["angles"] ) = pp_jobs[pp_ii]()
-					if self.set["pyVerbose"] >= 0: print pp_ii, "collected"
-		
+					if self.set["pyVerbose"] >= 0: 
+						sys.stdout.write("\r"+20*" "+"\r"+ "%5.1f%% collected"%((pp_ii+1)/float(pp_noJobs)*100))
+						sys.stdout.flush()
 
 		
 		self.r["settings"] = self.set
@@ -485,7 +489,7 @@ class pyPamtra:
 		#for key in self.__dict__.keys():
 			#print key
 			#print self.__dict__[key]
-		if self.set["pyVerbose"] >= 0: job_server.print_stats()
+		if self.set["pyVerbose"] >= 0: print " "; job_server.print_stats()
 		job_server.destroy()
 		
 	def runPamtra(self,freqs):
