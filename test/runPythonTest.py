@@ -14,7 +14,7 @@ t.readPamtraProfile(inputFile)
 
 t.set["data_path"]='/home/mech/models/pamtra/data/'
 t.set["verbose"]=0
-
+t.set["pyVerbose"]=1
 #make artificially less levels for on eprofile!
 t.p["nlyrs"][2,0] = 25
 #change atrificially one timestamp
@@ -26,7 +26,7 @@ testNo = sys.argv[1]
 if testNo == "1":
 
 
-	t.runPamtra([24,90,150])
+	t.runParallelPamtra([24,90,150],pp_local_workers=2,pp_deltaF=1,pp_deltaX=1)
 	
 elif testNo == "2":
 
@@ -38,7 +38,7 @@ elif testNo == "2":
 	t.set["liu_type"]=4
 
 
-	t.runParallelPamtra(35)
+	t.runPamtra(35)
 elif testNo == "3":
 
 	t.set["passive"]=True

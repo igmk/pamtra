@@ -245,7 +245,7 @@ docstring
             cmd = "nohup ppserver.py -w %d -p %d -t %d -s %s &\n"\
                 % (self._n_cpus, self._pp_port, self._timeout, self._pp_secret)
         else:
-            cmd = "nohup /home/mmaahn/bin/ppserver.py -w %d -p %d -t %d &\n"\
+            cmd = "nohup ppserver.py -w %d -p %d -t %d &\n"\
                 % (self._n_cpus, self._pp_port, self._timeout)
         # any output and errors of ppserver are appened to nohup.out
         # we only have to check for immediate errors of running this command
@@ -268,8 +268,8 @@ docstring
             channel.close()
             raise IOError
         stdout = ""
-        expect = "`nohup.out'\r\n"
-        while not stdout.endswith(expect):
+        expect = "nohup.out"
+        while not stdout.rfind(expect) > 0:
             try:
                 stdout += channel.recv(self._buf_size)
             except socket.timeout:
@@ -278,7 +278,7 @@ docstring
                 channel.close()
                 raise IOError
         self.logger.debug(stdout)
-        channel.close()
+
     
     def run(self):
         """
@@ -294,10 +294,13 @@ docstring
         self.logger.info("Usage is: %f", self._cpu_usage)
         # compare work load with number of cpus present
         self._cpu_usage = self._cpu_usage / 100.
-        if (self._cpu_usage - math.floor(self._cpu_usage)) < 0.6:
-            self._cpu_usage = math.floor(self._cpu_usage)
-        else:
-            self._cpu_usage = math.ceil(self._cpu_usage)
+        #act more conervatively!
+        #if (self._cpu_usage - math.floor(self._cpu_usage)) < 0.1:
+            #self._cpu_usage = math.floor(self._cpu_usage)
+        #else:
+        self._cpu_usage = math.ceil(self._cpu_usage)
+        #take not more than half of the processors
+        if self._cpu_usage < self._n_cpus/2: self._cpu_usage = self._n_cpus/2
         self._n_cpus = self._n_cpus - int(self._cpu_usage)
         # start pp_server there
         self.logger.info("Number of CPUs to use: %d.", self._n_cpus)
