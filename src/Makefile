@@ -59,10 +59,10 @@ pyprecompile:
 
 py: pyPamtraLib.f90 precompile $(OBJECTS) 
 	f2py -c --fcompiler=gnu95 pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
-	cp pyPamtraLib.so ../py/lib/
+	cp pyPamtraLib.so ../py/
 
 pyinstall:
-	cp ../py/lib/* ~/lib/python/
+	cp ../py/* ~/lib/python/
 
 
 
