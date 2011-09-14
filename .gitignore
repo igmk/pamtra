@@ -16,6 +16,7 @@ run_LMRT*
 *.prefs
 Debug
 test/tmp/*
+!test/tmp/.gitignore
 *.kate-swp
 *.auto.f90
 *.pyc
