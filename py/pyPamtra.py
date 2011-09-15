@@ -20,7 +20,7 @@ except:
 
 missingNumber=-9999
 
-def PamtraFortranWrapper(*args):
+def _PamtraFortranWrapper(*args):
 	#is needed because pp cannot work with fortran modules directly
 	import pyPamtraLib
 	code = ""
@@ -78,7 +78,7 @@ class pyPamtra(object):
 		self.set["n_moments"]=1
 		self.set["moments_file"]='snowCRYSTAL'
 		
-		self.setDefaultKeys = self.set.keys()
+		self._setDefaultKeys = self.set.keys()
 		
 		self.dimensions = dict()
 		
@@ -179,7 +179,9 @@ class pyPamtra(object):
 		self.units["attenuationAtmo"] = "-"
 		self.units["tb"] = "K"
 	
-		
+		self._nstokes = 2
+		self._noutlevels = 2
+		self._nangles = 32
 		
 	
 	def readPamtraProfile(self,inputFile):
@@ -197,45 +199,45 @@ class pyPamtra(object):
 		self.p["nlyrs"] = int(self.p["nlyrs"])
 		self.p["max_nlyrs"] = deepcopy(self.p["nlyrs"])
 		
-		shape2D = (self.p["ngridx"],self.p["ngridy"],)
-		shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],)
-		shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"]+1,)
+		self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
+		self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],)
+		self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"]+1,)
 		
-		self.p["model_i"] = np.zeros(shape2D)
-		self.p["model_j"] = np.zeros(shape2D)
-		self.p["lat"] = np.zeros(shape2D)
-		self.p["lon"] = np.zeros(shape2D)
-		self.p["lfrac"] = np.zeros(shape2D)
-		self.p["wind10u"] = np.zeros(shape2D)
-		self.p["wind10v"] = np.zeros(shape2D)
+		self.p["model_i"] = np.zeros(self._shape2D)
+		self.p["model_j"] = np.zeros(self._shape2D)
+		self.p["lat"] = np.zeros(self._shape2D)
+		self.p["lon"] = np.zeros(self._shape2D)
+		self.p["lfrac"] = np.zeros(self._shape2D)
+		self.p["wind10u"] = np.zeros(self._shape2D)
+		self.p["wind10v"] = np.zeros(self._shape2D)
 		
-		self.p["iwv"] = np.zeros(shape2D)
-		self.p["cwp"] = np.zeros(shape2D)
-		self.p["iwp"] = np.zeros(shape2D)
-		self.p["rwp"] = np.zeros(shape2D)
-		self.p["swp"] = np.zeros(shape2D)
-		self.p["gwp"] = np.zeros(shape2D)
-		self.p["hwp"] = np.zeros(shape2D)
+		self.p["iwv"] = np.zeros(self._shape2D)
+		self.p["cwp"] = np.zeros(self._shape2D)
+		self.p["iwp"] = np.zeros(self._shape2D)
+		self.p["rwp"] = np.zeros(self._shape2D)
+		self.p["swp"] = np.zeros(self._shape2D)
+		self.p["gwp"] = np.zeros(self._shape2D)
+		self.p["hwp"] = np.zeros(self._shape2D)
 		
-		self.p["hgt_lev"] = np.zeros(shape3Dplus)
-		self.p["temp_lev"] = np.zeros(shape3Dplus)
-		self.p["press_lev"] = np.zeros(shape3Dplus)
-		self.p["relhum_lev"] = np.zeros(shape3Dplus)
+		self.p["hgt_lev"] = np.zeros(self._shape3Dplus)
+		self.p["temp_lev"] = np.zeros(self._shape3Dplus)
+		self.p["press_lev"] = np.zeros(self._shape3Dplus)
+		self.p["relhum_lev"] = np.zeros(self._shape3Dplus)
 		
-		self.p["cwc_q"] = np.zeros(shape3D)
-		self.p["iwc_q"] = np.zeros(shape3D)
-		self.p["rwc_q"] = np.zeros(shape3D)
-		self.p["swc_q"] = np.zeros(shape3D)
-		self.p["gwc_q"] = np.zeros(shape3D)
+		self.p["cwc_q"] = np.zeros(self._shape3D)
+		self.p["iwc_q"] = np.zeros(self._shape3D)
+		self.p["rwc_q"] = np.zeros(self._shape3D)
+		self.p["swc_q"] = np.zeros(self._shape3D)
+		self.p["gwc_q"] = np.zeros(self._shape3D)
 		
 		if self.set["n_moments"] == 1:
-			self.p["hwc_q"] = np.ones(shape3D)*missingNumber
-			self.p["cwc_n"] = np.ones(shape3D)*missingNumber
-			self.p["iwc_n"] = np.ones(shape3D)*missingNumber
-			self.p["rwc_n"] = np.ones(shape3D)*missingNumber
-			self.p["swc_n"] = np.ones(shape3D)*missingNumber
-			self.p["gwc_n"] = np.ones(shape3D)*missingNumber
-			self.p["hwc_n"] = np.ones(shape3D)*missingNumber
+			self.p["hwc_q"] = np.ones(self._shape3D)*missingNumber
+			self.p["cwc_n"] = np.ones(self._shape3D)*missingNumber
+			self.p["iwc_n"] = np.ones(self._shape3D)*missingNumber
+			self.p["rwc_n"] = np.ones(self._shape3D)*missingNumber
+			self.p["swc_n"] = np.ones(self._shape3D)*missingNumber
+			self.p["gwc_n"] = np.ones(self._shape3D)*missingNumber
+			self.p["hwc_n"] = np.ones(self._shape3D)*missingNumber
 			
 			for x in np.arange(self.p["ngridx"]):
 				for y in np.arange(self.p["ngridy"]):
@@ -247,13 +249,13 @@ class pyPamtra(object):
 						self.p["hgt_lev"][x,y,z+1],self.p["press_lev"][x,y,z+1],self.p["temp_lev"][x,y,z+1],self.p["relhum_lev"][x,y,z+1],self.p["cwc_q"][x,y,z],self.p["iwc_q"][x,y,z],self.p["rwc_q"][x,y,z],self.p["swc_q"][x,y,z],self.p["gwc_q"][x,y,z] = np.array(np.array(g.next()),dtype=float)
 
 		elif self.set["n_moments"] == 2:
-			self.p["hwc_q"] = np.zeros(shape3D)
-			self.p["cwc_n"] = np.zeros(shape3D)
-			self.p["iwc_n"] = np.zeros(shape3D)
-			self.p["rwc_n"] = np.zeros(shape3D)
-			self.p["swc_n"] = np.zeros(shape3D)
-			self.p["gwc_n"] = np.zeros(shape3D)
-			self.p["hwc_n"] = np.zeros(shape3D)
+			self.p["hwc_q"] = np.zeros(self._shape3D)
+			self.p["cwc_n"] = np.zeros(self._shape3D)
+			self.p["iwc_n"] = np.zeros(self._shape3D)
+			self.p["rwc_n"] = np.zeros(self._shape3D)
+			self.p["swc_n"] = np.zeros(self._shape3D)
+			self.p["gwc_n"] = np.zeros(self._shape3D)
+			self.p["hwc_n"] = np.zeros(self._shape3D)
 			
 			for x in np.arange(self.p["ngridx"]):
 				for y in np.arange(self.p["ngridy"]):
@@ -271,8 +273,8 @@ class pyPamtra(object):
 		self.p["relhum_lev"] = self.p["relhum_lev"]/100.
 
 		#finally make an array from nlyrs and unixtime
-		self.p["nlyrs"] = np.ones(shape2D,dtype=int)*self.p["nlyrs"]
-		self.p["unixtime"] = np.ones(shape2D,dtype=int)*self.p["unixtime"]
+		self.p["nlyrs"] = np.ones(self._shape2D,dtype=int)*self.p["nlyrs"]
+		self.p["unixtime"] = np.ones(self._shape2D,dtype=int)*self.p["unixtime"]
 
 		f.close()
 
@@ -314,18 +316,18 @@ class pyPamtra(object):
 		swp = np.sum(swc_q*rho_moist*dz,axis=-1)
 		gwp = np.sum(gwc_q*rho_moist*dz,axis=-1)
 		
-		shape3D = np.shape(gwc_q)
-		shape2D = np.shape(gwp)
+		self._shape3D = np.shape(gwc_q)
+		self._shape2D = np.shape(gwp)
 		
 		hwp[:] = 0
 		
-		hwc_q = np.ones(shape3D)*missingNumber
-		cwc_n = np.ones(shape3D)*missingNumber
-		iwc_n = np.ones(shape3D)*missingNumber
-		rwc_n = np.ones(shape3D)*missingNumber
-		swc_n = np.ones(shape3D)*missingNumber
-		gwc_n = np.ones(shape3D)*missingNumber
-		hwc_n = np.ones(shape3D)*missingNumber
+		hwc_q = np.ones(self._shape3D)*missingNumber
+		cwc_n = np.ones(self._shape3D)*missingNumber
+		iwc_n = np.ones(self._shape3D)*missingNumber
+		rwc_n = np.ones(self._shape3D)*missingNumber
+		swc_n = np.ones(self._shape3D)*missingNumber
+		gwc_n = np.ones(self._shape3D)*missingNumber
+		hwc_n = np.ones(self._shape3D)*missingNumber
 		
 		
 		return self.createFullProfile(timestamp,lat,lon,lfrac,wind10u,wind10v,
@@ -366,58 +368,58 @@ class pyPamtra(object):
 		self.p["max_nlyrs"] = np.shape(hgt_lev)[-1] -1
 		
 		
-		shape2D = (self.p["ngridx"],self.p["ngridy"],)
-		shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
-		shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
+		self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
+		self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
+		self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
 		
 		if (type(timestamp) == int) or (type(timestamp) == float) :
-			self.p["unixtime"] = np.ones(shape2D,dtype=int)*timestamp
+			self.p["unixtime"] = np.ones(self._shape2D,dtype=int)*timestamp
 		elif (type(timestamp) == np.ndarray):
 			if (timestamp.dtype == int) or (timestamp.dtype == float):
 				self.p["unixtime"] = timestamp
 			else:
 				raise TypeError("timestamp entries have to be int or float objects")
 		elif (type(timestamp) == datetime):
-			self.p["unixtime"] = np.ones(shape2D,dtype=int)*calendar.timegm(timestamp.timetuple())
+			self.p["unixtime"] = np.ones(self._shape2D,dtype=int)*calendar.timegm(timestamp.timetuple())
 		else:
 			raise TypeError("timestamp has to be int, float or datetime object")
 				
 		self.p["deltax"] = 0.
 		self.p["deltay"] = 0.
-		self.p["lat"] = lat.reshape(shape2D)
-		self.p["lon"] = lon.reshape(shape2D)
-		self.p["lfrac"] = lfrac.reshape(shape2D)
-		self.p["model_i"] = np.array(np.where(lat.reshape(shape2D))[0]).reshape(shape2D) +1
-		self.p["model_j"] = np.array(np.where(lon.reshape(shape2D))[1]).reshape(shape2D) +1
-		self.p["wind10u"] = wind10u.reshape(shape2D)
-		self.p["wind10v"] = wind10v.reshape(shape2D)
+		self.p["lat"] = lat.reshape(self._shape2D)
+		self.p["lon"] = lon.reshape(self._shape2D)
+		self.p["lfrac"] = lfrac.reshape(self._shape2D)
+		self.p["model_i"] = np.array(np.where(lat.reshape(self._shape2D))[0]).reshape(self._shape2D) +1
+		self.p["model_j"] = np.array(np.where(lon.reshape(self._shape2D))[1]).reshape(self._shape2D) +1
+		self.p["wind10u"] = wind10u.reshape(self._shape2D)
+		self.p["wind10v"] = wind10v.reshape(self._shape2D)
 
-		self.p["iwv"] = iwv.reshape(shape2D)
-		self.p["cwp"] = cwp.reshape(shape2D)
-		self.p["iwp"] = iwp.reshape(shape2D)
-		self.p["rwp"] = rwp.reshape(shape2D)
-		self.p["swp"] = swp.reshape(shape2D)
-		self.p["gwp"] = gwp.reshape(shape2D)
-		self.p["hwp"] = gwp.reshape(shape2D)
+		self.p["iwv"] = iwv.reshape(self._shape2D)
+		self.p["cwp"] = cwp.reshape(self._shape2D)
+		self.p["iwp"] = iwp.reshape(self._shape2D)
+		self.p["rwp"] = rwp.reshape(self._shape2D)
+		self.p["swp"] = swp.reshape(self._shape2D)
+		self.p["gwp"] = gwp.reshape(self._shape2D)
+		self.p["hwp"] = gwp.reshape(self._shape2D)
 		
-		self.p["hgt_lev"] = hgt_lev.reshape(shape3Dplus)
-		self.p["temp_lev"] = temp_lev.reshape(shape3Dplus)
-		self.p["press_lev"] = press_lev.reshape(shape3Dplus)
-		self.p["relhum_lev"] = relhum_lev.reshape(shape3Dplus)
+		self.p["hgt_lev"] = hgt_lev.reshape(self._shape3Dplus)
+		self.p["temp_lev"] = temp_lev.reshape(self._shape3Dplus)
+		self.p["press_lev"] = press_lev.reshape(self._shape3Dplus)
+		self.p["relhum_lev"] = relhum_lev.reshape(self._shape3Dplus)
 		
-		self.p["cwc_q"] = cwc_q.reshape(shape3D)
-		self.p["iwc_q"] = iwc_q.reshape(shape3D)
-		self.p["rwc_q"] = rwc_q.reshape(shape3D)
-		self.p["swc_q"] = swc_q.reshape(shape3D)
-		self.p["gwc_q"] = gwc_q.reshape(shape3D)
+		self.p["cwc_q"] = cwc_q.reshape(self._shape3D)
+		self.p["iwc_q"] = iwc_q.reshape(self._shape3D)
+		self.p["rwc_q"] = rwc_q.reshape(self._shape3D)
+		self.p["swc_q"] = swc_q.reshape(self._shape3D)
+		self.p["gwc_q"] = gwc_q.reshape(self._shape3D)
 		
-		self.p["hwc_q"] = hwc_q.reshape(shape3D)
-		self.p["cwc_n"] = cwc_n.reshape(shape3D)
-		self.p["iwc_n"] = iwc_n.reshape(shape3D)
-		self.p["rwc_n"] = rwc_n.reshape(shape3D)
-		self.p["swc_n"] = swc_n.reshape(shape3D)
-		self.p["gwc_n"] = gwc_n.reshape(shape3D)
-		self.p["hwc_n"] = hwc_n.reshape(shape3D)
+		self.p["hwc_q"] = hwc_q.reshape(self._shape3D)
+		self.p["cwc_n"] = cwc_n.reshape(self._shape3D)
+		self.p["iwc_n"] = iwc_n.reshape(self._shape3D)
+		self.p["rwc_n"] = rwc_n.reshape(self._shape3D)
+		self.p["swc_n"] = swc_n.reshape(self._shape3D)
+		self.p["gwc_n"] = gwc_n.reshape(self._shape3D)
+		self.p["hwc_n"] = hwc_n.reshape(self._shape3D)
 		
 
 
@@ -438,13 +440,11 @@ class pyPamtra(object):
 		self.freqs = freqs
 		self.nfreqs = len(freqs)
 		
-		self.nstokes = 2
-		self.noutlevels = 2
-		self.nangles = 32
+
 
 		
 		for key in self.set:
-			if key not in self.setDefaultKeys:
+			if key not in self._setDefaultKeys:
 				warnings.warn("Warning can not parse setting: ",key, Warning)
 
 
@@ -462,7 +462,7 @@ class pyPamtra(object):
 		self.r["attenuationHydro"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
 		self.r["attenuationAtmo"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
 		self.r["hgt"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],))*missingNumber
-		self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.noutlevels,self.nangles,self.nfreqs,self.nstokes))*missingNumber
+		self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles,self.nfreqs,self._nstokes))*missingNumber
 		
 		self.r["Ze_dimensions"] = ["gridx","gridy","lyr","frequency"]
 		self.r["attenuationHydro_dimensions"] = ["gridx","gridy","lyr","frequency"]
@@ -486,7 +486,7 @@ class pyPamtra(object):
 					
 					pp_ii+=1
 					
-					pp_jobs[pp_ii] = job_server.submit(PamtraFortranWrapper, (
+					pp_jobs[pp_ii] = job_server.submit(_PamtraFortranWrapper, (
 					#self.set
 					self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["emissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["n_moments"], self.set["moments_file"],
 					#input
@@ -578,7 +578,7 @@ class pyPamtra(object):
 		self.nfreqs = len(freqs)
 		
 		for key in self.set:
-			if key not in self.setDefaultKeys:
+			if key not in self._setDefaultKeys:
 				print "Warning Could not parse ",key
 		
 		if np.max(self.p["relhum_lev"])>1.5:
@@ -590,7 +590,7 @@ class pyPamtra(object):
 		#output
 		self.r["pamtraVersion"],self.r["pamtraHash"],\
 		self.r["Ze"],self.r["attenuationHydro"],self.r["attenuationAtmo"],self.r["hgt"], self.r["tb"], self.r["angles"] = \
-		PamtraFortranWrapper(
+		_PamtraFortranWrapper(
 		#self.set
 		self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["emissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["n_moments"], self.set["moments_file"],
 		#input
@@ -615,7 +615,6 @@ class pyPamtra(object):
 		if self.set["pyVerbose"] >= 0: print "pyPamtra runtime:", time.time() - tttt
 
 
-
 	def writeResultsToNumpy(self,fname):
 		try: 
 			self.r
@@ -634,10 +633,6 @@ class pyPamtra(object):
 			f.close()
 		except:
 			raise IOError ("Could not read data")
-		
-	#calendar.timegm(date.timetuple())
-
-	 #datetime.datetime.utcfromtimestamp(unix)
 		
 	def writeResultsToNetCDF(self,fname,ncForm="NETCDF3_CLASSIC"):
 		import netCDF4

@@ -28,9 +28,8 @@ out_angles&
 ! differences between Pamtra and PyPamtraLib:
 
 ! 1) PyPamtra expects relative humidity in Pa/Pa, Pamtra wants relative humidity in % for backwards compatibility
-! 2) n-moments is not implemented in PyPamtra yet (there is no technical reason not to do it!)
-! 3) Only PyPamtra can deal with variing height numbers (Pamtra file format has to be changed for that, otherwise implementation is easy!)
-! 4) PyPamtra wants the time as unix timestamp (seconds since 1070) and can handle different times per gridpoint
+! 2) Only PyPamtra can deal with variing height numbers (Pamtra file format has to be changed for that, otherwise implementation is easy!)
+! 3) PyPamtra wants the time as unix timestamp (seconds since 1070) and can handle different times per gridpoint
 
   use kinds
   use constants !physical constants live here
