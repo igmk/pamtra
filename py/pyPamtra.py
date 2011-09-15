@@ -102,6 +102,7 @@ class pyPamtra(object):
 		self.dimensions["rwp"] = ["ngridx","ngridy"]
 		self.dimensions["swp"] = ["ngridx","ngridy"]
 		self.dimensions["gwp"] = ["ngridx","ngridy"]
+		self.dimensions["hwp"] = ["ngridx","ngridy"]
 		
 		self.dimensions["hgt_lev"] = ["ngridx","ngridy","max_nlyrs+1"]
 		self.dimensions["temp_lev"] = ["ngridx","ngridy","max_nlyrs+1"]
@@ -113,6 +114,14 @@ class pyPamtra(object):
 		self.dimensions["rwc_q"] = ["ngridx","ngridy","max_nlyrs"]
 		self.dimensions["swc_q"] = ["ngridx","ngridy","max_nlyrs"]
 		self.dimensions["gwc_q"] = ["ngridx","ngridy","max_nlyrs"]
+		self.dimensions["hwc_q"] = ["ngridx","ngridy","max_nlyrs"]
+		
+		self.dimensions["cwc_n"] = ["ngridx","ngridy","max_nlyrs"]
+		self.dimensions["iwc_n"] = ["ngridx","ngridy","max_nlyrs"]
+		self.dimensions["rwc_n"] = ["ngridx","ngridy","max_nlyrs"]
+		self.dimensions["swc_n"] = ["ngridx","ngridy","max_nlyrs"]
+		self.dimensions["gwc_n"] = ["ngridx","ngridy","max_nlyrs"]
+		self.dimensions["hwc_n"] = ["ngridx","ngridy","max_nlyrs"]
 		
 		self.dimensions["hgt"] = ["ngridx","ngridy","max_nlyrs"]
 		self.dimensions["Ze"] = ["gridx","gridy","lyr","frequency"]
@@ -143,6 +152,7 @@ class pyPamtra(object):
 		self.units["rwp"] = "kg/m^2"
 		self.units["swp"] = "kg/m^2"
 		self.units["gwp"] = "kg/m^2"
+		self.units["hwp"] = "kg/m^2"
 		
 		self.units["hgt_lev"] = "m"
 		self.units["temp_lev"] = "K"
@@ -154,7 +164,15 @@ class pyPamtra(object):
 		self.units["rwc_q"] = "kg/kg"
 		self.units["swc_q"] = "kg/kg"
 		self.units["gwc_q"] = "kg/kg"
+		self.units["hwc_q"] = "kg/kg"
 
+		self.units["cwc_n"] = "#/kg"
+		self.units["iwc_n"] = "#/kg"
+		self.units["rwc_n"] = "#/kg"
+		self.units["swc_n"] = "#/kg"
+		self.units["gwc_n"] = "#/kg"
+		self.units["hwc_n"] = "#/kg"
+		
 		self.units["hgt"] = "m"
 		self.units["Ze"] = "dBz"
 		self.units["attenuationHydros"] = "-"
@@ -197,6 +215,7 @@ class pyPamtra(object):
 		self.p["rwp"] = np.zeros(shape2D)
 		self.p["swp"] = np.zeros(shape2D)
 		self.p["gwp"] = np.zeros(shape2D)
+		self.p["hwp"] = np.zeros(shape2D)
 		
 		self.p["hgt_lev"] = np.zeros(shape3Dplus)
 		self.p["temp_lev"] = np.zeros(shape3Dplus)
@@ -209,15 +228,44 @@ class pyPamtra(object):
 		self.p["swc_q"] = np.zeros(shape3D)
 		self.p["gwc_q"] = np.zeros(shape3D)
 		
-		
-		for x in np.arange(self.p["ngridx"]):
-			for y in np.arange(self.p["ngridy"]):
-				self.p["model_i"][x,y], self.p["model_j"][x,y] = np.array(np.array(g.next()),dtype=int)
-				self.p["lat"][x,y], self.p["lon"][x,y], self.p["lfrac"][x,y],self.p["wind10u"][x,y],self.p["wind10v"][x,y]  = np.array(np.array(g.next()),dtype=float)
-				self.p["iwv"][x,y],self.p["cwp"][x,y],self.p["iwp"][x,y],self.p["rwp"][x,y],self.p["swp"][x,y],self.p["gwp"][x,y] = np.array(np.array(g.next()),dtype=float)
-				self.p["hgt_lev"][x,y,0],self.p["press_lev"][x,y,0],self.p["temp_lev"][x,y,0],self.p["relhum_lev"][x,y,0] = np.array(np.array(g.next()),dtype=float)
-				for z in np.arange(self.p["nlyrs"]):
-					self.p["hgt_lev"][x,y,z+1],self.p["press_lev"][x,y,z+1],self.p["temp_lev"][x,y,z+1],self.p["relhum_lev"][x,y,z+1],self.p["cwc_q"][x,y,z],self.p["iwc_q"][x,y,z],self.p["rwc_q"][x,y,z],self.p["swc_q"][x,y,z],self.p["gwc_q"][x,y,z] = np.array(np.array(g.next()),dtype=float)
+		if self.set["n_moments"] == 1:
+			self.p["hwc_q"] = np.ones(shape3D)*missingNumber
+			self.p["cwc_n"] = np.ones(shape3D)*missingNumber
+			self.p["iwc_n"] = np.ones(shape3D)*missingNumber
+			self.p["rwc_n"] = np.ones(shape3D)*missingNumber
+			self.p["swc_n"] = np.ones(shape3D)*missingNumber
+			self.p["gwc_n"] = np.ones(shape3D)*missingNumber
+			self.p["hwc_n"] = np.ones(shape3D)*missingNumber
+			
+			for x in np.arange(self.p["ngridx"]):
+				for y in np.arange(self.p["ngridy"]):
+					self.p["model_i"][x,y], self.p["model_j"][x,y] = np.array(np.array(g.next()),dtype=int)
+					self.p["lat"][x,y], self.p["lon"][x,y], self.p["lfrac"][x,y],self.p["wind10u"][x,y],self.p["wind10v"][x,y]  = np.array(np.array(g.next()),dtype=float)
+					self.p["iwv"][x,y],self.p["cwp"][x,y],self.p["iwp"][x,y],self.p["rwp"][x,y],self.p["swp"][x,y],self.p["gwp"][x,y] = np.array(np.array(g.next()),dtype=float)
+					self.p["hgt_lev"][x,y,0],self.p["press_lev"][x,y,0],self.p["temp_lev"][x,y,0],self.p["relhum_lev"][x,y,0] = np.array(np.array(g.next()),dtype=float)
+					for z in np.arange(self.p["nlyrs"]):
+						self.p["hgt_lev"][x,y,z+1],self.p["press_lev"][x,y,z+1],self.p["temp_lev"][x,y,z+1],self.p["relhum_lev"][x,y,z+1],self.p["cwc_q"][x,y,z],self.p["iwc_q"][x,y,z],self.p["rwc_q"][x,y,z],self.p["swc_q"][x,y,z],self.p["gwc_q"][x,y,z] = np.array(np.array(g.next()),dtype=float)
+
+		elif self.set["n_moments"] == 2:
+			self.p["hwc_q"] = np.zeros(shape3D)
+			self.p["cwc_n"] = np.zeros(shape3D)
+			self.p["iwc_n"] = np.zeros(shape3D)
+			self.p["rwc_n"] = np.zeros(shape3D)
+			self.p["swc_n"] = np.zeros(shape3D)
+			self.p["gwc_n"] = np.zeros(shape3D)
+			self.p["hwc_n"] = np.zeros(shape3D)
+			
+			for x in np.arange(self.p["ngridx"]):
+				for y in np.arange(self.p["ngridy"]):
+					self.p["model_i"][x,y], self.p["model_j"][x,y] = np.array(np.array(g.next()),dtype=int)
+					self.p["lat"][x,y], self.p["lon"][x,y], self.p["lfrac"][x,y],self.p["wind10u"][x,y],self.p["wind10v"][x,y]  = np.array(np.array(g.next()),dtype=float)
+					self.p["iwv"][x,y],self.p["cwp"][x,y],self.p["iwp"][x,y],self.p["rwp"][x,y],self.p["swp"][x,y],self.p["gwp"][x,y],self.p["hwp"][x,y] = np.array(np.array(g.next()),dtype=float)
+					self.p["hgt_lev"][x,y,0],self.p["press_lev"][x,y,0],self.p["temp_lev"][x,y,0],self.p["relhum_lev"][x,y,0] = np.array(np.array(g.next()),dtype=float)
+					for z in np.arange(self.p["nlyrs"]):
+						self.p["hgt_lev"][x,y,z+1],self.p["press_lev"][x,y,z+1],self.p["temp_lev"][x,y,z+1],self.p["relhum_lev"][x,y,z+1],self.p["cwc_q"][x,y,z],self.p["iwc_q"][x,y,z],self.p["rwc_q"][x,y,z],self.p["swc_q"][x,y,z],self.p["gwc_q"][x,y,z],self.p["hwc_q"][x,y,z],self.p["cwc_n"][x,y,z],self.p["iwc_n"][x,y,z],self.p["rwc_n"][x,y,z],self.p["swc_n"][x,y,z],self.p["gwc_n"][x,y,z],self.p["hwc_n"][x,y,z] = np.array(np.array(g.next()),dtype=float)
+		else:
+			raise IOError("n_moments mus be 1 or 2")
+
 
 		#in PyPamtra I want relhum not in %
 		self.p["relhum_lev"] = self.p["relhum_lev"]/100.
@@ -266,19 +314,34 @@ class pyPamtra(object):
 		swp = np.sum(swc_q*rho_moist*dz,axis=-1)
 		gwp = np.sum(gwc_q*rho_moist*dz,axis=-1)
 		
+		shape3D = np.shape(gwc_q)
+		shape2D = np.shape(gwp)
+		
+		hwp[:] = 0
+		
+		hwc_q = np.ones(shape3D)*missingNumber
+		cwc_n = np.ones(shape3D)*missingNumber
+		iwc_n = np.ones(shape3D)*missingNumber
+		rwc_n = np.ones(shape3D)*missingNumber
+		swc_n = np.ones(shape3D)*missingNumber
+		gwc_n = np.ones(shape3D)*missingNumber
+		hwc_n = np.ones(shape3D)*missingNumber
+		
 		
 		return self.createFullProfile(timestamp,lat,lon,lfrac,wind10u,wind10v,
-		iwv,cwp,iwp,rwp,swp,gwp,
+		iwv,cwp,iwp,rwp,swp,gwp,hwp,
 		hgt_lev,press_lev,temp_lev,relhum_lev,
-		cwc_q,iwc_q,rwc_q,swc_q,gwc_q)
+		cwc_q,iwc_q,rwc_q,swc_q,gwc_q,
+		hwc_q,cwc_n,iwc_n,rwc_n,swc_n,gwc_n,hwc_n)
 
 
 
 	
 	def createFullProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
-			iwv,cwp,iwp,rwp,swp,gwp,
+			iwv,cwp,iwp,rwp,swp,gwp,hwp,
 			hgt_lev,press_lev,temp_lev,relhum_lev,
-			cwc_q,iwc_q,rwc_q,swc_q,gwc_q):
+			cwc_q,iwc_q,rwc_q,swc_q,gwc_,
+			hwc_q,cwc_n,iwc_n,rwc_n,swc_n,gwc_n,hwc_n):
 		
 		self.p = dict()
 		noDims = len(np.shape(hgt_lev))
@@ -335,6 +398,7 @@ class pyPamtra(object):
 		self.p["rwp"] = rwp.reshape(shape2D)
 		self.p["swp"] = swp.reshape(shape2D)
 		self.p["gwp"] = gwp.reshape(shape2D)
+		self.p["hwp"] = gwp.reshape(shape2D)
 		
 		self.p["hgt_lev"] = hgt_lev.reshape(shape3Dplus)
 		self.p["temp_lev"] = temp_lev.reshape(shape3Dplus)
@@ -346,6 +410,14 @@ class pyPamtra(object):
 		self.p["rwc_q"] = rwc_q.reshape(shape3D)
 		self.p["swc_q"] = swc_q.reshape(shape3D)
 		self.p["gwc_q"] = gwc_q.reshape(shape3D)
+		
+		self.p["hwc_q"] = hwc_q.reshape(shape3D)
+		self.p["cwc_n"] = cwc_n.reshape(shape3D)
+		self.p["iwc_n"] = iwc_n.reshape(shape3D)
+		self.p["rwc_n"] = rwc_n.reshape(shape3D)
+		self.p["swc_n"] = swc_n.reshape(shape3D)
+		self.p["gwc_n"] = gwc_n.reshape(shape3D)
+		self.p["hwc_n"] = hwc_n.reshape(shape3D)
 		
 
 
@@ -374,9 +446,7 @@ class pyPamtra(object):
 		for key in self.set:
 			if key not in self.setDefaultKeys:
 				warnings.warn("Warning can not parse setting: ",key, Warning)
-				
-		if self.set["n_moments"]==2:
-			raise IOError("multi moments not implemented yet!")
+
 
 		self.r = dict()
 
@@ -445,11 +515,19 @@ class pyPamtra(object):
 					self.p["rwp"][pp_startX:pp_endX,pp_startY:pp_endY],
 					self.p["swp"][pp_startX:pp_endX,pp_startY:pp_endY],
 					self.p["gwp"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["hwp"][pp_startX:pp_endX,pp_startY:pp_endY],
 					self.p["cwc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
 					self.p["iwc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
 					self.p["rwc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
 					self.p["swc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
 					self.p["gwc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["hwc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["cwc_n"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["iwc_n"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["rwc_n"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["swc_n"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["gwc_n"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["hwc_n"][pp_startX:pp_endX,pp_startY:pp_endY]
 					),tuple(), ("pyPamtraLib","numpy",))
 		
 		pp_noJobs = pp_ii+1
@@ -502,9 +580,6 @@ class pyPamtra(object):
 		for key in self.set:
 			if key not in self.setDefaultKeys:
 				print "Warning Could not parse ",key
-				
-		if self.set["n_moments"]==2:
-			raise IOError("multi moments not implemented yet!")
 		
 		if np.max(self.p["relhum_lev"])>1.5:
 			raise IOError("relative humidity is _not_ in %!")
@@ -524,8 +599,9 @@ class pyPamtra(object):
 		self.p["deltax"],self.p["deltay"], self.p["lat"],self.p["lon"],self.p["model_i"],self.p["model_j"],
 		self.p["wind10u"],self.p["wind10v"],self.p["lfrac"],
 		self.p["relhum_lev"],self.p["press_lev"],self.p["temp_lev"],self.p["hgt_lev"],
-		self.p["iwv"],self.p["cwp"],self.p["iwp"],self.p["rwp"],self.p["swp"],self.p["gwp"],
-		self.p["cwc_q"],self.p["iwc_q"],self.p["rwc_q"],self.p["swc_q"],self.p["gwc_q"])
+		self.p["iwv"],self.p["cwp"],self.p["iwp"],self.p["rwp"],self.p["swp"],self.p["gwp"],self.p["hwp"],
+		self.p["cwc_q"],self.p["iwc_q"],self.p["rwc_q"],self.p["swc_q"],self.p["gwc_q"],
+		self.p["hwc_q"],self.p["cwc_n"],self.p["iwc_n"],self.p["rwc_n"],self.p["swc_n"],self.p["gwc_n"],self.p["hwc_n"])
 				
 		self.r["settings"] = self.set
 		
@@ -636,6 +712,10 @@ class pyPamtra(object):
 		nc_gwp = cdfFile.createVariable('gwp', 'f4',dim2d,fill_value= missingNumber)
 		nc_gwp.units = "kg/m^2"
 
+		nc_hwp = cdfFile.createVariable('hwp', 'f4',dim2d,fill_value= missingNumber)
+		nc_hwp.units = "kg/m^2"
+
+
 		#nc_hwp = cdfFile.createVariable('hwp', 'f4',dim2d,fill_value= missingNumber)
 		#nc_hwp.units = "kg/m^2"
 
@@ -677,7 +757,7 @@ class pyPamtra(object):
 		nc_rwp[:] = self.p["rwp"]
 		nc_swp[:] = self.p["swp"]
 		nc_gwp[:] = self.p["gwp"]
-		#if (self.r["settings"]["n_moments"] == 2): nc_hwp[:] = self.p["hwp"]
+		nc_hwp[:] = self.p["hwp"]
 		
 		if (self.r["settings"]["passive"]):
 			nc_tb[:] = self.r["tb"]

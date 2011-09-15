@@ -11,14 +11,17 @@ in_timestamp,&
 in_deltax,in_deltay, in_lat,in_lon,in_model_i,in_model_j,&
 in_wind10u,in_wind10v,in_lfrac,&
 in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev,&
-in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp,&
-in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q&
+in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp,in_hwp,&
+in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q,&
+in_hwc_q, in_cwc_n, in_iwc_n, in_rwc_n, in_swc_n, in_gwc_n, in_hwc_n&
 ,& !meta out
 out_gitVersion,out_gitHash &
 ,& !data_out
 out_Ze, out_Attenuation_hydro,out_Attenuation_atmo,out_hgt,out_tb,&
 out_angles&
 )
+
+
 
 ! python Version of the Pamtra model.
 
@@ -82,8 +85,10 @@ out_angles&
   real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_lat,in_lon,in_model_i,in_model_j
   real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_wind10u,in_wind10v,in_lfrac
   real(kind=sgl), dimension(in_ngridx,in_ngridy,1+max_in_nlyrs), intent(in) :: in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev
-  real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp
+  real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp,in_hwp
   real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs), intent(in) :: in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q
+  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs), intent(in) :: in_hwc_q,in_cwc_n,in_iwc_n,in_rwc_n
+  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs), intent(in) :: in_swc_n,in_gwc_n,in_hwc_n
     character(40),intent(out) :: out_gitHash, out_gitVersion
 
   !Output
@@ -106,8 +111,9 @@ out_angles&
   !f2py intent(in) :: in_deltax,in_deltay, in_lat,in_lon,in_model_i,in_model_j
   !f2py intent(in) :: in_wind10u,in_wind10v,in_lfrac
   !f2py intent(in) :: in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev
-  !f2py intent(in) :: in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp
+  !f2py intent(in) :: in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp,in_hwp
   !f2py intent(in) :: in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q
+  !f2py intent(in) :: in_hwc_q, in_cwc_n, in_iwc_n, in_rwc_n, in_swc_n, in_gwc_n, in_hwc_n
   !meta out
   !f2py intent(out) :: out_gitVersion,out_gitHash
   !data out
@@ -187,8 +193,8 @@ out_angles&
 
 
 
-!!! read n-moments file
-!   if (n_moments .eq. 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
+!! read n-moments file
+  if (n_moments .eq. 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
 
   ! now allocate output variables
    call allocate_output_vars(max_in_nlyrs)
@@ -249,7 +255,7 @@ out_angles&
           rwp = in_rwp(nx,ny)
           swp = in_swp(nx,ny)
           gwp = in_gwp(nx,ny)
-  !          hwp = in_hwp(nx,ny)
+          hwp = in_hwp(nx,ny)
 
           cwc_q = in_cwc_q(nx,ny,1:nlyr)           ! kg/kg
           iwc_q = in_iwc_q(nx,ny,1:nlyr)             ! kg/kg
@@ -257,20 +263,18 @@ out_angles&
           swc_q = in_swc_q(nx,ny,1:nlyr)                  ! kg/kg
           gwc_q = in_gwc_q(nx,ny,1:nlyr)               ! kg/kg
 
-!          if (n_moments .eq. 2) then
-!             hwc_q = profiles(nx,ny)%hail_q              ! kg/kg
-!             cwc_n = profiles(nx,ny)%cloud_water_n       ! #/kg
-!             iwc_n = profiles(nx,ny)%cloud_ice_n         ! #/kg
-!             rwc_n = profiles(nx,ny)%rain_n              ! #/kg
-!             swc_n = profiles(nx,ny)%snow_n              ! #/kg
-!             gwc_n = profiles(nx,ny)%graupel_n           ! #/kg
-!             hwc_n = profiles(nx,ny)%hail_n              ! #/kg
-!          end if
+         if (n_moments .eq. 2) then
+            hwc_q = in_hwc_q(nx,ny,1:nlyr)              ! kg/kg
+            cwc_n = in_cwc_n(nx,ny,1:nlyr)              ! #/kg
+            iwc_n = in_iwc_n(nx,ny,1:nlyr)              ! #/kg
+            rwc_n = in_rwc_n(nx,ny,1:nlyr)              ! #/kg
+            swc_n = in_swc_n(nx,ny,1:nlyr)              ! #/kg
+            gwc_n = in_gwc_n(nx,ny,1:nlyr)              ! #/kg
+            hwc_n = in_hwc_n(nx,ny,1:nlyr)              ! #/kg
+         end if
 
            !run the model
            call run_rt3(nx,ny,fi,freqs(fi),freq_str)
-
-
 
           if (active) then
             out_Ze(nx,ny,1:nlyr,:) = Ze(nx,ny,1:nlyr,:)
