@@ -61,6 +61,10 @@ py: pyPamtraLib.f90 precompile $(OBJECTS)
 	f2py -c --fcompiler=gnu95 pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ../py/
 
+pyNode: pyPamtraLib.f90 $(OBJECTS) 
+	f2py -c --fcompiler=gnu95 pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
+	cp pyPamtraLib.so ../py/
+
 pyinstall:
 	cp ../py/* ~/lib/python/
 
@@ -115,7 +119,9 @@ test4:
 	../test/compareNetcdf.sh 4
 	@echo "TEST 4 OK"
 
-pytest: pyinstall pytest1 pytest2 pytest3 pytest4 cleantest
+pytest: pytest1 pytest2 pytest3 pytest4 cleantest
+pytest123: pytest1 pytest2 pytest3 cleantest
+
 
 pytest1:
 	@echo "=== Python TEST 1 ==="
@@ -141,3 +147,4 @@ pytest4:
 	python ../test/runPythonTest.py 4
 	../test/compareNetcdf.sh 4
 	@echo "TEST 4 OK"
+

@@ -6,6 +6,8 @@ hosts="albe   euros   refoli   notos   roumet   helm   irifi trombe   habagat   
 hosts="roumet habagat"
 hosts=`ls /net`
 
+# hosts="orkan ramier rebat" 
+
 timeout=300
 
 #how many cpus shall be saved?
