@@ -11,7 +11,7 @@ hosts=`ls /net`
 # hosts="roumet"
 # hosts="lomar karif orkan ramier rebat"
 # hosts="ramier"
-hosts="albe"
+# hosts="albe"
 
 # sudo apt-get install python-dev
 # zapod viracao trombe tivano terral tempest taifun seistan schirokko refoli ramier qeb notos molan kaus irifi habagat garbi gales frog forano1 euros embat ecir chinook caspar albe

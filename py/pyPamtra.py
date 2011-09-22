@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 #todo: function to calculate PIA?
-
+from __future__ import division
 import numpy as np
 import datetime
 import csv
@@ -10,8 +10,10 @@ import time,calendar, datetime
 import warnings
 import sys
 from copy import deepcopy
+from numpy import *
 
 import meteoSI
+from neWrapper import feval
 
 try:
 	import pp
@@ -279,10 +281,16 @@ class pyPamtra(object):
 		f.close()
 
 
-	def createProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
+	def createProfile(*args):
+		print "see createProfile_radiosonde"
+
+	def createProfile_radiosonde(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
 			hgt_lev,press_lev,temp_lev,relhum_lev,
 			cwc_q,iwc_q,rwc_q,swc_q,gwc_q):
-
+		'''
+		for relative humidity, with special functions for varying number of layers
+		
+		'''
 		#import pdb;pdb.set_trace()
 		dz = np.diff(hgt_lev,axis=-1)
 		dz[dz<=0]=9999
@@ -336,13 +344,147 @@ class pyPamtra(object):
 		cwc_q,iwc_q,rwc_q,swc_q,gwc_q,
 		hwc_q,cwc_n,iwc_n,rwc_n,swc_n,gwc_n,hwc_n)
 
+	def createProfile_rh(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
+			hgt_lev,press_lev,temp_lev,relhum_lev,
+			cwc_q,iwc_q,rwc_q,swc_q,gwc_q):
+		'''
+		for relative humidity
+		'''
+		
+		#import pdb;pdb.set_trace()
+		dz = np.diff(hgt_lev,axis=-1)
+		
+		r0 = relhum_lev[...,0:-1]
+		r1 = relhum_lev[...,1:]
+		relhum = feval("(r0 + r1)/2.")
+		
+		t0 = temp_lev[...,0:-1]
+		t1 = temp_lev[...,1:]
+		temp = feval("(t0 + t1)/2.")
+		
+		p0 = press_lev[...,0:-1]
+		p1 = press_lev[...,1:]
+		xp = feval("-1.*log(p1/p0)/dz")
+		press = feval("-1.*p0/xp*(exp(-xp*dz)-1.)/dz")
+		
+		q = meteoSI.rh2q(relhum,temp,press)
+		rho_moist = meteoSI.moist_rho_q(press,temp,q)
+		
+		#integrate
+		iwv = np.sum(q*rho_moist*dz,axis=-1)
+		cwp = np.sum(cwc_q*rho_moist*dz,axis=-1)
+		iwp = np.sum(iwc_q*rho_moist*dz,axis=-1)
+		rwp = np.sum(rwc_q*rho_moist*dz,axis=-1)
+		swp = np.sum(swc_q*rho_moist*dz,axis=-1)
+		gwp = np.sum(gwc_q*rho_moist*dz,axis=-1)
+		
+		self._shape3D = np.shape(gwc_q)
+		self._shape2D = np.shape(gwp)
+		
+		hwp[:] = 0
+		
+		hwc_q = np.ones(self._shape3D)*missingNumber
+		cwc_n = np.ones(self._shape3D)*missingNumber
+		iwc_n = np.ones(self._shape3D)*missingNumber
+		rwc_n = np.ones(self._shape3D)*missingNumber
+		swc_n = np.ones(self._shape3D)*missingNumber
+		gwc_n = np.ones(self._shape3D)*missingNumber
+		hwc_n = np.ones(self._shape3D)*missingNumber
+		
+		return self.createFullProfile(timestamp,lat,lon,lfrac,wind10u,wind10v,
+		iwv,cwp,iwp,rwp,swp,gwp,hwp,
+		hgt_lev,press_lev,temp_lev,relhum_lev,
+		cwc_q,iwc_q,rwc_q,swc_q,gwc_q,
+		hwc_q,cwc_n,iwc_n,rwc_n,swc_n,gwc_n,hwc_n)
+
+	def createProfile_q(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
+			hgt_lev,press_lev,temp_lev,q,
+			cwc_q,iwc_q,rwc_q,swc_q,gwc_q):
+		'''
+		for specific humidity q
+		'''
+		
+		print "make temp"
+		t0 = temp_lev[...,0:-1]
+		t1 = temp_lev[...,1:]
+		temp = feval("(t0 + t1)/2.")
+		del t0,t1
+
+		print "make press"
+		dz = np.diff(hgt_lev,axis=-1)
+		p0 = press_lev[...,0:-1]
+		p1 = press_lev[...,1:]
+		xp = feval("-1.*log(p1/p0)/dz")
+		press = feval("-1.*p0/xp*(exp(-xp*dz)-1.)/dz")
+		del p0,p1,xp
+		rho_moist = meteoSI.moist_rho_q(press,temp,q)
+
+		print "make q_lev"
+		q00 = q[...,0:1]
+		q01 = q[...,1:2]
+		
+		qBot = feval("q00 + 0.25*(q00-q01)")
+		del q00,q01
+		
+		q10 = q[...,-1:]
+		q11 = q[...,-2:-1]
+
+		qTop = feval("q10 + 0.25*(q10-q11)")
+		del q10,q11
+		
+		q0 = q[...,0:-1]
+		q1 = q[...,1:]
+		
+		qMid = feval("(q0 + q1)/2.")
+		del q0,q1
+		
+		q_lev = np.concatenate((qBot,qMid,qTop),axis=-1)
+		del qBot,qMid,qTop
+
+		print "make relhum_lev"
+		relhum_lev=meteoSI.q2rh(q_lev,temp_lev,press_lev)
+
+		print "integrate concentrations..."
+		rhoDz = feval("rho_moist*dz")
+		del rho_moist, dz
+		#integrate
+		print "iwv"
+		iwv = np.sum(feval("q*rhoDz"),axis=-1)
+		print "cwp"
+		cwp = np.sum(feval("cwc_q*rhoDz"),axis=-1)
+		print "iwp"
+		iwp = np.sum(feval("iwc_q*rhoDz"),axis=-1)
+		print "rwp"
+		rwp = np.sum(feval("rwc_q*rhoDz"),axis=-1)
+		print "swp"
+		swp = np.sum(feval("swc_q*rhoDz"),axis=-1)
+		print "gwp"
+		gwp = np.sum(feval("gwc_q*rhoDz"),axis=-1)
+		
+		del rhoDz
+
+		
+		self._shape3D = np.shape(gwc_q)
+		self._shape2D = np.shape(gwp)
+		
+		hwp = np.zeros(self._shape2D)
+		
+		print "create empty _n"
+		hwc_q = cwc_n = iwc_n = rwc_n = swc_n = gwc_n = hwc_n = np.ones(self._shape3D)*missingNumber
+		
+		return self.createFullProfile(timestamp,lat,lon,lfrac,wind10u,wind10v,
+		iwv,cwp,iwp,rwp,swp,gwp,hwp,
+		hgt_lev,press_lev,temp_lev,relhum_lev,
+		cwc_q,iwc_q,rwc_q,swc_q,gwc_q,
+		hwc_q,cwc_n,iwc_n,rwc_n,swc_n,gwc_n,hwc_n)
+
 
 
 	
 	def createFullProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
 			iwv,cwp,iwp,rwp,swp,gwp,hwp,
 			hgt_lev,press_lev,temp_lev,relhum_lev,
-			cwc_q,iwc_q,rwc_q,swc_q,gwc_,
+			cwc_q,iwc_q,rwc_q,swc_q,gwc_q,
 			hwc_q,cwc_n,iwc_n,rwc_n,swc_n,gwc_n,hwc_n):
 		
 		self.p = dict()

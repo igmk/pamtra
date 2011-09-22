@@ -4,13 +4,16 @@
 # ----------------------------------------------------------
 # (c) Jan Schween 2005 (gnuplot) -> Mario Mech 2009 (python)
 # converted to sSI units
-# vaphet, pseudoAdiabLapseRate, rh2a, moist_rho_rh added by Max Maahn 2011
+# vaphet, pseudoAdiabLapseRate, rh2a, moist_rho2rh added by Max Maahn 2011
 # ----------------------------------------------------------
 #
+from __future__ import division
 #from math import *
 #import sys
 import numpy as np
+from neWrapper import feval
 
+from numpy import *
 
 Grav = 9.80665  # m/s^2 der Wert fuer mittlere Breiten
 Rair = 287.04  # J/kg/K
@@ -30,20 +33,28 @@ def moist_rho_rh(p,T,rh):
 	rh is in Pa/Pa
 	
 	Output:
-	
+	density of moist air [kg/m^3]
 	
 	'''
 	if np.any(rh > 1.5): raise TypeError("rh must not be in %")
-	return p/(Rair*T_virt_rh(T,rh,p))
+	
+	tVirt = T_virt_rh(T,rh,p)
+	
+	return feval("p/(Rair*tVirt)")
 
 def moist_rho_q(p,T,q):
 	'''
 	Input p is in Pa
 	T is in K
 	q is in kg/kg
+	Output:
+	density of moist air [kg/m^3]
 	
 	'''
-	return p/(Rair*T_virt_q(T,q))
+	tVirt = T_virt_q(T,q)
+	moist_rho_q =  feval("p/(Rair*tVirt)")
+	del tVirt
+	return moist_rho_q
 
 def T_virt_rh(T,rh,p):
 	'''
@@ -72,7 +83,7 @@ def T_virt_q(T,q):
 	  Output:
 	  T_virt in K
 	  '''
-	  return T + T * 0.6078 * q
+	  return feval("T + T * 0.6078 * q")
 
 
 def rh2q(rh,T,p):
@@ -89,11 +100,32 @@ def rh2q(rh,T,p):
 	q in kg/kg
 	'''
 	if np.any(rh > 1.5): raise TypeError("rh must not be in %")
-	e = rh*e_sat_gg_water(T)
-	q = Mwml*e/(p-(1-Mwml)*e)
 	
+	eStar = e_sat_gg_water(T)
+	e = feval("rh*eStar")
+	q = feval("Mwml*e/(p-(1-Mwml)*e)")
+	del q, eStar
 	return q
 	
+def q2rh(q,T,p):
+	'''
+	Calculate relative humidity from sepcific humidity
+	
+	Input:
+	T is in K
+	p is in Pa
+	q in kg/kg
+	
+	Output:
+	rh is in Pa/Pa
+	'''
+	
+	
+	e = feval("p/(Mwml*((1/q)+(1/(Mwml)-1)))")
+	eStar = e_sat_gg_water(T)
+	rh = feval("e/eStar")
+	del e,eStar
+	return rh
 	
 def e_sat_gg_water(T):
 	'''
@@ -108,7 +140,7 @@ def e_sat_gg_water(T):
 	Output:
 	e_sat_gg_water in Pa.
 	'''
-	return 100 * 1013.246 * 10**( -7.90298*(373.16/T-1) + 5.02808*np.log10(373.16/T) - 1.3816e-7*(10**(11.344*(1-T/373.16))-1) + 8.1328e-3 * (10**(-3.49149*(373.16/T-1))-1) )
+	return feval("100 * 1013.246 * 10**( -7.90298*(373.16/T-1) + 5.02808*log10(373.16/T) - 1.3816e-7*(10**(11.344*(1-T/373.16))-1) + 8.1328e-3 * (10**(-3.49149*(373.16/T-1))-1) )")
 
 def rh_to_iwv(relhum_lev,temp_lev,press_lev,hgt_lev):
 	'''
@@ -127,11 +159,11 @@ def rh_to_iwv(relhum_lev,temp_lev,press_lev,hgt_lev):
 	relhum = (relhum_lev[...,0:-1] + relhum_lev[...,1:])/2.
 	temp = (temp_lev[...,0:-1] + temp_lev[...,1:])/2.
 
-	xp = -1.*np.log(press_lev[...,1:]/press_lev[...,0:-1])/dz
-	press = -1.*press_lev[...,0:-1]/xp*(np.exp(-xp*dz)-1.)/dz
+	xp = -1.*log(press_lev[...,1:]/press_lev[...,0:-1])/dz
+	press = -1.*press_lev[...,0:-1]/xp*(exp(-xp*dz)-1.)/dz
 
 	q = meteoSI.rh2q(relhum,temp,press)
-	rho_moist = meteoSI.moist_rho_q(press,temp,q)
+	rho_moist = meteoSI.moist_rho2q(press,temp,q)
 
 	return np.sum(q*rho_moist*dz)
 
