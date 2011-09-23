@@ -307,7 +307,7 @@ class pyPamtra(object):
 		del data["PB"]
 
 		Cp = 7.*meteoSI.Rair/2. 
-		RdCp =   meteoSI.Rair/Cp
+		RdCp =  meteoSI.Rair/Cp
 		p0 = 100000
 		data["T"] = data["T"] + 300 # now in K
 		data["T"] = data["T"]*(data["P"]/p0)**RdCp # potential temp to temp
@@ -318,7 +318,9 @@ class pyPamtra(object):
 
 		data["T"] = np.concatenate((data["TSK"],data["T"]),axis=-1)
 		data["P"] = np.concatenate((data["PSFC"],data["P"]),axis=-1)
+		
 
+		
 		self.createProfile_q(data["Times"],data["XLAT"],data["XLONG"],data["LANDMASK"],data["U10"],data["V10"],
 			data["PH"],data["P"],data["T"],data["QVAPOR"],
 			data["QCLOUD"],data["QICE"],data["QRAIN"],data["QSNOW"],data["QGRAUP"])
@@ -506,9 +508,36 @@ class pyPamtra(object):
 		cwc_q,iwc_q,rwc_q,swc_q,gwc_q,
 		hwc_q,cwc_n,iwc_n,rwc_n,swc_n,gwc_n,hwc_n)
 
+	def filterProfiles(self,condition):
+		'''
+		discard profiles, which do not fullfill "condition" (2D boolean array)
+		
+		Note: If the initial field is a 2D grid, the field is flattend after application
+		
+		Applicate between CreateProfile and runPamtra
+		
+		'''
+		if condition.shape != self._shape2D and condition2D.shape == (pam._shape2D[0]*pam._shape2D[1],):
+			raise ValueError("shape mismatch, shape of condition must be 2D field!")
+
+		#create a new shape!
+		self.p["ngridx"] = np.sum(condition)
+		self.p["ngridy"] = 1
+		
+		self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
+		self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
+		self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
+
+		for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","iwv","cwp","iwp","rwp","swp","gwp","hwp"]:
+			self.p[key] = self.p[key][condition].reshape(self._shape2D)
+
+		for key in ["cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"]:
+			self.p[key] = self.p[key][condition].reshape(self._shape3D)
+			
+		for key in ["hgt_lev","temp_lev","press_lev","relhum_lev"]:
+			self.p[key] = self.p[key][condition].reshape(self._shape3Dplus)
 
 
-	
 	def createFullProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
 			iwv,cwp,iwp,rwp,swp,gwp,hwp,
 			hgt_lev,press_lev,temp_lev,relhum_lev,
@@ -642,6 +671,8 @@ class pyPamtra(object):
 		self.r["tb_dimensions"] = ["gridx","gridy","outlevels","angles","frequency","stokes"]
 
 		
+		pp_noJobs = len(np.arange(0,self.nfreqs,pp_deltaF))*len(np.arange(0,self.p["ngridx"],pp_deltaX))*len(np.arange(0,self.p["ngridy"],pp_deltaY))
+		
 		for pp_startF in np.arange(0,self.nfreqs,pp_deltaF):
 			pp_endF = pp_startF + pp_deltaF
 			if pp_endF > self.nfreqs: pp_endF = self.nfreqs
@@ -700,9 +731,14 @@ class pyPamtra(object):
 					self.p["gwc_n"][pp_startX:pp_endX,pp_startY:pp_endY],
 					self.p["hwc_n"][pp_startX:pp_endX,pp_startY:pp_endY]
 					),tuple(), ("pyPamtraLib","numpy",))
-		
-		pp_noJobs = pp_ii+1
-		if self.set["pyVerbose"] >= 0: print pp_noJobs, "jobs submitted"
+					
+					if self.set["pyVerbose"] >= 0: 
+						sys.stdout.write("\r"+20*" "+"\r"+ "%i, %5.3f%% submitted"%(pp_ii+1,(pp_ii+1)/float(pp_noJobs)*100))
+						sys.stdout.flush()
+
+		if self.set["pyVerbose"] >= 0: 
+			print " "
+			print pp_noJobs, "jobs submitted"
 										
 		#job_server.wait()
 		pp_ii = -1
@@ -726,7 +762,7 @@ class pyPamtra(object):
 					self.r["tb"][pp_startX:pp_endX,pp_startY:pp_endY,:,:,pp_startF:pp_endF,:], 
 					self.r["angles"] ) = pp_jobs[pp_ii]()
 					if self.set["pyVerbose"] >= 0: 
-						sys.stdout.write("\r"+20*" "+"\r"+ "%5.1f%% collected"%((pp_ii+1)/float(pp_noJobs)*100))
+						sys.stdout.write("\r"+20*" "+"\r"+ "%i, %5.3f%% collected"%(pp_ii+1,(pp_ii+1)/float(pp_noJobs)*100))
 						sys.stdout.flush()
 
 		

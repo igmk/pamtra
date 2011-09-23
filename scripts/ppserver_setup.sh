@@ -7,6 +7,9 @@ hosts="roumet habagat"
 hosts=`ls /net`
 
 hosts="roumet rebat orkan nemere lomar habagat aure adelie"
+
+hosts="roumet habagat"
+
 ppTimeout=300
 
 #how many cpus shall be saved?
@@ -42,9 +45,9 @@ then
 		if  [ $useP -gt 0 ]
 		then
 			useP=`echo $useP |bc`
-			echo "$host: ppserver.py -t $ppTimeout -w $useP &"
+			echo "$host: nice -n 18 ppserver.py -t $ppTimeout -w $useP &"
 # 			export PYTHONPATH=:/home/$user/python/lib:/home/$user/python/libs-local/$host/ && <- now in bashrc of hatpro
-			ssh -o "BatchMode yes" -o "ConnectTimeout 2" $user@$host "~/python/bin/ppserver.py -t $ppTimeout -w $useP -s 'pyPamtra' &"&
+			ssh -o "BatchMode yes" -o "ConnectTimeout 2" $user@$host "/usr/bin/nice -n 18  ~/python/bin/ppserver.py -t $ppTimeout -w $useP -s 'pyPamtra' &"&
 			if [ $? -eq 0 ] 
 			then
 				OkHosts="\"$host\",$OkHosts" 
@@ -109,9 +112,27 @@ then
 		fi
 	done
 	exit
+
+elif [ "$1" == "killpython" ]
+then
+
+	for host in $hosts
+	do
+		if ssh -q -q -o "BatchMode=yes" -o "ConnectTimeout 2" $user@${host} "echo 2>&1" 
+		then
+
+			echo "ssh -o 'BatchMode yes' $user@$host killall python"
+			ssh -o "BatchMode yes" $user@$host killall python &
+		else
+			echo "No access to ${host}"
+		fi
+	done
+	exit
 fi
+
 
 echo "Options:"
 echo "create"
 echo "test"
 echo "kill"
+echo "killpython"
