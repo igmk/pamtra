@@ -11,9 +11,8 @@ from __future__ import division
 #from math import *
 #import sys
 import numpy as np
-from neWrapper import feval
+import numexpr as ne
 
-from numpy import *
 
 Grav = 9.80665  # m/s^2 der Wert fuer mittlere Breiten
 Rair = 287.04  # J/kg/K
@@ -40,7 +39,7 @@ def moist_rho_rh(p,T,rh):
 	
 	tVirt = T_virt_rh(T,rh,p)
 	
-	return feval("p/(Rair*tVirt)")
+	return p/(Rair*tVirt)
 
 def moist_rho_q(p,T,q):
 	'''
@@ -52,7 +51,7 @@ def moist_rho_q(p,T,q):
 	
 	'''
 	tVirt = T_virt_q(T,q)
-	moist_rho_q =  feval("p/(Rair*tVirt)")
+	moist_rho_q = p/(Rair*tVirt)
 	del tVirt
 	return moist_rho_q
 
@@ -83,7 +82,7 @@ def T_virt_q(T,q):
 	  Output:
 	  T_virt in K
 	  '''
-	  return feval("T + T * 0.6078 * q")
+	  return ne.evaluate("T + T * 0.6078 * q")
 
 
 def rh2q(rh,T,p):
@@ -102,8 +101,8 @@ def rh2q(rh,T,p):
 	if np.any(rh > 1.5): raise TypeError("rh must not be in %")
 	
 	eStar = e_sat_gg_water(T)
-	e = feval("rh*eStar")
-	q = feval("Mwml*e/(p-(1-Mwml)*e)")
+	e = ne.evaluate("rh*eStar")
+	q = ne.evaluate("Mwml*e/(p-(1-Mwml)*e)")
 	del q, eStar
 	return q
 	
@@ -121,9 +120,9 @@ def q2rh(q,T,p):
 	'''
 	
 	
-	e = feval("p/(Mwml*((1/q)+(1/(Mwml)-1)))")
+	e = ne.evaluate("p/(Mwml*((1/q)+(1/(Mwml)-1)))")
 	eStar = e_sat_gg_water(T)
-	rh = feval("e/eStar")
+	rh = ne.evaluate("e/eStar")
 	del e,eStar
 	return rh
 	
@@ -140,7 +139,7 @@ def e_sat_gg_water(T):
 	Output:
 	e_sat_gg_water in Pa.
 	'''
-	return feval("100 * 1013.246 * 10**( -7.90298*(373.16/T-1) + 5.02808*log10(373.16/T) - 1.3816e-7*(10**(11.344*(1-T/373.16))-1) + 8.1328e-3 * (10**(-3.49149*(373.16/T-1))-1) )")
+	return ne.evaluate("100 * 1013.246 * 10**( -7.90298*(373.16/T-1) + 5.02808*log10(373.16/T) - 1.3816e-7*(10**(11.344*(1-T/373.16))-1) + 8.1328e-3 * (10**(-3.49149*(373.16/T-1))-1) )")
 
 def rh_to_iwv(relhum_lev,temp_lev,press_lev,hgt_lev):
 	'''

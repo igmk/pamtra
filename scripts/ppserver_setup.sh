@@ -6,12 +6,11 @@ hosts="albe   euros   refoli   notos   roumet   helm   irifi trombe   habagat   
 hosts="roumet habagat"
 hosts=`ls /net`
 
-# hosts="orkan ramier rebat" 
-
-timeout=300
+hosts="roumet rebat orkan nemere lomar habagat aure adelie"
+ppTimeout=300
 
 #how many cpus shall be saved?
-saveCPUs=100
+saveCPUs=0.95
 
 user=hatpro
 
@@ -30,25 +29,27 @@ then
 			echo "No access to ${host}"
 			continue
 		fi
-					
-		noP=`ssh -o "BatchMode yes" $user@$host grep processor /proc/cpuinfo | wc|awk '{print $1}'`
-		load=`ssh -o "BatchMode yes" $user@$host uptime| awk -F, '{print $(NF)}'`
-		useP=`echo $noP\-\($load\%$noP\) |bc | cut -d '.' -f1`
+		echo "$host: checking no of available cpus"
+		noP=`ssh -o "BatchMode yes" -o "ConnectTimeout 2" $user@$host grep processor /proc/cpuinfo | wc|awk '{print $1}'`
+		load=`ssh -o "BatchMode yes" -o "ConnectTimeout 2" $user@$host uptime| awk -F, '{print $(NF)}'`
+		useP=`echo $noP\-$saveCPUs\-\($load\%$noP\) |bc | cut -d '.' -f1`
 		if [[ $useP =~ ^-?[0-9]+$ ]]
 		then
 			:
 		else
 			useP=0
 		fi
-		if  [ $useP -gt $saveCPUs ]
+		if  [ $useP -gt 0 ]
 		then
-			useP=`echo $useP -$saveCPUs|bc`
-			echo "$host: nohup ppserver.py -t $timeout -w $useP &"
-			ssh -o "BatchMode yes" $user@$host "export PYTHONPATH=:/home/$user/python/lib:/home/$user/python/libs-local/$host/ && /home/$user/python/bin/ppserver.py -t $timeout -w $useP &"
-			if [ $? -eq 0 ]
+			useP=`echo $useP |bc`
+			echo "$host: ppserver.py -t $ppTimeout -w $useP &"
+# 			export PYTHONPATH=:/home/$user/python/lib:/home/$user/python/libs-local/$host/ && <- now in bashrc of hatpro
+			ssh -o "BatchMode yes" -o "ConnectTimeout 2" $user@$host "~/python/bin/ppserver.py -t $ppTimeout -w $useP -s 'pyPamtra' &"&
+			if [ $? -eq 0 ] 
 			then
 				OkHosts="\"$host\",$OkHosts" 
 				totalWorkers=`echo $totalWorkers \+ $useP| bc`
+				echo "$host: OK"
 			fi
 		else
 			echo $host: not enough CPUs available: $useP
@@ -76,7 +77,7 @@ then
 		
 		for module in "numpy" "pp" "pyPamtra" "pyPamtraLib"
 		do
-			if ssh -o "BatchMode yes" -o "ConnectTimeout 2" $user@$host "export PYTHONPATH=:/home/$user/python/lib:/home/$user/python/libs-local/$host/ && python -c 'import $module;'> /dev/null 2>&1"
+			if ssh -o "BatchMode yes" -o "ConnectTimeout 2" $user@$host "python -c 'import $module;'> /dev/null 2>&1"
 			then
 				echo "${host} : Found $module"
 			else

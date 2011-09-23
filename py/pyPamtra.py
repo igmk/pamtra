@@ -11,9 +11,10 @@ import warnings
 import sys
 from copy import deepcopy
 from numpy import *
+import numexpr as ne
 
 import meteoSI
-from neWrapper import feval
+
 
 try:
 	import pp
@@ -32,7 +33,7 @@ def _PamtraFortranWrapper(*args):
 
 
 class pyPamtra(object):
-	
+
 	def __init__(self):
 		
 		#set setting default values
@@ -280,6 +281,49 @@ class pyPamtra(object):
 
 		f.close()
 
+	def readWrfDataset(self,fname,kind):
+		import netCDF4
+		
+		if kind not in ["gce"]:
+			raise TypeError("unknown wrf data type")
+		
+		variables = ['XLONG', 'XLAT', 'U10', 'V10', 'TSK', 'PSFC', 'T', 'P', 'PB', 'QVAPOR', 'QCLOUD', 'QICE', 'QRAIN', 'QGRAUP', 'QSNOW', 'LANDMASK', 'PH', 'PHB']
+
+		data = dict()
+
+		ncFile = netCDF4.Dataset(fname,"r")
+
+
+		timeStr = "".join(ncFile.variables["Times"][:].tolist()[0])
+		data["Times"] = netCDF4.date2num(datetime.datetime.strptime(timeStr,"%Y-%m-%d_%H:%M:%S"),"seconds since 1970-01-01 00:00:00")
+		for var in variables:		
+			data[var] = ncFile.variables[var][0,:].T
+		ncFile.close()
+
+		data["PH"] = (data["PH"]+data["PHB"])/9.81 #now "real m
+		del data["PHB"]
+		
+		data["P"] = data["P"]+data["PB"] # now in Pa
+		del data["PB"]
+
+		Cp = 7.*meteoSI.Rair/2. 
+		RdCp =   meteoSI.Rair/Cp
+		p0 = 100000
+		data["T"] = data["T"] + 300 # now in K
+		data["T"] = data["T"]*(data["P"]/p0)**RdCp # potential temp to temp
+		
+		#add surface data
+		data["TSK"] = data["TSK"].reshape(append(list(np.shape(data["TSK"])),1))
+		data["PSFC"] = data["PSFC"].reshape(append(list(np.shape(data["PSFC"])),1))
+
+		data["T"] = np.concatenate((data["TSK"],data["T"]),axis=-1)
+		data["P"] = np.concatenate((data["PSFC"],data["P"]),axis=-1)
+
+		self.createProfile_q(data["Times"],data["XLAT"],data["XLONG"],data["LANDMASK"],data["U10"],data["V10"],
+			data["PH"],data["P"],data["T"],data["QVAPOR"],
+			data["QCLOUD"],data["QICE"],data["QRAIN"],data["QSNOW"],data["QGRAUP"])
+		
+		del data
 
 	def createProfile(*args):
 		print "see createProfile_radiosonde"
@@ -356,16 +400,16 @@ class pyPamtra(object):
 		
 		r0 = relhum_lev[...,0:-1]
 		r1 = relhum_lev[...,1:]
-		relhum = feval("(r0 + r1)/2.")
+		relhum = ne.evaluate("(r0 + r1)/2.")
 		
 		t0 = temp_lev[...,0:-1]
 		t1 = temp_lev[...,1:]
-		temp = feval("(t0 + t1)/2.")
+		temp = ne.evaluate("(t0 + t1)/2.")
 		
 		p0 = press_lev[...,0:-1]
 		p1 = press_lev[...,1:]
-		xp = feval("-1.*log(p1/p0)/dz")
-		press = feval("-1.*p0/xp*(exp(-xp*dz)-1.)/dz")
+		xp = ne.evaluate("-1.*log(p1/p0)/dz")
+		press = ne.evaluate("-1.*p0/xp*(exp(-xp*dz)-1.)/dz")
 		
 		q = meteoSI.rh2q(relhum,temp,press)
 		rho_moist = meteoSI.moist_rho_q(press,temp,q)
@@ -381,15 +425,9 @@ class pyPamtra(object):
 		self._shape3D = np.shape(gwc_q)
 		self._shape2D = np.shape(gwp)
 		
-		hwp[:] = 0
+		hwp = np.zeros(self._shape2D)
 		
-		hwc_q = np.ones(self._shape3D)*missingNumber
-		cwc_n = np.ones(self._shape3D)*missingNumber
-		iwc_n = np.ones(self._shape3D)*missingNumber
-		rwc_n = np.ones(self._shape3D)*missingNumber
-		swc_n = np.ones(self._shape3D)*missingNumber
-		gwc_n = np.ones(self._shape3D)*missingNumber
-		hwc_n = np.ones(self._shape3D)*missingNumber
+		hwc_q = cwc_n = iwc_n = rwc_n = swc_n = gwc_n = hwc_n = np.ones(self._shape3D)*missingNumber
 		
 		return self.createFullProfile(timestamp,lat,lon,lfrac,wind10u,wind10v,
 		iwv,cwp,iwp,rwp,swp,gwp,hwp,
@@ -403,63 +441,54 @@ class pyPamtra(object):
 		'''
 		for specific humidity q
 		'''
-		
-		print "make temp"
+
 		t0 = temp_lev[...,0:-1]
 		t1 = temp_lev[...,1:]
-		temp = feval("(t0 + t1)/2.")
+		temp = ne.evaluate("(t0 + t1)/2.")
 		del t0,t1
 
-		print "make press"
 		dz = np.diff(hgt_lev,axis=-1)
 		p0 = press_lev[...,0:-1]
 		p1 = press_lev[...,1:]
-		xp = feval("-1.*log(p1/p0)/dz")
-		press = feval("-1.*p0/xp*(exp(-xp*dz)-1.)/dz")
+		xp = ne.evaluate("-1.*log(p1/p0)/dz")
+		press = ne.evaluate("-1.*p0/xp*(exp(-xp*dz)-1.)/dz")
 		del p0,p1,xp
 		rho_moist = meteoSI.moist_rho_q(press,temp,q)
 
-		print "make q_lev"
 		q00 = q[...,0:1]
 		q01 = q[...,1:2]
 		
-		qBot = feval("q00 + 0.25*(q00-q01)")
+		qBot = ne.evaluate("q00 + 0.25*(q00-q01)")
 		del q00,q01
 		
 		q10 = q[...,-1:]
 		q11 = q[...,-2:-1]
 
-		qTop = feval("q10 + 0.25*(q10-q11)")
+		qTop = ne.evaluate("q10 + 0.25*(q10-q11)")
 		del q10,q11
 		
 		q0 = q[...,0:-1]
 		q1 = q[...,1:]
 		
-		qMid = feval("(q0 + q1)/2.")
+		qMid = ne.evaluate("(q0 + q1)/2.")
 		del q0,q1
 		
 		q_lev = np.concatenate((qBot,qMid,qTop),axis=-1)
 		del qBot,qMid,qTop
 
-		print "make relhum_lev"
+
 		relhum_lev=meteoSI.q2rh(q_lev,temp_lev,press_lev)
 
-		print "integrate concentrations..."
-		rhoDz = feval("rho_moist*dz")
+
+		rhoDz = ne.evaluate("rho_moist*dz")
 		del rho_moist, dz
 		#integrate
-		print "iwv"
-		iwv = np.sum(feval("q*rhoDz"),axis=-1)
-		print "cwp"
-		cwp = np.sum(feval("cwc_q*rhoDz"),axis=-1)
-		print "iwp"
-		iwp = np.sum(feval("iwc_q*rhoDz"),axis=-1)
-		print "rwp"
-		rwp = np.sum(feval("rwc_q*rhoDz"),axis=-1)
-		print "swp"
-		swp = np.sum(feval("swc_q*rhoDz"),axis=-1)
-		print "gwp"
-		gwp = np.sum(feval("gwc_q*rhoDz"),axis=-1)
+		iwv = np.sum(ne.evaluate("q*rhoDz"),axis=-1)
+		cwp = np.sum(ne.evaluate("cwc_q*rhoDz"),axis=-1)
+		iwp = np.sum(ne.evaluate("iwc_q*rhoDz"),axis=-1)
+		rwp = np.sum(ne.evaluate("rwc_q*rhoDz"),axis=-1)
+		swp = np.sum(ne.evaluate("swc_q*rhoDz"),axis=-1)
+		gwp = np.sum(ne.evaluate("gwc_q*rhoDz"),axis=-1)
 		
 		del rhoDz
 
@@ -469,7 +498,6 @@ class pyPamtra(object):
 		
 		hwp = np.zeros(self._shape2D)
 		
-		print "create empty _n"
 		hwc_q = cwc_n = iwc_n = rwc_n = swc_n = gwc_n = hwc_n = np.ones(self._shape3D)*missingNumber
 		
 		return self.createFullProfile(timestamp,lat,lon,lfrac,wind10u,wind10v,
@@ -503,10 +531,7 @@ class pyPamtra(object):
 			print "Too many dimensions!"
 			raise IOError
 		
-		if np.any(hgt_lev==missingNumber):
-			self.p["nlyrs"] = np.sum(hgt_lev!=missingNumber,axis=-1) -1
-		else:
-			self.p["nlyrs"] = np.shape(hgt_lev)[-1] -1
+		self.p["nlyrs"] = np.sum(hgt_lev!=missingNumber,axis=-1) -1
 		self.p["max_nlyrs"] = np.shape(hgt_lev)[-1] -1
 		
 		
@@ -565,12 +590,22 @@ class pyPamtra(object):
 		
 
 
-	def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers=1,pp_deltaF=0,pp_deltaX=0,pp_deltaY = 0):
+	def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers="auto",pp_deltaF=0,pp_deltaX=0,pp_deltaY = 0):
+
+
+		if np.max(self.p["relhum_lev"])>5:
+			raise IOError("relative humidity is _not_ in %!")
+
 		
+		for key in self.set:
+			if key not in self._setDefaultKeys:
+				warnings.warn("Warning can not parse setting: ",key, Warning)
+
+
 		if pp_local_workers == "auto":
-			job_server = pp.Server(ppservers=pp_servers) 
+			job_server = pp.Server(ppservers=pp_servers,secret="pyPamtra") 
 		else:
-			job_server = pp.Server(pp_local_workers,ppservers=pp_servers) 
+			job_server = pp.Server(pp_local_workers,ppservers=pp_servers,secret="pyPamtra") 
 		if self.set["pyVerbose"] >= 0: 
 			print "Starting pp with: "
 			pp_nodes = job_server.get_active_nodes()
@@ -582,12 +617,6 @@ class pyPamtra(object):
 		self.freqs = freqs
 		self.nfreqs = len(freqs)
 		
-
-
-		
-		for key in self.set:
-			if key not in self._setDefaultKeys:
-				warnings.warn("Warning can not parse setting: ",key, Warning)
 
 
 		self.r = dict()
@@ -723,7 +752,7 @@ class pyPamtra(object):
 			if key not in self._setDefaultKeys:
 				print "Warning Could not parse ",key
 		
-		if np.max(self.p["relhum_lev"])>1.5:
+		if np.max(self.p["relhum_lev"])>5:
 			raise IOError("relative humidity is _not_ in %!")
 		
 		tttt = time.time()
