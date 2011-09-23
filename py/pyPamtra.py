@@ -14,7 +14,10 @@ from numpy import *
 import numexpr as ne
 
 import meteoSI
-
+try: 
+	import pyPamtraLib
+except:
+	warnings.warn("pyPamtraLib not available", Warning)
 
 try:
 	import pp
@@ -25,7 +28,6 @@ missingNumber=-9999
 
 def _PamtraFortranWrapper(*args):
 	#is needed because pp cannot work with fortran modules directly
-	import pyPamtraLib
 	code = ""
 	for ii in range(len(args)):
 		code = code + "args["+str(ii)+"],"
@@ -188,7 +190,9 @@ class pyPamtra(object):
 		
 	
 	def readPamtraProfile(self,inputFile):
-		
+		"""
+		read classical pamtra profile
+		"""
 		self.p = dict()
 		
 		f = open(inputFile,"r")
@@ -284,6 +288,10 @@ class pyPamtra(object):
 	def readWrfDataset(self,fname,kind):
 		import netCDF4
 		
+		'''
+		import wrf Dataset with fname of kind
+		'''
+		
 		if kind not in ["gce"]:
 			raise TypeError("unknown wrf data type")
 		
@@ -334,7 +342,7 @@ class pyPamtra(object):
 			hgt_lev,press_lev,temp_lev,relhum_lev,
 			cwc_q,iwc_q,rwc_q,swc_q,gwc_q):
 		'''
-		for relative humidity, with special functions for varying number of layers
+		Create a profile for relative humidity, with special functions for varying number of layers
 		
 		'''
 		#import pdb;pdb.set_trace()
@@ -394,7 +402,7 @@ class pyPamtra(object):
 			hgt_lev,press_lev,temp_lev,relhum_lev,
 			cwc_q,iwc_q,rwc_q,swc_q,gwc_q):
 		'''
-		for relative humidity
+		Create Profile with relhum_lev relative humidity
 		'''
 		
 		#import pdb;pdb.set_trace()
@@ -441,7 +449,7 @@ class pyPamtra(object):
 			hgt_lev,press_lev,temp_lev,q,
 			cwc_q,iwc_q,rwc_q,swc_q,gwc_q):
 		'''
-		for specific humidity q
+		create Profile with specific humidity q
 		'''
 
 		t0 = temp_lev[...,0:-1]
@@ -776,6 +784,8 @@ class pyPamtra(object):
 			#print self.__dict__[key]
 		if self.set["pyVerbose"] >= 0: print " "; job_server.print_stats()
 		job_server.destroy()
+		del job_server
+		
 		
 	def runPamtra(self,freqs):
 		
@@ -853,7 +863,8 @@ class pyPamtra(object):
 		
 		#write meta data
 		cdfFile.history = "Created with pyPamtra (Version: "+self.r["pamtraVersion"]+", Git Hash: "+self.r["pamtraHash"]+") by "+self.set["creator"]+" (University of Cologne, IGMK) at " + datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
-		#cdfFile.data_time = self.p["unixtime"]+"/"+self.p["month"]+"/"+self.p["day"]+"-"+self.p["time"][0:2]+":"+self.p["time"][2:4]
+		
+		cdfFile.properties = str(self.set)
 
 		#make dimesnions
 		
@@ -868,8 +879,9 @@ class pyPamtra(object):
 			cdfFile.createDimension('nlyr',self.p["max_nlyrs"])
 		
 		#create variables
-		nc_angle = cdfFile.createVariable('angle','f4',('nang',),fill_value= missingNumber)
-		nc_angle.units = 'deg'
+		if (self.r["settings"]["passive"]):
+			nc_angle = cdfFile.createVariable('angle','f4',('nang',),fill_value= missingNumber)
+			nc_angle.units = 'deg'
 		
 		nc_frequency = cdfFile.createVariable('frequency','f4',('nfreq',),fill_value= missingNumber)
 		nc_frequency.units = 'GHz'
@@ -917,10 +929,6 @@ class pyPamtra(object):
 		nc_hwp = cdfFile.createVariable('hwp', 'f4',dim2d,fill_value= missingNumber)
 		nc_hwp.units = "kg/m^2"
 
-
-		#nc_hwp = cdfFile.createVariable('hwp', 'f4',dim2d,fill_value= missingNumber)
-		#nc_hwp.units = "kg/m^2"
-
 		if (self.r["settings"]["active"]):
 
 			dim3d = ("nlon","nlat","nlyr",)
@@ -944,7 +952,8 @@ class pyPamtra(object):
 			nc_tb.units = "K"
 
 		#save data
-		nc_angle[:] = self.r["angles"]
+		if (self.r["settings"]["passive"]): 
+			nc_angle[:] = self.r["angles"]
 		nc_frequency[:] = self.freqs
 		nc_nlyrs[:] = self.p["nlyrs"]
 		nc_model_i[:] = self.p["model_i"]
@@ -970,5 +979,6 @@ class pyPamtra(object):
 			nc_Attenuation_Atmosphere[:] = self.r["attenuationAtmo"]
 			
 		cdfFile.close()
+		if self.set["pyVerbose"] >= 0: print fname,"written"
 
 

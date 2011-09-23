@@ -119,7 +119,7 @@ test4:
 	../test/compareNetcdf.sh 4
 	@echo "TEST 4 OK"
 
-pytest: pytest1 pytest2 pytest3 pytest4 cleantest
+pytest: pyinstall pytest1 pytest2 pytest3 pytest4 cleantest
 pytest123: pytest1 pytest2 pytest3 cleantest
 
 

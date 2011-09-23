@@ -1,15 +1,10 @@
 #!/bin/bash
 
-hosts="albe   euros   refoli   notos   roumet   helm   irifi trombe   habagat   embat caspar"
-
-
-hosts="roumet habagat"
 hosts=`ls /net`
 
-hosts="roumet rebat orkan nemere lomar habagat aure adelie"
-
 hosts="roumet habagat"
-
+hosts="caspar embat trombe irifi notos refoli euros albe roumet rebat orkan nemere lomar habagat aure adelie"
+hosts="schili roumet rebat orkan nemere meltemi lomar karif habagat gargal diablo buran aure adelie albe euros refoli notos helm irifi trombe embat caspar"
 ppTimeout=300
 
 #how many cpus shall be saved?

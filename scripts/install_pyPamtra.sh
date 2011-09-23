@@ -103,6 +103,37 @@ then
 	exit
 fi
 
+if [ "$1" == "installHACK" ]
+then
+	hosts="albe euros refoli notos helm irifi trombe embat caspar"
+	for host in $hosts
+	do
+		if ssh -q -q -o "BatchMode=yes" -o "ConnectTimeout 2" ${host} "echo 2>&1" 
+		then
+			:
+		else
+			echo "No access to ${host}"
+			continue
+		fi
+		ssh -o "BatchMode yes" $user@$host "mkdir -p ~/python/libs-local/$host/ && cp ~/python/libs-local/karif/* ~/python/libs-local/$host/ "
+		if [ $? -gt 0 ]
+		then
+			echo "############################"
+			echo "Could not copy $host"
+			echo "############################"
+			ssh -o "BatchMode yes" $user@$host rm -rf /tmp/pyPamtraCopy
+			NotCompileHosts="$host $NotCompileHosts"
+			continue
+		fi
+		echo "$host OK"
+		OkHosts="$host $OkHosts"
+	done
+	echo "hosts=$OkHosts"
+	echo "not copied: $NotCompileHosts"
+	exit
+fi
+
+
 
 echo "Options:"
 echo "install"
