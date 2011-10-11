@@ -42,16 +42,16 @@
  *            Range is shape dependent as follows		      *
  *             SHAPE-ID	SHAPE#	dmax-Range(um)	re-Range(um)          *
  *		hexl	0	121 - 4835	25 - 1000	      *
- *              hexs	1	83  - 3304	25 - 1000	      *
+ *      hexs	1	83  - 3304	25 - 1000	      *
  * 		hexb	2	66  - 2632	25 - 1000	      *
- *  		hexf	3	81  - 3246	25 - 1000	      *
+ *  	hexf	3	81  - 3246	25 - 1000	      *
  *		hexp	4	127 - 5059	25 - 1000	      *	
  *		ros3	5	50  - 10000	19 - 1086	      *
  *		ros4	6	50  - 10000	19 - 984	      *
  *		ros5	7	50  - 10000	21 - 1058	      *
  *		ros6	8	50  - 10000	21 - 1123	      *
  *		sstr	9	50  - 10000	25 - 672	      *
- *              sden	10	75  - 12454     33 - 838	      *
+ *      sden	10	75  - 12454 33 - 838	  *
  *     Note: While the program will return values when dmax is out of *
  *           range, the resultant values are probably wrong because   *
  *           they are EXTRAPOLATED, particularly for phase function   *
