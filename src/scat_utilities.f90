@@ -167,44 +167,12 @@ function distribution(a, b, alpha, gamma, d, distflag)
   elseif (distflag .eq. 'C') then 
      !   distribution according to cosmo-de model                                  
      distribution = a * exp(-b*d)
-  elseif (distflag .eq. 'M') then
-     !   distribution according to mesonh model
-     ! C = alpha; x = gamma
-	 gam=exp(gammln(1.0+b))
-     lambda = (rho/(a*alpha*gam))**(1.0/(gamma-b))
-     distribution = a * exp(-b*d)
   else 
      write ( * , * ) 'unrecognized distflag in distribution' 
   end if
 
   return 
 end function distribution
-
-function gammln(xx)
-! returns the value ln[gamma(xx)] for xx > 0.
-! full accuracy is obtained for xx > 1.
-  real(kind=8), dimension(6) :: cof =(/76.18009173d0,-86.50532033d0,24.01409822d0,&
-       -1.231739516d0,.120858003d-2,-.536382d-5/)
-  real(kind=8) :: stp,half,one,fpf,x,tmp,ser
-  ! internal arithmetic will be done in double precision,
-  ! a nicety that you can omit if five-figure accuracy is good enough.
-  stp = 2.50662827465d0
-  half = 0.5d0
-  one = 1.0d0
-  fpf = 5.5d0
-  x=xx-one
-  tmp=x+fpf
-  tmp=(x+half)*log(tmp)-tmp
-  ser=one
-  do j=1,6
-     x=x+one
-     ser=ser+cof(j)/x
-  end do
-  gammln=tmp+log(stp*ser)
-
-  return
-
-end function gammln
 
 
 subroutine gausquad (n, xa, wt) 

@@ -14,8 +14,8 @@ ifeq ($(ARCH),Darwin)
 	LDFLAGS=-lnetcdf -lnetcdff
 else
 	NCFLAGS=-I$(HOME)/include
-	LFLAGS=-L$(HOME)/lib
-	LDFLAGS=-lnetcdf -static
+	LFLAGS=-L$(HOME)/lib -L/usr/local/lib
+	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm  -lsz
 endif
 
 
