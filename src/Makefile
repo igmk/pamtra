@@ -14,13 +14,13 @@ ifeq ($(ARCH),Darwin)
 	LDFLAGS=-lnetcdf -lnetcdff
 else
 	NCFLAGS=-I$(HOME)/include
-	LFLAGS=-L$(HOME)/lib
-	LDFLAGS=-lnetcdf -static
+	LFLAGS=-L$(HOME)/lib -L/usr/local/lib
+	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm -lsz
 endif
 
 
 OBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_atmosphere.o mod_io_strings.o constants.o double_moments_module.o\
-	vars_output.o run_rt3.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o radmat.o \
+	vars_output.o conversions.o run_rt3.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o radmat.o \
 	scat_utilities.o dsd_utilities.o mpm93.o get_atmosG0.o get_atmosG.o mie.o mie_densitysizedep_spheremasseq.o\
 	slant_profile.o  allocate_vars.o rosen98_gasabs.o surface.o eps_water.o mie_icefactor.o epsi.o \
 	equcom.o land_emis.o equare.o scatdb.o dda_db_liu.o dielec_water.o ref_water.o \

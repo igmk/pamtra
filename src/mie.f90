@@ -17,7 +17,7 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
   real(kind=dbl), intent(in) :: f  ! frequency [GHz]
 
   real(kind=dbl) :: wavelength, dia1, dia2
-  real(kind=dbl) :: ad, bd, alpha, gamma 
+  real(kind=dbl) :: ad, bd, alpha, gamma
   complex(kind=dbl) :: mindex 
   real(kind=dbl) :: extinction, albedo, back_scatt, &
        legen(200), legen2(200), legen3(200), legen4(200)                                        

@@ -1,10 +1,11 @@
-subroutine grau_ssp(f,qg,t,p,q,maxleg,kext, salb, back,  &
-     nlegen, legen, legen2, legen3, legen4, ng)
+subroutine grau_ssp(f,gwc,t,maxleg,kext, salb, back,  &
+     nlegen, legen, legen2, legen3, legen4, nc)
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_0grauDgrau, EM_grau, n_moments
+  use nml_params, only: verbose, lphase_flag, n_0grauDgrau, EM_grau, n_moments, SD_grau
   use constants, only: pi, im
   use double_moments_module
+  use conversions
 
   implicit none
 
@@ -12,17 +13,15 @@ subroutine grau_ssp(f,qg,t,p,q,maxleg,kext, salb, back,  &
   integer, intent(in) :: maxleg
 
   real(kind=dbl), intent(in) :: &
-       qg,&
+       gwc,&
        t,&
-       p,&
-       q,&
        f
 
-  real(kind=dbl), optional, intent(in) :: ng
+  real(kind=dbl), optional, intent(in) :: nc
 
   real(kind=dbl) :: refre, refim
 
-  real(kind=dbl) :: dia1, dia2, gwc, ad, bd, alpha, gamma, b_grau, a_mgrau, ng_abs
+  real(kind=dbl) :: dia1, dia2, ad, bd, alpha, gamma, b_grau, a_mgrau
 
   real(kind=dbl), intent(out) :: &
        kext,&
@@ -33,9 +32,7 @@ subroutine grau_ssp(f,qg,t,p,q,maxleg,kext, salb, back,  &
 
   complex(kind=dbl) :: mindex, m_air
 
-  real(kind=dbl) :: spec2abs, gammln
-
-  character(1) :: dist_name
+  real(kind=dbl) :: gammln
 
   if (verbose .gt. 1) print*, 'Entering grau_ssp'
 
@@ -43,9 +40,8 @@ subroutine grau_ssp(f,qg,t,p,q,maxleg,kext, salb, back,  &
   mindex = refre-Im*refim
   m_air = 1.0d0 - 0.0d0 * Im
 
-  gwc =  spec2abs(qg,t,p,q) ! [kg/m^3]
-
   if (n_moments .eq. 1) then
+	if (SD_grau .eq. 'C') then
      dia1 = 1.d-5 	! minimum diameter [m]
      dia2 = 1.d-2	! minimum diameter [m]
 
@@ -56,16 +52,24 @@ subroutine grau_ssp(f,qg,t,p,q,maxleg,kext, salb, back,  &
      nbins = 100
      alpha = 0.d0
      gamma = 1.d0
-     dist_name='C'
+	else if (SD_grau .eq. 'M') then
+     dia1 = 1.d-5 	! minimum diameter [m]
+     dia2 = 1.d-2	! minimum diameter [m]
+     b_grau = 2.8d0
+     a_mgrau = 19.6d0
+     bd = (gwc/(a_mgrau*5.d5*exp(gammln(1.d0+a_mgrau))))**(1.d0/(-0.5d0-a_mgrau)) !  [m**-1]
+     ad = 5.d5*bd**0.5
+     nbins = 100
+     alpha = 0.d0
+     gamma = 1.d0
+	end if
   else if (n_moments .eq. 2) then
-     if (.not. present(ng)) stop 'STOP in routine grau_ssp'
-     ng_abs = spec2abs(ng,t,p,q) 							! [#/m^3]
-     call double_moments(gwc,ng_abs,gamma_graupel(1),gamma_graupel(2),gamma_graupel(3),gamma_graupel(4), &
+     if (.not. present(nc)) stop 'STOP in routine grau_ssp'
+     call double_moments(gwc,nc,gamma_graupel(1),gamma_graupel(2),gamma_graupel(3),gamma_graupel(4), &
           ad,bd,alpha,gamma,a_mgrau, b_grau)
      nbins = 100
      dia1 = 1.d-5	! minimum diameter [m]
      dia2 = 1.d-2	! maximum diameter [m]
-     dist_name='G'
   else
      stop'Number of moments is not specified'
   end if
@@ -75,13 +79,13 @@ subroutine grau_ssp(f,qg,t,p,q,maxleg,kext, salb, back,  &
           a_mgrau, b_grau, dia1, dia2, nbins, maxleg,   &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, nlegen, legen, legen2, legen3,        &
-          legen4, dist_name)
+          legen4, SD_grau)
   elseif (EM_grau .eq. 'surus') then 
      call mie_icefactor(f, t,mindex,      &
           a_mgrau, b_grau, dia1, dia2, nbins, maxleg,   &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
-          LEGEN4, dist_name,0.815*1.e-3*f+0.0112,44)
+          LEGEN4, SD_grau,0.815*1.e-3*f+0.0112,44)
   else 
      write (*, *) 'no em mod for grau'
      stop

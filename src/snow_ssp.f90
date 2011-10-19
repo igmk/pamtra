@@ -1,13 +1,14 @@
 ! Subroutine for the setup of the parameters of the snow particle size distribution.
 !
 !
-subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
-     nlegen, legen, legen2, legen3, legen4, ns)
+subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
+     nlegen, legen, legen2, legen3, legen4, qs, nc)
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_0snowDsnow, EM_snow, n_moments, isnow_n0
+  use nml_params, only: verbose, lphase_flag, n_0snowDsnow, EM_snow, n_moments, isnow_n0, SD_snow
   use constants, only: pi, im
   use double_moments_module
+  use conversions
 
   implicit none
 
@@ -16,17 +17,16 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
   integer, intent(in) :: maxleg
 
   real(kind=dbl), intent(in) :: &
+       swc,&
        qs,&
        t,&
-       p,&
-       q,&
        f
 
-  real(kind=dbl), optional, intent(in) :: ns
+  real(kind=dbl), optional, intent(in) :: nc
 
   real(kind=dbl) :: refre, refim
 
-  real(kind=dbl) :: dia1, dia2, swc, ad, bd, alpha, gamma, b_snow, a_msnow, ns_abs
+  real(kind=dbl) :: dia1, dia2, ad, bd, alpha, gamma, b_snow, a_msnow
 
   real(kind=dbl), intent(out) :: &
        kext,&
@@ -37,22 +37,20 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
 
   complex(kind=dbl) :: mindex, m_air
 
-  real(kind=dbl) :: spec2abs, gammln
+  real(kind=dbl) :: gammln
 
   real(kind=dbl), dimension(10) :: mma, mmb
 
   real(kind=dbl) :: ztc, hlp, alf, bet, m2s, m3s
-
-  character(1) :: dist_name
 
   if (verbose .gt. 1) print*, 'Entering snow_ssp'
 
   call ref_ice(t, f, refre, refim)
   mindex = refre-Im*refim  ! mimicking a
   m_air = 1.0d0 - 0.0d0 * Im
-  swc =  spec2abs(qs,t,p,q) ! [kg/m^3]
 
   if (n_moments .eq. 1) then
+  	if (SD_snow .eq. 'C') then
      !	b_snow = 2.0d0
      !	a_msnow = 0.038d0
      b_snow = 2.2850d0
@@ -103,16 +101,25 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
      nbins = 100
      alpha = 0.d0 ! exponential SD
      gamma = 1.d0
-     dist_name='C'
+    else if (SD_snow .eq. 'M') then
+     dia1 = 0.51d-5 ! minimum maximum diameter [m] after kneifel
+     dia2 = 1.d-2 ! maximum maximum diameter [m] after kneifel
+
+     a_msnow = 0.02d0
+     b_snow = 1.9d0
+     bd = (swc/(a_msnow*5.d0*exp(gammln(b_snow+1.))))**(1.d0/(1.d0-b_snow))  ! [m**-1]
+	 ad = 5.*bd**2.
+     nbins = 100
+     alpha = 0.d0 ! exponential SD
+     gamma = 1.d0
+	end if
   else if (n_moments .eq. 2) then
-     if (.not. present(ns)) stop 'STOP in routine snow_ssp'
-     ns_abs = spec2abs(ns,t,p,q) 							! [#/m^3]
-     call double_moments(swc,ns_abs,gamma_snow(1),gamma_snow(2),gamma_snow(3),gamma_snow(4), &
+     if (.not. present(nc)) stop 'STOP in routine snow_ssp'
+     call double_moments(swc,nc,gamma_snow(1),gamma_snow(2),gamma_snow(3),gamma_snow(4), &
           ad,bd,alpha,gamma,a_msnow,b_snow)
      nbins = 100
      dia1 = 1.d-6 ! minimum maximum diameter [m] after kneifel
      dia2 = 2.d-2 ! maximum maximum diameter [m] after kneifel
-     dist_name='G'
   else
      stop'Number of moments is not specified'
   end if
@@ -122,13 +129,14 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
           a_msnow, b_snow, dia1, dia2, nbins, maxleg,   &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
-          LEGEN4, dist_name)
+          LEGEN4, SD_snow)
   elseif (EM_snow .eq. 'surus') then 
+    print*, "here"
      call mie_icefactor(f, t,mindex,      &
           a_msnow, b_snow, dia1, dia2, nbins, maxleg,   &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
-          LEGEN4, dist_name,0.863*1.e-3*f+0.115,42)
+          LEGEN4, SD_snow,0.863*1.e-3*f+0.115,42)
   elseif (EM_snow .eq. 'liudb') then
      dia1 = 1.02d-4
      dia2 = 2.d-2
@@ -136,7 +144,7 @@ subroutine snow_ssp(f,qs,t,p,q,maxleg,kext, salb, back,  &
           dia1,dia2,nbins,maxleg,ad,&
           bd, alpha, gamma, lphase_flag,kext, salb,&
           back, nlegen, legen, legen2, legen3,&
-          legen4, dist_name)
+          legen4, SD_snow)
   else 
      write (*, *) 'no em mod', EM_snow
      stop

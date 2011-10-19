@@ -1,7 +1,7 @@
 subroutine mie_icefactor(f, t, m_ice,    &
      a_mtox, bcoeff, dia1, dia2, nbins, maxleg, ad, bd, alpha, &
      gamma, lphase_flag, extinction, albedo, back_scatt, nlegen, legen,  &
-     legen2, legen3, legen4, aerodist,density,ice_type)                                 
+     legen2, legen3, legen4, aerodist,density,ice_type)
   !    computing the scattering properties according to                  
   !    ice sphere model, i.e. the electromagnetic properties of the      
   !     particle are computed by assuming that they are the same          
@@ -20,7 +20,7 @@ subroutine mie_icefactor(f, t, m_ice,    &
   integer :: maxleg, nlegen, nbins, ice_type
   logical :: lphase_flag 
   real(kind=dbl) :: wavelength, dia1, dia2
-  real(kind=dbl), intent(in) :: ad, bd, alpha, gamma 
+  real(kind=dbl), intent(in) :: ad, bd, alpha, gamma
   complex(kind=dbl) :: m_ice
   real(kind=dbl) :: a_mtox, bcoeff 
   real(kind=dbl) :: extinction, albedo, back_scatt, legen (200), legen2 (200),&
@@ -75,7 +75,7 @@ subroutine mie_icefactor(f, t, m_ice,    &
   if (nbins .gt. 0) del_d = (dia2 - dia1) / nbins
   do ir = 1, nbins+1
      diameter = dia1 + (ir - 1) * del_d
-     ndens = distribution (ad, bd, alpha, gamma, diameter, aerodist)
+     ndens = distribution(ad, bd, alpha, gamma, diameter, aerodist)
      if ( (ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
         ndens = 0.5 * ndens 
      end if
@@ -108,7 +108,6 @@ subroutine mie_icefactor(f, t, m_ice,    &
         end do
      end if
   end do
-
   !           multiply the sums by the integration delta and other constan
   !             put quadrature weights in angular array for later         
   if (nbins.eq.0) del_d = 1.0d0
@@ -116,7 +115,9 @@ subroutine mie_icefactor(f, t, m_ice,    &
   extinction = pi * sumqe * del_d
   scatter = pi * sumqs * del_d
   back_scatt = pi * sumqback * del_d
+print*, scatter, extinction, scatter / extinction
   albedo = scatter / extinction 
+print*, "still"
 
   !         if the phase function is not desired then leave now           
   if ( .not. lphase_flag) return 
