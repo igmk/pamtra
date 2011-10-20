@@ -28,6 +28,8 @@ Mwml = 0.622	# dimlos, Molmassenverhaeltnis
 Tnull = -273.15 # K Absoluter Nullpunkt
 Kadiab = Rair/Cp # dimlos  Adiabatenexponent
 
+missingNumber = -9999
+
 def moist_rho_rh(p,T,rh):
 	'''
 	Input:
@@ -107,8 +109,30 @@ def rh2q(rh,T,p):
 	eStar = e_sat_gg_water(T)
 	e = ne.evaluate("rh*eStar")
 	q = ne.evaluate("Mwml*e/(p-(1-Mwml)*e)")
-	del q, eStar
+	del e, eStar
 	return q
+	
+def rh2a(rh,T):
+	'''
+	Calculate the absolute humidity from relative humidity, air temperature,
+	and pressure.
+
+	Input T is in K
+	rh is in Pa/Pa
+	p is in Pa
+	Output 
+	a in kg/m^3
+	
+	Source: Kraus: Chapter 8.1.2
+	'''
+	
+	if np.any(rh > 1.5): raise TypeError("rh must not be in %")
+
+	e = rh*e_sat_gg_water(T)
+	a = e/(Rvapor*T)
+	return a
+ 
+	
 	
 def q2rh(q,T,p):
 	'''
@@ -228,7 +252,7 @@ def detect_liq_cloud(z, t, rh):#, rh_thres, t_thres):
       n_top = len(i_top)
       if n_top != n_base:   
          print 'something wrong, number of bases NE number of cloud tops!'
-         return -99,-99,[]
+         return [],[],[]
       # end if
    # end if
    #z_top = z[i_top]
@@ -238,3 +262,136 @@ def detect_liq_cloud(z, t, rh):#, rh_thres, t_thres):
   
    return i_top, i_base, i_cloud
 # end def detect_liq_cloud
+
+
+
+def adiab(i,T,P,z):
+   """
+   Adiabtic liquid water content assuming pseudoadiabatic lapse rate 
+   throughout the whole cloud layer. Thus the assumed temperature     
+   profile is differnt from the measured one   
+   
+   Input:
+   i no of levels
+   T is in K
+   p is in Pa
+   z is in m
+   Output:
+   LWC in 
+   
+   translated to Python from adiab.pro by mx.
+   """
+   
+   #   Set actual cloud base temperature to the measured one
+   #   Initialize Liquid Water Content (LWC)
+   #   Compute adiabatic LWC by integration from cloud base to level I
+   
+   TCL=T[0]
+   LWC=0.0
+   
+   for j in range(1,i+1):
+      
+      deltaz=z[j]-z[j-1]
+      
+      #   Compute actual cloud temperature
+      
+      #   1. Compute air density
+      #   2. Compute water vapor density of saturated air
+      #   3. Compute mixing ratio of saturated air
+      #   4. Compute pseudoadiabatic lapse rate
+      #   5. Compute actual cloud temperature
+      
+      R=moist_rho_rh(P[j],T[j],1.)
+      RWV=rh2a(1.,T[j])
+      WS=RWV/(R-RWV)
+      DTPS=pseudoAdiabLapseRate(T[j],WS)
+      TCL=TCL+DTPS*(deltaz)
+      
+      #   Compute adiabatic LWC
+      
+      #   1. Compute air density
+      #   2. Compute water vapor density of saturated air
+      #   3. Compute mixing ratio of saturated air
+      #   4. Compute specific heat of vaporisation
+      #   5. Compute adiabatic LWC
+      
+      R=moist_rho_rh(P[j],TCL,1.)
+      RWV=rh2a(1.,TCL)
+      WS=RWV/(R-RWV)
+      L=vaphet(TCL)
+      
+      LWC=LWC+(R*Cp/L*((Grav/Cp)-pseudoAdiabLapseRate(TCL,WS))*(deltaz))
+   # end for
+   
+   return LWC
+# end def adiab
+
+def mod_ad(T_cloud, p_cloud, z_cloud, fak):
+   
+   #;IN: T_cloud, p_cloud, z_cloud
+   #;OUT: lwc 
+   
+   #;Einheiten: SI!
+   #translated to Python from mod_ad.pro by mx.
+   
+   
+   n_level = len(T_cloud)
+   lwc = np.zeros(n_level-1)
+   
+   thick = 0.
+   
+   for jj in range(n_level-1):
+      deltaz = z_cloud[jj+1] - z_cloud[jj]
+      thick = deltaz + thick
+      lwc[jj] = adiab(jj+1, T_cloud, p_cloud, z_cloud) 
+      lwc[jj] = lwc[jj]*(-0.144779*np.log(thick/fak) + 1.239387)
+   # end for
+   return lwc
+# end def mod_ad
+
+def pseudoAdiabLapseRate(T,Ws):
+    """                                                                 
+    Pseudoadiabatic lapse rate                                        
+                                                                
+    Input: T   [K]  thermodynamic temperature                         
+    Ws   [1]  mixing ratio of saturation                       
+                                                                
+    Output: PSEUDO [K/m] pseudoadiabatic lapse rate                   
+                                                                
+    Constants: Grav   [m/s2]     : constant of acceleration           
+        CP  [J/(kg K)]    : specific heat cap. at const. press 
+        Rair  [J/(kg K)]  : gas constant of dry air            
+        Rvapor [J/(kg K)] : gas constant of water vapor        
+                                                                
+    Source: Rogers and Yau, 1989: A Short Course in Cloud Physics     
+    (III.Ed.), Pergamon Press, 293p. Page 32                  
+                                                                
+    translated to Python from pseudo1.pro by mx
+    """
+    
+    #Compute specific humidity of vaporisation
+    L=vaphet(T)
+    
+    #Compute pseudo-adiabatic temperature gradient
+    x=(Grav/Cp) * (1+(L*Ws/Rair/T)) / (1+(Ws*L**2/Cp/Rvapor/T**2))
+
+    return x
+
+def vaphet(T):
+    """
+    Compute specific heat of vaporisation                             
+                                                                    
+    Input  : T      [K]      thermodynamic temperature                
+                                                                    
+    Output : VAPHET [J/kg]   specific heat of vaporisation            
+                                                                    
+    Source: Liljequist, G.H. und K. Cehak, 1984: Allgemeine           
+        Meteorologie (III.Ed.). Vieweg, 396p. Page 95      
+
+    translated to Python from vaphet.pro by mx
+    """                                                          
+
+    x=(2500.8-2.372*(T-273.15)) * 1000.0
+
+    return x
+
