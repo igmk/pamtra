@@ -33,7 +33,6 @@ missingNumber=-9999
 class pyPamtra(object):
 	
 	def __init__(self):
-		
 		#set setting default values
 		self.set = dict()
 		self.set["verbose"]=0
@@ -910,13 +909,13 @@ class pyPamtra(object):
 			raise IOError ("run runPamtra first!")
 			
 		f = open(fname, "w")
-		pickle.dump(self.r, f)
+		pickle.dump([self.r,self.p], f)
 		f.close()
 
 	def loadResultsFromNumpy(self,fname):
 		try: 
 			f = open(fname, "r")
-			self.r = pickle.load(f)
+			[self.r,self.p] = pickle.load(f)
 			f.close()
 		except:
 			raise IOError ("Could not read data")
