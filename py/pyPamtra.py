@@ -9,13 +9,17 @@ import pickle
 import time,calendar, datetime
 import warnings
 import sys
+import os
 from copy import deepcopy
-from numpy import *
-import numexpr as ne
+#from numpy import *
+try: 
+	import numexpr as ne
+except:
+	warnings.warn("numexpr not available", Warning)
 
 import meteoSI
 try: 
-	import pyPamtraLib
+	import pyPamtraLibWrapper
 except:
 	warnings.warn("pyPamtraLib not available", Warning)
 
@@ -26,16 +30,8 @@ except:
 
 missingNumber=-9999
 
-def _PamtraFortranWrapper(*args):
-	#is needed because pp cannot work with fortran modules directly
-	code = ""
-	for ii in range(len(args)):
-		code = code + "args["+str(ii)+"],"
-	return eval("pyPamtraLib.pypamtralib("+code[0:-1]+")")
-
-
 class pyPamtra(object):
-
+	
 	def __init__(self):
 		
 		#set setting default values
@@ -321,8 +317,8 @@ class pyPamtra(object):
 		data["T"] = data["T"]*(data["P"]/p0)**RdCp # potential temp to temp
 		
 		#add surface data
-		data["TSK"] = data["TSK"].reshape(append(list(np.shape(data["TSK"])),1))
-		data["PSFC"] = data["PSFC"].reshape(append(list(np.shape(data["PSFC"])),1))
+		data["TSK"] = data["TSK"].reshape(np.append(list(np.shape(data["TSK"])),1))
+		data["PSFC"] = data["PSFC"].reshape(np.append(list(np.shape(data["PSFC"])),1))
 
 		data["T"] = np.concatenate((data["TSK"],data["T"]),axis=-1)
 		data["P"] = np.concatenate((data["PSFC"],data["P"]),axis=-1)
@@ -339,8 +335,7 @@ class pyPamtra(object):
 		print "see createProfile_radiosonde"
 
 	def createProfile_radiosonde(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
-			hgt_lev,press_lev,temp_lev,relhum_lev,
-			cwc_q,iwc_q,rwc_q,swc_q,gwc_q):
+			hgt_lev,press_lev,temp_lev,relhum_lev):
 		'''
 		Create a profile for relative humidity, with special functions for varying number of layers
 		
@@ -364,26 +359,26 @@ class pyPamtra(object):
 		
 		#necessary for varying nlyr:
 		q[q==missingNumber] = 0
-		cwc_q[cwc_q==missingNumber] = 0
-		iwc_q[iwc_q==missingNumber] = 0
-		rwc_q[rwc_q==missingNumber] = 0
-		swc_q[swc_q==missingNumber] = 0
-		gwc_q[gwc_q==missingNumber] = 0
+		
+		self._shape3D = np.shape(q)
+		self._shape2D = np.shape(lat)
+		
+		cwc_q = np.ones(self._shape3D)*missingNumber
+		iwc_q = np.ones(self._shape3D)*missingNumber
+		rwc_q = np.ones(self._shape3D)*missingNumber
+		swc_q = np.ones(self._shape3D)*missingNumber
+		gwc_q = np.ones(self._shape3D)*missingNumber
+		hwc_q = np.ones(self._shape3D)*missingNumber
 		
 		#integrate
 		iwv = np.sum(q*rho_moist*dz,axis=-1)
-		cwp = np.sum(cwc_q*rho_moist*dz,axis=-1)
-		iwp = np.sum(iwc_q*rho_moist*dz,axis=-1)
-		rwp = np.sum(rwc_q*rho_moist*dz,axis=-1)
-		swp = np.sum(swc_q*rho_moist*dz,axis=-1)
-		gwp = np.sum(gwc_q*rho_moist*dz,axis=-1)
-		
-		self._shape3D = np.shape(gwc_q)
-		self._shape2D = np.shape(gwp)
-		
-		hwp[:] = 0
-		
-		hwc_q = np.ones(self._shape3D)*missingNumber
+		cwp = np.zeros(self._shape2D)
+		iwp = np.zeros(self._shape2D)
+		rwp = np.zeros(self._shape2D)
+		swp = np.zeros(self._shape2D)
+		gwp = np.zeros(self._shape2D)
+		hwp = np.zeros(self._shape2D)
+
 		cwc_n = np.ones(self._shape3D)*missingNumber
 		iwc_n = np.ones(self._shape3D)*missingNumber
 		rwc_n = np.ones(self._shape3D)*missingNumber
@@ -544,7 +539,64 @@ class pyPamtra(object):
 			
 		for key in ["hgt_lev","temp_lev","press_lev","relhum_lev"]:
 			self.p[key] = self.p[key][condition].reshape(self._shape3Dplus)
+			
+		return
 
+	def addCloudShape(self):
+		"""
+		adds cloud base and cloud top to the data to an existing pamtra profile
+		clouds are detected with rh >= 0.95 and T >= 253.15 K
+		if multiple cloud layers are found, only the uppermost and the lowest one are saved.
+		"""
+		self.p["cloudTop"] = np.ones(self._shape2D)*missingNumber
+		self.p["cloudBase"] = np.ones(self._shape2D)*missingNumber
+		
+		for x in xrange(self._shape2D[0]):
+			for y in xrange(self._shape2D[1]):
+				i_top, i_base, i_cloud =  meteoSI.detect_liq_cloud(self.p["hgt_lev"][x,y,0:self.p["nlyrs"][x,y]], self.p["temp_lev"][x,y,0:self.p["nlyrs"][x,y]], self.p["relhum_lev"][x,y,0:self.p["nlyrs"][x,y]])
+				if len(i_top)> 0:
+					self.p["cloudTop"][x,y] = self.p["hgt_lev"][x,y,i_top[-1]+1]
+					self.p["cloudBase"][x,y] = self.p["hgt_lev"][x,y,i_base[0]]
+		return
+
+	def addPseudoAdiabaticLWC(self):
+		"""
+		adds liquid water content to the data to an existing pamtra profile
+		using a simple cloud model with pseudo adiabatic lapse rate
+		clouds are detected with rh >= 0.95 and T >= 253.15 K
+		existing cwc_q values are overriden!
+		"""
+
+		#calculate CWC
+		self.p["cwc_q"][:] = 0
+
+		for x in xrange(self._shape2D[0]):
+			for y in xrange(self._shape2D[1]):
+				i_top, i_base, i_cloud =  meteoSI.detect_liq_cloud(self.p["hgt_lev"][x,y,0:self.p["nlyrs"][x,y]], self.p["temp_lev"][x,y,0:self.p["nlyrs"][x,y]], self.p["relhum_lev"][x,y,0:self.p["nlyrs"][x,y]])
+				for k in np.arange(len(i_top)):
+					i_cloud_k = np.arange(i_base[k],i_top[k]+1) 
+					self.p["cwc_q"][x,y,i_cloud_k[:-1]] = meteoSI.mod_ad(self.p["temp_lev"][x,y,i_cloud_k], self.p["press_lev"][x,y,i_cloud_k], self.p["hgt_lev"][x,y,i_cloud_k], 1)
+
+		#calculate CWP, invalid data has to be especially tretead to allow matrix operations
+		self.p["cwp"][:] = 0
+		
+		dz = np.diff(self.p["hgt_lev"],axis=-1)
+		dz[dz<=0]=9999
+		relhum = (self.p["relhum_lev"][...,0:-1] + self.p["relhum_lev"][...,1:])/2.
+		relhum[relhum<=0] = 1
+		temp = (self.p["temp_lev"][...,0:-1] + self.p["temp_lev"][...,1:])/2.
+		temp[temp<=0] = 1
+		press_lev1 = deepcopy(self.p["press_lev"])
+		press_lev1[self.p["press_lev"]==missingNumber]=1
+		xp = -1.*np.log(press_lev1[...,1:]/press_lev1[...,0:-1])/dz
+		xp[xp==0] = 9999
+		press = -1.*press_lev1[...,0:-1]/xp*(np.exp(-xp*dz)-1.)/dz
+		
+		q = meteoSI.rh2q(relhum,temp,press)
+		rho_moist = meteoSI.moist_rho_q(press,temp,q)
+		
+		self.p["cwp"][:] = np.sum(self.p["cwc_q"]*rho_moist*dz,axis=-1)
+		return
 
 	def createFullProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
 			iwv,cwp,iwp,rwp,swp,gwp,hwp,
@@ -628,8 +680,8 @@ class pyPamtra(object):
 
 
 	def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers="auto",pp_deltaF=0,pp_deltaX=0,pp_deltaY = 0):
-
-
+	
+		
 		if np.max(self.p["relhum_lev"])>5:
 			raise IOError("relative humidity is _not_ in %!")
 
@@ -638,14 +690,15 @@ class pyPamtra(object):
 			if key not in self._setDefaultKeys:
 				warnings.warn("Warning can not parse setting: ",key, Warning)
 
-
 		if pp_local_workers == "auto":
-			job_server = pp.Server(ppservers=pp_servers,secret="pyPamtra") 
+			self.job_server = pp.Server(ppservers=pp_servers,secret="pyPamtra") 
 		else:
-			job_server = pp.Server(pp_local_workers,ppservers=pp_servers,secret="pyPamtra") 
+			self.job_server = pp.Server(pp_local_workers,ppservers=pp_servers,secret="pyPamtra") 
+			
+			
 		if self.set["pyVerbose"] >= 0: 
 			print "Starting pp with: "
-			pp_nodes = job_server.get_active_nodes()
+			pp_nodes = self.job_server.get_active_nodes()
 			for key in pp_nodes.keys():
 				print key+": "+str(pp_nodes[key])+" nodes"
 		
@@ -679,7 +732,15 @@ class pyPamtra(object):
 		self.r["tb_dimensions"] = ["gridx","gridy","outlevels","angles","frequency","stokes"]
 
 		
-		pp_noJobs = len(np.arange(0,self.nfreqs,pp_deltaF))*len(np.arange(0,self.p["ngridx"],pp_deltaX))*len(np.arange(0,self.p["ngridy"],pp_deltaY))
+		self.pp_noJobs = len(np.arange(0,self.nfreqs,pp_deltaF))*len(np.arange(0,self.p["ngridx"],pp_deltaX))*len(np.arange(0,self.p["ngridy"],pp_deltaY))
+		self.pp_jobsDone = 0
+		
+		fi = open("/tmp/pp_logfile.txt","w")
+		fi.write("Starting pp with %i jobs \n\r"%(self.pp_noJobs))
+		fi.close()
+		
+		self.hosts=[]
+		
 		
 		for pp_startF in np.arange(0,self.nfreqs,pp_deltaF):
 			pp_endF = pp_startF + pp_deltaF
@@ -696,96 +757,105 @@ class pyPamtra(object):
 					
 					pp_ii+=1
 					
-					pp_jobs[pp_ii] = job_server.submit(_PamtraFortranWrapper, (
+					pp_jobs[pp_ii] = self.job_server.submit(pyPamtraLibWrapper.PamtraFortranWrapper, (
 					#self.set
 					self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["emissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["n_moments"], self.set["moments_file"],
 					#input
 					pp_ngridx,
 					pp_ngridy,
 					self.p["max_nlyrs"],
-					self.p["nlyrs"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["nlyrs"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
 					pp_nfreqs,
 					self.freqs[pp_startF:pp_endF],
-					self.p["unixtime"][pp_startX:pp_endX,pp_startY:pp_endY],
+					self.p["unixtime"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
 					self.p["deltax"],self.p["deltay"],
-					self.p["lat"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["lon"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["model_i"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["model_j"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["wind10u"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["wind10v"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["lfrac"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["relhum_lev"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["press_lev"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["temp_lev"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["hgt_lev"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["iwv"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["cwp"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["iwp"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["rwp"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["swp"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["gwp"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["hwp"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["cwc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["iwc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["rwc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["swc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["gwc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["hwc_q"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["cwc_n"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["iwc_n"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["rwc_n"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["swc_n"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["gwc_n"][pp_startX:pp_endX,pp_startY:pp_endY],
-					self.p["hwc_n"][pp_startX:pp_endX,pp_startY:pp_endY]
-					),tuple(), ("pyPamtraLib","numpy",))
+					self.p["lat"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["lon"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["model_i"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["model_j"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["wind10u"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["wind10v"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["lfrac"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["relhum_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["press_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["temp_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["hgt_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["iwv"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["cwp"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["iwp"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["rwp"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["swp"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["gwp"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["hwp"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["cwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["iwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["rwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["swc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["gwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["hwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["cwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["iwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["rwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["swc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["gwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+					self.p["hwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist()
+					),tuple(), ("pyPamtraLibWrapper","pyPamtraLib","os",),callback=self._ppCallback,
+					callbackargs=(pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii,))
 					
 					if self.set["pyVerbose"] >= 0: 
-						sys.stdout.write("\r"+20*" "+"\r"+ "%i, %5.3f%% submitted"%(pp_ii+1,(pp_ii+1)/float(pp_noJobs)*100))
+						sys.stdout.write("\r"+20*" "+"\r"+ "%i, %5.3f%% submitted"%(pp_ii+1,(pp_ii+1)/float(self.pp_noJobs)*100))
 						sys.stdout.flush()
 
 		if self.set["pyVerbose"] >= 0: 
 			print " "
-			print pp_noJobs, "jobs submitted"
-										
-		#job_server.wait()
-		pp_ii = -1
+			print self.pp_noJobs, "jobs submitted"
 
-		for pp_startF in np.arange(0,self.nfreqs,pp_deltaF):
-			pp_endF = pp_startF + pp_deltaF
-			if pp_endF > self.nfreqs: pp_endF = self.nfreqs
-			for pp_startX in np.arange(0,self.p["ngridx"],pp_deltaX):
-				pp_endX = pp_startX + pp_deltaX
-				if pp_endX > self.p["ngridx"]: pp_endX = self.p["ngridx"]
-				for pp_startY in np.arange(0,self.p["ngridy"],pp_deltaY):
-					pp_endY = pp_startY + pp_deltaY
-					if pp_endY > self.p["ngridy"]: pp_endY = self.p["ngridy"]
-					pp_ii +=1
 
-					(self.r["pamtraVersion"],self.r["pamtraHash"],
-					self.r["Ze"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
-					self.r["attenuationHydro"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
-					self.r["attenuationAtmo"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
-					self.r["hgt"][pp_startX:pp_endX,pp_startY:pp_endY,:], 
-					self.r["tb"][pp_startX:pp_endX,pp_startY:pp_endY,:,:,pp_startF:pp_endF,:], 
-					self.r["angles"] ) = pp_jobs[pp_ii]()
-					if self.set["pyVerbose"] >= 0: 
-						sys.stdout.write("\r"+20*" "+"\r"+ "%i, %5.3f%% collected"%(pp_ii+1,(pp_ii+1)/float(pp_noJobs)*100))
-						sys.stdout.flush()
+		if self.set["pyVerbose"] >= 0: print " "; self.job_server.get_active_nodes()
+		self.job_server.wait()
+		#pp_ii = -1
+
+		#for pp_startF in np.arange(0,self.nfreqs,pp_deltaF):
+			#pp_endF = pp_startF + pp_deltaF
+			#if pp_endF > self.nfreqs: pp_endF = self.nfreqs
+			#for pp_startX in np.arange(0,self.p["ngridx"],pp_deltaX):
+				#pp_endX = pp_startX + pp_deltaX
+				#if pp_endX > self.p["ngridx"]: pp_endX = self.p["ngridx"]
+				#for pp_startY in np.arange(0,self.p["ngridy"],pp_deltaY):
+					#pp_endY = pp_startY + pp_deltaY
+					#if pp_endY > self.p["ngridy"]: pp_endY = self.p["ngridy"]
+					#pp_ii +=1
+
+					#(self.r["pamtraVersion"],self.r["pamtraHash"],
+					#self.r["Ze"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
+					#self.r["attenuationHydro"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
+					#self.r["attenuationAtmo"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
+					#self.r["hgt"][pp_startX:pp_endX,pp_startY:pp_endY,:], 
+					#self.r["tb"][pp_startX:pp_endX,pp_startY:pp_endY,:,:,pp_startF:pp_endF,:], 
+					#self.r["angles"] ) = pp_jobs[pp_ii]()
 
 		
 		self.r["settings"] = self.set
-		
 		self.r["pamtraVersion"] = self.r["pamtraVersion"].strip()
 		self.r["pamtraHash"] = self.r["pamtraHash"].strip()
 		
 		#for key in self.__dict__.keys():
 			#print key
 			#print self.__dict__[key]
-		if self.set["pyVerbose"] >= 0: print " "; job_server.print_stats()
-		job_server.destroy()
-		del job_server
-		
+		if self.set["pyVerbose"] >= 0: print " "; self.job_server.print_stats()
+		self.job_server.destroy()
+		del self.job_server
+	
+	def _ppCallback(self,pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii,*results):
+		(((self.r["pamtraVersion"],self.r["pamtraHash"], self.r["Ze"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], self.r["attenuationHydro"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], self.r["attenuationAtmo"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], self.r["hgt"][pp_startX:pp_endX,pp_startY:pp_endY,:],self.r["tb"][pp_startX:pp_endX,pp_startY:pp_endY,:,:,pp_startF:pp_endF,:], self.r["angles"],),host,),) = results
+		self.pp_jobsDone += 1
+		if self.set["pyVerbose"] > 0: 
+			sys.stdout.write("\r"+50*" "+"\r"+ "%s: %6i, %8.3f%% collected (#%6i, %s)"%(datetime.datetime.now().strftime("%Y%m%d-%H:%M:%S"),self.pp_jobsDone,(self.pp_jobsDone)/float(self.pp_noJobs)*100,pp_ii+1,host))
+			sys.stdout.flush()
+		if self.set["pyVerbose"] > 1: print " "; self.job_server.print_stats()
+		fi = open("/tmp/pp_logfile.txt","a")
+		fi.write("%s: %6i, %8.3f%% collected (#%6i, %s)\n\r"%(datetime.datetime.now().strftime("%Y%m%d-%H:%M:%S"),self.pp_jobsDone,(self.pp_jobsDone)/float(self.pp_noJobs)*100,pp_ii+1,host))
+		fi.close()
 		
 	def runPamtra(self,freqs):
 		
@@ -805,9 +875,9 @@ class pyPamtra(object):
 		self.r = dict()
 
 		#output
-		self.r["pamtraVersion"],self.r["pamtraHash"],\
-		self.r["Ze"],self.r["attenuationHydro"],self.r["attenuationAtmo"],self.r["hgt"], self.r["tb"], self.r["angles"] = \
-		_PamtraFortranWrapper(
+		(self.r["pamtraVersion"],self.r["pamtraHash"],\
+		self.r["Ze"],self.r["attenuationHydro"],self.r["attenuationAtmo"],self.r["hgt"], self.r["tb"], self.r["angles"],), host = \
+		pyPamtraLibWrapper.PamtraFortranWrapper(
 		#self.set
 		self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["emissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["n_moments"], self.set["moments_file"],
 		#input
@@ -851,7 +921,7 @@ class pyPamtra(object):
 		except:
 			raise IOError ("Could not read data")
 		
-	def writeResultsToNetCDF(self,fname,ncForm="NETCDF3_CLASSIC"):
+	def writeResultsToNetCDF(self,fname,profileVars="all",ncForm="NETCDF3_CLASSIC"):
 		import netCDF4
 		try: 
 			self.r
@@ -867,33 +937,39 @@ class pyPamtra(object):
 		cdfFile.properties = str(self.set)
 
 		#make dimesnions
-		
-		cdfFile.createDimension('nlon',self.p["ngridx"])
-		cdfFile.createDimension('nlat',self.p["ngridy"])
-		cdfFile.createDimension('nfreq',self.nfreqs)
+				#self.dimensions["tb"] = ["gridx","gridy","outlevels","angles","frequency","stokes"]
+		cdfFile.createDimension('grid_x',self.p["ngridx"])
+		cdfFile.createDimension('grid_y',self.p["ngridy"])
+		cdfFile.createDimension('frequency',self.nfreqs)
 		if (self.r["settings"]["passive"]):
-			cdfFile.createDimension('nang',len(self.r["angles"]))
-			cdfFile.createDimension('nout',np.shape(self.r["tb"])[2])
-			cdfFile.createDimension('nstokes',np.shape(self.r["tb"])[-1])
+			cdfFile.createDimension('angles',len(self.r["angles"]))
+			cdfFile.createDimension('outlevels',self._noutlevels)
+			cdfFile.createDimension('stokes',self._nstokes)
 		if (self.r["settings"]["active"]):
 			cdfFile.createDimension('nlyr',self.p["max_nlyrs"])
 		
 		#create variables
 		if (self.r["settings"]["passive"]):
-			nc_angle = cdfFile.createVariable('angle','f4',('nang',),fill_value= missingNumber)
+			nc_angle = cdfFile.createVariable('angles','f4',('angles',),fill_value= missingNumber)
 			nc_angle.units = 'deg'
+			
+			nc_stokes = cdfFile.createVariable('stokes', 'S1',("stokes",),fill_value= missingNumber)
+			nc_stokes.units = "-"
 		
-		nc_frequency = cdfFile.createVariable('frequency','f4',('nfreq',),fill_value= missingNumber)
+			nc_out = cdfFile.createVariable('outlevels', 'f4',("outlevels",),fill_value= missingNumber)
+			nc_out.units = "m over sea level (top of atmosphere value) OR m over ground (ground value)"
+		
+		nc_frequency = cdfFile.createVariable('frequency','f4',('frequency',),fill_value= missingNumber)
 		nc_frequency.units = 'GHz'
 
-		dim2d = ("nlon","nlat",)
+		dim2d = ("grid_x","grid_y",)
 		nc_model_i = cdfFile.createVariable('model_i', 'i4',dim2d,fill_value= missingNumber)
 		nc_model_i.units = "-"
 
 		nc_model_j = cdfFile.createVariable('model_j', 'i4',dim2d,fill_value= missingNumber)
 		nc_model_j.units = "-"
 
-		nc_nlyrs = cdfFile.createVariable('nlyrs', 'i4',dim2d,fill_value= missingNumber)
+		nc_nlyrs = cdfFile.createVariable('nlyr', 'i4',dim2d,fill_value= missingNumber)
 		nc_nlyrs.units = "-"
 
 		nc_time = cdfFile.createVariable('datatime', 'i4',dim2d,fill_value= missingNumber)
@@ -908,34 +984,13 @@ class pyPamtra(object):
 		nc_lfrac = cdfFile.createVariable('lfrac', 'f4',dim2d,fill_value= missingNumber)
 		nc_lfrac.units = "-"
 
-		nc_iwv = cdfFile.createVariable('iwv', 'f4',dim2d,fill_value= missingNumber)
-		nc_iwv.units = "kg/m^2"
-
-		nc_cwp= cdfFile.createVariable('cwp', 'f4',dim2d,fill_value= missingNumber)
-		nc_cwp.units = "kg/m^2"
-
-		nc_iwp = cdfFile.createVariable('iwp', 'f4',dim2d,fill_value= missingNumber)
-		nc_iwp.units = "kg/m^2"
-
-		nc_rwp = cdfFile.createVariable('rwp', 'f4',dim2d,fill_value= missingNumber)
-		nc_rwp.units = "kg/m^2"
-
-		nc_swp = cdfFile.createVariable('swp', 'f4',dim2d,fill_value= missingNumber)
-		nc_swp.units = "kg/m^2"
-
-		nc_gwp = cdfFile.createVariable('gwp', 'f4',dim2d,fill_value= missingNumber)
-		nc_gwp.units = "kg/m^2"
-
-		nc_hwp = cdfFile.createVariable('hwp', 'f4',dim2d,fill_value= missingNumber)
-		nc_hwp.units = "kg/m^2"
-
 		if (self.r["settings"]["active"]):
 
-			dim3d = ("nlon","nlat","nlyr",)
+			dim3d = ("grid_x","grid_y","nlyr",)
 			nc_height = cdfFile.createVariable('height', 'f4',dim3d,fill_value= missingNumber)
 			nc_height.units = "m"
 
-			dim4d = ("nlon","nlat","nlyr","nfreq")
+			dim4d = ("grid_x","grid_y","nlyr","frequency")
 			nc_Ze = cdfFile.createVariable('Ze', 'f4',dim4d,fill_value= missingNumber)
 			nc_Ze.units = "dBz"
 
@@ -947,7 +1002,9 @@ class pyPamtra(object):
 
 
 		if (self.r["settings"]["passive"]):
-			dim6d = ("nlon","nlat","nout","nang","nfreq","nstokes")
+		
+			
+			dim6d = ("grid_x","grid_y","outlevels","angles","frequency","stokes")
 			nc_tb = cdfFile.createVariable('tb', 'f4',dim6d,fill_value= missingNumber)
 			nc_tb.units = "K"
 
@@ -962,22 +1019,64 @@ class pyPamtra(object):
 		nc_longitude[:] = self.p["lon"]
 		nc_latitude[:] = self.p["lat"]
 		nc_lfrac[:] = self.p["lfrac"]
-		nc_iwv[:] = self.p["iwv"]
-		nc_cwp[:] = self.p["cwp"]
-		nc_iwp[:] = self.p["iwp"]
-		nc_rwp[:] = self.p["rwp"]
-		nc_swp[:] = self.p["swp"]
-		nc_gwp[:] = self.p["gwp"]
-		nc_hwp[:] = self.p["hwp"]
 		
 		if (self.r["settings"]["passive"]):
+			nc_stokes[:] = ["H","V"]
+			nc_out[:] = [self.set["obs_height"],0]
 			nc_tb[:] = self.r["tb"]
 		if (self.r["settings"]["active"]):
 			nc_height[:] = self.r["hgt"]
 			nc_Ze[:] = self.r["Ze"]
 			nc_Attenuation_Hydrometeors[:] = self.r["attenuationHydro"]
 			nc_Attenuation_Atmosphere[:] = self.r["attenuationAtmo"]
+		
+		#profile data
+		
+		if "iwv" in profileVars or profileVars =="all":
+			nc_iwv = cdfFile.createVariable('iwv', 'f4',dim2d,fill_value= missingNumber)
+			nc_iwv.units = "kg/m^2"
+			nc_iwv[:] = self.p["iwv"]
+
+		if "cwp" in profileVars or profileVars =="all":
+			nc_cwp= cdfFile.createVariable('cwp', 'f4',dim2d,fill_value= missingNumber)
+			nc_cwp.units = "kg/m^2"
+			nc_cwp[:] = self.p["cwp"]
 			
+		if "iwp" in profileVars or profileVars =="all":
+			nc_iwp = cdfFile.createVariable('iwp', 'f4',dim2d,fill_value= missingNumber)
+			nc_iwp.units = "kg/m^2"
+			nc_iwp[:] = self.p["iwp"]
+
+		if "rwp" in profileVars or profileVars =="all":
+			nc_rwp = cdfFile.createVariable('rwp', 'f4',dim2d,fill_value= missingNumber)
+			nc_rwp.units = "kg/m^2"
+			nc_rwp[:] = self.p["rwp"]
+			
+		if "swp" in profileVars or profileVars =="all":
+			nc_swp = cdfFile.createVariable('swp', 'f4',dim2d,fill_value= missingNumber)
+			nc_swp.units = "kg/m^2"
+			nc_swp[:] = self.p["swp"]
+			
+		if "gwp" in profileVars or profileVars =="all":
+			nc_gwp = cdfFile.createVariable('gwp', 'f4',dim2d,fill_value= missingNumber)
+			nc_gwp.units = "kg/m^2"
+			nc_gwp[:] = self.p["gwp"]
+
+		if "hwp" in profileVars or profileVars =="all":
+			nc_hwp = cdfFile.createVariable('hwp', 'f4',dim2d,fill_value= missingNumber)
+			nc_hwp.units = "kg/m^2"
+			nc_hwp[:] = self.p["hwp"]
+			
+		if ("cloudBase" in profileVars or profileVars =="all") and ("cloudBase" in self.p.keys()):
+			nc_cb = cdfFile.createVariable('cloudBase', 'f4',dim2d,fill_value= missingNumber)
+			nc_cb.units = "m"
+			nc_cb[:] = self.p["cloudBase"]
+			
+		if ("cloudTop" in profileVars or profileVars =="all") and ("cloudTop" in self.p.keys()):
+			nc_ct = cdfFile.createVariable('cloudTop', 'f4',dim2d,fill_value= missingNumber)
+			nc_ct.units = "m"
+			nc_ct[:] = self.p["cloudTop"]
+
 		cdfFile.close()
 		if self.set["pyVerbose"] >= 0: print fname,"written"
 
