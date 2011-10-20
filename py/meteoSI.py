@@ -11,7 +11,11 @@ from __future__ import division
 #from math import *
 #import sys
 import numpy as np
-import numexpr as ne
+import warnings
+try: 
+	import numexpr as ne
+except:
+	warnings.warn("numexpr not available", Warning)
 
 
 Grav = 9.80665  # m/s^2 der Wert fuer mittlere Breiten
@@ -166,4 +170,71 @@ def rh_to_iwv(relhum_lev,temp_lev,press_lev,hgt_lev):
 
 	return np.sum(q*rho_moist*dz)
 
-
+def detect_liq_cloud(z, t, rh):#, rh_thres, t_thres):
+   
+   #UL NOV 2007
+   #tranlated to python by mx 2011
+   #***********
+   #INPUT
+   #z: height grid
+   #T: temperature on z
+   #rh: relative humidty on z
+   #rh_thres: relative humidity threshold for the detection on liquid clouds on z
+   #T_thres: don not detect liquid water clouds below this value (scalar)
+   #***********
+   #OUTPUT
+   #z_top: array of cloud tops
+   #z_base: array of cloud bases
+   #z_cloud: array of cloudy height levels
+   #***********
+   
+   rh_thres = 0.95 #1
+   t_thres = 253.15 #K
+   #import pdb; pdb.set_trace()
+   n = len(z)
+   #print "!",n
+   #***determine cloud boundaries
+   #--> layers where mean rh GT rh_thres
+   
+   cloud_bound_ind = np.zeros(n,dtype=int)
+   for i in np.arange(0, (n - 1)):
+      #print ((rh[i + 1] + rh[i]) / 2. > rh_thres)
+      #print ((t[i + 1] + t[i]) / 2. > t_thres)
+      if ((rh[i + 1] + rh[i]) / 2. > rh_thres)  and  ((t[i + 1] + t[i]) / 2. > t_thres):   
+         cloud_bound_ind[i] = np.bitwise_or(1, cloud_bound_ind[i])
+         cloud_bound_ind[i + 1] = np.bitwise_or(2, cloud_bound_ind[i + 1])
+      # end if
+   # end for
+   #import pdb; pdb.set_trace()
+   
+   i_cloud = np.where(cloud_bound_ind != 0)[0]
+   
+   #***determine z_base & z_top arrays
+   
+   #z_top = -99.
+   #z_base = -99.
+   #z_cloud = -99
+   
+   i_top = []
+   i_base = []
+   
+   if len(i_cloud) != 0:   
+      
+      #z_cloud = z[i_cloud]
+      i_base = np.where(cloud_bound_ind == 1)[0]
+      i_top = np.where(cloud_bound_ind == 2)[0]
+      
+      n_base = len(i_base)
+      n_top = len(i_top)
+      if n_top != n_base:   
+         print 'something wrong, number of bases NE number of cloud tops!'
+         return -99,-99,[]
+      # end if
+   # end if
+   #z_top = z[i_top]
+   #z_base = z[i_base]
+   
+   
+  
+   return i_top, i_base, i_cloud
+# end def detect_liq_cloud
