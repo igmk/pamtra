@@ -1,10 +1,11 @@
 #!/bin/bash
 
 hosts=`ls /net`
-
-hosts="roumet habagat"
-hosts="caspar embat trombe irifi notos refoli euros albe roumet rebat orkan nemere lomar habagat aure adelie"
-hosts="schili roumet rebat orkan nemere meltemi lomar karif habagat gargal diablo buran aure adelie albe euros refoli notos helm irifi trombe embat caspar"
+hosts="zapod viracao trombe tivano tempest seistan schirokko schili roumet refoli rebat ramier qeb orkan notos nemere molan meltemi lomar kaus karif irifi habagat gargal garbi gales frog forano1 euros embat diablo chinook caspar buran aure albe adelie"
+# hosts="roumet habagat"
+# hosts="caspar embat trombe irifi notos refoli euros albe roumet rebat orkan nemere lomar habagat aure adelie"
+# hosts="schili roumet rebat orkan nemere meltemi lomar karif habagat gargal diablo buran aure adelie albe euros refoli notos helm irifi trombe embat caspar"
+# hosts="zapod viracao trombe tivano tempest seistan schirokko schili roumet refoli rebat ramier qeb orkan notos nemere molan meltemi lomar kaus irifi habagat gargal garbi gales frog forano1 euros embat diablo chinook caspar buran aure adelie"
 ppTimeout=300
 
 #how many cpus shall be saved?
@@ -29,7 +30,7 @@ then
 		fi
 		echo "$host: checking no of available cpus"
 		noP=`ssh -o "BatchMode yes" -o "ConnectTimeout 2" $user@$host grep processor /proc/cpuinfo | wc|awk '{print $1}'`
-		load=`ssh -o "BatchMode yes" -o "ConnectTimeout 2" $user@$host uptime| awk -F, '{print $(NF)}'`
+		load=`ssh -o "BatchMode yes" -o "ConnectTimeout 2" $user@$host uptime| awk -F, '{print $(NF-1)}'`
 		useP=`echo $noP\-$saveCPUs\-\($load\%$noP\) |bc | cut -d '.' -f1`
 		if [[ $useP =~ ^-?[0-9]+$ ]]
 		then
@@ -73,7 +74,7 @@ then
 			continue
 		fi
 		
-		for module in "numpy" "pp" "pyPamtra" "pyPamtraLib"
+		for module in "numpy" "pp" "pyPamtra" "pyPamtraLib" "pyPamtraLibWrapper"
 		do
 			if ssh -o "BatchMode yes" -o "ConnectTimeout 2" $user@$host "python -c 'import $module;'> /dev/null 2>&1"
 			then

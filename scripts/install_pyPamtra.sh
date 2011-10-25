@@ -105,7 +105,7 @@ fi
 
 if [ "$1" == "installHACK" ]
 then
-	hosts="albe euros refoli notos helm irifi trombe embat caspar"
+	hosts="albe"
 	for host in $hosts
 	do
 		if ssh -q -q -o "BatchMode=yes" -o "ConnectTimeout 2" ${host} "echo 2>&1" 
