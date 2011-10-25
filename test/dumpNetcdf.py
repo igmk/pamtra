@@ -18,5 +18,6 @@ vars.sort()
 
 for var in vars:
 	print var
-	print np.around(np.array(N.variables[var][:],dtype=float),decimals=4)
+	try: print np.around(np.array(N.variables[var][:],dtype=float),decimals=4)
+	except: print np.array(N.variables[var][:],dtype=str)
 N.close()

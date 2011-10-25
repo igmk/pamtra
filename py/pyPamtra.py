@@ -936,98 +936,113 @@ class pyPamtra(object):
 		cdfFile.properties = str(self.set)
 
 		#make dimesnions
-				#self.dimensions["tb"] = ["gridx","gridy","outlevels","angles","frequency","stokes"]
 		cdfFile.createDimension('grid_x',self.p["ngridx"])
 		cdfFile.createDimension('grid_y',self.p["ngridy"])
 		cdfFile.createDimension('frequency',self.nfreqs)
+		
 		if (self.r["settings"]["passive"]):
 			cdfFile.createDimension('angles',len(self.r["angles"]))
 			cdfFile.createDimension('outlevels',self._noutlevels)
 			cdfFile.createDimension('stokes',self._nstokes)
-		if (self.r["settings"]["active"]):
-			cdfFile.createDimension('nlyr',self.p["max_nlyrs"])
-		
-		#create variables
-		if (self.r["settings"]["passive"]):
-			nc_angle = cdfFile.createVariable('angles','f4',('angles',),fill_value= missingNumber)
-			nc_angle.units = 'deg'
 			
-			nc_stokes = cdfFile.createVariable('stokes', 'S1',("stokes",),fill_value= missingNumber)
-			nc_stokes.units = "-"
+		if (self.r["settings"]["active"]):
+			cdfFile.createDimension('heightbins',self.p["max_nlyrs"])
 		
-			nc_out = cdfFile.createVariable('outlevels', 'f4',("outlevels",),fill_value= missingNumber)
-			nc_out.units = "m over sea level (top of atmosphere value) OR m over ground (ground value)"
+		dim2d = ("grid_x","grid_y",)
+		dim3d = ("grid_x","grid_y","heightbins",)
+		dim4d = ("grid_x","grid_y","heightbins","frequency")
+		dim6d = ("grid_x","grid_y","outlevels","angles","frequency","stokes")
+			
+		#create and write dim variables
 		
 		nc_frequency = cdfFile.createVariable('frequency','f4',('frequency',),fill_value= missingNumber)
 		nc_frequency.units = 'GHz'
+		nc_frequency[:] = self.freqs
+		
+		nc_gridx = cdfFile.createVariable('grid_x','f4',('grid_x',),fill_value= missingNumber)
+		nc_gridx.units = '-'
+		nc_gridx[:] = np.arange(self.p["ngridx"])
 
-		dim2d = ("grid_x","grid_y",)
-		nc_model_i = cdfFile.createVariable('model_i', 'i4',dim2d,fill_value= missingNumber)
-		nc_model_i.units = "-"
+		nc_gridy = cdfFile.createVariable('grid_y','f4',('grid_y',),fill_value= missingNumber)
+		nc_gridy.units = '-'
+		nc_gridy[:] = np.arange(self.p["ngridy"])
 
-		nc_model_j = cdfFile.createVariable('model_j', 'i4',dim2d,fill_value= missingNumber)
-		nc_model_j.units = "-"
-
-		nc_nlyrs = cdfFile.createVariable('nlyr', 'i4',dim2d,fill_value= missingNumber)
-		nc_nlyrs.units = "-"
-
-		nc_time = cdfFile.createVariable('datatime', 'i4',dim2d,fill_value= missingNumber)
-		nc_time.units = "seconds since 1970-01-01 00:00:00"
-
-		nc_longitude = cdfFile.createVariable('longitude', 'f4',dim2d,fill_value= missingNumber)
-		nc_longitude.units = "deg.dec"
-
-		nc_latitude = cdfFile.createVariable('latitude', 'f4',dim2d,fill_value= missingNumber)
-		nc_latitude.units = "deg.dec"
-
-		nc_lfrac = cdfFile.createVariable('lfrac', 'f4',dim2d,fill_value= missingNumber)
-		nc_lfrac.units = "-"
-
+		
+		
 		if (self.r["settings"]["active"]):
 
-			dim3d = ("grid_x","grid_y","nlyr",)
+			nc_heightbins = cdfFile.createVariable('heightbins', 'i4',("heightbins",),fill_value= missingNumber)
+			nc_heightbins.units = "-"
+			nc_heightbins[:] = np.arange(0,self.p["max_nlyrs"])
+
+
 			nc_height = cdfFile.createVariable('height', 'f4',dim3d,fill_value= missingNumber)
 			nc_height.units = "m"
-
-			dim4d = ("grid_x","grid_y","nlyr","frequency")
-			nc_Ze = cdfFile.createVariable('Ze', 'f4',dim4d,fill_value= missingNumber)
-			nc_Ze.units = "dBz"
-
-			nc_Attenuation_Hydrometeors = cdfFile.createVariable('Attenuation_Hydrometeors', 'f4',dim4d,fill_value= missingNumber)
-			nc_Attenuation_Hydrometeors.units = "dB"
-
-			nc_Attenuation_Atmosphere = cdfFile.createVariable('Attenuation_Atmosphere', 'f4',dim4d,fill_value= missingNumber)
-			nc_Attenuation_Atmosphere.units = "dB"
-
-
-		if (self.r["settings"]["passive"]):
+			nc_height[:] = self.r["hgt"]
 		
-			
-			dim6d = ("grid_x","grid_y","outlevels","angles","frequency","stokes")
-			nc_tb = cdfFile.createVariable('tb', 'f4',dim6d,fill_value= missingNumber)
-			nc_tb.units = "K"
-
-		#save data
-		if (self.r["settings"]["passive"]): 
+		if (self.r["settings"]["passive"]):
+			nc_angle = cdfFile.createVariable('angles','f4',('angles',),fill_value= missingNumber)
+			nc_angle.units = 'deg'
 			nc_angle[:] = self.r["angles"]
-		nc_frequency[:] = self.freqs
-		nc_nlyrs[:] = self.p["nlyrs"]
+			
+			nc_stokes = cdfFile.createVariable('stokes', 'S1',("stokes",),fill_value= missingNumber)
+			nc_stokes.units = "-"
+			nc_stokes[:] = ["H","V"]
+			
+			nc_out = cdfFile.createVariable('outlevels', 'f4',("outlevels",),fill_value= missingNumber)
+			nc_out.units = "m over sea level (top of atmosphere value) OR m over ground (ground value)"
+			nc_out[:] = [self.set["obs_height"],0]
+			
+		#create and write variables
+		
+		nc_model_i = cdfFile.createVariable('model_i', 'i4',dim2d,fill_value= missingNumber)
+		nc_model_i.units = "-"
 		nc_model_i[:] = self.p["model_i"]
+		
+		nc_model_j = cdfFile.createVariable('model_j', 'i4',dim2d,fill_value= missingNumber)
+		nc_model_j.units = "-"
 		nc_model_j[:] = self.p["model_j"]
+		
+		nc_nlyrs = cdfFile.createVariable('nlyr', 'i4',dim2d,fill_value= missingNumber)
+		nc_nlyrs.units = "-"
+		nc_nlyrs[:] = self.p["nlyrs"]
+		
+		nc_time = cdfFile.createVariable('datatime', 'i4',dim2d,fill_value= missingNumber)
+		nc_time.units = "seconds since 1970-01-01 00:00:00"
 		nc_time[:] = self.p["unixtime"]
+		
+		nc_longitude = cdfFile.createVariable('longitude', 'f4',dim2d,fill_value= missingNumber)
+		nc_longitude.units = "deg.dec"
 		nc_longitude[:] = self.p["lon"]
+		
+		nc_latitude = cdfFile.createVariable('latitude', 'f4',dim2d,fill_value= missingNumber)
+		nc_latitude.units = "deg.dec"
 		nc_latitude[:] = self.p["lat"]
+		
+		nc_lfrac = cdfFile.createVariable('lfrac', 'f4',dim2d,fill_value= missingNumber)
+		nc_lfrac.units = "-"
 		nc_lfrac[:] = self.p["lfrac"]
 		
-		if (self.r["settings"]["passive"]):
-			nc_stokes[:] = ["H","V"]
-			nc_out[:] = [self.set["obs_height"],0]
-			nc_tb[:] = self.r["tb"]
+		
 		if (self.r["settings"]["active"]):
-			nc_height[:] = self.r["hgt"]
+			
+			nc_Ze = cdfFile.createVariable('Ze', 'f4',dim4d,fill_value= missingNumber)
+			nc_Ze.units = "dBz"
 			nc_Ze[:] = self.r["Ze"]
+			
+			nc_Attenuation_Hydrometeors = cdfFile.createVariable('Attenuation_Hydrometeors', 'f4',dim4d,fill_value= missingNumber)
+			nc_Attenuation_Hydrometeors.units = "dB"
 			nc_Attenuation_Hydrometeors[:] = self.r["attenuationHydro"]
+			
+			nc_Attenuation_Atmosphere = cdfFile.createVariable('Attenuation_Atmosphere', 'f4',dim4d,fill_value= missingNumber)
+			nc_Attenuation_Atmosphere.units = "dB"
 			nc_Attenuation_Atmosphere[:] = self.r["attenuationAtmo"]
+		
+		if (self.r["settings"]["passive"]):
+			nc_tb = cdfFile.createVariable('tb', 'f4',dim6d,fill_value= missingNumber)
+			nc_tb.units = "K"
+			nc_tb[:] = self.r["tb"]
+			
 		
 		#profile data
 		

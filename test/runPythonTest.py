@@ -15,10 +15,11 @@ t.readPamtraProfile(inputFile)
 t.set["data_path"]='/home/mech/models/pamtra/data/'
 t.set["verbose"]=0
 t.set["pyVerbose"]=1
+
 #make artificially less levels for on eprofile!
 t.p["nlyrs"][2,0] = 25
-#change atrificially one timestamp
 
+#change atrificially one timestamp
 t.p["unixtime"][0,0] = 600 #1970-01-01 00:10
 
 testNo = sys.argv[1]
