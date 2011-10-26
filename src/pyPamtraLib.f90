@@ -139,7 +139,7 @@ out_angles&
 
 
 
-  if (verbose .gt. 1) print*,in_freqs, in_nlyrs, max_in_nlyrs
+if (set_verbose .gt. 1) print*,in_freqs, in_nlyrs, max_in_nlyrs
 
 
   !get git data
