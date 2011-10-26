@@ -4,7 +4,7 @@ subroutine write_nc_results(nc_file)
   use vars_output
   use vars_atmosphere, only: ngridx, ngridy,nlyr,freqs,nfrq, year, month, day, time
   use netcdf
-  use nml_params, only: active, passive, creator, verbose
+  use nml_params, only: active, passive, creator, verbose, zeSplitUp, n_moments
   implicit none
 
   integer :: ncid
@@ -131,62 +131,70 @@ subroutine write_nc_results(nc_file)
 
      dim4d = (/dfrqID,dlayerID,dlatID,dlonID/)
 
-     call check(nf90_def_var(ncid,'Ze', nf90_double,dim4d, ZeVarID))
-     call check(nf90_put_att(ncid, ZeVarID, "units", "dBz"))
-     call check(nf90_put_att(ncid, ZeVarID, "missing_value", -9999))
+     if (zeSplitUp) then
 
-     call check(nf90_def_var(ncid,'Ze_cloud water', nf90_double,dim4d, ZeCwVarID))
-     call check(nf90_put_att(ncid, ZeCwVarID, "units", "dBz"))
-     call check(nf90_put_att(ncid, ZeCwVarID, "missing_value", -9999))
+        call check(nf90_def_var(ncid,'Ze_cloud water', nf90_double,dim4d, ZeCwVarID))
+        call check(nf90_put_att(ncid, ZeCwVarID, "units", "dBz"))
+        call check(nf90_put_att(ncid, ZeCwVarID, "missing_value", -9999))
 
-     call check(nf90_def_var(ncid,'Ze_rain_water', nf90_double,dim4d, ZeRrVarID))
-     call check(nf90_put_att(ncid, ZeRrVarID, "units", "dBz"))
-     call check(nf90_put_att(ncid, ZeRrVarID, "missing_value", -9999))
+        call check(nf90_def_var(ncid,'Ze_rain_water', nf90_double,dim4d, ZeRrVarID))
+        call check(nf90_put_att(ncid, ZeRrVarID, "units", "dBz"))
+        call check(nf90_put_att(ncid, ZeRrVarID, "missing_value", -9999))
 
-     call check(nf90_def_var(ncid,'Ze_cloud_ice', nf90_double,dim4d, ZeCiVarID))
-     call check(nf90_put_att(ncid, ZeCiVarID, "units", "dBz"))
-     call check(nf90_put_att(ncid, ZeCiVarID, "missing_value", -9999))
+        call check(nf90_def_var(ncid,'Ze_cloud_ice', nf90_double,dim4d, ZeCiVarID))
+        call check(nf90_put_att(ncid, ZeCiVarID, "units", "dBz"))
+        call check(nf90_put_att(ncid, ZeCiVarID, "missing_value", -9999))
 
-     call check(nf90_def_var(ncid,'Ze_snow', nf90_double,dim4d, ZeSnVarID))
-     call check(nf90_put_att(ncid, ZeSnVarID, "units", "dBz"))
-     call check(nf90_put_att(ncid, ZeSnVarID, "missing_value", -9999))
+        call check(nf90_def_var(ncid,'Ze_snow', nf90_double,dim4d, ZeSnVarID))
+        call check(nf90_put_att(ncid, ZeSnVarID, "units", "dBz"))
+        call check(nf90_put_att(ncid, ZeSnVarID, "missing_value", -9999))
 
-     call check(nf90_def_var(ncid,'Ze_graupel', nf90_double,dim4d, ZeGrVarID))
-     call check(nf90_put_att(ncid, ZeGrVarID, "units", "dBz"))
-     call check(nf90_put_att(ncid, ZeGrVarID, "missing_value", -9999))
+        call check(nf90_def_var(ncid,'Ze_graupel', nf90_double,dim4d, ZeGrVarID))
+        call check(nf90_put_att(ncid, ZeGrVarID, "units", "dBz"))
+        call check(nf90_put_att(ncid, ZeGrVarID, "missing_value", -9999))
 
-     call check(nf90_def_var(ncid,'Ze_hail', nf90_double,dim4d, ZeHaVarID))
-     call check(nf90_put_att(ncid, ZeHaVarID, "units", "dBz"))
-     call check(nf90_put_att(ncid, ZeHaVarID, "missing_value", -9999))
+        call check(nf90_def_var(ncid,'Attenuation_cloud_water', nf90_float,dim4d, AttCwVarID))
+        call check(nf90_put_att(ncid, AttCwVarID, "units", "dB"))
+        call check(nf90_put_att(ncid, AttCwVarID, "missing_value", -9999))
 
+        call check(nf90_def_var(ncid,'Attenuation_rain', nf90_float,dim4d, AttRrVarID))
+        call check(nf90_put_att(ncid, AttRrVarID, "units", "dB"))
+        call check(nf90_put_att(ncid, AttRrVarID, "missing_value", -9999))
 
-     call check(nf90_def_var(ncid,'Attenuation_Hydrometeors', nf90_float,dim4d, AttHydroVarID))
-     call check(nf90_put_att(ncid, AttHydroVarID, "units", "dB"))
-     call check(nf90_put_att(ncid, AttHydroVarID, "missing_value", -9999))
+        call check(nf90_def_var(ncid,'Attenuation_cloud_ice', nf90_float,dim4d, AttCiVarID))
+        call check(nf90_put_att(ncid, AttCiVarID, "units", "dB"))
+        call check(nf90_put_att(ncid, AttCiVarID, "missing_value", -9999))
 
-     call check(nf90_def_var(ncid,'Attenuation_cloud_water', nf90_float,dim4d, AttCwVarID))
-     call check(nf90_put_att(ncid, AttCwVarID, "units", "dB"))
-     call check(nf90_put_att(ncid, AttCwVarID, "missing_value", -9999))
+        call check(nf90_def_var(ncid,'Attenuation_snow', nf90_float,dim4d, AttSnVarID))
+        call check(nf90_put_att(ncid, AttSnVarID, "units", "dB"))
+        call check(nf90_put_att(ncid, AttSnVarID, "missing_value", -9999))
 
-     call check(nf90_def_var(ncid,'Attenuation_rain', nf90_float,dim4d, AttRrVarID))
-     call check(nf90_put_att(ncid, AttRrVarID, "units", "dB"))
-     call check(nf90_put_att(ncid, AttRrVarID, "missing_value", -9999))
+        call check(nf90_def_var(ncid,'Attenuation_graupel', nf90_float,dim4d, AttGrVarID))
+        call check(nf90_put_att(ncid, AttGrVarID, "units", "dB"))
+        call check(nf90_put_att(ncid, AttGrVarID, "missing_value", -9999))
 
-     call check(nf90_def_var(ncid,'Attenuation_cloud_ice', nf90_float,dim4d, AttCiVarID))
-     call check(nf90_put_att(ncid, AttCiVarID, "units", "dB"))
-     call check(nf90_put_att(ncid, AttCiVarID, "missing_value", -9999))
+        if (n_moments .eq. 2) then
+           call check(nf90_def_var(ncid,'Ze_hail', nf90_double,dim4d, ZeHaVarID))
+           call check(nf90_put_att(ncid, ZeHaVarID, "units", "dBz"))
+           call check(nf90_put_att(ncid, ZeHaVarID, "missing_value", -9999))
+       
+           call check(nf90_def_var(ncid,'Attenuation_hail', nf90_float,dim4d, AttHaVarID))
+           call check(nf90_put_att(ncid, AttHaVarID, "units", "dB"))
+           call check(nf90_put_att(ncid, AttHaVarID, "missing_value", -9999))
+        end if
+        
+     else
+     
+        call check(nf90_def_var(ncid,'Ze', nf90_double,dim4d, ZeVarID))
+        call check(nf90_put_att(ncid, ZeVarID, "units", "dBz"))
+        call check(nf90_put_att(ncid, ZeVarID, "missing_value", -9999))
 
-     call check(nf90_def_var(ncid,'Attenuation_snow', nf90_float,dim4d, AttSnVarID))
-     call check(nf90_put_att(ncid, AttSnVarID, "units", "dB"))
-     call check(nf90_put_att(ncid, AttSnVarID, "missing_value", -9999))
+        call check(nf90_def_var(ncid,'Attenuation_Hydrometeors', nf90_float,dim4d, AttHydroVarID))
+        call check(nf90_put_att(ncid, AttHydroVarID, "units", "dB"))
+        call check(nf90_put_att(ncid, AttHydroVarID, "missing_value", -9999))
 
-     call check(nf90_def_var(ncid,'Attenuation_graupel', nf90_float,dim4d, AttGrVarID))
-     call check(nf90_put_att(ncid, AttGrVarID, "units", "dB"))
-     call check(nf90_put_att(ncid, AttGrVarID, "missing_value", -9999))
+     end if
 
-     call check(nf90_def_var(ncid,'Attenuation_hail', nf90_float,dim4d, AttHaVarID))
-     call check(nf90_put_att(ncid, AttHaVarID, "units", "dB"))
-     call check(nf90_put_att(ncid, AttHaVarID, "missing_value", -9999))
 
      call check(nf90_def_var(ncid,'Attenuation_Atmosphere', nf90_float,dim4d, AttAtmoVarID))
      call check(nf90_put_att(ncid, AttAtmoVarID, "units", "dB"))
@@ -228,37 +236,44 @@ subroutine write_nc_results(nc_file)
   if (active) then                             !reshapeing needed due to Fortran's crazy Netcdf handling...
      call check(nf90_put_var(ncid, heightVarID, &
           RESHAPE( hgt, (/ nlyr, ngridy, ngridx/), ORDER = (/3,2,1/))))
-     call check(nf90_put_var(ncid, ZeVarID, &
-          RESHAPE( Ze, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-          
-     call check(nf90_put_var(ncid, ZeCwVarID, &
-          RESHAPE( Ze_cw, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-     call check(nf90_put_var(ncid, ZeRrVarID, &
-          RESHAPE( Ze_rr, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-     call check(nf90_put_var(ncid, ZeCiVarID, &
-          RESHAPE( Ze_ci, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-     call check(nf90_put_var(ncid, ZeSnVarID, &
-          RESHAPE( Ze_sn, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-     call check(nf90_put_var(ncid, ZeGrVarID, &
-          RESHAPE( Ze_gr, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-     call check(nf90_put_var(ncid, ZeHaVarID, &
-          RESHAPE( Ze_ha, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
 
-     call check(nf90_put_var(ncid, AttHydroVarID, &
-          RESHAPE( Att_hydro, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+     if (zeSplitUp) then
+        call check(nf90_put_var(ncid, ZeCwVarID, &
+          RESHAPE( Ze_cw, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+        call check(nf90_put_var(ncid, ZeRrVarID, &
+          RESHAPE( Ze_rr, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+        call check(nf90_put_var(ncid, ZeCiVarID, &
+          RESHAPE( Ze_ci, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+        call check(nf90_put_var(ncid, ZeSnVarID, &
+          RESHAPE( Ze_sn, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+        call check(nf90_put_var(ncid, ZeGrVarID, &
+          RESHAPE( Ze_gr, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
           
-     call check(nf90_put_var(ncid, AttCwVarID, &
+        call check(nf90_put_var(ncid, AttCwVarID, &
           RESHAPE( Att_cw, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-     call check(nf90_put_var(ncid, AttRrVarID, &
+        call check(nf90_put_var(ncid, AttRrVarID, &
           RESHAPE( Att_rr, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-     call check(nf90_put_var(ncid, AttCiVarID, &
+        call check(nf90_put_var(ncid, AttCiVarID, &
           RESHAPE( Att_ci, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-     call check(nf90_put_var(ncid, AttSnVarID, &
+        call check(nf90_put_var(ncid, AttSnVarID, &
           RESHAPE( Att_sn, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-     call check(nf90_put_var(ncid, AttGrVarID, &
+        call check(nf90_put_var(ncid, AttGrVarID, &
           RESHAPE( Att_gr, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-     call check(nf90_put_var(ncid, AttHaVarID, &
-          RESHAPE( Att_ha, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+        if (n_moments .eq. 2) then
+           call check(nf90_put_var(ncid, ZeHaVarID, &
+             RESHAPE( Ze_ha, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+           call check(nf90_put_var(ncid, AttHaVarID, &
+             RESHAPE( Att_ha, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+        end if           
+     else
+        call check(nf90_put_var(ncid, ZeVarID, &
+          RESHAPE( Ze, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+        call check(nf90_put_var(ncid, AttHydroVarID, &
+          RESHAPE( Att_hydro, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+     end if
+
+
+
 
      call check(nf90_put_var(ncid, AttAtmoVarID, &
           RESHAPE( Att_atmo, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
