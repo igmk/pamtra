@@ -125,8 +125,8 @@ class pyPamtra(object):
 		
 		self.dimensions["hgt"] = ["ngridx","ngridy","max_nlyrs"]
 		self.dimensions["Ze"] = ["gridx","gridy","lyr","frequency"]
-		self.dimensions["attenuationHydros"] = ["gridx","gridy","lyr","frequency"]
-		self.dimensions["attenuationAtmo"] = ["gridx","gridy","lyr","frequency"]
+		self.dimensions["Att_hydros"] = ["gridx","gridy","lyr","frequency"]
+		self.dimensions["Att_atmo"] = ["gridx","gridy","lyr","frequency"]
 		self.dimensions["tb"] = ["gridx","gridy","outlevels","angles","frequency","stokes"]
 
 		
@@ -175,8 +175,8 @@ class pyPamtra(object):
 		
 		self.units["hgt"] = "m"
 		self.units["Ze"] = "dBz"
-		self.units["attenuationHydros"] = "-"
-		self.units["attenuationAtmo"] = "-"
+		self.units["Att_hydros"] = "-"
+		self.units["Att_atmo"] = "-"
 		self.units["tb"] = "K"
 	
 		self._nstokes = 2
@@ -719,16 +719,30 @@ class pyPamtra(object):
 		pp_jobs = dict()
 		
 		self.r["Ze"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
-		self.r["attenuationHydro"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
-		self.r["attenuationAtmo"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["Att_hydro"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["Att_atmo"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		
+		self.r["Ze_cw"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["Ze_rr "] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["Ze_ci"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["Ze_sn"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["Ze_gr "] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["Ze_ha"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["Att_cw"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["Att_rr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["Att_ci"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["Att_sn"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["Att_gr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["Att_ha"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+
 		self.r["hgt"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],))*missingNumber
 		self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles,self.nfreqs,self._nstokes))*missingNumber
 		
-		self.r["Ze_dimensions"] = ["gridx","gridy","lyr","frequency"]
-		self.r["attenuationHydro_dimensions"] = ["gridx","gridy","lyr","frequency"]
-		self.r["attenuationAtmo_dimensions"] = ["gridx","gridy","lyr","frequency"]
-		self.r["hgt_dimensions"] = ["gridx","gridy","lyr"]
-		self.r["tb_dimensions"] = ["gridx","gridy","outlevels","angles","frequency","stokes"]
+		#self.r["Ze_dimensions"] = ["gridx","gridy","lyr","frequency"]
+		#self.r["Att_hydro_dimensions"] = ["gridx","gridy","lyr","frequency"]
+		#self.r["Att_atmo_dimensions"] = ["gridx","gridy","lyr","frequency"]
+		#self.r["hgt_dimensions"] = ["gridx","gridy","lyr"]
+		#self.r["tb_dimensions"] = ["gridx","gridy","outlevels","angles","frequency","stokes"]
 
 		
 		self.pp_noJobs = len(np.arange(0,self.nfreqs,pp_deltaF))*len(np.arange(0,self.p["ngridx"],pp_deltaX))*len(np.arange(0,self.p["ngridy"],pp_deltaY))
@@ -827,8 +841,8 @@ class pyPamtra(object):
 
 					#(self.r["pamtraVersion"],self.r["pamtraHash"],
 					#self.r["Ze"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
-					#self.r["attenuationHydro"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
-					#self.r["attenuationAtmo"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
+					#self.r["Att_hydro"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
+					#self.r["Att_atmo"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
 					#self.r["hgt"][pp_startX:pp_endX,pp_startY:pp_endY,:], 
 					#self.r["tb"][pp_startX:pp_endX,pp_startY:pp_endY,:,:,pp_startF:pp_endF,:], 
 					#self.r["angles"] ) = pp_jobs[pp_ii]()
@@ -846,7 +860,27 @@ class pyPamtra(object):
 		del self.job_server
 	
 	def _ppCallback(self,pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii,*results):
-		(((self.r["pamtraVersion"],self.r["pamtraHash"], self.r["Ze"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], self.r["attenuationHydro"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], self.r["attenuationAtmo"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], self.r["hgt"][pp_startX:pp_endX,pp_startY:pp_endY,:],self.r["tb"][pp_startX:pp_endX,pp_startY:pp_endY,:,:,pp_startF:pp_endF,:], self.r["angles"],),host,),) = results
+		(((
+		self.r["pamtraVersion"],self.r["pamtraHash"], 
+		self.r["Ze"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
+		self.r["Ze_cw"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
+		self.r["Ze_rr "][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
+		self.r["Ze_ci"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
+		self.r["Ze_sn"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
+		self.r["Ze_gr "][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
+		self.r["Ze_ha"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
+		self.r["Att_hydro"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
+		self.r["Att_cw"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
+		self.r["Att_rr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
+		self.r["Att_ci"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
+		self.r["Att_sn"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
+		self.r["Att_gr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
+		self.r["Att_ha"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
+		self.r["Att_atmo"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
+		self.r["hgt"][pp_startX:pp_endX,pp_startY:pp_endY,:],
+		self.r["tb"][pp_startX:pp_endX,pp_startY:pp_endY,:,:,pp_startF:pp_endF,:], 
+		self.r["angles"],
+		),host,),) = results
 		self.pp_jobsDone += 1
 		if self.set["pyVerbose"] > 0: 
 			sys.stdout.write("\r"+50*" "+"\r"+ "%s: %6i, %8.3f%% collected (#%6i, %s)"%(datetime.datetime.now().strftime("%Y%m%d-%H:%M:%S"),self.pp_jobsDone,(self.pp_jobsDone)/float(self.pp_noJobs)*100,pp_ii+1,host))
@@ -874,8 +908,28 @@ class pyPamtra(object):
 		self.r = dict()
 
 		#output
-		(self.r["pamtraVersion"],self.r["pamtraHash"],\
-		self.r["Ze"],self.r["attenuationHydro"],self.r["attenuationAtmo"],self.r["hgt"], self.r["tb"], self.r["angles"],), host = \
+		(
+		self.r["pamtraVersion"],
+		self.r["pamtraHash"],
+		self.r["Ze"], 
+		self.r["Ze_cw"], 
+		self.r["Ze_rr "], 
+		self.r["Ze_ci"], 
+		self.r["Ze_sn"], 
+		self.r["Ze_gr "], 
+		self.r["Ze_ha"], 
+		self.r["Att_hydro"], 
+		self.r["Att_cw"], 
+		self.r["Att_rr"], 
+		self.r["Att_ci"], 
+		self.r["Att_sn"], 
+		self.r["Att_gr"], 
+		self.r["Att_ha"], 
+		self.r["Att_atmo"], 
+		self.r["hgt"],
+		self.r["tb"],
+		self.r["angles"],
+		), host = \
 		pyPamtraLibWrapper.PamtraFortranWrapper(
 		#self.set
 		self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["emissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["n_moments"], self.set["moments_file"],
@@ -1032,11 +1086,11 @@ class pyPamtra(object):
 			
 			nc_Attenuation_Hydrometeors = cdfFile.createVariable('Attenuation_Hydrometeors', 'f4',dim4d,fill_value= missingNumber)
 			nc_Attenuation_Hydrometeors.units = "dB"
-			nc_Attenuation_Hydrometeors[:] = self.r["attenuationHydro"]
+			nc_Attenuation_Hydrometeors[:] = self.r["Att_hydro"]
 			
 			nc_Attenuation_Atmosphere = cdfFile.createVariable('Attenuation_Atmosphere', 'f4',dim4d,fill_value= missingNumber)
 			nc_Attenuation_Atmosphere.units = "dB"
-			nc_Attenuation_Atmosphere[:] = self.r["attenuationAtmo"]
+			nc_Attenuation_Atmosphere[:] = self.r["Att_atmo"]
 		
 		if (self.r["settings"]["passive"]):
 			nc_tb = cdfFile.createVariable('tb', 'f4',dim6d,fill_value= missingNumber)

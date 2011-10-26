@@ -85,7 +85,19 @@ python module pyPamtraLib ! in
             character*40 intent(out) :: out_gitversion
             character*40 intent(out) :: out_githash
             real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_ze
+            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_ze_cw
+            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_ze_rr 
+            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_ze_ci
+            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_ze_sn
+            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_ze_gr 
+            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_ze_ha
             real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_hydro
+            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_cw
+            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_rr
+            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_ci
+            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_sn
+            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_gr
+            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_ha
             real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_atmo
             real dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: out_hgt
             real dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out),depend(in_ngridx,in_ngridy,in_nfreq) :: out_tb
