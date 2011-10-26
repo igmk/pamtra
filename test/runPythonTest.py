@@ -77,7 +77,8 @@ if testNo != "4":
 	reference.loadResultsFromNumpy("../test/referenceOutput/"+testNo+"/python"+testNo+".pickle")
 	#import pdb; pdb.set_trace()
 	error = 0
-	for key in ["angles","tb","hgt","Ze", "Ze_rr ", "Ze_ci", "Ze_sn", "Ze_gr ", "Ze_ha", "Att_hydro", "Att_cw", "Att_rr", "Att_ci", "Att_sn", "Att_gr", "Att_ha", "Att_atmo"]:
+
+	for key in ["angles","tb","hgt", "Ze_rr", "Ze_ci", "Ze_sn", "Ze_gr", "Ze_ha", "Att_cw", "Att_rr", "Att_ci", "Att_sn", "Att_gr", "Att_ha", "Att_atmo"]:
 		if np.any(reference.r[key] != t.r[key]):
 			error += 1
 			print key, "max. difference:", np.max(reference.r[key] - t.r[key])

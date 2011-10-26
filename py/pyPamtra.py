@@ -44,7 +44,8 @@ class pyPamtra(object):
 		self.set["obs_height"]=833000.
 		self.set["units"]='T'
 		self.set["outpol"]='VH'
-		self.set["creator"]='Pamtrauser'
+		self.set["creator"]='pyPamtrauser'
+		self.set["zeSplitUp"]=True # only locally in PYpamtra
 
 		self.set["active"]=True
 		self.set["passive"]=True
@@ -723,10 +724,10 @@ class pyPamtra(object):
 		self.r["Att_atmo"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
 		
 		self.r["Ze_cw"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
-		self.r["Ze_rr "] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["Ze_rr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
 		self.r["Ze_ci"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
 		self.r["Ze_sn"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
-		self.r["Ze_gr "] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["Ze_gr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
 		self.r["Ze_ha"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
 		self.r["Att_cw"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
 		self.r["Att_rr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
@@ -864,10 +865,10 @@ class pyPamtra(object):
 		self.r["pamtraVersion"],self.r["pamtraHash"], 
 		self.r["Ze"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
 		self.r["Ze_cw"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
-		self.r["Ze_rr "][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
+		self.r["Ze_rr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
 		self.r["Ze_ci"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
 		self.r["Ze_sn"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
-		self.r["Ze_gr "][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
+		self.r["Ze_gr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
 		self.r["Ze_ha"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
 		self.r["Att_hydro"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
 		self.r["Att_cw"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
@@ -913,10 +914,10 @@ class pyPamtra(object):
 		self.r["pamtraHash"],
 		self.r["Ze"], 
 		self.r["Ze_cw"], 
-		self.r["Ze_rr "], 
+		self.r["Ze_rr"], 
 		self.r["Ze_ci"], 
 		self.r["Ze_sn"], 
-		self.r["Ze_gr "], 
+		self.r["Ze_gr"], 
 		self.r["Ze_ha"], 
 		self.r["Att_hydro"], 
 		self.r["Att_cw"], 
@@ -1080,13 +1081,68 @@ class pyPamtra(object):
 		
 		if (self.r["settings"]["active"]):
 			
-			nc_Ze = cdfFile.createVariable('Ze', 'f4',dim4d,fill_value= missingNumber)
-			nc_Ze.units = "dBz"
-			nc_Ze[:] = self.r["Ze"]
-			
-			nc_Attenuation_Hydrometeors = cdfFile.createVariable('Attenuation_Hydrometeors', 'f4',dim4d,fill_value= missingNumber)
-			nc_Attenuation_Hydrometeors.units = "dB"
-			nc_Attenuation_Hydrometeors[:] = self.r["Att_hydro"]
+			if self.set["zeSplitUp"]:
+
+				nc_Ze_cw = cdfFile.createVariable('Ze_cloud_water', 'f4',dim4d,fill_value= missingNumber)
+				nc_Ze_cw.units = "dBz"
+				nc_Ze_cw[:] = self.r["Ze_cw"]
+
+				nc_Ze_rr = cdfFile.createVariable('Ze_rain', 'f4',dim4d,fill_value= missingNumber)
+				nc_Ze_rr.units = "dBz"
+				nc_Ze_rr[:] = self.r["Ze_rr"]
+
+				nc_Ze_ci = cdfFile.createVariable('Ze_cloud_ice', 'f4',dim4d,fill_value= missingNumber)
+				nc_Ze_ci.units = "dBz"
+				nc_Ze_ci[:] = self.r["Ze_ci"]
+
+				nc_Ze_sn = cdfFile.createVariable('Ze_snow', 'f4',dim4d,fill_value= missingNumber)
+				nc_Ze_sn.units = "dBz"
+				nc_Ze_sn[:] = self.r["Ze_sn"]
+
+				nc_Ze_gr = cdfFile.createVariable('Ze_graupel', 'f4',dim4d,fill_value= missingNumber)
+				nc_Ze_gr.units = "dBz"
+				nc_Ze_gr[:] = self.r["Ze_gr"]
+
+				nc_Att_cw = cdfFile.createVariable('Attenuation_cloud_water', 'f4',dim4d,fill_value= missingNumber)
+				nc_Att_cw.units = "dB"
+				nc_Att_cw[:] = self.r["Att_cw"]
+
+				nc_Att_rrrs = cdfFile.createVariable('Attenuation_rain', 'f4',dim4d,fill_value= missingNumber)
+				nc_Att_rrrs.units = "dB"
+				nc_Att_rrrs[:] = self.r["Att_rr"]
+				
+				nc_Att_ci = cdfFile.createVariable('Attenuation_cloud_ice', 'f4',dim4d,fill_value= missingNumber)
+				nc_Att_ci.units = "dB"
+				nc_Att_ci[:] = self.r["Att_ci"]
+				
+				nc_Att_sn = cdfFile.createVariable('Attenuation_snow', 'f4',dim4d,fill_value= missingNumber)
+				nc_Att_sn.units = "dB"
+				nc_Att_sn[:] = self.r["Att_sn"]
+				
+				nc_Att_gr = cdfFile.createVariable('Attenuation_graupel', 'f4',dim4d,fill_value= missingNumber)
+				nc_Att_gr.units = "dB"
+				nc_Att_gr[:] = self.r["Att_gr"]
+				
+				if self.set["n_moments"]==2:
+
+					nc_Ze_ha = cdfFile.createVariable('Ze_hail', 'f4',dim4d,fill_value= missingNumber)
+					nc_Ze_ha.units = "dBz"
+					nc_Ze_ha[:] = self.r["Ze_ha"]
+
+					nc_Att_ha = cdfFile.createVariable('Attenuation_hail', 'f4',dim4d,fill_value= missingNumber)
+					nc_Att_ha.units = "dB"
+					nc_Att_ha[:] = self.r["Att_ha"]
+					
+				
+			else: 
+				 
+				nc_Ze = cdfFile.createVariable('Ze', 'f4',dim4d,fill_value= missingNumber)
+				nc_Ze.units = "dBz"
+				nc_Ze[:] = self.r["Ze"]
+				
+				nc_Attenuation_Hydrometeors = cdfFile.createVariable('Attenuation_Hydrometeors', 'f4',dim4d,fill_value= missingNumber)
+				nc_Attenuation_Hydrometeors.units = "dB"
+				nc_Attenuation_Hydrometeors[:] = self.r["Att_hydro"]
 			
 			nc_Attenuation_Atmosphere = cdfFile.createVariable('Attenuation_Atmosphere', 'f4',dim4d,fill_value= missingNumber)
 			nc_Attenuation_Atmosphere.units = "dB"
