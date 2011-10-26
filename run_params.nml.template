@@ -16,6 +16,7 @@ outpol='VH'
 freq_str=''
 file_desc=''
 creator='Name (mail@domain.com)'
+zeSplitUp=.true. 
 /
 &run_mode
 active=.true.

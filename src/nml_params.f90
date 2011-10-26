@@ -43,7 +43,8 @@ module nml_params
        lhyd_extinction, &    ! hydrometeor extinction desired
        write_nc, &  ! write netcdf or ascii output
        active, &  	   ! calculate active stuff
-       passive		   ! calculate passive stuff (with RT3)
+       passive, &     ! calculate passive stuff (with RT3)
+       zeSplitUp     ! save Ze and Att for every hydrometeor seperately. has only effect on netcdf file!
 
   character(5) :: EM_snow, EM_grau, EM_ice
   character(3) :: SD_snow, SD_grau, SD_rain, gas_mod
@@ -65,7 +66,7 @@ contains
     namelist / verbose_mode / verbose
     namelist / inoutput_mode / write_nc, input_path, output_path,&
          tmp_path, dump_to_file, data_path
-    namelist / output / obs_height,units,outpol,freq_str,file_desc,creator
+    namelist / output / obs_height,units,outpol,freq_str,file_desc,creator,zeSplitUp
     namelist / run_mode / active, passive
     namelist / surface_params / ground_type,salinity, emissivity
     namelist / gas_abs_mod / lgas_extinction, gas_mod
@@ -93,7 +94,8 @@ contains
     freq_str=''
     file_desc=''
     creator='Pamtrauser'
-
+    zeSplitUp = .true.    
+    
     active=.true.
     passive=.true.
 
