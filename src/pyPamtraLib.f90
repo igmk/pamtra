@@ -17,9 +17,14 @@ in_hwc_q, in_cwc_n, in_iwc_n, in_rwc_n, in_swc_n, in_gwc_n, in_hwc_n&
 ,& !meta out
 out_gitVersion,out_gitHash &
 ,& !data_out
-out_Ze, out_Att_hydro,out_Att_atmo,out_hgt,out_tb,&
+out_Ze,&
+out_Ze_cw,out_Ze_rr,out_Ze_ci,out_Ze_sn,out_Ze_gr,out_Ze_ha,&
+out_Att_hydro,&
+out_Att_cw,out_Att_rr,out_Att_ci,out_Att_sn,out_Att_gr,out_Att_ha,&
+out_Att_atmo,out_hgt,out_tb,&
 out_angles&
 )
+
 
 
 
@@ -91,8 +96,11 @@ out_angles&
     character(40),intent(out) :: out_gitHash, out_gitVersion
 
   !Output
-  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out) :: out_Ze,&
-            out_Att_hydro,out_Att_atmo
+  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out) :: out_Ze,out_Att_hydro,out_Att_atmo
+  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out)::out_Ze_cw,out_Ze_rr,out_Ze_ci,&
+                  out_Ze_sn,out_Ze_gr,out_Ze_ha
+  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out)::out_Att_cw,out_Att_rr,out_Att_ci,&
+                  out_Att_sn,out_Att_gr,out_Att_ha
   real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(out) :: out_hgt
   real(kind=sgl), dimension(32),intent(out) :: out_angles !2*NUMMU instead of 32 does not work, because f2py does not know dimensions!
   real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: out_tb !same here: noutlevels=2, 2*NUMMU = 32, NSTOKES = 2
@@ -117,6 +125,8 @@ out_angles&
   !f2py intent(out) :: out_gitVersion,out_gitHash
   !data out
   !f2py intent(out) :: out_Ze,out_Att_hydro,out_Att_atmo,out_hgt,out_tb
+  !f2py intent(out) :: out_Ze_cw,out_Ze_rr,out_Ze_ci,out_Ze_sn,out_Ze_gr,out_Ze_ha
+  !f2py intent(out) :: out_Att_cw,out_Att_rr,out_Att_ci,out_Att_sn,out_Att_gr,out_Att_ha
   !f2py intent(out) :: out_angles
 
 
@@ -203,6 +213,21 @@ out_angles&
    out_Ze = -9999.
    out_Att_hydro = -9999.
    out_Att_atmo = -9999.
+
+   out_Ze_cw = -9999.
+   out_Ze_rr = -9999.
+   out_Ze_ci = -9999.
+   out_Ze_sn = -9999.
+   out_Ze_gr = -9999.
+   out_Ze_ha = -9999.
+   out_Att_cw = -9999.
+   out_Att_rr = -9999.
+   out_Att_ci = -9999.
+   out_Att_sn = -9999.
+   out_Att_gr = -9999.
+   out_Att_ha = -9999.
+
+
    out_hgt = -9999.
    out_angles = -9999.
    out_tb = -9999
@@ -279,6 +304,21 @@ out_angles&
             out_Ze(nx,ny,1:nlyr,:) = Ze(nx,ny,1:nlyr,:)
             out_Att_hydro(nx,ny,1:nlyr,:) = Att_hydro(nx,ny,1:nlyr,:)
             out_Att_atmo(nx,ny,1:nlyr,:) = Att_atmo(nx,ny,1:nlyr,:)
+
+            out_Ze_cw(nx,ny,1:nlyr,:) = Ze_cw(nx,ny,1:nlyr,:)
+            out_Ze_rr(nx,ny,1:nlyr,:) = Ze_rr(nx,ny,1:nlyr,:)
+            out_Ze_ci(nx,ny,1:nlyr,:) = Ze_ci(nx,ny,1:nlyr,:)
+            out_Ze_sn(nx,ny,1:nlyr,:) = Ze_sn(nx,ny,1:nlyr,:)
+            out_Ze_gr(nx,ny,1:nlyr,:) = Ze_gr(nx,ny,1:nlyr,:)
+            out_Ze_ha(nx,ny,1:nlyr,:) = Ze_ha(nx,ny,1:nlyr,:)
+            out_Att_cw(nx,ny,1:nlyr,:) = Att_cw(nx,ny,1:nlyr,:)
+            out_Att_rr(nx,ny,1:nlyr,:) = Att_rr(nx,ny,1:nlyr,:)
+            out_Att_ci(nx,ny,1:nlyr,:) = Att_ci(nx,ny,1:nlyr,:)
+            out_Att_sn(nx,ny,1:nlyr,:) = Att_sn(nx,ny,1:nlyr,:)
+            out_Att_gr(nx,ny,1:nlyr,:) = Att_gr(nx,ny,1:nlyr,:)
+            out_Att_ha(nx,ny,1:nlyr,:) = Att_ha(nx,ny,1:nlyr,:)
+
+
             out_hgt(nx,ny,1:nlyr) = hgt(nx,ny,1:nlyr)
           end if
 
