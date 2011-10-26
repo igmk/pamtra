@@ -3,7 +3,7 @@
 
 python module pyPamtraLib ! in 
     interface  ! in :pyPamtraLib
-        subroutine pypamtralib(set_verbose,set_dump_to_file,set_tmp_path,set_data_path,set_obs_height,set_units,set_outpol,set_creator,set_active,set_passive,set_ground_type,set_salinity,set_emissivity,set_lgas_extinction,set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_sd_snow,set_n_0snowdsnow,set_em_snow,set_sp,set_isnow_n0,set_liu_type,set_sd_grau,set_n_0graudgrau,set_em_grau,set_em_ice,set_sd_rain,set_n_0raind,set_n_moments,set_moments_file,in_ngridx,in_ngridy,max_in_nlyrs,in_nlyrs,in_nfreq,in_freqs,in_timestamp,in_deltax,in_deltay,in_lat,in_lon,in_model_i,in_model_j,in_wind10u,in_wind10v,in_lfrac,in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev,in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp,in_hwp,in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q,in_hwc_q,in_cwc_n,in_iwc_n,in_rwc_n,in_swc_n,in_gwc_n,in_hwc_n,out_gitversion,out_githash,out_ze,out_attenuation_hydro,out_attenuation_atmo,out_hgt,out_tb,out_angles) ! in :pyPamtraLib:pyPamtraLib.f90
+        subroutine pypamtralib(set_verbose,set_dump_to_file,set_tmp_path,set_data_path,set_obs_height,set_units,set_outpol,set_creator,set_active,set_passive,set_ground_type,set_salinity,set_emissivity,set_lgas_extinction,set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_sd_snow,set_n_0snowdsnow,set_em_snow,set_sp,set_isnow_n0,set_liu_type,set_sd_grau,set_n_0graudgrau,set_em_grau,set_em_ice,set_sd_rain,set_n_0raind,set_n_moments,set_moments_file,in_ngridx,in_ngridy,max_in_nlyrs,in_nlyrs,in_nfreq,in_freqs,in_timestamp,in_deltax,in_deltay,in_lat,in_lon,in_model_i,in_model_j,in_wind10u,in_wind10v,in_lfrac,in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev,in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp,in_hwp,in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q,in_hwc_q,in_cwc_n,in_iwc_n,in_rwc_n,in_swc_n,in_gwc_n,in_hwc_n,out_gitversion,out_githash,out_ze,out_att_hydro,out_att_atmo,out_hgt,out_tb,out_angles) ! in :pyPamtraLib:pyPamtraLib.f90
             use mod_io_strings
             use kinds
             use vars_output
@@ -85,8 +85,8 @@ python module pyPamtraLib ! in
             character*40 intent(out) :: out_gitversion
             character*40 intent(out) :: out_githash
             real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_ze
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_attenuation_hydro
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_attenuation_atmo
+            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_hydro
+            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_atmo
             real dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: out_hgt
             real dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out),depend(in_ngridx,in_ngridy,in_nfreq) :: out_tb
             real dimension(32),intent(out) :: out_angles

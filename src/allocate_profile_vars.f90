@@ -37,13 +37,29 @@ subroutine allocate_profile_vars
 
   allocate(nlegen(nlyr),stat=alloc_status)
   allocate(rt3nlegen(nlyr),stat=alloc_status)
+  
   allocate(kextatmo(nlyr), stat=alloc_status)
   allocate(kexttot(nlyr), stat=alloc_status)
+  allocate(kextsn(nlyr), stat=alloc_status)
+  allocate(kextcw(nlyr), stat=alloc_status)
+  allocate(kextrr(nlyr), stat=alloc_status)
+  allocate(kextgr(nlyr), stat=alloc_status)
+  allocate(kextci(nlyr), stat=alloc_status)
+  allocate(kextha(nlyr), stat=alloc_status)
+  
   allocate(salbtot(nlyr), stat=alloc_status)
   allocate(rt3kexttot(nlyr), stat=alloc_status)
   allocate(rt3salbtot(nlyr), stat=alloc_status)
   allocate(g_coeff(nlyr), stat=alloc_status)
+  
   allocate(back(nlyr), stat=alloc_status)
+  allocate(backcw(nlyr), stat=alloc_status)
+  allocate(backrr(nlyr), stat=alloc_status)
+  allocate(backci(nlyr), stat=alloc_status)
+  allocate(backsn(nlyr), stat=alloc_status)
+  allocate(backgr(nlyr), stat=alloc_status)
+  allocate(backha(nlyr), stat=alloc_status)
+
   allocate(legen(nlyr,200), stat=alloc_status)
   allocate(legen2(nlyr,200), stat=alloc_status)
   allocate(legen3(nlyr,200), stat=alloc_status)

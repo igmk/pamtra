@@ -29,9 +29,21 @@ subroutine allocate_output_vars(no_allocated_lyrs)
   end if
 
   if (active) then
-     allocate(Ze(ngridx,ngridy,no_allocated_lyrs,nfrq))
-     allocate(Attenuation_hydro(ngridx,ngridy,no_allocated_lyrs,nfrq))
-     allocate(Attenuation_atmo(ngridx,ngridy,no_allocated_lyrs,nfrq))
+     allocate(Ze(ngridx,ngridy,no_allocated_lyrs,nfrq),&
+             Ze_cw(ngridx,ngridy,no_allocated_lyrs,nfrq),&
+             Ze_rr(ngridx,ngridy,no_allocated_lyrs,nfrq),&
+             Ze_ci(ngridx,ngridy,no_allocated_lyrs,nfrq),&
+             Ze_sn(ngridx,ngridy,no_allocated_lyrs,nfrq),&
+             Ze_gr(ngridx,ngridy,no_allocated_lyrs,nfrq),&
+             Ze_ha(ngridx,ngridy,no_allocated_lyrs,nfrq))
+     allocate(Att_hydro(ngridx,ngridy,no_allocated_lyrs,nfrq),&
+             Att_cw(ngridx,ngridy,no_allocated_lyrs,nfrq),&
+             Att_rr(ngridx,ngridy,no_allocated_lyrs,nfrq),&
+             Att_ci(ngridx,ngridy,no_allocated_lyrs,nfrq),&
+             Att_sn(ngridx,ngridy,no_allocated_lyrs,nfrq),&
+             Att_gr(ngridx,ngridy,no_allocated_lyrs,nfrq),&
+             Att_ha(ngridx,ngridy,no_allocated_lyrs,nfrq))
+     allocate(Att_atmo(ngridx,ngridy,no_allocated_lyrs,nfrq))
      allocate(hgt(ngridx,ngridy,no_allocated_lyrs))
   end if
 

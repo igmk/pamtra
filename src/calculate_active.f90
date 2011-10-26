@@ -1,4 +1,6 @@
-subroutine calculate_active(OUT_FILE_ACT,freq,hgt,Ze, Attenuation_atmo, Attenuation_hydro)
+subroutine calculate_active(OUT_FILE_ACT,freq,hgt,&
+  Ze,Ze_cw,Ze_rr,Ze_ci,Ze_sn,Ze_gr,Ze_ha,&
+  Att_atmo, Att_hydro, Att_cw,Att_rr,Att_ci,Att_sn,Att_gr,Att_ha)
   ! This function computes and writes Ze and PIA
   ! PIA is calculated bottom (BU) up AND top down (TD) for hydrometeors and gaseous extinction seperately.
 
@@ -14,7 +16,9 @@ subroutine calculate_active(OUT_FILE_ACT,freq,hgt,Ze, Attenuation_atmo, Attenuat
   real(kind=dbl) :: K2, dielec_water, tau_hydro, tau_atmo, d_hgt,wavelength
   character(300), intent(in) ::OUT_FILE_ACT 
   real(kind=dbl), intent(in) :: freq
-  real(kind=dbl), dimension(nlyr), intent(out) ::      hgt, Ze, Attenuation_atmo, Attenuation_hydro
+  real(kind=dbl), dimension(nlyr), intent(out) :: hgt, &
+          Ze,Ze_cw,Ze_rr,Ze_ci,Ze_sn,Ze_gr,Ze_ha, &
+          Att_atmo, Att_hydro, Att_cw,Att_rr,Att_ci,Att_sn,Att_gr,Att_ha
 
   wavelength = c / (freq*1.d9)   ! m
   tau_hydro = 0.d0
@@ -23,11 +27,36 @@ subroutine calculate_active(OUT_FILE_ACT,freq,hgt,Ze, Attenuation_atmo, Attenuat
      hgt(nz) = (hgt_lev(nz-1)+hgt_lev(nz))*0.5d0
      d_hgt = hgt_lev(nz) - hgt_lev(nz-1)
      K2 = dielec_water(0.D0,temp(nz)-t_abs,freq)
-     Ze(nz) = 10*log10(1d18* (1d0/ (K2*pi**5) ) * back(nz) * (wavelength)**4)
-     if (abs(Ze(nz)) .gt. huge(Ze(nz))) Ze(nz) = -9999.d0
-     Attenuation_atmo(nz) = 10*log10(exp(kextatmo(nz)*d_hgt))
-     Attenuation_hydro(nz) = 10*log10(exp(kexttot(nz)*d_hgt))
 
+     Ze(nz) = 10*log10(1d18* (1d0/ (K2*pi**5) ) * back(nz) * (wavelength)**4)
+     if (abs(Ze(nz)) .ge. huge(Ze(nz))) Ze(nz) = -9999.d0
+
+     Ze_cw(nz) = 10*log10(1d18* (1d0/ (K2*pi**5) ) * backcw(nz) * (wavelength)**4)
+     if (abs(Ze_cw(nz)) .ge. huge(Ze_cw(nz))) Ze_cw(nz) = -9999.d0
+
+     Ze_rr(nz) = 10*log10(1d18* (1d0/ (K2*pi**5) ) * backrr(nz) * (wavelength)**4)
+     if (abs(Ze_rr(nz)) .ge. huge(Ze_rr(nz))) Ze_rr(nz) = -9999.d0
+
+     Ze_ci(nz) = 10*log10(1d18* (1d0/ (K2*pi**5) ) * backci(nz) * (wavelength)**4)
+     if (abs(Ze_ci(nz)) .ge. huge(Ze_ci(nz))) Ze_ci(nz) = -9999.d0
+
+     Ze_sn(nz) = 10*log10(1d18* (1d0/ (K2*pi**5) ) * backsn(nz) * (wavelength)**4)
+     if (abs(Ze_sn(nz)) .ge. huge(Ze_sn(nz))) Ze_sn(nz) = -9999.d0
+
+     Ze_gr(nz) = 10*log10(1d18* (1d0/ (K2*pi**5) ) * backgr(nz) * (wavelength)**4)
+     if (abs(Ze_gr(nz)) .ge. huge(Ze_gr(nz))) Ze_gr(nz) = -9999.d0
+
+     Ze_ha(nz) = 10*log10(1d18* (1d0/ (K2*pi**5) ) * backha(nz) * (wavelength)**4)
+     if (abs(Ze_ha(nz)) .ge. huge(Ze_ha(nz))) Ze_ha(nz) = -9999.d0
+
+     Att_atmo(nz) = 10*log10(exp(kextatmo(nz)*d_hgt))
+     Att_hydro(nz) = 10*log10(exp(kexttot(nz)*d_hgt))
+     Att_cw(nz) = 10*log10(exp(kextcw(nz)*d_hgt))
+     Att_rr(nz) = 10*log10(exp(kextrr(nz)*d_hgt))
+     Att_ci(nz) = 10*log10(exp(kextci(nz)*d_hgt))
+     Att_sn(nz) = 10*log10(exp(kextsn(nz)*d_hgt))
+     Att_gr(nz) = 10*log10(exp(kextgr(nz)*d_hgt))
+     Att_ha(nz) = 10*log10(exp(kextha(nz)*d_hgt))
   end do
 
 
@@ -47,7 +76,7 @@ subroutine calculate_active(OUT_FILE_ACT,freq,hgt,Ze, Attenuation_atmo, Attenuat
      open (unit=22, file=OUT_FILE_ACT, status='unknown')
      write (22,*) "C           z[m]           Ze[dBz] Attenuation_hydro[dB] Attenuation_atmo[dB]"
      do nz = 1, nlyr
-        write (22,2222) hgt(nz), Ze(nz), Attenuation_hydro(nz), Attenuation_atmo(nz)
+        write (22,2222) hgt(nz), Ze(nz), Att_hydro(nz), Att_atmo(nz)
 2222    format(1x, f16.4,1x, f16.4,1x, f16.4,1x, f16.4)
      end do
      close(22)

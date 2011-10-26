@@ -9,7 +9,9 @@ subroutine deallocate_output_vars
 
   if (write_nc)  deallocate(is,js,lons,lats,lfracs,iwvs,cwps,iwps,rwps,swps,gwps,hwps)
   if (write_nc .or. in_python) deallocate(tb)
-  if (active) deallocate(Ze,Attenuation_hydro,Attenuation_atmo,hgt)
+  if (active) deallocate(Ze,Ze_cw,Ze_rr,Ze_ci,Ze_sn,Ze_gr,Ze_ha, &
+               Att_hydro,Att_atmo,Att_cw,Att_rr,Att_ci,Att_sn,Att_gr,Att_ha, &
+               hgt)
 
 
 end subroutine deallocate_output_vars

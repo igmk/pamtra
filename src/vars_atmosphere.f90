@@ -44,11 +44,11 @@ module vars_atmosphere
        hwc_n
 
   real(kind=dbl), allocatable, dimension(:) :: kextatmo, &
-       kexttot, &
+       kexttot, kextsn, kextcw, kextrr, kextgr, kextci, kextha, &
        rt3kexttot,&
        salbtot, &
        rt3salbtot,&
-       back, &
+       back, backcw, backrr, backci, backsn, backgr, backha, &
        g_coeff
 
   real(kind=dbl), allocatable, dimension(:,:) :: legen, &
