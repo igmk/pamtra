@@ -34,7 +34,7 @@ if [ "$1" == "prepare" ]
 then
 	mkdir -p /tmp/pyPamtra
 	cd /tmp/pyPamtra
-	git clone /home/mmaahn/projects/pamtra -b ppMultiLyr2
+	git clone /home/mmaahn/projects/pamtra -b multiZe2
 	cd /tmp/pyPamtra/pamtra/src/
 	make precompile
 	tar -czf /tmp/pyPamtra.tar.gz /tmp/pyPamtra
