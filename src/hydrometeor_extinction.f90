@@ -42,7 +42,7 @@ subroutine hydrometeor_extinction(f,frq_str)
   legen3  = 0.d0
   legen4  = 0.d0
 
-  threshold = 1.d-5   ! [kg/kg]
+  threshold = 1.d-7   ! [kg/kg]
 
   if (verbose .gt. 1) print*, 'start loop over layer'
 
