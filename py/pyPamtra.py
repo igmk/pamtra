@@ -11,6 +11,8 @@ import warnings
 import sys
 import os
 from copy import deepcopy
+
+
 #from numpy import *
 try: 
 	import numexpr as ne
@@ -184,12 +186,13 @@ class pyPamtra(object):
 		self._noutlevels = 2
 		self._nangles = 32
 		
-	
+		self.p = dict()
+		self._helperP = dict()
+		
 	def readPamtraProfile(self,inputFile):
 		"""
 		read classical pamtra profile
 		"""
-		self.p = dict()
 		
 		f = open(inputFile,"r")
 		g = csv.reader(f,delimiter=" ",skipinitialspace=True)
@@ -297,7 +300,6 @@ class pyPamtra(object):
 
 		ncFile = netCDF4.Dataset(fname,"r")
 
-
 		timeStr = "".join(ncFile.variables["Times"][:].tolist()[0])
 		data["Times"] = netCDF4.date2num(datetime.datetime.strptime(timeStr,"%Y-%m-%d_%H:%M:%S"),"seconds since 1970-01-01 00:00:00")
 		for var in variables:		
@@ -331,8 +333,229 @@ class pyPamtra(object):
 		
 		del data
 
-	def createProfile(*args):
-		print "see createProfile_radiosonde"
+	def createProfile(self,**kwargs):
+		'''
+		Function to create the Pamtra Profiles.
+		
+		Variables ending on _lev mean level values, variables without are layer values (height vecotr one entry shorter!)!
+		
+		Everything is needed in SI units, relhum is in Pa/PA not %
+		
+		The following variables are mandatroy:
+		hgt_lev, temp_lev, press_lev and (relhum_lev OR q)
+		
+		The following variables are optional:	"timestamp","lat","lon","lfrac","wind10u","wind10v","hgt_lev","cwc_q","iwc_q","rwc_q","swc_q","gwc_q"
+		
+		The integrated values are calculated if not provided:
+		"iwv","cwp","iwp","rwp","swp","gwp"
+		
+		The following variables are only needed together with the 2 moments scheme!
+		"hwc_q","hwp", "cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"
+		'''
+		allVars=["timestamp","lat","lon","lfrac","wind10u","wind10v","iwv","cwp","iwp","rwp","swp","gwp","hwp","hgt_lev","press_lev","temp_lev","relhum_lev","q","cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"]
+			
+		for key in kwargs.keys():
+			if key not in allVars:
+				raise TypeError("Could not parse "+key)
+		
+		if not ("hgt_lev" in kwargs.keys() and "temp_lev" in kwargs.keys() and "press_lev" in kwargs.keys() and ("relhum_lev" in kwargs.keys() or "q" in kwargs.keys())):
+			raise TypeError("I need hgt_lev and temp_lev and press_lev and (relhum_lev or q)!")
+		
+		noDims = len(np.shape(kwargs["hgt_lev"]))
+		
+		if noDims == 1:
+			self.p["ngridx"] = 1
+			self.p["ngridy"] = 1
+		elif noDims == 2:
+			self.p["ngridx"] = np.shape(kwargs["hgt_lev"])[0]
+			self.p["ngridy"] = 1
+		elif noDims == 3:
+			self.p["ngridx"] = np.shape(kwargs["hgt_lev"])[0]
+			self.p["ngridy"] = np.shape(kwargs["hgt_lev"])[1]
+		else:
+			print "Too many dimensions!"
+			raise IOError
+		
+		self.p["max_nlyrs"] = np.shape(kwargs["hgt_lev"])[-1] -1
+		
+		#if np.any(self.p["nlyrs"] != self.p["max_nlyrs"]):
+			#self._radiosonde = True
+		#else:
+			#self._radiosonde = False
+			
+		self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
+		self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
+		self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
+		
+		self.p["nlyrs"] = np.sum(kwargs["hgt_lev"]!=missingNumber,axis=-1) -1
+		self.p["nlyrs"] = self.p["nlyrs"].reshape(self._shape2D)
+		
+		self.p["hgt_lev"] = kwargs["hgt_lev"].reshape(self._shape3Dplus)
+		self.p["temp_lev"] = kwargs["temp_lev"].reshape(self._shape3Dplus)
+		self.p["press_lev"] = kwargs["press_lev"].reshape(self._shape3Dplus)
+
+		self.p["deltax"] = 0.
+		self.p["deltay"] = 0.
+		self.p["model_i"] = np.array(np.where(self.p["hgt_lev"][:,:,0])[0]).reshape(self._shape2D) +1
+		self.p["model_j"] = np.array(np.where(self.p["hgt_lev"][:,:,0])[1]).reshape(self._shape2D) +1
+
+		if "timestamp" not in kwargs.keys():
+			self.p["unixtime"] = np.ones(self._shape2D)* int(time.time())
+			warnings.warn("timestamp set to now", Warning)
+		else:
+			if (type(kwargs["timestamp"]) == int) or (type(kwargs["timestamp"]) == float) :
+				self.p["unixtime"] = np.ones(self._shape2D,dtype=int)*kwargs["timestamp"]
+			elif (type(kwargs["timestamp"]) == np.ndarray):
+				if (kwargs["timestamp"].dtype == int) or (kwargs["timestamp"].dtype == float):
+					self.p["unixtime"] = kwargs["timestamp"]
+				else:
+					raise TypeError("timestamp entries have to be int or float objects")
+			elif (type(kwargs["timestamp"]) == datetime):
+				self.p["unixtime"] = np.ones(self._shape2D,dtype=int)*calendar.timegm(kwargs["timestamp"].timetuple())
+			else:
+				raise TypeError("timestamp has to be int, float or datetime object")
+			
+		for environment, preset in [["lat",50.938056],["lon",6.956944],["lfrac",1],["wind10u",0],["wind10v",0]]:
+			if environment not in kwargs.keys():
+				self.p[environment] = np.ones(self._shape2D)*preset
+				warnings.warn("%s set to %s"%(environment,preset,), Warning)
+			else:
+				if type(kwargs[environment]) == int or type(kwargs[environment]) == float:
+					self.p[environment] = np.ones(self._shape2D) * kwargs[environment]
+				else:
+					self.p[environment] = kwargs[environment].reshape(self._shape2D)
+		
+		for qValue in ["cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q"]:
+			if qValue not in kwargs.keys():
+				self.p[qValue] = np.zeros(self._shape3D)
+				warnings.warn(qValue + " set to 0", Warning)
+			else:
+				self.p[qValue] = kwargs[qValue].reshape(self._shape3D)
+				
+		for hydroNo in ["cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"]:
+			if hydroNo not in kwargs.keys():
+				self.p[hydroNo] = np.ones(self._shape3D) * -9999
+				warnings.warn(hydroNo + " set to -9999", Warning)
+			else:
+				self.p[hydroNo] = kwargs[hydroNo].reshape(self._shape3D)
+
+
+		if "q" in kwargs.keys():
+			self._helperP["q"] = kwargs["q"].reshape(self._shape3D)
+
+		if "relhum_lev" in kwargs.keys():
+			self.p["relhum_lev"] = kwargs["relhum_lev"].reshape(self._shape3Dplus)
+		else:
+			self._calcRelhum_lev()
+
+		for qValue,intValue in [["q","iwv"],["cwc_q","cwp"],["iwc_q","iwp"],["rwc_q","rwp"],["swc_q","swp"],["gwc_q","gwp"],["hwc_q","hwp"]]:
+			if intValue in kwargs.keys():
+				self.p[intValue] = kwargs[intValue].reshape(self._shape2D)
+			else:
+				#now we need q!
+				self._calcQ()
+				#nothing to do without hydrometeors:
+				if np.all(self.p[qValue]==0):
+					self.p[intValue] = np.zeros(self._shape2D)
+				else:
+					self._calcMoistRho() #provides also temp,press,dz and q!
+					self.p[intValue] =  np.sum(self.p[qValue]*self._helperP["rho_moist"]*self._helperP["rho_moist"],axis=-1)
+					
+		#clean up: remove all nans
+		for key in self.p.keys():
+			#apply only to arrays, lists or tupels
+			if np.sum(np.shape(self.p[key])) > 0:
+				self.p[key][np.isnan(self.p[key])] = missingNumber
+		
+		return
+
+	def _calcPressTempRelhum(self):
+		if set(("temp","relhum","press","dz")).issubset(self._helperP.keys()):
+			return
+		else:
+			if self.set["pyVerbose"] > 0:
+				print 'calculating "temp","relhum","press","dz"'
+			self._helperP["temp"] = (self.p["temp_lev"][...,0:-1] + self.p["temp_lev"][...,1:])/2.
+			self._helperP["relhum"] = (self.p["relhum_lev"][...,0:-1] + self.p["relhum_lev"][...,1:])/2.
+			dz = np.diff(self.p["hgt_lev"],axis=-1)
+			self._helperP["rho_moist"] = dz
+			
+			#if not self._radiosonde:
+
+				#p0 = self.p["press_lev"][...,0:-1]
+				#p1 = self.p["press_lev"][...,1:]
+				#xp = ne.evaluate("-1.*log(p1/p0)/dz")
+
+			#else: #to allow array operations, cases with varying heights or invalid data have to be treated a bit differently:
+
+			dz[dz<=0]=9999
+			self._helperP["relhum"][self._helperP["relhum"]<=0] = 1
+			self._helperP["temp"][self._helperP["temp"]<=0] = 1
+			
+			press_lev1 = deepcopy(self.p["press_lev"])
+			press_lev1[press_lev1==missingNumber]=1
+			
+			p0 = press_lev1[...,0:-1]
+			p1 = press_lev1[...,1:]
+			xp = ne.evaluate("-1.*log(p1/p0)/dz")
+			xp[xp==0] = 9999
+				
+			self._helperP["press"] = ne.evaluate("-1.*p0/xp*(exp(-xp*dz)-1.)/dz")
+			del p0,p1,xp
+				
+			return
+
+	def _calcQ(self):
+		
+		if set(("q",)).issubset(self._helperP.keys()):
+			return
+		else:
+			self._calcPressTempRelhum()
+			
+			if self.set["pyVerbose"] > 0:
+				print 'calculating "q"'
+			self._helperP["q"] = meteoSI.rh2q(self._helperP["relhum"],self._helperP["temp"],self._helperP["press"])
+			return
+
+	def _calcQ_lev(self):
+		if set(("q_lev",)).issubset(self._helperP.keys()):
+			return
+		else:
+			if self.set["pyVerbose"] > 0:
+				print 'calculating "q_lev"'
+			qBot = self._helperP["q"][...,0:1] + 0.25*(self._helperP["q"][...,0:1]-self._helperP["q"][...,1:2])
+			qTop = self._helperP["q"][...,-1:] + 0.25*(self._helperP["q"][...,-1:]-self._helperP["q"][...,-2:-1])
+			qMid = (self._helperP["q"][...,0:-1] + self._helperP["q"][...,1:])/2.
+			
+			self._helperP["q_lev"] = np.concatenate((qBot,qMid,qTop),axis=-1)
+			return
+
+	def _calcMoistRho(self):
+		if set(("rho_moist",)).issubset(self._helperP.keys()):
+			return
+		else:
+			self._calcQ()
+			self._calcPressTempRelhum()
+			
+			if self.set["pyVerbose"] > 0:
+				print 'calculating "rho_moist"'
+
+			self._helperP["rho_moist"] = meteoSI.moist_rho_q(self._helperP["press"],self._helperP["temp"],self._helperP["q"])
+			return
+
+	def _calcRelhum_lev(self):
+		if set(("relhum_lev",)).issubset(self.p.keys()):
+			return
+		else:
+			self._calcQ_lev()
+			
+			if self.set["pyVerbose"] > 0:
+				print 'calculating "relhum_lev"'
+				
+			self.p["relhum_lev"] = meteoSI.q2rh(self._helperP["q_lev"],self.p["temp_lev"],self.p["press_lev"])
+			return
+
+
 
 	def createProfile_radiosonde(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
 			hgt_lev,press_lev,temp_lev,relhum_lev):
@@ -340,7 +563,6 @@ class pyPamtra(object):
 		Create a profile for relative humidity, with special functions for varying number of layers
 		
 		'''
-		#import pdb;pdb.set_trace()
 		dz = np.diff(hgt_lev,axis=-1)
 		dz[dz<=0]=9999
 		relhum = (relhum_lev[...,0:-1] + relhum_lev[...,1:])/2.
@@ -396,11 +618,10 @@ class pyPamtra(object):
 	def createProfile_rh(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
 			hgt_lev,press_lev,temp_lev,relhum_lev,
 			cwc_q,iwc_q,rwc_q,swc_q,gwc_q):
+				
 		'''
 		Create Profile with relhum_lev relative humidity
 		'''
-		
-		#import pdb;pdb.set_trace()
 		dz = np.diff(hgt_lev,axis=-1)
 		
 		r0 = relhum_lev[...,0:-1]
@@ -520,7 +741,7 @@ class pyPamtra(object):
 		Applicate between CreateProfile and runPamtra
 		
 		'''
-		if condition.shape != self._shape2D and condition2D.shape == (pam._shape2D[0]*pam._shape2D[1],):
+		if condition.shape != self._shape2D and condition.shape != (self._shape2D[0]*self._shape2D[1],):
 			raise ValueError("shape mismatch, shape of condition must be 2D field!")
 
 		#create a new shape!
@@ -603,8 +824,7 @@ class pyPamtra(object):
 			hgt_lev,press_lev,temp_lev,relhum_lev,
 			cwc_q,iwc_q,rwc_q,swc_q,gwc_q,
 			hwc_q,cwc_n,iwc_n,rwc_n,swc_n,gwc_n,hwc_n):
-		
-		self.p = dict()
+
 		noDims = len(np.shape(hgt_lev))
 		
 		if noDims == 1:
