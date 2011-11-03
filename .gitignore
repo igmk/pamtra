@@ -21,3 +21,4 @@ test/tmp/*
 *.auto.f90
 *.pyc
 *.so
+py/codefriedhof.py

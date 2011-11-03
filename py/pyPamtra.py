@@ -325,12 +325,14 @@ class pyPamtra(object):
 		data["T"] = np.concatenate((data["TSK"],data["T"]),axis=-1)
 		data["P"] = np.concatenate((data["PSFC"],data["P"]),axis=-1)
 		
-
+		#translate variables
+		varPairs = [["Times","timestamp"],["XLAT","lat"],["XLONG","lon"],["LANDMASK","lfrac"],["U10","wind10u"],["V10","wind10v"],["PH","hgt_lev"],["P","press_lev"],["T","temp_lev"],["QVAPOR","q"],["QCLOUD","cwc_q"],["QICE","iwc_q"],["QRAIN","rwc_q"],["QSNOW","swc_q"],["QGRAUP","gwc_q"]]
 		
-		self.createProfile_q(data["Times"],data["XLAT"],data["XLONG"],data["LANDMASK"],data["U10"],data["V10"],
-			data["PH"],data["P"],data["T"],data["QVAPOR"],
-			data["QCLOUD"],data["QICE"],data["QRAIN"],data["QSNOW"],data["QGRAUP"])
-		
+		pamData = dict()
+		for wrfVar,pamVar in varPairs:
+			pamData[pamVar] = data[wrfVar]
+			
+		self.createProfile(**pamData)
 		del data
 
 	def createProfile(self,**kwargs):
@@ -396,8 +398,9 @@ class pyPamtra(object):
 
 		self.p["deltax"] = 0.
 		self.p["deltay"] = 0.
-		self.p["model_i"] = np.array(np.where(self.p["hgt_lev"][:,:,0])[0]).reshape(self._shape2D) +1
-		self.p["model_j"] = np.array(np.where(self.p["hgt_lev"][:,:,0])[1]).reshape(self._shape2D) +1
+
+		self.p["model_i"] = np.array(np.where(self.p["press_lev"][:,:,0])[0]).reshape(self._shape2D) +1
+		self.p["model_j"] = np.array(np.where(self.p["press_lev"][:,:,0])[1]).reshape(self._shape2D) +1
 
 		if "timestamp" not in kwargs.keys():
 			self.p["unixtime"] = np.ones(self._shape2D)* int(time.time())
@@ -448,18 +451,18 @@ class pyPamtra(object):
 		else:
 			self._calcRelhum_lev()
 
-		for qValue,intValue in [["q","iwv"],["cwc_q","cwp"],["iwc_q","iwp"],["rwc_q","rwp"],["swc_q","swp"],["gwc_q","gwp"],["hwc_q","hwp"]]:
+		for pDict,qValue,intValue in [[self._helperP,"q","iwv"],[self.p,"cwc_q","cwp"],[self.p,"iwc_q","iwp"],[self.p,"rwc_q","rwp"],[self.p,"swc_q","swp"],[self.p,"gwc_q","gwp"],[self.p,"hwc_q","hwp"]]:
 			if intValue in kwargs.keys():
 				self.p[intValue] = kwargs[intValue].reshape(self._shape2D)
 			else:
 				#now we need q!
 				self._calcQ()
 				#nothing to do without hydrometeors:
-				if np.all(self.p[qValue]==0):
+				if np.all(pDict[qValue]==0):
 					self.p[intValue] = np.zeros(self._shape2D)
 				else:
 					self._calcMoistRho() #provides also temp,press,dz and q!
-					self.p[intValue] =  np.sum(self.p[qValue]*self._helperP["rho_moist"]*self._helperP["rho_moist"],axis=-1)
+					self.p[intValue] =  np.sum(pDict[qValue]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
 					
 		#clean up: remove all nans
 		for key in self.p.keys():
@@ -478,7 +481,7 @@ class pyPamtra(object):
 			self._helperP["temp"] = (self.p["temp_lev"][...,0:-1] + self.p["temp_lev"][...,1:])/2.
 			self._helperP["relhum"] = (self.p["relhum_lev"][...,0:-1] + self.p["relhum_lev"][...,1:])/2.
 			dz = np.diff(self.p["hgt_lev"],axis=-1)
-			self._helperP["rho_moist"] = dz
+			self._helperP["dz"] = dz
 			
 			#if not self._radiosonde:
 
@@ -557,180 +560,6 @@ class pyPamtra(object):
 
 
 
-	def createProfile_radiosonde(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
-			hgt_lev,press_lev,temp_lev,relhum_lev):
-		'''
-		Create a profile for relative humidity, with special functions for varying number of layers
-		
-		'''
-		dz = np.diff(hgt_lev,axis=-1)
-		dz[dz<=0]=9999
-		relhum = (relhum_lev[...,0:-1] + relhum_lev[...,1:])/2.
-		relhum[relhum<=0] = 1
-		temp = (temp_lev[...,0:-1] + temp_lev[...,1:])/2.
-		temp[temp<=0] = 1
-		press_lev1 = deepcopy(press_lev)
-		press_lev1[press_lev==missingNumber]=1
-		xp = -1.*np.log(press_lev1[...,1:]/press_lev1[...,0:-1])/dz
-		xp[xp==0] = 9999
-		press = -1.*press_lev1[...,0:-1]/xp*(np.exp(-xp*dz)-1.)/dz
-		
-		q = meteoSI.rh2q(relhum,temp,press)
-		rho_moist = meteoSI.moist_rho_q(press,temp,q)
-
-		
-		#necessary for varying nlyr:
-		q[q==missingNumber] = 0
-		
-		self._shape3D = np.shape(q)
-		self._shape2D = np.shape(lat)
-		
-		cwc_q = np.ones(self._shape3D)*missingNumber
-		iwc_q = np.ones(self._shape3D)*missingNumber
-		rwc_q = np.ones(self._shape3D)*missingNumber
-		swc_q = np.ones(self._shape3D)*missingNumber
-		gwc_q = np.ones(self._shape3D)*missingNumber
-		hwc_q = np.ones(self._shape3D)*missingNumber
-		
-		#integrate
-		iwv = np.sum(q*rho_moist*dz,axis=-1)
-		cwp = np.zeros(self._shape2D)
-		iwp = np.zeros(self._shape2D)
-		rwp = np.zeros(self._shape2D)
-		swp = np.zeros(self._shape2D)
-		gwp = np.zeros(self._shape2D)
-		hwp = np.zeros(self._shape2D)
-
-		cwc_n = np.ones(self._shape3D)*missingNumber
-		iwc_n = np.ones(self._shape3D)*missingNumber
-		rwc_n = np.ones(self._shape3D)*missingNumber
-		swc_n = np.ones(self._shape3D)*missingNumber
-		gwc_n = np.ones(self._shape3D)*missingNumber
-		hwc_n = np.ones(self._shape3D)*missingNumber
-		
-		
-		return self.createFullProfile(timestamp,lat,lon,lfrac,wind10u,wind10v,
-		iwv,cwp,iwp,rwp,swp,gwp,hwp,
-		hgt_lev,press_lev,temp_lev,relhum_lev,
-		cwc_q,iwc_q,rwc_q,swc_q,gwc_q,
-		hwc_q,cwc_n,iwc_n,rwc_n,swc_n,gwc_n,hwc_n)
-
-	def createProfile_rh(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
-			hgt_lev,press_lev,temp_lev,relhum_lev,
-			cwc_q,iwc_q,rwc_q,swc_q,gwc_q):
-				
-		'''
-		Create Profile with relhum_lev relative humidity
-		'''
-		dz = np.diff(hgt_lev,axis=-1)
-		
-		r0 = relhum_lev[...,0:-1]
-		r1 = relhum_lev[...,1:]
-		relhum = ne.evaluate("(r0 + r1)/2.")
-		
-		t0 = temp_lev[...,0:-1]
-		t1 = temp_lev[...,1:]
-		temp = ne.evaluate("(t0 + t1)/2.")
-		
-		p0 = press_lev[...,0:-1]
-		p1 = press_lev[...,1:]
-		xp = ne.evaluate("-1.*log(p1/p0)/dz")
-		press = ne.evaluate("-1.*p0/xp*(exp(-xp*dz)-1.)/dz")
-		
-		q = meteoSI.rh2q(relhum,temp,press)
-		rho_moist = meteoSI.moist_rho_q(press,temp,q)
-		
-		#integrate
-		iwv = np.sum(q*rho_moist*dz,axis=-1)
-		cwp = np.sum(cwc_q*rho_moist*dz,axis=-1)
-		iwp = np.sum(iwc_q*rho_moist*dz,axis=-1)
-		rwp = np.sum(rwc_q*rho_moist*dz,axis=-1)
-		swp = np.sum(swc_q*rho_moist*dz,axis=-1)
-		gwp = np.sum(gwc_q*rho_moist*dz,axis=-1)
-		
-		self._shape3D = np.shape(gwc_q)
-		self._shape2D = np.shape(gwp)
-		
-		hwp = np.zeros(self._shape2D)
-		
-		hwc_q = cwc_n = iwc_n = rwc_n = swc_n = gwc_n = hwc_n = np.ones(self._shape3D)*missingNumber
-		
-		return self.createFullProfile(timestamp,lat,lon,lfrac,wind10u,wind10v,
-		iwv,cwp,iwp,rwp,swp,gwp,hwp,
-		hgt_lev,press_lev,temp_lev,relhum_lev,
-		cwc_q,iwc_q,rwc_q,swc_q,gwc_q,
-		hwc_q,cwc_n,iwc_n,rwc_n,swc_n,gwc_n,hwc_n)
-
-	def createProfile_q(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
-			hgt_lev,press_lev,temp_lev,q,
-			cwc_q,iwc_q,rwc_q,swc_q,gwc_q):
-		'''
-		create Profile with specific humidity q
-		'''
-
-		t0 = temp_lev[...,0:-1]
-		t1 = temp_lev[...,1:]
-		temp = ne.evaluate("(t0 + t1)/2.")
-		del t0,t1
-
-		dz = np.diff(hgt_lev,axis=-1)
-		p0 = press_lev[...,0:-1]
-		p1 = press_lev[...,1:]
-		xp = ne.evaluate("-1.*log(p1/p0)/dz")
-		press = ne.evaluate("-1.*p0/xp*(exp(-xp*dz)-1.)/dz")
-		del p0,p1,xp
-		rho_moist = meteoSI.moist_rho_q(press,temp,q)
-
-		q00 = q[...,0:1]
-		q01 = q[...,1:2]
-		
-		qBot = ne.evaluate("q00 + 0.25*(q00-q01)")
-		del q00,q01
-		
-		q10 = q[...,-1:]
-		q11 = q[...,-2:-1]
-
-		qTop = ne.evaluate("q10 + 0.25*(q10-q11)")
-		del q10,q11
-		
-		q0 = q[...,0:-1]
-		q1 = q[...,1:]
-		
-		qMid = ne.evaluate("(q0 + q1)/2.")
-		del q0,q1
-		
-		q_lev = np.concatenate((qBot,qMid,qTop),axis=-1)
-		del qBot,qMid,qTop
-
-
-		relhum_lev=meteoSI.q2rh(q_lev,temp_lev,press_lev)
-
-
-		rhoDz = ne.evaluate("rho_moist*dz")
-		del rho_moist, dz
-		#integrate
-		iwv = np.sum(ne.evaluate("q*rhoDz"),axis=-1)
-		cwp = np.sum(ne.evaluate("cwc_q*rhoDz"),axis=-1)
-		iwp = np.sum(ne.evaluate("iwc_q*rhoDz"),axis=-1)
-		rwp = np.sum(ne.evaluate("rwc_q*rhoDz"),axis=-1)
-		swp = np.sum(ne.evaluate("swc_q*rhoDz"),axis=-1)
-		gwp = np.sum(ne.evaluate("gwc_q*rhoDz"),axis=-1)
-		
-		del rhoDz
-
-		
-		self._shape3D = np.shape(gwc_q)
-		self._shape2D = np.shape(gwp)
-		
-		hwp = np.zeros(self._shape2D)
-		
-		hwc_q = cwc_n = iwc_n = rwc_n = swc_n = gwc_n = hwc_n = np.ones(self._shape3D)*missingNumber
-		
-		return self.createFullProfile(timestamp,lat,lon,lfrac,wind10u,wind10v,
-		iwv,cwp,iwp,rwp,swp,gwp,hwp,
-		hgt_lev,press_lev,temp_lev,relhum_lev,
-		cwc_q,iwc_q,rwc_q,swc_q,gwc_q,
-		hwc_q,cwc_n,iwc_n,rwc_n,swc_n,gwc_n,hwc_n)
 
 	def filterProfiles(self,condition):
 		'''
@@ -743,7 +572,9 @@ class pyPamtra(object):
 		'''
 		if condition.shape != self._shape2D and condition.shape != (self._shape2D[0]*self._shape2D[1],):
 			raise ValueError("shape mismatch, shape of condition must be 2D field!")
-
+		
+		condition = condition.reshape(self._shape2D)
+		
 		#create a new shape!
 		self.p["ngridx"] = np.sum(condition)
 		self.p["ngridy"] = 1
@@ -824,7 +655,16 @@ class pyPamtra(object):
 			hgt_lev,press_lev,temp_lev,relhum_lev,
 			cwc_q,iwc_q,rwc_q,swc_q,gwc_q,
 			hwc_q,cwc_n,iwc_n,rwc_n,swc_n,gwc_n,hwc_n):
-
+		
+		'''
+		create comple PAmtra Profile
+		
+		No Extras, no missing values are guessed. the Data is only reshaped
+		
+		
+		'''
+		
+		
 		noDims = len(np.shape(hgt_lev))
 		
 		if noDims == 1:
@@ -848,17 +688,8 @@ class pyPamtra(object):
 		self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
 		self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
 		
-		if (type(timestamp) == int) or (type(timestamp) == float) :
-			self.p["unixtime"] = np.ones(self._shape2D,dtype=int)*timestamp
-		elif (type(timestamp) == np.ndarray):
-			if (timestamp.dtype == int) or (timestamp.dtype == float):
-				self.p["unixtime"] = timestamp
-			else:
-				raise TypeError("timestamp entries have to be int or float objects")
-		elif (type(timestamp) == datetime):
-			self.p["unixtime"] = np.ones(self._shape2D,dtype=int)*calendar.timegm(timestamp.timetuple())
-		else:
-			raise TypeError("timestamp has to be int, float or datetime object")
+
+		self.p["unixtime"] = timestamp.reshape(self._shape2D)
 				
 		self.p["deltax"] = 0.
 		self.p["deltay"] = 0.
@@ -896,8 +727,6 @@ class pyPamtra(object):
 		self.p["swc_n"] = swc_n.reshape(self._shape3D)
 		self.p["gwc_n"] = gwc_n.reshape(self._shape3D)
 		self.p["hwc_n"] = hwc_n.reshape(self._shape3D)
-		
-
 
 	def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers="auto",pp_deltaF=0,pp_deltaX=0,pp_deltaY = 0):
 	
