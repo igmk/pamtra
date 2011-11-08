@@ -3,7 +3,7 @@ import os
 
 
 def PamtraFortranWrapper(*args):
-	#is needed because pp cannot work with fortran modules directly
+	#this wrapper is needed because pp cannot work with fortran modules directly. returns results from pamtra AND name of the host (for pp statistics)
 	code = ""
 	for ii in range(len(args)):
 		code = code + "args["+str(ii)+"],"

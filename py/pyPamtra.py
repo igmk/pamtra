@@ -33,7 +33,10 @@ except:
 missingNumber=-9999
 
 class pyPamtra(object):
+	'''
+	Class for pamtra calculations. Initalisations fill dictonary 'set' with default values and also fills 'dimensions' and 'units'
 	
+	'''
 	def __init__(self):
 		#set setting default values
 		self.set = dict()
@@ -80,6 +83,9 @@ class pyPamtra(object):
 
 		self.set["n_moments"]=1
 		self.set["moments_file"]='snowCRYSTAL'
+		
+		self.set["freqs"] = []
+		self.set["nfreqs"] = 0
 		
 		self._setDefaultKeys = self.set.keys()
 		
@@ -191,7 +197,7 @@ class pyPamtra(object):
 		
 	def readPamtraProfile(self,inputFile):
 		"""
-		read classical pamtra profile
+		read classical pamtra profile from file
 		"""
 		
 		f = open(inputFile,"r")
@@ -346,7 +352,7 @@ class pyPamtra(object):
 		The following variables are mandatroy:
 		hgt_lev, temp_lev, press_lev and (relhum_lev OR q)
 		
-		The following variables are optional:	"timestamp","lat","lon","lfrac","wind10u","wind10v","hgt_lev","cwc_q","iwc_q","rwc_q","swc_q","gwc_q"
+		The following variables are optional and guessed if not provided:	"timestamp","lat","lon","lfrac","wind10u","wind10v","hgt_lev","cwc_q","iwc_q","rwc_q","swc_q","gwc_q"
 		
 		The integrated values are calculated if not provided:
 		"iwv","cwp","iwp","rwp","swp","gwp"
@@ -753,40 +759,40 @@ class pyPamtra(object):
 		
 		if (type(freqs) == int) or (type(freqs) == float): freqs = [freqs]
 		
-		self.freqs = freqs
-		self.nfreqs = len(freqs)
+		self.set["freqs"] = freqs
+		self.set["nfreqs"] = len(freqs)
 		
 
 
 		self.r = dict()
 
 		
-		if pp_deltaF==0: pp_deltaF = self.nfreqs
+		if pp_deltaF==0: pp_deltaF = self.set["nfreqs"]
 		if pp_deltaX==0: pp_deltaX = self.p["ngridx"]
 		if pp_deltaY==0: pp_deltaY = self.p["ngridy"]
 		
 		pp_ii = -1
 		pp_jobs = dict()
 		
-		self.r["Ze"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
-		self.r["Att_hydro"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
-		self.r["Att_atmo"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["Ze"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+		self.r["Att_hydro"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+		self.r["Att_atmo"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
 		
-		self.r["Ze_cw"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
-		self.r["Ze_rr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
-		self.r["Ze_ci"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
-		self.r["Ze_sn"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
-		self.r["Ze_gr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
-		self.r["Ze_ha"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
-		self.r["Att_cw"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
-		self.r["Att_rr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
-		self.r["Att_ci"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
-		self.r["Att_sn"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
-		self.r["Att_gr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
-		self.r["Att_ha"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.nfreqs,))*missingNumber
+		self.r["Ze_cw"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+		self.r["Ze_rr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+		self.r["Ze_ci"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+		self.r["Ze_sn"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+		self.r["Ze_gr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+		self.r["Ze_ha"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+		self.r["Att_cw"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+		self.r["Att_rr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+		self.r["Att_ci"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+		self.r["Att_sn"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+		self.r["Att_gr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+		self.r["Att_ha"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
 
 		self.r["hgt"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],))*missingNumber
-		self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles,self.nfreqs,self._nstokes))*missingNumber
+		self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles,self.set["nfreqs"],self._nstokes))*missingNumber
 		
 		#self.r["Ze_dimensions"] = ["gridx","gridy","lyr","frequency"]
 		#self.r["Att_hydro_dimensions"] = ["gridx","gridy","lyr","frequency"]
@@ -795,7 +801,7 @@ class pyPamtra(object):
 		#self.r["tb_dimensions"] = ["gridx","gridy","outlevels","angles","frequency","stokes"]
 
 		
-		self.pp_noJobs = len(np.arange(0,self.nfreqs,pp_deltaF))*len(np.arange(0,self.p["ngridx"],pp_deltaX))*len(np.arange(0,self.p["ngridy"],pp_deltaY))
+		self.pp_noJobs = len(np.arange(0,self.set["nfreqs"],pp_deltaF))*len(np.arange(0,self.p["ngridx"],pp_deltaX))*len(np.arange(0,self.p["ngridy"],pp_deltaY))
 		self.pp_jobsDone = 0
 		
 		fi = open("/tmp/pp_logfile.txt","w")
@@ -805,9 +811,9 @@ class pyPamtra(object):
 		self.hosts=[]
 		
 		
-		for pp_startF in np.arange(0,self.nfreqs,pp_deltaF):
+		for pp_startF in np.arange(0,self.set["nfreqs"],pp_deltaF):
 			pp_endF = pp_startF + pp_deltaF
-			if pp_endF > self.nfreqs: pp_endF = self.nfreqs
+			if pp_endF > self.set["nfreqs"]: pp_endF = self.set["nfreqs"]
 			pp_nfreqs = pp_endF - pp_startF
 			for pp_startX in np.arange(0,self.p["ngridx"],pp_deltaX):
 				pp_endX = pp_startX + pp_deltaX
@@ -829,7 +835,7 @@ class pyPamtra(object):
 					self.p["max_nlyrs"],
 					self.p["nlyrs"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
 					pp_nfreqs,
-					self.freqs[pp_startF:pp_endF],
+					self.set["freqs"][pp_startF:pp_endF],
 					self.p["unixtime"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
 					self.p["deltax"],self.p["deltay"],
 					self.p["lat"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
@@ -878,9 +884,9 @@ class pyPamtra(object):
 		self.job_server.wait()
 		#pp_ii = -1
 
-		#for pp_startF in np.arange(0,self.nfreqs,pp_deltaF):
+		#for pp_startF in np.arange(0,self.set["nfreqs"],pp_deltaF):
 			#pp_endF = pp_startF + pp_deltaF
-			#if pp_endF > self.nfreqs: pp_endF = self.nfreqs
+			#if pp_endF > self.set["nfreqs"]: pp_endF = self.set["nfreqs"]
 			#for pp_startX in np.arange(0,self.p["ngridx"],pp_deltaX):
 				#pp_endX = pp_startX + pp_deltaX
 				#if pp_endX > self.p["ngridx"]: pp_endX = self.p["ngridx"]
@@ -944,8 +950,8 @@ class pyPamtra(object):
 		
 		if (type(freqs) == int) or (type(freqs) == float): freqs = [freqs]
 		
-		self.freqs = freqs
-		self.nfreqs = len(freqs)
+		self.set["freqs"] = freqs
+		self.set["nfreqs"] = len(freqs)
 		
 		for key in self.set:
 			if key not in self._setDefaultKeys:
@@ -984,7 +990,7 @@ class pyPamtra(object):
 		#self.set
 		self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["emissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["n_moments"], self.set["moments_file"],
 		#input
-		self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.p["nlyrs"],self.nfreqs,self.freqs,
+		self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.p["nlyrs"],self.set["nfreqs"],self.set["freqs"],
 		self.p["unixtime"],
 		self.p["deltax"],self.p["deltay"], self.p["lat"],self.p["lon"],self.p["model_i"],self.p["model_j"],
 		self.p["wind10u"],self.p["wind10v"],self.p["lfrac"],
@@ -1013,13 +1019,13 @@ class pyPamtra(object):
 			raise IOError ("run runPamtra first!")
 			
 		f = open(fname, "w")
-		pickle.dump([self.r,self.p], f)
+		pickle.dump([self.r,self.p,self.set], f)
 		f.close()
 
 	def loadResultsFromNumpy(self,fname):
 		try: 
 			f = open(fname, "r")
-			[self.r,self.p] = pickle.load(f)
+			[self.r,self.p,self.set] = pickle.load(f)
 			f.close()
 		except:
 			raise IOError ("Could not read data")
@@ -1042,7 +1048,7 @@ class pyPamtra(object):
 		#make dimesnions
 		cdfFile.createDimension('grid_x',self.p["ngridx"])
 		cdfFile.createDimension('grid_y',self.p["ngridy"])
-		cdfFile.createDimension('frequency',self.nfreqs)
+		cdfFile.createDimension('frequency',self.set["nfreqs"])
 		
 		if (self.r["settings"]["passive"]):
 			cdfFile.createDimension('angles',len(self.r["angles"]))
@@ -1061,7 +1067,7 @@ class pyPamtra(object):
 		
 		nc_frequency = cdfFile.createVariable('frequency','f4',('frequency',),fill_value= missingNumber)
 		nc_frequency.units = 'GHz'
-		nc_frequency[:] = self.freqs
+		nc_frequency[:] = self.set["freqs"]
 		
 		nc_gridx = cdfFile.createVariable('grid_x','f4',('grid_x',),fill_value= missingNumber)
 		nc_gridx.units = '-'
