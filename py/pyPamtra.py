@@ -6,7 +6,7 @@ import numpy as np
 import datetime
 import csv
 import pickle
-import time,calendar, datetime
+import time,calendar,datetime
 import warnings
 import sys
 import os
@@ -194,6 +194,7 @@ class pyPamtra(object):
 		
 		self.p = dict()
 		self._helperP = dict()
+		self.r = dict()
 		
 	def readPamtraProfile(self,inputFile):
 		"""
@@ -666,8 +667,6 @@ class pyPamtra(object):
 		create comple PAmtra Profile
 		
 		No Extras, no missing values are guessed. the Data is only reshaped
-		
-		
 		'''
 		
 		
@@ -735,7 +734,20 @@ class pyPamtra(object):
 		self.p["hwc_n"] = hwc_n.reshape(self._shape3D)
 
 	def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers="auto",pp_deltaF=0,pp_deltaX=0,pp_deltaY = 0):
-	
+		'''
+		run Pamtra analouge to runPamtra, but with with parallel python
+		
+		input:
+		
+		freqs: list with frequencies
+		pp_servers: tuple with servers, ("*") activates auto detection
+		pp_local_workers: number of local workers, "auto" is usually amount of cores
+		pp_deltaF,pp_deltaX,pp_deltaY: length of the peaces in frequency,x and y direction. 0 means no slicing
+		
+		In my experience, smaller pieces (e.g. pp_deltaF=0,pp_deltaX=1,pp_deltaY=1) work much better than bigger ones, even though overhead might be bigger.
+		
+		output is collected by _ppCallback()
+		'''
 		
 		if np.max(self.p["relhum_lev"])>5:
 			raise IOError("relative humidity is _not_ in %!")
@@ -761,11 +773,6 @@ class pyPamtra(object):
 		
 		self.set["freqs"] = freqs
 		self.set["nfreqs"] = len(freqs)
-		
-
-
-		self.r = dict()
-
 		
 		if pp_deltaF==0: pp_deltaF = self.set["nfreqs"]
 		if pp_deltaX==0: pp_deltaX = self.p["ngridx"]
@@ -794,13 +801,6 @@ class pyPamtra(object):
 		self.r["hgt"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],))*missingNumber
 		self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles,self.set["nfreqs"],self._nstokes))*missingNumber
 		
-		#self.r["Ze_dimensions"] = ["gridx","gridy","lyr","frequency"]
-		#self.r["Att_hydro_dimensions"] = ["gridx","gridy","lyr","frequency"]
-		#self.r["Att_atmo_dimensions"] = ["gridx","gridy","lyr","frequency"]
-		#self.r["hgt_dimensions"] = ["gridx","gridy","lyr"]
-		#self.r["tb_dimensions"] = ["gridx","gridy","outlevels","angles","frequency","stokes"]
-
-		
 		self.pp_noJobs = len(np.arange(0,self.set["nfreqs"],pp_deltaF))*len(np.arange(0,self.p["ngridx"],pp_deltaX))*len(np.arange(0,self.p["ngridy"],pp_deltaY))
 		self.pp_jobsDone = 0
 		
@@ -809,7 +809,6 @@ class pyPamtra(object):
 		fi.close()
 		
 		self.hosts=[]
-		
 		
 		for pp_startF in np.arange(0,self.set["nfreqs"],pp_deltaF):
 			pp_endF = pp_startF + pp_deltaF
@@ -882,40 +881,19 @@ class pyPamtra(object):
 
 		if self.set["pyVerbose"] >= 0: print " "; self.job_server.get_active_nodes()
 		self.job_server.wait()
-		#pp_ii = -1
-
-		#for pp_startF in np.arange(0,self.set["nfreqs"],pp_deltaF):
-			#pp_endF = pp_startF + pp_deltaF
-			#if pp_endF > self.set["nfreqs"]: pp_endF = self.set["nfreqs"]
-			#for pp_startX in np.arange(0,self.p["ngridx"],pp_deltaX):
-				#pp_endX = pp_startX + pp_deltaX
-				#if pp_endX > self.p["ngridx"]: pp_endX = self.p["ngridx"]
-				#for pp_startY in np.arange(0,self.p["ngridy"],pp_deltaY):
-					#pp_endY = pp_startY + pp_deltaY
-					#if pp_endY > self.p["ngridy"]: pp_endY = self.p["ngridy"]
-					#pp_ii +=1
-
-					#(self.r["pamtraVersion"],self.r["pamtraHash"],
-					#self.r["Ze"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
-					#self.r["Att_hydro"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
-					#self.r["Att_atmo"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
-					#self.r["hgt"][pp_startX:pp_endX,pp_startY:pp_endY,:], 
-					#self.r["tb"][pp_startX:pp_endX,pp_startY:pp_endY,:,:,pp_startF:pp_endF,:], 
-					#self.r["angles"] ) = pp_jobs[pp_ii]()
-
 		
 		self.r["settings"] = self.set
 		self.r["pamtraVersion"] = self.r["pamtraVersion"].strip()
 		self.r["pamtraHash"] = self.r["pamtraHash"].strip()
 		
-		#for key in self.__dict__.keys():
-			#print key
-			#print self.__dict__[key]
 		if self.set["pyVerbose"] >= 0: print " "; self.job_server.print_stats()
 		self.job_server.destroy()
 		del self.job_server
 	
 	def _ppCallback(self,pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii,*results):
+		'''
+		Collect the data of parallel pyPamtra		
+		'''
 		(((
 		self.r["pamtraVersion"],self.r["pamtraHash"], 
 		self.r["Ze"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
@@ -947,7 +925,9 @@ class pyPamtra(object):
 		fi.close()
 		
 	def runPamtra(self,freqs):
-		
+		'''
+		run Pamtra from python
+		'''
 		if (type(freqs) == int) or (type(freqs) == float): freqs = [freqs]
 		
 		self.set["freqs"] = freqs
@@ -961,7 +941,6 @@ class pyPamtra(object):
 			raise IOError("relative humidity is _not_ in %!")
 		
 		tttt = time.time()
-		self.r = dict()
 
 		#output
 		(
@@ -1012,17 +991,17 @@ class pyPamtra(object):
 
 
 	def writeResultsToNumpy(self,fname):
-		try: 
-			self.r
-			self.r["pamtraVersion"]
-		except:
-			raise IOError ("run runPamtra first!")
-			
+		'''
+		write the complete state of the session (profile,results,settings to a file
+		'''
 		f = open(fname, "w")
 		pickle.dump([self.r,self.p,self.set], f)
 		f.close()
 
 	def loadResultsFromNumpy(self,fname):
+		'''
+		load the complete state of the session (profile,results,settings to a file
+		'''
 		try: 
 			f = open(fname, "r")
 			[self.r,self.p,self.set] = pickle.load(f)
@@ -1031,6 +1010,16 @@ class pyPamtra(object):
 			raise IOError ("Could not read data")
 		
 	def writeResultsToNetCDF(self,fname,profileVars="all",ncForm="NETCDF3_CLASSIC"):
+		'''
+		write the results to a netcdf file
+		
+		Input:
+		
+		fname: str filename with path
+		profileVars list of variables of the profile to be saved. "all" saves all implmented ones
+		ncForm: str netcdf file format, possible values are NETCDF3_CLASSIC, NETCDF3_64BIT, NETCDF4_CLASSIC, and NETCDF4
+		'''
+		
 		import netCDF4
 		try: 
 			self.r

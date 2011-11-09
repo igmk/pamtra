@@ -10,13 +10,13 @@ data_path='data'
 tmp_path='/dev/shm/'
 /
 &output
-obs_height=833000.
+obs_height=833000. 
 units='T'
 outpol='VH'
 freq_str=''
 file_desc=''
 creator='Name (mail@domain.com)'
-zeSplitUp=.true. 
+zeSplitUp=.true.
 /
 &run_mode
 active=.true.

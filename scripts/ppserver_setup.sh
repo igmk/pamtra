@@ -3,14 +3,10 @@
 hosts=`ls /net`
 hosts="zapod viracao trombe tivano tempest seistan schirokko schili roumet refoli rebat ramier qeb orkan notos nemere molan meltemi lomar kaus karif irifi habagat gargal garbi gales frog forano1 euros embat diablo chinook caspar buran aure albe adelie"
 
-# hosts="roumet habagat"
-# hosts="caspar embat trombe irifi notos refoli euros albe roumet rebat orkan nemere lomar habagat aure adelie"
-# hosts="schili roumet rebat orkan nemere meltemi lomar karif habagat gargal diablo buran aure adelie albe euros refoli notos helm irifi trombe embat caspar"
-# hosts="zapod viracao trombe tivano tempest seistan schirokko schili roumet refoli rebat ramier qeb orkan notos nemere molan meltemi lomar kaus irifi habagat gargal garbi gales frog forano1 euros embat diablo chinook caspar buran aure adelie"
 ppTimeout=300
 
 #how many cpus shall be saved?
-saveCPUs=0.95
+saveCPUs=0.98
 
 user=hatpro
 
