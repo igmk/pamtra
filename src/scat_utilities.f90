@@ -165,11 +165,11 @@ real(kind=dbl) function distribution(a, b, alpha, gamma, d, distflag)
   elseif (distflag .eq. 'C' .or. distflag .eq. 'M' ) then
      !   distribution according to cosmo-de or mesonh model
      distribution = a * exp(-b*d)
-  else
-     write ( * , * ) 'unrecognized distflag in distribution'
+  else 
+     write ( * , * ) 'unrecognized distflag in distribution' 
   end if
 
-  return
+  return 
 end function distribution
 
 subroutine gausquad (n, xa, wt) 
