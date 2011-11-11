@@ -5,7 +5,7 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
   use vars_atmosphere !input variables and reading routine
   use vars_output !output variables
   use double_moments_module 
-  use mod_io_strings
+!  use mod_io_strings
 
   implicit none
 
@@ -30,6 +30,7 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
 
   character(300) :: OUT_FILE_PAS, OUT_FILE_ACT !file names if no nc
   character(80) :: femis ! filename for the emissivity databases
+  character(3) :: xstr, ystr
 
   wavelength = c / (freq*1.d3)   ! microns
 
@@ -136,10 +137,10 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
   !&&&&&&&&   I/O FILE NAMES   &&&&&&&&&&&&&&&&&&
 
   OUT_FILE_PAS = output_path(:len_trim(output_path))//"/"//&
-       micro_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_passive"
+       date_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_passive"
 
   OUT_FILE_ACT = output_path(:len_trim(output_path))//"/"//&
-       micro_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_active"
+       date_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_active"
 
 
   if (active) then

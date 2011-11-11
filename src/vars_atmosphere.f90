@@ -110,6 +110,7 @@ module vars_atmosphere
 
   character(2) :: month, day
   character(4) :: year, time
+  character(12) :: date_str
   real(kind=sgl) :: deltax, deltay
 contains
 
@@ -151,6 +152,8 @@ contains
     end if
 
     read(14,*,iostat=istat) year, month, day, time, ngridx, ngridy, nlyr, deltax, deltay
+
+    date_str = year//month//day//time
 
     if (istat .ne. 0) then
        call error_msg(input_file,0,0)

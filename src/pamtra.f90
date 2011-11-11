@@ -6,7 +6,6 @@ program pamtra
   use vars_atmosphere !input variables and reading routine
   use vars_output !output variables
   use double_moments_module !double moments variables are stored here
-  use mod_io_strings !some strings for nice filenames
 
 
   !     The code reads a full (e.g. COSMO) grid and computes for each 
@@ -103,9 +102,6 @@ program pamtra
   ! pressure for this model).  Assign/compute the missing fields first
   ! make layer averages
   call get_atmosG0
-
-  if (write_nc .eqv. .false.) call mod_io_strings_get_filename()
-
 
   if (verbose .gt. 1) print*, 'Start loop over frequencies & profiles!'
 

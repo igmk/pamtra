@@ -242,7 +242,6 @@ subroutine hydrometeor_extinction(f,frq_str)
                 maxleg,kextha, salbha, backha,  &
                 nlegenha, legenha, legen2ha, legen3ha, legen4ha, nc)
            call legendre2phasefunction(legenha, nlegenha, 2, 200, p11, ang)
-           backha = kextha * salbha * p11 (2)
         else
            kextha = 0.0d0
            salbha = 0.0d0
