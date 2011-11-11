@@ -68,6 +68,9 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
 
      call land_emis(ise,lon,lat,freq,land_emissivity)
      close(ise)
+     if (land_emissivity .lt. 0.01) then
+	     land_emissivity = 0.94d0
+     end if
      ground_albedo = 1.d0 - land_emissivity
 
   else if (lfrac .ge. 0.0 .and. lfrac .lt. 0.5) then

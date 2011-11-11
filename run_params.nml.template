@@ -35,8 +35,19 @@ gas_mod='R98'
 lhyd_extinction=.true.
 lphase_flag = .true.
 /
+&cloud_params
+SD_cloud='M'
+/
+&ice_params
+SD_ice='M'
+EM_ice='icesf'
+/
+&rain_params
+SD_rain='M' 
+N_0rainD=8.0
+/
 &snow_params
-SD_snow='Exp' 
+SD_snow='M' 
 N_0snowDsnow=7.628 
 EM_snow='surus' 
 SP=0.2 
@@ -44,17 +55,16 @@ isnow_n0=1
 liu_type=8
 /
 &graupel_params
-SD_grau='Exp' 
+SD_grau='M' 
 N_0grauDgrau=4.0 
 EM_grau='surus'
 /
-&ice_params
-EM_ice='icesf'
+&hail_params
+SD_hail='M' 
+N_0hailDhail=4.0 
+EM_hail='surus'
 /
-&rain_params
-SD_rain='Exp' 
-N_0rainD=8.0
-/
+# if moments eq 2, set SD_rain, SD_snow, SD_grau, and SD_hail to G
 &moments
 n_moments=1
 moments_file='snowCRYSTAL'

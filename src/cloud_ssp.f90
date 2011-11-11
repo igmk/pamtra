@@ -1,4 +1,4 @@
-subroutine cloud_ssp(f,qc,t,p,q,maxleg,kext, salb, back,  &
+subroutine cloud_ssp(f,cwc,t, maxleg,kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4, nc)
 
   ! This subroutine prepares the input parameters for the routines
@@ -6,10 +6,8 @@ subroutine cloud_ssp(f,qc,t,p,q,maxleg,kext, salb, back,  &
   !
   ! Input:
   !   f    frequency [GHz]
-  !   qc   claud water mass mixing ratio [kg/kg]
+  !   cwc   claud water content [kg/m^3]
   !   t    temperature [K]
-  !   p    pressure [Pa]
-  !   q    specific humidity (mass of water vapor per moist air) [kg/kg]
   !
   ! Output:
   !  kext
@@ -18,9 +16,10 @@ subroutine cloud_ssp(f,qc,t,p,q,maxleg,kext, salb, back,  &
   !  legen[2-4] legendre coefficients for the phase function
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_moments
+  use nml_params, only: verbose, lphase_flag, n_moments, SD_cloud
   use constants, only: pi, im
   use double_moments_module
+  use conversions
 
   implicit none
 
@@ -29,10 +28,8 @@ subroutine cloud_ssp(f,qc,t,p,q,maxleg,kext, salb, back,  &
   integer, intent(in) :: maxleg
 
   real(kind=dbl), intent(in) :: &
-       qc,&
+       cwc,&
        t,&
-       p,&
-       q,&
        f
 
   real(kind=dbl), optional, intent(in) :: nc
@@ -42,7 +39,7 @@ subroutine cloud_ssp(f,qc,t,p,q,maxleg,kext, salb, back,  &
   real(kind=dbl) :: absind, abscof
 
   real(kind=dbl) :: dia1, dia2, del_d, den_liq, drop_mass, b_cloud, a_mcloud
-  real(kind=dbl) :: lwc, ad, bd, alpha, gamma, number_density, nc_abs
+  real(kind=dbl) :: ad, bd, alpha, gamma, number_density
 
   real(kind=dbl), intent(out) :: &
        kext,&
@@ -53,10 +50,6 @@ subroutine cloud_ssp(f,qc,t,p,q,maxleg,kext, salb, back,  &
 
   complex(kind=dbl) :: mindex
 
-  real(kind=dbl) :: spec2abs
-
-  character(1) :: dist_name
-
   if (verbose .gt. 1) print*, 'Entering cloud_ssp'
 
   ! absind  absorptive index 
@@ -65,41 +58,49 @@ subroutine cloud_ssp(f,qc,t,p,q,maxleg,kext, salb, back,  &
   call ref_water(0.d0, t-273.15, f, refre, refim, absind, abscof)
   mindex = refre-im*refim
 
-  lwc = spec2abs(qc,t,p,q)	! [kg/m^3]
+  den_liq = 1.d3 	! density of liquid water [kg/m^3]
 
   if (n_moments .eq. 1) then
-     ! iautocon is defined in COSMO-de routine hydci_pp_gr in src_gscp.f90
-     !		iautocon =  1 fixed number density eq to 1.0d8 [1/m^3] (eq to variable cloud_num in COSMO)
-     !		iautocon /= 1 fixed diameter eq to 1.d-4 [m]
-     iautocon = 0
-     den_liq = 1.d3 	! density of liquid water [kg/m^3]
-     del_d = 1.d-8 	! delta_diameter for mie calculation [m]
-     if (iautocon .eq. 1) then
-        number_density = 1.0d8	        	! fixed number density [1/m^3]
-        drop_mass = lwc /  number_density	! [kg]
-        dia1 = (6.d0 * drop_mass / (pi * den_liq))**(1./3.)	! monodisperse size distribution [m]
-        dia2 = dia1 + del_d
-        ad = lwc / (drop_mass*del_d)	! intercept parameter [1/m^4]
-     else
+	if (SD_cloud .eq. 'C') then
+	     ! iautocon is defined in COSMO-de routine hydci_pp_gr in src_gscp.f90
+	     !		iautocon =  1 fixed number density eq to 1.0d8 [1/m^3] (eq to variable cloud_num in COSMO)
+	     !		iautocon /= 1 fixed diameter eq to 1.d-4 [m]
+	     iautocon = 0
+	     del_d = 1.d-8 	! delta_diameter for mie calculation [m]
+	     if (iautocon .eq. 1) then
+	        number_density = 1.0d8	        	! fixed number density [1/m^3]
+	        drop_mass = cwc /  number_density	! [kg]
+	        dia1 = (6.d0 * drop_mass / (pi * den_liq))**(1./3.)	! monodisperse size distribution [m]
+	        dia2 = dia1 + del_d
+	        ad = cwc / (drop_mass*del_d)	! intercept parameter [1/m^4]
+	     else
+	        dia1 = 2.d-5 	! [m] 20 micron diameter monodisperse
+	        dia2 = dia1 + del_d
+	        drop_mass = pi/6.d0 * den_liq * dia1**3 		    	! [kg]
+	        ad = cwc / (drop_mass*del_d)	! intercept parameter [1/m^4]
+	     end if
+	     bd = 0.d0
+	     nbins = 2
+	     alpha = 0.d0 ! exponential SD
+	     gamma = 1.d0
+	else if (SD_cloud .eq. 'M') then
+	    del_d = 1.d-8 	! delta_diameter for mie calculation [m]
         dia1 = 2.d-5 	! [m] 20 micron diameter monodisperse
         dia2 = dia1 + del_d
         drop_mass = pi/6.d0 * den_liq * dia1**3 		    	! [kg]
-        ad = lwc / (drop_mass*del_d)	! intercept parameter [1/m^4]
-     end if
-     bd = 0.d0
-     nbins = 2
-     alpha = 0.d0 ! exponential SD
-     gamma = 1.d0
-     dist_name='C'
+        ad = cwc / (drop_mass*del_d)	! intercept parameter [1/m^4]
+	    bd = 0.d0
+	    nbins = 2
+	    alpha = 0.d0 ! exponential SD
+	    gamma = 1.d0
+	end if
   else if (n_moments .eq. 2) then
      if (.not. present(nc)) stop 'STOP in routine cloud_ssp'
-     nc_abs = spec2abs(nc,t,p,q) 	! [#/m^3]
-     call double_moments(lwc,nc_abs,gamma_cloud(1),gamma_cloud(2),gamma_cloud(3),gamma_cloud(4), &
+     call double_moments(cwc,nc,gamma_cloud(1),gamma_cloud(2),gamma_cloud(3),gamma_cloud(4), &
           ad,bd,alpha,gamma,a_mcloud,b_cloud)
      nbins = 100
      dia1 = .5d-6	! minimum diameter [m]
      dia2 = 1.d-4	! maximum diameter [m]
-     dist_name='G'
   else
      stop 'Number of moments is not specified'
   end if
@@ -107,7 +108,7 @@ subroutine cloud_ssp(f,qc,t,p,q,maxleg,kext, salb, back,  &
 
   call mie(f, mindex, dia1, dia2, nbins, maxleg, ad,       &
        bd, alpha, gamma, lphase_flag, kext, salb, back,  &
-       nlegen, legen, legen2, legen3, legen4, dist_name)
+       nlegen, legen, legen2, legen3, legen4, SD_cloud,den_liq,cwc)
 
   if (verbose .gt. 1) print*, 'Exiting cloud_ssp'
 

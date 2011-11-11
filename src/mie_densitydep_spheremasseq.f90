@@ -1,7 +1,7 @@
-subroutine mie_icefactor(f, t, m_ice,    &
+subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
      a_mtox, bcoeff, dia1, dia2, nbins, maxleg, ad, bd, alpha, &
      gamma, lphase_flag, extinction, albedo, back_scatt, nlegen, legen,  &
-     legen2, legen3, legen4, aerodist,density,ice_type)                                 
+     legen2, legen3, legen4, aerodist,density,wc)
   !    computing the scattering properties according to                  
   !    ice sphere model, i.e. the electromagnetic properties of the      
   !     particle are computed by assuming that they are the same          
@@ -17,12 +17,12 @@ subroutine mie_icefactor(f, t, m_ice,    &
   real(kind=dbl), intent(in) :: f,  &! frequency [GHz]
        t    ! temperature [K]
 
-  integer :: maxleg, nlegen, nbins, ice_type
+  integer :: maxleg, nlegen, nbins
   logical :: lphase_flag 
   real(kind=dbl) :: wavelength, dia1, dia2
-  real(kind=dbl), intent(in) :: ad, bd, alpha, gamma 
+  real(kind=dbl), intent(in) :: ad, bd, alpha, gamma
   complex(kind=dbl) :: m_ice
-  real(kind=dbl) :: a_mtox, bcoeff 
+  real(kind=dbl) :: a_mtox, bcoeff,tot_mass,wc
   real(kind=dbl) :: extinction, albedo, back_scatt, legen (200), legen2 (200),&
        legen3 (200), legen4 (200)                                        
   integer, parameter :: maxn  = 5000
@@ -37,7 +37,7 @@ subroutine mie_icefactor(f, t, m_ice,    &
   real(kind=dbl), dimension(maxn) :: sump1, coef1, sump2, coef2,   &
        sump3, coef3, sump4, coef4            
   complex(kind=dbl), dimension(maxn) :: a, b
-  complex(kind=dbl) :: msphere 
+  complex(kind=dbl) :: msphere, eps_mix
   character :: aerodist * 1
 
   wavelength = c/(f*1.e9) !
@@ -45,10 +45,9 @@ subroutine mie_icefactor(f, t, m_ice,    &
   !           find the maximum number of terms required in the mie series,
   !       call density_ice(a_mtox, bcoeff, rad2, dens_graup) 
   !       rad2_ice = (dens_graup / 917.) **0.33333333 * rad2 
-  diameter_ice = (6.*a_mtox*dia2**bcoeff/(pi*density*1.e3))**(1./3.)
-  msphere = m_ice !conjg(m_ice)
+  diameter_ice = (6.*a_mtox*dia2**bcoeff/(pi*density))**(1./3.)
 
-  call epsi(msphere,f,t,ice_type,density) 
+  msphere = eps_mix((1.d0,0.d0),m_ice,density)
 
   x = pi * diameter_ice / wavelength
   nterms = 0 
@@ -73,11 +72,17 @@ subroutine mie_icefactor(f, t, m_ice,    &
 
   !               integration loop over diameter of spheres
   if (nbins .gt. 0) del_d = (dia2 - dia1) / nbins
-  do ir = 1, nbins+1
+  tot_mass = 0.
+   do ir = 1, nbins+1
      diameter = dia1 + (ir - 1) * del_d
-     ndens = distribution (ad, bd, alpha, gamma, diameter, aerodist)
+     ndens = distribution(ad, bd, alpha, gamma, diameter, aerodist)
      if ( (ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
         ndens = 0.5 * ndens 
+     end if
+     tot_mass = tot_mass + ndens*del_d*a_mtox*diameter**bcoeff
+     if ((ir .eq. nbins+1) .and. (tot_mass/wc*100. .lt. 99.9d0)) then
+      ndens = ndens + (wc-tot_mass)/(del_d*a_mtox*(diameter)**bcoeff)
+      tot_mass = wc
      end if
 
      nmie = 0 
@@ -86,9 +91,10 @@ subroutine mie_icefactor(f, t, m_ice,    &
      ! !         write(18,*)'dens',dens_graup                                  
      !       radius_ice = (dens_graup / 917.) **0.33333333 * radius 
 
-     diameter_ice = (6.*a_mtox*diameter**bcoeff/(pi*density*1.e3))**(1./3.)
+     diameter_ice = (6.*a_mtox*diameter**bcoeff/(pi*density))**(1./3.)
      x = pi * diameter_ice / wavelength
-     call epsi(msphere,f,t,ice_type,density) 
+
+	 msphere = eps_mix((1.d0,0.d0),m_ice,density)
 
      call miecalc (nmie, x, msphere, a, b) 
      call miecross (nmie, x, a, b, qext, qscat, qback)
@@ -96,7 +102,6 @@ subroutine mie_icefactor(f, t, m_ice,    &
      sumqe = sumqe+qext * ndens * (diameter_ice/2.)**2         ! [1/m^2]
      sumqs = sumqs + qscat * ndens * (diameter_ice/2.)**2      ! [1/m^2]
      sumqback = sumqback + qback * ndens * (diameter_ice/2.)**2! [1/m^2]
-
      if (lphase_flag) then 
         nmie = min0(nmie, nterms) 
         do i = 1, nquad 
@@ -107,6 +112,7 @@ subroutine mie_icefactor(f, t, m_ice,    &
            sump4 (i) = sump4 (i) + p4 * ndens 
         end do
      end if
+     tot_mass = tot_mass + ndens*del_d*a_mtox*diameter**bcoeff
   end do
 
   !           multiply the sums by the integration delta and other constan
@@ -164,4 +170,4 @@ subroutine mie_icefactor(f, t, m_ice,    &
 
   return 
 
-end subroutine mie_icefactor
+end subroutine mie_densitydep_spheremasseq

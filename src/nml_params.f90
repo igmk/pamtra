@@ -32,7 +32,8 @@ module nml_params
 
   real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
   real(kind=dbl) :: emissivity
-  real(kind=dbl) :: N_0snowDsnow, N_0grauDgrau, N_0rainD, SP
+  real(kind=dbl) :: N_0rainD, N_0snowDsnow, N_0grauDgrau, N_0hailDhail,  SP
+  real(kind=dbl) :: snow_density, graupel_density, hail_density
   real(kind=dbl) :: salinity         ! sea surface salinity
 
   logical ::  in_python !are we in python
@@ -46,8 +47,9 @@ module nml_params
        passive, &     ! calculate passive stuff (with RT3)
        zeSplitUp     ! save Ze and Att for every hydrometeor seperately. has only effect on netcdf file!
 
-  character(5) :: EM_snow, EM_grau, EM_ice
-  character(3) :: SD_snow, SD_grau, SD_rain, gas_mod
+  character(5) :: EM_ice, EM_snow, EM_grau, EM_hail
+  character(1) :: SD_cloud, SD_ice, SD_rain, SD_snow, SD_grau, SD_hail
+  character(3) :: gas_mod
   character(20) :: moments_file,file_desc
   character(180) :: input_path, output_path, tmp_path,creator, data_path
   character(13) :: freq_str
@@ -71,10 +73,12 @@ contains
     namelist / surface_params / ground_type,salinity, emissivity
     namelist / gas_abs_mod / lgas_extinction, gas_mod
     namelist / hyd_opts / lhyd_extinction, lphase_flag
-    namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, SP, isnow_n0, liu_type
-    namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau
-    namelist / ice_params / EM_ice
+    namelist / cloud_params / SD_cloud
+    namelist / ice_params / SD_ice, EM_ice
     namelist / rain_params / SD_rain, N_0rainD
+    namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, snow_density, SP, isnow_n0, liu_type
+    namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau, graupel_density
+    namelist / hail_params / SD_hail, N_0hailDhail, EM_hail, hail_density
     namelist / moments / n_moments, moments_file
 
     in_python = .false. ! we are _not_ in python
@@ -109,21 +113,31 @@ contains
     lhyd_extinction=.true.
     lphase_flag = .true.
 
-    SD_snow='Exp' 
+ 	SD_cloud='C'
+
+ 	SD_ice='C'
+    EM_ice='mieic'
+
+    SD_rain='C'
+    N_0rainD=8.0
+
+    SD_snow='C'
     N_0snowDsnow=7.628 
-    EM_snow='icesf' 
+    EM_snow='densi'
+    snow_density=200.d0
     SP=0.2 
     isnow_n0=1
     liu_type=8
 
-    SD_grau='Exp' 
+    SD_grau='C'
     N_0grauDgrau=4.0 
-    EM_grau='surus'
+    EM_grau='densi'
+    graupel_density=400.d0
 
-    EM_ice='mieic'
-
-    SD_rain='Exp' 
-    N_0rainD=8.0
+    SD_hail='C'
+    N_0hailDhail=4.0
+    EM_hail='densi'
+    hail_density=917.d0
 
     n_moments=1
     moments_file='snowCRYSTAL'
@@ -138,10 +152,12 @@ contains
     read(7,nml=surface_params)
     read(7,nml=gas_abs_mod)
     read(7,nml=hyd_opts)
-    read(7,nml=snow_params)
-    read(7,nml=graupel_params)
+    read(7,nml=cloud_params)
     read(7,nml=ice_params)
     read(7,nml=rain_params)
+    read(7,nml=snow_params)
+    read(7,nml=graupel_params)
+    read(7,nml=hail_params)
     read(7,nml=moments)
     close(7)
 

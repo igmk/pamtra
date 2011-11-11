@@ -18,7 +18,8 @@ subroutine ref_water(s,T,f,refre,refim,absind,abscoef)
   ! References:
   !      Maetzler 2006: Thermal microwave radiation: Application for remote sensing
 
-  use kinds 
+  use kinds
+  use constants, only: c, pi
 
   implicit none
 
@@ -32,14 +33,12 @@ subroutine ref_water(s,T,f,refre,refim,absind,abscoef)
        abscoef ! abscoef absorption coefficient (4*pi*n_i*f/c) [1/m]
 
 
-  complex(kind=dbl) :: eps_water, epsi, ref_wat
+  complex(kind=dbl) :: eps_water, epsw, ref_wat
 
-  real(kind=dbl), parameter :: pi = 3.141592653589793, &
-       c = 299792458
   !complex permittivity of natural water
-  epsi =  eps_water(s,T,f)
+  epsw =  eps_water(s,T,f)
 
-  ref_wat = sqrt(epsi)
+  ref_wat = sqrt(epsw)
   refre = real(ref_wat)
   refim = aimag(ref_wat)
 

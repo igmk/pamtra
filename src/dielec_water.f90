@@ -1,6 +1,6 @@
 function dielec_water(s,T,f)
 
-  ! This function calculates the dielectric constant of warter based on the relative permettivity
+  ! This function calculates the dielectric factor of water based on the relative permettivity
   ! for natural water including soluted salt.
   ! Valid parameter range: s 0-40, t 0-30, f 0-500 (1000)
   !
@@ -13,7 +13,8 @@ function dielec_water(s,T,f)
   !	K2 dielectric constant |K|^2
   ! 
   ! References:
-  !      Paul L Smith, “Equivalent Radar Reflectivity Factors for Snow and Ice Particles,” Journal of Climate and Applied Meteorology 23, no. 8 (1984): 1258-1260.
+  !      Paul L Smith, “Equivalent Radar Reflectivity Factors for Snow and Ice Particles,”
+  !                Journal of Climate and Applied Meteorology 23, no. 8 (1984): 1258-1260.
 
   use kinds 
 
@@ -23,7 +24,7 @@ function dielec_water(s,T,f)
        T,& ! temperature [°C]
        f   ! frequency [GHz]
 
-  real(kind=dbl) :: dielec_water !dielectric constant |K|^2
+  real(kind=dbl) :: dielec_water ! dielectric factor |K|^2
 
 
   complex(kind=dbl) :: eps_water, epsi

@@ -62,9 +62,11 @@ subroutine write_nc_results(nc_file)
   end if
 
   !1dim
-  call check(nf90_def_var(ncid,'angle', nf90_float,(/dangID/), anglesVarID))
-  call check(nf90_put_att(ncid, anglesVarID, "units", "deg"))
-  call check(nf90_put_att(ncid, anglesVarID, "missing_value", -9999))
+  if (passive) then
+	 call check(nf90_def_var(ncid,'angle', nf90_float,(/dangID/), anglesVarID))
+	 call check(nf90_put_att(ncid, anglesVarID, "units", "deg"))
+  	 call check(nf90_put_att(ncid, anglesVarID, "missing_value", -9999))
+  end if
 
   call check(nf90_def_var(ncid,'frequency', nf90_float,(/dfrqID/), frequencyVarID))
   call check(nf90_put_att(ncid, frequencyVarID, "units", "GHz"))
@@ -214,8 +216,11 @@ subroutine write_nc_results(nc_file)
   !  call check(nf90_inq_varid(ncid, 'longitude', VarId))
 
 
-  call check(nf90_put_var(ncid, anglesVarID, angles_deg))
+
   call check(nf90_put_var(ncid, frequencyVarID, freqs(1:nfrq)))
+  if (passive) then
+	  call check(nf90_put_var(ncid, anglesVarID, angles_deg))
+  end if
   call check(nf90_put_var(ncid, isVarID, is))
   call check(nf90_put_var(ncid, jsVarID, js))
   call check(nf90_put_var(ncid, lonVarID, lons))

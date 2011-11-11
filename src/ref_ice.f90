@@ -1,59 +1,45 @@
-subroutine ref_ice(T,freq,refre,refim)
+subroutine ref_ice(T,f,refre,refim,absind,abscoef)
 
   ! This function calculates the components (Re,Im) of the complex index of refraction 
   ! of ice. No explicit freq. dependence for Re(RI), const. value for T < 240.
   !
   ! Input:
-  !	T  temperature in Kelvin
-  !	f  frequency in GHz
+  !  T  temperature in Kelvin
+  !	 f  frequency in GHz
   !
   ! Output:
-  !	refre real part of complex index of refraction n_r
-  !	refim imaginary part of complex index of refraction n_i
-  ! 
+  !	 refre    real part of complex index of refraction n_r
+  !	 refim    imaginary part of complex index of refraction n_i
+  !  absind   absorption index
+  !  abscoef  absorption coefficient
+  !
   ! References:
   !      Maetzler 2006: Thermal microwave radiation: Application for remote sensing
   !      Personal communication with Maetzler
 
   use kinds
+  use constants, only: pi, c
 
   implicit none
 
   real(kind=dbl), intent(in) :: T, &
-       freq
+       f
 
   real(kind=dbl), intent(out) :: refre,& ! real part of complex index of refraction n_r []
-       refim   ! imaginary part of complex index of refraction n_i []
+       refim,& ! imaginary part of complex index of refraction n_i []
+       absind,&! absind absorptive index (n_i/n_r) []
+       abscoef ! abscoef absorption coefficient (4*pi*n_i*f/c) [1/m]
 
-  real(kind=dbl) :: eps_real,  &
-       mit,       &
-       alpha,     &
-       beta,     &
-       beta_m,    &
-       delta_beta,&
-       eps_imag
+  complex(kind=dbl) :: epsi, eps_ice, ref_i
 
-  complex(kind=dbl) :: eps
+  epsi =  eps_ice(T,f)
 
-  if (T .ge. 240.) eps_real = 3.1884 + 9.1d-4*(T-273.)
-  if (T .lt. 240.) eps_real = 3.1884 + 9.1d-4*(240. - 273.)
+  ref_i = sqrt(epsi)
+  refre = real(ref_i)
+  refim = aimag(ref_i)
 
-  ! "modified inverse temperature"
-  mit = (300./T)-1
-
-  alpha = (0.00504 + 0.0062*mit)*exp(-22.1*mit)
-
-  beta_m = (0.0207/T)*(exp(335./T))/(exp(335./T)-1.)**2.
-  beta_m = beta_m + 1.16d-11*(freq**2.)
-  delta_beta = exp(-9.963 + 0.0372*(T-273.16))
-
-  beta = beta_m + delta_beta
-  eps_imag = (alpha/freq)+beta*freq
-
-  eps = cmplx(eps_real, eps_imag)
-
-  refre = real(sqrt(eps))
-  refim = aimag(sqrt(eps))
+  absind = refim/refre
+  abscoef = (4*pi*refim*f*1.e9/c)
 
   return
 
