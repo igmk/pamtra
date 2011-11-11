@@ -1,5 +1,4 @@
 &verbose_mode
-verbose=0
 /
 &inoutput_mode
 write_nc=.false.
@@ -21,6 +20,8 @@ active=.true.
 /
 &snow_params
 EM_snow='liudb'
+isnow_n0=0
+N_0snowDsnow=1
 liu_type=4
 /
 &graupel_params
