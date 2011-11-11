@@ -113,9 +113,9 @@ contains
     lhyd_extinction=.true.
     lphase_flag = .true.
 
- 	SD_cloud='C'
+    SD_cloud='C'
 
- 	SD_ice='C'
+    SD_ice='C'
     EM_ice='mieic'
 
     SD_rain='C'

@@ -30,17 +30,17 @@ python module pyPamtraLib ! in
             character*3 intent(in) :: set_gas_mod
             logical intent(in) :: set_lhyd_extinction
             logical intent(in) :: set_lphase_flag
-            character*3 intent(in) :: set_sd_snow
+            character*1 intent(in) :: set_sd_snow
             real intent(in) :: set_n_0snowdsnow
             character*5 intent(in) :: set_em_snow
             real intent(in) :: set_sp
             integer intent(in) :: set_isnow_n0
             integer intent(in) :: set_liu_type
-            character*3 intent(in) :: set_sd_grau
+            character*1 intent(in) :: set_sd_grau
             real intent(in) :: set_n_0graudgrau
             character*5 intent(in) :: set_em_grau
             character*5 intent(in) :: set_em_ice
-            character*3 intent(in) :: set_sd_rain
+            character*1 intent(in) :: set_sd_rain
             real intent(in) :: set_n_0raind
             integer intent(in) :: set_n_moments
             character*20 intent(in) :: set_moments_file
@@ -55,8 +55,8 @@ python module pyPamtraLib ! in
             real intent(in) :: in_deltay
             real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_lat
             real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_lon
-            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_model_i
-            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_model_j
+            integer dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_model_i
+            integer dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_model_j
             real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_wind10u
             real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_wind10v
             real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_lfrac

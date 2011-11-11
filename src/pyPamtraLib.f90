@@ -70,7 +70,8 @@ out_angles&
        set_passive         ! calculate passive stuff (with RT3)
 
   character(5),intent(in) :: set_EM_snow, set_EM_grau, set_EM_ice
-  character(3),intent(in) :: set_SD_snow, set_SD_grau, set_SD_rain, set_gas_mod
+  character(1),intent(in) :: set_SD_snow, set_SD_grau, set_SD_rain
+  character(3),intent(in) :: set_gas_mod
   character(20),intent(in) :: set_moments_file
   character(100),intent(in) :: set_tmp_path,set_creator, set_data_path
   character(2),intent(in) :: set_OUTPOL
@@ -86,7 +87,8 @@ out_angles&
 
   integer, dimension(in_ngridx,in_ngridy), intent(in) :: in_nlyrs
 
-  real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_lat,in_lon,in_model_i,in_model_j
+  real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_lat,in_lon
+  integer, dimension(in_ngridx,in_ngridy), intent(in) :: in_model_i,in_model_j
   real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_wind10u,in_wind10v,in_lfrac
   real(kind=sgl), dimension(in_ngridx,in_ngridy,1+max_in_nlyrs), intent(in) :: in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev
   real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp,in_hwp
