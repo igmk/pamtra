@@ -413,10 +413,10 @@ class pyPamtra(object):
 			self.p["unixtime"] = np.ones(self._shape2D)* int(time.time())
 			warnings.warn("timestamp set to now", Warning)
 		else:
-			if (type(kwargs["timestamp"]) == int) or (type(kwargs["timestamp"]) == float) :
+			if type(kwargs["timestamp"]) in (int,np.int32,np.int64,float,np.float32,np.float64) :
 				self.p["unixtime"] = np.ones(self._shape2D,dtype=int)*kwargs["timestamp"]
 			elif (type(kwargs["timestamp"]) == np.ndarray):
-				if (kwargs["timestamp"].dtype == int) or (kwargs["timestamp"].dtype == float):
+				if kwargs["timestamp"].dtype in (int,np.int32,np.int64,float,np.float32,np.float64):
 					self.p["unixtime"] = kwargs["timestamp"]
 				else:
 					raise TypeError("timestamp entries have to be int or float objects")
@@ -430,7 +430,7 @@ class pyPamtra(object):
 				self.p[environment] = np.ones(self._shape2D)*preset
 				warnings.warn("%s set to %s"%(environment,preset,), Warning)
 			else:
-				if type(kwargs[environment]) == int or type(kwargs[environment]) == float:
+				if type(kwargs[environment]) in (int,np.int32,np.int64,float,np.float32,np.float64):
 					self.p[environment] = np.ones(self._shape2D) * kwargs[environment]
 				else:
 					self.p[environment] = kwargs[environment].reshape(self._shape2D)
@@ -769,7 +769,7 @@ class pyPamtra(object):
 			for key in pp_nodes.keys():
 				print key+": "+str(pp_nodes[key])+" nodes"
 		
-		if (type(freqs) == int) or (type(freqs) == float): freqs = [freqs]
+		if type(freqs) in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
 		
 		self.set["freqs"] = freqs
 		self.set["nfreqs"] = len(freqs)
@@ -928,7 +928,7 @@ class pyPamtra(object):
 		'''
 		run Pamtra from python
 		'''
-		if (type(freqs) == int) or (type(freqs) == float): freqs = [freqs]
+		if type(freqs) == int in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
 		
 		self.set["freqs"] = freqs
 		self.set["nfreqs"] = len(freqs)
@@ -1019,7 +1019,6 @@ class pyPamtra(object):
 		profileVars list of variables of the profile to be saved. "all" saves all implmented ones
 		ncForm: str netcdf file format, possible values are NETCDF3_CLASSIC, NETCDF3_64BIT, NETCDF4_CLASSIC, and NETCDF4
 		'''
-		
 		import netCDF4
 		try: 
 			self.r
