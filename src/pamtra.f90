@@ -7,7 +7,6 @@ program pamtra
   use vars_output !output variables
   use vars_profile
   use double_moments_module !double moments variables are stored here
-  use mod_io_strings !some strings for nice filenames
 
 
   !     The code reads a full (e.g. COSMO) grid and computes for each 
@@ -103,13 +102,10 @@ program pamtra
   nlyr = profiles_nlyr
   deltax = profiles_deltax
   deltay = profiles_deltay
-
+  date_str = year//month//day//time
   ! now allocate variables
  call allocate_output_vars(nlyr)
 
-
-
-  if (write_nc .eqv. .false.) call mod_io_strings_get_filename()
 
 
   if (verbose .gt. 1) print*, 'Start loop over frequencies & profiles!'

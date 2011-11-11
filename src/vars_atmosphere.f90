@@ -9,6 +9,7 @@ module vars_atmosphere
   integer :: ngridx, ngridy
   character(2) :: month, day
   character(4) :: year, time
+  character(12) :: date_str
   real(kind=sgl) :: deltax, deltay
 
   integer, allocatable, dimension(:) :: nlegen
@@ -63,6 +64,7 @@ module vars_atmosphere
 
   integer :: alloc_status
 
+! <<<<<<< HEAD
   integer :: model_i, model_j
   real(kind=sgl) :: lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,hwp
 
@@ -89,6 +91,9 @@ module vars_atmosphere
 ! 
 !     close(14)
 ! >>>>>>> master
+! =======
+!   type(profile), allocatable :: profiles(:,:)
+!   integer, allocatable, dimension(:,:) :: ics
 
 
 

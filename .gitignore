@@ -22,3 +22,5 @@ test/tmp/*
 *.pyc
 *.so
 py/codefriedhof.py
+*.png
+

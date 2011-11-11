@@ -23,11 +23,11 @@ data_path='/home/mech/models/pamtra/data/'
 &rain_params
 /
 &snow_params
-EM_snow='icesf' 
+EM_snow='densi' 
 isnow_n0=2
 /
 &graupel_params
-EM_grau='icesf'
+EM_grau='densi'
 /
 &hail_params
 /
