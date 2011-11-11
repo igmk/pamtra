@@ -2,7 +2,7 @@ subroutine hail_ssp(f,hwc,t,maxleg,kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4, nc)
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, EM_hail, n_moments, SD_hail
+  use nml_params, only: verbose, lphase_flag, EM_hail, n_moments, SD_hail, hail_density
   use constants, only: pi, im
   use double_moments_module
   use conversions
@@ -45,18 +45,13 @@ subroutine hail_ssp(f,hwc,t,maxleg,kext, salb, back,  &
   dia1 = 1.d-5	! minimum diameter [m]
   dia2 = 2.d-2	! maximum diameter [m]
 
-  if (EM_hail .eq. 'icesf') then
-     call mie_densitysizedep_spheremasseq(f, mindex,      &
+  if (EM_hail .eq. 'densi' .or. EM_hail .eq. 'surus') then
+  	if (EM_hail .eq. 'surus') hail_density = 0.815*f+11.2d0
+     call mie_densitydep_spheremasseq(f, mindex,      &
           a_mhail, b_hail, dia1, dia2, nbins, maxleg,   &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, nlegen, legen, legen2, legen3,        &
-          legen4, SD_hail)
-  elseif (EM_hail .eq. 'surus') then
-     call mie_icefactor(f, t,mindex,      &
-          a_mhail, b_hail, dia1, dia2, nbins, maxleg,   &
-          ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
-          back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
-          LEGEN4, SD_hail,0.815*1.e-3*f+0.0112,44)
+          legen4, SD_hail,hail_density,hwc)
   else
      write (*, *) 'no em mod for hail'
      stop

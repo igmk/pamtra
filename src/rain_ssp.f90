@@ -44,7 +44,7 @@ subroutine rain_ssp(f,rwc,t,maxleg,kext, salb, back,  &
   den_liq = 1.d3  ! density of liquid water [kg/m^3]
 
   nbins = 100
-  dia1 = 1.d-4	! minimum diameter [m]
+  dia1 = 1.d-10	! minimum diameter [m]
   dia2 = 6.d-3	! maximum diameter [m]
 
   if (n_moments .eq. 1) then
@@ -63,6 +63,8 @@ subroutine rain_ssp(f,rwc,t,maxleg,kext, salb, back,  &
       a_mrain = 524.
 	  bd = (rwc/(a_mrain*1.d7*exp(gammln(b_rain+1.))))**(1./(-1.-b_rain))
 	  ad = 1.d7
+	  dia2 = log(ad)/bd
+	  if (dia2 .gt. 6.d-3) dia2 = 6.d-3
       alpha = 0.d0 ! exponential SD
       gamma = 1.d0
     end if
@@ -71,12 +73,12 @@ subroutine rain_ssp(f,rwc,t,maxleg,kext, salb, back,  &
      call double_moments(rwc,nc,gamma_rain(1),gamma_rain(2),gamma_rain(3),gamma_rain(4), &
           ad,bd,alpha,gamma,a_mrain, b_rain)
   else
-     stop'Number of moments is not specified'
+     stop 'Number of moments is not specified'
   end if
 
   call mie(f, mindex, dia1, dia2, nbins, maxleg, ad,    &
        bd, alpha, gamma, lphase_flag, kext, salb, back,     &
-       nlegen, legen, legen2, legen3, legen4, SD_rain)
+       nlegen, legen, legen2, legen3, legen4, SD_rain,den_liq,rwc)
 
   if (verbose .gt. 1) print*, 'Exiting rain_ssp'
 

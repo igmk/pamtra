@@ -33,6 +33,7 @@ module nml_params
   real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
   real(kind=dbl) :: emissivity
   real(kind=dbl) :: N_0rainD, N_0snowDsnow, N_0grauDgrau, N_0hailDhail,  SP
+  real(kind=dbl) :: snow_density, graupel_density, hail_density
   real(kind=dbl) :: salinity         ! sea surface salinity
 
   logical :: dump_to_file   ! flag for profile and ssp dump
@@ -73,9 +74,9 @@ contains
     namelist / cloud_params / SD_cloud
     namelist / ice_params / SD_ice, EM_ice
     namelist / rain_params / SD_rain, N_0rainD
-    namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, SP, isnow_n0, liu_type
-    namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau
-    namelist / hail_params / SD_hail, N_0hailDhail, EM_hail
+    namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, snow_density, SP, isnow_n0, liu_type
+    namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau, graupel_density
+    namelist / hail_params / SD_hail, N_0hailDhail, EM_hail, hail_density
     namelist / moments / n_moments, moments_file
 
 
@@ -119,18 +120,21 @@ contains
 
     SD_snow='C'
     N_0snowDsnow=7.628 
-    EM_snow='icesf' 
+    EM_snow='densi'
+    snow_density=200.d0
     SP=0.2 
     isnow_n0=1
     liu_type=8
 
     SD_grau='C'
     N_0grauDgrau=4.0 
-    EM_grau='surus'
+    EM_grau='densi'
+    graupel_density=400.d0
 
     SD_hail='C'
     N_0hailDhail=4.0
-    EM_hail='surus'
+    EM_hail='densi'
+    hail_density=917.d0
 
     n_moments=1
     moments_file='snowCRYSTAL'

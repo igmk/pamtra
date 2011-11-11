@@ -2,7 +2,7 @@ module conversions
 
 contains
 
-real function q2spec(spec_var,t,p,qv,qc,qi,qr,qs,qg,qh)
+real function q2abs(spec_var,t,p,qv,qc,qi,qr,qs,qg,qh)
 
   use kinds
 
@@ -25,11 +25,11 @@ real function q2spec(spec_var,t,p,qv,qc,qi,qr,qs,qg,qh)
   real(kind=dbl), intent(in), optional :: qh
 
   if (present(qh)) then
-	q2spec = spec_var*p/(r_d*(1.d0+(r_v/r_d-1.d0)*qv-qs-qc-qi-qr-qg-qh)*t)
+	q2abs = spec_var*p/(r_d*(1.d0+(r_v/r_d-1.d0)*qv-qs-qc-qi-qr-qg-qh)*t)
   else
-	q2spec = spec_var*p/(r_d*(1.d0+(r_v/r_d-1.d0)*qv-qs-qc-qi-qr-qg)*t)
+	q2abs = spec_var*p/(r_d*(1.d0+(r_v/r_d-1.d0)*qv-qs-qc-qi-qr-qg)*t)
   end if
 
 
-end function q2spec
+end function q2abs
 end module conversions

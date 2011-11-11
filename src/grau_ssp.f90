@@ -2,7 +2,7 @@ subroutine grau_ssp(f,gwc,t,maxleg,kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4, nc)
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_0grauDgrau, EM_grau, n_moments, SD_grau
+  use nml_params, only: verbose, lphase_flag, n_0grauDgrau, EM_grau, n_moments, SD_grau, graupel_density
   use constants, only: pi, im
   use double_moments_module
   use conversions
@@ -53,13 +53,15 @@ subroutine grau_ssp(f,gwc,t,maxleg,kext, salb, back,  &
      alpha = 0.d0
      gamma = 1.d0
 	else if (SD_grau .eq. 'M') then
-     dia1 = 1.d-5 	! minimum diameter [m]
+     dia1 = 1.d-10 	! minimum diameter [m]
      dia2 = 1.d-2	! minimum diameter [m]
      b_grau = 2.8d0
      a_mgrau = 19.6d0
-     bd = (gwc/(a_mgrau*5.d5*exp(gammln(1.d0+a_mgrau))))**(1.d0/(-0.5d0-a_mgrau)) !  [m**-1]
+     bd = (gwc/(a_mgrau*5.d5*exp(gammln(1.d0+b_grau))))**(1.d0/(-0.5d0-b_grau)) !  [m**-1]
      ad = 5.d5*bd**0.5
-     nbins = 100
+	 dia2 = log(ad)/bd
+     if (dia2 .gt. 1.d-2) dia2 = 1.d-2
+	 nbins = 100
      alpha = 0.d0
      gamma = 1.d0
 	end if
@@ -71,21 +73,16 @@ subroutine grau_ssp(f,gwc,t,maxleg,kext, salb, back,  &
      dia1 = 1.d-5	! minimum diameter [m]
      dia2 = 1.d-2	! maximum diameter [m]
   else
-     stop'Number of moments is not specified'
+     stop 'Number of moments is not specified'
   end if
 
-  if (EM_grau .eq. 'icesf') then
-     call mie_densitysizedep_spheremasseq(f, mindex,      &
-          a_mgrau, b_grau, dia1, dia2, nbins, maxleg,   &
-          ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
-          back, nlegen, legen, legen2, legen3,        &
-          legen4, SD_grau)
-  elseif (EM_grau .eq. 'surus') then 
-     call mie_icefactor(f, t,mindex,      &
+  if (EM_grau .eq. 'densi' .or. EM_grau .eq. 'surus') then
+     if (EM_grau .eq. 'surus') graupel_density =  0.815*f+11.2d0
+     call mie_densitydep_spheremasseq(f, t,mindex,      &
           a_mgrau, b_grau, dia1, dia2, nbins, maxleg,   &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
-          LEGEN4, SD_grau,0.815*1.e-3*f+0.0112,44)
+          LEGEN4, SD_grau,graupel_density,gwc)
   else 
      write (*, *) 'no em mod for grau'
      stop

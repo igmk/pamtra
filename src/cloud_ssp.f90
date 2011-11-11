@@ -1,4 +1,4 @@
-subroutine cloud_ssp(f,cwc,t,maxleg,kext, salb, back,  &
+subroutine cloud_ssp(f,cwc,t, maxleg,kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4, nc)
 
   ! This subroutine prepares the input parameters for the routines
@@ -108,7 +108,7 @@ subroutine cloud_ssp(f,cwc,t,maxleg,kext, salb, back,  &
 
   call mie(f, mindex, dia1, dia2, nbins, maxleg, ad,       &
        bd, alpha, gamma, lphase_flag, kext, salb, back,  &
-       nlegen, legen, legen2, legen3, legen4, SD_cloud)
+       nlegen, legen, legen2, legen3, legen4, SD_cloud,den_liq,cwc)
 
   if (verbose .gt. 1) print*, 'Exiting cloud_ssp'
 

@@ -10,7 +10,7 @@ function eps_water(s,T,f)
   !	f  frequency [GHz]
   !
   ! Result:
-  !	eps_water complex permittivity of natural water
+  !	 eps_water complex permittivity of natural water
   ! 
   ! References:
   !      Maetzler 2006: Thermal microwave radiation: Application for remote sensing

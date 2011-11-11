@@ -1,6 +1,6 @@
 subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
      ad, bd, alpha, gamma, lphase_flag, extinction, albedo, back_scatt,  &
-     nlegen, legen, legen2, legen3, legen4, aerodist)
+     nlegen, legen, legen2, legen3, legen4, aerodist,density,wc)
 
   ! note that mindex has the convention with negative imaginary part
   !     
@@ -25,8 +25,8 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
   real(kind=dbl), parameter :: pi = 3.14159265358979d0
   integer :: nterms, nquad, nmie, nleg 
   integer :: i, l, m, ir
-  real(kind=dbl) :: x, del_d, diameter, ndens, tmp, tot_mass
-  real(kind=dbl) :: qext, qscat, qback, scatter 
+  real(kind=dbl) :: x, del_d, diameter, ndens, tmp, tot_mass, wc, density
+  real(kind=dbl) :: qext, qscat, qback, scatter
   real(kind=dbl) :: distribution 
   real(kind=dbl) :: mu(maxn), wts(maxn) 
   real(kind=dbl) :: p1, pl, pl1, pl2, p2, p3, p4 
@@ -72,6 +72,11 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
      if ((ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
         ndens = 0.5 * ndens
      end if
+     tot_mass = tot_mass + ndens*del_d*pi/6.d0*density*diameter**3.d0
+     if ((ir .eq. nbins+1) .and. (tot_mass/wc*100. .lt. 99.9d0)) then
+      ndens = ndens + (wc-tot_mass)/(del_d*pi/6.d0*density*diameter**3.d0)
+      tot_mass = wc
+     end if
      x = pi * diameter / wavelength ! size parameter
      nmie = 0 
      call miecalc(nmie, x, msphere, a, b) ! calculate a and b
@@ -80,6 +85,7 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
      sumqe = sumqe + qext * ndens * (diameter/2.)**2         ! [1/m^2]
      sumqs = sumqs + qscat * ndens * (diameter/2.)**2        ! [1/m^2]
      sumqback = sumqback + qback * ndens * (diameter/2.)**2  ! [1/m^2]
+!    write(36,*) diameter, diameter, ndens, ad, bd, qext, qscat
      if (lphase_flag) then 
         nmie = min(nmie, nterms) 
         do i = 1, nquad 

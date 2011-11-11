@@ -68,17 +68,19 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
      alpha = 0.0d0     ! exponential SD
      gamma = 1.0d0
     else if (SD_ice .eq. 'M') then
-        del_d = 1.d-8    ! [m]
-        dia1 = 6.d-5     ! [m] 60 micron diameter
-        dia2 = dia1 + del_d
-        den_ice = 917.d0  ! [kg/m^3]
-        drop_mass = pi/6.d0 * dia1**3 * den_ice
+     del_d = 1.d-8    ! [m]
+     dia1 = 6.d-5     ! [m] 60 micron diameter
+     dia2 = dia1 + del_d
+     den_ice = 917.d0  ! [kg/m^3]
+     drop_mass = pi/6.d0 * dia1**3 * den_ice
+     a_mice = 0.82d0
+     b_ice = 2.5d0
      ad = iwc/(drop_mass*del_d) 	!intercept parameter [1/m^4]
      bd = 0.0d0
      nbins = 2
      alpha = 0.0d0     ! exponential SD
      gamma = 1.0d0 
-     end if
+    end if
   else if (n_moments .eq. 2) then
      if (.not. present(nc)) stop 'STOP in routine ice_ssp'
      call double_moments(iwc,nc,gamma_ice(1),gamma_ice(2),gamma_ice(3),gamma_ice(4), &
@@ -95,20 +97,8 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
           dia1, dia2, nbins, maxleg,   &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
-          LEGEN4, SD_ice)
-  elseif (EM_ice .eq. 'icesf') then
-     call mie_densitysizedep_spheremasseq(f, mindex,      &
-          a_mice, b_ice, dia1, dia2, nbins, maxleg,   &
-          ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
-          back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
-          LEGEN4, SD_ice)
-  elseif (EM_ice .eq. 'surus') then
-     call mie_icefactor(f, t,mindex,      &
-          a_mice, b_ice, dia1, dia2, nbins, maxleg,   &
-          ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
-          back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
-          LEGEN4, SD_ice,0.863*1.e-3*f+0.115,42)
-  elseif (EM_ice(1:3) .eq. 'liu') then
+          LEGEN4, SD_ice,den_ice,iwc)
+  elseif (EM_ice .eq. 'liudb') then
      call dda_db_liu(f,t,9,mindex, &
           dia1,dia2,nbins,maxleg,ad,&
           bd, alpha, gamma, lphase_flag,kext, salb,&
