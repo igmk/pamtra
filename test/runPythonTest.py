@@ -52,9 +52,9 @@ elif testNo == "3":
 	t.runPamtra(35)
 elif testNo == "4":
 
-	t.set["EM_snow"]='icesf'
+	t.set["EM_snow"]='densi'
 	t.set["isnow_n0"]=2
-	t.set["EM_grau"]='icesf'
+	t.set["EM_grau"]='densi'
 	
 
 	

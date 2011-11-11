@@ -303,25 +303,25 @@ if (set_verbose .gt. 1) print*,in_freqs, in_nlyrs, max_in_nlyrs
            call run_rt3(nx,ny,fi,freqs(fi),freq_str)
 
           if (active) then
-            out_Ze(nx,ny,1:nlyr,:) = Ze(nx,ny,1:nlyr,:)
-            out_Att_hydro(nx,ny,1:nlyr,:) = Att_hydro(nx,ny,1:nlyr,:)
-            out_Att_atmo(nx,ny,1:nlyr,:) = Att_atmo(nx,ny,1:nlyr,:)
+            out_Ze(nx,ny,1:nlyr,:) = REAL(Ze(nx,ny,1:nlyr,:))
+            out_Att_hydro(nx,ny,1:nlyr,:) = REAL(Att_hydro(nx,ny,1:nlyr,:))
+            out_Att_atmo(nx,ny,1:nlyr,:) = REAL(Att_atmo(nx,ny,1:nlyr,:))
 
-            out_Ze_cw(nx,ny,1:nlyr,:) = Ze_cw(nx,ny,1:nlyr,:)
-            out_Ze_rr(nx,ny,1:nlyr,:) = Ze_rr(nx,ny,1:nlyr,:)
-            out_Ze_ci(nx,ny,1:nlyr,:) = Ze_ci(nx,ny,1:nlyr,:)
-            out_Ze_sn(nx,ny,1:nlyr,:) = Ze_sn(nx,ny,1:nlyr,:)
-            out_Ze_gr(nx,ny,1:nlyr,:) = Ze_gr(nx,ny,1:nlyr,:)
-            out_Ze_ha(nx,ny,1:nlyr,:) = Ze_ha(nx,ny,1:nlyr,:)
-            out_Att_cw(nx,ny,1:nlyr,:) = Att_cw(nx,ny,1:nlyr,:)
-            out_Att_rr(nx,ny,1:nlyr,:) = Att_rr(nx,ny,1:nlyr,:)
-            out_Att_ci(nx,ny,1:nlyr,:) = Att_ci(nx,ny,1:nlyr,:)
-            out_Att_sn(nx,ny,1:nlyr,:) = Att_sn(nx,ny,1:nlyr,:)
-            out_Att_gr(nx,ny,1:nlyr,:) = Att_gr(nx,ny,1:nlyr,:)
-            out_Att_ha(nx,ny,1:nlyr,:) = Att_ha(nx,ny,1:nlyr,:)
+            out_Ze_cw(nx,ny,1:nlyr,:) = REAL(Ze_cw(nx,ny,1:nlyr,:))
+            out_Ze_rr(nx,ny,1:nlyr,:) = REAL(Ze_rr(nx,ny,1:nlyr,:))
+            out_Ze_ci(nx,ny,1:nlyr,:) = REAL(Ze_ci(nx,ny,1:nlyr,:))
+            out_Ze_sn(nx,ny,1:nlyr,:) = REAL(Ze_sn(nx,ny,1:nlyr,:))
+            out_Ze_gr(nx,ny,1:nlyr,:) = REAL(Ze_gr(nx,ny,1:nlyr,:))
+            out_Ze_ha(nx,ny,1:nlyr,:) = REAL(Ze_ha(nx,ny,1:nlyr,:))
+            out_Att_cw(nx,ny,1:nlyr,:) = REAL(Att_cw(nx,ny,1:nlyr,:))
+            out_Att_rr(nx,ny,1:nlyr,:) = REAL(Att_rr(nx,ny,1:nlyr,:))
+            out_Att_ci(nx,ny,1:nlyr,:) = REAL(Att_ci(nx,ny,1:nlyr,:))
+            out_Att_sn(nx,ny,1:nlyr,:) = REAL(Att_sn(nx,ny,1:nlyr,:))
+            out_Att_gr(nx,ny,1:nlyr,:) = REAL(Att_gr(nx,ny,1:nlyr,:))
+            out_Att_ha(nx,ny,1:nlyr,:) = REAL(Att_ha(nx,ny,1:nlyr,:))
 
 
-            out_hgt(nx,ny,1:nlyr) = hgt(nx,ny,1:nlyr)
+            out_hgt(nx,ny,1:nlyr) = REAL(hgt(nx,ny,1:nlyr))
           end if
 
           call deallocate_profile_vars()
@@ -333,8 +333,8 @@ if (set_verbose .gt. 1) print*,in_freqs, in_nlyrs, max_in_nlyrs
 
 
   if (passive) then
-    out_angles = angles_deg(:)
-    out_tb = RESHAPE( tb, (/ngridx, ngridy, noutlevels, 2*nummu, nfrq,nstokes /),&
+    out_angles = REAL(angles_deg(:))
+    out_tb = RESHAPE( REAL(tb), (/ngridx, ngridy, noutlevels, 2*nummu, nfrq,nstokes /),&
           ORDER = (/6,5,4,3,2,1/))
   end if
 
