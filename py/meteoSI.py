@@ -58,7 +58,7 @@ def moist_rho_q(p,T,q):
 	'''
 	tVirt = T_virt_q(T,q)
 	moist_rho_q = p/(Rair*tVirt)
-	del tVirt
+
 	return moist_rho_q
 
 def T_virt_rh(T,rh,p):
@@ -88,7 +88,7 @@ def T_virt_q(T,q):
 	  Output:
 	  T_virt in K
 	  '''
-	  return ne.evaluate("T + T * 0.6078 * q")
+	  return T + T * (Rvapor/Rair-1) * q
 
 
 def rh2q(rh,T,p):
@@ -107,8 +107,8 @@ def rh2q(rh,T,p):
 	if np.any(rh > 1.5): raise TypeError("rh must not be in %")
 	
 	eStar = e_sat_gg_water(T)
-	e = ne.evaluate("rh*eStar")
-	q = ne.evaluate("Mwml*e/(p-(1-Mwml)*e)")
+	e = rh*eStar
+	q = Mwml*e/(p-(1-Mwml)*e)
 	del e, eStar
 	return q
 	
@@ -150,7 +150,7 @@ def q2rh(q,T,p):
 	
 	e = ne.evaluate("p/(Mwml*((1/q)+(1/(Mwml)-1)))")
 	eStar = e_sat_gg_water(T)
-	rh = ne.evaluate("e/eStar")
+	rh = e/eStar
 	del e,eStar
 	return rh
 	
