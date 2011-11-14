@@ -74,8 +74,9 @@ pyNode: pyPamtraLib.f90 $(OBJECTS)
 	cp pyPamtraLib.so ../py/
 
 pyinstall:
-	cp ../py/* ~/lib/python/
-
+	cp ../py/*.py ~/lib/python/
+	cp ../py/*.so ~/lib/python/
+	cp ../py/libs/*/*.py ~/lib/python/
 
 
 precompile: 

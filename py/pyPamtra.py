@@ -12,8 +12,8 @@ import sys
 import os
 from copy import deepcopy
 
+import namelist #parser for fortran namelist files
 
-#from numpy import *
 try: 
 	import numexpr as ne
 except:
@@ -205,6 +205,24 @@ class pyPamtra(object):
 		self.p = dict()
 		self._helperP = dict()
 		self.r = dict()
+		
+	def readNmlFile(self,inputFile):
+		nmlFile = namelist.Namelist(inputFile)
+		if nmlFile == {}:
+			raise IOError("file not found: "+inputFile)
+		
+		for key in nmlFile.keys():
+			for subkey in nmlFile[key]["par"][0].keys():
+				if subkey in self._setDefaultKeys:
+					if nmlFile[key]["par"][0][subkey][0] == ".true.": value = True
+					elif nmlFile[key]["par"][0][subkey][0] == ".false.": value = False
+					else: value = nmlFile[key]["par"][0][subkey][0]
+					self.set[subkey] = value
+					if self.set["pyVerbose"] > 1: print subkey, ":", value
+				elif self.set["pyVerbose"] > 0:
+					print "Setting '"+ subkey +"' from '"+ inputFile +"' skipped."
+		if self.set["pyVerbose"] > 1: print "reading nml file done: ", inputFile
+		return
 		
 	def readPamtraProfile(self,inputFile):
 		"""

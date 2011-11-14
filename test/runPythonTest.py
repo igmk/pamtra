@@ -22,41 +22,24 @@ t.p["nlyrs"][2,0] = 25
 #change artificially one timestamp
 t.p["unixtime"][0,0] = 600 #1970-01-01 00:10
 
+
 testNo = sys.argv[1]
 
-if testNo == "1":
+t.readNmlFile("../test/nmls/test"+testNo+".nml")
 
+
+
+if testNo == "1":
 
 	t.runParallelPamtra([24,90,150],pp_local_workers=2,pp_deltaF=1,pp_deltaX=1)
 	
 elif testNo == "2":
 
-	t.set["passive"]=False
-	t.set["active"]=True
-	t.set["EM_snow"]='liudb'
-	t.set["isnow_n0"]=0
-	t.set["N_0snowDsnow"]=1
-	t.set["liu_type"]=4
-
-
 	t.runPamtra(35)
 elif testNo == "3":
-
-	t.set["passive"]=True
-	t.set["active"]=False
-	t.set["EM_snow"]='liudb'
-	t.set["isnow_n0"]=0
-	t.set["N_0snowDsnow"]=1
-	t.set["liu_type"]=8
 	
 	t.runPamtra(35)
 elif testNo == "4":
-
-	t.set["EM_snow"]='densi'
-	t.set["isnow_n0"]=2
-	t.set["EM_grau"]='densi'
-	
-
 	
 	t.runPamtra(35)
 	t.writeResultsToNetCDF("../test/tmp/pythontest4.nc")
