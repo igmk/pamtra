@@ -30,34 +30,49 @@ Kadiab = Rair/Cp # dimlos  Adiabatenexponent
 
 missingNumber = -9999
 
-def moist_rho_rh(p,T,rh):
+def moist_rho_rh(p,T,rh,*qm):
 	'''
 	Input:
 	p is in Pa
 	T is in K
 	rh is in Pa/Pa
-	
+	Optional, several possible:
+	qm is in kg/kg other species which contribute to the air mass! (ice, snow, cloud etc.)
+
 	Output:
 	density of moist air [kg/m^3]
+
+	Example:
+	moist_rho_q(p,T,rh,q_ice,q_snow,q_rain,q_cloud,q_graupel,q_hail)
+
 	
 	'''
 	if np.any(rh > 1.5): raise TypeError("rh must not be in %")
 	
-	tVirt = T_virt_rh(T,rh,p)
+	q = rh2q(rh,T,p)
 	
-	return p/(Rair*tVirt)
+	return moist_rho_q(p,T,q,*qm)
 
-def moist_rho_q(p,T,q):
+def moist_rho_q(p,T,q,*qm):
 	'''
 	Input p is in Pa
 	T is in K
 	q is in kg/kg
+	Optional, several possible:
+	qm is in kg/kg other species which contribute to the air mass! (ice, snow, cloud etc.)
+	
 	Output:
 	density of moist air [kg/m^3]
 	
+	Example:
+	moist_rho_q(p,T,q,q_ice,q_snow,q_rain,q_cloud,q_graupel,q_hail)
 	'''
-	tVirt = T_virt_q(T,q)
-	moist_rho_q = p/(Rair*tVirt)
+	
+	if len(qm)> 0: qm = np.sum(qm,axis=0)
+	else: qm = 0
+	
+	moist_rho_q = p/(Rair*T*(1+(Rvapor/Rair-1)*q-qm))
+	if np.any(moist_rho_q < 0): raise ValueError("meteoSI.moist_rho_q calculated negative densities!")
 
 	return moist_rho_q
 

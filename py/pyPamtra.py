@@ -207,6 +207,10 @@ class pyPamtra(object):
 		self.r = dict()
 		
 	def readNmlFile(self,inputFile):
+		"""
+		read classical Pamtra Namelist File from inputFile
+		"""
+		
 		nmlFile = namelist.Namelist(inputFile)
 		if nmlFile == {}:
 			raise IOError("file not found: "+inputFile)
@@ -578,7 +582,7 @@ class pyPamtra(object):
 			if self.set["pyVerbose"] > 0:
 				print 'calculating "rho_moist"'
 
-			self._helperP["rho_moist"] = meteoSI.moist_rho_q(self._helperP["press"],self._helperP["temp"],self._helperP["q"])
+			self._helperP["rho_moist"] = meteoSI.moist_rho_q(self._helperP["press"],self._helperP["temp"],self._helperP["q"],self.p["cwc_q"],self.p["iwc_q"],self.p["rwc_q"],self.p["gwc_q"],self.p["swc_q"])
 			return
 
 	def _calcRelhum_lev(self):
@@ -664,25 +668,11 @@ class pyPamtra(object):
 					i_cloud_k = np.arange(i_base[k],i_top[k]+1) 
 					self.p["cwc_q"][x,y,i_cloud_k[:-1]] = meteoSI.mod_ad(self.p["temp_lev"][x,y,i_cloud_k], self.p["press_lev"][x,y,i_cloud_k], self.p["hgt_lev"][x,y,i_cloud_k], 1)
 
-		#calculate CWP, invalid data has to be especially tretead to allow matrix operations
 		self.p["cwp"][:] = 0
 		
-		dz = np.diff(self.p["hgt_lev"],axis=-1)
-		dz[dz<=0]=9999
-		relhum = (self.p["relhum_lev"][...,0:-1] + self.p["relhum_lev"][...,1:])/2.
-		relhum[relhum<=0] = 1
-		temp = (self.p["temp_lev"][...,0:-1] + self.p["temp_lev"][...,1:])/2.
-		temp[temp<=0] = 1
-		press_lev1 = deepcopy(self.p["press_lev"])
-		press_lev1[self.p["press_lev"]==missingNumber]=1
-		xp = -1.*np.log(press_lev1[...,1:]/press_lev1[...,0:-1])/dz
-		xp[xp==0] = 9999
-		press = -1.*press_lev1[...,0:-1]/xp*(np.exp(-xp*dz)-1.)/dz
-		
-		q = meteoSI.rh2q(relhum,temp,press)
-		rho_moist = meteoSI.moist_rho_q(press,temp,q)
-		
-		self.p["cwp"][:] = np.sum(self.p["cwc_q"]*rho_moist*dz,axis=-1)
+		self._calcMoistRho() #provides also temp,press,dz and q!
+		self.p["cwp"][:] =  np.sum(self.p["cwc_q"]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
+
 		return
 
 	def createFullProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
