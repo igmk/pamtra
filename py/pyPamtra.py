@@ -57,7 +57,7 @@ class pyPamtra(object):
 
 		self.set["ground_type"]='S'
 		self.set["salinity"]=33.0
-		self.set["emissivity"]=0.6
+		self.set["EMissivity"]=0.6
 
 		self.set["lgas_extinction"]=True
 		self.set["gas_mod"]='R98'
@@ -65,28 +65,38 @@ class pyPamtra(object):
 		self.set["lhyd_extinction"]=True
 		self.set["lphase_flag"]= True
 
-		self.set["SD_snow"]='Exp' 
+		self.set["SD_cloud"]='C'
+		
+		self.set["SD_ice"]='C'
+		self.set["EM_ice"]='mieic'
+		
+		self.set["SD_rain"]='C' 
+		self.set["N_0rainD"]=8.0
+
+		self.set["SD_snow"]='C' 
 		self.set["N_0snowDsnow"]=7.628 
-		self.set["EM_snow"]='icesf' 
+		self.set["EM_snow"]='densi' 
+		self.set["snow_density"]=200 
 		self.set["SP"]=0.2 
 		self.set["isnow_n0"]=1
 		self.set["liu_type"]=8
 
-		self.set["SD_grau"]='Exp' 
+		self.set["SD_grau"]='C' 
 		self.set["N_0grauDgrau"]=4.0 
-		self.set["EM_grau"]='surus'
+		self.set["EM_grau"]='densi'
+		self.set["graupel_density"]=400 
 
-		self.set["EM_ice"]='mieic'
-
-		self.set["SD_rain"]='Exp' 
-		self.set["N_0rainD"]=8.0
+		self.set["SD_hail"]='C' 
+		self.set["N_0hailDhail"]=4.0 
+		self.set["EM_hail"]='densi'
+		self.set["hail_density"]=917 
 
 		self.set["n_moments"]=1
 		self.set["moments_file"]='snowCRYSTAL'
 		
 		self.set["freqs"] = []
 		self.set["nfreqs"] = 0
-		
+				
 		self._setDefaultKeys = self.set.keys()
 		
 		self.dimensions = dict()
@@ -827,7 +837,7 @@ class pyPamtra(object):
 					
 					pp_jobs[pp_ii] = self.job_server.submit(pyPamtraLibWrapper.PamtraFortranWrapper, (
 					#self.set
-					self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["emissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["n_moments"], self.set["moments_file"],
+					self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["EMissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"],self.set["SD_cloud"], self.set["SD_ice"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["snow_density"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["graupel_density"], self.set["SD_hail"], self.set["N_0hailDhail"], self.set["EM_hail"], self.set["hail_density"], self.set["n_moments"], self.set["moments_file"],
 					#input
 					pp_ngridx,
 					pp_ngridy,
@@ -967,7 +977,7 @@ class pyPamtra(object):
 		), host = \
 		pyPamtraLibWrapper.PamtraFortranWrapper(
 		#self.set
-		self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["emissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["n_moments"], self.set["moments_file"],
+		self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["EMissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"],self.set["SD_cloud"], self.set["SD_ice"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["snow_density"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["graupel_density"], self.set["SD_hail"], self.set["N_0hailDhail"], self.set["EM_hail"], self.set["hail_density"], self.set["n_moments"], self.set["moments_file"],
 		#input
 		self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.p["nlyrs"],self.set["nfreqs"],self.set["freqs"],
 		self.p["unixtime"],

@@ -2,9 +2,12 @@ subroutine pyPamtraLib(&!settings
 set_verbose,set_dump_to_file,set_tmp_path,&
 set_data_path,set_obs_height,set_units,set_outpol,set_creator,&
 set_active,set_passive,set_ground_type,set_salinity,set_emissivity,set_lgas_extinction,&
-set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_SD_snow,set_N_0snowDsnow,set_EM_snow,&
-set_SP,set_isnow_n0,set_liu_type,set_SD_grau,set_N_0grauDgrau,set_EM_grau,set_EM_ice,set_SD_rain,&
-set_N_0rainD,set_n_moments,set_moments_file&
+set_gas_mod,set_lhyd_extinction,set_lphase_flag,&
+set_SD_cloud, set_SD_ice, set_EM_ice, set_SD_rain, set_N_0rainD, set_SD_snow,&
+set_N_0snowDsnow, set_EM_snow, set_snow_density, set_SP, set_isnow_n0, set_liu_type,&
+set_SD_grau, set_N_0grauDgrau, set_EM_grau, set_graupel_density, set_SD_hail,&
+set_N_0hailDhail, set_EM_hail, set_hail_density,&
+set_n_moments,set_moments_file&
 ,& !in
 in_ngridx, in_ngridy, max_in_nlyrs, in_nlyrs, in_nfreq, in_freqs,&
 in_timestamp,&
@@ -24,9 +27,6 @@ out_Att_cw,out_Att_rr,out_Att_ci,out_Att_sn,out_Att_gr,out_Att_ha,&
 out_Att_atmo,out_hgt,out_tb,&
 out_angles&
 )
-
-
-
 
 ! python Version of the Pamtra model.
 
@@ -59,8 +59,10 @@ out_angles&
 
   real(kind=sgl),intent(in) :: set_obs_height     ! upper level output height [m] (> 100000. for satellite)
   real(kind=sgl),intent(in) :: set_emissivity
-  real(kind=sgl),intent(in) :: set_N_0snowDsnow, set_N_0grauDgrau, set_N_0rainD, set_SP
+  real(kind=sgl),intent(in) :: set_N_0snowDsnow, set_N_0grauDgrau, set_N_0rainD, set_N_0hailDhail
+  real(kind=sgl),intent(in) :: set_SP
   real(kind=sgl),intent(in) :: set_salinity         ! sea surface salinity
+  real(kind=sgl),intent(in) :: set_snow_density, set_graupel_density, set_hail_density   
 
   logical,intent(in) :: set_dump_to_file   ! flag for profile and ssp dump
   logical,intent(in) :: set_lphase_flag, &        ! flag for phase function calculation
@@ -69,13 +71,14 @@ out_angles&
        set_active, &       ! calculate active stuff
        set_passive         ! calculate passive stuff (with RT3)
 
-  character(5),intent(in) :: set_EM_snow, set_EM_grau, set_EM_ice
-  character(1),intent(in) :: set_SD_snow, set_SD_grau, set_SD_rain
+  character(5),intent(in) :: set_EM_snow, set_EM_grau, set_EM_ice, set_EM_hail
+  character(1),intent(in) :: set_SD_snow, set_SD_grau, set_SD_rain, set_SD_cloud, set_SD_ice, set_SD_hail
   character(3),intent(in) :: set_gas_mod
   character(20),intent(in) :: set_moments_file
   character(100),intent(in) :: set_tmp_path,set_creator, set_data_path
   character(2),intent(in) :: set_OUTPOL
   character(1),intent(in) :: set_GROUND_TYPE, set_UNITS
+
 !Input
 
   integer, intent(in) :: in_nfreq, max_in_nlyrs, in_ngridx, in_ngridy
@@ -111,9 +114,12 @@ out_angles&
   !f2py intent(in) :: set_verbose,set_dump_to_file,set_tmp_path
   !f2py intent(in) :: set_data_path,set_obs_height,set_units,set_outpol,set_creator
   !f2py intent(in) :: set_active,set_passive,set_ground_type,set_salinity,set_emissivity,set_lgas_extinction
-  !f2py intent(in) :: set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_SD_snow,set_N_0snowDsnow,set_EM_snow
-  !f2py intent(in) :: set_SP,set_isnow_n0,set_liu_type,set_SD_grau,set_N_0grauDgrau,set_EM_grau,set_EM_ice,set_SD_rain
-  !f2py intent(in) :: set_N_0rainD,set_n_moments,set_moments_file
+  !f2py intent(in) :: set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_SD_cloud, set_SD_ice, set_EM_ice
+  !f2py intent(in) :: set_SD_rain, set_N_0rainD, set_SD_snow, set_N_0snowDsnow
+  !f2py intent(in) :: set_EM_snow, set_snow_density, set_SP, set_isnow_n0
+  !f2py intent(in) :: set_liu_type, set_SD_grau, set_N_0grauDgrau, set_EM_grau
+  !f2py intent(in) :: set_graupel_density, set_SD_hail, set_N_0hailDhail, set_EM_hail
+  !f2py intent(in) :: set_hail_density,set_n_moments,set_moments_file
   !input
   !f2py intent(in) :: max_in_nlyrs, in_nlyrs, in_ngridx, in_ngridy,in_nfreq, in_freqs
   !f2py intent(in) :: in_timestamp
@@ -138,6 +144,7 @@ out_angles&
 
   integer,dimension(9) :: timestamp
 
+! 		set_sd_cloud, set_sd_ice, set_em_ice, set_sd_rain, set_n_0raind, set_sd_snow, set_n_0snowdsnow, set_em_snow, set_snow_density, set_sp, set_isnow_n0, set_liu_type, set_sd_grau, set_n_0graudgrau, set_em_grau, set_graupel_density, set_sd_hail, set_n_0haildhail, set_em_hail, set_hail_density,
 
 
 
@@ -160,6 +167,8 @@ if (set_verbose .gt. 1) print*,in_freqs, in_nlyrs, max_in_nlyrs
 
 
 
+
+
   !load settings, uggly but neccessary!
   verbose = set_verbose
   dump_to_file = set_dump_to_file
@@ -178,18 +187,28 @@ if (set_verbose .gt. 1) print*,in_freqs, in_nlyrs, max_in_nlyrs
   gas_mod = set_gas_mod
   lhyd_extinction = set_lhyd_extinction
   lphase_flag = set_lphase_flag
-  SD_snow = set_SD_snow
+
+  SD_cloud = set_SD_cloud
+  SD_ice = set_SD_ice
+  EM_ice = set_EM_ice
+  SD_rain = set_SD_rain
+  N_0rainD = set_N_0rainD
+  SD_snow =  set_SD_snow
   N_0snowDsnow = set_N_0snowDsnow
   EM_snow = set_EM_snow
+  snow_density = set_snow_density
   SP = set_SP
   isnow_n0 = set_isnow_n0
   liu_type = set_liu_type
   SD_grau = set_SD_grau
   N_0grauDgrau = set_N_0grauDgrau
   EM_grau = set_EM_grau
-  EM_ice = set_EM_ice
-  SD_rain = set_SD_rain
-  N_0rainD = set_N_0rainD
+  graupel_density = set_graupel_density
+  SD_hail = set_SD_hail
+  N_0hailDhail = set_N_0hailDhail
+  EM_hail = set_EM_hail
+  hail_density = set_hail_density
+
   n_moments = set_n_moments
   moments_file = set_moments_file
 
