@@ -72,8 +72,17 @@ def moist_rho_q(p,T,q,*qm):
 	else: qm = 0
 	
 	moist_rho_q = p/(Rair*T*(1+(Rvapor/Rair-1)*q-qm))
-	if np.any(moist_rho_q < 0): raise ValueError("meteoSI.moist_rho_q calculated negative densities!")
+	
 
+	
+	if np.any(moist_rho_q < 0):
+		if np.any(moist_rho_q < -0.001): 
+			raise ValueError("meteoSI.moist_rho_q calculated negative densities!")
+		else:
+			try: moist_rho_q[moist_rho_q<0] = 0
+			except: moist_rho_q = 0
+			
+	
 	return moist_rho_q
 
 def T_virt_rh(T,rh,p):

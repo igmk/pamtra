@@ -630,7 +630,13 @@ class pyPamtra(object):
 			
 		for key in ["hgt_lev","temp_lev","press_lev","relhum_lev"]:
 			self.p[key] = self.p[key][condition].reshape(self._shape3Dplus)
-			
+		
+		for key in ['q_lev', 'temp', 'q', 'dz', 'press', 'relhum', 'rho_moist']:
+			if key in self._helperP.keys():
+				if key in ['q_lev']:
+					self._helperP[key] = self._helperP[key][condition].reshape(self._shape3Dplus)
+				if key in ['temp', 'q', 'dz', 'press', 'relhum', 'rho_moist']:
+					self._helperP[key] = self._helperP[key][condition].reshape(self._shape3D)
 		return
 
 	def addCloudShape(self):
