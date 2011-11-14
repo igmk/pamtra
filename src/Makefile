@@ -14,18 +14,14 @@ ifeq ($(ARCH),Darwin)
 	LDFLAGS=-lnetcdf -lnetcdff
 else
 
- 	NCFLAGS=-I/usr/include
- 	LFLAGS=-L/usr/lib
-	LDFLAGS=-L/usr/lib -lnetcdff -lnetcdf
+ 	NCFLAGS := $(shell nc-config --fflags)
+ 	LFLAGS=
+	LDFLAGS := $(shell nc-config --flibs)
 # 	NCFLAGS=-I$(HOME)/include
 # 	LFLAGS=-L$(HOME)/lib -L/usr/local/lib
 # 	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm -lsz
 
-
 endif
-
-
-
 
 OBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_profile.o vars_atmosphere.o mod_io_strings.o constants.o double_moments_module.o\
 	vars_output.o conversions.o run_rt3.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o radmat.o \
@@ -90,7 +86,7 @@ precompile:
 	echo "end subroutine versionNumber" >> versionNumber.auto.f90
 	$(FC) $(FCFLAGS) versionNumber.auto.f90 #otherwise error on first make run!
 clean:
-	rm -rf $(OBJECTS) $(BIN) *.mod *~
+	rm -rf $(OBJECTS) $(pamtraOBJECTS) $(BIN) *.mod *~
 
 test: test1 test2 test3 test4 cleantest
 
