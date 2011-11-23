@@ -99,7 +99,7 @@ subroutine cloud_ssp(f,cwc,t, maxleg,kext, salb, back,  &
      call double_moments(cwc,nc,gamma_cloud(1),gamma_cloud(2),gamma_cloud(3),gamma_cloud(4), &
           ad,bd,alpha,gamma,a_mcloud,b_cloud)
      nbins = 100
-     dia1 = .5d-6	! minimum diameter [m]
+     dia1 = .5d-10	! minimum diameter [m]
      dia2 = 1.d-4	! maximum diameter [m]
   else
      stop 'Number of moments is not specified'

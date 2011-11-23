@@ -13,7 +13,7 @@ subroutine double_moments( &
   !As a reference for the calculation of a and lambda for F(m) see appendix.a Seifert and Beheng, 2006, MAP
   !
   !INPUT:
-  !rohydro		: density of idrometeor 						[kg/m^3]
+  !rohydro		: density of hydrometeor 						[kg/m^3]
   !ntot			: total number concentration					[#/m^3]
   !nu_mass		: Nu parameter of F(m)
   !mu_mass		: Mu parameter of F(m)
