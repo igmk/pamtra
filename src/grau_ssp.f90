@@ -42,7 +42,7 @@ subroutine grau_ssp(f,gwc,t,maxleg,kext, salb, back,  &
 
   if (n_moments .eq. 1) then
 	if (SD_grau .eq. 'C') then
-     dia1 = 1.d-5 	! minimum diameter [m]
+     dia1 = 1.d-10 	! minimum diameter [m]
      dia2 = 1.d-2	! minimum diameter [m]
 
      b_grau = 3.1d0
@@ -70,7 +70,7 @@ subroutine grau_ssp(f,gwc,t,maxleg,kext, salb, back,  &
      call double_moments(gwc,nc,gamma_graupel(1),gamma_graupel(2),gamma_graupel(3),gamma_graupel(4), &
           ad,bd,alpha,gamma,a_mgrau, b_grau)
      nbins = 100
-     dia1 = 1.d-5	! minimum diameter [m]
+     dia1 = 1.d-10	! minimum diameter [m]
      dia2 = 1.d-2	! maximum diameter [m]
   else
      stop 'Number of moments is not specified'

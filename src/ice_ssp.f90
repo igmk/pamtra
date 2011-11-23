@@ -86,7 +86,8 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
      call double_moments(iwc,nc,gamma_ice(1),gamma_ice(2),gamma_ice(3),gamma_ice(4), &
           ad,bd,alpha,gamma,a_mice,b_ice)
      nbins = 100
-     dia1 = 1.d-6	! minimum diameter [m]
+     den_ice=917.d0
+     dia1 = 1.d-10	! minimum diameter [m]
      dia2 = 1.d-3	! maximum diameter [m]
   else
      stop 'Number of moments is not specified'
