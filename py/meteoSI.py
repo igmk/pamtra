@@ -67,9 +67,14 @@ def moist_rho_q(p,T,q,*qm):
 	Example:
 	moist_rho_q(p,T,q,q_ice,q_snow,q_rain,q_cloud,q_graupel,q_hail)
 	'''
-	
-	if len(qm)> 0: qm = np.sum(qm,axis=0)
-	else: qm = 0
+
+	if len(qm)> 0: 
+		#get rid of masked data!
+		qm = np.ma.array(qm).filled(0)
+		qm[qm<0] = 0
+		qm = np.sum(qm,axis=0)
+	else: 
+		qm = 0
 	
 	moist_rho_q = p/(Rair*T*(1+(Rvapor/Rair-1)*q-qm))
 	
