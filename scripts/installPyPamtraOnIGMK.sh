@@ -34,7 +34,7 @@ if [ "$1" == "prepare" ]
 then
 	mkdir -p /tmp/pyPamtra
 	cd /tmp/pyPamtra
-	git clone /home/mmaahn/projects/pamtra -b multiZe2
+	git clone /home/mmaahn/projects/pamtra -b pyPamtra
 	cd /tmp/pyPamtra/pamtra/src/
 	make precompile
 	tar -czf /tmp/pyPamtra.tar.gz /tmp/pyPamtra
@@ -79,7 +79,7 @@ then
 			continue
 		fi
 		#make pyinstall
-		ssh -o "BatchMode yes" $user@$host "mkdir -p ~/python/libs-local/$host/ && mv /tmp/pyPamtraCopy/tmp/pyPamtra/pamtra/py/*so ~/python/libs-local/$host/ && mv /tmp/pyPamtraCopy/tmp/pyPamtra/pamtra/py/*py ~/python/lib/"
+		ssh -o "BatchMode yes" $user@$host "mkdir -p ~/python/libs-local/$host/ && mv /tmp/pyPamtraCopy/tmp/pyPamtra/pamtra/py/*so ~/python/libs-local/$host/ && mv /tmp/pyPamtraCopy/tmp/pyPamtra/pamtra/py/*py ~/python/lib/ && mv /tmp/pyPamtraCopy/tmp/pyPamtra/pamtra/py/libs/*/*.py ~/python/lib/"
 		#make pytest
 		ssh -o "BatchMode yes" $user@$host "export PYTHONPATH=:/home/$user/python/lib:/home/$user/python/libs-local/$host/ && cd /tmp/pyPamtraCopy/tmp/pyPamtra/pamtra/src && make pytest123"
 		if [ $? -gt 0 ]
