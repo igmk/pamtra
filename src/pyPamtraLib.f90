@@ -14,7 +14,6 @@ in_timestamp,&
 in_deltax,in_deltay, in_lat,in_lon,in_model_i,in_model_j,&
 in_wind10u,in_wind10v,in_lfrac,&
 in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev,&
-in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp,in_hwp,&
 in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q,&
 in_hwc_q, in_cwc_n, in_iwc_n, in_rwc_n, in_swc_n, in_gwc_n, in_hwc_n&
 ,& !meta out
@@ -94,7 +93,6 @@ out_angles&
   integer, dimension(in_ngridx,in_ngridy), intent(in) :: in_model_i,in_model_j
   real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_wind10u,in_wind10v,in_lfrac
   real(kind=sgl), dimension(in_ngridx,in_ngridy,1+max_in_nlyrs), intent(in) :: in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev
-  real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp,in_hwp
   real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs), intent(in) :: in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q
   real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs), intent(in) :: in_hwc_q,in_cwc_n,in_iwc_n,in_rwc_n
   real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs), intent(in) :: in_swc_n,in_gwc_n,in_hwc_n
@@ -126,7 +124,6 @@ out_angles&
   !f2py intent(in) :: in_deltax,in_deltay, in_lat,in_lon,in_model_i,in_model_j
   !f2py intent(in) :: in_wind10u,in_wind10v,in_lfrac
   !f2py intent(in) :: in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev
-  !f2py intent(in) :: in_iwv,in_cwp,in_iwp,in_rwp,in_swp,in_gwp,in_hwp
   !f2py intent(in) :: in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q
   !f2py intent(in) :: in_hwc_q, in_cwc_n, in_iwc_n, in_rwc_n, in_swc_n, in_gwc_n, in_hwc_n
   !meta out
@@ -294,13 +291,14 @@ if (set_verbose .gt. 1) print*,in_freqs, in_nlyrs, max_in_nlyrs
           temp_lev = in_temp_lev(nx,ny,1:nlyr+1)             ! K
           hgt_lev = in_hgt_lev(nx,ny,1:nlyr+1)               ! m
 
-          iwv = in_iwv(nx,ny)
-          cwp = in_cwp(nx,ny)
-          iwp = in_iwp(nx,ny)
-          rwp = in_rwp(nx,ny)
-          swp = in_swp(nx,ny)
-          gwp = in_gwp(nx,ny)
-          hwp = in_hwp(nx,ny)
+          ! to avoid possible strange effects which are not understood integrated values are set but not used...
+          iwv = -1.
+          cwp = -1.
+          iwp = -1.
+          rwp = -1.
+          swp = -1.
+          gwp = -1.
+          hwp = -1.
 
           cwc_q = in_cwc_q(nx,ny,1:nlyr)           ! kg/kg
           iwc_q = in_iwc_q(nx,ny,1:nlyr)             ! kg/kg

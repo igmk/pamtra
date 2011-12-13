@@ -882,13 +882,6 @@ class pyPamtra(object):
 					self.p["press_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
 					self.p["temp_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
 					self.p["hgt_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-					self.p["iwv"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-					self.p["cwp"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-					self.p["iwp"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-					self.p["rwp"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-					self.p["swp"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-					self.p["gwp"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-					self.p["hwp"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
 					self.p["cwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
 					self.p["iwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
 					self.p["rwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
@@ -1010,7 +1003,6 @@ class pyPamtra(object):
 		self.p["deltax"],self.p["deltay"], self.p["lat"],self.p["lon"],self.p["model_i"],self.p["model_j"],
 		self.p["wind10u"],self.p["wind10v"],self.p["lfrac"],
 		self.p["relhum_lev"],self.p["press_lev"],self.p["temp_lev"],self.p["hgt_lev"],
-		self.p["iwv"],self.p["cwp"],self.p["iwp"],self.p["rwp"],self.p["swp"],self.p["gwp"],self.p["hwp"],
 		self.p["cwc_q"],self.p["iwc_q"],self.p["rwc_q"],self.p["swc_q"],self.p["gwc_q"],
 		self.p["hwc_q"],self.p["cwc_n"],self.p["iwc_n"],self.p["rwc_n"],self.p["swc_n"],self.p["gwc_n"],self.p["hwc_n"])
 				
