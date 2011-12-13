@@ -1,9 +1,8 @@
 #!/bin/bash
 
 hosts=`ls /net`
-hosts="zapod viracao trombe tivano tempest seistan schirokko schili roumet refoli rebat ramier qeb orkan notos nemere molan meltemi lomar kaus karif irifi habagat gargal garbi gales frog forano1 euros embat diablo chinook caspar buran aure albe adelie"
-
-ppTimeout=300
+hosts="zapod viracao trombe tivano tempest seistan schirokko roumet refoli rebat ramier qeb orkan notos nemere molan meltemi kaus irifi habagat gargal garbi gales frog forano1 euros embat chinook aure albe"
+ppTimeout=1800
 
 #how many cpus shall be saved?
 saveCPUs=0.98

@@ -244,6 +244,10 @@ class pyPamtra(object):
 		self.p["nlyrs"] = int(self.p["nlyrs"])
 		self.p["max_nlyrs"] = deepcopy(self.p["nlyrs"])
 		
+		if self.p["max_nlyrs"] > 200:
+			warnings.warn("Too many layers for pamtra (max:200): " + str(self.p["max_nlyrs"]),Warning)
+		
+		
 		self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
 		self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],)
 		self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"]+1,)
@@ -323,57 +327,6 @@ class pyPamtra(object):
 
 		f.close()
 
-	def readWrfDataset(self,fname,kind):
-		import netCDF4
-		
-		'''
-		import wrf Dataset with fname of kind
-		'''
-		
-		if kind not in ["gce"]:
-			raise TypeError("unknown wrf data type")
-		
-		variables = ['XLONG', 'XLAT', 'U10', 'V10', 'TSK', 'PSFC', 'T', 'P', 'PB', 'QVAPOR', 'QCLOUD', 'QICE', 'QRAIN', 'QGRAUP', 'QSNOW', 'LANDMASK', 'PH', 'PHB']
-
-		data = dict()
-
-		ncFile = netCDF4.Dataset(fname,"r")
-
-		timeStr = "".join(ncFile.variables["Times"][:].tolist()[0])
-		data["Times"] = netCDF4.date2num(datetime.datetime.strptime(timeStr,"%Y-%m-%d_%H:%M:%S"),"seconds since 1970-01-01 00:00:00")
-		for var in variables:		
-			data[var] = ncFile.variables[var][0,:].T
-		ncFile.close()
-
-		data["PH"] = (data["PH"]+data["PHB"])/9.81 #now "real m
-		del data["PHB"]
-		
-		data["P"] = data["P"]+data["PB"] # now in Pa
-		del data["PB"]
-
-		Cp = 7.*meteoSI.Rair/2. 
-		RdCp =  meteoSI.Rair/Cp
-		p0 = 100000
-		data["T"] = data["T"] + 300 # now in K
-		data["T"] = data["T"]*(data["P"]/p0)**RdCp # potential temp to temp
-		
-		#add surface data
-		data["TSK"] = data["TSK"].reshape(np.append(list(np.shape(data["TSK"])),1))
-		data["PSFC"] = data["PSFC"].reshape(np.append(list(np.shape(data["PSFC"])),1))
-
-		data["T"] = np.concatenate((data["TSK"],data["T"]),axis=-1)
-		data["P"] = np.concatenate((data["PSFC"],data["P"]),axis=-1)
-		
-		#translate variables
-		varPairs = [["Times","timestamp"],["XLAT","lat"],["XLONG","lon"],["LANDMASK","lfrac"],["U10","wind10u"],["V10","wind10v"],["PH","hgt_lev"],["P","press_lev"],["T","temp_lev"],["QVAPOR","q"],["QCLOUD","cwc_q"],["QICE","iwc_q"],["QRAIN","rwc_q"],["QSNOW","swc_q"],["QGRAUP","gwc_q"]]
-		
-		pamData = dict()
-		for wrfVar,pamVar in varPairs:
-			pamData[pamVar] = data[wrfVar]
-			
-		self.createProfile(**pamData)
-		del data
-
 	def createProfile(self,**kwargs):
 		'''
 		Function to create the Pamtra Profiles.
@@ -419,6 +372,9 @@ class pyPamtra(object):
 		
 		self.p["max_nlyrs"] = np.shape(kwargs["hgt_lev"])[-1] -1
 		
+		if self.p["max_nlyrs"] > 200:
+			warnings.warn("Too many layers for pamtra (max:200): " + str(self.p["max_nlyrs"]),Warning)
+		
 		#if np.any(self.p["nlyrs"] != self.p["max_nlyrs"]):
 			#self._radiosonde = True
 		#else:
@@ -449,7 +405,7 @@ class pyPamtra(object):
 				self.p["unixtime"] = np.ones(self._shape2D,dtype=int)*kwargs["timestamp"]
 			elif (type(kwargs["timestamp"]) == np.ndarray):
 				if kwargs["timestamp"].dtype in (int,np.int32,np.int64,float,np.float32,np.float64):
-					self.p["unixtime"] = kwargs["timestamp"]
+					self.p["unixtime"] = kwargs["timestamp"].reshape(self._shape2D)
 				else:
 					raise TypeError("timestamp entries have to be int or float objects")
 			elif (type(kwargs["timestamp"]) == datetime):
@@ -639,6 +595,56 @@ class pyPamtra(object):
 					self._helperP[key] = self._helperP[key][condition].reshape(self._shape3D)
 		return
 
+	def rescaleHeights(self,new_hgt_lev):
+	
+		# sort height vectors
+		old_hgt_lev = self.p["hgt_lev"]
+		new_hgt = (new_hgt_lev[...,1:] + new_hgt_lev[...,:-1])/2.
+		old_hgt = (old_hgt_lev[...,1:] + old_hgt_lev[...,:-1])/2.
+		
+		self.p["max_nlyrs"] = len(new_hgt_lev) -1
+		
+		#new shape
+		self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
+		self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
+		
+
+		for key in ["cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"]:
+			#make new array
+			newP = np.ones(self._shape3D) * missingNumber
+			for x in xrange(self._shape2D[0]):
+				for y in xrange(self._shape2D[1]):
+					#interpolate!
+					newP[x,y] = np.interp(new_hgt,old_hgt[x,y],self.p[key][x,y])
+			#save new array
+			self.p[key] = newP
+			#and mark all entries below -1 as missing Number!
+			self.p[key][self.p[key]<-1] = missingNumber
+			
+		for key in ["hgt_lev","temp_lev","relhum_lev"]:
+			newP = np.ones(self._shape3Dplus) * missingNumber
+			for x in xrange(self._shape2D[0]):
+				for y in xrange(self._shape2D[1]):
+					newP[x,y] = np.interp(new_hgt_lev,old_hgt_lev[x,y],self.p[key][x,y])
+			self.p[key] = newP
+			self.p[key][self.p[key]<-1] = missingNumber
+			
+		for key in ["press_lev"]:
+			newP = np.ones(self._shape3Dplus) * missingNumber
+			for x in xrange(self._shape2D[0]):
+				for y in xrange(self._shape2D[1]):
+					newP[x,y] = np.exp(np.interp(new_hgt_lev,old_hgt_lev[x,y],np.log(self.p[key][x,y])))
+			self.p[key] = newP
+			self.p[key][self.p[key]<-1] = missingNumber
+
+		self.p["nlyrs"] = np.sum(self.p["hgt_lev"] != missingNumber,axis=-1) -1
+		
+		if self.p["max_nlyrs"] > 200:
+			warnings.warn("Still too many layers for pamtra (max:200): " + str(self.p["max_nlyrs"]),Warning)
+
+
+		return
+
 	def addCloudShape(self):
 		"""
 		adds cloud base and cloud top to the data to an existing pamtra profile
@@ -712,6 +718,8 @@ class pyPamtra(object):
 		self.p["nlyrs"] = np.sum(hgt_lev!=missingNumber,axis=-1) -1
 		self.p["max_nlyrs"] = np.shape(hgt_lev)[-1] -1
 		
+		if self.p["max_nlyrs"] > 200:
+			warnings.warn("Too many layers for pamtra (max:200): " + str(self.p["max_nlyrs"]),Warning)
 		
 		self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
 		self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
@@ -772,6 +780,8 @@ class pyPamtra(object):
 		
 		output is collected by _ppCallback()
 		'''
+		
+		tttt = time.time()
 		
 		if np.max(self.p["relhum_lev"])>5:
 			raise IOError("relative humidity is _not_ in %!")
@@ -913,6 +923,8 @@ class pyPamtra(object):
 		if self.set["pyVerbose"] >= 0: print " "; self.job_server.print_stats()
 		self.job_server.destroy()
 		del self.job_server
+		
+		if self.set["pyVerbose"] >= 0: print "pyPamtra runtime:", time.time() - tttt
 	
 	def _ppCallback(self,pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii,*results):
 		'''
@@ -952,6 +964,8 @@ class pyPamtra(object):
 		'''
 		run Pamtra from python
 		'''
+		tttt = time.time()
+		
 		if type(freqs) == int in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
 		
 		self.set["freqs"] = freqs
@@ -963,8 +977,6 @@ class pyPamtra(object):
 		
 		if np.max(self.p["relhum_lev"])>5:
 			raise IOError("relative humidity is _not_ in %!")
-		
-		tttt = time.time()
 
 		#output
 		(
@@ -1057,7 +1069,7 @@ class pyPamtra(object):
 		
 		cdfFile.properties = str(self.set)
 
-		#make dimesnions
+		#make frequsnions
 		cdfFile.createDimension('grid_x',self.p["ngridx"])
 		cdfFile.createDimension('grid_y',self.p["ngridy"])
 		cdfFile.createDimension('frequency',self.set["nfreqs"])
