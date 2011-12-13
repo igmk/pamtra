@@ -340,7 +340,7 @@ class pyPamtra(object):
 		
 		The following variables are optional and guessed if not provided:	"timestamp","lat","lon","lfrac","wind10u","wind10v","hgt_lev","cwc_q","iwc_q","rwc_q","swc_q","gwc_q"
 		
-		The integrated values are calculated if not provided:
+		The integrated values are skipped if not provided, they have no effect on pamtra!:
 		"iwv","cwp","iwp","rwp","swp","gwp"
 		
 		The following variables are only needed together with the 2 moments scheme!
@@ -446,19 +446,6 @@ class pyPamtra(object):
 		else:
 			self._calcRelhum_lev()
 
-		for pDict,qValue,intValue in [[self._helperP,"q","iwv"],[self.p,"cwc_q","cwp"],[self.p,"iwc_q","iwp"],[self.p,"rwc_q","rwp"],[self.p,"swc_q","swp"],[self.p,"gwc_q","gwp"],[self.p,"hwc_q","hwp"]]:
-			if intValue in kwargs.keys():
-				self.p[intValue] = kwargs[intValue].reshape(self._shape2D)
-			else:
-				#now we need q!
-				self._calcQ()
-				#nothing to do without hydrometeors:
-				if np.all(pDict[qValue]==0):
-					self.p[intValue] = np.zeros(self._shape2D)
-				else:
-					self._calcMoistRho() #provides also temp,press,dz and q!
-					self.p[intValue] =  np.sum(pDict[qValue]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
-					
 		#clean up: remove all nans
 		for key in self.p.keys():
 			#apply only to arrays, lists or tupels
@@ -467,6 +454,9 @@ class pyPamtra(object):
 		
 		return
 
+
+		
+		
 	def _calcPressTempRelhum(self):
 		if set(("temp","relhum","press","dz")).issubset(self._helperP.keys()):
 			return
@@ -578,8 +568,12 @@ class pyPamtra(object):
 		self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
 		self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
 
-		for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","iwv","cwp","iwp","rwp","swp","gwp","hwp"]:
+		for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v"]:
 			self.p[key] = self.p[key][condition].reshape(self._shape2D)
+			
+		for key in ["iwv","cwp","iwp","rwp","swp","gwp","hwp"]:
+			if key in self.p.keys():
+				self.p[key] = self.p[key][condition].reshape(self._shape2D)
 
 		for key in ["cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"]:
 			self.p[key] = self.p[key][condition].reshape(self._shape3D)
@@ -643,6 +637,22 @@ class pyPamtra(object):
 			warnings.warn("Still too many layers for pamtra (max:200): " + str(self.p["max_nlyrs"]),Warning)
 
 
+		return
+		
+	def addIntegratedValues(self):
+	  
+		for pDict,qValue,intValue in [[self._helperP,"q","iwv"],[self.p,"cwc_q","cwp"],[self.p,"iwc_q","iwp"],[self.p,"rwc_q","rwp"],[self.p,"swc_q","swp"],[self.p,"gwc_q","gwp"],[self.p,"hwc_q","hwp"]]:
+			if intValue in kwargs.keys():
+				self.p[intValue] = kwargs[intValue].reshape(self._shape2D)
+			else:
+				#now we need q!
+				self._calcQ()
+				#nothing to do without hydrometeors:
+				if np.all(pDict[qValue]==0):
+					self.p[intValue] = np.zeros(self._shape2D)
+				else:
+					self._calcMoistRho() #provides also temp,press,dz and q!
+					self.p[intValue] =  np.sum(pDict[qValue]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
 		return
 
 	def addCloudShape(self):
@@ -1227,37 +1237,37 @@ class pyPamtra(object):
 		
 		#profile data
 		
-		if "iwv" in profileVars or profileVars =="all":
+		if ("iwv" in profileVars or profileVars =="all") and ("iwv" in self.p.keys()):
 			nc_iwv = cdfFile.createVariable('iwv', 'f4',dim2d,fill_value= missingNumber)
 			nc_iwv.units = "kg/m^2"
 			nc_iwv[:] = self.p["iwv"]
 
-		if "cwp" in profileVars or profileVars =="all":
+		if ("cwp" in profileVars or profileVars =="all") and ("cwp" in self.p.keys()):
 			nc_cwp= cdfFile.createVariable('cwp', 'f4',dim2d,fill_value= missingNumber)
 			nc_cwp.units = "kg/m^2"
 			nc_cwp[:] = self.p["cwp"]
 			
-		if "iwp" in profileVars or profileVars =="all":
+		if ("iwp" in profileVars or profileVars =="all") and ("iwp" in self.p.keys()):
 			nc_iwp = cdfFile.createVariable('iwp', 'f4',dim2d,fill_value= missingNumber)
 			nc_iwp.units = "kg/m^2"
 			nc_iwp[:] = self.p["iwp"]
 
-		if "rwp" in profileVars or profileVars =="all":
+		if ("rwp" in profileVars or profileVars =="all") and ("rwp" in self.p.keys()):
 			nc_rwp = cdfFile.createVariable('rwp', 'f4',dim2d,fill_value= missingNumber)
 			nc_rwp.units = "kg/m^2"
 			nc_rwp[:] = self.p["rwp"]
 			
-		if "swp" in profileVars or profileVars =="all":
+		if ("swp" in profileVars or profileVars =="all") and ("swp" in self.p.keys()):
 			nc_swp = cdfFile.createVariable('swp', 'f4',dim2d,fill_value= missingNumber)
 			nc_swp.units = "kg/m^2"
 			nc_swp[:] = self.p["swp"]
 			
-		if "gwp" in profileVars or profileVars =="all":
+		if ("gwp" in profileVars or profileVars =="all") and ("gwp" in self.p.keys()):
 			nc_gwp = cdfFile.createVariable('gwp', 'f4',dim2d,fill_value= missingNumber)
 			nc_gwp.units = "kg/m^2"
 			nc_gwp[:] = self.p["gwp"]
 
-		if "hwp" in profileVars or profileVars =="all":
+		if ("hwp" in profileVars or profileVars =="all") and ("hwp" in self.p.keys()):
 			nc_hwp = cdfFile.createVariable('hwp', 'f4',dim2d,fill_value= missingNumber)
 			nc_hwp.units = "kg/m^2"
 			nc_hwp[:] = self.p["hwp"]
