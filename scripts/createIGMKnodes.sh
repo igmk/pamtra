@@ -1,7 +1,7 @@
 #!/bin/bash
 
 hosts=`ls /net`
-hosts="zapod viracao trombe tivano tempest seistan schirokko roumet refoli rebat ramier qeb orkan notos nemere molan meltemi kaus irifi habagat gargal garbi gales frog forano1 euros embat chinook aure albe"
+hosts="zapod viracao trombe tivano tempest seistan schirokko roumet refoli rebat ramier qeb orkan notos nemere molan meltemi kaus karif irifi habagat gargal garbi gales frog forano1 euros embat chinook aure albe"
 ppTimeout=1800
 
 #how many cpus shall be saved?

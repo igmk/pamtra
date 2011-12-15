@@ -642,17 +642,14 @@ class pyPamtra(object):
 	def addIntegratedValues(self):
 	  
 		for pDict,qValue,intValue in [[self._helperP,"q","iwv"],[self.p,"cwc_q","cwp"],[self.p,"iwc_q","iwp"],[self.p,"rwc_q","rwp"],[self.p,"swc_q","swp"],[self.p,"gwc_q","gwp"],[self.p,"hwc_q","hwp"]]:
-			if intValue in kwargs.keys():
-				self.p[intValue] = kwargs[intValue].reshape(self._shape2D)
+			#now we need q!
+			self._calcQ()
+			#nothing to do without hydrometeors:
+			if np.all(pDict[qValue]==0):
+				self.p[intValue] = np.zeros(self._shape2D)
 			else:
-				#now we need q!
-				self._calcQ()
-				#nothing to do without hydrometeors:
-				if np.all(pDict[qValue]==0):
-					self.p[intValue] = np.zeros(self._shape2D)
-				else:
-					self._calcMoistRho() #provides also temp,press,dz and q!
-					self.p[intValue] =  np.sum(pDict[qValue]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
+				self._calcMoistRho() #provides also temp,press,dz and q!
+				self.p[intValue] =  np.sum(pDict[qValue]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
 		return
 
 	def addCloudShape(self):
@@ -848,9 +845,9 @@ class pyPamtra(object):
 		self.pp_noJobs = len(np.arange(0,self.set["nfreqs"],pp_deltaF))*len(np.arange(0,self.p["ngridx"],pp_deltaX))*len(np.arange(0,self.p["ngridy"],pp_deltaY))
 		self.pp_jobsDone = 0
 		
-		fi = open("/tmp/pp_logfile.txt","w")
-		fi.write("Starting pp with %i jobs \n\r"%(self.pp_noJobs))
-		fi.close()
+		#fi = open("/tmp/pp_logfile.txt","w")
+		#fi.write("Starting pp with %i jobs \n\r"%(self.pp_noJobs))
+		#fi.close()
 		
 		self.hosts=[]
 		
@@ -959,9 +956,9 @@ class pyPamtra(object):
 			sys.stdout.write("\r"+50*" "+"\r"+ "%s: %6i, %8.3f%% collected (#%6i, %s)"%(datetime.datetime.now().strftime("%Y%m%d-%H:%M:%S"),self.pp_jobsDone,(self.pp_jobsDone)/float(self.pp_noJobs)*100,pp_ii+1,host))
 			sys.stdout.flush()
 		if self.set["pyVerbose"] > 1: print " "; self.job_server.print_stats()
-		fi = open("/tmp/pp_logfile.txt","a")
-		fi.write("%s: %6i, %8.3f%% collected (#%6i, %s)\n\r"%(datetime.datetime.now().strftime("%Y%m%d-%H:%M:%S"),self.pp_jobsDone,(self.pp_jobsDone)/float(self.pp_noJobs)*100,pp_ii+1,host))
-		fi.close()
+		#fi = open("/tmp/pp_logfile.txt","a")
+		#fi.write("%s: %6i, %8.3f%% collected (#%6i, %s)\n\r"%(datetime.datetime.now().strftime("%Y%m%d-%H:%M:%S"),self.pp_jobsDone,(self.pp_jobsDone)/float(self.pp_noJobs)*100,pp_ii+1,host))
+		#fi.close()
 		
 	def runPamtra(self,freqs):
 		'''
@@ -1284,5 +1281,3 @@ class pyPamtra(object):
 
 		cdfFile.close()
 		if self.set["pyVerbose"] >= 0: print fname,"written"
-
-

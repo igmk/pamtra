@@ -12,7 +12,7 @@ module nml_params
   integer, parameter :: MAXV = 64,   &
        MAXLAY = 200, &
        maxleg = 200, &
-       maxfreq = 40, &
+       maxfreq = 100, &
        nummu = 16, & ! no. of observation angles
        NSTOKES = 2, &
        NOUTLEVELS = 2
