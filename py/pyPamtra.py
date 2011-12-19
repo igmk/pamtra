@@ -403,7 +403,7 @@ class pyPamtra(object):
 		else:
 			if type(kwargs["timestamp"]) in (int,np.int32,np.int64,float,np.float32,np.float64) :
 				self.p["unixtime"] = np.ones(self._shape2D,dtype=int)*kwargs["timestamp"]
-			elif (type(kwargs["timestamp"]) == np.ndarray):
+			elif (type(kwargs["timestamp"]) == np.ndarray) or (type(kwargs["timestamp"]) == np.ma.masked_array):
 				if kwargs["timestamp"].dtype in (int,np.int32,np.int64,float,np.float32,np.float64):
 					self.p["unixtime"] = kwargs["timestamp"].reshape(self._shape2D)
 				else:
@@ -543,8 +543,16 @@ class pyPamtra(object):
 			self.p["relhum_lev"] = meteoSI.q2rh(self._helperP["q_lev"],self.p["temp_lev"],self.p["press_lev"])
 			return
 
-
-
+	def _checkData(self):
+		maxLimits = {"relhum_lev":2,"swc_q":0.05,"rwc_q":0.05,"cwc_q":0.05,"iwc_q":0.05,"gwc_q":0.05,"hwc_q":0.05,"temp_lev":320,"press_lev":110000}
+		minLimits = {"relhum_lev":0,"swc_q":0,   "rwc_q":0,   "cwc_q":0,   "iwc_q":0   ,"gwc_q":0   ,"hwc_q":0   ,"temp_lev":170,"press_lev":1}
+		for key in maxLimits.keys():
+			if np.max(self.p[key]) > maxLimits[key]:
+				raise ValueError("unrealistic value for "+ key + ": " +str(np.max(self.p[key])) + ", maximum is " + str(maxLimits[key]))
+		for key in minLimits.keys():
+			if len(self.p[key][self.p[key] != missingNumber]) > 0:
+				if np.min(self.p[key][self.p[key] != missingNumber]) < minLimits[key]:
+					raise ValueError("unrealistic value for "+ key + ": " +str(np.min(self.p[key])) + ", minimum is " + str(minLimits[key]))
 
 	def filterProfiles(self,condition):
 		'''
@@ -790,9 +798,7 @@ class pyPamtra(object):
 		
 		tttt = time.time()
 		
-		if np.max(self.p["relhum_lev"])>5:
-			raise IOError("relative humidity is _not_ in %!")
-
+		self._checkData()
 		
 		for key in self.set:
 			if key not in self._setDefaultKeys:
@@ -975,8 +981,7 @@ class pyPamtra(object):
 			if key not in self._setDefaultKeys:
 				print "Warning Could not parse ",key
 		
-		if np.max(self.p["relhum_lev"])>5:
-			raise IOError("relative humidity is _not_ in %!")
+		self._checkData()
 
 		#output
 		(
