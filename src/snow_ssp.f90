@@ -47,9 +47,11 @@ subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
 
   call ref_ice(t, f, refre, refim)
 
+
   mindex = refre-Im*refim  ! mimicking a
+
   m_air = 1.0d0 - 0.0d0 * Im
-print*, qs, nc,t
+
   if (n_moments .eq. 1) then
   	if (SD_snow .eq. 'C') then
      	b_snow = 2.0d0

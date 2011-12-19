@@ -17,11 +17,9 @@ else
  	NCFLAGS := $(shell nc-config --fflags)
  	LFLAGS=
 	LDFLAGS := $(shell nc-config --flibs)
-# 	NCFLAGS=-I$(HOME)/include
-# 	LFLAGS=-L$(HOME)/lib -L/usr/local/lib
-# 	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm -lsz
-
 endif
+
+
 
 OBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_profile.o vars_atmosphere.o mod_io_strings.o constants.o double_moments_module.o\
 	vars_output.o conversions.o run_rt3.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o radmat.o \
