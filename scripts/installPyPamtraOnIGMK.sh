@@ -88,6 +88,7 @@ then
 			echo "make pytest Fehler bei $host"
 			echo "############################"
 			ssh -o "BatchMode yes" $user@$host rm -rf /tmp/pyPamtraCopy
+			ssh -o "BatchMode yes" $user@$host rm -rvf ~/python/libs-local/$host/
 			testFailHosts="$host $testFailHosts"
 			continue
 		fi
@@ -133,8 +134,13 @@ then
 	exit
 fi
 
-
+if [ "$1" == "remove" ]
+then
+	ssh -o "BatchMode yes" $user@localhost "rm -rvf ~/python/libs-local"
+	exit
+fi
 
 echo "Options:"
 echo "install"
 echo "prepare"
+echo "remove (machine dependend code only)"
