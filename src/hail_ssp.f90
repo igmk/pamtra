@@ -42,7 +42,7 @@ subroutine hail_ssp(f,hwc,t,maxleg,kext, salb, back,  &
   call double_moments(hwc,nc,gamma_hail(1),gamma_hail(2),gamma_hail(3),gamma_hail(4), &
        ad,bd,alpha,gamma,a_mhail, b_hail)
   nbins = 100
-  dia1 = 1.d-5	! minimum diameter [m]
+  dia1 = 1.d-8	! minimum diameter [m]
   dia2 = 2.d-2	! maximum diameter [m]
 
   if (EM_hail .eq. 'densi' .or. EM_hail .eq. 'surus') then

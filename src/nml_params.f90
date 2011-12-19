@@ -51,8 +51,8 @@ module nml_params
   character(1) :: SD_cloud, SD_ice, SD_rain, SD_snow, SD_grau, SD_hail
   character(3) :: gas_mod
   character(20) :: moments_file,file_desc
-  character(180) :: input_path, output_path, tmp_path,creator, data_path
-  character(13) :: freq_str
+  character(100) :: input_path, output_path, tmp_path,creator, data_path
+  character(14) :: freq_str
   character(2) :: OUTPOL
   character(1) :: GROUND_TYPE, UNITS
 

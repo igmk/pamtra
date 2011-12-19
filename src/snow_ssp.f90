@@ -46,9 +46,10 @@ subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
   if (verbose .gt. 1) print*, 'Entering snow_ssp'
 
   call ref_ice(t, f, refre, refim)
+
   mindex = refre-Im*refim  ! mimicking a
   m_air = 1.0d0 - 0.0d0 * Im
-
+print*, qs, nc,t
   if (n_moments .eq. 1) then
   	if (SD_snow .eq. 'C') then
      	b_snow = 2.0d0
@@ -56,7 +57,7 @@ subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
 !     b_snow = 2.2850d0
 !     a_msnow = 0.2124d0
 
-     dia1 = 0.51d-6 ! minimum maximum diameter [m] after kneifel
+     dia1 = 0.51d-10 ! minimum maximum diameter [m] after kneifel
      dia2 = 1.d-2 ! maximum maximum diameter [m] after kneifel
 
      !option isnow_n0 as in COSMO-de 1 moment scheme
@@ -84,7 +85,7 @@ subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
     	alf = 10.0d0**hlp
     	bet = mmb(1)      +mmb(2)*ztc      +mmb(3)*nn       +mmb(4)*ztc*nn+mmb(5)*ztc**2 &
              + mmb(6)*nn**2+mmb(7)*ztc**2*nn+mmb(8)*ztc*nn**2+mmb(9)*ztc**3+mmb(10)*nn**3
-    	m2s = qs / 0.038d0 ! 0.038 = Formfactor in the mass-size relation of snow particles [kg/m^3]
+    	m2s = swc / 0.038d0 ! 0.038 = Formfactor in the mass-size relation of snow particles [kg/m^2]
     	m3s = alf*EXP(bet*LOG(m2s))
     	hlp  = n_0snowDsnow * 1.d6*EXP(-0.107d0*ztc)	! N0snow as a function of solely T from Field (2005)				[1/m^4]
     	ad = 13.5 * m2s**4 / m3s**3						! N0snow as a function of T and snow mixing ratio from Field (2005)	[1/m^4]
@@ -96,6 +97,7 @@ subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
      else if (isnow_n0 .eq. 1) then
         ! Field param. ! multiplied by 10^6 is 1/m^4
         ad = n_0snowDsnow * 1.d6 * exp(-0.107d0 * (t - 273.15))
+
      else if (isnow_n0 .eq. 0) then
         !fixed N0
         ad = n_0snowDsnow * 1.d6
@@ -126,7 +128,7 @@ subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
      call double_moments(swc,nc,gamma_snow(1),gamma_snow(2),gamma_snow(3),gamma_snow(4), &
           ad,bd,alpha,gamma,a_msnow,b_snow)
      nbins = 100
-     dia1 = 1.d-6
+     dia1 = 1.d-10
      dia2 = 2.d-2
   else
      stop'Number of moments is not specified'
