@@ -12,9 +12,7 @@ inputFile="../test/referenceProfile/testProfiles.dat"
 t = pyPamtra.pyPamtra()
 t.readPamtraProfile(inputFile)
 
-t.set["data_path"]='/home/mech/models/pamtra/data/'
-t.set["verbose"]=0
-t.set["pyVerbose"]=1
+
 
 #make artificially less levels for one profile!
 t.p["nlyrs"][2,0] = 25
@@ -26,6 +24,8 @@ t.p["unixtime"][0,0] = 600 #1970-01-01 00:10
 testNo = sys.argv[1]
 
 t.readNmlFile("../test/nmls/test"+testNo+".nml")
+t.set["verbose"]=0
+t.set["pyVerbose"]=1
 
 
 
@@ -53,7 +53,7 @@ if testNo != "4":
 
 	#uncomment if test should be defined again
 	##print "warning, rewrting tests!!"
-	##t.writeResultsToNumpy("../test/referenceOutput/"+testNo+"/python"+testNo+".pickle")
+	t.writeResultsToNumpy("../test/referenceOutput/"+testNo+"/python"+testNo+".pickle")
 
 
 	reference = pyPamtra.pyPamtra()
