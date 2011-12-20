@@ -42,7 +42,7 @@ p16
 tp17
 bsS'pamtraHash'
 p18
-S'9fe612f9f4eddbc82a571c4428d4ddace7c9d869'
+S'39bb9fb0f9af9f9133b20beb90be75c1ba0ce95a'
 p19
 sS'Att_ha'
 p20
@@ -442,7 +442,7 @@ S'snowCRYSTAL'
 p165
 sS'EMissivity'
 p166
-F0.6
+F0.59999999999999998
 sS'EM_snow'
 p167
 S'densi'
@@ -464,7 +464,7 @@ p173
 I01
 sS'N_0snowDsnow'
 p174
-F7.628
+F7.6280000000000001
 sS'n_moments'
 p175
 I1
@@ -479,7 +479,7 @@ p178
 I8
 sS'SP'
 p179
-F0.2
+F0.20000000000000001
 sS'EM_ice'
 p180
 S'mieic'
@@ -543,7 +543,7 @@ p199
 tp200
 bsS'pamtraVersion'
 p201
-S'v0.2-147-g9fe612f-pyPamtra'
+S'v0.1-195-g39bb9fb-pyPamtra'
 p202
 sa(dp203
 S'deltax'

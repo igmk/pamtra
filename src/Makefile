@@ -18,7 +18,9 @@ else
  	LFLAGS=
 	LDFLAGS := $(shell nc-config --flibs)
 endif
-
+#-	NCFLAGS=-I$(HOME)/include
+#-	LFLAGS=-L$(HOME)/lib -L/usr/local/lib
+#-	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm -lsz
 
 
 OBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_profile.o vars_atmosphere.o mod_io_strings.o constants.o double_moments_module.o\

@@ -279,7 +279,7 @@ class pyPamtra(object):
 		self.p["swc_q"] = np.zeros(self._shape3D)
 		self.p["gwc_q"] = np.zeros(self._shape3D)
 		
-		if self.set["n_moments"] == 1:
+		if int(self.set["n_moments"]) == 1:
 			self.p["hwc_q"] = np.ones(self._shape3D)*missingNumber
 			self.p["cwc_n"] = np.ones(self._shape3D)*missingNumber
 			self.p["iwc_n"] = np.ones(self._shape3D)*missingNumber
@@ -297,7 +297,7 @@ class pyPamtra(object):
 					for z in np.arange(self.p["nlyrs"]):
 						self.p["hgt_lev"][x,y,z+1],self.p["press_lev"][x,y,z+1],self.p["temp_lev"][x,y,z+1],self.p["relhum_lev"][x,y,z+1],self.p["cwc_q"][x,y,z],self.p["iwc_q"][x,y,z],self.p["rwc_q"][x,y,z],self.p["swc_q"][x,y,z],self.p["gwc_q"][x,y,z] = np.array(np.array(g.next()),dtype=float)
 
-		elif self.set["n_moments"] == 2:
+		elif int(self.set["n_moments"]) == 2:
 			self.p["hwc_q"] = np.zeros(self._shape3D)
 			self.p["cwc_n"] = np.zeros(self._shape3D)
 			self.p["iwc_n"] = np.zeros(self._shape3D)
@@ -809,7 +809,8 @@ class pyPamtra(object):
 		else:
 			self.job_server = pp.Server(pp_local_workers,ppservers=pp_servers,secret="pyPamtra") 
 			
-			
+		if self.set["verbose"] >= 0:	
+			raise IOError('There is a weired bug if verbosity of the fortran part prints anythin (e.g verbosity is larger than 0). Use the non-parallel pyPamtra version for debugging!")
 		if self.set["pyVerbose"] >= 0: 
 			print "Starting pp with: "
 			pp_nodes = self.job_server.get_active_nodes()
@@ -1197,87 +1198,87 @@ class pyPamtra(object):
 
 				nc_Ze_cw = cdfFile.createVariable('Ze_cloud_water', 'f',dim4d,**fillVDict)
 				nc_Ze_cw.units = "dBz"
-				nc_Ze_cw[:] = self.r["Ze_cw"]
+				nc_Ze_cw[:] = np.array(self.r["Ze_cw"],dtype='f')
 				if not nc4: nc_Ze_cw._FillValue =missingNumber
 		
 				nc_Ze_rr = cdfFile.createVariable('Ze_rain', 'f',dim4d,**fillVDict)
 				nc_Ze_rr.units = "dBz"
-				nc_Ze_rr[:] = self.r["Ze_rr"]
+				nc_Ze_rr[:] = np.array(self.r["Ze_rr"],dtype='f')
 				if not nc4: nc_Ze_rr._FillValue =missingNumber
 		
 				nc_Ze_ci = cdfFile.createVariable('Ze_cloud_ice', 'f',dim4d,**fillVDict)
 				nc_Ze_ci.units = "dBz"
-				nc_Ze_ci[:] = self.r["Ze_ci"]
+				nc_Ze_ci[:] = np.array(self.r["Ze_ci"],dtype='f')
 				if not nc4: nc_Ze_ci._FillValue = missingNumber
 			
 				nc_Ze_sn = cdfFile.createVariable('Ze_snow', 'f',dim4d,**fillVDict)
 				nc_Ze_sn.units = "dBz"
-				nc_Ze_sn[:] = self.r["Ze_sn"]
+				nc_Ze_sn[:] = np.array(self.r["Ze_sn"],dtype='f')
 				if not nc4: nc_Ze_sn._FillValue =missingNumber
 		
 				nc_Ze_gr = cdfFile.createVariable('Ze_graupel', 'f',dim4d,**fillVDict)
 				nc_Ze_gr.units = "dBz"
-				nc_Ze_gr[:] = self.r["Ze_gr"]
+				nc_Ze_gr[:] = np.array(self.r["Ze_gr"],dtype='f')
 				if not nc4: nc_Ze_gr._FillValue =missingNumber
 		
 				nc_Att_cw = cdfFile.createVariable('Attenuation_cloud_water', 'f',dim4d,**fillVDict)
 				nc_Att_cw.units = "dB"
-				nc_Att_cw[:] = self.r["Att_cw"]
+				nc_Att_cw[:] = np.array(self.r["Att_cw"],dtype='f')
 				if not nc4: nc_Att_cw._FillValue =missingNumber
 		
 				nc_Att_rrrs = cdfFile.createVariable('Attenuation_rain', 'f',dim4d,**fillVDict)
 				nc_Att_rrrs.units = "dB"
-				nc_Att_rrrs[:] = self.r["Att_rr"]
+				nc_Att_rrrs[:] = np.array(self.r["Att_rr"],dtype='f')
 				if not nc4: nc_Att_rrrs._FillValue =missingNumber
 				
 				nc_Att_ci = cdfFile.createVariable('Attenuation_cloud_ice', 'f',dim4d,**fillVDict)
 				nc_Att_ci.units = "dB"
-				nc_Att_ci[:] = self.r["Att_ci"]
+				nc_Att_ci[:] = np.array(self.r["Att_ci"],dtype='f')
 				if not nc4: nc_Att_ci._FillValue =missingNumber
 				
 				nc_Att_sn = cdfFile.createVariable('Attenuation_snow', 'f',dim4d,**fillVDict)
 				nc_Att_sn.units = "dB"
-				nc_Att_sn[:] = self.r["Att_sn"]
+				nc_Att_sn[:] = np.array(self.r["Att_sn"],dtype='f')
 				if not nc4: nc_Att_sn._FillValue =missingNumber
 		
 				nc_Att_gr = cdfFile.createVariable('Attenuation_graupel', 'f',dim4d,**fillVDict)
 				nc_Att_gr.units = "dB"
-				nc_Att_gr[:] = self.r["Att_gr"]
+				nc_Att_gr[:] = np.array(self.r["Att_gr"],dtype='f')
 				if not nc4: nc_Att_gr._FillValue =missingNumber
 		
 				if self.set["n_moments"]==2:
 
 					nc_Ze_ha = cdfFile.createVariable('Ze_hail', 'f',dim4d,**fillVDict)
 					nc_Ze_ha.units = "dBz"
-					nc_Ze_ha[:] = self.r["Ze_ha"]
+					nc_Ze_ha[:] = np.array(self.r["Ze_ha"],dtype='f')
 					if not nc4: nc_Ze_ha._FillValue =missingNumber
 		
 					nc_Att_ha = cdfFile.createVariable('Attenuation_hail', 'f',dim4d,**fillVDict)
 					nc_Att_ha.units = "dB"
-					nc_Att_ha[:] = self.r["Att_ha"]
+					nc_Att_ha[:] = np.array(self.r["Att_ha"],dtype='f')
 					if not nc4: nc_Att_ha._FillValue =missingNumber
 		
 			else: 
 				 
 				nc_Ze = cdfFile.createVariable('Ze', 'f',dim4d,**fillVDict)
 				nc_Ze.units = "dBz"
-				nc_Ze[:] = self.r["Ze"]
+				nc_Ze[:] = np.array(self.r["Ze"],dtype='f')
 				if not nc4: nc_Ze._FillValue =missingNumber
 		
 				nc_Attenuation_Hydrometeors = cdfFile.createVariable('Attenuation_Hydrometeors', 'f',dim4d,**fillVDict)
 				nc_Attenuation_Hydrometeors.units = "dB"
-				nc_Attenuation_Hydrometeors[:] = self.r["Att_hydro"]
+				nc_Attenuation_Hydrometeors[:] = np.array(self.r["Att_hydro"],dtype='f')
 				if not nc4: nc_Attenuation_Hydrometeors._FillValue =missingNumber
 		
 			nc_Attenuation_Atmosphere = cdfFile.createVariable('Attenuation_Atmosphere', 'f',dim4d,**fillVDict)
 			nc_Attenuation_Atmosphere.units = "dB"
-			nc_Attenuation_Atmosphere[:] = self.r["Att_atmo"]
+			nc_Attenuation_Atmosphere[:] = np.array(self.r["Att_atmo"],dtype='f')
 			if not nc4: nc_Attenuation_Atmosphere._FillValue =missingNumber
 		
 		if (self.r["settings"]["passive"]):
 			nc_tb = cdfFile.createVariable('tb', 'f',dim6d,**fillVDict)
 			nc_tb.units = "K"
-			nc_tb[:] = self.r["tb"]
+			nc_tb[:] = np.array(self.r["tb"],dtype='f')
 			if not nc4: nc_tb._FillValue =missingNumber
 				
 		#profile data

@@ -136,7 +136,7 @@ fi
 
 if [ "$1" == "remove" ]
 then
-	ssh -o "BatchMode yes" $user@localhost "rm -rvf ~/python/libs-local"
+	ssh -o "BatchMode yes" $user@karif "rm -rvf ~/python/libs-local"
 	exit
 fi
 
