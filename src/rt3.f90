@@ -336,7 +336,7 @@ SUBROUTINE OUTPUT_FILE (NSTOKES, NUMMU, AZIORDER, SRC_CODE,       &
      GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP,  &
      WAVELENGTH, UNITS, OUTPOL, NUM_LAYERS, HEIGHT, NOUTLEVELS,        &
      OUTLEVELS, NUMAZIMUTHS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD,    &
-     DOWN_RAD,lon,lat,lfrac,wind10u,windv,iwv,cwp,iwp,rwp,swp,gwp,hwp)
+     DOWN_RAD,lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,hwp)
 
   use kinds
   use mod_io_strings
@@ -362,7 +362,7 @@ SUBROUTINE OUTPUT_FILE (NSTOKES, NUMMU, AZIORDER, SRC_CODE,       &
   REAL OUT (4), PHI, PHID, PI 
   PARAMETER (PI = 3.1415926535897932384D0) 
 
-  real lon,lat,lfrac,wind10u,windv,iwv,cwp,iwp,rwp,swp,gwp
+  real lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp
 
   N = NUMMU * (AZIORDER + 1) * NOUTLEVELS 
   CALL CONVERT_OUTPUT (UNITS, OUTPOL, NSTOKES, N, WAVELENGTH, 0,    &
