@@ -166,7 +166,7 @@ real(kind=dbl) function distribution(a, b, alpha, gamma, d, distflag)
      !   distribution according to cosmo-de or mesonh model
      distribution = a * exp(-b*d)
   else 
-     write ( * , * ) 'unrecognized distflag in distribution' 
+     write ( * , * ) 'unrecognized distflag in distribution: "', distflag, '"'
   end if
 
   return 

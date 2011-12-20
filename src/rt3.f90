@@ -219,7 +219,7 @@ SUBROUTINE RT3 (NSTOKES, NUMMU, AZIORDER, MU_VALUES, SRC_CODE,    &
 
   use kinds
   use vars_atmosphere
-  use nml_params, only: verbose, write_nc
+  use nml_params, only: verbose, write_nc, in_python
 
   implicit none
 
@@ -246,9 +246,9 @@ SUBROUTINE RT3 (NSTOKES, NUMMU, AZIORDER, MU_VALUES, SRC_CODE,    &
        GROUND_TYPE * 1                                                   
   CHARACTER(100) OUT_FILE
 
-  integer :: model_i, model_j
 
-  real :: lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,hwp
+
+
 
 
   if (verbose .gt. 1) print*, "entered rt3"
@@ -260,26 +260,11 @@ SUBROUTINE RT3 (NSTOKES, NUMMU, AZIORDER, MU_VALUES, SRC_CODE,    &
   gas_extinct = 0.
   MAX_DELTA_TAU = 1.0E-6
 
-  model_i = profiles(nx,ny)%isamp
-  model_j = profiles(nx,ny)%jsamp
-  lon = profiles(nx,ny)%longitude
-  lat = profiles(nx,ny)%latitude
-  lfrac = profiles(nx,ny)%land_fraction
-  wind10u = profiles(nx,ny)%wind_10u
-  wind10v = profiles(nx,ny)%wind_10v
-
-  iwv = profiles(nx,ny)%iwv
-  cwp = profiles(nx,ny)%cwp
-  iwp = profiles(nx,ny)%iwp
-  rwp = profiles(nx,ny)%rwp
-  swp = profiles(nx,ny)%swp
-  gwp = profiles(nx,ny)%gwp
-  hwp = profiles(nx,ny)%hwp
 
 
   num_layers = nlyr
-  height(1:nlyr+1) = profiles(nx,ny)%hgt_lev(nlyr:0:-1)
-  temperatures(1:nlyr+1) = profiles(nx,ny)%temp_lev(nlyr:0:-1)
+  height(1:nlyr+1) = hgt_lev(nlyr:0:-1)
+  temperatures(1:nlyr+1) = temp_lev(nlyr:0:-1)
   gas_extinct(1:nlyr) = kextatmo(nlyr:1:-1)
   rt3kexttot(1:nlyr) = kexttot(nlyr:1:-1)
   rt3salbtot(1:nlyr) = salbtot(nlyr:1:-1)
@@ -299,7 +284,7 @@ SUBROUTINE RT3 (NSTOKES, NUMMU, AZIORDER, MU_VALUES, SRC_CODE,    &
        GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP, WAVELENGTH,   &
        NUM_LAYERS, HEIGHT, TEMPERATURES, GAS_EXTINCT, &
        NOUTLEVELS, OUTLEVELS, MU_VALUES, UP_FLUX, DOWN_FLUX, UP_RAD,     &
-       DOWN_RAD,dble(wind10u),dble(wind10v))
+       DOWN_RAD)
 
   if (verbose .gt. 1) print*, ".... radtran done!"
 
@@ -311,7 +296,7 @@ SUBROUTINE RT3 (NSTOKES, NUMMU, AZIORDER, MU_VALUES, SRC_CODE,    &
 
   if (verbose .gt. 1) print*, "Writing output ...."
 
-  if (write_nc) then 
+  if (write_nc .or. in_python) then 
      call collect_output(NSTOKES, NUMMU, AZIORDER, &
           WAVELENGTH,   &
           UNITS, OUTPOL,NOUTLEVELS, OUTLEVELS,         &
