@@ -30,7 +30,7 @@ try:
 except:
 	warnings.warn("parallel python not available", Warning)
 
-missingNumber=-9999
+missingNumber=-9999.
 
 class pyPamtra(object):
 	'''
@@ -1049,7 +1049,7 @@ class pyPamtra(object):
 		except:
 			raise IOError ("Could not read data")
 		
-	def writeResultsToNetCDF(self,fname,profileVars="all",ncForm="NETCDF3_CLASSIC"):
+	def writeResultsToNetCDF(self,fname,profileVars="all",ncForm="NETCDF3"):
 		'''
 		write the results to a netcdf file
 		
@@ -1057,16 +1057,27 @@ class pyPamtra(object):
 		
 		fname: str filename with path
 		profileVars list of variables of the profile to be saved. "all" saves all implmented ones
-		ncForm: str netcdf file format, possible values are NETCDF3_CLASSIC, NETCDF3_64BIT, NETCDF4_CLASSIC, and NETCDF4
+		ncForm: str netcdf file format, possible values are NETCDF3_CLASSIC, NETCDF3_64BIT, NETCDF4_CLASSIC, and NETCDF4 for the python-netcdf4 package (netcdf3 gives netcdf4 files for newer ubuntu versions!!") NETCDF3 takes the "old" Scientific.IO.NetCDF module, which is a bit more convinient
 		'''
-		import netCDF4
+		
+		#most syntax is identical, but there is one nasty difference regarding the fillValue...
+		if ncForm in ["NETCDF3_CLASSIC", "NETCDF3_64BIT", "NETCDF4_CLASSIC", "NETCDF4"]:
+			import netCDF4 as nc
+			nc4 = True
+		elif ncForm in ["NETCDF3"]:
+			import Scientific.IO.NetCDF as nc
+			nc4 = False
+		else:
+			raise ValueError("Unknown nc form "+ncForm)
+		  
 		try: 
 			self.r
 			self.r["pamtraVersion"]
 		except:
 			raise IOError ("run runPamtra first!")
 
-		cdfFile = netCDF4.Dataset(fname,"w",ncForm)
+		if nc4: cdfFile = nc.Dataset(fname,"w",ncForm)
+		else: cdfFile = nc.NetCDFFile(fname,"w")
 		
 		#write meta data
 		cdfFile.history = "Created with pyPamtra (Version: "+self.r["pamtraVersion"]+", Git Hash: "+self.r["pamtraHash"]+") by "+self.set["creator"]+" (University of Cologne, IGMK) at " + datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
@@ -1093,196 +1104,237 @@ class pyPamtra(object):
 			
 		#create and write dim variables
 		
-		nc_frequency = cdfFile.createVariable('frequency','f4',('frequency',),fill_value= missingNumber)
+		fillVDict = dict()
+		#little cheat to avoid hundreds of if, else...
+		if nc4: fillVDict["fill_value"] = missingNumber
+		
+		nc_frequency = cdfFile.createVariable('frequency','f',('frequency',),**fillVDict)
 		nc_frequency.units = 'GHz'
 		nc_frequency[:] = self.set["freqs"]
+		if not nc4: nc_frequency._FillValue =missingNumber
 		
-		nc_gridx = cdfFile.createVariable('grid_x','f4',('grid_x',),fill_value= missingNumber)
+		nc_gridx = cdfFile.createVariable('grid_x','f',('grid_x',),**fillVDict)#= missingNumber)
 		nc_gridx.units = '-'
-		nc_gridx[:] = np.arange(self.p["ngridx"])
-
-		nc_gridy = cdfFile.createVariable('grid_y','f4',('grid_y',),fill_value= missingNumber)
+		nc_gridx[:] = np.arange(self.p["ngridx"],dtype="f")
+		if not nc4: nc_gridx._FillValue =missingNumber
+		
+		nc_gridy = cdfFile.createVariable('grid_y','f',('grid_y',),**fillVDict)
 		nc_gridy.units = '-'
-		nc_gridy[:] = np.arange(self.p["ngridy"])
-
+		nc_gridy[:] = np.arange(self.p["ngridy"],dtype="f")
+		if not nc4: nc_gridy._FillValue =missingNumber
+		
 		
 		
 		if (self.r["settings"]["active"]):
 
-			nc_heightbins = cdfFile.createVariable('heightbins', 'i4',("heightbins",),fill_value= missingNumber)
+			nc_heightbins = cdfFile.createVariable('heightbins', 'i',("heightbins",),**fillVDict)
 			nc_heightbins.units = "-"
-			nc_heightbins[:] = np.arange(0,self.p["max_nlyrs"])
+			nc_heightbins[:] = np.arange(0,self.p["max_nlyrs"],dtype="i")
+			if not nc4: nc_heightbins._FillValue =int(missingNumber)
 
-
-			nc_height = cdfFile.createVariable('height', 'f4',dim3d,fill_value= missingNumber)
+			nc_height = cdfFile.createVariable('height', 'f',dim3d,**fillVDict)
 			nc_height.units = "m"
 			nc_height[:] = self.r["hgt"]
+			if not nc4: nc_height._FillValue =missingNumber
+			
 		
 		if (self.r["settings"]["passive"]):
-			nc_angle = cdfFile.createVariable('angles','f4',('angles',),fill_value= missingNumber)
+			nc_angle = cdfFile.createVariable('angles','f',('angles',),**fillVDict)
 			nc_angle.units = 'deg'
 			nc_angle[:] = self.r["angles"]
+			if not nc4: nc_angle._FillValue =missingNumber
 			
-			nc_stokes = cdfFile.createVariable('stokes', 'S1',("stokes",),fill_value= missingNumber)
+			nc_stokes = cdfFile.createVariable('stokes', 'c',("stokes",),**fillVDict)
 			nc_stokes.units = "-"
-			nc_stokes[:] = ["H","V"]
+			nc_stokes[:] = "HV"
 			
-			nc_out = cdfFile.createVariable('outlevels', 'f4',("outlevels",),fill_value= missingNumber)
+			nc_out = cdfFile.createVariable('outlevels', 'f',("outlevels",),**fillVDict)
 			nc_out.units = "m over sea level (top of atmosphere value) OR m over ground (ground value)"
 			nc_out[:] = [self.set["obs_height"],0]
+			if not nc4: nc_out._FillValue =missingNumber
 			
 		#create and write variables
 		
-		nc_model_i = cdfFile.createVariable('model_i', 'i4',dim2d,fill_value= missingNumber)
+		nc_model_i = cdfFile.createVariable('model_i', 'i',dim2d,**fillVDict)
 		nc_model_i.units = "-"
-		nc_model_i[:] = self.p["model_i"]
+		nc_model_i[:] = np.array(self.p["model_i"],dtype="i")
+		if not nc4: nc_model_i._FillValue =int(missingNumber)
 		
-		nc_model_j = cdfFile.createVariable('model_j', 'i4',dim2d,fill_value= missingNumber)
+		nc_model_j = cdfFile.createVariable('model_j', 'i',dim2d,**fillVDict)
 		nc_model_j.units = "-"
-		nc_model_j[:] = self.p["model_j"]
-		
-		nc_nlyrs = cdfFile.createVariable('nlyr', 'i4',dim2d,fill_value= missingNumber)
+		nc_model_j[:] = np.array(self.p["model_j"],dtype="i")
+		if not nc4: nc_model_j._FillValue =int(missingNumber)
+			
+		nc_nlyrs = cdfFile.createVariable('nlyr', 'i',dim2d,**fillVDict)
 		nc_nlyrs.units = "-"
-		nc_nlyrs[:] = self.p["nlyrs"]
+		nc_nlyrs[:] = np.array(self.p["nlyrs"],dtype="i")
+		if not nc4: nc_nlyrs._FillValue =int(missingNumber)
 		
-		nc_time = cdfFile.createVariable('datatime', 'i4',dim2d,fill_value= missingNumber)
+		nc_time = cdfFile.createVariable('datatime', 'i',dim2d,**fillVDict)
 		nc_time.units = "seconds since 1970-01-01 00:00:00"
-		nc_time[:] = self.p["unixtime"]
+		nc_time[:] = np.array(self.p["unixtime"],dtype="i")
+		if not nc4: nc_time._FillValue =int(missingNumber)
 		
-		nc_longitude = cdfFile.createVariable('longitude', 'f4',dim2d,fill_value= missingNumber)
+		nc_longitude = cdfFile.createVariable('longitude', 'f',dim2d,**fillVDict)
 		nc_longitude.units = "deg.dec"
-		nc_longitude[:] = self.p["lon"]
+		nc_longitude[:] = np.array(self.p["lon"],dtype="f")
+		if not nc4: nc_longitude._FillValue =missingNumber
 		
-		nc_latitude = cdfFile.createVariable('latitude', 'f4',dim2d,fill_value= missingNumber)
+		nc_latitude = cdfFile.createVariable('latitude', 'f',dim2d,**fillVDict)
 		nc_latitude.units = "deg.dec"
-		nc_latitude[:] = self.p["lat"]
-		
-		nc_lfrac = cdfFile.createVariable('lfrac', 'f4',dim2d,fill_value= missingNumber)
+		nc_latitude[:] = np.array(self.p["lat"],dtype="f")
+		if not nc4: nc_latitude._FillValue =missingNumber
+			
+		nc_lfrac = cdfFile.createVariable('lfrac', 'f',dim2d,**fillVDict)
 		nc_lfrac.units = "-"
-		nc_lfrac[:] = self.p["lfrac"]
+		nc_lfrac[:] = np.array(self.p["lfrac"],dtype="f")
+		if not nc4: nc_lfrac._FillValue =missingNumber
 		
 		
 		if (self.r["settings"]["active"]):
 			
 			if self.set["zeSplitUp"]:
 
-				nc_Ze_cw = cdfFile.createVariable('Ze_cloud_water', 'f4',dim4d,fill_value= missingNumber)
+				nc_Ze_cw = cdfFile.createVariable('Ze_cloud_water', 'f',dim4d,**fillVDict)
 				nc_Ze_cw.units = "dBz"
 				nc_Ze_cw[:] = self.r["Ze_cw"]
-
-				nc_Ze_rr = cdfFile.createVariable('Ze_rain', 'f4',dim4d,fill_value= missingNumber)
+				if not nc4: nc_Ze_cw._FillValue =missingNumber
+		
+				nc_Ze_rr = cdfFile.createVariable('Ze_rain', 'f',dim4d,**fillVDict)
 				nc_Ze_rr.units = "dBz"
 				nc_Ze_rr[:] = self.r["Ze_rr"]
-
-				nc_Ze_ci = cdfFile.createVariable('Ze_cloud_ice', 'f4',dim4d,fill_value= missingNumber)
+				if not nc4: nc_Ze_rr._FillValue =missingNumber
+		
+				nc_Ze_ci = cdfFile.createVariable('Ze_cloud_ice', 'f',dim4d,**fillVDict)
 				nc_Ze_ci.units = "dBz"
 				nc_Ze_ci[:] = self.r["Ze_ci"]
-
-				nc_Ze_sn = cdfFile.createVariable('Ze_snow', 'f4',dim4d,fill_value= missingNumber)
+				if not nc4: nc_Ze_ci._FillValue = missingNumber
+			
+				nc_Ze_sn = cdfFile.createVariable('Ze_snow', 'f',dim4d,**fillVDict)
 				nc_Ze_sn.units = "dBz"
 				nc_Ze_sn[:] = self.r["Ze_sn"]
-
-				nc_Ze_gr = cdfFile.createVariable('Ze_graupel', 'f4',dim4d,fill_value= missingNumber)
+				if not nc4: nc_Ze_sn._FillValue =missingNumber
+		
+				nc_Ze_gr = cdfFile.createVariable('Ze_graupel', 'f',dim4d,**fillVDict)
 				nc_Ze_gr.units = "dBz"
 				nc_Ze_gr[:] = self.r["Ze_gr"]
-
-				nc_Att_cw = cdfFile.createVariable('Attenuation_cloud_water', 'f4',dim4d,fill_value= missingNumber)
+				if not nc4: nc_Ze_gr._FillValue =missingNumber
+		
+				nc_Att_cw = cdfFile.createVariable('Attenuation_cloud_water', 'f',dim4d,**fillVDict)
 				nc_Att_cw.units = "dB"
 				nc_Att_cw[:] = self.r["Att_cw"]
-
-				nc_Att_rrrs = cdfFile.createVariable('Attenuation_rain', 'f4',dim4d,fill_value= missingNumber)
+				if not nc4: nc_Att_cw._FillValue =missingNumber
+		
+				nc_Att_rrrs = cdfFile.createVariable('Attenuation_rain', 'f',dim4d,**fillVDict)
 				nc_Att_rrrs.units = "dB"
 				nc_Att_rrrs[:] = self.r["Att_rr"]
+				if not nc4: nc_Att_rrrs._FillValue =missingNumber
 				
-				nc_Att_ci = cdfFile.createVariable('Attenuation_cloud_ice', 'f4',dim4d,fill_value= missingNumber)
+				nc_Att_ci = cdfFile.createVariable('Attenuation_cloud_ice', 'f',dim4d,**fillVDict)
 				nc_Att_ci.units = "dB"
 				nc_Att_ci[:] = self.r["Att_ci"]
+				if not nc4: nc_Att_ci._FillValue =missingNumber
 				
-				nc_Att_sn = cdfFile.createVariable('Attenuation_snow', 'f4',dim4d,fill_value= missingNumber)
+				nc_Att_sn = cdfFile.createVariable('Attenuation_snow', 'f',dim4d,**fillVDict)
 				nc_Att_sn.units = "dB"
 				nc_Att_sn[:] = self.r["Att_sn"]
-				
-				nc_Att_gr = cdfFile.createVariable('Attenuation_graupel', 'f4',dim4d,fill_value= missingNumber)
+				if not nc4: nc_Att_sn._FillValue =missingNumber
+		
+				nc_Att_gr = cdfFile.createVariable('Attenuation_graupel', 'f',dim4d,**fillVDict)
 				nc_Att_gr.units = "dB"
 				nc_Att_gr[:] = self.r["Att_gr"]
-				
+				if not nc4: nc_Att_gr._FillValue =missingNumber
+		
 				if self.set["n_moments"]==2:
 
-					nc_Ze_ha = cdfFile.createVariable('Ze_hail', 'f4',dim4d,fill_value= missingNumber)
+					nc_Ze_ha = cdfFile.createVariable('Ze_hail', 'f',dim4d,**fillVDict)
 					nc_Ze_ha.units = "dBz"
 					nc_Ze_ha[:] = self.r["Ze_ha"]
-
-					nc_Att_ha = cdfFile.createVariable('Attenuation_hail', 'f4',dim4d,fill_value= missingNumber)
+					if not nc4: nc_Ze_ha._FillValue =missingNumber
+		
+					nc_Att_ha = cdfFile.createVariable('Attenuation_hail', 'f',dim4d,**fillVDict)
 					nc_Att_ha.units = "dB"
 					nc_Att_ha[:] = self.r["Att_ha"]
-					
-				
+					if not nc4: nc_Att_ha._FillValue =missingNumber
+		
 			else: 
 				 
-				nc_Ze = cdfFile.createVariable('Ze', 'f4',dim4d,fill_value= missingNumber)
+				nc_Ze = cdfFile.createVariable('Ze', 'f',dim4d,**fillVDict)
 				nc_Ze.units = "dBz"
 				nc_Ze[:] = self.r["Ze"]
-				
-				nc_Attenuation_Hydrometeors = cdfFile.createVariable('Attenuation_Hydrometeors', 'f4',dim4d,fill_value= missingNumber)
+				if not nc4: nc_Ze._FillValue =missingNumber
+		
+				nc_Attenuation_Hydrometeors = cdfFile.createVariable('Attenuation_Hydrometeors', 'f',dim4d,**fillVDict)
 				nc_Attenuation_Hydrometeors.units = "dB"
 				nc_Attenuation_Hydrometeors[:] = self.r["Att_hydro"]
-			
-			nc_Attenuation_Atmosphere = cdfFile.createVariable('Attenuation_Atmosphere', 'f4',dim4d,fill_value= missingNumber)
+				if not nc4: nc_Attenuation_Hydrometeors._FillValue =missingNumber
+		
+			nc_Attenuation_Atmosphere = cdfFile.createVariable('Attenuation_Atmosphere', 'f',dim4d,**fillVDict)
 			nc_Attenuation_Atmosphere.units = "dB"
 			nc_Attenuation_Atmosphere[:] = self.r["Att_atmo"]
+			if not nc4: nc_Attenuation_Atmosphere._FillValue =missingNumber
 		
 		if (self.r["settings"]["passive"]):
-			nc_tb = cdfFile.createVariable('tb', 'f4',dim6d,fill_value= missingNumber)
+			nc_tb = cdfFile.createVariable('tb', 'f',dim6d,**fillVDict)
 			nc_tb.units = "K"
 			nc_tb[:] = self.r["tb"]
-			
-		
+			if not nc4: nc_tb._FillValue =missingNumber
+				
 		#profile data
 		
 		if ("iwv" in profileVars or profileVars =="all") and ("iwv" in self.p.keys()):
-			nc_iwv = cdfFile.createVariable('iwv', 'f4',dim2d,fill_value= missingNumber)
+			nc_iwv = cdfFile.createVariable('iwv', 'f',dim2d,**fillVDict)
 			nc_iwv.units = "kg/m^2"
-			nc_iwv[:] = self.p["iwv"]
+			nc_iwv[:] = np.array(self.p["iwv"],dtype="f")
+			if not nc4: nc_iwv._FillValue =missingNumber
 
 		if ("cwp" in profileVars or profileVars =="all") and ("cwp" in self.p.keys()):
-			nc_cwp= cdfFile.createVariable('cwp', 'f4',dim2d,fill_value= missingNumber)
+			nc_cwp= cdfFile.createVariable('cwp', 'f',dim2d,**fillVDict)
 			nc_cwp.units = "kg/m^2"
-			nc_cwp[:] = self.p["cwp"]
-			
+			nc_cwp[:] = np.array(self.p["cwp"],dtype="f")
+			if not nc4: nc_cwp._FillValue =missingNumber
+	
 		if ("iwp" in profileVars or profileVars =="all") and ("iwp" in self.p.keys()):
-			nc_iwp = cdfFile.createVariable('iwp', 'f4',dim2d,fill_value= missingNumber)
+			nc_iwp = cdfFile.createVariable('iwp', 'f',dim2d,**fillVDict)
 			nc_iwp.units = "kg/m^2"
-			nc_iwp[:] = self.p["iwp"]
+			nc_iwp[:] = np.array(self.p["iwp"],dtype="f")
+			if not nc4: nc_iwp._FillValue =missingNumber
 
 		if ("rwp" in profileVars or profileVars =="all") and ("rwp" in self.p.keys()):
-			nc_rwp = cdfFile.createVariable('rwp', 'f4',dim2d,fill_value= missingNumber)
+			nc_rwp = cdfFile.createVariable('rwp', 'f',dim2d,**fillVDict)
 			nc_rwp.units = "kg/m^2"
-			nc_rwp[:] = self.p["rwp"]
-			
+			nc_rwp[:] = np.array(self.p["rwp"],dtype="f")
+			if not nc4: nc_rwp._FillValue =missingNumber
+
 		if ("swp" in profileVars or profileVars =="all") and ("swp" in self.p.keys()):
-			nc_swp = cdfFile.createVariable('swp', 'f4',dim2d,fill_value= missingNumber)
+			nc_swp = cdfFile.createVariable('swp', 'f',dim2d,**fillVDict)
 			nc_swp.units = "kg/m^2"
-			nc_swp[:] = self.p["swp"]
-			
+			nc_swp[:] = np.array(self.p["swp"],dtype="f")
+			if not nc4: nc_swp._FillValue =missingNumber
+
 		if ("gwp" in profileVars or profileVars =="all") and ("gwp" in self.p.keys()):
-			nc_gwp = cdfFile.createVariable('gwp', 'f4',dim2d,fill_value= missingNumber)
+			nc_gwp = cdfFile.createVariable('gwp', 'f',dim2d,**fillVDict)
 			nc_gwp.units = "kg/m^2"
-			nc_gwp[:] = self.p["gwp"]
+			nc_gwp[:] = np.array(self.p["gwp"],dtype="f")
+			if not nc4: nc_gwp._FillValue =missingNumber
 
 		if ("hwp" in profileVars or profileVars =="all") and ("hwp" in self.p.keys()):
-			nc_hwp = cdfFile.createVariable('hwp', 'f4',dim2d,fill_value= missingNumber)
+			nc_hwp = cdfFile.createVariable('hwp', 'f',dim2d,**fillVDict)
 			nc_hwp.units = "kg/m^2"
-			nc_hwp[:] = self.p["hwp"]
-			
+			nc_hwp[:] = np.array(self.p["hwp"],dtype="f")
+			if not nc4: nc_hwp._FillValue =missingNumber
+
 		if ("cloudBase" in profileVars or profileVars =="all") and ("cloudBase" in self.p.keys()):
-			nc_cb = cdfFile.createVariable('cloudBase', 'f4',dim2d,fill_value= missingNumber)
+			nc_cb = cdfFile.createVariable('cloudBase', 'f',dim2d,**fillVDict)
 			nc_cb.units = "m"
-			nc_cb[:] = self.p["cloudBase"]
-			
+			nc_cb[:] = np.array(self.p["cloudBase"],dtype="f")
+			if not nc4: nc_cb._FillValue =missingNumber
+
 		if ("cloudTop" in profileVars or profileVars =="all") and ("cloudTop" in self.p.keys()):
-			nc_ct = cdfFile.createVariable('cloudTop', 'f4',dim2d,fill_value= missingNumber)
+			nc_ct = cdfFile.createVariable('cloudTop', 'f',dim2d,**fillVDict)
 			nc_ct.units = "m"
-			nc_ct[:] = self.p["cloudTop"]
+			nc_ct[:] = np.array(self.p["cloudTop"],dtype="f")
+			if not nc4: nc_ct._FillValue =missingNumber
 
 		cdfFile.close()
 		if self.set["pyVerbose"] >= 0: print fname,"written"
