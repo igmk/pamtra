@@ -1,9 +1,15 @@
-#try: 
-	#import scipy.io.netcdf as nc
-	#ncOpen = nc.NetCDFFile
-#except: 
-import netCDF4 as nc
-ncOpen = nc.Dataset
+# -*- coding: utf-8 -*-
+
+try:
+	import netCDF4 as nc
+	nc4 = True
+except:
+	import Scientific.IO.NetCDF as nc
+	nc4 = False
+	
+	
+if nc4: ncOpen = nc.Dataset
+else: ncOpen = nc.NetCDFFile
 
 import numpy as np
 import sys
@@ -11,7 +17,7 @@ import sys
 
 fnameIn =sys.argv[1]
 
-N = ncOpen(fnameIn)
+N = ncOpen(fnameIn,"r")
 
 vars = N.variables.keys()
 vars.sort()
