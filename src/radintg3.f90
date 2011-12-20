@@ -342,68 +342,99 @@ SUBROUTINE COMBINE_LAYERS (N, REFLECT1, TRANS1, SOURCE1, REFLECT2,&
   !      layer is attached to the negative side (up) of the second layer; 
   !      thus layer 1 is put on top of layer 2.     
   use kinds
+  IMPLICIT NONE
   INTEGER N 
   REAL(kind=dbl) REFLECT1 (N, N, 2), TRANS1 (N, N, 2) 
   REAL(kind=dbl) REFLECT2 (N, N, 2), TRANS2 (N, N, 2) 
   REAL(kind=dbl) SOURCE1 (N, 2), SOURCE2 (N, 2) 
   REAL(kind=dbl) OUT_REFLECT (N, N, 2), OUT_TRANS (N, N, 2) 
   REAL(kind=dbl) OUT_SOURCE (N, 2) 
+  REAL(kind=dbl) Y_NN(N,N), X_NN(N,N), G_NN(N,N), ID_NN(N,N), WORK_N1(N), X_N2(N*N,1),  X_N3(N*N,1)
   INTEGER MAXM 
   PARAMETER (MAXM = 4096) 
   REAL(kind=dbl) X (MAXM), Y (MAXM) 
   REAL(kind=dbl) GAMMA (MAXM) 
-  COMMON / SCRATCH1 / X, Y 
-  COMMON / SCRATCH2 / GAMMA 
+  COMMON / SCRATCH1 / X, Y
+  COMMON / SCRATCH2 / GAMMA
 
   !           GAMMAp = inv[1 - R1p * R2m]     (p for +,  m for -)         
-  CALL MMULT (N, N, N, REFLECT1 (1, 1, 1), REFLECT2 (1, 1, 2),      &
-       X)                                                                
-  CALL MIDENTITY (N, Y) 
-  CALL MSUB (N, N, Y, X, Y) 
-  CALL MINVERT (N, Y, GAMMA) 
+!  CALL MMULT (N, N, N, REFLECT1 (1, 1, 1), REFLECT2 (1, 1, 2),      &
+!       X)
+  X_NN=MATMUL(REFLECT1 (:, :, 1), REFLECT2 (:, :, 2))
+!  CALL MIDENTITY (N, Y)
+  CALL MIDENTITY (N, ID_NN)
+!  CALL MSUB (N, N, Y, X, Y)
+  Y_NN=ID_NN - X_NN
+!  CALL MINVERT (N, Y, GAMMA)
+  CALL MINVERT (N, Y_NN, G_NN)
 
   !           RTp = R2p + T2p * GAMMAp * R1p * T2m                        
-  CALL MMULT (N, N, N, REFLECT1 (1, 1, 1), TRANS2 (1, 1, 2),        &
-       X)                                                                
-  CALL MMULT (N, N, N, GAMMA, X, Y) 
-  CALL MMULT (N, N, N, TRANS2 (1, 1, 1), Y, X) 
-  CALL MADD (N, N, REFLECT2 (1, 1, 1), X, OUT_REFLECT (1, 1, 1) ) 
+!  CALL MMULT (N, N, N, REFLECT1 (1, 1, 1), TRANS2 (1, 1, 2),        &
+!       X)
+  X_NN=MATMUL(REFLECT1 (:, :, 1), TRANS2 (:, :, 2))
+!  CALL MMULT (N, N, N, GAMMA, X, Y)
+  Y_NN=MATMUL(G_NN, X_NN)
+!  CALL MMULT (N, N, N, TRANS2 (1, 1, 1), Y, X)
+  X_NN=MATMUL(TRANS2 (:, :, 1), Y_NN)
+!  CALL MADD (N, N, REFLECT2 (1, 1, 1), X, OUT_REFLECT (1, 1, 1) )
+  OUT_REFLECT(:, :, 1)=REFLECT2 (:, :, 1) + X_NN
 
-  !           TTp = T2p * GAMMAp * T1p                                    
-  CALL MMULT (N, N, N, GAMMA, TRANS1 (1, 1, 1), X) 
-  CALL MMULT (N, N, N, TRANS2 (1, 1, 1), X, OUT_TRANS (1, 1, 1) ) 
+  !           TTp = T2p * GAMMAp * T1p
+!  CALL MMULT (N, N, N, GAMMA, TRANS1 (1, 1, 1), X)
+  X_NN=MATMUL(G_NN, TRANS1(:, :, 1))
+!  CALL MMULT (N, N, N, TRANS2 (1, 1, 1), X, OUT_TRANS (1, 1, 1) )
+  OUT_TRANS (:, :, 1) = MATMUL(TRANS2 (:, :, 1), X_NN)
 
-  !           STp = S2p + T2p * GAMMAp * (S1p + R1p * S2m)                
-  CALL MMULT (N, N, 1, REFLECT1 (1, 1, 1), SOURCE2 (1, 2), X) 
-  CALL MADD (N, 1, SOURCE1 (1, 1), X, Y) 
-  CALL MMULT (N, N, 1, GAMMA, Y, X) 
-  CALL MMULT (N, N, 1, TRANS2 (1, 1, 1), X, Y) 
-  CALL MADD (N, 1, SOURCE2 (1, 1), Y, OUT_SOURCE (1, 1) ) 
+  !           STp = S2p + T2p * GAMMAp * (S1p + R1p * S2m)
+!  CALL MMULT (N, N, 1, REFLECT1 (1, 1, 1), SOURCE2 (1, 2), X)
+  WORK_N1=MATMUL(REFLECT1 (:, :, 1), SOURCE2 (:, 2))
+!  CALL MADD (N, 1, SOURCE1 (1, 1), X, Y)
+  WORK_N1=SOURCE1(:,1)+ WORK_N1
+!  CALL MMULT (N, N, 1, GAMMA, Y, X)
+  WORK_N1=MATMUL(G_NN,WORK_N1)
+!  CALL MMULT (N, N, 1, TRANS2 (1, 1, 1), X, Y)
+  WORK_N1=MATMUL(TRANS2 (:, :, 1), WORK_N1)
+!  CALL MADD (N, 1, SOURCE2 (1, 1), Y, OUT_SOURCE (1, 1) )
+  OUT_SOURCE (:, 1)=SOURCE2 (:, 1) + WORK_N1
 
   !           GAMMAm = inv[1 - R2m * R1p]                                 
-  CALL MMULT (N, N, N, REFLECT2 (1, 1, 2), REFLECT1 (1, 1, 1),      &
-       X)                                                                
-  CALL MIDENTITY (N, Y) 
-  CALL MSUB (N, N, Y, X, Y) 
-  CALL MINVERT (N, Y, GAMMA) 
+!  CALL MMULT (N, N, N, REFLECT2 (1, 1, 2), REFLECT1 (1, 1, 1),      &
+!       X)
+  X_NN=MATMUL(REFLECT2 (:, :, 2), REFLECT1 (:, :, 1))
+!  CALL MIDENTITY (N, Y)
+!  CALL MSUB (N, N, Y, X, Y)
+  Y_NN= ID_NN - X_NN
+!  CALL MINVERT (N, Y, GAMMA)
+  CALL MINVERT (N, Y_NN, G_NN)
 
   !           RTm = R1m + T1m * GAMMAm * R2m * T1p                        
-  CALL MMULT (N, N, N, REFLECT2 (1, 1, 2), TRANS1 (1, 1, 1),        &
-       X)                                                                
-  CALL MMULT (N, N, N, GAMMA, X, Y) 
-  CALL MMULT (N, N, N, TRANS1 (1, 1, 2), Y, X) 
-  CALL MADD (N, N, REFLECT1 (1, 1, 2), X, OUT_REFLECT (1, 1, 2) ) 
+!  CALL MMULT (N, N, N, REFLECT2 (1, 1, 2), TRANS1 (1, 1, 1),        &
+!       X)
+  X_NN=MATMUL(REFLECT2 (:, :, 2), TRANS1 (:, :, 1))
+!  CALL MMULT (N, N, N, GAMMA, X, Y)
+  Y_NN=MATMUL(G_NN, X_NN)
+!  CALL MMULT (N, N, N, TRANS1 (1, 1, 2), Y, X)
+  X_NN=MATMUL(TRANS1 (:, :, 2), Y_NN)
+!  CALL MADD (N, N, REFLECT1 (1, 1, 2), X, OUT_REFLECT (1, 1, 2) )
+  OUT_REFLECT (:, :, 2)=REFLECT1 (:, :, 2) + X_NN
 
-  !           TTm = T1m * GAMMAm * T2m                                    
-  CALL MMULT (N, N, N, GAMMA, TRANS2 (1, 1, 2), X) 
-  CALL MMULT (N, N, N, TRANS1 (1, 1, 2), X, OUT_TRANS (1, 1, 2) ) 
+  !           TTm = T1m * GAMMAm * T2m
+!  CALL MMULT (N, N, N, GAMMA, TRANS2 (1, 1, 2), X)
+  X_NN=MATMUL(G_NN, TRANS2 (:, :, 2))
+!  CALL MMULT (N, N, N, TRANS1 (1, 1, 2), X, OUT_TRANS (1, 1, 2) )
+  OUT_TRANS (:, :, 2)=MATMUL(TRANS1 (:, :, 2), X_NN)
 
   !           STm = S1m + T1m * GAMMAm * (S2m + R2m * S1p)                
-  CALL MMULT (N, N, 1, REFLECT2 (1, 1, 2), SOURCE1 (1, 1), X) 
-  CALL MADD (N, 1, SOURCE2 (1, 2), X, Y) 
-  CALL MMULT (N, N, 1, GAMMA, Y, X) 
-  CALL MMULT (N, N, 1, TRANS1 (1, 1, 2), X, Y) 
-  CALL MADD (N, 1, SOURCE1 (1, 2), Y, OUT_SOURCE (1, 2) ) 
+!  CALL MMULT (N, N, 1, REFLECT2 (1, 1, 2), SOURCE1 (1, 1), X)
+  WORK_N1=MATMUL(REFLECT2 (:, :, 2), SOURCE1 (:, 1))
+!  CALL MADD (N, 1, SOURCE2 (1, 2), X, Y)
+  WORK_N1=SOURCE2 (:, 2) + WORK_N1
+!  CALL MMULT (N, N, 1, GAMMA, Y, X)
+  WORK_N1=MATMUL(G_NN, WORK_N1)
+!  CALL MMULT (N, N, 1, TRANS1 (1, 1, 2), X, Y)
+  WORK_N1=MATMUL(TRANS1 (:, :, 2), WORK_N1)
+!  CALL MADD (N, 1, SOURCE1 (1, 2), Y, OUT_SOURCE (1, 2) )
+  OUT_SOURCE (:, 2)=SOURCE1 (:, 2) + WORK_N1
 
   RETURN 
 END SUBROUTINE COMBINE_LAYERS

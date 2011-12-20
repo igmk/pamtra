@@ -7,6 +7,8 @@ ppTimeout=10000
 #how many cpus shall be saved?
 saveCPUs=0.98
 
+port=50010
+
 user=hatpro
 
 totalWorkers=0
@@ -66,12 +68,12 @@ create_parallel () {
 			local useP=`echo $useP |bc`
 # 			echo "$host: /usr/bin/nice -n 18  ~/python/bin/ppserver.py -r -t $ppTimeout -w $useP -s 'pyPamtra' &"
 # 				export PYTHONPATH=:/home/$user/python/lib:/home/$user/python/libs-local/$host/ && <- now in bashrc of hatpro
-			ssh -o "BatchMode yes" -o "ConnectTimeout 2" $user@$host "/usr/bin/nice -n 18  ~/python/bin/ppserver.py -r -t $ppTimeout -w $useP -s 'pyPamtra'  2>/dev/null &"&
+			ssh -o "BatchMode yes" -o "ConnectTimeout 2" $user@$host "/usr/bin/nice -n 18  ~/python/bin/ppserver.py -r -t $ppTimeout -w $useP -s 'pyPamtra' -p $port 2>/dev/null &"&
 			if [ $? -eq 0 ] 
 			then
 # 				OkHosts="\"$host\",$OkHosts" 
 # 				totalWorkers=`echo $totalWorkers \+ $useP| bc`
-				echo -n "\"$host\"," 
+				echo -n "\"$host:$port\"," 
 			fi
 		else
 # 			echo "${host} : No pyPamtraLibWrapper"
@@ -113,10 +115,10 @@ then
 				useP=`echo $useP |bc`
 				echo "$host: /usr/bin/nice -n 18  ~/python/bin/ppserver.py -r -t $ppTimeout -w $useP -s 'pyPamtra' &"
 # 				export PYTHONPATH=:/home/$user/python/lib:/home/$user/python/libs-local/$host/ && <- now in bashrc of hatpro
-				ssh -o "BatchMode yes" -o "ConnectTimeout 2" $user@$host "/usr/bin/nice -n 18  ~/python/bin/ppserver.py -r -t $ppTimeout -w $useP -s 'pyPamtra' &"&
+				ssh -o "BatchMode yes" -o "ConnectTimeout 2" $user@$host "/usr/bin/nice -n 18  ~/python/bin/ppserver.py -r -t $ppTimeout -w $useP -s 'pyPamtra' -p $port &"&
 				if [ $? -eq 0 ] 
 				then
-					OkHosts="\"$host\",$OkHosts" 
+					OkHosts="\"$host:$port\",$OkHosts" 
 					totalWorkers=`echo $totalWorkers \+ $useP| bc`
 					echo "$host: OK"
 				fi

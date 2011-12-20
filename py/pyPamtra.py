@@ -809,8 +809,8 @@ class pyPamtra(object):
 		else:
 			self.job_server = pp.Server(pp_local_workers,ppservers=pp_servers,secret="pyPamtra") 
 			
-		if self.set["verbose"] >= 0:	
-			raise IOError('There is a weired bug if verbosity of the fortran part prints anythin (e.g verbosity is larger than 0). Use the non-parallel pyPamtra version for debugging!")
+		if int(self.set["verbose"]) > 0:	
+			raise IOError('There is a weired bug if verbosity of the fortran part prints anythin (e.g verbosity is larger than 0). Use the non-parallel pyPamtra version for debugging!', self.set["verbose"])
 		if self.set["pyVerbose"] >= 0: 
 			print "Starting pp with: "
 			pp_nodes = self.job_server.get_active_nodes()
