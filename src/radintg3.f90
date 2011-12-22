@@ -175,7 +175,8 @@ SUBROUTINE DOUBLING_INTEGRATION (N, NUM_DOUBLES, SRC_CODE,        &
   REAL(kind=dbl) EXP_SOURCE (N, 2), EXPFACTOR 
   REAL(kind=dbl) LIN_SOURCE (N, 2), LINFACTOR 
   REAL(kind=dbl) T_REFLECT (N, N, 2), T_TRANS (N, N, 2) 
-  REAL(kind=dbl) T_SOURCE (N, 2) 
+  REAL(kind=dbl) T_SOURCE (N, 2)
+  REAL(kind=dbl) Y_N1(N,1), X_N1(N,1), keep_n2(n,2)
   INTEGER MAXV, MAXM 
   PARAMETER (MAXV = 64, MAXM = 4096) 
   INTEGER I, NM 
@@ -184,148 +185,150 @@ SUBROUTINE DOUBLING_INTEGRATION (N, NUM_DOUBLES, SRC_CODE,        &
   REAL(kind=dbl) EXPFAC, LINFAC 
   REAL(kind=dbl) X (MAXM), Y (MAXM) 
   REAL(kind=dbl) GAMMA (MAXM) 
-  COMMON / SCRATCH1 / X, Y 
-  COMMON / SCRATCH2 / GAMMA 
+  REAL(kind=dbl) Y_NN(N,N), X_NN(N,N), G_NN(N,N), ID_NN(N,N)
 
   EXPFAC = EXPFACTOR 
   LINFAC = LINFACTOR 
   CALL MCOPY (N, 1, LIN_SOURCE (1, 1), CONST (1) ) 
   CALL MCOPY (N, 1, LIN_SOURCE (1, 2), CONST (1 + N) ) 
+  CONST (1:N)=LIN_SOURCE (:, 1)
+  CONST (N+1:2*N)=LIN_SOURCE (:, 2)
 
   DO I = 1, NUM_DOUBLES 
 
      !           Make gamma plus matrix: GAMMA = inv[1 - Rp*Rm]              
-     CALL MMULT (N, N, N, REFLECT (1, 1, 1), REFLECT (1, 1, 2),X)
-     CALL MIDENTITY (N, Y) 
-     CALL MSUB (N, N, Y, X, Y) 
-     CALL MINVERT (N, Y, GAMMA) 
+     X_NN=MATMUL(REFLECT (:, :, 1), REFLECT (:, :, 2))
+     CALL MIDENTITY (N, ID_NN)
+     Y_NN=ID_NN - X_NN
+     CALL MINVERT (N, Y_NN, G_NN)
 
      !           Rp(2N) = Rp + Tp * GAMMA * Rp * Tm                          
-     CALL MMULT (N, N, N, REFLECT (1, 1, 1), TRANS (1, 1, 2), X) 
-     CALL MMULT (N, N, N, GAMMA, X, Y) 
-     CALL MMULT (N, N, N, TRANS (1, 1, 1), Y, X) 
-     CALL MADD (N, N, REFLECT (1, 1, 1), X, T_REFLECT (1, 1, 1) ) 
+     X_NN=MATMUL(REFLECT (:, :, 1), TRANS (:, :, 2))
+     Y_NN=MATMUL(G_NN, X_NN)
+     X_NN=MATMUL(TRANS (:, :, 1), Y_NN)
+    T_REFLECT (:, :, 1)=REFLECT (:, :, 1) + X_NN
 
      !           Tp(2N) = Tp * GAMMA * Tp                                    
-     CALL MMULT (N, N, N, GAMMA, TRANS (1, 1, 1), X) 
-     CALL MMULT (N, N, N, TRANS (1, 1, 1), X, T_TRANS (1, 1, 1) ) 
+     X_NN=MATMUL(G_NN, TRANS (:, :, 1))
+     T_TRANS (:, :, 1)=MATMUL(TRANS (:, :, 1), X_NN)
 
      !           Exponential source doubling                                 
      IF (SRC_CODE.EQ.1.OR.SRC_CODE.EQ.3) THEN 
         !             Sp(2N) = e*Sp + Tp * GAMMA * (Sp + Rp * e*Sm)             
-        CALL MSCALARMULT (N, 1, EXPFAC, EXP_SOURCE (1, 2), Y) 
-        CALL MMULT (N, N, 1, REFLECT (1, 1, 1), Y, X) 
-        CALL MADD (N, 1, EXP_SOURCE (1, 1), X, Y) 
-        CALL MMULT (N, N, 1, GAMMA, Y, X) 
-        CALL MMULT (N, N, 1, TRANS (1, 1, 1), X, Y) 
-        CALL MSCALARMULT (N, 1, EXPFAC, EXP_SOURCE (1, 1), X) 
-        CALL MADD (N, 1, X, Y, T_EXP (1) ) 
+        Y_N1(:,1)=EXPFAC * EXP_SOURCE (:, 2)
+        X_N1=MATMUL(REFLECT (:, :, 1), Y_N1)
+        Y_N1(:,1)=EXP_SOURCE (:, 1) + X_N1(:,1)
+        X_N1=MATMUL(G_NN, Y_N1)
+        Y_N1=MATMUL(TRANS (:, :, 1), X_N1)
+        X_N1(:,1)=EXPFAC * EXP_SOURCE (:, 1)
+        T_EXP (1:N)=X_N1(:,1) + Y_N1(:,1)
+
      ENDIF
 
      !           Linear source doubling                                      
      IF (SRC_CODE.GE.2) THEN 
         !             Sp(2N) = (Sp+f*Cp) + Tp * GAMMA * (Sp + Rp * (Sm+f*Cm))   
-        CALL MSCALARMULT (N, 1, LINFAC, CONST (1 + N), X) 
-        CALL MADD (N, 1, LIN_SOURCE (1, 2), X, Y) 
-        CALL MMULT (N, N, 1, REFLECT (1, 1, 1), Y, X) 
-        CALL MADD (N, 1, LIN_SOURCE (1, 1), X, Y) 
-        CALL MMULT (N, N, 1, GAMMA, Y, X) 
-        CALL MMULT (N, N, 1, TRANS (1, 1, 1), X, Y) 
-        CALL MADD (N, 1, LIN_SOURCE (1, 1), Y, X) 
-        CALL MSCALARMULT (N, 1, LINFAC, CONST (1), Y) 
-        CALL MADD (N, 1, X, Y, T_LIN (1) ) 
+        X_N1(:,1)=LINFAC * CONST (1+N:2*N)
+        Y_N1(:,1)=LIN_SOURCE (:, 2) + X_N1(:,1)
+        X_N1=MATMUL(REFLECT (:, :, 1), Y_N1)
+        Y_N1(:,1)=LIN_SOURCE (:, 1) + X_N1(:,1)
+        X_N1=MATMUL(G_NN, Y_N1)
+        Y_N1=MATMUL(TRANS (:, :, 1), X_N1)
+        X_N1(:,1)=LIN_SOURCE (:, 1) + Y_N1(:,1)
+        Y_N1(:,1)=LINFAC * CONST(1:N)
+        T_LIN (1:N)=X_N1(:,1) + Y_N1(:,1)
+
         !             Cp(2N) = Cp + Tp * GAMMA * (Cp + Rp * Cm)                 
-        CALL MMULT (N, N, 1, REFLECT (1, 1, 1), CONST (1 + N), X) 
-        CALL MADD (N, 1, CONST (1), X, Y) 
-        CALL MMULT (N, N, 1, GAMMA, Y, X) 
-        CALL MMULT (N, N, 1, TRANS (1, 1, 1), X, Y) 
-        CALL MADD (N, 1, CONST (1), Y, T_CONST (1) ) 
+        Y_N1(:,1)=CONST (1+N:2*N)
+        X_N1=MATMUL(REFLECT (:, :, 1),Y_N1)
+        Y_N1(:,1)=CONST (1:N) + X_N1(:,1)
+        X_N1=MATMUL(G_NN, Y_N1)
+        Y_N1=MATMUL(TRANS (:, :, 1), X_N1)
+        T_CONST (1:N)=CONST (1:N) + Y_N1(:,1)
      ENDIF
 
 
      IF (SYMMETRIC) THEN 
-        CALL MCOPY (N, N, T_REFLECT (1, 1, 1), T_REFLECT (1, 1, 2) ) 
-        CALL MCOPY (N, N, T_TRANS (1, 1, 1), T_TRANS (1, 1, 2) ) 
+        CALL MCOPY (N, N, T_REFLECT (1, 1, 1), T_REFLECT (1, 1, 2) )
+        CALL MCOPY (N, N, T_TRANS (1, 1, 1), T_TRANS (1, 1, 2) )
 
      ELSE 
         !             Make gamma minus matrix: GAMMA = inv[1 - Rm*Rp]           
-        CALL MMULT (N, N, N, REFLECT (1, 1, 2), REFLECT (1, 1, 1),     &
-             X)                                                             
-        CALL MIDENTITY (N, Y) 
-        CALL MSUB (N, N, Y, X, Y) 
-        CALL MINVERT (N, Y, GAMMA) 
+        X_NN=MATMUL( REFLECT (:, :, 2), REFLECT (:, :, 1))
+        Y_NN=ID_NN - X_NN
+        CALL MINVERT (N, Y_NN, G_NN)
 
-        !             Rm(2N) = Rm + Tm * GAMMA * Rm * Tp                        
-        CALL MMULT (N, N, N, REFLECT (1, 1, 2), TRANS (1, 1, 1),       &
-             X)                                                             
-        CALL MMULT (N, N, N, GAMMA, X, Y) 
-        CALL MMULT (N, N, N, TRANS (1, 1, 2), Y, X) 
-        CALL MADD (N, N, REFLECT (1, 1, 2), X, T_REFLECT (1, 1, 2) ) 
+        !             Rm(2N) = Rm + Tm * GAMMA * Rm * Tp
+        X_NN=MATMUL(REFLECT (:, :, 2), TRANS (:, :, 1))
+        Y_NN=MATMUL(G_NN, X_NN)
+        X_NN=MATMUL(TRANS (:, :, 2), Y_NN)
+        T_REFLECT (:, :, 2)=REFLECT (:, :, 2) + X_NN
+
 
         !             Tm(2N) = Tm * GAMMA * Tm                                  
-        CALL MMULT (N, N, N, GAMMA, TRANS (1, 1, 2), X) 
-        CALL MMULT (N, N, N, TRANS (1, 1, 2), X, T_TRANS (1, 1, 2) ) 
+        X_NN=MATMUL(G_NN, TRANS (:, :, 2))
+        T_TRANS (:, :, 2)=MATMUL(TRANS (:, :, 2), X_NN)
      ENDIF
 
 
      !           Exponential source doubling                                 
      IF (SRC_CODE.EQ.1.OR.SRC_CODE.EQ.3) THEN 
         !             Sm(2N) = Sm + Tm * GAMMA * (e*Sm + Rm * Sp)               
-        CALL MMULT (N, N, 1, REFLECT (1, 1, 2), EXP_SOURCE (1, 1),     &
-             Y)                                                             
-        CALL MSCALARMULT (N, 1, EXPFAC, EXP_SOURCE (1, 2), X) 
-        CALL MADD (N, 1, X, Y, Y) 
-        CALL MMULT (N, N, 1, GAMMA, Y, X) 
-        CALL MMULT (N, N, 1, TRANS (1, 1, 2), X, Y) 
-        CALL MADD (N, 1, EXP_SOURCE (1, 2), Y, T_EXP (1 + N) ) 
+        Y_N1(:,1)=EXP_SOURCE (:, 1)
+        Y_N1=MATMUL(REFLECT (:, :, 2), Y_N1)
+        X_N1(:,1)=EXPFAC * EXP_SOURCE (:, 2)
+        Y_N1(:,1)=X_N1(:,1) + Y_N1(:,1)
+        X_N1=MATMUL(G_NN, Y_N1)
+        Y_N1=MATMUL(TRANS (:, :, 2), X_N1)
+        T_EXP (1+N:2*N)=EXP_SOURCE (:, 2) + Y_N1(:,1)
 
-        CALL MCOPY (N, 1, T_EXP (1), EXP_SOURCE (1, 1) ) 
-        CALL MCOPY (N, 1, T_EXP (1 + N), EXP_SOURCE (1, 2) ) 
+        EXP_SOURCE (:, 1)=T_EXP (1:N)
+        EXP_SOURCE (:, 2)=T_EXP (1+N:2*N)
         EXPFAC = EXPFAC**2 
      ENDIF
 
      !           Linear source doubling                                      
      IF (SRC_CODE.GE.2) THEN 
         !             Sm(2N) = Sm + Tm * GAMMA * (Sm+f*Cm + Rm * Sp)            
-        CALL MSCALARMULT (N, 1, LINFAC, CONST (1 + N), X) 
-        CALL MADD (N, 1, LIN_SOURCE (1, 2), X, Y) 
-        CALL MMULT (N, N, 1, REFLECT (1, 1, 2), LIN_SOURCE (1, 1),     &
-             X)                                                             
-        CALL MADD (N, 1, Y, X, Y) 
-        CALL MMULT (N, N, 1, GAMMA, Y, X) 
-        CALL MMULT (N, N, 1, TRANS (1, 1, 2), X, Y) 
-        CALL MADD (N, 1, LIN_SOURCE (1, 2), Y, T_LIN (1 + N) ) 
-        !             Cm(2N) = Cm + Tm * GAMMA * (Cm + Rm * Cp)                 
-        CALL MMULT (N, N, 1, REFLECT (1, 1, 2), CONST (1), X) 
-        CALL MADD (N, 1, CONST (1 + N), X, Y) 
-        CALL MMULT (N, N, 1, GAMMA, Y, X) 
-        CALL MMULT (N, N, 1, TRANS (1, 1, 2), X, Y) 
-        CALL MADD (N, 1, CONST (1 + N), Y, T_CONST (1 + N) ) 
+        X_N1(:,1)=LINFAC * CONST (1+N:2*N)
+        Y_N1(:,1)=LIN_SOURCE (:, 2) + X_N1(:,1)
+        X_N1(:,1)=LIN_SOURCE (:, 1)
+        X_N1=MATMUL(REFLECT (:, :, 2), X_N1)
+        Y_N1(:,1)=Y_N1(:,1) + X_N1(:,1)
+        X_N1=MATMUL(G_NN, Y_N1)
+        Y_N1=MATMUL(TRANS (:, :, 2), X_N1)
+        T_LIN (1+N:2*N)=LIN_SOURCE (:, 2) + Y_N1(:,1)
 
-        CALL MCOPY (N, 1, T_LIN (1), LIN_SOURCE (1, 1) ) 
-        CALL MCOPY (N, 1, T_LIN (1 + N), LIN_SOURCE (1, 2) ) 
-        CALL MCOPY (2 * N, 1, T_CONST, CONST) 
+        !             Cm(2N) = Cm + Tm * GAMMA * (Cm + Rm * Cp)                 
+        X_N1(:,1)=CONST (1:N)
+        X_N1=MATMUL(REFLECT (:, :, 2), X_N1)
+        Y_N1(:,1)=CONST (1+N:2*N) + X_N1(:,1)
+        X_N1=MATMUL(G_NN, Y_N1)
+        Y_N1=MATMUL(TRANS (:, :, 2), X_N1)
+        T_CONST (1+N:2*N)=CONST (1+N:2*n) + Y_N1(:,1)
+
+        LIN_SOURCE (:, 1) = T_LIN (1:N)
+        LIN_SOURCE (:, 2) = T_LIN (N+1:2*N)
+        CONST = T_CONST
         LINFAC = 2.0 * LINFAC 
      ENDIF
 
-     CALL MCOPY (N, N, T_REFLECT (1, 1, 1), REFLECT (1, 1, 1) ) 
-     CALL MCOPY (N, N, T_REFLECT (1, 1, 2), REFLECT (1, 1, 2) ) 
-     CALL MCOPY (N, N, T_TRANS (1, 1, 1), TRANS (1, 1, 1) ) 
-     CALL MCOPY (N, N, T_TRANS (1, 1, 2), TRANS (1, 1, 2) ) 
+     REFLECT = T_REFLECT
+     TRANS = T_TRANS
   ENDDO
 
   NM = 2 * N 
   IF (NUM_DOUBLES.LE.0) THEN 
-     CALL MCOPY (NM, N, REFLECT, T_REFLECT) 
-     CALL MCOPY (NM, N, TRANS, T_TRANS) 
+     T_REFLECT = REFLECT
+     T_TRANS = TRANS
   ENDIF
 
   IF (SRC_CODE.EQ.3) THEN 
-     CALL MADD (NM, 1, EXP_SOURCE, LIN_SOURCE, T_SOURCE) 
+     T_SOURCE = EXP_SOURCE + LIN_SOURCE
   ELSEIF (SRC_CODE.EQ.2) THEN 
-     CALL MCOPY (NM, 1, LIN_SOURCE, T_SOURCE) 
+     T_SOURCE = LIN_SOURCE
   ELSEIF (SRC_CODE.EQ.1) THEN 
-     CALL MCOPY (NM, 1, EXP_SOURCE, T_SOURCE) 
+     T_SOURCE = EXP_SOURCE
   ELSE 
      CALL MZERO (NM, 1, T_SOURCE) 
   ENDIF
@@ -342,68 +345,61 @@ SUBROUTINE COMBINE_LAYERS (N, REFLECT1, TRANS1, SOURCE1, REFLECT2,&
   !      layer is attached to the negative side (up) of the second layer; 
   !      thus layer 1 is put on top of layer 2.     
   use kinds
+  IMPLICIT NONE
   INTEGER N 
   REAL(kind=dbl) REFLECT1 (N, N, 2), TRANS1 (N, N, 2) 
   REAL(kind=dbl) REFLECT2 (N, N, 2), TRANS2 (N, N, 2) 
   REAL(kind=dbl) SOURCE1 (N, 2), SOURCE2 (N, 2) 
   REAL(kind=dbl) OUT_REFLECT (N, N, 2), OUT_TRANS (N, N, 2) 
   REAL(kind=dbl) OUT_SOURCE (N, 2) 
+  REAL(kind=dbl) Y_NN(N,N), X_NN(N,N), G_NN(N,N), ID_NN(N,N), WORK_N1(N)
   INTEGER MAXM 
   PARAMETER (MAXM = 4096) 
-  REAL(kind=dbl) X (MAXM), Y (MAXM) 
-  REAL(kind=dbl) GAMMA (MAXM) 
-  COMMON / SCRATCH1 / X, Y 
-  COMMON / SCRATCH2 / GAMMA 
 
   !           GAMMAp = inv[1 - R1p * R2m]     (p for +,  m for -)         
-  CALL MMULT (N, N, N, REFLECT1 (1, 1, 1), REFLECT2 (1, 1, 2),      &
-       X)                                                                
-  CALL MIDENTITY (N, Y) 
-  CALL MSUB (N, N, Y, X, Y) 
-  CALL MINVERT (N, Y, GAMMA) 
+  X_NN=MATMUL(REFLECT1 (:, :, 1), REFLECT2 (:, :, 2))
+  CALL MIDENTITY (N, ID_NN)
+  Y_NN=ID_NN - X_NN
+  CALL MINVERT (N, Y_NN, G_NN)
 
   !           RTp = R2p + T2p * GAMMAp * R1p * T2m                        
-  CALL MMULT (N, N, N, REFLECT1 (1, 1, 1), TRANS2 (1, 1, 2),        &
-       X)                                                                
-  CALL MMULT (N, N, N, GAMMA, X, Y) 
-  CALL MMULT (N, N, N, TRANS2 (1, 1, 1), Y, X) 
-  CALL MADD (N, N, REFLECT2 (1, 1, 1), X, OUT_REFLECT (1, 1, 1) ) 
+  X_NN=MATMUL(REFLECT1 (:, :, 1), TRANS2 (:, :, 2))
+  Y_NN=MATMUL(G_NN, X_NN)
+  X_NN=MATMUL(TRANS2 (:, :, 1), Y_NN)
+  OUT_REFLECT(:, :, 1)=REFLECT2 (:, :, 1) + X_NN
 
-  !           TTp = T2p * GAMMAp * T1p                                    
-  CALL MMULT (N, N, N, GAMMA, TRANS1 (1, 1, 1), X) 
-  CALL MMULT (N, N, N, TRANS2 (1, 1, 1), X, OUT_TRANS (1, 1, 1) ) 
+  !           TTp = T2p * GAMMAp * T1p
+  X_NN=MATMUL(G_NN, TRANS1(:, :, 1))
+  OUT_TRANS (:, :, 1) = MATMUL(TRANS2 (:, :, 1), X_NN)
 
-  !           STp = S2p + T2p * GAMMAp * (S1p + R1p * S2m)                
-  CALL MMULT (N, N, 1, REFLECT1 (1, 1, 1), SOURCE2 (1, 2), X) 
-  CALL MADD (N, 1, SOURCE1 (1, 1), X, Y) 
-  CALL MMULT (N, N, 1, GAMMA, Y, X) 
-  CALL MMULT (N, N, 1, TRANS2 (1, 1, 1), X, Y) 
-  CALL MADD (N, 1, SOURCE2 (1, 1), Y, OUT_SOURCE (1, 1) ) 
+  !           STp = S2p + T2p * GAMMAp * (S1p + R1p * S2m)
+  WORK_N1=MATMUL(REFLECT1 (:, :, 1), SOURCE2 (:, 2))
+  WORK_N1=SOURCE1(:,1)+ WORK_N1
+  WORK_N1=MATMUL(G_NN,WORK_N1)
+  WORK_N1=MATMUL(TRANS2 (:, :, 1), WORK_N1)
+  OUT_SOURCE (:, 1)=SOURCE2 (:, 1) + WORK_N1
 
   !           GAMMAm = inv[1 - R2m * R1p]                                 
-  CALL MMULT (N, N, N, REFLECT2 (1, 1, 2), REFLECT1 (1, 1, 1),      &
-       X)                                                                
-  CALL MIDENTITY (N, Y) 
-  CALL MSUB (N, N, Y, X, Y) 
-  CALL MINVERT (N, Y, GAMMA) 
+  X_NN=MATMUL(REFLECT2 (:, :, 2), REFLECT1 (:, :, 1))
+  Y_NN= ID_NN - X_NN
+  CALL MINVERT (N, Y_NN, G_NN)
 
   !           RTm = R1m + T1m * GAMMAm * R2m * T1p                        
-  CALL MMULT (N, N, N, REFLECT2 (1, 1, 2), TRANS1 (1, 1, 1),        &
-       X)                                                                
-  CALL MMULT (N, N, N, GAMMA, X, Y) 
-  CALL MMULT (N, N, N, TRANS1 (1, 1, 2), Y, X) 
-  CALL MADD (N, N, REFLECT1 (1, 1, 2), X, OUT_REFLECT (1, 1, 2) ) 
+  X_NN=MATMUL(REFLECT2 (:, :, 2), TRANS1 (:, :, 1))
+  Y_NN=MATMUL(G_NN, X_NN)
+  X_NN=MATMUL(TRANS1 (:, :, 2), Y_NN)
+  OUT_REFLECT (:, :, 2)=REFLECT1 (:, :, 2) + X_NN
 
-  !           TTm = T1m * GAMMAm * T2m                                    
-  CALL MMULT (N, N, N, GAMMA, TRANS2 (1, 1, 2), X) 
-  CALL MMULT (N, N, N, TRANS1 (1, 1, 2), X, OUT_TRANS (1, 1, 2) ) 
+  !           TTm = T1m * GAMMAm * T2m
+  X_NN=MATMUL(G_NN, TRANS2 (:, :, 2))
+  OUT_TRANS (:, :, 2)=MATMUL(TRANS1 (:, :, 2), X_NN)
 
   !           STm = S1m + T1m * GAMMAm * (S2m + R2m * S1p)                
-  CALL MMULT (N, N, 1, REFLECT2 (1, 1, 2), SOURCE1 (1, 1), X) 
-  CALL MADD (N, 1, SOURCE2 (1, 2), X, Y) 
-  CALL MMULT (N, N, 1, GAMMA, Y, X) 
-  CALL MMULT (N, N, 1, TRANS1 (1, 1, 2), X, Y) 
-  CALL MADD (N, 1, SOURCE1 (1, 2), Y, OUT_SOURCE (1, 2) ) 
+  WORK_N1=MATMUL(REFLECT2 (:, :, 2), SOURCE1 (:, 1))
+  WORK_N1=SOURCE2 (:, 2) + WORK_N1
+  WORK_N1=MATMUL(G_NN, WORK_N1)
+  WORK_N1=MATMUL(TRANS1 (:, :, 2), WORK_N1)
+  OUT_SOURCE (:, 2)=SOURCE1 (:, 2) + WORK_N1
 
   RETURN 
 END SUBROUTINE COMBINE_LAYERS
