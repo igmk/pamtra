@@ -14,8 +14,10 @@ import numpy as np
 import warnings
 try: 
 	import numexpr as ne
+	neAvail = True
 except:
 	warnings.warn("numexpr not available", Warning)
+	neAvail = False
 
 
 Grav = 9.80665  # m/s^2 der Wert fuer mittlere Breiten
@@ -177,7 +179,9 @@ def q2rh(q,T,p):
 	'''
 	
 	
-	e = ne.evaluate("p/(Mwml*((1/q)+(1/(Mwml)-1)))")
+	if neAvail: e = ne.evaluate("p/(Mwml*((1/q)+(1/(Mwml)-1)))")
+	else: e = p/(Mwml*((1/q)+(1/(Mwml)-1)))
+	
 	eStar = e_sat_gg_water(T)
 	rh = e/eStar
 	del e,eStar
@@ -196,7 +200,9 @@ def e_sat_gg_water(T):
 	Output:
 	e_sat_gg_water in Pa.
 	'''
-	return ne.evaluate("100 * 1013.246 * 10**( -7.90298*(373.16/T-1) + 5.02808*log10(373.16/T) - 1.3816e-7*(10**(11.344*(1-T/373.16))-1) + 8.1328e-3 * (10**(-3.49149*(373.16/T-1))-1) )")
+	if neAvail: e_sat_gg_water = ne.evaluate("100 * 1013.246 * 10**( -7.90298*(373.16/T-1) + 5.02808*log10(373.16/T) - 1.3816e-7*(10**(11.344*(1-T/373.16))-1) + 8.1328e-3 * (10**(-3.49149*(373.16/T-1))-1) )")
+	else: e_sat_gg_water = 100 * 1013.246 * 10**( -7.90298*(373.16/T-1) + 5.02808*np.log10(373.16/T) - 1.3816e-7*(10**(11.344*(1-T/373.16))-1) + 8.1328e-3 * (10**(-3.49149*(373.16/T-1))-1) )
+	return e_sat_gg_water
 
 def rh_to_iwv(relhum_lev,temp_lev,press_lev,hgt_lev):
 	'''

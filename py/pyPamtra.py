@@ -16,8 +16,10 @@ import namelist #parser for fortran namelist files
 
 try: 
 	import numexpr as ne
+	neAvail = True
 except:
 	warnings.warn("numexpr not available", Warning)
+	neAvail = False
 
 import meteoSI
 try: 
@@ -485,10 +487,15 @@ class pyPamtra(object):
 			
 			p0 = press_lev1[...,0:-1]
 			p1 = press_lev1[...,1:]
-			xp = ne.evaluate("-1.*log(p1/p0)/dz")
+			
+			if neAvail: xp = ne.evaluate("-1.*log(p1/p0)/dz")
+			else: xp = -1.*np.log(p1/p0)/dz
+			
 			xp[xp==0] = 9999
 				
-			self._helperP["press"] = ne.evaluate("-1.*p0/xp*(exp(-xp*dz)-1.)/dz")
+			if neAvail: self._helperP["press"] = ne.evaluate("-1.*p0/xp*(exp(-xp*dz)-1.)/dz")
+			else: self._helperP["press"] = -1.*p0/xp*(np.exp(-xp*dz)-1.)/dz
+			
 			del p0,p1,xp
 				
 			return
