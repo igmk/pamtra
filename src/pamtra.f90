@@ -158,6 +158,7 @@ program pamtra
             hwc_n = profiles(nx,ny)%hail_n              ! #/kg
          end if
 
+
            !run the model
            call run_rt3(nx,ny,fi,freqs(fi),frqs_str(fi))
            

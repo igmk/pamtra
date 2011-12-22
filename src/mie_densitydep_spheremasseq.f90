@@ -22,7 +22,7 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
   real(kind=dbl) :: wavelength, dia1, dia2
   real(kind=dbl), intent(in) :: ad, bd, alpha, gamma
   complex(kind=dbl) :: m_ice
-  real(kind=dbl) :: a_mtox, bcoeff,tot_mass,wc,ntot
+  real(kind=dbl) :: a_mtox, bcoeff,tot_mass,wc
   real(kind=dbl) :: extinction, albedo, back_scatt, legen (200), legen2 (200),&
        legen3 (200), legen4 (200)                                        
   integer, parameter :: maxn  = 5000
@@ -46,12 +46,12 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
   !       call density_ice(a_mtox, bcoeff, rad2, dens_graup) 
   !       rad2_ice = (dens_graup / 917.) **0.33333333 * rad2 
   diameter_ice = (6.*a_mtox*dia2**bcoeff/(pi*density))**(1./3.)
+
   msphere = eps_mix((1.d0,0.d0),m_ice,density)
 
   x = pi * diameter_ice / wavelength
-
   nterms = 0 
-  call miecalc(nterms, x, msphere, a, b)
+  call miecalc (nterms, x, msphere, a, b) 
   nlegen = 2 * nterms 
   nlegen = min(maxleg, nlegen) 
   nquad = (nlegen + 2 * nterms + 2) / 2 
@@ -73,7 +73,6 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
   !               integration loop over diameter of spheres
   if (nbins .gt. 0) del_d = (dia2 - dia1) / nbins
   tot_mass = 0.
-  ntot=0.
    do ir = 1, nbins+1
      diameter = dia1 + (ir - 1) * del_d
      ndens = distribution(ad, bd, alpha, gamma, diameter, aerodist)
@@ -113,6 +112,7 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
            sump4 (i) = sump4 (i) + p4 * ndens 
         end do
      end if
+     tot_mass = tot_mass + ndens*del_d*a_mtox*diameter**bcoeff
   end do
 
   !           multiply the sums by the integration delta and other constan

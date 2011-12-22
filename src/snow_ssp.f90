@@ -112,8 +112,8 @@ subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
      alpha = 0.d0 ! exponential SD
      gamma = 1.d0
     else if (SD_snow .eq. 'M') then
-     dia1 = 0.51d-10 ! minimum maximum diameter [m]
-     dia2 = 1.d-2 ! maximum maximum diameter [m]
+     dia1 = 0.51d-10 ! minimum maximum diameter [m] after kneifel
+     dia2 = 1.d-2 ! maximum maximum diameter [m] after kneifel
 
      a_msnow = 0.02d0
      b_snow = 1.9d0
@@ -133,7 +133,7 @@ subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
      dia1 = 1.d-10
      dia2 = 2.d-2
   else
-     stop 'Number of moments is not specified'
+     stop'Number of moments is not specified'
   end if
 
   if (EM_snow .eq. 'densi' .or. EM_snow .eq. 'surus') then
