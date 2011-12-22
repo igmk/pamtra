@@ -294,12 +294,14 @@ contains
 !                  profiles(i,j)%rwp  =0.              ! kg/m^2
 !                  profiles(i,j)%swp  =0.              ! kg/m^2
 !                  profiles(i,j)%gwp  =0.
+!     if (n_moments .eq. 2)              profiles(i,j)%hwp  =0.
 !       do k = 1, nlyr
 !	profiles(i,j)%cloud_water_q(k) = 0.
 !	profiles(i,j)%cloud_ice_q(k) = 0.
 !	profiles(i,j)%rain_q(k) = 0.
 !	profiles(i,j)%snow_q(k) = 0.
 !	profiles(i,j)%graupel_q(k) = 0.
+!if (n_moments .eq. 2) 	profiles(i,j)%hail_q(k) = 0.
 !	end do
 !	end do
 !	end do

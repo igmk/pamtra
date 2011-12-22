@@ -108,7 +108,6 @@ program pamtra
   grid_f: do fi =1, nfrq
      grid_y: do ny = 1, ngridy !ny_in, ny_fin  
         grid_x: do nx = 1, ngridx !nx_in, nx_fin   
-
            !run the model
            call run_rt3(nx,ny,fi,freqs(fi),frqs_str(fi))
 

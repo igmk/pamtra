@@ -61,6 +61,8 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
         dia2 = dia1 + del_d
         den_ice = 917.d0  ! [kg/m^3]
         drop_mass = pi/6.d0 * dia1**3 * den_ice
+        a_mice = 130.d0
+        b_ice = 3.d0
      endif
      ad = iwc/(drop_mass*del_d) 	!intercept parameter [1/m^4]
      bd = 0.0d0
@@ -86,7 +88,7 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
      call double_moments(iwc,nc,gamma_ice(1),gamma_ice(2),gamma_ice(3),gamma_ice(4), &
           ad,bd,alpha,gamma,a_mice,b_ice)
      nbins = 100
-     den_ice=917.d0
+     den_ice = 917.d0
      dia1 = 1.d-10	! minimum diameter [m]
      dia2 = 1.d-3	! maximum diameter [m]
   else
@@ -94,8 +96,8 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
   end if
 
   if (EM_ice .eq. 'mieic') then
-     call mie(f, mindex,      &
-          dia1, dia2, nbins, maxleg,   &
+     call mie_densitydep_spheremasseq(f, t,mindex,      &
+          a_mice, b_ice, dia1, dia2, nbins, maxleg,   &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
           LEGEN4, SD_ice,den_ice,iwc)

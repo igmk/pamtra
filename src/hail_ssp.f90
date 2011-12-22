@@ -47,7 +47,7 @@ subroutine hail_ssp(f,hwc,t,maxleg,kext, salb, back,  &
 
   if (EM_hail .eq. 'densi' .or. EM_hail .eq. 'surus') then
   	if (EM_hail .eq. 'surus') hail_density = 0.815*f+11.2d0
-     call mie_densitydep_spheremasseq(f, mindex,      &
+     call mie_densitydep_spheremasseq(f, t, mindex,      &
           a_mhail, b_hail, dia1, dia2, nbins, maxleg,   &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, nlegen, legen, legen2, legen3,        &
