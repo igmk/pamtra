@@ -1084,19 +1084,18 @@ class pyPamtra(object):
 		cdfFile.history = "Created with pyPamtra (Version: "+self.r["pamtraVersion"]+", Git Hash: "+self.r["pamtraHash"]+") by "+self.set["creator"]+" (University of Cologne, IGMK) at " + datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
 		
 		cdfFile.properties = str(self.set)
-
 		#make frequsnions
-		cdfFile.createDimension('grid_x',self.p["ngridx"])
-		cdfFile.createDimension('grid_y',self.p["ngridy"])
-		cdfFile.createDimension('frequency',self.set["nfreqs"])
+		cdfFile.createDimension('grid_x',int(self.p["ngridx"]))
+		cdfFile.createDimension('grid_y',int(self.p["ngridy"]))
+		cdfFile.createDimension('frequency',int(self.set["nfreqs"]))
 		
 		if (self.r["settings"]["passive"]):
 			cdfFile.createDimension('angles',len(self.r["angles"]))
-			cdfFile.createDimension('outlevels',self._noutlevels)
-			cdfFile.createDimension('stokes',self._nstokes)
+			cdfFile.createDimension('outlevels',int(self._noutlevels))
+			cdfFile.createDimension('stokes',int(self._nstokes))
 			
 		if (self.r["settings"]["active"]):
-			cdfFile.createDimension('heightbins',self.p["max_nlyrs"])
+			cdfFile.createDimension('heightbins',int(self.p["max_nlyrs"]))
 		
 		dim2d = ("grid_x","grid_y",)
 		dim3d = ("grid_x","grid_y","heightbins",)
@@ -1135,14 +1134,14 @@ class pyPamtra(object):
 
 			nc_height = cdfFile.createVariable('height', 'f',dim3d,**fillVDict)
 			nc_height.units = "m"
-			nc_height[:] = self.r["hgt"]
+			nc_height[:] = np.array(self.r["hgt"],dtype="f")
 			if not nc4: nc_height._FillValue =missingNumber
 			
 		
 		if (self.r["settings"]["passive"]):
 			nc_angle = cdfFile.createVariable('angles','f',('angles',),**fillVDict)
 			nc_angle.units = 'deg'
-			nc_angle[:] = self.r["angles"]
+			nc_angle[:] = np.array(self.r["angles"],dtype="f")
 			if not nc4: nc_angle._FillValue =missingNumber
 			
 			nc_stokes = cdfFile.createVariable('stokes', 'c',("stokes",),**fillVDict)
@@ -1151,7 +1150,7 @@ class pyPamtra(object):
 			
 			nc_out = cdfFile.createVariable('outlevels', 'f',("outlevels",),**fillVDict)
 			nc_out.units = "m over sea level (top of atmosphere value) OR m over ground (ground value)"
-			nc_out[:] = [self.set["obs_height"],0]
+			nc_out[:] = np.array([self.set["obs_height"],0],dtype="f")
 			if not nc4: nc_out._FillValue =missingNumber
 			
 		#create and write variables
