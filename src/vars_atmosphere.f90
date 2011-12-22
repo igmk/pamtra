@@ -64,37 +64,7 @@ module vars_atmosphere
 
   integer :: alloc_status
 
-! <<<<<<< HEAD
   integer :: model_i, model_j
   real(kind=sgl) :: lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,hwp
-
-
-! <<<<<<< HEAD
-! !   integer, allocatable, dimension(:,:) :: ics
-! =======
-! !	do i = 1, ngridx
-! !       do j = 1, ngridy
-! !                  profiles(i,j)%cwp  =0.             ! kg/m^2
-! !                  profiles(i,j)%iwp  =0.               ! kg/m^2
-! !                  profiles(i,j)%rwp  =0.              ! kg/m^2
-! !                  profiles(i,j)%swp  =0.              ! kg/m^2
-! !                  profiles(i,j)%gwp  =0.
-! !       do k = 1, nlyr
-! !	profiles(i,j)%cloud_water_q(k) = 0.
-! !	profiles(i,j)%cloud_ice_q(k) = 0.
-! !	profiles(i,j)%rain_q(k) = 0.
-! !	profiles(i,j)%snow_q(k) = 0.
-! !	profiles(i,j)%graupel_q(k) = 0.
-! !	end do
-! !	end do
-! !	end do
-! 
-!     close(14)
-! >>>>>>> master
-! =======
-!   type(profile), allocatable :: profiles(:,:)
-!   integer, allocatable, dimension(:,:) :: ics
-
-
 
 end module vars_atmosphere
