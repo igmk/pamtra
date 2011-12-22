@@ -13,9 +13,10 @@ ifeq ($(ARCH),Darwin)
 	LFLAGS=-L/opt/local/lib/
 	LDFLAGS=-lnetcdf -lnetcdff
 else
-	NCFLAGS=-I$(HOME)/include
-	LFLAGS=-L$(HOME)/lib -L/usr/local/lib
-	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm -lsz
+ 	NCFLAGS := $(shell nc-config --fflags)
+ 	LFLAGS=
+	LDFLAGS := $(shell nc-config --flibs)
+
 endif
 
 
