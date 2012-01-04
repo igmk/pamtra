@@ -139,7 +139,7 @@ p51
 tp52
 bsS'pamtraVersion'
 p53
-S'v0.2-161-g3e3819a-pyPamtra'
+S'v0.2-165-ge05f4a4-master'
 p54
 sS'Att_hydro'
 p55
@@ -243,7 +243,7 @@ p88
 tp89
 bsS'pamtraHash'
 p90
-S'3e3819af343129c28afdcc413e9359c43f990270'
+S'e05f4a42802db6ff63c9bd30430e2e1bb4687071'
 p91
 sS'Att_atmo'
 p92
