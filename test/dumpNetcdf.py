@@ -2,13 +2,18 @@
 
 try:
 	import netCDF4 as nc
-	nc4 = True
+	pyNc = True
 except:
-	import Scientific.IO.NetCDF as nc
-	nc4 = False
+	try: 
+		import Scientific.IO.NetCDF as nc
+		pyNc = False
+	except:
+		import netCDF3 as nc
+		pyNc = True
+		
 	
 	
-if nc4: ncOpen = nc.Dataset
+if pyNc: ncOpen = nc.Dataset
 else: ncOpen = nc.NetCDFFile
 
 import numpy as np
