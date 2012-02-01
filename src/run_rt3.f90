@@ -20,8 +20,7 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
   real(kind=dbl), dimension(maxv) :: MU_VALUES
   real(kind=dbl) :: wavelength       ! microns
   real(kind=dbl) :: GROUND_TEMP, ground_albedo
-  real(kind=sgl) :: lat, lon, lfrac
-  real(kind=dbl) :: wind10u, wind10v
+
   real(kind=dbl) :: land_emissivity
 
   complex(kind=dbl) :: eps_water, & ! function to calculate the dielectic properties of (salt)water
@@ -33,43 +32,19 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
   character(3) :: xstr, ystr
 
   wavelength = c / (freq*1.d3)   ! microns
-
-  write(xstr, '(i3.3)') profiles(nx,ny)%isamp
-  write(ystr, '(i3.3)') profiles(nx,ny)%jsamp
+  GROUND_TEMP = temp_lev(0)
 
   if (verbose .gt. 0) print*, "calculating: ", frq_str, " Y:",ny, " of ", ngridy, "X:", nx, " of ", ngridx
 
-  ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
-  lat = profiles(nx,ny)%latitude                  ! °
-  lon = profiles(nx,ny)%longitude                 ! °
-  lfrac = profiles(nx,ny)%land_fraction
-  relhum_lev = profiles(nx,ny)%relhum_lev         ! %
-  press_lev = profiles(nx,ny)%press_lev           ! Pa
-  temp_lev = profiles(nx,ny)%temp_lev             ! K
-  hgt_lev = profiles(nx,ny)%hgt_lev               ! m
 
-  cwc_q = profiles(nx,ny)%cloud_water_q           ! kg/kg
-  iwc_q = profiles(nx,ny)%cloud_ice_q             ! kg/kg
-  rwc_q = profiles(nx,ny)%rain_q                  ! kg/kg
-  swc_q = profiles(nx,ny)%snow_q                  ! kg/kg
-  gwc_q = profiles(nx,ny)%graupel_q               ! kg/kg
+  write(xstr, '(i3.3)') model_i
+  write(ystr, '(i3.3)') model_j
 
-  if (n_moments .eq. 2) then
-     hwc_q = profiles(nx,ny)%hail_q              ! kg/kg
-     cwc_n = profiles(nx,ny)%cloud_water_n       ! #/kg
-     iwc_n = profiles(nx,ny)%cloud_ice_n         ! #/kg
-     rwc_n = profiles(nx,ny)%rain_n              ! #/kg
-     swc_n = profiles(nx,ny)%snow_n              ! #/kg
-     gwc_n = profiles(nx,ny)%graupel_n           ! #/kg
-     hwc_n = profiles(nx,ny)%hail_n              ! #/kg
-  end if
-
-  press = profiles(nx,ny)%press                   ! Pa
-  temp = profiles(nx,ny)%temp                     ! K
-  relhum = profiles(nx,ny)%relhum                 ! %
-  vapor_pressure = profiles(nx,ny)%vapor_pressure ! Pa
-  rho_vap = profiles(nx,ny)%rho_vap               ! kg/m^3
-  q_hum = profiles(nx,ny)%q_hum                   ! kg/kg
+  ! This GCE model format does not have all the fields expected by    
+  ! the radiative transfer code (i.e. total pressure, and water vapor 
+  ! pressure for this model).  Assign/compute the missing fields first
+  ! make layer averages
+  call get_atmosG0
 
 
   if (verbose .gt. 1) print*, nx,ny, 'type to local variables done' 
@@ -142,18 +117,20 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
   OUT_FILE_ACT = output_path(:len_trim(output_path))//"/"//&
        date_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_active"
 
-
   if (active) then
-     call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),Ze(nx,ny,:,fi),Attenuation_atmo(nx,ny,:,fi),&
-          Attenuation_hydro(nx,ny,:,fi))
+     call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),&
+          Ze(nx,ny,:,fi),Ze_cw(nx,ny,:,fi),Ze_rr(nx,ny,:,fi),Ze_ci(nx,ny,:,fi),&
+          Ze_sn(nx,ny,:,fi),Ze_gr(nx,ny,:,fi),Ze_ha(nx,ny,:,fi),&
+          Att_atmo(nx,ny,:,fi),Att_hydro(nx,ny,:,fi),Att_cw(nx,ny,:,fi),Att_rr(nx,ny,:,fi),&
+          Att_ci(nx,ny,:,fi),Att_sn(nx,ny,:,fi),Att_gr(nx,ny,:,fi),Att_ha(nx,ny,:,fi))
      if (verbose .gt. 1) print*, nx,ny, 'calculate_active done'
   end if
 
   if (write_nc) then
      !      Output integrated quantities
      call collect_boundary_output(lon,lat,lfrac,&
-          profiles(nx,ny)%iwv, profiles(nx,ny)%cwp,profiles(nx,ny)%iwp,profiles(nx,ny)%rwp,profiles(nx,ny)%swp, &
-          profiles(nx,ny)%gwp,profiles(nx,ny)%hwp,profiles(nx,ny)%isamp,profiles(nx,ny)%jsamp,nx,ny)
+          iwv, cwp,iwp,rwp,swp, &
+          gwp,hwp,model_i,model_j,nx,ny)
      if (verbose .gt. 1) print*, nx,ny, 'collect_boundary_output done'
   end if
 
@@ -193,7 +170,6 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
      !calculate human readable angles!
      angles_deg(1:NUMMU) = 180-(180.*acos(MU_VALUES(NUMMU:1:-1))/pi)
      angles_deg(1+NUMMU:2*NUMMU) = (180.*acos(MU_VALUES(1:NUMMU))/pi)
-
      if (verbose .gt. 1) print*, nx,ny, "....rt3 finished"
 
   end if

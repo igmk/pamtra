@@ -12,7 +12,7 @@ module nml_params
   integer, parameter :: MAXV = 64,   &
        MAXLAY = 200, &
        maxleg = 200, &
-       maxfreq = 40, &
+       maxfreq = 100, &
        nummu = 16, & ! no. of observation angles
        NSTOKES = 2, &
        NOUTLEVELS = 2
@@ -36,13 +36,16 @@ module nml_params
   real(kind=dbl) :: snow_density, graupel_density, hail_density
   real(kind=dbl) :: salinity         ! sea surface salinity
 
-  logical :: dump_to_file   ! flag for profile and ssp dump
-  logical :: lphase_flag, &        ! flag for phase function calculation
+  logical ::  in_python !are we in python
+
+  logical :: dump_to_file, &   ! flag for profile and ssp dump
+       lphase_flag, &        ! flag for phase function calculation
        lgas_extinction, &    ! gas extinction desired
        lhyd_extinction, &    ! hydrometeor extinction desired
-       write_nc, &	   ! write netcdf output
+       write_nc, &  ! write netcdf or ascii output
        active, &  	   ! calculate active stuff
-       passive		   ! calculate passive stuff (with RT3)
+       passive, &     ! calculate passive stuff (with RT3)
+       zeSplitUp     ! save Ze and Att for every hydrometeor seperately. has only effect on netcdf file!
 
   character(5) :: EM_ice, EM_snow, EM_grau, EM_hail
   character(1) :: SD_cloud, SD_ice, SD_rain, SD_snow, SD_grau, SD_hail
@@ -62,11 +65,10 @@ contains
     character(300), intent(in) ::namelist_file
 
     ! name list declarations
-
     namelist / verbose_mode / verbose
     namelist / inoutput_mode / write_nc, input_path, output_path,&
          tmp_path, dump_to_file, data_path
-    namelist / output / obs_height,units,outpol,freq_str,file_desc,creator
+    namelist / output / obs_height,units,outpol,freq_str,file_desc,creator,zeSplitUp
     namelist / run_mode / active, passive
     namelist / surface_params / ground_type,salinity, emissivity
     namelist / gas_abs_mod / lgas_extinction, gas_mod
@@ -79,10 +81,10 @@ contains
     namelist / hail_params / SD_hail, N_0hailDhail, EM_hail, hail_density
     namelist / moments / n_moments, moments_file
 
+    in_python = .false. ! we are _not_ in python
 
     !set namelist defaults!
     verbose=0
-
     write_nc=.true.
     dump_to_file=.false.
     input_path='profile/'
@@ -96,7 +98,8 @@ contains
     freq_str=''
     file_desc=''
     creator='Pamtrauser'
-
+    zeSplitUp = .true.    
+    
     active=.true.
     passive=.true.
 
@@ -110,9 +113,9 @@ contains
     lhyd_extinction=.true.
     lphase_flag = .true.
 
- 	SD_cloud='C'
+    SD_cloud='C'
 
- 	SD_ice='C'
+    SD_ice='C'
     EM_ice='mieic'
 
     SD_rain='C'

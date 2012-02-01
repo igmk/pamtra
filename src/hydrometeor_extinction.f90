@@ -17,9 +17,8 @@ subroutine hydrometeor_extinction(f,frq_str)
 
   real(kind=dbl) :: f, wavelength, qwc, nc
 
-  real(kind=dbl) :: kextcw, salbcw, kextrr, salbrr,  &
-       kextci, salbci, kextsn, salbsn, kextgr, salbgr,  kextha, salbha, &
-       backcw, backrr, backci, backsn, backgr, backha
+  real(kind=dbl) :: salbcw, salbrr, salbci, salbsn, salbgr, salbha
+
 
   real(kind=dbl), dimension(200) ::  LEGENcw, LEGENrr, LEGENci, LEGENgr, LEGENsn, LEGENha,      &
        LEGEN2cw, LEGEN2rr, LEGEN2ci, LEGEN2gr, LEGEN2sn, LEGEN2ha,  &
@@ -49,7 +48,7 @@ subroutine hydrometeor_extinction(f,frq_str)
   if (verbose .gt. 1) print*, 'start loop over layer'
 
   grid_z: do nz = 1, nlyr  ! loop over all layers
-
+! print *,temp(nz)
      if (verbose .gt. 1) print*, 'Layer: ', nz
 
      !---------------------------salinity------------------------------
@@ -69,28 +68,30 @@ subroutine hydrometeor_extinction(f,frq_str)
      legen3cw = 0.d0
      legen4cw = 0.d0
 
-     kextcw = 0.d0 
+     kextcw(nz) = 0.d0 
      salbcw = 0.d0 
-     backcw = 0.d0 
+     backcw(nz) = 0.d0 
+
 
      if (cwc_q(nz) .ge. threshold) then
      	if (n_moments .eq. 1) then
 	     	qwc = q2abs(cwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
     		call cloud_ssp(f,qwc,temp(nz),&
-             	maxleg, kextcw, salbcw, backcw,  &
+             	maxleg, kextcw(nz), salbcw, backcw(nz),  &
              	nlegencw, legencw, legen2cw, legen3cw, legen4cw)
      	else if (n_moments .eq. 2) then
 	     	qwc = q2abs(cwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(cwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
     		call cloud_ssp(f,qwc,temp(nz),&
-             	maxleg, kextcw, salbcw, backcw,  &
+             	maxleg, kextcw(nz), salbcw, backcw(nz),  &
              	nlegencw, legencw, legen2cw, legen3cw, legen4cw, nc)
        	end if
      else
-        kextcw = 0.0d0
+        kextcw(nz) = 0.0d0
         salbcw = 0.0d0
-        backcw = 0.0d0
+        backcw(nz) = 0.0d0
      end if
+
 
      !---------------------------------------------------------
      !       single scattering properties of ice crystals
@@ -102,27 +103,28 @@ subroutine hydrometeor_extinction(f,frq_str)
      legen3ci = 0.d0
      legen4ci = 0.d0
 
-     kextci = 0.0d0 
+     kextci(nz) = 0.0d0 
      salbci = 0.0d0 
-     backci = 0.0d0 
+     backci(nz) = 0.0d0 
 
      if (iwc_q(nz) .ge. threshold) then
 	     if (n_moments .eq. 1) then
 	     	qwc = q2abs(iwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
 	        call ice_ssp(f,qwc,temp(nz),&
-	             maxleg,kextci, salbci, backci,  &
+	             maxleg,kextci(nz), salbci, backci(nz),  &
 	             nlegenci, legenci, legen2ci, legen3ci, legen4ci)
 	     else if (n_moments .eq. 2) then
 	     	qwc = q2abs(iwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(iwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	      	call ice_ssp(f,qwc,temp(nz),&
-	             maxleg,kextci, salbci, backci,  &
+	             maxleg,kextci(nz), salbci, backci(nz),  &
 	             nlegenci, legenci, legen2ci, legen3ci, legen4ci, nc)
 	     end if
+
      else
-        kextci = 0.0d0
+        kextci(nz) = 0.0d0
         salbci = 0.0d0
-        backci = 0.0d0
+        backci(nz) = 0.0d0
      end if
 
      !---------------------------------------------------------
@@ -135,27 +137,27 @@ subroutine hydrometeor_extinction(f,frq_str)
      legen3rr = 0.d0
      legen4rr = 0.d0
 
-     kextrr = 0.d0
+     kextrr(nz) = 0.d0
      salbrr = 0.d0
-     backrr = 0.d0
+     backrr(nz) = 0.d0
 
      if (rwc_q(nz) .ge. threshold) then
      	if (n_moments .eq. 1) then
 	       qwc = q2abs(rwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
 	       call rain_ssp(f,qwc,temp(nz),&
-	            maxleg,kextrr, salbrr, backrr,  &
+	            maxleg,kextrr(nz), salbrr, backrr(nz),  &
 	            nlegenrr, legenrr, legen2rr, legen3rr, legen4rr)
 	    else if (n_moments .eq. 2) then
 	     	qwc = q2abs(rwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(rwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	     	call rain_ssp(f,qwc,temp(nz),&
-	            maxleg,kextrr, salbrr, backrr,  &
+	            maxleg,kextrr(nz), salbrr, backrr(nz),  &
 	            nlegenrr, legenrr, legen2rr, legen3rr, legen4rr, nc)
 	    end if
      else
-        kextrr = 0.0d0
+        kextrr(nz) = 0.0d0
         salbrr = 0.0d0
-        backrr = 0.0d0
+        backrr(nz) = 0.0d0
      end if
 
      !---------------------------------------------------------
@@ -172,23 +174,23 @@ subroutine hydrometeor_extinction(f,frq_str)
      	 if (n_moments .eq. 1) then
 	     	qwc = q2abs(swc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
 	        call snow_ssp(f,qwc,temp(nz),&
-	             maxleg,kextsn, salbsn, backsn,  &
+	             maxleg,kextsn(nz), salbsn, backsn(nz),  &
 	             nlegensn, legensn, legen2sn, legen3sn, legen4sn, swc_q(nz))
 	        call legendre2phasefunction(legensn, nlegensn, 2, 200,p11, ang)
-	        backsn = kextsn * salbsn * P11 (2)
+	        backsn(nz) = kextsn(nz) * salbsn * P11 (2)
 	     else if (n_moments .eq. 2) then
 	     	qwc = q2abs(swc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(swc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	      	call snow_ssp(f,qwc,temp(nz),&
-	             maxleg,kextsn, salbsn, backsn,  &
+	             maxleg,kextsn(nz), salbsn, backsn(nz),  &
 	             nlegensn, legensn, legen2sn, legen3sn, legen4sn, swc_q(nz), nc)
 	        call legendre2phasefunction(legensn, nlegensn, 2, 200,p11, ang)
-	        backsn = kextsn * salbsn * P11 (2)
+	        backsn(nz) = kextsn(nz) * salbsn * P11 (2)
 	     end if
      else
-        kextsn = 0.0d0
+        kextsn(nz) = 0.0d0
         salbsn = 0.0d0
-        backsn = 0.0d0
+        backsn(nz) = 0.0d0
      endif
 
      !---------------------------------------------------------
@@ -205,23 +207,23 @@ subroutine hydrometeor_extinction(f,frq_str)
 	     if (n_moments .eq. 1) then
 	     	qwc = q2abs(gwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
 	        call grau_ssp(f,qwc,temp(nz),&
-	             maxleg,kextgr, salbgr, backgr,  &
+	             maxleg,kextgr(nz), salbgr, backgr(nz),  &
 	             nlegengr, legengr, legen2gr, legen3gr, legen4gr)
 	        call legendre2phasefunction(legengr, nlegengr, 2, 200, p11, ang)
-	        backgr = kextgr * salbgr * p11 (2)
+	        backgr(nz) = kextgr(nz) * salbgr * p11 (2)
 	     else if (n_moments .eq. 2) then
 	     	qwc = q2abs(gwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(gwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	      	call grau_ssp(f,qwc,temp(nz),&
-	             maxleg,kextgr, salbgr, backgr,  &
+	             maxleg,kextgr(nz), salbgr, backgr(nz),  &
 	             nlegengr, legengr, legen2gr, legen3gr, legen4gr, nc)
 	      	call legendre2phasefunction(legengr, nlegengr, 2, 200, p11, ang)
-	        backgr = kextgr * salbgr * p11 (2)
+	        backgr(nz) = kextgr(nz) * salbgr * p11 (2)
 	     end if
      else
-        kextgr = 0.0d0
+        kextgr(nz) = 0.0d0
         salbgr = 0.0d0
-        backgr = 0.0d0
+        backgr(nz) = 0.0d0
      endif
 
      !---------------------------------------------------------
@@ -239,18 +241,18 @@ subroutine hydrometeor_extinction(f,frq_str)
 	       qwc = q2abs(hwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	       nc = q2abs(hwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
            call hail_ssp(f,qwc,temp(nz),&
-                maxleg,kextha, salbha, backha,  &
+                maxleg,kextha(nz), salbha, backha(nz),  &
                 nlegenha, legenha, legen2ha, legen3ha, legen4ha, nc)
            call legendre2phasefunction(legenha, nlegenha, 2, 200, p11, ang)
         else
-           kextha = 0.0d0
+           kextha(nz) = 0.0d0
            salbha = 0.0d0
-           backha = 0.0d0
+           backha(nz) = 0.0d0
         endif
      else
-        kextha = 0.0d0
+        kextha(nz) = 0.0d0
         salbha = 0.0d0
-        backha = 0.0d0
+        backha(nz) = 0.0d0
      endif
 
      nlegen(nz) = max(nlegen(nz),nlegencw,nlegenci,nlegenrr,nlegensn,nlegengr,nlegenha)
@@ -265,17 +267,16 @@ subroutine hydrometeor_extinction(f,frq_str)
      !                                                                       
 
 
-     kexttot(nz) = kextsn + kextcw + kextrr + kextgr + kextci + kextha
-     back(nz) = backcw + backrr + backci + backsn + backgr + backha
-
+     kexttot(nz) = kextsn(nz) + kextcw(nz) + kextrr(nz) + kextgr(nz) + kextci(nz) + kextha(nz)
+     back(nz) = backcw(nz) + backrr(nz) + backci(nz) + backsn(nz) + backgr(nz) + backha(nz)
 
      if (kexttot(nz) .lt. 0.) write(*,*) 'something wrong'
      if (kexttot(nz) .le. 0.) then 
-        salbtot(nz) = 0.0
+        salbtot(nz) = 0.d0
      else 
-        salbtot(nz) = (salbcw * kextcw + salbrr *       &
-             kextrr + salbci * kextci + salbsn * kextsn + salbgr *    &
-             kextgr + salbha * kextha) / kexttot(nz)
+        salbtot(nz) = (salbcw * kextcw(nz) + salbrr *       &
+             kextrr(nz) + salbci * kextci(nz) + salbsn * kextsn(nz) + salbgr *    &
+             kextgr(nz) + salbha * kextha(nz)) / kexttot(nz)
      endif
      !
      !      absorp(nz) = (1.0 - salbtot(nz) ) * kexttot(nz)
@@ -299,28 +300,28 @@ subroutine hydrometeor_extinction(f,frq_str)
         end if
 
         do jj = 1, Nlegen(nz)
-           legen (nz,jj) = (legencw (jj) * salbcw * kextcw + legenrr ( &
-                jj) * salbrr * kextrr + legenci (jj) * salbci * kextci + &
-                legensn (jj) * salbsn * kextsn + legengr (jj) * salbgr * &
-                kextgr + legenha (jj) * salbha * kextha) / (salbtot (nz) &
+           legen (nz,jj) = (legencw (jj) * salbcw * kextcw(nz) + legenrr ( &
+                jj) * salbrr * kextrr(nz) + legenci (jj) * salbci * kextci(nz) + &
+                legensn (jj) * salbsn * kextsn(nz) + legengr (jj) * salbgr * &
+                kextgr(nz) + legenha (jj) * salbha * kextha(nz)) / (salbtot (nz) &
                 * kexttot (nz) )
 
-           legen2 (nz,jj) = (legen2cw (jj) * salbcw * kextcw +         &
-                legen2rr (jj) * salbrr * kextrr + legen2ci (jj) * salbci &
-                * kextci + legen2sn (jj) * salbsn * kextsn + legen2gr (  &
-                jj) * salbgr * kextgr + legen2ha (jj) * salbha * kextha ) &
+           legen2 (nz,jj) = (legen2cw (jj) * salbcw * kextcw(nz) +         &
+                legen2rr (jj) * salbrr * kextrr(nz) + legen2ci (jj) * salbci &
+                * kextci(nz) + legen2sn (jj) * salbsn * kextsn(nz) + legen2gr (  &
+                jj) * salbgr * kextgr(nz) + legen2ha (jj) * salbha * kextha(nz) ) &
                 / (salbtot (nz) * kexttot (nz) )
 
-           legen3 (nz,jj) = (legen3cw (jj) * salbcw * kextcw +         &
-                legen3rr (jj) * salbrr * kextrr + legen3ci (jj) * salbci &
-                * kextci + legen3sn (jj) * salbsn * kextsn + legen3gr (  &
-                jj) * salbgr * kextgr + legen3ha (jj) * salbha * kextha) &
+           legen3 (nz,jj) = (legen3cw (jj) * salbcw * kextcw(nz) +         &
+                legen3rr (jj) * salbrr * kextrr(nz) + legen3ci (jj) * salbci &
+                * kextci(nz) + legen3sn (jj) * salbsn * kextsn(nz) + legen3gr (  &
+                jj) * salbgr * kextgr(nz) + legen3ha (jj) * salbha * kextha(nz)) &
                 / (salbtot (nz) * kexttot (nz) )
 
-           legen4 (nz,jj) = (legen4cw(jj) * salbcw * kextcw +         &
-                legen4rr (jj) * salbrr * kextrr + legen4ci (jj) * salbci &
-                * kextci + legen4sn (jj) * salbsn * kextsn + legen4gr (  &
-                jj) * salbgr * kextgr + legen4ha (jj) * salbha * kextha) &
+           legen4 (nz,jj) = (legen4cw(jj) * salbcw * kextcw(nz) +         &
+                legen4rr (jj) * salbrr * kextrr(nz) + legen4ci (jj) * salbci &
+                * kextci(nz) + legen4sn (jj) * salbsn * kextsn(nz) + legen4gr (  &
+                jj) * salbgr * kextgr(nz) + legen4ha (jj) * salbha * kextha(nz)) &
                 / (salbtot(nz) * kexttot &
                 (nz))
            if (dump_to_file) then
