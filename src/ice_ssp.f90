@@ -57,14 +57,6 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
 		drop_mass = 130.d0 * dia1**3						! [kg]
 	 endif
 	 dia2 = dia1 + del_d
-!        ! monodisperse distribution
-!        ! Fixed diameter
-!        del_d = 1.d-8    ! [m]
-!        dia1 = 1.d-4     ! [m] 100 micron diameter
-!        dia2 = dia1 + del_d
-!        den_ice = 917.d0  ! [kg/m^3]
-!!        drop_mass = pi/6.d0 * dia1**3 * den_ice 	! sphere case
-!        drop_mass = 130.d0 * dia1**3				! hexagonal plates with aspect ratio of 0.2
      ad = iwc/(drop_mass*del_d) 	!intercept parameter [1/m^4]
      bd = 0.0d0
      nbins = 2
