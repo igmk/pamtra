@@ -1077,7 +1077,7 @@ class pyPamtra(object):
 				import Scientific.IO.NetCDF as nc
 				pyNc = False
 			except:
-				#fallback for cheops with the same syntax as netcdf3!
+				#fallback for cheops with the same syntax as netcdf4!
 				import netCDF3 as nc
 				pyNc = True
 		else:
