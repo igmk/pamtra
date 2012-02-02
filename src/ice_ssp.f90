@@ -50,13 +50,13 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
      drop_mass = iwc/number_concentration 					! [kg]
      del_d = 1.d-8											! [m]
      dia1 = (drop_mass/130.0d0)**(1.0d0/3.0d0)				! [m]
-     dia2 = dia1 + del_d
 !    CHECK if dia1 > maxdiam=2.d-4 (maximum diameter for COSMO)
 ! 	 then ricalculate the drop mass using 2.d-4 as particle diameter
 	 if (dia1 .gt. 2.d-4) then
 	 	dia1 = 2.d-4 										! [m] maximum allowed diameter
-		drop_mass = 130.d0 * dia1**3							! [kg]
+		drop_mass = 130.d0 * dia1**3						! [kg]
 	 endif
+	 dia2 = dia1 + del_d
 !        ! monodisperse distribution
 !        ! Fixed diameter
 !        del_d = 1.d-8    ! [m]
@@ -65,7 +65,6 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
 !        den_ice = 917.d0  ! [kg/m^3]
 !!        drop_mass = pi/6.d0 * dia1**3 * den_ice 	! sphere case
 !        drop_mass = 130.d0 * dia1**3				! hexagonal plates with aspect ratio of 0.2
-
      ad = iwc/(drop_mass*del_d) 	!intercept parameter [1/m^4]
      bd = 0.0d0
      nbins = 2
