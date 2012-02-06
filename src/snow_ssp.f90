@@ -5,7 +5,8 @@ subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4, qs, nc)
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_0snowDsnow, EM_snow, n_moments, isnow_n0, SD_snow, snow_density
+  use nml_params, only: verbose, lphase_flag, n_0snowDsnow, EM_snow, &
+		        n_moments, isnow_n0, SD_snow, snow_density,liu_type
   use constants, only: pi, im
   use double_moments_module
   use conversions
@@ -146,7 +147,7 @@ subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
   elseif (EM_snow .eq. 'liudb') then
      dia1 = 1.02d-4
      dia2 = 2.d-2
-     call dda_db_liu(f,t,mindex, &
+     call dda_db_liu(f,t,liu_type,mindex, &
           dia1,dia2,nbins,maxleg,ad,&
           bd, alpha, gamma, lphase_flag,kext, salb,&
           back, nlegen, legen, legen2, legen3,&
