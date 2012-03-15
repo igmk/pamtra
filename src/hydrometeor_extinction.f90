@@ -72,7 +72,6 @@ subroutine hydrometeor_extinction(f,frq_str)
      salbcw = 0.d0 
      backcw(nz) = 0.d0 
 
-
      if (cwc_q(nz) .ge. threshold) then
      	if (n_moments .eq. 1) then
 	     	qwc = q2abs(cwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))

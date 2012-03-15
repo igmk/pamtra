@@ -62,6 +62,7 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
      nbins = 2
      alpha = 0.0d0     ! exponential SD
      gamma = 1.0d0
+     den_ice=917.d0
     else if (SD_ice .eq. 'M') then
      del_d = 1.d-8    ! [m]
      dia1 = 6.d-5     ! [m] 60 micron diameter
@@ -83,7 +84,7 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
      nbins = 100
      den_ice=917.d0
      dia1 = 1.d-10	! minimum diameter [m]
-     dia2 = 1.d-3	! maximum diameter [m]
+     dia2 = 6.d-5	! maximum diameter [m]
   else
      stop 'Number of moments is not specified'
   end if

@@ -24,14 +24,14 @@ program pamtra
 
   integer :: inarg, ff
   character(40) :: gitHash, gitVersion
-  character(6) :: formatted_frqstr !function call
+  character(8) :: formatted_frqstr !function call
 
 !!! set by "handle command line parameters" !!! 
 
   character(99)  :: input_file !name of profile
   character(300) :: namelist_file
-  character(6), dimension(maxfreq) :: frqs_str !from commandline
-  character(7) :: frq_str_s,frq_str_e
+  character(8), dimension(maxfreq) :: frqs_str !from commandline
+  character(9) :: frq_str_s,frq_str_e
 
 !!!loop variables
   integer ::  fi,nx, ny
@@ -86,7 +86,6 @@ program pamtra
 
   if (verbose .gt. 1) print *,"input_file: ",input_file(:len_trim(input_file)),&
        " namelist file: ",namelist_file," freq: ",freq_str
-
 !!! read n-moments file
   if (n_moments .eq. 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
 

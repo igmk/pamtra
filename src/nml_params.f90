@@ -52,7 +52,7 @@ module nml_params
   character(3) :: gas_mod
   character(20) :: moments_file,file_desc
   character(100) :: input_path, output_path, tmp_path,creator, data_path
-  character(14) :: freq_str
+  character(18) :: freq_str
   character(2) :: OUTPOL
   character(1) :: GROUND_TYPE, UNITS
 

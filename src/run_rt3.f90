@@ -11,7 +11,7 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
 
   integer, intent(in) :: nx,ny,fi 
   real(kind=dbl), intent(in) :: freq ! frequency [GHz]
-  character(6), intent(in) :: frq_str !from commandline
+  character(8), intent(in) :: frq_str !from commandline
 
   integer, dimension(maxlay) :: OUTLEVELS
   integer :: ise, imonth ! filehandle for the emissivity data
