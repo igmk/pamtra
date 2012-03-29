@@ -27,3 +27,9 @@ py/codefriedhof.py
 *.png
 *.py
 snowCRYSTALuli
+cl340d14.dda
+runtestc
+testc.lay
+testc.out
+testc.out.check
+src/scatcnv*

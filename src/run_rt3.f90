@@ -154,7 +154,7 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
      end do out_search
   end if
 
-  OUTLEVELS(2) = nlyr+1    ! this is the bottom
+!  OUTLEVELS(2) = nlyr+1    ! this is the bottom
 
   if (passive .eqv. .true.) then
 
@@ -173,5 +173,9 @@ subroutine run_rt3(nx,ny,fi,freq,frq_str)
      if (verbose .gt. 1) print*, nx,ny, "....rt3 finished"
 
   end if
+
+  call rt4(nstokes,nummu,quad_type,ground_temp,&
+    ground_type,ground_albedo,ground_index,sky_temp,&
+    wavelength,units,outpol,noutlevels,(/1,21/))
 
 end subroutine run_rt3

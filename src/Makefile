@@ -31,7 +31,8 @@ OBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_profile.o vars_atmosphere.o
 	ref_ice.o e_sat_gg_water.o spec2abs.o interpolation.o deallocate_profile_vars.o deallocate_output_vars.o\
 	hydrometeor_extinction.o cloud_ssp.o ice_ssp.o rain_ssp.o snow_ssp.o grau_ssp.o hail_ssp.o legendre2phasefunction.o \
 	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o  \
-	get_scat_coefs.o dump_profile.o collect_boundary_output.o double_moments.o versionNumber.auto.o
+	get_scat_coefs.o dump_profile.o collect_boundary_output.o double_moments.o \
+	rt4.o radtran4.o radintg4.o radscat4.o versionNumber.auto.o
 
 pamtraOBJECTS=formatted_frqstr.o write_nc_results.o
 
@@ -41,7 +42,7 @@ all: precompile pamtra py
 
 	
 pamtra: pamtra.f90 $(OBJECTS) $(pamtraOBJECTS)
-	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS)  $(pamtraOBJECTS) $(LFLAGS) $(LDFLAGS)
+	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(pamtraOBJECTS) $(LFLAGS) $(LDFLAGS)
 	mv $(BIN) ../
  
 scatdb.o:

@@ -13,7 +13,7 @@ module nml_params
        MAXLAY = 200, &
        maxleg = 200, &
        maxfreq = 100, &
-       nummu = 16, & ! no. of observation angles
+       nummu = 8, & ! no. of observation angles
        NSTOKES = 2, &
        NOUTLEVELS = 2
   integer, parameter :: SRC_CODE = 2,&
