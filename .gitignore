@@ -4,6 +4,7 @@ bin
 pamtra
 .cproject
 .project
+.pydevproject
 *.nml
 !test/nmls/*nml
 fort*
@@ -24,3 +25,5 @@ test/tmp/*
 *.so
 py/codefriedhof.py
 *.png
+*.py
+snowCRYSTALuli
