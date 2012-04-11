@@ -1057,7 +1057,7 @@ class pyPamtra(object):
 		except:
 			raise IOError ("Could not read data")
 		
-	def writeResultsToNetCDF(self,fname,profileVars="all",ncForm="NETCDF3"):
+	def writeResultsToNetCDF(self,fname,profileVars="all",ncForm="NETCDF3_CLASSIC"):
 		'''
 		write the results to a netcdf file
 		
@@ -1089,7 +1089,7 @@ class pyPamtra(object):
 		except:
 			raise IOError ("run runPamtra first!")
 
-		if pyNc: cdfFile = nc.Dataset(fname,"w",ncForm)
+		if pyNc: cdfFile = nc.Dataset(fname,"w",format=ncForm)
 		else: cdfFile = nc.NetCDFFile(fname,"w")
 		
 		#write meta data
