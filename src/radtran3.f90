@@ -122,8 +122,8 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   !      PARAMETER (MAXV=64, MAXM=4096, MAXLM=201*256)                    
   !   PARAMETER (MAXV = 64, MAXM = 4096, MAXLM = 201 * 512) 
   !                                    maxlm = layer*(stokes*angles)**2
-  PARAMETER (MAXV = 64, MAXM = 4096, MAXLM = 201 * (2*32)**2)
-  PARAMETER (MAXLEG = 256, MAXLAY = 200) 
+  PARAMETER (MAXV = 64, MAXM = 4096, MAXLM = 201 * (maxv)**2)
+  PARAMETER (MAXLEG = 256, MAXLAY = 600)
   PARAMETER (MAXSBUF = MAXLAY * 2 * MAXM, MAXDBUF = MAXLAY * 2 *    &
        MAXV)                                                             
 
@@ -159,8 +159,8 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   REAL(kind=dbl) GND_RADIANCE (MAXV), SKY_RADIANCE (2 * MAXV) 
   real(kind=dbl) wind10,windratio,windangle
   integer :: iquadrant
-  REAL(KIND=dbl), PARAMETER :: quadcof  (4, 2  ) =      &
-       & Reshape((/0.0_dbl, 1.0_dbl, 1.0_dbl, 2.0_dbl, 1.0_dbl,  - 1.0_dbl, 1.0_dbl,  - 1.0_dbl/), (/4, 2/))
+  REAL(KIND=dbl), PARAMETER :: quadcof(4,2) =      &
+       & Reshape((/0.0d0, 1.0d0, 1.0d0, 2.0d0, 1.0d0, -1.0d0, 1.0d0, -1.0d0/), (/4, 2/))
 
   ! variables needed for fastem4
 
@@ -168,13 +168,6 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
   real(kind=dbl), dimension(nummu) :: transmittance
 
   if (verbose .gt. 1) print*, "Entered radtran ...."
-
-  IF (SRC_CODE.EQ.1.OR.SRC_CODE.EQ.3) THEN 
-     IF (GROUND_TYPE.NE.'L') THEN 
-        WRITE (*, * ) 'Solar case requires Lambertian surface' 
-        STOP 
-     ENDIF
-  ENDIF
 
   SYMMETRIC = .FALSE. 
   IF (NSTOKES.LE.2) SYMMETRIC = .TRUE. 
@@ -189,11 +182,7 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
           &AXM                                                               
      STOP 
   ENDIF
-  IF ( (SRC_CODE.EQ.1.OR.SRC_CODE.EQ.3) .AND.MAXDBUF.LT. (AZIORDER +&
-       1) * 2 * N * NUM_LAYERS) THEN                                     
-     WRITE (*, '(1X,A,I3)') 'Direct source buffer size exceeded.' 
-     STOP 
-  ENDIF
+
   IF (NUM_LAYERS.GT.MAXLAY) THEN 
      WRITE (*, '(1X,A,I3)') 'Too many layers.  Maximum number :', MAXL&
           &AY                                                                
@@ -274,17 +263,6 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
      ENDIF
   ENDDO
 
-  !           Compute the direct beam flux at each level                  
-  IF (SRC_CODE.EQ.1.OR.SRC_CODE.EQ.3) THEN 
-     TAU = 0.0 
-     DIRECT_LEVEL_FLUX (1) = DIRECT_FLUX 
-     DO LAYER = 1, NUM_LAYERS 
-        TAU = TAU + EXTINCTIONS (LAYER) / DIRECT_MU * ABS (HEIGHT (    &
-             LAYER) - HEIGHT (LAYER + 1) )                                  
-        DIRECT_LEVEL_FLUX (LAYER + 1) = DIRECT_FLUX * DEXP ( - TAU) 
-     ENDDO
-  ENDIF
-
   !       Loop through each azimuth mode                                  
   DO MODE = 0, AZIORDER 
      SCAT_NUM = 0 
@@ -300,33 +278,25 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
            SCAT_NUM = SCAT_NUMS (LAYER) 
            !                   Get the scattering matrix from the buffer           
            CALL GET_SCATTERING (NSTOKES, NUMMU, MODE, AZIORDER, SCAT_NUM, &
-                SCATBUF, SCATTER_MATRIX)                                       
+                SCATBUF, SCATTER_MATRIX)
            !                   Check the normalization of the scattering matrix    
            IF (MODE.EQ.0) THEN 
               CALL CHECK_NORM (NSTOKES, NUMMU, QUAD_WEIGHTS, SCATTER_MATRIX)
            ENDIF
            !                   Get the direct (solar) vector from the buffer       
-           IF (SRC_CODE.EQ.1.OR.SRC_CODE.EQ.3) THEN 
-              CALL GET_DIRECT (NSTOKES, NUMMU, MODE, AZIORDER, SCAT_NUM,  &
-                   DIRECTBUF, DIRECT_VECTOR)                                   
-           ENDIF
         ENDIF
 
 
         !           Compute the thermal emission at top and bottom of layer
-        IF (SRC_CODE.EQ.2.OR.SRC_CODE.EQ.3) THEN 
-           !                   Calculate the thermal source for end of layer       
-           CALL THERMAL_RADIANCE (NSTOKES, NUMMU, MODE, TEMPERATURES (    &
-                LAYER + 1), ALBEDO, WAVELENGTH, THERMAL_VECTOR)                
-           PLANCK1 = THERMAL_VECTOR (1) 
-           !                   Calculate the thermal source for beginning of layer 
-           CALL THERMAL_RADIANCE (NSTOKES, NUMMU, MODE, TEMPERATURES (    &
-                LAYER), ALBEDO, WAVELENGTH, THERMAL_VECTOR)                    
-           PLANCK0 = THERMAL_VECTOR (1) 
-        ELSE 
-           PLANCK0 = 0.0 
-           PLANCK1 = 0.0 
-        ENDIF
+
+       !                   Calculate the thermal source for end of layer
+       CALL THERMAL_RADIANCE (NSTOKES, NUMMU, MODE, TEMPERATURES (    &
+            LAYER + 1), ALBEDO, WAVELENGTH, THERMAL_VECTOR)
+       PLANCK1 = THERMAL_VECTOR (1)
+       !                   Calculate the thermal source for beginning of layer
+       CALL THERMAL_RADIANCE (NSTOKES, NUMMU, MODE, TEMPERATURES (    &
+            LAYER), ALBEDO, WAVELENGTH, THERMAL_VECTOR)
+       PLANCK0 = THERMAL_VECTOR (1)
 
 
         KRT = 1 + 2 * N * N * (LAYER - 1) 
@@ -451,14 +421,13 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
              trans(krt),&
              source(ks))
      ELSE 
-        ! For a Lambertian surface                                
+        ! For a Lambertian surface
         CALL LAMBERT_SURFACE (NSTOKES, NUMMU, MODE, MU_VALUES,         &
              QUAD_WEIGHTS, GROUND_ALBEDO, REFLECT (KRT), TRANS (KRT),       &
-             SOURCE (KS) )                                                  
-        ! The radiance from the ground is thermal and reflected direct
-        CALL LAMBERT_RADIANCE (NSTOKES, NUMMU, MODE, SRC_CODE,         &
-             GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH, DIRECT_LEVEL_FLUX (    &
-             NUM_LAYERS + 1), GND_RADIANCE)                                 
+             SOURCE (KS) )
+        ! The radiance from the ground is thermal
+        CALL LAMBERT_RADIANCE (NSTOKES, NUMMU, MODE, &
+             GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH, GND_RADIANCE)
      ENDIF
 
      if (verbose .gt. 1) print*, ".... done!"
@@ -485,7 +454,7 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
            IF (L.EQ.1) THEN 
               CALL MCOPY (2 * N, N, REFLECT (KRT), UPREFLECT) 
               CALL MCOPY (2 * N, N, TRANS (KRT), UPTRANS) 
-              CALL MCOPY (2 * N, 1, SOURCE (KS), UPSOURCE) 
+              CALL MCOPY (2 * N, 1, SOURCE (KS), UPSOURCE)
            ELSE 
               CALL MCOPY (2 * N, N, UPREFLECT, REFLECT1) 
               CALL MCOPY (2 * N, N, UPTRANS, TRANS1) 

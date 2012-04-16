@@ -181,15 +181,17 @@
 !                       MIDENTITY, MTRANSPOSE, MMULT, MINVERT
 !
 !
-      subroutine RT4(nstokes,nummu,quad_type,ground_temp,&
+      subroutine RT4(nstokes,nummu,mu_values,out_file,quad_type,ground_temp,&
         ground_type,ground_albedo,ground_index,sky_temp,&
-        wavelength,units,outpol,noutlevels,outlevels)
+        wavelength,units,outpol,noutlevels,outlevels,nx,ny,fi)
 
   use kinds
   use vars_atmosphere
-  use nml_params, only: verbose
+  use nml_params, only: verbose, write_nc, in_python, numazimuths
 
   implicit none
+
+  integer :: nx,ny,fi
 
       INTEGER   MAXV, MAXLAY
       PARAMETER (MAXV=64)
@@ -210,19 +212,31 @@
       CHARACTER*64 LAYER_FILE, OUT_FILE
       CHARACTER*64 SCAT_FILES(MAXLAY)
 
+  height = 0.
+  temperatures = 0.
+  gas_extinct = 0.
+  MAX_DELTA_TAU = 1.0d-6
 
   if (verbose .gt. 0) print*, "entered rt4"
+!scat_files = ''
+!scat_files(nlyr) = '1.txt'
 
-      layer_file = 'testc.lay'
-      out_file = 'testc.out'
+  num_layers = nlyr
+  height(1:nlyr+1) = hgt_lev(nlyr:0:-1)
+  temperatures(1:nlyr+1) = temp_lev(nlyr:0:-1)
+  gas_extinct(1:nlyr) = kextatmo(nlyr:1:-1)
 
-      CALL READ_LAYERS (LAYER_FILE, MAXLAY, NUM_LAYERS,&
-                       HEIGHT, TEMPERATURES,&
-                       GAS_EXTINCT, SCAT_FILES)
+  rt4salbtot(1:nlyr) = salbtot(nlyr:1:-1)
+  rt4hydros_present(1:nlyr) = hydros_present(nlyr:1:-1)
+
+  rt4scatter_matrix(1:nlyr,:,:,:,:,:) = scattermatrix(nlyr:1:-1,:,:,:,:,:)
+  rt4ext_matrix(1:nlyr,:,:,:,:) = extmatrix(nlyr:1:-1,:,:,:,:)
+  print*, rt4ext_matrix(1:nlyr,1,1,1,1),rt4ext_matrix(1:nlyr,1,2,1,1)
+  rt4emis_vec(1:nlyr,:,:,:) = emisvec(nlyr:1:-1,:,:,:)
+
 
   if (verbose .gt. 0) print*, ".... read_layers done!"
 
-      MAX_DELTA_TAU = 1.0E-6
       CALL RADTRAN4(NSTOKES, NUMMU, MAX_DELTA_TAU,&
                     QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&
                     GROUND_ALBEDO, GROUND_INDEX,&
@@ -235,7 +249,15 @@
 
   if (verbose .gt. 0) print*, ".... radtran done!"
 
-      CALL OUTPUT_FILE4(NSTOKES, NUMMU,&
+  if (write_nc .or. in_python) then
+     call collect_output(NSTOKES, NUMMU, 0, &
+          WAVELENGTH,   &
+          UNITS, OUTPOL,NOUTLEVELS, OUTLEVELS,         &
+          NUMAZIMUTHS,UP_RAD, DOWN_RAD,     &
+          nx,ny,fi)
+  else
+        out_file='output/test_rt4'
+     CALL OUTPUT_FILE4(NSTOKES, NUMMU,&
                        LAYER_FILE, OUT_FILE,&
                        QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&
                        GROUND_ALBEDO, GROUND_INDEX,&
@@ -244,13 +266,8 @@
                        NOUTLEVELS, OUTLEVELS, &
                        MU_VALUES, UP_FLUX, DOWN_FLUX,&
                        UP_RAD, DOWN_RAD)
-
+  end if
       END subroutine rt4
-
-
-
-
-
 
 
       SUBROUTINE READ_LAYERS (LAYER_FILE, MAXLAY, NUM_LAYERS,&
@@ -369,9 +386,9 @@
 
 
       IF (UNITS(1:1) .EQ. 'T') THEN
-          FORM1 = '(F8.3,1X,F8.5,2(1X,F7.2),:)'
+          FORM1 = '(F8.1,1X,F8.5,2(1X,F7.2),:)'
       ELSE
-          FORM1 = '(F8.3,1X,F8.5,2(1X,E13.6),:)'
+          FORM1 = '(F8.1,1X,F8.5,2(1X,E13.6),:)'
       ENDIF
  
       IF (OUTPOL .EQ. 'VH') THEN
@@ -405,10 +422,6 @@
 
       RETURN
       END
-
-
-
-
 
       SUBROUTINE CONVERT_OUTPUT4(UNITS, OUTPOL, NSTOKES, NOUT,&
                                 WAVELEN, FLUXCODE, OUTPUT)

@@ -1,7 +1,7 @@
 ARCH=$(shell uname -s)
 FC=gfortran
 
-FCFLAGS=-c -fPIC
+FCFLAGS=-c -fPIC -Wuninitialized
 
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
@@ -24,15 +24,17 @@ endif
 
 
 OBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_profile.o vars_atmosphere.o mod_io_strings.o constants.o double_moments_module.o\
-	vars_output.o conversions.o run_rt3.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o radmat.o \
+	vars_output.o conversions.o run_rt.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o radmat.o \
 	scat_utilities.o dsd_utilities.o mpm93.o get_atmosG0.o get_atmosG.o mie.o mie_densitydep_spheremasseq.o\
 	slant_profile.o allocate_profile_vars.o allocate_output_vars.o rosen98_gasabs.o surface.o eps_water.o eps_ice.o eps_mix.o \
 	equcom.o land_emis.o equare.o scatdb.o dda_db_liu.o dielec_water.o ref_water.o \
 	ref_ice.o e_sat_gg_water.o spec2abs.o interpolation.o deallocate_profile_vars.o deallocate_output_vars.o\
-	hydrometeor_extinction.o cloud_ssp.o ice_ssp.o rain_ssp.o snow_ssp.o grau_ssp.o hail_ssp.o legendre2phasefunction.o \
+	hydrometeor_extinction_rt3.o cloud_ssp.o ice_ssp.o rain_ssp.o snow_ssp.o grau_ssp.o hail_ssp.o legendre2phasefunction.o \
 	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o  \
 	get_scat_coefs.o dump_profile.o collect_boundary_output.o double_moments.o \
-	rt4.o radtran4.o radintg4.o radscat4.o versionNumber.auto.o
+	rt4.o radtran4.o radintg4.o radscat4.o hydrometeor_extinction_rt4.o scatcnv.o \
+	tmatrix.o matrix_cal.o tmatrix_cal.o lpd.o get_scat_mat.o snow_ssp_tmat.o \
+	versionNumber.auto.o
 
 pamtraOBJECTS=formatted_frqstr.o write_nc_results.o
 

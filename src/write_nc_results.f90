@@ -28,7 +28,7 @@ subroutine write_nc_results(nc_file)
 
   integer :: today(3), now(3)
 
-  character(300) :: nc_file, timestring, user
+  character(300) :: nc_file, timestring
   character(40) ::gitVersion,gitHash
 
   if (verbose .gt. 0) print*,"writing: ", nc_file
@@ -234,7 +234,6 @@ subroutine write_nc_results(nc_file)
   call check(nf90_put_var(ncid, gwpVarID, gwps))
   call check(nf90_put_var(ncid, hwpVarID, hwps))
   if (passive) then
-
      call check(nf90_put_var(ncid, tbVarID, tb))
   end if 	
 

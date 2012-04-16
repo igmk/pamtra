@@ -47,17 +47,13 @@ SUBROUTINE LAMBERT_SURFACE (NSTOKES, NUMMU, MODE, MU_VALUES,      &
 END SUBROUTINE LAMBERT_SURFACE
 
 
-SUBROUTINE LAMBERT_RADIANCE (NSTOKES, NUMMU, MODE, SRC_CODE,      &
-     GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH, DIRECT_SFC_FLUX, RADIANCE)
+SUBROUTINE LAMBERT_RADIANCE (NSTOKES, NUMMU, MODE, &
+     GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH,RADIANCE)
   !        LAMBERT_RADIANCE calculates the ground radiance of a Lambertian
-  !      surface.  The radiance is due to thermal radiation and reflected 
-  !      direct solar radiation if there is a solar source (SRC_CODE=1,3).
-  !      TOTAL_DEPTH is the total optical depth in the direction of the   
-  !      direct source (sun), with the path length effect already included
+  !      surface.  The radiance is due to thermal radiation.
   use kinds
-  INTEGER NSTOKES, NUMMU, MODE, SRC_CODE 
+  INTEGER NSTOKES, NUMMU, MODE
   REAL(kind=dbl) GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH 
-  REAL(kind=dbl) DIRECT_SFC_FLUX 
   REAL(kind=dbl) RADIANCE (NSTOKES, NUMMU) 
   INTEGER J, N 
   REAL(kind=dbl) TMP, THERMAL, PLANCK, PI 
@@ -67,21 +63,11 @@ SUBROUTINE LAMBERT_RADIANCE (NSTOKES, NUMMU, MODE, SRC_CODE,      &
   CALL MZERO (N, 1, RADIANCE) 
   IF (MODE.EQ.0) THEN 
      !           Thermal radiation going up                                  
-     IF (SRC_CODE.EQ.2.OR.SRC_CODE.EQ.3) THEN 
-        CALL PLANCK_FUNCTION (GROUND_TEMP, 'R', WAVELENGTH, PLANCK)
-        THERMAL = (1.0 - GROUND_ALBEDO) * PLANCK 
-        DO J = 1, NUMMU 
-           RADIANCE (1, J) = THERMAL 
-        ENDDO
-     ENDIF
-
-     !           Direct solar reflection (unpolarized)                       
-     IF (SRC_CODE.EQ.1.OR.SRC_CODE.EQ.3) THEN 
-        TMP = DIRECT_SFC_FLUX * GROUND_ALBEDO / PI 
-        DO J = 1, NUMMU 
-           RADIANCE (1, J) = RADIANCE (1, J) + TMP 
-        ENDDO
-     ENDIF
+    CALL PLANCK_FUNCTION (GROUND_TEMP, 'R', WAVELENGTH, PLANCK)
+    THERMAL = (1.0 - GROUND_ALBEDO) * PLANCK
+    DO J = 1, NUMMU
+       RADIANCE (1, J) = THERMAL
+    ENDDO
   ENDIF
 
   RETURN 
@@ -179,7 +165,7 @@ SUBROUTINE FRESNEL_RADIANCE (NSTOKES, NUMMU, MODE, MU_VALUES,     &
 END SUBROUTINE FRESNEL_RADIANCE
 
 
-SUBROUTINE THERMAL_RADIANCE (NSTOKES, NUMMU, MODE, TEMPERATURE,   &
+SUBROUTINE THERMAL_RADIANCE(NSTOKES, NUMMU, MODE, TEMPERATURE,   &
      ALBEDO, WAVELENGTH, RADIANCE)                                     
   !        THERMAL_RADIANCE returns a polarized radiance vector for       
   !      thermal emission at WAVELENGTH (microns) for a body with         

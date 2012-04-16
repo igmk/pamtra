@@ -10,14 +10,14 @@ module nml_params
 
   !!Global Stettings
   integer, parameter :: MAXV = 64,   &
-       MAXLAY = 200, &
+       MAXLAY = 600, &
        maxleg = 200, &
        maxfreq = 100, &
-       nummu = 8, & ! no. of observation angles
+       nummu = 16, & ! no. of observation angles
        NSTOKES = 2, &
        NOUTLEVELS = 2
   integer, parameter :: SRC_CODE = 2,&
-       NUMAZIMUTHS =1,&
+       NUMAZIMUTHS = 1,&
        Aziorder = 0
 
   real(kind=dbl), parameter :: SKY_TEMP    = 2.73d0,  &    ! cosmic background
@@ -55,6 +55,7 @@ module nml_params
   character(18) :: freq_str
   character(2) :: OUTPOL
   character(1) :: GROUND_TYPE, UNITS
+  character(3) :: rt_mode
 
 
 
@@ -69,7 +70,7 @@ contains
     namelist / inoutput_mode / write_nc, input_path, output_path,&
          tmp_path, dump_to_file, data_path
     namelist / output / obs_height,units,outpol,freq_str,file_desc,creator,zeSplitUp
-    namelist / run_mode / active, passive
+    namelist / run_mode / active, passive,rt_mode
     namelist / surface_params / ground_type,salinity, emissivity
     namelist / gas_abs_mod / lgas_extinction, gas_mod
     namelist / hyd_opts / lhyd_extinction, lphase_flag
@@ -102,6 +103,7 @@ contains
     
     active=.true.
     passive=.true.
+    rt_mode='rt3'
 
     ground_type='S'
     salinity=33.0

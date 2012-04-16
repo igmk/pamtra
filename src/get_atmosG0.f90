@@ -22,16 +22,13 @@ subroutine get_atmosG0
   real(kind=dbl) :: e_sat_gg_water
 
   do nz = 1, nlyr 
-
      temp(nz) = 0.5 * (temp_lev(nz - 1) + temp_lev(nz)) 
      relhum(nz) = 0.5 * (relhum_lev(nz - 1) + relhum_lev(nz))
-     press(nz) = (press_lev(nz) - press_lev(nz - 1))/&
-    log(press_lev(nz) / press_lev (nz - 1))  ! [Pa]   
+     press(nz) = (press_lev(nz) - press_lev(nz - 1))/log(press_lev(nz) / press_lev (nz - 1))  ! [Pa]
 
      vapor_pressure(nz) = relhum(nz) * e_sat_gg_water(temp(nz)) ! Pa
      rho_vap(nz) = vapor_pressure(nz)/(temp(nz) * 461.5)  ! [kg/m3]
-     q_hum(nz) = 0.622*vapor_pressure(nz)/&
-    (press(nz) - (1.- 0.622) * vapor_pressure(nz))  ! [kg/kg]
+     q_hum(nz) = 0.622*vapor_pressure(nz)/(press(nz) - (1.- 0.622) * vapor_pressure(nz))  ! [kg/kg]
   end do
 
   return

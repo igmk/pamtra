@@ -16,7 +16,8 @@ subroutine deallocate_profile_vars
   end if
 
   deallocate(nlegen,rt3nlegen,kextatmo,kexttot,salbtot,rt3kexttot,rt3salbtot,g_coeff,&
-    back,legen,legen2,legen3,legen4,rt3legen,rt3legen2,rt3legen3,rt3legen4)
+    back,legen,legen2,legen3,legen4,rt3legen,rt3legen2,rt3legen3,rt3legen4,&
+    rt4hydros_present,hydros_present)
 
   if (dump_to_file) deallocate(file_ph)
 

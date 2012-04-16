@@ -50,7 +50,8 @@ module vars_atmosphere
        salbtot, &
        rt3salbtot,&
        back, backcw, backrr, backci, backsn, backgr, backha, &
-       g_coeff
+       g_coeff,&
+       rt4salbtot
 
   real(kind=dbl), allocatable, dimension(:,:) :: legen, &
        legen2, &
@@ -61,6 +62,12 @@ module vars_atmosphere
        rt3legen2, &
        rt3legen3, &
        rt3legen4
+
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: rt4scatter_matrix,scattermatrix
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: rt4ext_matrix,extmatrix
+  real(kind=dbl), allocatable, dimension(:,:,:,:) :: rt4emis_vec,emisvec
+
+  logical, allocatable, dimension(:) :: hydros_present, rt4hydros_present
 
   integer :: alloc_status
 

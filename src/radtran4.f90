@@ -129,6 +129,12 @@
                     MU_VALUES, UP_FLUX, DOWN_FLUX,&
                     UP_RAD, DOWN_RAD)
 
+      use kinds
+      use vars_atmosphere
+      use nml_params, only: verbose
+
+      implicit none
+
       INTEGER   NSTOKES, NUMMU, NUM_LAYERS
       INTEGER   NOUTLEVELS, OUTLEVELS(*)
       REAL*8    GROUND_TEMP, GROUND_ALBEDO
@@ -144,7 +150,7 @@
       CHARACTER*64 SCAT_FILES(*)
 
       INTEGER   MAXV, MAXM, MAXLAY, MAXLM
-      PARAMETER (MAXV=64, MAXM=4096, MAXLAY=200, MAXLM=201*256)
+      PARAMETER (MAXV=64, MAXM=4096, MAXLAY=200, maxlm=201 * (maxv)**2)!MAXLM=201*256)
 
       REAL*8    PI, TWOPI, ZERO
       PARAMETER (PI = 3.1415926535897932384D0, TWOPI=2.0D0*PI)
@@ -214,9 +220,6 @@
                             (NUMMU, MU_VALUES, QUAD_WEIGHTS)
       ENDIF
 
-
-
-
       SCAT_FILE = '&&&'
 !     ------------------------------------------------------
 !           Loop through the layers
@@ -227,32 +230,37 @@
 !                   Calculate the layer thickness
           ZDIFF = ABS(HEIGHT(LAYER) - HEIGHT(LAYER+1))
           GAS_EXTINCT(LAYER) = MAX(GAS_EXTINCT(LAYER),0.0D0)
+!        if (rt4kexttot(layer) .gt. 0.0) then
+        if (rt4hydros_present(layer)) then
+            call get_scat_mat(layer,NSTOKES, NUMMU,SCATTER_MATRIX,EXTINCT_MATRIX, EMIS_VECTOR)
 
-          IF (SCAT_FILES(LAYER) .NE. SCAT_FILE .AND.&
-             SCAT_FILES(LAYER) .NE. ' ')  THEN
-              SCAT_FILE = SCAT_FILES(LAYER)
-!                   Read the scattering matrix from the file
-              CALL GET_SCAT_FILE (NSTOKES, NUMMU, QUAD_TYPE, SCAT_FILE,&
-                                 SCATTER_MATRIX,&
-                                 EXTINCT_MATRIX, EMIS_VECTOR)
-              CALL CHECK_NORM4(NSTOKES, NUMMU, QUAD_WEIGHTS,&
-                              SCATTER_MATRIX,&
-                              EXTINCT_MATRIX, EMIS_VECTOR)
-          ENDIF
+            call cHECK_NORM4(NSTOKES, NUMMU, QUAD_WEIGHTS,&
+                                      SCATTER_MATRIX,&
+                                      EXTINCT_MATRIX, EMIS_VECTOR)
+        end if
 
+!          IF (SCAT_FILES(LAYER) .NE. SCAT_FILE .AND. SCAT_FILES(LAYER) .NE. ' ')  THEN
+!              SCAT_FILE = SCAT_FILES(LAYER)
+!       Read the scattering matrix from the file
+!              CALL GET_SCAT_FILE(NSTOKES, NUMMU, QUAD_TYPE, SCAT_FILE,&
+!                                 SCATTER_MATRIX,EXTINCT_MATRIX, EMIS_VECTOR)
+!              CALL CHECK_NORM4(NSTOKES, NUMMU, QUAD_WEIGHTS,&
+!                              SCATTER_MATRIX,&
+!                              EXTINCT_MATRIX, EMIS_VECTOR)
+!          ENDIF
 
 !                   Do the stuff for thermal source in layer
 !                   Calculate the thermal source for end of layer
-          CALL PLANCK_FUNCTION (TEMPERATURES(LAYER+1), 'R',&
-                               WAVELENGTH, PLANCK1)
+          CALL PLANCK_FUNCTION (TEMPERATURES(LAYER+1), 'R',WAVELENGTH, PLANCK1)
 !                   Calculate the thermal source for beginning of layer
-          CALL PLANCK_FUNCTION (TEMPERATURES(LAYER), 'R',&
-                               WAVELENGTH, PLANCK0)
+          CALL PLANCK_FUNCTION (TEMPERATURES(LAYER), 'R',WAVELENGTH, PLANCK0)
 
           KRT = 1 + 2*N*N*(LAYER-1)
           KS = 1 + 2*N*(LAYER-1)
 
-          IF (SCAT_FILES(LAYER) .EQ. ' ') THEN
+!          IF (SCAT_FILES(LAYER) .EQ. ' ') THEN
+!          IF (rt4kexttot(layer) .EQ. 0.d0) THEN
+          IF (.not. rt4hydros_present(layer)) THEN
 !                   If the layer is purely absorbing then quickly
 !                     make the reflection and transmission matrices
 !                     and source vector instead of doubling.
@@ -294,6 +302,7 @@
           ENDIF
 
       ENDDO
+
 !            End of layer loop
 
 
@@ -316,14 +325,15 @@
                             MU_VALUES, QUAD_WEIGHTS, GROUND_ALBEDO,&
                             REFLECT(KRT), TRANS(KRT), SOURCE(KS))
 !                The radiance from the ground is thermal and reflected direct
-        CALL LAMBERT_RADIANCE (NSTOKES, NUMMU, &
+        CALL LAMBERT_RADIANCE (NSTOKES, NUMMU,0, &
               GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH, GND_RADIANCE)
       ENDIF
 
 !           Assume the radiation coming from above is blackbody radiation
-      CALL THERMAL_RADIANCE (NSTOKES, NUMMU, SKY_TEMP, ZERO,  &
+! 0 stands for mode = 0. this is required, since we use the routine from the former
+! radutil3.f
+      CALL THERMAL_RADIANCE (NSTOKES, NUMMU,0, SKY_TEMP, ZERO,  &
                             WAVELENGTH,  SKY_RADIANCE)
-
 
 !         For each desired output level (1 thru NL+2) add layers
 !           above and below level and compute internal radiance.

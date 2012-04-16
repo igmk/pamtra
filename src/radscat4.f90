@@ -16,7 +16,7 @@
       CHARACTER*(16)  FQUAD
       CHARACTER*132   BUFFER
 
-
+print*, nstokes
       OPEN (UNIT=2, FILE=SCAT_FILE, STATUS='OLD')
 100   CONTINUE
           READ (2,'(A)') BUFFER
@@ -88,6 +88,8 @@
       SUBROUTINE CHECK_NORM4(NSTOKES, NUMMU, QUAD_WEIGHTS,&
                             SCATTER_MATRIX,&
                             EXTINCT_MATRIX, EMIS_VECTOR)
+      implicit none
+
       INTEGER  NSTOKES, NUMMU
       REAL*8   QUAD_WEIGHTS(NUMMU)
       REAL*8   SCATTER_MATRIX(NSTOKES,NUMMU,NSTOKES,NUMMU,4)

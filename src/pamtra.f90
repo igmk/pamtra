@@ -159,7 +159,7 @@ program pamtra
 
 
            !run the model
-           call run_rt3(nx,ny,fi,freqs(fi),frqs_str(fi))
+           call run_rt(nx,ny,fi,freqs(fi),frqs_str(fi))
            
            call deallocate_profile_vars()
 
