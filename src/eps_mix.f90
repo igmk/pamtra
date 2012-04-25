@@ -6,12 +6,13 @@ function eps_mix(eps0,eps1,mix_de)
   ! Input:
   !   eps0
   !   eps1
+  !   mix_de
   !
   ! Result:
   !   eps_mix
   !
   ! References:
-  !    A. H. Sihvola, 1989: "Self-consistency apects of dielectric mixing theories.",
+  !    A. H. Sihvola, 1989: "Self-consistency aspects of dielectric mixing theories.",
   !          IEEE Trans. on Geosci. and Remote Sens., 27, 403-415.
   use kinds
 

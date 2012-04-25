@@ -21,6 +21,7 @@
       IF(PHASE.EQ.'S'.OR.PHASE.EQ.'s')THEN
 	CALL REFSNOW(TEMPR, FRQ, PARTICLE_SIZE,&
           AS_RATIO, PARTICLE_MASS, AXI, REF)
+!          print*, TEMPR, FRQ, PARTICLE_SIZE,AS_RATIO, PARTICLE_MASS, AXI, REF
       ELSEIF(PHASE.EQ.'L'.OR.PHASE.EQ.'l')THEN
         SAL = 0
         CALL REFWATER(SAL,FRQ,TEMPR,REF)
@@ -99,6 +100,7 @@
 
       ICE_REF = REALP*(1.0,0)+(alpha1/FREQ+beta1*FREQ)*(0,1E0)
       ICE_REF = SQRT(ICE_REF)
+
 !======================================================================
 !        RELATIVE VOLUME OF ICE IN PARTICLE
       SNOW_REF = (2*(AIR_DENS-MASS/VOLM)/(AIR_DENS-ICE_DENS)&

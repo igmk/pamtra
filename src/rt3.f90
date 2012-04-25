@@ -246,11 +246,6 @@ SUBROUTINE RT3 (NSTOKES, NUMMU, AZIORDER, MU_VALUES, SRC_CODE,    &
        GROUND_TYPE * 1                                                   
   CHARACTER(100) OUT_FILE
 
-
-
-
-
-
   if (verbose .gt. 1) print*, "entered rt3"
 
   ! initialization

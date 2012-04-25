@@ -181,9 +181,9 @@
 !                       MIDENTITY, MTRANSPOSE, MMULT, MINVERT
 !
 !
-      subroutine RT4(nstokes,nummu,mu_values,out_file,quad_type,ground_temp,&
-        ground_type,ground_albedo,ground_index,sky_temp,&
-        wavelength,units,outpol,noutlevels,outlevels,nx,ny,fi)
+subroutine RT4(nstokes,nummu,mu_values,out_file,quad_type,ground_temp,&
+    ground_type,ground_albedo,ground_index,sky_temp,&
+    wavelength,units,outpol,noutlevels,outlevels,nx,ny,fi)
 
   use kinds
   use vars_atmosphere
@@ -193,24 +193,24 @@
 
   integer :: nx,ny,fi
 
-      INTEGER   MAXV, MAXLAY
-      PARAMETER (MAXV=64)
-      PARAMETER (MAXLAY=200)
+  INTEGER   MAXV, MAXLAY
+  PARAMETER (MAXV=64)
+  PARAMETER (MAXLAY=200)
 
-      INTEGER   NSTOKES, NUMMU
-      INTEGER   NUM_LAYERS
-      INTEGER   NOUTLEVELS, OUTLEVELS(MAXLAY)
-      real(kind=dbl)    GROUND_TEMP, GROUND_ALBEDO
-      COMPLEX*16 GROUND_INDEX
-      real(kind=dbl)    SKY_TEMP, WAVELENGTH, MAX_DELTA_TAU
-      real(kind=dbl)    MU_VALUES(MAXV)
-      real(kind=dbl)    HEIGHT(MAXLAY), TEMPERATURES(MAXLAY)
-      real(kind=dbl)    GAS_EXTINCT(MAXLAY)
-      real(kind=dbl)    UP_RAD(MAXV*(MAXLAY+1)), DOWN_RAD(MAXV*(MAXLAY+1))
-      real(kind=dbl)    UP_FLUX(4*(MAXLAY+1)), DOWN_FLUX(4*(MAXLAY+1))
-      CHARACTER QUAD_TYPE*1, UNITS*1, OUTPOL*2, GROUND_TYPE*1
-      CHARACTER*64 LAYER_FILE, OUT_FILE
-      CHARACTER*64 SCAT_FILES(MAXLAY)
+  INTEGER   NSTOKES, NUMMU
+  INTEGER   NUM_LAYERS
+  INTEGER   NOUTLEVELS, OUTLEVELS(MAXLAY)
+  real(kind=dbl)    GROUND_TEMP, GROUND_ALBEDO
+  COMPLEX*16 GROUND_INDEX
+  real(kind=dbl)    SKY_TEMP, WAVELENGTH, MAX_DELTA_TAU
+  real(kind=dbl)    MU_VALUES(MAXV)
+  real(kind=dbl)    HEIGHT(MAXLAY), TEMPERATURES(MAXLAY)
+  real(kind=dbl)    GAS_EXTINCT(MAXLAY)
+  real(kind=dbl)    UP_RAD(MAXV*(MAXLAY+1)), DOWN_RAD(MAXV*(MAXLAY+1))
+  real(kind=dbl)    UP_FLUX(4*(MAXLAY+1)), DOWN_FLUX(4*(MAXLAY+1))
+  CHARACTER QUAD_TYPE*1, UNITS*1, OUTPOL*2, GROUND_TYPE*1
+  CHARACTER*64 LAYER_FILE, OUT_FILE
+  CHARACTER*64 SCAT_FILES(MAXLAY)
 
   height = 0.
   temperatures = 0.
@@ -222,16 +222,15 @@
 !scat_files(nlyr) = '1.txt'
 
   num_layers = nlyr
-  height(1:nlyr+1) = hgt_lev(nlyr:0:-1)
-  temperatures(1:nlyr+1) = temp_lev(nlyr:0:-1)
-  gas_extinct(1:nlyr) = kextatmo(nlyr:1:-1)
+  height(1:nlyr+1) = hgt_lev(nlyr:0:-1)             ! [m]
+  temperatures(1:nlyr+1) = temp_lev(nlyr:0:-1)      ! [K]
+  gas_extinct(1:nlyr) = kextatmo(nlyr:1:-1)         ! [Np/m]
 
   rt4salbtot(1:nlyr) = salbtot(nlyr:1:-1)
   rt4hydros_present(1:nlyr) = hydros_present(nlyr:1:-1)
 
   rt4scatter_matrix(1:nlyr,:,:,:,:,:) = scattermatrix(nlyr:1:-1,:,:,:,:,:)
   rt4ext_matrix(1:nlyr,:,:,:,:) = extmatrix(nlyr:1:-1,:,:,:,:)
-  print*, rt4ext_matrix(1:nlyr,1,1,1,1),rt4ext_matrix(1:nlyr,1,2,1,1)
   rt4emis_vec(1:nlyr,:,:,:) = emisvec(nlyr:1:-1,:,:,:)
 
 

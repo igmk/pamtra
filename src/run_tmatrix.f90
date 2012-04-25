@@ -1,7 +1,7 @@
 program run_trmatrix
     implicit none
 
-    call cal_scat_rt4('S','L',16,270.0d0,0.19986163866666665d04, 2,1.d0)
+    call cal_scat_rt4('S','L',16,270.0d0,0.19986163866666665d04, 2,1.30623069708235562d-1)
 
 end program run_trmatrix
 

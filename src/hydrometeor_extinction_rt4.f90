@@ -201,8 +201,10 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
 	        call legendre2phasefunction(legensn, nlegensn, 2, 200,p11, ang)
 	        backsn(nz) = kextsn(nz) * salbsn * P11 (2)
 	     else if (n_moments .eq. 2) then
+	     print*, swc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz)
 	     	qwc = q2abs(swc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(swc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
+	        print*, swc_q(nz), qwc, swc_n(nz),nc
             if (EM_snow .eq. 'tmat') then
                 call snow_ssp_tmat(f,qwc,temp(nz),salbsn, backsn(nz),snow_scat, snow_ext, snow_emis,nc)
                  nlegensn = 0
@@ -420,7 +422,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
 !            (snow_emis(I,J,L), I=1,NSTOKES), 0E0, 0E0
 !        ENDDO
 !      ENDDO
-!
+
      end if
 
   end do grid_z !end of cycle over the vertical layers

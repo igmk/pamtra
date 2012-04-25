@@ -107,7 +107,7 @@
 !   increase the maximum convergent equivalent-sphere size parameter
 !   and make it well larger than 100 (depending on refractive index
 !   and aspect ratio).  The extended-precision code is also available.
-!   However, the use of extended precision varibales results in a
+!   However, the use of extended precision variables results in a
 !   greater consumption of CPU time.
 !   On IBM RISC workstations, that code is approximately
 !   five times slower than this double-precision code.  The

@@ -238,6 +238,7 @@
                                       SCATTER_MATRIX,&
                                       EXTINCT_MATRIX, EMIS_VECTOR)
         end if
+          print*, HEIGHT(LAYER), HEIGHT(LAYER+1), zdiff,scatter_matrix(1),scatter_matrix(2)
 
 !          IF (SCAT_FILES(LAYER) .NE. SCAT_FILE .AND. SCAT_FILES(LAYER) .NE. ' ')  THEN
 !              SCAT_FILE = SCAT_FILES(LAYER)

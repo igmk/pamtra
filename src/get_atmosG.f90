@@ -47,7 +47,7 @@ subroutine get_atmosg(freq)!, kextatmo_o2,kextatmo_h2o,kextatmo_n2)
         !    extinction by water vapor   Np/km      
         call gasabsr98(freq,temp(nz),rho_vap(nz),press(nz),absair,abswv)!,abs_n2,abs_o2)
 
-        kextatmo(nz) = (absair + abswv)/1000.    ! [1/m]
+        kextatmo(nz) = (absair + abswv)/1000.    ! [Np/m]
 
      else
         kextatmo(nz) = 0
