@@ -32,7 +32,7 @@ OBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_profile.o vars_atmosphere.o
 	hydrometeor_extinction_rt3.o cloud_ssp.o ice_ssp.o rain_ssp.o snow_ssp.o grau_ssp.o hail_ssp.o legendre2phasefunction.o \
 	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o  \
 	get_scat_coefs.o dump_profile.o collect_boundary_output.o double_moments.o \
-	rt4.o radtran4.o radintg4.o radscat4.o hydrometeor_extinction_rt4.o scatcnv.o \
+	rt4.o radtran4.o radintg4.o radscat4.o hydrometeor_extinction_rt4.o scatcnv.o tmat_db.o \
 	tmatrix.o matrix_cal.o tmatrix_cal.o lpd.o get_scat_mat.o snow_ssp_tmat.o mass_size_rel.o \
 	refractive_index.o \
 	versionNumber.auto.o

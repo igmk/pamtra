@@ -12,8 +12,6 @@ subroutine snow_ssp_tmat(f,swc,t,salb, back,scatter_matrix,extinct_matrix, emis_
 
     implicit none
 
-    integer :: nbins
-
     integer, parameter :: nstokes = 2, nquad = 16
 
     real(kind=dbl), intent(in) :: &
@@ -24,7 +22,7 @@ subroutine snow_ssp_tmat(f,swc,t,salb, back,scatter_matrix,extinct_matrix, emis_
     real(kind=dbl), optional, intent(in) :: nc
 
 
-    real(kind=dbl) :: dia1, dia2, ad, bd, alpha, gamma, b_snow, a_msnow
+    real(kind=dbl) :: ad, bd, alpha, gamma, b_snow, a_msnow
 
     real(kind=dbl), intent(out) :: salb, back
 
@@ -37,14 +35,7 @@ subroutine snow_ssp_tmat(f,swc,t,salb, back,scatter_matrix,extinct_matrix, emis_
     if (.not. present(nc)) stop 'STOP in routine snow_ssp_tmat'
     call double_moments(swc,nc,gamma_snow(1),gamma_snow(2),gamma_snow(3),gamma_snow(4), &
       ad,bd,alpha,gamma,a_msnow,b_snow)
-!    dia1 = 1.d-4
-    dia1 = 1.d-4
-    dia2 = 2.d-2
-    nbins = 30
-!    dia1 = 150.0d-5
-!    dia2 = 10000.0d-6
-!    nbins = (dia2-dia1)/250.d-6+2
-    call tmatrix(f, swc, t, nc, dia1, dia2, nbins, &
+    call tmatrix(f, swc, t, nc, &
           ad, bd, alpha, gamma, a_msnow,b_snow,SD_snow, scatter_matrix,extinct_matrix, emis_vector)
 
     if (verbose .gt. 1) print*, 'Exiting snow_ssp_tmat'

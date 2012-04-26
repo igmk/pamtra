@@ -36,8 +36,8 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
   integer :: i1,i2,i12
 
   real(kind=dbl), dimension(nstokes,nummu,nstokes,nummu,4) :: snow_scat
-  real(kind=dbl), dimension(4,4,nummu,2) :: snow_ext
-  real(kind=dbl), dimension(4,nummu,2) :: snow_emis
+  real(kind=dbl), dimension(nstokes,nstokes,nummu,2) :: snow_ext
+  real(kind=dbl), dimension(nstokes,nummu,2) :: snow_emis
 
   character(6), intent(in) :: frq_str !from commandline
   CHARACTER*64 SCATFILES(nlyr)
@@ -201,7 +201,6 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
 	        call legendre2phasefunction(legensn, nlegensn, 2, 200,p11, ang)
 	        backsn(nz) = kextsn(nz) * salbsn * P11 (2)
 	     else if (n_moments .eq. 2) then
-	     print*, swc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz)
 	     	qwc = q2abs(swc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(swc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        print*, swc_q(nz), qwc, swc_n(nz),nc

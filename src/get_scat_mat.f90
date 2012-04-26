@@ -7,9 +7,9 @@ subroutine get_scat_mat(layer,nstokes, nummu,&
     implicit none
 
     integer :: layer, nstokes, nummu, j, l, i, i1, i2, j1, j2, l1, l2
-      real*8  scatter_matrix(2,nummu,2,nummu,4)
-      real*8  extinct_matrix(4,4,nummu,2)
-      real*8  emis_vector(4,nummu,2)
+      real*8  scatter_matrix(nstokes,nummu,nstokes,nummu,4)
+      real*8  extinct_matrix(nstokes,nstokes,nummu,2)
+      real*8  emis_vector(nstokes,nummu,2)
 
      do l1 = 1, 2
         do j1 = 1, nummu

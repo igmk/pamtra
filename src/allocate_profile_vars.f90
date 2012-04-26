@@ -70,12 +70,12 @@ subroutine allocate_profile_vars
   allocate(rt3legen4(nlyr,200), stat=alloc_status)
 
   allocate(rt4salbtot(nlyr),stat=alloc_status)
-  allocate(rt4scatter_matrix(nlyr,4,nummu,4,nummu,4),stat=alloc_status)
-  allocate(scattermatrix(nlyr,4,nummu,4,nummu,4),stat=alloc_status)
-  allocate(rt4ext_matrix(nlyr,4,4,nummu,4),stat=alloc_status)
-  allocate(extmatrix(nlyr,4,4,nummu,4),stat=alloc_status)
-  allocate(rt4emis_vec(nlyr,4,nummu,4),stat=alloc_status)
-  allocate(emisvec(nlyr,4,nummu,4),stat=alloc_status)
+  allocate(rt4scatter_matrix(nlyr,nstokes,nummu,nstokes,nummu,4),stat=alloc_status)
+  allocate(scattermatrix(nlyr,nstokes,nummu,nstokes,nummu,4),stat=alloc_status)
+  allocate(rt4ext_matrix(nlyr,nstokes,nstokes,nummu,4),stat=alloc_status)
+  allocate(extmatrix(nlyr,nstokes,nstokes,nummu,4),stat=alloc_status)
+  allocate(rt4emis_vec(nlyr,nstokes,nummu,4),stat=alloc_status)
+  allocate(emisvec(nlyr,nstokes,nummu,4),stat=alloc_status)
 
   allocate(hydros_present(nlyr),stat=alloc_status)
   allocate(rt4hydros_present(nlyr),stat=alloc_status)

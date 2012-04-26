@@ -42,6 +42,7 @@ module nml_params
        lphase_flag, &        ! flag for phase function calculation
        lgas_extinction, &    ! gas extinction desired
        lhyd_extinction, &    ! hydrometeor extinction desired
+       use_db, &    ! wanna use the tmatrix database
        write_nc, &  ! write netcdf or ascii output
        active, &  	   ! calculate active stuff
        passive, &     ! calculate passive stuff (with RT3)
@@ -77,7 +78,7 @@ contains
     namelist / cloud_params / SD_cloud
     namelist / ice_params / SD_ice, EM_ice
     namelist / rain_params / SD_rain, N_0rainD
-    namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, snow_density, SP, isnow_n0, liu_type
+    namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, use_db, snow_density, SP, isnow_n0, liu_type
     namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau, graupel_density
     namelist / hail_params / SD_hail, N_0hailDhail, EM_hail, hail_density
     namelist / moments / n_moments, moments_file
@@ -126,6 +127,7 @@ contains
     SD_snow='C'
     N_0snowDsnow=7.628 
     EM_snow='densi'
+    use_db=.false.
     snow_density=200.d0
     SP=0.2 
     isnow_n0=1
