@@ -33,7 +33,7 @@ module nml_params
   real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
   real(kind=dbl) :: emissivity
   real(kind=dbl) :: N_0rainD, N_0snowDsnow, N_0grauDgrau, N_0hailDhail,  SP
-  real(kind=dbl) :: snow_density, graupel_density, hail_density
+  real(kind=dbl) :: as_ratio, snow_density, graupel_density, hail_density
   real(kind=dbl) :: salinity         ! sea surface salinity
 
   logical ::  in_python !are we in python
@@ -42,7 +42,8 @@ module nml_params
        lphase_flag, &        ! flag for phase function calculation
        lgas_extinction, &    ! gas extinction desired
        lhyd_extinction, &    ! hydrometeor extinction desired
-       use_db, &    ! wanna use the tmatrix database
+       use_rain_db, &    ! use the tmatrix database for rain
+       use_snow_db, &    ! use the tmatrix database for snow
        write_nc, &  ! write netcdf or ascii output
        active, &  	   ! calculate active stuff
        passive, &     ! calculate passive stuff (with RT3)
@@ -77,8 +78,8 @@ contains
     namelist / hyd_opts / lhyd_extinction, lphase_flag
     namelist / cloud_params / SD_cloud
     namelist / ice_params / SD_ice, EM_ice
-    namelist / rain_params / SD_rain, N_0rainD
-    namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, use_db, snow_density, SP, isnow_n0, liu_type
+    namelist / rain_params / SD_rain, N_0rainD, use_rain_db
+    namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, use_snow_db, as_ratio,snow_density, SP, isnow_n0, liu_type
     namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau, graupel_density
     namelist / hail_params / SD_hail, N_0hailDhail, EM_hail, hail_density
     namelist / moments / n_moments, moments_file
@@ -123,11 +124,13 @@ contains
 
     SD_rain='C'
     N_0rainD=8.0
+    use_rain_db=.false.
 
     SD_snow='C'
     N_0snowDsnow=7.628 
     EM_snow='densi'
-    use_db=.false.
+    use_snow_db=.false.
+    as_ratio=0.5d0
     snow_density=200.d0
     SP=0.2 
     isnow_n0=1

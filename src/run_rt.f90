@@ -31,6 +31,11 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
   character(80) :: femis ! filename for the emissivity databases
   character(3) :: xstr, ystr
 
+  ! i/o-length test for the emissivity file
+  integer :: iolsgl
+
+  inquire(iolength=iolsgl) 1._sgl
+
   wavelength = c / (freq*1.d3)   ! microns
   GROUND_TEMP = temp_lev(0)
 
@@ -44,8 +49,8 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
   ! the radiative transfer code (i.e. total pressure, and water vapor 
   ! pressure for this model).  Assign/compute the missing fields first
   ! make layer averages
-  call get_atmosG0
 
+  call get_atmosG0
 
   if (verbose .gt. 1) print*, nx,ny, 'type to local variables done' 
 
@@ -64,7 +69,7 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
         stop
      end if
      open(ise,file=trim(femis),status='old',form='unformatted',&
-          access='direct',recl=28)
+          access='direct',recl=iolsgl*7)
      ! land_emis could give polarized reflectivities
 
      call land_emis(ise,lon,lat,freq,land_emissivity)

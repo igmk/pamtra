@@ -4,6 +4,8 @@ subroutine get_atmosg(freq)!, kextatmo_o2,kextatmo_h2o,kextatmo_n2)
   !     layers, given the temperature, pressure, and relative humidity    
   !     from cloud-resolving model output.                                
   !     vapor_pressure viene data in mb = hPa
+  !
+  !     convert from Np/km to Np/m
 
   use kinds
   use vars_atmosphere

@@ -238,7 +238,6 @@
                                       SCATTER_MATRIX,&
                                       EXTINCT_MATRIX, EMIS_VECTOR)
         end if
-          print*, HEIGHT(LAYER), HEIGHT(LAYER+1), zdiff,scatter_matrix(1),scatter_matrix(2)
 
 !          IF (SCAT_FILES(LAYER) .NE. SCAT_FILE .AND. SCAT_FILES(LAYER) .NE. ' ')  THEN
 !              SCAT_FILE = SCAT_FILES(LAYER)
@@ -274,6 +273,7 @@
 !                   Find initial thickness of sublayer and
 !                     the number of times to double
               EXTINCT = EXTINCT_MATRIX(1)+GAS_EXTINCT(LAYER)
+!     print*, gas_extinct(layer), extinct_matrix(1), extinct
               F =DLOG(MAX(EXTINCT*ZDIFF,1.0D-7)/MAX_DELTA_TAU)/LOG(2.)
               NUM_DOUBLES = 0
               IF (F .GT. 0.0)  NUM_DOUBLES = INT(F) + 1

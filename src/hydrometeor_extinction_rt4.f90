@@ -2,10 +2,14 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
 
   use kinds
   use vars_atmosphere
-  use nml_params, only: verbose, tmp_path, active, passive, dump_to_file, n_moments, quad_type, nummu, EM_snow
+  use nml_params, only: verbose, tmp_path, active, passive, dump_to_file, &
+                        n_moments, quad_type, nummu, EM_snow, as_ratio, &
+                        use_rain_db, use_snow_db
   use constants
   use mod_io_strings
   use conversions
+  use tmat_snow_db
+  use tmat_rain_db
 
   implicit none
 
@@ -16,7 +20,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
 
   integer :: nlegencw, nlegenci, nlegenrr, nlegensn, nlegengr, nlegenha
 
-  real(kind=dbl) :: f, qwc, nc
+  real(kind=dbl) :: f, qwc, nc, cwc
 
   real(kind=dbl) :: salbcw, salbrr, salbci, salbsn, salbgr, salbha
 
@@ -35,9 +39,9 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
 
   integer :: i1,i2,i12
 
-  real(kind=dbl), dimension(nstokes,nummu,nstokes,nummu,4) :: snow_scat
-  real(kind=dbl), dimension(nstokes,nstokes,nummu,2) :: snow_ext
-  real(kind=dbl), dimension(nstokes,nummu,2) :: snow_emis
+  real(kind=dbl), dimension(nstokes,nummu,nstokes,nummu,4) :: rain_scat,snow_scat
+  real(kind=dbl), dimension(nstokes,nstokes,nummu,2) :: rain_ext,snow_ext
+  real(kind=dbl), dimension(nstokes,nummu,2) :: rain_emis,snow_emis
 
   character(6), intent(in) :: frq_str !from commandline
   CHARACTER*64 SCATFILES(nlyr)
@@ -60,6 +64,17 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
   hydros_present = .false.
 
   threshold = 1.d-10   ! [kg/kg]
+
+  if (use_rain_db) then
+      rdb_file = 'data/tmatrix/tmatrix_rain.dat'
+      call initialize_rain_db
+  end if
+
+  if (use_snow_db) then
+      write(as_str,'(f3.1)') as_ratio
+      sdb_file = 'data/tmatrix/tmatrix_s_'//as_str//'.dat'
+      call initialize_snow_db
+  end if
 
   if (verbose .gt. 1) print*, 'start loop over layer'
 
@@ -153,6 +168,9 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
      legen2rr = 0.d0
      legen3rr = 0.d0
      legen4rr = 0.d0
+     rain_scat = 0.0d0
+     rain_ext = 0.0d0
+     rain_emis = 0.0d0
 
      kextrr(nz) = 0.d0
      salbrr = 0.d0
@@ -166,11 +184,22 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
 	            maxleg,kextrr(nz), salbrr, backrr(nz),  &
 	            nlegenrr, legenrr, legen2rr, legen3rr, legen4rr)
 	    else if (n_moments .eq. 2) then
-	     	qwc = q2abs(rwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
+            qwc = q2abs(rwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
+            cwc = q2abs(cwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(rwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
-	     	call rain_ssp(f,qwc,temp(nz),&
-	            maxleg,kextrr(nz), salbrr, backrr(nz),  &
-	            nlegenrr, legenrr, legen2rr, legen3rr, legen4rr, nc)
+            if (use_rain_db) then
+                call rain_ssp_tmat(f,qwc,cwc,temp(nz),salbsn, backsn(nz),rain_scat, rain_ext, rain_emis,nc)
+                 nlegenrr = 0
+                 legenrr = 0.0d0
+                 legen2rr = 0.0d0
+                 legen3rr = 0.0d0
+                 legen4rr = 0.0d0
+                 kextrr(nz) = 0.d0
+            else
+    	     	call rain_ssp(f,qwc,cwc,temp(nz),&
+	                maxleg,kextrr(nz), salbrr, backrr(nz),  &
+	                nlegenrr, legenrr, legen2rr, legen3rr, legen4rr, nc)
+            end if
 	    end if
      else
         kextrr(nz) = 0.0d0
@@ -203,7 +232,6 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
 	     else if (n_moments .eq. 2) then
 	     	qwc = q2abs(swc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(swc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
-	        print*, swc_q(nz), qwc, swc_n(nz),nc
             if (EM_snow .eq. 'tmat') then
                 call snow_ssp_tmat(f,qwc,temp(nz),salbsn, backsn(nz),snow_scat, snow_ext, snow_emis,nc)
                  nlegensn = 0
@@ -353,6 +381,10 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
            coef(4,jj) = legen4(nz,jj)
            coef(5,jj) = legen(nz,jj)
            coef(6,jj) = legen3(nz,jj)
+           if (dump_to_file) then
+              write (22, 1005) jj - 1, legen (nz,jj), legen2 (nz,jj),        &
+                   legen3(nz,jj), legen4(nz,jj), legen(nz,jj), legen3(nz,jj)
+           end if
 	    end do ! end of cycle over Legendre coefficient
 !     write(ly,'(I2)') nz
 !     ly = adjustl(ly)
@@ -375,12 +407,12 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
 !     coef(6,1:12) = (/.71206342d0,1.76014119d0,1.06682431d0,.39651104d0,.09576412d0,.01765088d0,&
 !     .00261549d0,.00032713d0,.00003583d0,.00000351d0,.00000031d0,.00000003d0/)
 
-     call scatcnv(nummu,0,quad_type,scatfiles(nz),nlegen(nz),coef,kexttot(nz),salbtot(nz),&
+     call scatcnv(scatfiles(nz),nlegen(nz),coef,kexttot(nz),salbtot(nz),&
      scattermatrix(nz,:,:,:,:,:),extmatrix(nz,:,:,:,:),emisvec(nz,:,:,:))
 
-     scattermatrix(nz,:,:,:,:,:)=scattermatrix(nz,:,:,:,:,:)+snow_scat
-     extmatrix(nz,:,:,:,:)=extmatrix(nz,:,:,:,:)+snow_ext
-     emisvec(nz,:,:,:)=emisvec(nz,:,:,:)+snow_emis
+     scattermatrix(nz,:,:,:,:,:)=scattermatrix(nz,:,:,:,:,:)+rain_scat+snow_scat
+     extmatrix(nz,:,:,:,:)=extmatrix(nz,:,:,:,:)+rain_ext+snow_ext
+     emisvec(nz,:,:,:)=emisvec(nz,:,:,:)+rain_emis+snow_emis
 
 !                  call lobatto_quadrature(nquad,qua_angle(1:nquad),qua_weights(1:nquad))
 !
@@ -393,7 +425,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
 !                (-1.0)**(L2+1.0)*QUA_ANGLE(J2), 0E0
 !              DO I2 = 1, NSTOKES
 !                WRITE(232,*)&
-!            (snow_scat(I2,J2,I1,J1,L), I1=1,NSTOKES), 0E0, 0
+!            (scattermatrix(nz,I2,J2,I1,J1,L), I1=1,NSTOKES), 0E0, 0
 !              ENDDO
 !              DO I2 = NSTOKES+1,4
 !                WRITE(232,*) 0E0, 0E0, 0E0, 0E0
@@ -407,7 +439,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
 !        DO J = 1, nquad
 !          WRITE(232,*) (-1.0)**(L+1.0)*QUA_ANGLE(J)
 !          DO I2 = 1, NSTOKES
-!           WRITE(232,*)(snow_ext(I2,I1,J,L), I1=1,NSTOKES), 0E0, 0E0
+!           WRITE(232,*)(extmatrix(nz,I2,I1,J,L), I1=1,NSTOKES), 0E0, 0E0
 !          ENDDO
 !          DO I2 = NSTOKES+1,4
 !             WRITE(232,*) 0E0, 0E0, 0E0, 0E0
@@ -418,16 +450,19 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
 !      DO L = 1, 2
 !        DO J = 1, nquad
 !          WRITE(232,*) (-1.0)**(L+1.0)*QUA_ANGLE(J),&
-!            (snow_emis(I,J,L), I=1,NSTOKES), 0E0, 0E0
+!            (emisvec(nz,I,J,L), I=1,NSTOKES), 0E0, 0E0
 !        ENDDO
 !      ENDDO
-
+!
      end if
 
   end do grid_z !end of cycle over the vertical layers
 
-  if (verbose .gt. 1) print*, 'Exiting hydrometeor_extinction_rt4'
+  if (use_snow_db) call close_snow_db()
+  if (use_rain_db) call close_rain_db()
 
+  if (verbose .gt. 1) print*, 'Exiting hydrometeor_extinction_rt4'
+1005 format  (i3,6(1x,f10.7))
   return
 
 end subroutine hydrometeor_extinction_rt4

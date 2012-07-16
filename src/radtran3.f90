@@ -349,7 +349,6 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
            CALL DOUBLING_INTEGRATION (N, NUM_DOUBLES, SRC_CODE, SYMMETRIC,&
                 REFLECT1, TRANS1, EXP_SOURCE, EXPFACTOR, LIN_SOURCE, LINFACTOR,&
                 REFLECT (KRT), TRANS (KRT), SOURCE (KS) )                      
-
         ENDIF
      ENDDO
      !            End of layer loop

@@ -1,4 +1,4 @@
-subroutine rain_ssp(f,rwc,t,maxleg,kext, salb, back,  &
+subroutine rain_ssp(f,rwc,cwc,t,maxleg,kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4, nc)
 
   use kinds
@@ -14,6 +14,7 @@ subroutine rain_ssp(f,rwc,t,maxleg,kext, salb, back,  &
 
   real(kind=dbl), intent(in) :: &
        rwc,&
+       cwc,&
        t,&
        f
 
@@ -43,9 +44,12 @@ subroutine rain_ssp(f,rwc,t,maxleg,kext, salb, back,  &
 
   den_liq = 1.d3  ! density of liquid water [kg/m^3]
 
-  nbins = 100
-  dia1 = 1.d-10	! minimum diameter [m]
-  dia2 = 6.d-3	! maximum diameter [m]
+!  nbins = 100
+  nbins = 50
+!  dia1 = 1.d-10 ! minimum diameter [m]
+!  dia2 = 6.d-3  ! maximum diameter [m]
+  dia1 = 1.2d-4 ! minimum diameter [m]
+  dia2 = 6.d-3  ! maximum diameter [m]
 
   if (n_moments .eq. 1) then
 
@@ -55,7 +59,7 @@ subroutine rain_ssp(f,rwc,t,maxleg,kext, salb, back,  &
 
 	  ad = n_0rainD*1.d6   ! [1/m^4]
    	  bd = (pi * den_liq * ad / rwc)**0.25
-
+print*, ad, bd
       alpha = 0.d0 ! exponential SD
       gamma = 1.d0
     else if (SD_rain .eq. 'M') then
@@ -71,7 +75,7 @@ subroutine rain_ssp(f,rwc,t,maxleg,kext, salb, back,  &
   else if (n_moments .eq. 2) then
      if (.not. present(nc)) stop 'STOP in routine rain_ssp'
      call double_moments(rwc,nc,gamma_rain(1),gamma_rain(2),gamma_rain(3),gamma_rain(4), &
-          ad,bd,alpha,gamma,a_mrain, b_rain)
+          ad,bd,alpha,gamma,a_mrain, b_rain,cwc)
   else
      stop 'Number of moments is not specified'
   end if

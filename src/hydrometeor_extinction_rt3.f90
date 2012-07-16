@@ -30,7 +30,7 @@ subroutine hydrometeor_extinction_rt3(f,frq_str)
 
   real(kind=dbl) :: threshold ! threshold value for hydrometeor extinction as mass mixing ratio
 
-  character(6), intent(in) :: frq_str !from commandline
+  character(6), intent(in) :: frq_str ! from commandline
 
   if (verbose .gt. 1) print*, 'Entering hydrometeor_extinction_rt3'
 

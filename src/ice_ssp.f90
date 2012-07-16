@@ -51,7 +51,7 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
      del_d = 1.d-8											! [m]
      dia1 = (drop_mass/130.0d0)**(1.0d0/3.0d0)				! [m]
 !    CHECK if dia1 > maxdiam=2.d-4 (maximum diameter for COSMO)
-! 	 then ricalculate the drop mass using 2.d-4 as particle diameter
+! 	 then recalculate the drop mass using 2.d-4 as particle diameter
 	 if (dia1 .gt. 2.d-4) then
 	 	dia1 = 2.d-4 										! [m] maximum allowed diameter
 		drop_mass = 130.d0 * dia1**3						! [kg]

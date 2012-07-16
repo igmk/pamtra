@@ -1,5 +1,6 @@
 ARCH=$(shell uname -s)
 FC=gfortran
+CC=gcc
 
 FCFLAGS=-c -fPIC -Wuninitialized
 
@@ -13,9 +14,8 @@ ifeq ($(ARCH),Darwin)
 	LFLAGS=-L/opt/local/lib/
 	LDFLAGS=-lnetcdf -lnetcdff
 else
-
- 	NCFLAGS := $(shell nc-config --fflags)
- 	LFLAGS=
+	NCFLAGS := $(shell nc-config --fflags)
+	LFLAGS=
 	LDFLAGS := $(shell nc-config --flibs)
 endif
 #-	NCFLAGS=-I$(HOME)/include
@@ -31,10 +31,10 @@ OBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_profile.o vars_atmosphere.o
 	ref_ice.o e_sat_gg_water.o spec2abs.o interpolation.o deallocate_profile_vars.o deallocate_output_vars.o\
 	hydrometeor_extinction_rt3.o cloud_ssp.o ice_ssp.o rain_ssp.o snow_ssp.o grau_ssp.o hail_ssp.o legendre2phasefunction.o \
 	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o  \
-	get_scat_coefs.o dump_profile.o collect_boundary_output.o double_moments.o \
-	rt4.o radtran4.o radintg4.o radscat4.o hydrometeor_extinction_rt4.o scatcnv.o tmat_db.o \
-	tmatrix.o matrix_cal.o tmatrix_cal.o lpd.o get_scat_mat.o snow_ssp_tmat.o mass_size_rel.o \
-	refractive_index.o \
+	get_scat_coefs.o dump_profile.o collect_boundary_output.o \
+	rt4.o radtran4.o radintg4.o radscat4.o tmat_rain_db.o tmat_snow_db.o hydrometeor_extinction_rt4.o scatcnv.o \
+	tmatrix_rain.o tmatrix_snow.o matrix_cal.o tmatrix_cal.o lpd.o get_scat_mat.o rain_ssp_tmat.o snow_ssp_tmat.o \
+	mass_size_rel.o refractive_index.o \
 	versionNumber.auto.o
 
 pamtraOBJECTS=formatted_frqstr.o write_nc_results.o
@@ -43,20 +43,20 @@ BIN=pamtra
 
 all: precompile pamtra py
 
-	
+
 pamtra: pamtra.f90 $(OBJECTS) $(pamtraOBJECTS)
 	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(pamtraOBJECTS) $(LFLAGS) $(LDFLAGS)
 	mv $(BIN) ../
  
 scatdb.o:
-	gcc -O  -fPIC -c scatdb.c 
+	$(CC) -O  -fPIC -c scatdb.c 
 
 %.o: %.f90
 	$(FC) $(FCFLAGS) $<
-	
+
 write_nc_results.o: write_nc_results.f90
 	$(FC) $(FCFLAGS) $(NCFLAGS) write_nc_results.f90
-	
+
 
 
 pyprecompile: 
