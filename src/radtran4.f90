@@ -175,6 +175,17 @@
       REAL*8    GND_RADIANCE(MAXV), SKY_RADIANCE(2*MAXV)
       CHARACTER*64 SCAT_FILE
 
+  real(kind=dbl) wind10,windratio,windangle
+  integer :: iquadrant
+  REAL(KIND=dbl), PARAMETER :: quadcof(4,2) =      &
+       & Reshape((/0.0d0, 1.0d0, 1.0d0, 2.0d0, 1.0d0, -1.0d0, 1.0d0, -1.0d0/), (/4, 2/))
+
+  ! variables needed for fastem4
+
+  real(kind=dbl) :: rel_azimuth, salinity
+  real(kind=dbl), dimension(nummu) :: transmittance
+
+!  if (verbose .gt. 1) print*, "Entered radtran ...."
       SYMMETRIC = .TRUE.
       N = NSTOKES*NUMMU
       IF (N .GT. MAXV) THEN
@@ -311,16 +322,66 @@
 !             and the surface radiance
       KRT = 1 + 2*N*N*(NUM_LAYERS)
       KS = 1 + 2*N*(NUM_LAYERS)
+
+     if (verbose .gt. 1) print*, "Calculating surface emissivity ...."
+
       IF (GROUND_TYPE .EQ. 'F') THEN
 !               For a Fresnel surface
         CALL FRESNEL_SURFACE (NSTOKES, NUMMU, &
-                             MU_VALUES, GROUND_INDEX, &
+                             MU_VALUES, GROUND_INDEX,&
                              REFLECT(KRT), TRANS(KRT), SOURCE(KS))
 !                The radiance from the ground is thermal
-        CALL FRESNEL_RADIANCE (NSTOKES, NUMMU,&
+        CALL FRESNEL_RADIANCE (NSTOKES, NUMMU,0,&
                        MU_VALUES, GROUND_INDEX, GROUND_TEMP,&
                        WAVELENGTH, GND_RADIANCE)
-      ELSE
+     ELSEIF (GROUND_TYPE.EQ.'S') THEN
+        ! For a specular surface
+        CALL specular_surface(NSTOKES, NUMMU, GROUND_ALBEDO, &
+             REFLECT (KRT), TRANS (KRT), SOURCE (KS) )
+        ! The radiance from the ground is thermal
+        CALL specular_radiance(NSTOKES, NUMMU, 0,       &
+             GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH, GND_RADIANCE)
+     ELSEIF(GROUND_TYPE .EQ. 'O') THEN
+    ! call fastem4 ocean emissivity model. the correction due to transmittance is not necessary in
+    ! our multi-stream model (?!)
+        wind10 = sqrt(wind10u**2+wind10v**2)
+        IF (wind10u >= 0.0 .AND. wind10v >= 0.0 ) iquadrant = 1
+        IF (wind10u >= 0.0 .AND. wind10v <  0.0 ) iquadrant = 2
+        IF (wind10u <  0.0 .AND. wind10v >= 0.0 ) iquadrant = 4
+        IF (wind10u <  0.0 .AND. wind10v <  0.0 ) iquadrant = 3
+        IF (abs(wind10v) >= 0.0001) THEN
+           windratio = wind10u / wind10v
+        ELSE
+           windratio = 0.0
+           IF (abs(wind10u) > 0.0001) THEN
+              windratio = 999999.0 * wind10u
+           ENDIF
+        ENDIF
+        windangle        = atan(abs(windratio))
+        rel_azimuth = (quadcof(iquadrant, 1) * pi + windangle * quadcof(iquadrant, 2))*180./pi
+
+        ! azimuthal component
+        !
+        ! the azimuthal component is ignored (rel_azimuth > 360°) when doing simulations for COSMO runs
+        ! since we do not know what direction does the satellite have in advance
+        !
+        rel_azimuth = 400.
+        transmittance(:) = 1.
+        salinity = 33.
+        call fastem4(wavelength   , &  ! Input
+             mu_values, &  ! Input
+             nummu, &
+             ground_temp , &  ! Input
+             Salinity    , &  ! Input
+             wind10  ,&
+             transmittance,&  ! Input, may not be used
+             Rel_Azimuth, &  ! Input
+             ground_index,&
+             GND_RADIANCE, &  ! Output
+             REFLECT(KRT), &  ! Output
+             trans(krt),&
+             source(ks))
+     ELSE
 !               For a Lambertian surface
         CALL LAMBERT_SURFACE (NSTOKES, NUMMU, 0,&
                             MU_VALUES, QUAD_WEIGHTS, GROUND_ALBEDO,&
@@ -329,6 +390,8 @@
         CALL LAMBERT_RADIANCE (NSTOKES, NUMMU,0, &
               GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH, GND_RADIANCE)
       ENDIF
+
+     if (verbose .gt. 1) print*, ".... done!"
 
 !           Assume the radiation coming from above is blackbody radiation
 ! 0 stands for mode = 0. this is required, since we use the routine from the former

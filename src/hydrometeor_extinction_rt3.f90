@@ -15,7 +15,7 @@ subroutine hydrometeor_extinction_rt3(f,frq_str)
 
   integer :: nlegencw, nlegenci, nlegenrr, nlegensn, nlegengr, nlegenha
 
-  real(kind=dbl) :: f, qwc, nc
+  real(kind=dbl) :: f, qwc, nc, cwc
 
   real(kind=dbl) :: salbcw, salbrr, salbci, salbsn, salbgr, salbha
 
@@ -148,8 +148,9 @@ subroutine hydrometeor_extinction_rt3(f,frq_str)
 	            nlegenrr, legenrr, legen2rr, legen3rr, legen4rr)
 	    else if (n_moments .eq. 2) then
 	     	qwc = q2abs(rwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
+            cwc = q2abs(cwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(rwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
-	     	call rain_ssp(f,qwc,temp(nz),&
+	     	call rain_ssp(f,qwc,cwc,temp(nz),&
 	            maxleg,kextrr(nz), salbrr, backrr(nz),  &
 	            nlegenrr, legenrr, legen2rr, legen3rr, legen4rr, nc)
 	    end if

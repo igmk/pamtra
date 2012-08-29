@@ -74,8 +74,7 @@ SUBROUTINE LAMBERT_RADIANCE (NSTOKES, NUMMU, MODE, &
 END SUBROUTINE LAMBERT_RADIANCE
 
 
-SUBROUTINE FRESNEL_SURFACE (NSTOKES, NUMMU, MU_VALUES, INDEX,     &
-     WAVELENGTH,REFLECT, TRANS, SOURCE)
+SUBROUTINE FRESNEL_SURFACE (NSTOKES, NUMMU, MU_VALUES, INDEX,REFLECT, TRANS, SOURCE)
   !         FRESNEL_REFLECT makes the reflection matrix for a             
   !      plane surface with index of refraction (INDEX) using             
   !      the Fresnel reflection formulae.  Also makes the diagonal        

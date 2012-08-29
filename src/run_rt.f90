@@ -55,7 +55,6 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
   if (verbose .gt. 1) print*, nx,ny, 'type to local variables done' 
 
   ! Determine surface properties
-
   if (lfrac .ge. 0.5 .and. lfrac .le. 1.0) then
      ground_type = 'S' ! changed to specular after advice of cathrine prigent
      ise=13
@@ -107,7 +106,6 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
 
 
   ! hydrometeor extinction desired
-
   if (lhyd_extinction) then
     if (rt_mode .eq. 'rt3') then
         call hydrometeor_extinction_rt3(freq,frq_str)

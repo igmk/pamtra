@@ -217,7 +217,7 @@ subroutine RT4(nstokes,nummu,mu_values,out_file,quad_type,ground_temp,&
   gas_extinct = 0.
   MAX_DELTA_TAU = 1.0d-6
 
-  if (verbose .gt. 0) print*, "entered rt4"
+!  if (verbose .gt. 0) print*, "entered rt4"
 !scat_files = ''
 !scat_files(nlyr) = '1.txt'
 
@@ -233,8 +233,7 @@ subroutine RT4(nstokes,nummu,mu_values,out_file,quad_type,ground_temp,&
   rt4ext_matrix(1:nlyr,:,:,:,:) = extmatrix(nlyr:1:-1,:,:,:,:)
   rt4emis_vec(1:nlyr,:,:,:) = emisvec(nlyr:1:-1,:,:,:)
 
-
-  if (verbose .gt. 0) print*, ".... read_layers done!"
+!  if (verbose .gt. 0) print*, ".... read_layers done!"
 
       CALL RADTRAN4(NSTOKES, NUMMU, MAX_DELTA_TAU,&
                     QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&
@@ -246,7 +245,7 @@ subroutine RT4(nstokes,nummu,mu_values,out_file,quad_type,ground_temp,&
                     MU_VALUES, UP_FLUX, DOWN_FLUX,&
                     UP_RAD, DOWN_RAD)
 
-  if (verbose .gt. 0) print*, ".... radtran done!"
+!  if (verbose .gt. 0) print*, ".... radtran done!"
 
   if (write_nc .or. in_python) then
      call collect_output(NSTOKES, NUMMU, 0, &

@@ -366,9 +366,8 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
 
      IF (GROUND_TYPE.EQ.'F') THEN
         ! For a Fresnel surface
-        wind10 = sqrt(wind10u**2+wind10v**2)
 	CALL FRESNEL_SURFACE (NSTOKES, NUMMU, MU_VALUES, GROUND_INDEX, &
-             wavelength, REFLECT (KRT), TRANS (KRT), SOURCE (KS) )
+             REFLECT (KRT), TRANS (KRT), SOURCE (KS) )
  ! The radiance from the ground is thermal                
 	CALL FRESNEL_RADIANCE (NSTOKES, NUMMU, MODE, MU_VALUES,        &
              GROUND_INDEX, GROUND_TEMP, WAVELENGTH, GND_RADIANCE)

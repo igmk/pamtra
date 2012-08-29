@@ -8,6 +8,7 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
   ! distribution of spheres.                                          
 
   use kinds
+  use nml_params, only: verbose
 
   implicit none
 
@@ -19,8 +20,8 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
   real(kind=dbl) :: wavelength, dia1, dia2
   real(kind=dbl) :: ad, bd, alpha, gamma
   complex(kind=dbl) :: mindex 
-  real(kind=dbl) :: extinction, albedo, back_scatt, &
-       legen(200), legen2(200), legen3(200), legen4(200)                                        
+  real(kind=dbl) :: extinction, albedo, back_scatt
+  real(kind=dbl), dimension(200) :: legen, legen2, legen3, legen4
   integer, parameter :: maxn = 5000
   real(kind=dbl), parameter :: pi = 3.14159265358979d0
   integer :: nterms, nquad, nmie, nleg 
@@ -37,6 +38,10 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
   character :: aerodist*1 
 
   real(kind=dbl), parameter :: c = 299792458.d0
+
+
+  if (verbose .gt. 1) print*, 'Entering mie'
+  legen4 = 0._dbl
 
   wavelength = c/(f*1.e9) !
 
@@ -85,7 +90,6 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
      sumqe = sumqe + qext * ndens * (diameter/2.)**2         ! [1/m^2]
      sumqs = sumqs + qscat * ndens * (diameter/2.)**2        ! [1/m^2]
      sumqback = sumqback + qback * ndens * (diameter/2.)**2  ! [1/m^2]
-!    write(36,*) diameter, diameter, ndens, ad, bd, qext, qscat
      if (lphase_flag) then 
         nmie = min(nmie, nterms) 
         do i = 1, nquad 
@@ -126,6 +130,7 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
      coef3(m) = 0.0d0 
      coef4(m) = 0.0d0 
   end do
+
   !  use upward recurrence to find legendre polynomials          
   do i = 1, nquad 
      pl1 = 1.0d0 
@@ -141,15 +146,17 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
         pl1 = pl 
      end do
   end do
+
   nleg = nlegen 
   do l = 0, nleg 
-     m = l + 1 
+     m = l + 1
      legen(m) = (2 * l + 1) / 2.0 * coef1(m) 
      legen2(m) = (2 * l + 1) / 2.0 * coef2(m) 
      legen3(m) = (2 * l + 1) / 2.0 * coef3(m) 
-     legen4(m) = (2 * l + 1) / 2.0 * coef4(m) 
+     legen4(m) = (2 * l + 1) / 2.0 * coef4(m)
      if (legen(m) .gt. 1.0e-7) nlegen = l 
   end do
 
+  if (verbose .gt. 1) print*, 'finished with mie'
   return 
 end subroutine mie

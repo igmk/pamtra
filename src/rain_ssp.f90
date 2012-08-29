@@ -59,7 +59,6 @@ subroutine rain_ssp(f,rwc,cwc,t,maxleg,kext, salb, back,  &
 
 	  ad = n_0rainD*1.d6   ! [1/m^4]
    	  bd = (pi * den_liq * ad / rwc)**0.25
-print*, ad, bd
       alpha = 0.d0 ! exponential SD
       gamma = 1.d0
     else if (SD_rain .eq. 'M') then
