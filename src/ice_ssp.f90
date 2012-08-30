@@ -9,7 +9,7 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
 
   implicit none
 
-  integer :: nbins, nlegen, ice_flag
+  integer :: nbins, nlegen
 
   integer, intent(in) :: maxleg
 
@@ -41,32 +41,28 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
 
   if (n_moments .eq. 1) then
 	if (SD_ice .eq. 'C') then
-     ice_flag=0
-     if (ice_flag .eq. 1) then
-        !	Monodisperse size distribution coherent with COSMO-de 1-moment scheme
-        !	Number_concentration of activated ice ctystal is temperature dependent
-        !	 from COSMO-de code src_gscp.f90 routine: hydci_pp_gr
-        !	Radius is derived from mass-size relation m=aD^3
-        !	 a=130 kg/m^3 (hexagonal plates with aspect ratio of 0.2 -> thickness=0.2*Diameter)
-        number_concentration = 1.0d2*DEXP(0.2d0*(273.15d0-t)) 	! [1/m^3]
-        drop_mass = iwc/number_concentration 					! [kg]
-        del_d = 1.d-8											! [m]
-        dia1 = (drop_mass/130.0d0)**(1.0d0/3.0d0)				! [m]
-        dia2 = dia1 + del_d
-     else
-        ! monodisperse distribution
-        ! Fixed diameter
-        del_d = 1.d-8    ! [m]
-        dia1 = 1.d-4     ! [m] 100 micron diameter
-        dia2 = dia1 + del_d
-        den_ice = 917.d0  ! [kg/m^3]
-        drop_mass = pi/6.d0 * dia1**3 * den_ice
-     endif
+     !	Monodisperse size distribution coherent with COSMO-de 1-moment scheme
+     !	Number_concentration of activated ice ctystal is temperature dependent
+     !	 from COSMO-de code src_gscp.f90 routine: hydci_pp_gr
+     !	Radius is derived from mass-size relation m=aD^3
+     !	 a=130 kg/m^3 (hexagonal plates with aspect ratio of 0.2 -> thickness=0.2*Diameter)
+     number_concentration = 1.0d2*DEXP(0.2d0*(273.15d0-t)) 	! [1/m^3]
+     drop_mass = iwc/number_concentration 					! [kg]
+     del_d = 1.d-8											! [m]
+     dia1 = (drop_mass/130.0d0)**(1.0d0/3.0d0)				! [m]
+!    CHECK if dia1 > maxdiam=2.d-4 (maximum diameter for COSMO)
+! 	 then recalculate the drop mass using 2.d-4 as particle diameter
+	 if (dia1 .gt. 2.d-4) then
+	 	dia1 = 2.d-4 										! [m] maximum allowed diameter
+		drop_mass = 130.d0 * dia1**3						! [kg]
+	 endif
+	 dia2 = dia1 + del_d
      ad = iwc/(drop_mass*del_d) 	!intercept parameter [1/m^4]
      bd = 0.0d0
      nbins = 2
      alpha = 0.0d0     ! exponential SD
      gamma = 1.0d0
+     den_ice=917.d0
     else if (SD_ice .eq. 'M') then
      del_d = 1.d-8    ! [m]
      dia1 = 6.d-5     ! [m] 60 micron diameter
@@ -88,7 +84,7 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
      nbins = 100
      den_ice=917.d0
      dia1 = 1.d-10	! minimum diameter [m]
-     dia2 = 1.d-3	! maximum diameter [m]
+     dia2 = 6.d-5	! maximum diameter [m]
   else
      stop 'Number of moments is not specified'
   end if

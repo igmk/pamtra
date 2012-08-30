@@ -22,7 +22,7 @@ SUBROUTINE PLANCK_FUNCTION (TEMP, UNITS, WAVELENGTH, PLANCK)
 END SUBROUTINE PLANCK_FUNCTION
 
 
-SUBROUTINE GAUSS_LEGENDRE_QUADRATURE (NUM, ABSCISSAS, WEIGHTS) 
+SUBROUTINE GAUSS_LEGENDRE_QUADRATURE(NUM, ABSCISSAS, WEIGHTS)
   !      Generates the abscissas and weights for an even 2*NUM point    
   !      Gauss-Legendre quadrature.  Only the NUM positive points are returned
   use kinds
@@ -95,7 +95,7 @@ SUBROUTINE DOUBLE_GAUSS_QUADRATURE (NUM, ABSCISSAS, WEIGHTS)
 END SUBROUTINE DOUBLE_GAUSS_QUADRATURE
 
 
-SUBROUTINE LOBATTO_QUADRATURE (NUM, ABSCISSAS, WEIGHTS) 
+SUBROUTINE LOBATTO_QUADRATURE(NUM, ABSCISSAS, WEIGHTS)
   !        Generates the abscissas and weights for an even 2*NUM point    
   !      Gauss-Legendre quadrature.  Only the NUM positive points are retu
   use kinds

@@ -31,8 +31,7 @@ SUBROUTINE SCATTERING (NUMMU, AZIORDER, NSTOKES, MU_VALUES,       &
 
   NUMPTS = 2 * 2**INT (LOG (FLOAT (NUMLEGENDRE+4) ) / LOG (2.0)     &
        + 1.0)                                                            
-  IF (AZIORDER.EQ.0) NUMPTS = 2 * INT ( (NUMLEGENDRE+1) / 2)        &
-       + 4                                                               
+  IF (AZIORDER.EQ.0) NUMPTS = 2 * INT ( (NUMLEGENDRE+1) / 2) + 4
   SCATBASE = (SCAT_NUM - 1) * (AZIORDER + 1) * 2 * (NUMMU**2) 
 
   !           Find how many Legendre series must be summed                
@@ -61,7 +60,6 @@ SUBROUTINE SCATTERING (NUMMU, AZIORDER, NSTOKES, MU_VALUES,       &
            ENDDO
            CALL FOURIER_MATRIX (AZIORDER, NUMPTS, NSTOKES, SCAT_MATRIX,      &
                 BASIS_MATRIX)                                                     
-
            NUMELEM = NSTOKES**2 
            DO M = 0, AZIORDER 
               CALL COMBINE_PHASE_MODES (NSTOKES, AZIORDER, M, TMP, BASIS_MATRIX,&

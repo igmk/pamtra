@@ -69,7 +69,6 @@ subroutine gasabsR98(f,Tk,Rhowv,Pa,absair,abswv)
   ! get volume extinction coefficients
   absair = absn2(Tk,pmb,f) + o2abs(Tk,pmb,vapden,f)
   abswv = abh2o(Tk,pmb,vapden,f)
-
   !       abs_n2 = absn2(Tk,pmb,f)
   !       abs_o2 = o2abs(Tk,pmb,vapden,f)
 

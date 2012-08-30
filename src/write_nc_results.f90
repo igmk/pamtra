@@ -1,10 +1,12 @@
-subroutine write_nc_results(nc_file)
+subroutine write_nc_results
 
   use kinds
   use vars_output
   use vars_atmosphere, only: ngridx, ngridy,nlyr,freqs,nfrq, year, month, day, time
   use netcdf
   use nml_params, only: active, passive, creator, verbose, zeSplitUp, n_moments
+  use file_mod, only: nc_out_file
+
   implicit none
 
   integer :: ncid
@@ -28,14 +30,14 @@ subroutine write_nc_results(nc_file)
 
   integer :: today(3), now(3)
 
-  character(300) :: nc_file, timestring, user
+  character(300) :: timestring
   character(40) ::gitVersion,gitHash
 
-  if (verbose .gt. 0) print*,"writing: ", nc_file
+  if (verbose .gt. 0) print*,"writing: ", nc_out_file
   !get git data
   call versionNumber(gitVersion,gitHash)
 
-  call check(nf90_create(path=nc_file,cmode=nf90_clobber,ncid=ncid))
+  call check(nf90_create(path=nc_out_file,cmode=nf90_clobber,ncid=ncid))
 
   ! for netcdf history get meta data
   call idate(today)   ! today(1)=day, (2)=month, (3)=year
@@ -234,7 +236,6 @@ subroutine write_nc_results(nc_file)
   call check(nf90_put_var(ncid, gwpVarID, gwps))
   call check(nf90_put_var(ncid, hwpVarID, hwps))
   if (passive) then
-
      call check(nf90_put_var(ncid, tbVarID, tb))
   end if 	
 

@@ -4,9 +4,9 @@ function formatted_frqstr(input_string)
 
   integer :: pos
 
-  character(2) :: tail
+  character(4) :: tail
   character(3) :: head
-  character(6) :: input_string, formatted_frqstr
+  character(8) :: input_string, formatted_frqstr
 
   pos = index(input_string,'.')
 
@@ -16,7 +16,7 @@ function formatted_frqstr(input_string)
   end if
 
   head = repeat('0', 3-len_trim(adjustl(input_string(:pos-1))))//input_string(:pos-1)
-  tail = trim(input_string(pos+1:))//repeat('0', 2-len_trim(input_string(pos+1:)))
+  tail = trim(input_string(pos+1:))//repeat('0', 4-len_trim(input_string(pos+1:)))
 
   formatted_frqstr = head//'.'//tail
 

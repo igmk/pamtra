@@ -62,27 +62,15 @@ subroutine cloud_ssp(f,cwc,t, maxleg,kext, salb, back,  &
 
   if (n_moments .eq. 1) then
 	if (SD_cloud .eq. 'C') then
-	     ! iautocon is defined in COSMO-de routine hydci_pp_gr in src_gscp.f90
-	     !		iautocon =  1 fixed number density eq to 1.0d8 [1/m^3] (eq to variable cloud_num in COSMO)
-	     !		iautocon /= 1 fixed diameter eq to 1.d-4 [m]
-	     iautocon = 0
-	     del_d = 1.d-8 	! delta_diameter for mie calculation [m]
-	     if (iautocon .eq. 1) then
-	        number_density = 1.0d8	        	! fixed number density [1/m^3]
-	        drop_mass = cwc /  number_density	! [kg]
-	        dia1 = (6.d0 * drop_mass / (pi * den_liq))**(1./3.)	! monodisperse size distribution [m]
-	        dia2 = dia1 + del_d
-	        ad = cwc / (drop_mass*del_d)	! intercept parameter [1/m^4]
-	     else
-	        dia1 = 2.d-5 	! [m] 20 micron diameter monodisperse
-	        dia2 = dia1 + del_d
-	        drop_mass = pi/6.d0 * den_liq * dia1**3 		    	! [kg]
-	        ad = cwc / (drop_mass*del_d)	! intercept parameter [1/m^4]
-	     end if
-	     bd = 0.d0
-	     nbins = 2
-	     alpha = 0.d0 ! exponential SD
-	     gamma = 1.d0
+	    del_d = 1.d-8 	! delta_diameter for mie calculation [m]
+        dia1 = 2.d-5 	! [m] 20 micron diameter monodisperse
+        dia2 = dia1 + del_d
+        drop_mass = pi/6.d0 * den_liq * dia1**3 		    	! [kg]
+        ad = cwc / (drop_mass*del_d)	! intercept parameter [1/m^4]
+	    bd = 0.d0
+	    nbins = 2
+	    alpha = 0.d0 ! exponential SD
+	    gamma = 1.d0
 	else if (SD_cloud .eq. 'M') then
 	    del_d = 1.d-8 	! delta_diameter for mie calculation [m]
         dia1 = 2.d-5 	! [m] 20 micron diameter monodisperse

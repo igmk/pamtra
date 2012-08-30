@@ -42,7 +42,7 @@ p16
 tp17
 bsS'pamtraHash'
 p18
-S'e05f4a42802db6ff63c9bd30430e2e1bb4687071'
+S'159ccd830feb60d9558cd380a49ec0db4274779a'
 p19
 sS'Att_ha'
 p20
@@ -543,7 +543,7 @@ p199
 tp200
 bsS'pamtraVersion'
 p201
-S'v0.2-165-ge05f4a4-master'
+S'v0.1-207-g159ccd8-master'
 p202
 sa(dp203
 S'deltax'

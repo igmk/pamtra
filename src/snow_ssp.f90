@@ -2,11 +2,11 @@
 !
 !
 subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
-     nlegen, legen, legen2, legen3, legen4, qs, nc)
+     nlegen, legen, legen2, legen3, legen4, nc)
 
   use kinds
   use nml_params, only: verbose, lphase_flag, n_0snowDsnow, EM_snow, &
-		        n_moments, isnow_n0, SD_snow, snow_density,liu_type
+	n_moments, isnow_n0, SD_snow, snow_density,liu_type
   use constants, only: pi, im
   use double_moments_module
   use conversions
@@ -19,7 +19,6 @@ subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
 
   real(kind=dbl), intent(in) :: &
        swc,&
-       qs,&
        t,&
        f
 

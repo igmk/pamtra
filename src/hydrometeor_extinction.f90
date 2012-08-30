@@ -15,7 +15,7 @@ subroutine hydrometeor_extinction(f,frq_str)
 
   integer :: nlegencw, nlegenci, nlegenrr, nlegensn, nlegengr, nlegenha
 
-  real(kind=dbl) :: f, wavelength, qwc, nc
+  real(kind=dbl) :: f, qwc, nc
 
   real(kind=dbl) :: salbcw, salbrr, salbci, salbsn, salbgr, salbha
 
@@ -71,7 +71,6 @@ subroutine hydrometeor_extinction(f,frq_str)
      kextcw(nz) = 0.d0 
      salbcw = 0.d0 
      backcw(nz) = 0.d0 
-
 
      if (cwc_q(nz) .ge. threshold) then
      	if (n_moments .eq. 1) then
@@ -175,7 +174,7 @@ subroutine hydrometeor_extinction(f,frq_str)
 	     	qwc = q2abs(swc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
 	        call snow_ssp(f,qwc,temp(nz),&
 	             maxleg,kextsn(nz), salbsn, backsn(nz),  &
-	             nlegensn, legensn, legen2sn, legen3sn, legen4sn, swc_q(nz))
+	             nlegensn, legensn, legen2sn, legen3sn, legen4sn)
 	        call legendre2phasefunction(legensn, nlegensn, 2, 200,p11, ang)
 	        backsn(nz) = kextsn(nz) * salbsn * P11 (2)
 	     else if (n_moments .eq. 2) then
@@ -183,7 +182,7 @@ subroutine hydrometeor_extinction(f,frq_str)
 	        nc = q2abs(swc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	      	call snow_ssp(f,qwc,temp(nz),&
 	             maxleg,kextsn(nz), salbsn, backsn(nz),  &
-	             nlegensn, legensn, legen2sn, legen3sn, legen4sn, swc_q(nz), nc)
+	             nlegensn, legensn, legen2sn, legen3sn, legen4sn, nc)
 	        call legendre2phasefunction(legensn, nlegensn, 2, 200,p11, ang)
 	        backsn(nz) = kextsn(nz) * salbsn * P11 (2)
 	     end if

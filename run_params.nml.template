@@ -8,6 +8,9 @@ input_path='/path/to/profiles/'
 output_path='/path/to/output/'
 data_path='data'
 tmp_path='/dev/shm/'
+use_crm=.false.
+crm_data=''
+crm_constants=''
 /
 &output
 obs_height=833000. 

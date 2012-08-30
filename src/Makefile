@@ -1,7 +1,8 @@
 ARCH=$(shell uname -s)
 FC=gfortran
+CC=gcc
 
-FCFLAGS=-c -fPIC
+FCFLAGS=-c -fPIC -Wuninitialized
 
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
@@ -13,9 +14,8 @@ ifeq ($(ARCH),Darwin)
 	LFLAGS=-L/opt/local/lib/
 	LDFLAGS=-lnetcdf -lnetcdff
 else
-
- 	NCFLAGS := $(shell nc-config --fflags)
- 	LFLAGS=
+	NCFLAGS := $(shell nc-config --fflags)
+	LFLAGS=
 	LDFLAGS := $(shell nc-config --flibs)
 endif
 #-	NCFLAGS=-I$(HOME)/include
@@ -23,15 +23,20 @@ endif
 #-	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm -lsz
 
 
-OBJECTS=kinds.o nml_params.o mod_fastem4_coef.o vars_profile.o vars_atmosphere.o mod_io_strings.o constants.o double_moments_module.o\
-	vars_output.o conversions.o run_rt3.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o radmat.o \
+OBJECTS=kinds.o constants.o file_mod.o nml_params.o mod_fastem4_coef.o conversions.o double_moments_module.o cosmo_netcdf.o vars_profile.o \
+	vars_atmosphere.o mod_io_strings.o getopt.o parse_options.o \
+	get_atmosphere.o vars_output.o run_rt.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o radmat.o \
 	scat_utilities.o dsd_utilities.o mpm93.o get_atmosG0.o get_atmosG.o mie.o mie_densitydep_spheremasseq.o\
 	slant_profile.o allocate_profile_vars.o allocate_output_vars.o rosen98_gasabs.o surface.o eps_water.o eps_ice.o eps_mix.o \
 	equcom.o land_emis.o equare.o scatdb.o dda_db_liu.o dielec_water.o ref_water.o \
 	ref_ice.o e_sat_gg_water.o spec2abs.o interpolation.o deallocate_profile_vars.o deallocate_output_vars.o\
-	hydrometeor_extinction.o cloud_ssp.o ice_ssp.o rain_ssp.o snow_ssp.o grau_ssp.o hail_ssp.o legendre2phasefunction.o \
+	hydrometeor_extinction_rt3.o cloud_ssp.o ice_ssp.o rain_ssp.o snow_ssp.o grau_ssp.o hail_ssp.o legendre2phasefunction.o \
 	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o  \
-	get_scat_coefs.o dump_profile.o collect_boundary_output.o double_moments.o versionNumber.auto.o
+	get_scat_coefs.o dump_profile.o collect_boundary_output.o \
+	rt4.o radtran4.o radintg4.o radscat4.o tmat_rain_db.o tmat_snow_db.o hydrometeor_extinction_rt4.o scatcnv.o \
+	tmatrix_rain.o tmatrix_snow.o matrix_cal.o tmatrix_cal.o lpd.o get_scat_mat.o rain_ssp_tmat.o snow_ssp_tmat.o \
+	mass_size_rel.o refractive_index.o \
+	versionNumber.auto.o
 
 pamtraOBJECTS=formatted_frqstr.o write_nc_results.o
 
@@ -39,20 +44,23 @@ BIN=pamtra
 
 all: precompile pamtra py
 
-	
+
 pamtra: pamtra.f90 $(OBJECTS) $(pamtraOBJECTS)
-	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS)  $(pamtraOBJECTS) $(LFLAGS) $(LDFLAGS)
+	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(pamtraOBJECTS) $(LFLAGS) $(LDFLAGS)
 	mv $(BIN) ../
  
 scatdb.o:
-	gcc -O  -fPIC -c scatdb.c 
+	$(CC) -O  -fPIC -c scatdb.c 
 
 %.o: %.f90
 	$(FC) $(FCFLAGS) $<
-	
+
 write_nc_results.o: write_nc_results.f90
 	$(FC) $(FCFLAGS) $(NCFLAGS) write_nc_results.f90
-	
+
+cosmo_netcdf.o: cosmo_netcdf.f90
+	$(FC) $(FCFLAGS) $(NCFLAGS) cosmo_netcdf.f90
+
 
 
 pyprecompile: 

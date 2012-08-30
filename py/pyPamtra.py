@@ -36,7 +36,8 @@ missingNumber=-9999.
 
 class pyPamtra(object):
 	'''
-	Class for pamtra calculations. Initalisations fill dictonary 'set' with default values and also fills 'dimensions' and 'units'
+	Class for pamtra calculations. Initalisations fill dictonary 'set' with default values and 
+	also fills 'dimensions' and 'units'
 	
 	'''
 	def __init__(self):
@@ -331,7 +332,7 @@ class pyPamtra(object):
 
 	def createProfile(self,**kwargs):
 		'''
-		Function to create the Pamtra Profiles.
+		Function to create Pamtra Profiles.
 		
 		Variables ending on _lev mean level values, variables without are layer values (height vecotr one entry shorter!)!
 		
