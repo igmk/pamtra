@@ -1,29 +1,101 @@
 subroutine pyPamtraLib(&!settings
-set_verbose,set_dump_to_file,set_tmp_path,&
-set_data_path,set_obs_height,set_units,set_outpol,set_creator,&
-set_active,set_passive,set_ground_type,set_salinity,set_emissivity,set_lgas_extinction,&
-set_gas_mod,set_lhyd_extinction,set_lphase_flag,&
-set_SD_cloud, set_SD_ice, set_EM_ice, set_SD_rain, set_N_0rainD, set_SD_snow,&
-set_N_0snowDsnow, set_EM_snow, set_snow_density, set_SP, set_isnow_n0, set_liu_type,&
-set_SD_grau, set_N_0grauDgrau, set_EM_grau, set_graupel_density, set_SD_hail,&
-set_N_0hailDhail, set_EM_hail, set_hail_density,&
-set_n_moments,set_moments_file&
-,& !in
-in_ngridx, in_ngridy, max_in_nlyrs, in_nlyrs, in_nfreq, in_freqs,&
+set_verbose,&
+set_dump_to_file,&
+set_tmp_path,&
+set_data_path,&
+set_obs_height,&
+set_units,&
+set_outpol,&
+set_creator,&
+set_active,&
+set_passive,&
+set_rt_mode,& !new
+set_ground_type,&
+set_salinity,&
+set_emissivity,&
+set_lgas_extinction,&
+set_gas_mod,&
+set_lhyd_extinction,&
+set_lphase_flag,&
+set_SD_cloud,&
+set_SD_ice,&
+set_EM_ice,&
+set_SD_rain,&
+set_N_0rainD,&
+set_use_rain_db,& !new
+set_SD_snow,&
+set_N_0snowDsnow,&
+set_EM_snow,&
+set_use_snow_db,& !new
+set_as_ratio, & !new
+set_snow_density,&
+set_SP,&
+set_isnow_n0,&
+set_liu_type,&
+set_SD_grau,&
+set_N_0grauDgrau,&
+set_EM_grau,&
+set_graupel_density,&
+set_SD_hail,&
+&set_N_0hailDhail,&
+set_EM_hail,&
+set_hail_density,&
+set_n_moments,&
+set_moments_file&
+,&!in
+in_ngridx,&
+ in_ngridy,&
+ max_in_nlyrs,&
+ in_nlyrs,&
+ in_nfreq,&
+ in_freqs,&
 in_timestamp,&
-in_deltax,in_deltay, in_lat,in_lon,in_model_i,in_model_j,&
-in_wind10u,in_wind10v,in_lfrac,&
-in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev,&
-in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q,&
-in_hwc_q, in_cwc_n, in_iwc_n, in_rwc_n, in_swc_n, in_gwc_n, in_hwc_n&
+in_deltax,&
+in_deltay,&
+ in_lat,&
+in_lon,&
+in_model_i,&
+in_model_j,&
+in_wind10u,&
+in_wind10v,&
+in_lfrac,&
+in_relhum_lev,&
+in_press_lev,&
+in_temp_lev,&
+in_hgt_lev,&
+in_cwc_q,&
+in_iwc_q,&
+in_rwc_q,&
+in_swc_q,&
+in_gwc_q,&
+in_hwc_q,&
+ in_cwc_n,&
+ in_iwc_n,&
+ in_rwc_n,&
+ in_swc_n,&
+ in_gwc_n,&
+ in_hwc_n&
 ,& !meta out
-out_gitVersion,out_gitHash &
-,& !data_out
+out_gitVersion,&
+out_gitHash &
+,&!data_out
 out_Ze,&
-out_Ze_cw,out_Ze_rr,out_Ze_ci,out_Ze_sn,out_Ze_gr,out_Ze_ha,&
+out_Ze_cw,&
+out_Ze_rr,&
+out_Ze_ci,&
+out_Ze_sn,&
+out_Ze_gr,&
+out_Ze_ha,&
 out_Att_hydro,&
-out_Att_cw,out_Att_rr,out_Att_ci,out_Att_sn,out_Att_gr,out_Att_ha,&
-out_Att_atmo,out_hgt,out_tb,&
+out_Att_cw,&
+out_Att_rr,&
+out_Att_ci,&
+out_Att_sn,&
+out_Att_gr,&
+out_Att_ha,&
+out_Att_atmo,&
+out_hgt,&
+out_tb,&
 out_angles&
 )
 
@@ -59,7 +131,7 @@ out_angles&
   real(kind=sgl),intent(in) :: set_obs_height     ! upper level output height [m] (> 100000. for satellite)
   real(kind=sgl),intent(in) :: set_emissivity
   real(kind=sgl),intent(in) :: set_N_0snowDsnow, set_N_0grauDgrau, set_N_0rainD, set_N_0hailDhail
-  real(kind=sgl),intent(in) :: set_SP
+  real(kind=sgl),intent(in) :: set_SP, set_as_ratio
   real(kind=sgl),intent(in) :: set_salinity         ! sea surface salinity
   real(kind=sgl),intent(in) :: set_snow_density, set_graupel_density, set_hail_density   
 
@@ -68,11 +140,13 @@ out_angles&
        set_lgas_extinction, &    ! gas extinction desired
        set_lhyd_extinction, &    ! hydrometeor extinction desired
        set_active, &       ! calculate active stuff
-       set_passive         ! calculate passive stuff (with RT3)
+       set_passive, &         ! calculate passive stuff (with RT3/4)
+       set_use_rain_db, &
+       set_use_snow_db
 
   character(5),intent(in) :: set_EM_snow, set_EM_grau, set_EM_ice, set_EM_hail
   character(1),intent(in) :: set_SD_snow, set_SD_grau, set_SD_rain, set_SD_cloud, set_SD_ice, set_SD_hail
-  character(3),intent(in) :: set_gas_mod
+  character(3),intent(in) :: set_gas_mod, set_rt_mode
   character(20),intent(in) :: set_moments_file
   character(100),intent(in) :: set_tmp_path,set_creator, set_data_path
   character(2),intent(in) :: set_OUTPOL
@@ -110,12 +184,12 @@ out_angles&
 
   !settings
   !f2py intent(in) :: set_verbose,set_dump_to_file,set_tmp_path
-  !f2py intent(in) :: set_data_path,set_obs_height,set_units,set_outpol,set_creator
-  !f2py intent(in) :: set_active,set_passive,set_ground_type,set_salinity,set_emissivity,set_lgas_extinction
+  !f2py intent(in) :: set_data_path,set_obs_height,set_units,set_outpol,set_creator,set_active
+  !f2py intent(in) :: set_passive,set_rt_mode,set_ground_type,set_salinity,set_emissivity,set_lgas_extinction
   !f2py intent(in) :: set_gas_mod,set_lhyd_extinction,set_lphase_flag,set_SD_cloud, set_SD_ice, set_EM_ice
-  !f2py intent(in) :: set_SD_rain, set_N_0rainD, set_SD_snow, set_N_0snowDsnow
-  !f2py intent(in) :: set_EM_snow, set_snow_density, set_SP, set_isnow_n0
-  !f2py intent(in) :: set_liu_type, set_SD_grau, set_N_0grauDgrau, set_EM_grau
+  !f2py intent(in) :: set_SD_rain, set_N_0rainD, set_use_rain_db, set_SD_snow, set_N_0snowDsnow
+  !f2py intent(in) :: set_EM_snow, set_use_snow_db, set_as_ratio, set_snow_density, set_SP
+  !f2py intent(in) :: set_isnow_n0, set_liu_type, set_SD_grau, set_N_0grauDgrau, set_EM_grau
   !f2py intent(in) :: set_graupel_density, set_SD_hail, set_N_0hailDhail, set_EM_hail
   !f2py intent(in) :: set_hail_density,set_n_moments,set_moments_file
   !input
@@ -161,9 +235,11 @@ if (set_verbose .gt. 1) print*,in_freqs, in_nlyrs, max_in_nlyrs
   output_path = "/tmp"
   freq_str = "pythonFrequen"
   file_desc = ""
-
-
-
+  input_type ="python"
+  crm_case=''
+  crm_data=''
+  crm_data2=''
+  crm_constants=''
 
 
   !load settings, uggly but neccessary!
@@ -177,6 +253,7 @@ if (set_verbose .gt. 1) print*,in_freqs, in_nlyrs, max_in_nlyrs
   creator = set_creator
   active = set_active
   passive = set_passive
+  rt_mode = set_rt_mode
   ground_type = set_ground_type
   salinity = set_salinity
   emissivity = set_emissivity
@@ -190,9 +267,12 @@ if (set_verbose .gt. 1) print*,in_freqs, in_nlyrs, max_in_nlyrs
   EM_ice = set_EM_ice
   SD_rain = set_SD_rain
   N_0rainD = set_N_0rainD
+  use_rain_db = set_use_rain_db
   SD_snow =  set_SD_snow
   N_0snowDsnow = set_N_0snowDsnow
   EM_snow = set_EM_snow
+  use_snow_db = set_use_snow_db
+  as_ratio = set_as_ratio
   snow_density = set_snow_density
   SP = set_SP
   isnow_n0 = set_isnow_n0
@@ -317,7 +397,7 @@ if (set_verbose .gt. 1) print*,in_freqs, in_nlyrs, max_in_nlyrs
          end if
 
            !run the model
-           call run_rt3(nx,ny,fi,freqs(fi),freq_str)
+           call run_rt(nx,ny,fi,freqs(fi),freq_str)
 
           if (active) then
             out_Ze(nx,ny,1:nlyr,:) = REAL(Ze(nx,ny,1:nlyr,:))

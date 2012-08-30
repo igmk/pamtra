@@ -11,25 +11,30 @@ gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran
 	NCFLAGS=-I/opt/local/include/ #-g
+	NCFLAGS_F2PY=-I/opt/local/include/ #-g
 	LFLAGS=-L/opt/local/lib/
 	LDFLAGS=-lnetcdf -lnetcdff
 else
 	NCFLAGS := $(shell nc-config --fflags)
+	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
 	LFLAGS=
 	LDFLAGS := $(shell nc-config --flibs)
 endif
+
+
+
 #-	NCFLAGS=-I$(HOME)/include
 #-	LFLAGS=-L$(HOME)/lib -L/usr/local/lib
 #-	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm -lsz
 
 
-OBJECTS=kinds.o constants.o file_mod.o nml_params.o mod_fastem4_coef.o conversions.o double_moments_module.o cosmo_netcdf.o vars_profile.o \
+OBJECTS=kinds.o constants.o file_mod.o nml_params.o mod_fastem4_coef.o conversions.o double_moments_module.o cosmo_netcdf.o  vars_profile.o \
 	vars_atmosphere.o mod_io_strings.o getopt.o parse_options.o \
 	get_atmosphere.o vars_output.o run_rt.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o radmat.o \
 	scat_utilities.o dsd_utilities.o mpm93.o get_atmosG0.o get_atmosG.o mie.o mie_densitydep_spheremasseq.o\
 	slant_profile.o allocate_profile_vars.o allocate_output_vars.o rosen98_gasabs.o surface.o eps_water.o eps_ice.o eps_mix.o \
 	equcom.o land_emis.o equare.o scatdb.o dda_db_liu.o dielec_water.o ref_water.o \
-	ref_ice.o e_sat_gg_water.o spec2abs.o interpolation.o deallocate_profile_vars.o deallocate_output_vars.o\
+	ref_ice.o e_sat_gg_water.o spec2abs.o interpolation.o deallocate_profile_vars.o deallocate_output_vars.o \
 	hydrometeor_extinction_rt3.o cloud_ssp.o ice_ssp.o rain_ssp.o snow_ssp.o grau_ssp.o hail_ssp.o legendre2phasefunction.o \
 	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o  \
 	get_scat_coefs.o dump_profile.o collect_boundary_output.o \
@@ -38,7 +43,7 @@ OBJECTS=kinds.o constants.o file_mod.o nml_params.o mod_fastem4_coef.o conversio
 	mass_size_rel.o refractive_index.o \
 	versionNumber.auto.o
 
-pamtraOBJECTS=formatted_frqstr.o write_nc_results.o
+pamtraOBJECTS=formatted_frqstr.o write_nc_results.o 
 
 BIN=pamtra
 
@@ -69,8 +74,8 @@ pyprecompile:
 	@echo ""
 	f2py -m pyPamtraLib -h pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90
 
-py: pyPamtraLib.f90 precompile $(OBJECTS) 
-	f2py -c --fcompiler=gnu95 pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
+py: pyPamtraLib.f90 precompile $(OBJECTS) $(pamtraOBJECTS)
+	f2py $(NCFLAGS_F2PY) $(LDFLAGS) -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) $(pamtraOBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ../py/
 
 pyNode: pyPamtraLib.f90 $(OBJECTS) 
