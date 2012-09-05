@@ -37,7 +37,7 @@ module tmat_rain_db
 !        db_temps = (/(real(itemp), itemp=245,305,5)/)
 !    db_temps = (/290.0,300.0/)
 
-    character(50) :: rdb_file
+    character(100) :: rdb_file
 
     contains
 

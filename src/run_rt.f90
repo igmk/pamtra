@@ -192,6 +192,7 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
     !calculate human readable angles!
     angles_deg(1:NUMMU) = 180-(180.*acos(MU_VALUES(NUMMU:1:-1))/pi)
     angles_deg(1+NUMMU:2*NUMMU) = (180.*acos(MU_VALUES(1:NUMMU))/pi)
+
   end if
 
 

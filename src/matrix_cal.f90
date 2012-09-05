@@ -86,7 +86,7 @@ subroutine matrix_cal(quad,qua_num,frequency,wave_num,snow_ref,axi, nstokes,&
         call gauss_legendre_quadrature(qua_num,qua_angle(1:qua_num),&
         qua_weights(1:qua_num))
     endif
-
+ 
     !	 write(*,*)quad,qua_num,qua_angle
 
     ! for each quadrature angle

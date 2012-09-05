@@ -34,6 +34,12 @@
         CALL GAUSS_LEGENDRE_QUADRATURE (NUMMU, MU_VALUES, QUAD_WEIGHTS)
       ENDIF
 
+<<<<<<< HEAD
+=======
+! print *, NUMMU
+! print *, "ff", (180.*acos(MU_VALUES(1:NUMMU))/3.14)
+! print *, "fdd", 180-(180.*acos(MU_VALUES(NUMMU:1:-1))/3.14)
+>>>>>>> 12a69f49da636f38b853d35706612cd1e9ffe31e
       CONST = EXTINCT*ALBEDO/ (4.0D0*3.1415926535897932384D0)
 
       if (dump_to_file) then
