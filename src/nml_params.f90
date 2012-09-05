@@ -86,7 +86,7 @@ contains
     namelist / hail_params / SD_hail, N_0hailDhail, EM_hail, hail_density
     namelist / moments / n_moments, moments_file
 
-    in_python = .false. ! we are _not_ in python
+
 
     !set namelist defaults!
     ! sec verbose_mode
@@ -193,6 +193,7 @@ contains
     if (n_moments .ne. 1 .and. n_moments .ne. 2) stop "n_moments is not 1 or 2"
 
     if (verbose .gt. 1) print *,"PASSIVE: ", passive, "ACTIVE: ", active
+
 
     return
   end subroutine nml_params_read
