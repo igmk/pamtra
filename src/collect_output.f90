@@ -75,7 +75,7 @@ subroutine collect_output(NSTOKES, NUMMU, AZIORDER,   &
            end do
            do i = 1, nstokes
               !	      tb_down(a,b,l,j,i) = out(i)
-	      tb(i,fi,nummu+j,l,b,a) = out(i)
+              tb(i,fi,nummu+j,l,b,a) = out(i)
            end do
            !	    write (3, form1) height (li), phid, mu_values(j), (out(i),i = 1, nstokes)                                                   
         end do

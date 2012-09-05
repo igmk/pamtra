@@ -32,4 +32,4 @@ runtestc
 testc.lay
 testc.out
 testc.out.check
-src/scatcnv*
+src/scatcnv

@@ -27,8 +27,8 @@ subroutine rain_ssp_tmat(f,rwc,cwc,t,salb, back,scatter_matrix,extinct_matrix, e
     real(kind=dbl), intent(out) :: salb, back
 
     real(kind=dbl), dimension(nstokes,nquad,nstokes,nquad,4), intent(out) :: scatter_matrix
-    real(kind=dbl), dimension(4,4,nquad,2), intent(out) :: extinct_matrix
-    real(kind=dbl), dimension(4,nquad,2), intent(out) :: emis_vector
+    real(kind=dbl), dimension(nstokes,nstokes,nquad,2), intent(out) :: extinct_matrix
+    real(kind=dbl), dimension(nstokes,nquad,2), intent(out) :: emis_vector
 
     if (verbose .gt. 1) print*, 'Entering rain_ssp_tmat'
 
