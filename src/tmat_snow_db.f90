@@ -50,7 +50,7 @@ module tmat_snow_db
 
 
     character(3) :: as_str
-    character(50) :: sdb_file
+    character(100) :: sdb_file
 
     contains
 
@@ -68,7 +68,13 @@ module tmat_snow_db
 
         open(db_unit, file=trim(sdb_file), form='unformatted', access='direct', recl=lrec, iostat=db_status)
 
-        if (db_status == 0 .and. verbose .gt. 0) print*, 'database ', sdb_file, ' opened successfully!'
+        if (verbose .gt. 0) then 
+	  if (db_status == 0) then 
+	    print*, 'database ', sdb_file, ' opened successfully!'
+	  else 
+            print*, 'database ', sdb_file, ' was not opend'
+          end if
+        end if
 
         return
 

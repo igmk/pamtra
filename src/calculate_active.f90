@@ -2,9 +2,7 @@ subroutine calculate_active(OUT_FILE_ACT,freq,hgt,&
   Ze,Ze_cw,Ze_rr,Ze_ci,Ze_sn,Ze_gr,Ze_ha,&
   Att_atmo, Att_hydro, Att_cw,Att_rr,Att_ci,Att_sn,Att_gr,Att_ha)
   ! This function computes and writes Ze and PIA
-  ! PIA is calculated bottom (BU) up AND top down (TD) for hydrometeors and gaseous extinction seperately.
-
-
+ 
   use kinds 
   use vars_atmosphere !gives kextatmo, kexttot, temp, nlyr
   use constants

@@ -57,7 +57,8 @@ class pyPamtra(object):
 
 		self.set["active"]=True
 		self.set["passive"]=True
-
+		self.set["rt_mode"]="rt4"
+		
 		self.set["ground_type"]='S'
 		self.set["salinity"]=33.0
 		self.set["EMissivity"]=0.6
@@ -75,8 +76,11 @@ class pyPamtra(object):
 		
 		self.set["SD_rain"]='C' 
 		self.set["N_0rainD"]=8.0
-
+		self.set["use_rain_db"]=False
+		
 		self.set["SD_snow"]='C' 
+		self.set["use_snow_db"]=False		
+		self.set["as_ratio"]=0.5		
 		self.set["N_0snowDsnow"]=7.628 
 		self.set["EM_snow"]='densi' 
 		self.set["snow_density"]=200 
@@ -883,7 +887,7 @@ class pyPamtra(object):
 					
 					pp_jobs[pp_ii] = self.job_server.submit(pyPamtraLibWrapper.PamtraFortranWrapper, (
 					#self.set
-					self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["EMissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"],self.set["SD_cloud"], self.set["SD_ice"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["snow_density"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["graupel_density"], self.set["SD_hail"], self.set["N_0hailDhail"], self.set["EM_hail"], self.set["hail_density"], self.set["n_moments"], self.set["moments_file"],
+					self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["rt_mode"], self.set["ground_type"], self.set["salinity"], self.set["EMissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_cloud"], self.set["SD_ice"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["use_rain_db"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["use_snow_db"], self.set["as_ratio"], self.set["snow_density"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["graupel_density"], self.set["SD_hail"], self.set["N_0hailDhail"], self.set["EM_hail"], self.set["hail_density"], self.set["n_moments"], self.set["moments_file"],
 					#input
 					pp_ngridx,
 					pp_ngridy,
@@ -1017,7 +1021,7 @@ class pyPamtra(object):
 		), host = \
 		pyPamtraLibWrapper.PamtraFortranWrapper(
 		#self.set
-		self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["ground_type"], self.set["salinity"], self.set["EMissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"],self.set["SD_cloud"], self.set["SD_ice"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["snow_density"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["graupel_density"], self.set["SD_hail"], self.set["N_0hailDhail"], self.set["EM_hail"], self.set["hail_density"], self.set["n_moments"], self.set["moments_file"],
+		self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["rt_mode"], self.set["ground_type"], self.set["salinity"], self.set["EMissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_cloud"], self.set["SD_ice"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["use_rain_db"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["use_snow_db"], self.set["as_ratio"], self.set["snow_density"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["graupel_density"], self.set["SD_hail"], self.set["N_0hailDhail"], self.set["EM_hail"], self.set["hail_density"], self.set["n_moments"], self.set["moments_file"],
 		#input
 		self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.p["nlyrs"],self.set["nfreqs"],self.set["freqs"],
 		self.p["unixtime"],
@@ -1058,7 +1062,7 @@ class pyPamtra(object):
 		except:
 			raise IOError ("Could not read data")
 		
-	def writeResultsToNetCDF(self,fname,profileVars="all",ncForm="NETCDF3"):
+	def writeResultsToNetCDF(self,fname,profileVars="all",ncForm="NETCDF3_CLASSIC"):
 		'''
 		write the results to a netcdf file
 		
