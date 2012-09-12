@@ -26,35 +26,53 @@ subroutine calculate_active(OUT_FILE_ACT,freq,hgt,&
      d_hgt = hgt_lev(nz) - hgt_lev(nz-1)
      K2 = dielec_water(0.D0,temp(nz)-t_abs,freq)
 
-     Ze(nz) = 10*log10(1d18* (1d0/ (K2*pi**5) ) * back(nz) * (wavelength)**4)
-     if (abs(Ze(nz)) .ge. huge(Ze(nz))) Ze(nz) = -9999.d0
 
-     Ze_cw(nz) = 10*log10(1d18* (1d0/ (K2*pi**5) ) * backcw(nz) * (wavelength)**4)
-     if (abs(Ze_cw(nz)) .ge. huge(Ze_cw(nz))) Ze_cw(nz) = -9999.d0
+     Ze(nz) = 1d18* (1d0/ (K2*pi**5) ) * back(nz) * (wavelength)**4
+     Ze_cw(nz) = 1d18* (1d0/ (K2*pi**5) ) * backcw(nz) * (wavelength)**4
+     Ze_rr(nz) = 1d18* (1d0/ (K2*pi**5) ) * backrr(nz) * (wavelength)**4
+     Ze_ci(nz) = 1d18* (1d0/ (K2*pi**5) ) * backci(nz) * (wavelength)**4
+     Ze_sn(nz) = 1d18* (1d0/ (K2*pi**5) ) * backsn(nz) * (wavelength)**4
+     Ze_gr(nz) = 1d18* (1d0/ (K2*pi**5) ) * backgr(nz) * (wavelength)**4
+     Ze_ha(nz) = 1d18* (1d0/ (K2*pi**5) ) * backha(nz) * (wavelength)**4
 
-     Ze_rr(nz) = 10*log10(1d18* (1d0/ (K2*pi**5) ) * backrr(nz) * (wavelength)**4)
-     if (abs(Ze_rr(nz)) .ge. huge(Ze_rr(nz))) Ze_rr(nz) = -9999.d0
+     Att_atmo(nz) = exp(kextatmo(nz)*d_hgt)
+     Att_hydro(nz) = exp(kexttot(nz)*d_hgt)
+     Att_cw(nz) = exp(kextcw(nz)*d_hgt)
+     Att_rr(nz) = exp(kextrr(nz)*d_hgt)
+     Att_ci(nz) = exp(kextci(nz)*d_hgt)
+     Att_sn(nz) = exp(kextsn(nz)*d_hgt)
+     Att_gr(nz) = exp(kextgr(nz)*d_hgt)
+     Att_ha(nz) = exp(kextha(nz)*d_hgt)
 
-     Ze_ci(nz) = 10*log10(1d18* (1d0/ (K2*pi**5) ) * backci(nz) * (wavelength)**4)
-     if (abs(Ze_ci(nz)) .ge. huge(Ze_ci(nz))) Ze_ci(nz) = -9999.d0
 
-     Ze_sn(nz) = 10*log10(1d18* (1d0/ (K2*pi**5) ) * backsn(nz) * (wavelength)**4)
-     if (abs(Ze_sn(nz)) .ge. huge(Ze_sn(nz))) Ze_sn(nz) = -9999.d0
+    if (activeLogScale) then
 
-     Ze_gr(nz) = 10*log10(1d18* (1d0/ (K2*pi**5) ) * backgr(nz) * (wavelength)**4)
-     if (abs(Ze_gr(nz)) .ge. huge(Ze_gr(nz))) Ze_gr(nz) = -9999.d0
+      Ze(nz) = 10*log10(Ze(nz))
+      if (abs(Ze(nz)) .ge. huge(Ze(nz))) Ze(nz) = -9999.d0
+      Ze_cw(nz) = 10*log10(Ze_cw(nz))
+      if (abs(Ze_cw(nz)) .ge. huge(Ze_cw(nz))) Ze_cw(nz) = -9999.d0
+      Ze_rr(nz) = 10*log10(Ze_rr(nz))
+      if (abs(Ze_rr(nz)) .ge. huge(Ze_rr(nz))) Ze_rr(nz) = -9999.d0
+      Ze_ci(nz) = 10*log10(Ze_ci(nz))
+      if (abs(Ze_ci(nz)) .ge. huge(Ze_ci(nz))) Ze_ci(nz) = -9999.d0
+      Ze_sn(nz) = 10*log10(Ze_sn(nz))
+      if (abs(Ze_sn(nz)) .ge. huge(Ze_sn(nz))) Ze_sn(nz) = -9999.d0
+      Ze_gr(nz) = 10*log10(Ze_gr(nz))
+      if (abs(Ze_gr(nz)) .ge. huge(Ze_gr(nz))) Ze_gr(nz) = -9999.d0
+      Ze_ha(nz) = 10*log10(Ze_ha(nz))
+      if (abs(Ze_ha(nz)) .ge. huge(Ze_ha(nz))) Ze_ha(nz) = -9999.d0
 
-     Ze_ha(nz) = 10*log10(1d18* (1d0/ (K2*pi**5) ) * backha(nz) * (wavelength)**4)
-     if (abs(Ze_ha(nz)) .ge. huge(Ze_ha(nz))) Ze_ha(nz) = -9999.d0
+      Att_atmo(nz) = 10*log10(Att_atmo(nz))
+      Att_hydro(nz) = 10*log10(Att_hydro(nz))
+      Att_cw(nz) = 10*log10(Att_cw(nz))
+      Att_rr(nz) = 10*log10(Att_rr(nz))
+      Att_ci(nz) = 10*log10(Att_ci(nz))
+      Att_sn(nz) = 10*log10(Att_sn(nz))
+      Att_gr(nz) = 10*log10(Att_gr(nz))
+      Att_ha(nz) = 10*log10(Att_ha(nz))
+  end if
 
-     Att_atmo(nz) = 10*log10(exp(kextatmo(nz)*d_hgt))
-     Att_hydro(nz) = 10*log10(exp(kexttot(nz)*d_hgt))
-     Att_cw(nz) = 10*log10(exp(kextcw(nz)*d_hgt))
-     Att_rr(nz) = 10*log10(exp(kextrr(nz)*d_hgt))
-     Att_ci(nz) = 10*log10(exp(kextci(nz)*d_hgt))
-     Att_sn(nz) = 10*log10(exp(kextsn(nz)*d_hgt))
-     Att_gr(nz) = 10*log10(exp(kextgr(nz)*d_hgt))
-     Att_ha(nz) = 10*log10(exp(kextha(nz)*d_hgt))
+
   end do
 
 

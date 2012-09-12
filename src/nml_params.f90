@@ -47,7 +47,8 @@ module nml_params
        write_nc, &  ! write netcdf or ascii output
        active, &  	   ! calculate active stuff
        passive, &     ! calculate passive stuff (with RT3)
-       zeSplitUp     ! save Ze and Att for every hydrometeor seperately. has only effect on netcdf file!
+       zeSplitUp, &     ! save Ze and Att for every hydrometeor seperately. has only effect on netcdf file!
+       activeLogScale !save ze and att in log scale or linear
 
   character(5) :: EM_ice, EM_snow, EM_grau, EM_hail
   character(1) :: SD_cloud, SD_ice, SD_rain, SD_snow, SD_grau, SD_hail
@@ -73,7 +74,8 @@ contains
     namelist / inoutput_mode / input_path, output_path,&
          tmp_path, dump_to_file, write_nc, data_path,&
          input_type, crm_case, crm_data, crm_data2, crm_constants
-    namelist / output / obs_height,units,outpol,freq_str,file_desc,creator,zeSplitUp
+    namelist / output / obs_height,units,outpol,freq_str,file_desc,creator,zeSplitUp, &
+	  activeLogScale
     namelist / run_mode / active, passive,rt_mode
     namelist / surface_params / ground_type,salinity, emissivity
     namelist / gas_abs_mod / lgas_extinction, gas_mod
@@ -110,7 +112,8 @@ contains
     freq_str=''
     file_desc=''
     creator='Pamtrauser'
-    zeSplitUp = .true.    
+    zeSplitUp = .true. 
+    activeLogScale = .true.
     ! sec run_mode
     active=.true.
     passive=.true.

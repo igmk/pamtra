@@ -78,6 +78,7 @@ class pyPamtra(object):
 		self.nmlSet["output"]["outpol"]='VH'
 		self.nmlSet["output"]["creator"]='pyPamtrauser'
 		self.nmlSet["output"]["zeSplitUp"]=True # only locally in PYpamtra
+		self.nmlSet["output"]["activeLogScale"]=True
 
 		self.nmlSet["run_mode"]["active"]=True
 		self.nmlSet["run_mode"]["passive"]=True
@@ -85,7 +86,7 @@ class pyPamtra(object):
 		
 		self.nmlSet["surface_params"]["ground_type"]='S'
 		self.nmlSet["surface_params"]["salinity"]=33.0
-		self.nmlSet["surface_params"]["EMissivity"]=0.6
+		self.nmlSet["surface_params"]["emissivity"]=0.6
 
 		self.nmlSet["gas_abs_mod"]["lgas_extinction"]=True
 		self.nmlSet["gas_abs_mod"]["gas_mod"]='R98'
@@ -127,7 +128,7 @@ class pyPamtra(object):
 		
 		#all settings which do not go into the nml file go here:
 		self.set = dict()
-		self.set["pyVerbose"] = 0 #
+		self.set["pyVerbose"] = 1
 		self.set["freqs"] = []
 		self.set["nfreqs"] = 0
 		self.set["namelist_file"] = "pyPamtra_namelist_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nml.tmp"
@@ -234,9 +235,9 @@ class pyPamtra(object):
 		self.units["hwc_n"] = "#/kg"
 		
 		self.units["hgt"] = "m"
-		self.units["Ze"] = "dBz"
-		self.units["Att_hydros"] = "-"
-		self.units["Att_atmo"] = "-"
+		self.units["Ze"] = "dBz OR mm^6 m^-3"
+		self.units["Att_hydros"] = "dB OR linear"
+		self.units["Att_atmo"] = "dB OR linear"
 		self.units["tb"] = "K"
 	
 		self._nstokes = 2
@@ -251,7 +252,7 @@ class pyPamtra(object):
 		for keygr in self.nmlSet.keys():
 			for key in self.nmlSet[keygr].keys():
 				if key not in self._nmlDefaultKeys:
-					warnings.warn("Warning can not parse setting: ",key, Warning)
+					warnings.warn("Warning can not parse setting: "+str(key))
 					
 					
 		f = open(nmlFile,"w")
@@ -401,7 +402,7 @@ class pyPamtra(object):
 		'''
 		Function to create Pamtra Profiles.
 		
-		Variables ending on _lev mean level values, variables without are layer values (height vecotr one entry shorter!)!
+		Variables ending on _lev mean level values, variables without are layer values (height vector one entry shorter!)!
 		
 		Everything is needed in SI units, relhum is in Pa/PA not %
 		
@@ -857,7 +858,7 @@ class pyPamtra(object):
 
 		
 		
-	def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers="auto",pp_deltaF=0,pp_deltaX=0,pp_deltaY = 0):
+	def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0):
 		'''
 		run Pamtra analouge to runPamtra, but with with parallel python
 		
@@ -872,14 +873,18 @@ class pyPamtra(object):
 		
 		output is collected by _ppCallback()
 		'''
-		
 		tttt = time.time()
 		
 		self._checkData()
 		
-		#if the tmp file is used, write it
-		if self.set["namelist_file"].split(".")[-1] == "tmp": self.writeNmlFile(self.set["namelist_file"])
-		else: warn.warning("NOT writing temporary nml file to run pamtra")
+		#if the namelist file is empty, write it. Otherwise existing one is used.
+		if not os.path.isfile(self.set["namelist_file"]):
+			self.writeNmlFile(self.set["namelist_file"])
+		else: 
+			if self.set["namelist_file"].split(".")[-1] == "tmp": 
+				raise ValueError("Namelitsfile "+ self.set["namelist_file"] +" ends with .tmp, but is existing already")
+			elif self.set["pyVerbose"] > 0:
+				print("NOT writing temporary nml file to run pamtra using exisiting nml file instead: "+self.set["namelist_file"])
 
 		if pp_local_workers == "auto":
 			self.job_server = pp.Server(ppservers=pp_servers,secret="pyPamtra") 
@@ -887,8 +892,8 @@ class pyPamtra(object):
 			self.job_server = pp.Server(pp_local_workers,ppservers=pp_servers,secret="pyPamtra") 
 			
 		if int(self.nmlSet["verbose_mode"]["verbose"]) > 0:	
-			raise IOError('There is a weired bug if verbosity of the fortran part prints anythin (e.g verbosity is larger than 0). Use the non-parallel pyPamtra version for debugging! verbose=', self.nmlSet["verbose_mode"]["verbose"])
-		if self.set["pyVerbose"] >= 0: 
+			raise IOError('There is a weired bug if the fortran part prints anything (i.e. verbosity is larger than 0). Use the non-parallel pyPamtra version for debugging! verbose=', self.nmlSet["verbose_mode"]["verbose"])
+		if self.set["pyVerbose"] > 0: 
 			print "Starting pp with: "
 			pp_nodes = self.job_server.get_active_nodes()
 			for key in pp_nodes.keys():
@@ -988,30 +993,30 @@ class pyPamtra(object):
 					),tuple(), ("pyPamtraLibWrapper","pyPamtraLib","os",),callback=self._ppCallback,
 					callbackargs=(pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii,))
 					
-					if self.set["pyVerbose"] >= 0: 
+					if self.set["pyVerbose"] > 0: 
 						sys.stdout.write("\r"+20*" "+"\r"+ "%i, %5.3f%% submitted"%(pp_ii+1,(pp_ii+1)/float(self.pp_noJobs)*100))
 						sys.stdout.flush()
 
-		if self.set["pyVerbose"] >= 0: 
+		if self.set["pyVerbose"] > 0: 
 			print " "
 			print self.pp_noJobs, "jobs submitted"
 
 
-		if self.set["pyVerbose"] >= 0: print " "; self.job_server.get_active_nodes()
+		if self.set["pyVerbose"] > 0: print " "; self.job_server.get_active_nodes()
 		self.job_server.wait()
 		
 		self.r["nmlSettings"] = self.nmlSet
 		self.r["pamtraVersion"] = self.r["pamtraVersion"].strip()
 		self.r["pamtraHash"] = self.r["pamtraHash"].strip()
 		
-		if self.set["pyVerbose"] >= 0: print " "; self.job_server.print_stats()
+		if self.set["pyVerbose"] > 0: print " "; self.job_server.print_stats()
 		self.job_server.destroy()
 		del self.job_server
 		
 		#remove temporary nml file
 		if self.set["namelist_file"].split(".")[-1] == "tmp": os.remove(self.set["namelist_file"])
 		
-		if self.set["pyVerbose"] >= 0: print "pyPamtra runtime:", time.time() - tttt
+		if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
 	
 	def _ppCallback(self,pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii,*results):
 		'''
@@ -1060,9 +1065,13 @@ class pyPamtra(object):
 		
 		self._checkData()
 
-		#if the tmp file is used, write it
-		if self.set["namelist_file"].split(".")[-1] == "tmp": self.writeNmlFile(self.set["namelist_file"])
-		else: warn.warning("NOT writing temporary nml file to run pamtra")
+		if not os.path.isfile(self.set["namelist_file"]):
+			self.writeNmlFile(self.set["namelist_file"])
+		else: 
+			if self.set["namelist_file"].split(".")[-1] == "tmp": 
+				raise ValueError("Namelitsfile "+ self.set["namelist_file"] +" ends with .tmp, but is existing already")
+			elif self.set["pyVerbose"] > 0:
+				print("NOT writing temporary nml file to run pamtra using exisiting nml file instead: "+self.set["namelist_file"])
 		
 		#output
 		(
@@ -1111,7 +1120,7 @@ class pyPamtra(object):
 		#remove temporary nml file
 		if self.set["namelist_file"].split(".")[-1] == "tmp": os.remove(self.set["namelist_file"])
 		
-		if self.set["pyVerbose"] >= 0: print "pyPamtra runtime:", time.time() - tttt
+		if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
 
 
 	def writeResultsToNumpy(self,fname):
@@ -1119,7 +1128,7 @@ class pyPamtra(object):
 		write the complete state of the session (profile,results,settings to a file
 		'''
 		f = open(fname, "w")
-		pickle.dump([self.r,self.p,self.nmlSet,self.set], f)
+		pickle.dump([self.r,self.p,self._helperP,self.nmlSet,self.set], f)
 		f.close()
 
 	def loadResultsFromNumpy(self,fname):
@@ -1128,8 +1137,11 @@ class pyPamtra(object):
 		'''
 		try: 
 			f = open(fname, "r")
-			[self.r,self.p,self.nmlSet,self.set] = pickle.load(f)
+			[self.r,self.p,self._helperP,self.nmlSet,self.set] = pickle.load(f)
 			f.close()
+			self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
+			self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],)
+			self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"]+1,)
 		except:
 			raise IOError ("Could not read data")
 		
@@ -1190,6 +1202,14 @@ class pyPamtra(object):
 		dim4d = ("grid_x","grid_y","heightbins","frequency")
 		dim6d = ("grid_x","grid_y","outlevels","angles","frequency","stokes")
 			
+			
+			
+		if (self.r["nmlSettings"]["output"]["activeLogScale"]):
+			attUnit = "dBz"
+			zeUnit = "dBz"
+		else:
+			 attUnit = "linear"
+			 zeUnit = "mm^6 m^-3"    
 		#create and write dim variables
 		
 		fillVDict = dict()
@@ -1284,81 +1304,81 @@ class pyPamtra(object):
 			if self.r["nmlSettings"]["output"]["zeSplitUp"]:
 
 				nc_Ze_cw = cdfFile.createVariable('Ze_cloud_water', 'f',dim4d,**fillVDict)
-				nc_Ze_cw.units = "dBz"
+				nc_Ze_cw.units = zeUnit
 				nc_Ze_cw[:] = np.array(self.r["Ze_cw"],dtype='f')
 				if not pyNc: nc_Ze_cw._FillValue =missingNumber
 		
 				nc_Ze_rr = cdfFile.createVariable('Ze_rain', 'f',dim4d,**fillVDict)
-				nc_Ze_rr.units = "dBz"
+				nc_Ze_rr.units = zeUnit
 				nc_Ze_rr[:] = np.array(self.r["Ze_rr"],dtype='f')
 				if not pyNc: nc_Ze_rr._FillValue =missingNumber
 		
 				nc_Ze_ci = cdfFile.createVariable('Ze_cloud_ice', 'f',dim4d,**fillVDict)
-				nc_Ze_ci.units = "dBz"
+				nc_Ze_ci.units = zeUnit
 				nc_Ze_ci[:] = np.array(self.r["Ze_ci"],dtype='f')
 				if not pyNc: nc_Ze_ci._FillValue = missingNumber
 			
 				nc_Ze_sn = cdfFile.createVariable('Ze_snow', 'f',dim4d,**fillVDict)
-				nc_Ze_sn.units = "dBz"
+				nc_Ze_sn.units = zeUnit
 				nc_Ze_sn[:] = np.array(self.r["Ze_sn"],dtype='f')
 				if not pyNc: nc_Ze_sn._FillValue =missingNumber
 		
 				nc_Ze_gr = cdfFile.createVariable('Ze_graupel', 'f',dim4d,**fillVDict)
-				nc_Ze_gr.units = "dBz"
+				nc_Ze_gr.units = zeUnit
 				nc_Ze_gr[:] = np.array(self.r["Ze_gr"],dtype='f')
 				if not pyNc: nc_Ze_gr._FillValue =missingNumber
 		
 				nc_Att_cw = cdfFile.createVariable('Attenuation_cloud_water', 'f',dim4d,**fillVDict)
-				nc_Att_cw.units = "dB"
+				nc_Att_cw.units = attUnit
 				nc_Att_cw[:] = np.array(self.r["Att_cw"],dtype='f')
 				if not pyNc: nc_Att_cw._FillValue =missingNumber
 		
 				nc_Att_rrrs = cdfFile.createVariable('Attenuation_rain', 'f',dim4d,**fillVDict)
-				nc_Att_rrrs.units = "dB"
+				nc_Att_rrrs.units = attUnit
 				nc_Att_rrrs[:] = np.array(self.r["Att_rr"],dtype='f')
 				if not pyNc: nc_Att_rrrs._FillValue =missingNumber
 				
 				nc_Att_ci = cdfFile.createVariable('Attenuation_cloud_ice', 'f',dim4d,**fillVDict)
-				nc_Att_ci.units = "dB"
+				nc_Att_ci.units = attUnit
 				nc_Att_ci[:] = np.array(self.r["Att_ci"],dtype='f')
 				if not pyNc: nc_Att_ci._FillValue =missingNumber
 				
 				nc_Att_sn = cdfFile.createVariable('Attenuation_snow', 'f',dim4d,**fillVDict)
-				nc_Att_sn.units = "dB"
+				nc_Att_sn.units = attUnit
 				nc_Att_sn[:] = np.array(self.r["Att_sn"],dtype='f')
 				if not pyNc: nc_Att_sn._FillValue =missingNumber
 		
 				nc_Att_gr = cdfFile.createVariable('Attenuation_graupel', 'f',dim4d,**fillVDict)
-				nc_Att_gr.units = "dB"
+				nc_Att_gr.units = attUnit
 				nc_Att_gr[:] = np.array(self.r["Att_gr"],dtype='f')
 				if not pyNc: nc_Att_gr._FillValue =missingNumber
 		
 				if self.r["nmlSettings"]["moments"]["n_moments"]==2:
 
 					nc_Ze_ha = cdfFile.createVariable('Ze_hail', 'f',dim4d,**fillVDict)
-					nc_Ze_ha.units = "dBz"
+					nc_Ze_ha.units = zeUnit
 					nc_Ze_ha[:] = np.array(self.r["Ze_ha"],dtype='f')
 					if not pyNc: nc_Ze_ha._FillValue =missingNumber
 		
 					nc_Att_ha = cdfFile.createVariable('Attenuation_hail', 'f',dim4d,**fillVDict)
-					nc_Att_ha.units = "dB"
+					nc_Att_ha.units = attUnit
 					nc_Att_ha[:] = np.array(self.r["Att_ha"],dtype='f')
 					if not pyNc: nc_Att_ha._FillValue =missingNumber
 		
 			else: 
 				 
 				nc_Ze = cdfFile.createVariable('Ze', 'f',dim4d,**fillVDict)
-				nc_Ze.units = "dBz"
+				nc_Ze.units = zeUnit
 				nc_Ze[:] = np.array(self.r["Ze"],dtype='f')
 				if not pyNc: nc_Ze._FillValue =missingNumber
 		
 				nc_Attenuation_Hydrometeors = cdfFile.createVariable('Attenuation_Hydrometeors', 'f',dim4d,**fillVDict)
-				nc_Attenuation_Hydrometeors.units = "dB"
+				nc_Attenuation_Hydrometeors.units = attUnit
 				nc_Attenuation_Hydrometeors[:] = np.array(self.r["Att_hydro"],dtype='f')
 				if not pyNc: nc_Attenuation_Hydrometeors._FillValue =missingNumber
 		
 			nc_Attenuation_Atmosphere = cdfFile.createVariable('Attenuation_Atmosphere', 'f',dim4d,**fillVDict)
-			nc_Attenuation_Atmosphere.units = "dB"
+			nc_Attenuation_Atmosphere.units = attUnit
 			nc_Attenuation_Atmosphere[:] = np.array(self.r["Att_atmo"],dtype='f')
 			if not pyNc: nc_Attenuation_Atmosphere._FillValue =missingNumber
 		
@@ -1425,4 +1445,4 @@ class pyPamtra(object):
 			if not pyNc: nc_ct._FillValue =missingNumber
 
 		cdfFile.close()
-		if self.set["pyVerbose"] >= 0: print fname,"written"
+		if self.set["pyVerbose"] > 0: print fname,"written"

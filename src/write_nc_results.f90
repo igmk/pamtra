@@ -4,7 +4,8 @@ subroutine write_nc_results
   use vars_output
   use vars_atmosphere, only: ngridx, ngridy,nlyr,freqs,nfrq, year, month, day, time
   use netcdf
-  use nml_params, only: active, passive, creator, verbose, zeSplitUp, n_moments
+  use nml_params, only: active, passive, creator, verbose, zeSplitUp, &
+			n_moments, activeLogScale
   use file_mod, only: nc_out_file
 
   implicit none
@@ -32,10 +33,20 @@ subroutine write_nc_results
 
   character(300) :: timestring
   character(40) ::gitVersion,gitHash
+  character(10) ::attUnit,zeUnit
 
   if (verbose .gt. 0) print*,"writing: ", nc_out_file
   !get git data
   call versionNumber(gitVersion,gitHash)
+
+  if (activeLogScale) then
+    attUnit = "dBz"
+    zeUnit = "dBz"
+  else
+    attUnit = "linear"
+    zeUnit = "mm^6 m^-3"    
+  end if
+
 
   call check(nf90_create(path=nc_out_file,cmode=nf90_clobber,ncid=ncid))
 
@@ -138,68 +149,68 @@ subroutine write_nc_results
      if (zeSplitUp) then
 
         call check(nf90_def_var(ncid,'Ze_cloud water', nf90_double,dim4d, ZeCwVarID))
-        call check(nf90_put_att(ncid, ZeCwVarID, "units", "dBz"))
+        call check(nf90_put_att(ncid, ZeCwVarID, "units", zeUnit))
         call check(nf90_put_att(ncid, ZeCwVarID, "missing_value", -9999))
 
         call check(nf90_def_var(ncid,'Ze_rain_water', nf90_double,dim4d, ZeRrVarID))
-        call check(nf90_put_att(ncid, ZeRrVarID, "units", "dBz"))
+        call check(nf90_put_att(ncid, ZeRrVarID, "units", zeUnit))
         call check(nf90_put_att(ncid, ZeRrVarID, "missing_value", -9999))
 
         call check(nf90_def_var(ncid,'Ze_cloud_ice', nf90_double,dim4d, ZeCiVarID))
-        call check(nf90_put_att(ncid, ZeCiVarID, "units", "dBz"))
+        call check(nf90_put_att(ncid, ZeCiVarID, "units", zeUnit))
         call check(nf90_put_att(ncid, ZeCiVarID, "missing_value", -9999))
 
         call check(nf90_def_var(ncid,'Ze_snow', nf90_double,dim4d, ZeSnVarID))
-        call check(nf90_put_att(ncid, ZeSnVarID, "units", "dBz"))
+        call check(nf90_put_att(ncid, ZeSnVarID, "units", zeUnit))
         call check(nf90_put_att(ncid, ZeSnVarID, "missing_value", -9999))
 
         call check(nf90_def_var(ncid,'Ze_graupel', nf90_double,dim4d, ZeGrVarID))
-        call check(nf90_put_att(ncid, ZeGrVarID, "units", "dBz"))
+        call check(nf90_put_att(ncid, ZeGrVarID, "units", zeUnit))
         call check(nf90_put_att(ncid, ZeGrVarID, "missing_value", -9999))
 
         call check(nf90_def_var(ncid,'Attenuation_cloud_water', nf90_double,dim4d, AttCwVarID))
-        call check(nf90_put_att(ncid, AttCwVarID, "units", "dB"))
+        call check(nf90_put_att(ncid, AttCwVarID, "units", attUnit))
         call check(nf90_put_att(ncid, AttCwVarID, "missing_value", -9999))
 
         call check(nf90_def_var(ncid,'Attenuation_rain', nf90_double,dim4d, AttRrVarID))
-        call check(nf90_put_att(ncid, AttRrVarID, "units", "dB"))
+        call check(nf90_put_att(ncid, AttRrVarID, "units", attUnit))
         call check(nf90_put_att(ncid, AttRrVarID, "missing_value", -9999))
 
         call check(nf90_def_var(ncid,'Attenuation_cloud_ice', nf90_double,dim4d, AttCiVarID))
-        call check(nf90_put_att(ncid, AttCiVarID, "units", "dB"))
+        call check(nf90_put_att(ncid, AttCiVarID, "units", attUnit))
         call check(nf90_put_att(ncid, AttCiVarID, "missing_value", -9999))
 
         call check(nf90_def_var(ncid,'Attenuation_snow', nf90_double,dim4d, AttSnVarID))
-        call check(nf90_put_att(ncid, AttSnVarID, "units", "dB"))
+        call check(nf90_put_att(ncid, AttSnVarID, "units", attUnit))
         call check(nf90_put_att(ncid, AttSnVarID, "missing_value", -9999))
 
         call check(nf90_def_var(ncid,'Attenuation_graupel', nf90_double,dim4d, AttGrVarID))
-        call check(nf90_put_att(ncid, AttGrVarID, "units", "dB"))
+        call check(nf90_put_att(ncid, AttGrVarID, "units", attUnit))
         call check(nf90_put_att(ncid, AttGrVarID, "missing_value", -9999))
 
         if (n_moments .eq. 2) then
            call check(nf90_def_var(ncid,'Ze_hail', nf90_double,dim4d, ZeHaVarID))
-           call check(nf90_put_att(ncid, ZeHaVarID, "units", "dBz"))
+           call check(nf90_put_att(ncid, ZeHaVarID, "units", zeUnit))
            call check(nf90_put_att(ncid, ZeHaVarID, "missing_value", -9999))
        
            call check(nf90_def_var(ncid,'Attenuation_hail', nf90_double,dim4d, AttHaVarID))
-           call check(nf90_put_att(ncid, AttHaVarID, "units", "dB"))
+           call check(nf90_put_att(ncid, AttHaVarID, "units", attUnit))
            call check(nf90_put_att(ncid, AttHaVarID, "missing_value", -9999))
         end if
         
      else
      
         call check(nf90_def_var(ncid,'Ze', nf90_double,dim4d, ZeVarID))
-        call check(nf90_put_att(ncid, ZeVarID, "units", "dBz"))
+        call check(nf90_put_att(ncid, ZeVarID, "units", zeUnit))
         call check(nf90_put_att(ncid, ZeVarID, "missing_value", -9999))
 
         call check(nf90_def_var(ncid,'Attenuation_Hydrometeors', nf90_double,dim4d, AttHydroVarID))
-        call check(nf90_put_att(ncid, AttHydroVarID, "units", "dB"))
+        call check(nf90_put_att(ncid, AttHydroVarID, "units", attUnit))
         call check(nf90_put_att(ncid, AttHydroVarID, "missing_value", -9999))
 
      end if
      call check(nf90_def_var(ncid,'Attenuation_Atmosphere', nf90_double,dim4d, AttAtmoVarID))
-     call check(nf90_put_att(ncid, AttAtmoVarID, "units", "dB"))
+     call check(nf90_put_att(ncid, AttAtmoVarID, "units", attUnit))
      call check(nf90_put_att(ncid, AttAtmoVarID, "missing_value", -9999))
 
 
