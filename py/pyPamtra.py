@@ -10,7 +10,10 @@ import time,calendar,datetime
 import warnings
 import sys
 import os
+import random
+import string
 from copy import deepcopy
+from collections import OrderedDict
 
 import namelist #parser for fortran namelist files
 
@@ -42,70 +45,102 @@ class pyPamtra(object):
 	'''
 	def __init__(self):
 		#set setting default values
+	
+		self.nmlSet = OrderedDict() #settings which are required for the nml file. keeping the order is important for Fortran""
+
+		self.nmlSet["verbose_mode"] = dict()
+		self.nmlSet["inoutput_mode"] = dict()
+		self.nmlSet["output"] = dict()
+		self.nmlSet["run_mode"] = dict()
+		self.nmlSet["surface_params"] = dict()
+		self.nmlSet["gas_abs_mod"] = dict()
+		self.nmlSet["hyd_opts"] = dict()
+		self.nmlSet["cloud_params"] = dict()
+		self.nmlSet["ice_params"] = dict()
+		self.nmlSet["rain_params"] = dict()
+		self.nmlSet["snow_params"] = dict()
+		self.nmlSet["graupel_params"] = dict()
+		self.nmlSet["hail_params"] = dict()
+		self.nmlSet["moments"] = dict()
+		
+		self.nmlSet["verbose_mode"]["verbose"] = 0
+		
+		self.nmlSet["inoutput_mode"]["dump_to_file"]=False
+		self.nmlSet["inoutput_mode"]["tmp_path"]='/tmp/'
+		self.nmlSet["inoutput_mode"]["data_path"]='/home/mech/models/pamtra/data/'
+		self.nmlSet["inoutput_mode"]["crm_case"]=''
+		self.nmlSet["inoutput_mode"]["crm_data"]=''
+		self.nmlSet["inoutput_mode"]["crm_data2"]=''
+		self.nmlSet["inoutput_mode"]["crm_constants"]=''
+
+		self.nmlSet["output"]["obs_height"]=833000.
+		self.nmlSet["output"]["units"]='T'
+		self.nmlSet["output"]["outpol"]='VH'
+		self.nmlSet["output"]["creator"]='pyPamtrauser'
+		self.nmlSet["output"]["zeSplitUp"]=True # only locally in PYpamtra
+		self.nmlSet["output"]["activeLogScale"]=True
+
+		self.nmlSet["run_mode"]["active"]=True
+		self.nmlSet["run_mode"]["passive"]=True
+		self.nmlSet["run_mode"]["rt_mode"]="rt4"
+		
+		self.nmlSet["surface_params"]["ground_type"]='S'
+		self.nmlSet["surface_params"]["salinity"]=33.0
+		self.nmlSet["surface_params"]["emissivity"]=0.6
+
+		self.nmlSet["gas_abs_mod"]["lgas_extinction"]=True
+		self.nmlSet["gas_abs_mod"]["gas_mod"]='R98'
+
+		self.nmlSet["hyd_opts"]["lhyd_extinction"]=True
+		self.nmlSet["hyd_opts"]["lphase_flag"]= True
+
+		self.nmlSet["cloud_params"]["SD_cloud"]='C'
+		
+		self.nmlSet["ice_params"]["SD_ice"]='C'
+		self.nmlSet["ice_params"]["EM_ice"]='mieic'
+		
+		self.nmlSet["rain_params"]["SD_rain"]='C' 
+		self.nmlSet["rain_params"]["N_0rainD"]=8.0
+		self.nmlSet["rain_params"]["use_rain_db"]=False
+		
+		self.nmlSet["snow_params"]["SD_snow"]='C' 
+		self.nmlSet["snow_params"]["use_snow_db"]=False		
+		self.nmlSet["snow_params"]["as_ratio"]=0.5		
+		self.nmlSet["snow_params"]["N_0snowDsnow"]=7.628 
+		self.nmlSet["snow_params"]["EM_snow"]='densi' 
+		self.nmlSet["snow_params"]["snow_density"]=200.
+		self.nmlSet["snow_params"]["SP"]=0.2 
+		self.nmlSet["snow_params"]["isnow_n0"]=1
+		self.nmlSet["snow_params"]["liu_type"]=8
+
+		self.nmlSet["graupel_params"]["SD_grau"]='C' 
+		self.nmlSet["graupel_params"]["N_0grauDgrau"]=4.0 
+		self.nmlSet["graupel_params"]["EM_grau"]='densi'
+		self.nmlSet["graupel_params"]["graupel_density"]=400.
+
+		self.nmlSet["hail_params"]["SD_hail"]='C' 
+		self.nmlSet["hail_params"]["N_0hailDhail"]=4.0 
+		self.nmlSet["hail_params"]["EM_hail"]='densi'
+		self.nmlSet["hail_params"]["hail_density"]=917.
+
+		self.nmlSet["moments"]["n_moments"]=1
+		self.nmlSet["moments"]["moments_file"]='snowCRYSTAL'
+		
+		#all settings which do not go into the nml file go here:
 		self.set = dict()
-		self.set["verbose"]=0
-		self.set["pyVerbose"] = 0 #not passed to Pamtra!
-		self.set["dump_to_file"]=False
-		self.set["tmp_path"]='/tmp/'
-		self.set["data_path"]='/home/mech/models/pamtra/data/'
-
-		self.set["obs_height"]=833000.
-		self.set["units"]='T'
-		self.set["outpol"]='VH'
-		self.set["creator"]='pyPamtrauser'
-		self.set["zeSplitUp"]=True # only locally in PYpamtra
-
-		self.set["active"]=True
-		self.set["passive"]=True
-		self.set["rt_mode"]="rt4"
-		
-		self.set["ground_type"]='S'
-		self.set["salinity"]=33.0
-		self.set["EMissivity"]=0.6
-
-		self.set["lgas_extinction"]=True
-		self.set["gas_mod"]='R98'
-
-		self.set["lhyd_extinction"]=True
-		self.set["lphase_flag"]= True
-
-		self.set["SD_cloud"]='C'
-		
-		self.set["SD_ice"]='C'
-		self.set["EM_ice"]='mieic'
-		
-		self.set["SD_rain"]='C' 
-		self.set["N_0rainD"]=8.0
-		self.set["use_rain_db"]=False
-		
-		self.set["SD_snow"]='C' 
-		self.set["use_snow_db"]=False		
-		self.set["as_ratio"]=0.5		
-		self.set["N_0snowDsnow"]=7.628 
-		self.set["EM_snow"]='densi' 
-		self.set["snow_density"]=200 
-		self.set["SP"]=0.2 
-		self.set["isnow_n0"]=1
-		self.set["liu_type"]=8
-
-		self.set["SD_grau"]='C' 
-		self.set["N_0grauDgrau"]=4.0 
-		self.set["EM_grau"]='densi'
-		self.set["graupel_density"]=400 
-
-		self.set["SD_hail"]='C' 
-		self.set["N_0hailDhail"]=4.0 
-		self.set["EM_hail"]='densi'
-		self.set["hail_density"]=917 
-
-		self.set["n_moments"]=1
-		self.set["moments_file"]='snowCRYSTAL'
-		
+		self.set["pyVerbose"] = 1
 		self.set["freqs"] = []
 		self.set["nfreqs"] = 0
+		self.set["namelist_file"] = "pyPamtra_namelist_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nml.tmp"
+
 				
-		self._setDefaultKeys = self.set.keys()
+		self._nmlDefaultKeys = list()
+		for keyGr in self.nmlSet.keys()	:  
+			for key in self.nmlSet[keyGr].keys():
+				self._nmlDefaultKeys.append(key)
 		
+		self._nmlDefaultValues = deepcopy(self.nmlSet)
+		    
 		self.dimensions = dict()
 		
 		self.dimensions["unixtime"] = ["ngridx","ngridy"]
@@ -200,9 +235,9 @@ class pyPamtra(object):
 		self.units["hwc_n"] = "#/kg"
 		
 		self.units["hgt"] = "m"
-		self.units["Ze"] = "dBz"
-		self.units["Att_hydros"] = "-"
-		self.units["Att_atmo"] = "-"
+		self.units["Ze"] = "dBz OR mm^6 m^-3"
+		self.units["Att_hydros"] = "dB OR linear"
+		self.units["Att_atmo"] = "dB OR linear"
 		self.units["tb"] = "K"
 	
 		self._nstokes = 2
@@ -213,6 +248,35 @@ class pyPamtra(object):
 		self._helperP = dict()
 		self.r = dict()
 		
+	def writeNmlFile(self,nmlFile):
+		for keygr in self.nmlSet.keys():
+			for key in self.nmlSet[keygr].keys():
+				if key not in self._nmlDefaultKeys:
+					warnings.warn("Warning can not parse setting: "+str(key))
+					
+					
+		f = open(nmlFile,"w")
+		for keygr in self.nmlSet.keys():
+			f.write("&%s\n\r"%keygr)
+			for key in self.nmlSet[keygr].keys():
+				if self.set["pyVerbose"] > 1: print "write: ", keygr, key
+				if type(self._nmlDefaultValues[keygr][key])==bool:
+					value = str(self.nmlSet[keygr][key]).lower()
+					f.write("%s=.%s.\n\r"%(key,value,))
+				elif type(self._nmlDefaultValues[keygr][key]) in [int,np.int32,np.int64]:
+					value = int(self.nmlSet[keygr][key])
+					f.write("%s=%i\n\r"%(key,value,))	
+				elif type(self._nmlDefaultValues[keygr][key]) in [float,np.float32,np.float64]:
+					value = np.float64(self.nmlSet[keygr][key])
+					f.write("%s=%f\n\r"%(key,value,))	
+				elif type(self._nmlDefaultValues[keygr][key]) in [str]:
+					value = str(self.nmlSet[keygr][key])
+					f.write("%s='%s'\n\r"%(key,value,))
+				else:
+					raise ValueError("cannot determine type of nml key "+ key)
+			f.write("/\n\r")
+		f.close()
+
 	def readNmlFile(self,inputFile):
 		"""
 		read classical Pamtra Namelist File from inputFile
@@ -224,11 +288,11 @@ class pyPamtra(object):
 		
 		for key in nmlFile.keys():
 			for subkey in nmlFile[key]["par"][0].keys():
-				if subkey in self._setDefaultKeys:
+				if subkey in self._nmlDefaultKeys:
 					if nmlFile[key]["par"][0][subkey][0] == ".true.": value = True
 					elif nmlFile[key]["par"][0][subkey][0] == ".false.": value = False
 					else: value = nmlFile[key]["par"][0][subkey][0]
-					self.set[subkey] = value
+					self.nmlSet[key][subkey] = value
 					if self.set["pyVerbose"] > 1: print subkey, ":", value
 				elif self.set["pyVerbose"] > 0:
 					print "Setting '"+ subkey +"' from '"+ inputFile +"' skipped."
@@ -286,7 +350,7 @@ class pyPamtra(object):
 		self.p["swc_q"] = np.zeros(self._shape3D)
 		self.p["gwc_q"] = np.zeros(self._shape3D)
 		
-		if int(self.set["n_moments"]) == 1:
+		if int(self.nmlSet["moments"]["n_moments"]) == 1:
 			self.p["hwc_q"] = np.ones(self._shape3D)*missingNumber
 			self.p["cwc_n"] = np.ones(self._shape3D)*missingNumber
 			self.p["iwc_n"] = np.ones(self._shape3D)*missingNumber
@@ -304,7 +368,7 @@ class pyPamtra(object):
 					for z in np.arange(self.p["nlyrs"]):
 						self.p["hgt_lev"][x,y,z+1],self.p["press_lev"][x,y,z+1],self.p["temp_lev"][x,y,z+1],self.p["relhum_lev"][x,y,z+1],self.p["cwc_q"][x,y,z],self.p["iwc_q"][x,y,z],self.p["rwc_q"][x,y,z],self.p["swc_q"][x,y,z],self.p["gwc_q"][x,y,z] = np.array(np.array(g.next()),dtype=float)
 
-		elif int(self.set["n_moments"]) == 2:
+		elif int(self.nmlSet["moments"]["n_moments"]) == 2:
 			self.p["hwc_q"] = np.zeros(self._shape3D)
 			self.p["cwc_n"] = np.zeros(self._shape3D)
 			self.p["iwc_n"] = np.zeros(self._shape3D)
@@ -338,7 +402,7 @@ class pyPamtra(object):
 		'''
 		Function to create Pamtra Profiles.
 		
-		Variables ending on _lev mean level values, variables without are layer values (height vecotr one entry shorter!)!
+		Variables ending on _lev mean level values, variables without are layer values (height vector one entry shorter!)!
 		
 		Everything is needed in SI units, relhum is in Pa/PA not %
 		
@@ -792,7 +856,9 @@ class pyPamtra(object):
 		self.p["gwc_n"] = gwc_n.reshape(self._shape3D)
 		self.p["hwc_n"] = hwc_n.reshape(self._shape3D)
 
-	def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers="auto",pp_deltaF=0,pp_deltaX=0,pp_deltaY = 0):
+		
+		
+	def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0):
 		'''
 		run Pamtra analouge to runPamtra, but with with parallel python
 		
@@ -807,23 +873,27 @@ class pyPamtra(object):
 		
 		output is collected by _ppCallback()
 		'''
-		
 		tttt = time.time()
 		
 		self._checkData()
 		
-		for key in self.set:
-			if key not in self._setDefaultKeys:
-				warnings.warn("Warning can not parse setting: ",key, Warning)
+		#if the namelist file is empty, write it. Otherwise existing one is used.
+		if not os.path.isfile(self.set["namelist_file"]):
+			self.writeNmlFile(self.set["namelist_file"])
+		else: 
+			if self.set["namelist_file"].split(".")[-1] == "tmp": 
+				raise ValueError("Namelitsfile "+ self.set["namelist_file"] +" ends with .tmp, but is existing already")
+			elif self.set["pyVerbose"] > 0:
+				print("NOT writing temporary nml file to run pamtra using exisiting nml file instead: "+self.set["namelist_file"])
 
 		if pp_local_workers == "auto":
 			self.job_server = pp.Server(ppservers=pp_servers,secret="pyPamtra") 
 		else:
 			self.job_server = pp.Server(pp_local_workers,ppservers=pp_servers,secret="pyPamtra") 
 			
-		if int(self.set["verbose"]) > 0:	
-			raise IOError('There is a weired bug if verbosity of the fortran part prints anythin (e.g verbosity is larger than 0). Use the non-parallel pyPamtra version for debugging!', self.set["verbose"])
-		if self.set["pyVerbose"] >= 0: 
+		if int(self.nmlSet["verbose_mode"]["verbose"]) > 0:	
+			raise IOError('There is a weired bug if the fortran part prints anything (i.e. verbosity is larger than 0). Use the non-parallel pyPamtra version for debugging! verbose=', self.nmlSet["verbose_mode"]["verbose"])
+		if self.set["pyVerbose"] > 0: 
 			print "Starting pp with: "
 			pp_nodes = self.job_server.get_active_nodes()
 			for key in pp_nodes.keys():
@@ -887,7 +957,7 @@ class pyPamtra(object):
 					
 					pp_jobs[pp_ii] = self.job_server.submit(pyPamtraLibWrapper.PamtraFortranWrapper, (
 					#self.set
-					self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["rt_mode"], self.set["ground_type"], self.set["salinity"], self.set["EMissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_cloud"], self.set["SD_ice"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["use_rain_db"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["use_snow_db"], self.set["as_ratio"], self.set["snow_density"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["graupel_density"], self.set["SD_hail"], self.set["N_0hailDhail"], self.set["EM_hail"], self.set["hail_density"], self.set["n_moments"], self.set["moments_file"],
+					self.set["namelist_file"],
 					#input
 					pp_ngridx,
 					pp_ngridy,
@@ -923,27 +993,30 @@ class pyPamtra(object):
 					),tuple(), ("pyPamtraLibWrapper","pyPamtraLib","os",),callback=self._ppCallback,
 					callbackargs=(pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii,))
 					
-					if self.set["pyVerbose"] >= 0: 
+					if self.set["pyVerbose"] > 0: 
 						sys.stdout.write("\r"+20*" "+"\r"+ "%i, %5.3f%% submitted"%(pp_ii+1,(pp_ii+1)/float(self.pp_noJobs)*100))
 						sys.stdout.flush()
 
-		if self.set["pyVerbose"] >= 0: 
+		if self.set["pyVerbose"] > 0: 
 			print " "
 			print self.pp_noJobs, "jobs submitted"
 
 
-		if self.set["pyVerbose"] >= 0: print " "; self.job_server.get_active_nodes()
+		if self.set["pyVerbose"] > 0: print " "; self.job_server.get_active_nodes()
 		self.job_server.wait()
 		
-		self.r["settings"] = self.set
+		self.r["nmlSettings"] = self.nmlSet
 		self.r["pamtraVersion"] = self.r["pamtraVersion"].strip()
 		self.r["pamtraHash"] = self.r["pamtraHash"].strip()
 		
-		if self.set["pyVerbose"] >= 0: print " "; self.job_server.print_stats()
+		if self.set["pyVerbose"] > 0: print " "; self.job_server.print_stats()
 		self.job_server.destroy()
 		del self.job_server
 		
-		if self.set["pyVerbose"] >= 0: print "pyPamtra runtime:", time.time() - tttt
+		#remove temporary nml file
+		if self.set["namelist_file"].split(".")[-1] == "tmp": os.remove(self.set["namelist_file"])
+		
+		if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
 	
 	def _ppCallback(self,pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii,*results):
 		'''
@@ -990,12 +1063,16 @@ class pyPamtra(object):
 		self.set["freqs"] = freqs
 		self.set["nfreqs"] = len(freqs)
 		
-		for key in self.set:
-			if key not in self._setDefaultKeys:
-				print "Warning Could not parse ",key
-		
 		self._checkData()
 
+		if not os.path.isfile(self.set["namelist_file"]):
+			self.writeNmlFile(self.set["namelist_file"])
+		else: 
+			if self.set["namelist_file"].split(".")[-1] == "tmp": 
+				raise ValueError("Namelitsfile "+ self.set["namelist_file"] +" ends with .tmp, but is existing already")
+			elif self.set["pyVerbose"] > 0:
+				print("NOT writing temporary nml file to run pamtra using exisiting nml file instead: "+self.set["namelist_file"])
+		
 		#output
 		(
 		self.r["pamtraVersion"],
@@ -1021,7 +1098,7 @@ class pyPamtra(object):
 		), host = \
 		pyPamtraLibWrapper.PamtraFortranWrapper(
 		#self.set
-		self.set["verbose"], self.set["dump_to_file"], self.set["tmp_path"], self.set["data_path"], self.set["obs_height"], self.set["units"], self.set["outpol"], self.set["creator"], self.set["active"], self.set["passive"], self.set["rt_mode"], self.set["ground_type"], self.set["salinity"], self.set["EMissivity"], self.set["lgas_extinction"], self.set["gas_mod"], self.set["lhyd_extinction"], self.set["lphase_flag"], self.set["SD_cloud"], self.set["SD_ice"], self.set["EM_ice"], self.set["SD_rain"], self.set["N_0rainD"], self.set["use_rain_db"], self.set["SD_snow"], self.set["N_0snowDsnow"], self.set["EM_snow"], self.set["use_snow_db"], self.set["as_ratio"], self.set["snow_density"], self.set["SP"], self.set["isnow_n0"], self.set["liu_type"], self.set["SD_grau"], self.set["N_0grauDgrau"], self.set["EM_grau"], self.set["graupel_density"], self.set["SD_hail"], self.set["N_0hailDhail"], self.set["EM_hail"], self.set["hail_density"], self.set["n_moments"], self.set["moments_file"],
+		self.set["namelist_file"],
 		#input
 		self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.p["nlyrs"],self.set["nfreqs"],self.set["freqs"],
 		self.p["unixtime"],
@@ -1031,7 +1108,7 @@ class pyPamtra(object):
 		self.p["cwc_q"],self.p["iwc_q"],self.p["rwc_q"],self.p["swc_q"],self.p["gwc_q"],
 		self.p["hwc_q"],self.p["cwc_n"],self.p["iwc_n"],self.p["rwc_n"],self.p["swc_n"],self.p["gwc_n"],self.p["hwc_n"])
 				
-		self.r["settings"] = self.set
+		self.r["nmlSettings"] = self.nmlSet
 		
 		self.r["pamtraVersion"] = self.r["pamtraVersion"].strip()
 		self.r["pamtraHash"] = self.r["pamtraHash"].strip()
@@ -1040,7 +1117,10 @@ class pyPamtra(object):
 			#print key
 			#print self.__dict__[key]
 		
-		if self.set["pyVerbose"] >= 0: print "pyPamtra runtime:", time.time() - tttt
+		#remove temporary nml file
+		if self.set["namelist_file"].split(".")[-1] == "tmp": os.remove(self.set["namelist_file"])
+		
+		if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
 
 
 	def writeResultsToNumpy(self,fname):
@@ -1048,7 +1128,7 @@ class pyPamtra(object):
 		write the complete state of the session (profile,results,settings to a file
 		'''
 		f = open(fname, "w")
-		pickle.dump([self.r,self.p,self.set], f)
+		pickle.dump([self.r,self.p,self._helperP,self.nmlSet,self.set], f)
 		f.close()
 
 	def loadResultsFromNumpy(self,fname):
@@ -1057,8 +1137,11 @@ class pyPamtra(object):
 		'''
 		try: 
 			f = open(fname, "r")
-			[self.r,self.p,self.set] = pickle.load(f)
+			[self.r,self.p,self._helperP,self.nmlSet,self.set] = pickle.load(f)
 			f.close()
+			self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
+			self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],)
+			self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"]+1,)
 		except:
 			raise IOError ("Could not read data")
 		
@@ -1098,20 +1181,20 @@ class pyPamtra(object):
 		else: cdfFile = nc.NetCDFFile(fname,"w")
 		
 		#write meta data
-		cdfFile.history = "Created with pyPamtra (Version: "+self.r["pamtraVersion"]+", Git Hash: "+self.r["pamtraHash"]+") by "+self.set["creator"]+" (University of Cologne, IGMK) at " + datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
+		cdfFile.history = "Created with pyPamtra (Version: "+self.r["pamtraVersion"]+", Git Hash: "+self.r["pamtraHash"]+") by "+self.nmlSet["output"]["creator"]+" (University of Cologne, IGMK) at " + datetime.datetime.now().strftime("%Y/%m/%d %H:%M:%S")
 		
-		cdfFile.properties = str(self.set)
+		cdfFile.properties = str(self.r["nmlSettings"])
 		#make frequsnions
 		cdfFile.createDimension('grid_x',int(self.p["ngridx"]))
 		cdfFile.createDimension('grid_y',int(self.p["ngridy"]))
 		cdfFile.createDimension('frequency',int(self.set["nfreqs"]))
 		
-		if (self.r["settings"]["passive"]):
+		if (self.r["nmlSettings"]["run_mode"]["passive"]):
 			cdfFile.createDimension('angles',len(self.r["angles"]))
 			cdfFile.createDimension('outlevels',int(self._noutlevels))
 			cdfFile.createDimension('stokes',int(self._nstokes))
 			
-		if (self.r["settings"]["active"]):
+		if (self.r["nmlSettings"]["run_mode"]["active"]):
 			cdfFile.createDimension('heightbins',int(self.p["max_nlyrs"]))
 		
 		dim2d = ("grid_x","grid_y",)
@@ -1119,6 +1202,14 @@ class pyPamtra(object):
 		dim4d = ("grid_x","grid_y","heightbins","frequency")
 		dim6d = ("grid_x","grid_y","outlevels","angles","frequency","stokes")
 			
+			
+			
+		if (self.r["nmlSettings"]["output"]["activeLogScale"]):
+			attUnit = "dBz"
+			zeUnit = "dBz"
+		else:
+			 attUnit = "linear"
+			 zeUnit = "mm^6 m^-3"    
 		#create and write dim variables
 		
 		fillVDict = dict()
@@ -1142,7 +1233,7 @@ class pyPamtra(object):
 		
 		
 		
-		if (self.r["settings"]["active"]):
+		if (self.r["nmlSettings"]["run_mode"]["active"]):
 
 			nc_heightbins = cdfFile.createVariable('heightbins', 'i',("heightbins",),**fillVDict)
 			nc_heightbins.units = "-"
@@ -1155,7 +1246,7 @@ class pyPamtra(object):
 			if not pyNc: nc_height._FillValue =missingNumber
 			
 		
-		if (self.r["settings"]["passive"]):
+		if (self.r["nmlSettings"]["run_mode"]["passive"]):
 			nc_angle = cdfFile.createVariable('angles','f',('angles',),**fillVDict)
 			nc_angle.units = 'deg'
 			nc_angle[:] = np.array(self.r["angles"],dtype="f")
@@ -1167,7 +1258,7 @@ class pyPamtra(object):
 			
 			nc_out = cdfFile.createVariable('outlevels', 'f',("outlevels",),**fillVDict)
 			nc_out.units = "m over sea level (top of atmosphere value) OR m over ground (ground value)"
-			nc_out[:] = np.array([self.set["obs_height"],0],dtype="f")
+			nc_out[:] = np.array([self.r["nmlSettings"]["output"]["obs_height"],0],dtype="f")
 			if not pyNc: nc_out._FillValue =missingNumber
 			
 		#create and write variables
@@ -1208,90 +1299,90 @@ class pyPamtra(object):
 		if not pyNc: nc_lfrac._FillValue =missingNumber
 		
 		
-		if (self.r["settings"]["active"]):
+		if (self.r["nmlSettings"]["run_mode"]["active"]):
 			
-			if self.set["zeSplitUp"]:
+			if self.r["nmlSettings"]["output"]["zeSplitUp"]:
 
 				nc_Ze_cw = cdfFile.createVariable('Ze_cloud_water', 'f',dim4d,**fillVDict)
-				nc_Ze_cw.units = "dBz"
+				nc_Ze_cw.units = zeUnit
 				nc_Ze_cw[:] = np.array(self.r["Ze_cw"],dtype='f')
 				if not pyNc: nc_Ze_cw._FillValue =missingNumber
 		
 				nc_Ze_rr = cdfFile.createVariable('Ze_rain', 'f',dim4d,**fillVDict)
-				nc_Ze_rr.units = "dBz"
+				nc_Ze_rr.units = zeUnit
 				nc_Ze_rr[:] = np.array(self.r["Ze_rr"],dtype='f')
 				if not pyNc: nc_Ze_rr._FillValue =missingNumber
 		
 				nc_Ze_ci = cdfFile.createVariable('Ze_cloud_ice', 'f',dim4d,**fillVDict)
-				nc_Ze_ci.units = "dBz"
+				nc_Ze_ci.units = zeUnit
 				nc_Ze_ci[:] = np.array(self.r["Ze_ci"],dtype='f')
 				if not pyNc: nc_Ze_ci._FillValue = missingNumber
 			
 				nc_Ze_sn = cdfFile.createVariable('Ze_snow', 'f',dim4d,**fillVDict)
-				nc_Ze_sn.units = "dBz"
+				nc_Ze_sn.units = zeUnit
 				nc_Ze_sn[:] = np.array(self.r["Ze_sn"],dtype='f')
 				if not pyNc: nc_Ze_sn._FillValue =missingNumber
 		
 				nc_Ze_gr = cdfFile.createVariable('Ze_graupel', 'f',dim4d,**fillVDict)
-				nc_Ze_gr.units = "dBz"
+				nc_Ze_gr.units = zeUnit
 				nc_Ze_gr[:] = np.array(self.r["Ze_gr"],dtype='f')
 				if not pyNc: nc_Ze_gr._FillValue =missingNumber
 		
 				nc_Att_cw = cdfFile.createVariable('Attenuation_cloud_water', 'f',dim4d,**fillVDict)
-				nc_Att_cw.units = "dB"
+				nc_Att_cw.units = attUnit
 				nc_Att_cw[:] = np.array(self.r["Att_cw"],dtype='f')
 				if not pyNc: nc_Att_cw._FillValue =missingNumber
 		
 				nc_Att_rrrs = cdfFile.createVariable('Attenuation_rain', 'f',dim4d,**fillVDict)
-				nc_Att_rrrs.units = "dB"
+				nc_Att_rrrs.units = attUnit
 				nc_Att_rrrs[:] = np.array(self.r["Att_rr"],dtype='f')
 				if not pyNc: nc_Att_rrrs._FillValue =missingNumber
 				
 				nc_Att_ci = cdfFile.createVariable('Attenuation_cloud_ice', 'f',dim4d,**fillVDict)
-				nc_Att_ci.units = "dB"
+				nc_Att_ci.units = attUnit
 				nc_Att_ci[:] = np.array(self.r["Att_ci"],dtype='f')
 				if not pyNc: nc_Att_ci._FillValue =missingNumber
 				
 				nc_Att_sn = cdfFile.createVariable('Attenuation_snow', 'f',dim4d,**fillVDict)
-				nc_Att_sn.units = "dB"
+				nc_Att_sn.units = attUnit
 				nc_Att_sn[:] = np.array(self.r["Att_sn"],dtype='f')
 				if not pyNc: nc_Att_sn._FillValue =missingNumber
 		
 				nc_Att_gr = cdfFile.createVariable('Attenuation_graupel', 'f',dim4d,**fillVDict)
-				nc_Att_gr.units = "dB"
+				nc_Att_gr.units = attUnit
 				nc_Att_gr[:] = np.array(self.r["Att_gr"],dtype='f')
 				if not pyNc: nc_Att_gr._FillValue =missingNumber
 		
-				if self.set["n_moments"]==2:
+				if self.r["nmlSettings"]["moments"]["n_moments"]==2:
 
 					nc_Ze_ha = cdfFile.createVariable('Ze_hail', 'f',dim4d,**fillVDict)
-					nc_Ze_ha.units = "dBz"
+					nc_Ze_ha.units = zeUnit
 					nc_Ze_ha[:] = np.array(self.r["Ze_ha"],dtype='f')
 					if not pyNc: nc_Ze_ha._FillValue =missingNumber
 		
 					nc_Att_ha = cdfFile.createVariable('Attenuation_hail', 'f',dim4d,**fillVDict)
-					nc_Att_ha.units = "dB"
+					nc_Att_ha.units = attUnit
 					nc_Att_ha[:] = np.array(self.r["Att_ha"],dtype='f')
 					if not pyNc: nc_Att_ha._FillValue =missingNumber
 		
 			else: 
 				 
 				nc_Ze = cdfFile.createVariable('Ze', 'f',dim4d,**fillVDict)
-				nc_Ze.units = "dBz"
+				nc_Ze.units = zeUnit
 				nc_Ze[:] = np.array(self.r["Ze"],dtype='f')
 				if not pyNc: nc_Ze._FillValue =missingNumber
 		
 				nc_Attenuation_Hydrometeors = cdfFile.createVariable('Attenuation_Hydrometeors', 'f',dim4d,**fillVDict)
-				nc_Attenuation_Hydrometeors.units = "dB"
+				nc_Attenuation_Hydrometeors.units = attUnit
 				nc_Attenuation_Hydrometeors[:] = np.array(self.r["Att_hydro"],dtype='f')
 				if not pyNc: nc_Attenuation_Hydrometeors._FillValue =missingNumber
 		
 			nc_Attenuation_Atmosphere = cdfFile.createVariable('Attenuation_Atmosphere', 'f',dim4d,**fillVDict)
-			nc_Attenuation_Atmosphere.units = "dB"
+			nc_Attenuation_Atmosphere.units = attUnit
 			nc_Attenuation_Atmosphere[:] = np.array(self.r["Att_atmo"],dtype='f')
 			if not pyNc: nc_Attenuation_Atmosphere._FillValue =missingNumber
 		
-		if (self.r["settings"]["passive"]):
+		if (self.r["nmlSettings"]["run_mode"]["passive"]):
 			nc_tb = cdfFile.createVariable('tb', 'f',dim6d,**fillVDict)
 			nc_tb.units = "K"
 			nc_tb[:] = np.array(self.r["tb"],dtype='f')
@@ -1354,4 +1445,4 @@ class pyPamtra(object):
 			if not pyNc: nc_ct._FillValue =missingNumber
 
 		cdfFile.close()
-		if self.set["pyVerbose"] >= 0: print fname,"written"
+		if self.set["pyVerbose"] > 0: print fname,"written"

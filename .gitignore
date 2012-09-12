@@ -23,6 +23,7 @@ test/tmp/*
 *.auto.f90
 *.pyc
 *.so
+*.tmp
 py/codefriedhof.py
 *.png
 *.py

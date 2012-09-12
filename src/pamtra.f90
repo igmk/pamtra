@@ -69,6 +69,8 @@ program pamtra
     !!! read variables from namelist file
     call nml_params_read !from nml_params.f90
 
+    in_python = .false.! we are _not_ in python
+    
     ! create frequency string if not set in pamtra
     if (freq_str .eq. "") then
          ! get integer and character frequencies
