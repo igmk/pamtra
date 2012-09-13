@@ -79,7 +79,7 @@ py: pyPamtraLib.f90 precompile $(OBJECTS) $(pamtraOBJECTS)
 	cp pyPamtraLib.so ../py/
 
 pyNode: pyPamtraLib.f90 $(OBJECTS)  $(pamtraOBJECTS)
-	f2py -c --fcompiler=gnu95 pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
+	f2py $(NCFLAGS_F2PY) $(LDFLAGS) -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) $(pamtraOBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ../py/
 
 pyinstall:
