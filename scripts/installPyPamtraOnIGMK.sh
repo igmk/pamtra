@@ -2,9 +2,9 @@
 
 hosts="albe euros refoli notos roumet   helm   irifi trombe   habagat   embat caspar"
 
+#  hosts=`ls /net`
+hosts="roumet habagat"
 
-# hosts="roumet habagat"
- hosts=`ls /net`
 
 # hosts="orkan ramier rebat" 
 # 
@@ -19,7 +19,7 @@ hosts="albe euros refoli notos roumet   helm   irifi trombe   habagat   embat ca
 timeout=300
 
 user=hatpro
-
+branch="rt4"
 date=`date "+%Y%m%d"`
 
 
@@ -34,7 +34,7 @@ if [ "$1" == "prepare" ]
 then
 	mkdir -p /tmp/pyPamtra
 	cd /tmp/pyPamtra
-	git clone /home/mmaahn/projects/pamtra -b pyPamtra
+	git clone /home/mmaahn/projects/pamtra -b $branch
 	cd /tmp/pyPamtra/pamtra/src/
 	make precompile
 	tar -czf /tmp/pyPamtra.tar.gz /tmp/pyPamtra
