@@ -4,8 +4,10 @@ hosts=`ls /net`
 # hosts="zapod viracao trombe tivano tempest seistan schirokko roumet refoli rebat ramier qeb orkan notos nemere molan meltemi kaus karif irifi habagat gargal garbi gales frog forano1 euros embat chinook aure albe"
 ppTimeout=10000
 
+hosts="roumet habagat karif"
+
 #how many cpus shall be saved?
-saveCPUs=0.98
+saveCPUs=1.98
 
 port=50010
 

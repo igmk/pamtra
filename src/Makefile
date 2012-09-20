@@ -2,7 +2,7 @@ ARCH=$(shell uname -s)
 FC=gfortran
 CC=gcc
 
-FCFLAGS=-c -fPIC -Wuninitialized
+FCFLAGS=-c -fPIC -Wuninitialized 
 
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
@@ -12,12 +12,12 @@ ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran
 	NCFLAGS=-I/opt/local/include/ #-g
 	NCFLAGS_F2PY=-I/opt/local/include/ #-g
-	LFLAGS=-L/opt/local/lib/
-	LDFLAGS=-lnetcdf -lnetcdff
+	LFLAGS=-L/opt/local/lib/ 
+	LDFLAGS=-lnetcdf -lnetcdff 
 else
-	NCFLAGS := $(shell nc-config --fflags)
+	NCFLAGS :=  $(shell nc-config --fflags)
 	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
-	LFLAGS=
+	LFLAGS := 
 	LDFLAGS := $(shell nc-config --flibs)
 endif
 
@@ -29,8 +29,8 @@ endif
 
 
 OBJECTS=kinds.o constants.o file_mod.o nml_params.o mod_fastem4_coef.o conversions.o double_moments_module.o cosmo_netcdf.o  vars_profile.o \
-	vars_atmosphere.o mod_io_strings.o getopt.o parse_options.o\
-	get_atmosphere.o vars_output.o run_rt.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o radmat.o \
+	vars_atmosphere.o mod_io_strings.o getopt.o parse_options.o radmat.o\
+	get_atmosphere.o vars_output.o run_rt.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o \
 	scat_utilities.o dsd_utilities.o mpm93.o get_atmosG0.o get_atmosG.o mie.o mie_densitydep_spheremasseq.o\
 	slant_profile.o allocate_profile_vars.o allocate_output_vars.o rosen98_gasabs.o surface.o eps_water.o eps_ice.o eps_mix.o \
 	equcom.o land_emis.o equare.o scatdb.o dda_db_liu.o dielec_water.o ref_water.o \
@@ -51,7 +51,7 @@ all: precompile pamtra py
 
 
 pamtra: pamtra.f90 $(OBJECTS) $(pamtraOBJECTS)
-	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(pamtraOBJECTS) $(LFLAGS) $(LDFLAGS)
+	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(pamtraOBJECTS) $(LFLAGS) $(LDFLAGS) 
 	mv $(BIN) ../
  
 scatdb.o:

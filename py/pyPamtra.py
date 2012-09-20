@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-#todo: function to calculate PIA?
 from __future__ import division
 import numpy as np
 import datetime
@@ -26,8 +25,8 @@ except:
 
 import meteoSI
 try: 
-	import pyPamtraLibWrapper
-except:
+	from pyPamtraLibWrapper import PamtraFortranWrapper
+except: 
 	warnings.warn("pyPamtraLib not available", Warning)
 
 try:
@@ -128,7 +127,7 @@ class pyPamtra(object):
 		
 		#all settings which do not go into the nml file go here:
 		self.set = dict()
-		self.set["pyVerbose"] = 1
+		self.set["pyVerbose"] = 0
 		self.set["freqs"] = []
 		self.set["nfreqs"] = 0
 		self.set["namelist_file"] = "pyPamtra_namelist_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nml.tmp"
@@ -503,7 +502,7 @@ class pyPamtra(object):
 				
 		for hydroNo in ["cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"]:
 			if hydroNo not in kwargs.keys():
-				self.p[hydroNo] = np.ones(self._shape3D) * -9999
+				self.p[hydroNo] = np.ones(self._shape3D) * missingNumber
 				warnings.warn(hydroNo + " set to -9999", Warning)
 			else:
 				self.p[hydroNo] = kwargs[hydroNo].reshape(self._shape3D)
@@ -778,6 +777,20 @@ class pyPamtra(object):
 
 		return
 
+	#def addPIA(self)
+	#todo: make pia for all hydrometeortypes!
+		#assert self.r["nmlSettings"]["output"]["activeLogScale"]
+	  
+		#Att_atmo = pam.r["Att_atmo"]
+		#Att_atmo[Att_atmo==missingNumber] = 0
+		#Att_hydro = pam.r["Att_hydro"]
+		#Att_hydro[Att_hydro==missingNumber] = 0    
+		#self.r["PIA"] = np.zeros(np.shape(Att_atmo))
+		#for hh in range(self.p["max_nlyrs"]):
+			#self.r["PIA"][:,:,hh,:] = Att_atmo[:,:,hh,:] +Att_hydro[:,:,hh,:] + 2*np.sum(Att_atmo[:,:,:hh,:] +Att_hydro[:,:,:hh,:],axis=2)#only half for the current layer
+		#return
+
+		
 	def createFullProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
 			iwv,cwp,iwp,rwp,swp,gwp,hwp,
 			hgt_lev,press_lev,temp_lev,relhum_lev,
@@ -877,6 +890,8 @@ class pyPamtra(object):
 		
 		self._checkData()
 		
+		
+		
 		#if the namelist file is empty, write it. Otherwise existing one is used.
 		if not os.path.isfile(self.set["namelist_file"]):
 			self.writeNmlFile(self.set["namelist_file"])
@@ -903,6 +918,8 @@ class pyPamtra(object):
 		
 		self.set["freqs"] = freqs
 		self.set["nfreqs"] = len(freqs)
+		
+		assert self.set["nfreqs"] > 0
 		
 		if pp_deltaF==0: pp_deltaF = self.set["nfreqs"]
 		if pp_deltaX==0: pp_deltaX = self.p["ngridx"]
@@ -955,7 +972,7 @@ class pyPamtra(object):
 					
 					pp_ii+=1
 					
-					pp_jobs[pp_ii] = self.job_server.submit(pyPamtraLibWrapper.PamtraFortranWrapper, (
+					pp_jobs[pp_ii] = self.job_server.submit(PamtraFortranWrapper, (
 					#self.set
 					self.set["namelist_file"],
 					#input
@@ -1006,6 +1023,7 @@ class pyPamtra(object):
 		self.job_server.wait()
 		
 		self.r["nmlSettings"] = self.nmlSet
+
 		self.r["pamtraVersion"] = self.r["pamtraVersion"].strip()
 		self.r["pamtraHash"] = self.r["pamtraHash"].strip()
 		
@@ -1062,6 +1080,7 @@ class pyPamtra(object):
 		
 		self.set["freqs"] = freqs
 		self.set["nfreqs"] = len(freqs)
+		assert self.set["nfreqs"] > 0
 		
 		self._checkData()
 
@@ -1096,7 +1115,7 @@ class pyPamtra(object):
 		self.r["tb"],
 		self.r["angles"],
 		), host = \
-		pyPamtraLibWrapper.PamtraFortranWrapper(
+		PamtraFortranWrapper(
 		#self.set
 		self.set["namelist_file"],
 		#input
