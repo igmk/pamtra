@@ -137,7 +137,7 @@ subroutine mieangle (nterms, a, b, mu, p1, p2, p3, p4)
   p2 = 0.5 * (abs(s2) **2 - abs(s1) **2) 
   p3 = real(conjg(s2) * s1) 
   p4 = imag(conjg(s1) * s2) 
-
+  ! looks like S2=F_vv and S1=F_hh according to Xinxin's Thesis (p.18/19) [Max]
   return 
 end subroutine mieangle
 

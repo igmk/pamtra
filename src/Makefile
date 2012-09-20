@@ -3,6 +3,10 @@ FC=gfortran
 CC=gcc
 
 FCFLAGS=-c -fPIC -Wuninitialized 
+#-pg
+
+#analyse gprof output with
+# gprof ./pamtra | gprof2dot.py | dot -Tpng -o output_old.png
 
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
@@ -12,12 +16,13 @@ ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran
 	NCFLAGS=-I/opt/local/include/ #-g
 	NCFLAGS_F2PY=-I/opt/local/include/ #-g
-	LFLAGS=-L/opt/local/lib/ 
+	LFLAGS=-L/opt/local/lib/ -llapack
 	LDFLAGS=-lnetcdf -lnetcdff 
 else
 	NCFLAGS :=  $(shell nc-config --fflags)
 	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
-	LFLAGS := 
+	LFLAGS := -llapack
+#-pg 
 	LDFLAGS := $(shell nc-config --flibs)
 endif
 
