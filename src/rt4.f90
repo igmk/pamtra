@@ -254,7 +254,6 @@ subroutine RT4(nstokes,nummu,mu_values,out_file,quad_type,ground_temp,&
           NUMAZIMUTHS,UP_RAD, DOWN_RAD,     &
           nx,ny,fi)
   else
-        out_file='output/test_rt4'
      CALL OUTPUT_FILE4(NSTOKES, NUMMU,&
                        LAYER_FILE, OUT_FILE,&
                        QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&

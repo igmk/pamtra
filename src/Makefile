@@ -112,28 +112,28 @@ cleantest:
 test1:
 	@echo "=== TEST 1 ==="
 	rm -fr ../test/tmp/*
-	../pamtra testProfiles.dat ../test/nmls/test1.nml 24 90 150
+	../pamtra -p testProfiles.dat -n ../test/nmls/test1.nml -f 24,90,150
 	../test/compareAscii.sh 1
 	@echo "TEST 1 OK"
 
 test2:
 	@echo "=== TEST 2 active only === "
 	rm -fr ../test/tmp/*
-	../pamtra testProfiles.dat ../test/nmls/test2.nml 35
+	../pamtra -p testProfiles.dat -n ../test/nmls/test2.nml -f 35
 	../test/compareAscii.sh 2
 	@echo "TEST 2 OK"
 
 test3:
 	@echo "=== TEST 3 passive only === "
 	rm -fr ../test/tmp/*
-	../pamtra testProfiles.dat ../test/nmls/test3.nml 35
+	../pamtra -p testProfiles.dat -n ../test/nmls/test3.nml -f 35
 	../test/compareAscii.sh 3
 	@echo "TEST 3 OK"
 
 test4:
 	@echo "=== TEST 4 Netcdf Data === "
 	rm -fr ../test/tmp/*
-	../pamtra testProfiles.dat ../test/nmls/test4.nml 35
+	../pamtra -p testProfiles.dat -n ../test/nmls/test4.nml -f 35
 	../test/compareNetcdf.sh 4
 	@echo "TEST 4 OK"
 
