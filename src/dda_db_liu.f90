@@ -138,7 +138,7 @@ subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
   !  do ir = 1, nbins+1
   do ir = 1, nbins
      !    diameter = dia1 + (ir - 1) * del_d
-     diameter = (dia2-dia1)/2.d0*xi(ir)+(dia1+dia2)/2.d0
+     diameter = (dia2-dia1)/2.d0*xi(ir)+(dia1+dia2)/2.d0 !because ir goes from -1 to 1
      ndens = distribution(ad, bd, alpha, gamma, dble(diameter), aerodist)  ! number density
      !    if ((ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
      !		ndens = 0.5d0 * ndens

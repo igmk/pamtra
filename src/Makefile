@@ -5,6 +5,9 @@ CC=gcc
 FCFLAGS=-c -fPIC -Wuninitialized 
 #-pg
 
+#analyse gprof output with
+# gprof ./pamtra | gprof2dot.py | dot -Tpng -o output_old.png
+
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
