@@ -71,7 +71,8 @@ class pyPamtra(object):
 		self.nmlSet["inoutput_mode"]["crm_data"]=''
 		self.nmlSet["inoutput_mode"]["crm_data2"]=''
 		self.nmlSet["inoutput_mode"]["crm_constants"]=''
-
+		self.nmlSet["inoutput_mode"]["jacobian_mode"]=False #profile 1,1 is reference, for all other collums only layers with different values are calculated
+		
 		self.nmlSet["output"]["obs_height"]=833000.
 		self.nmlSet["output"]["units"]='T'
 		self.nmlSet["output"]["outpol"]='VH'

@@ -236,8 +236,13 @@ character(300),intent(in) :: set_namelist_file
 
 
   grid_f: do fi =1, nfrq
-     grid_y: do ny = 1, ngridy !ny_in, ny_fin  
-        grid_x: do nx = 1, ngridx !nx_in, nx_fin   
+      if (jacobian_mode) then
+      !for jacobian mode. non disturbed profile is expected in grid 1,1!
+        call allocate_jacobian_vars
+      end if
+      grid_y: do ny = 1, ngridy !nx_in, nx_fin   
+          grid_x: do nx = 1, ngridx !ny_in, ny_fin  
+
 
           call GMTIME(in_timestamp(nx,ny),timestamp)
 
@@ -321,8 +326,12 @@ character(300),intent(in) :: set_namelist_file
 
           call deallocate_profile_vars()
 
-        end do grid_x
-     end do grid_y
+         end do grid_x
+    end do grid_y
+  if (jacobian_mode) then
+  !for jacobian mode
+      call deallocate_jacobian_vars
+  end if
   end do grid_f
 
 

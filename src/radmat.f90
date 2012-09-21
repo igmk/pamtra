@@ -206,13 +206,14 @@
       MATRIX2 = MATRIX1
       CALL DGETRF( M, N, MATRIX2, LDA, IPIV, INFO )
       IF(INFO.LT.0)THEN
-	  PRINT '(" LU decomposition:  illegal value ")'
+	  WRITE ( * , '(1X,A)') 'LU decomposition:  illegal value'
 	  STOP
 	ENDIF
 
       CALL DGETRI(N, MATRIX2, N, IPIV, WORK, LWORK, INFO)
       IF (info.NE.0) THEN
-         stop 'Matrix inversion failed!'
+	  WRITE ( * , '(1X,A)') 'Matrix inversion failed!'
+          STOP 
       ENDIF
 
       RETURN

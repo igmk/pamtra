@@ -31,7 +31,7 @@ t.set["pyVerbose"]=1
 
 if testNo == "1":
 
-	t.runParallelPamtra([24,90,150],pp_local_workers=2,pp_deltaF=1,pp_deltaX=1)
+	t.runPamtra([24,90,150])#Parallel,pp_local_workers=2,pp_deltaF=1,pp_deltaX=1)
 	
 elif testNo == "2":
 
@@ -47,8 +47,6 @@ elif testNo == "4":
 else:
 	sys.exit("unknown test number "+testNo)
 	
-
-
 if testNo != "4":
 
 	#uncomment if test should be defined again
@@ -66,10 +64,11 @@ if testNo != "4":
 			error += 1
 			print key, "max. difference:", np.max(reference.r[key] - t.r[key])
 	if error > 0:
+		#import pdb;pdb.set_trace()
 		raise IOError("do not match")
-		#else:
-			#print key, "OK"
+	#else:
+		#print key, "OK"
 
-			#for key in self.__dict__.keys():
-				#print key,type(self.__dict__[key]),self.__dict__[key]
+		#for key in self.__dict__.keys():
+			#print key,type(self.__dict__[key]),self.__dict__[key]
 

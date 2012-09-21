@@ -48,7 +48,8 @@ module nml_params
        active, &  	   ! calculate active stuff
        passive, &     ! calculate passive stuff (with RT3)
        zeSplitUp, &     ! save Ze and Att for every hydrometeor seperately. has only effect on netcdf file!
-       activeLogScale !save ze and att in log scale or linear
+       activeLogScale, & !save ze and att in log scale or linear
+       jacobian_mode  ! special jacobian mode which does not calculate the whole scattering properties each time. only rt4!
 
   character(5) :: EM_ice, EM_snow, EM_grau, EM_hail
   character(1) :: SD_cloud, SD_ice, SD_rain, SD_snow, SD_grau, SD_hail
@@ -73,7 +74,8 @@ contains
     namelist / verbose_mode / verbose
     namelist / inoutput_mode / input_path, output_path,&
          tmp_path, dump_to_file, write_nc, data_path,&
-         input_type, crm_case, crm_data, crm_data2, crm_constants
+         input_type, crm_case, crm_data, crm_data2, crm_constants, &
+	 jacobian_mode
     namelist / output / obs_height,units,outpol,freq_str,file_desc,creator,zeSplitUp, &
 	  activeLogScale
     namelist / run_mode / active, passive,rt_mode
@@ -105,6 +107,7 @@ contains
     crm_data=''
     crm_data2=''
     crm_constants=''
+    jacobian_mode=.false. !profile 1,1 is reference, for all other collums only layers with different values are calculated
     ! sec output
     obs_height=833000.
     units='T'

@@ -1,11 +1,12 @@
-subroutine hydrometeor_extinction_rt4(f,frq_str)
+subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
 
   use kinds
   use vars_atmosphere
-  use nml_params, only: verbose, tmp_path, active, passive, dump_to_file, &
-                        n_moments, quad_type, nummu, EM_snow, EM_grau, &
-			 EM_hail, EM_ice, as_ratio, &
-                        use_rain_db, use_snow_db, data_path
+  use nml_params, only:verbose, tmp_path, active, passive, dump_to_file, &
+                       n_moments, quad_type, nummu, EM_snow, EM_grau, &
+		       EM_hail, EM_ice, as_ratio, &
+                       use_rain_db, use_snow_db, data_path, &
+		       jacobian_mode
   use constants
   use mod_io_strings
   use conversions
@@ -14,6 +15,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
 
   implicit none
 
+  integer, intent(in) :: nx,ny
   integer, parameter :: maxleg = 200
   integer, parameter :: nstokes = 2
 
@@ -50,10 +52,13 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
   integer :: l1, j1, l2, j2, j, l,i
   integer, parameter :: nquad = 16
   real(kind=dbl), dimension(nquad) :: qua_angle, qua_weights
+  logical :: didNotChange 
 
-  if (verbose .gt. 1) print*, 'Entering hydrometeor_extinction_rt4'
+  if (verbose .gt. 1) print*, nx, ny, 'Entering hydrometeor_extinction_rt4'
 
   ! INITIALIZATION OF LEGENDRE COEFFICIENTS
+
+ 
 
   nlegen = 0
   legen   = 0.d0
@@ -81,6 +86,64 @@ subroutine hydrometeor_extinction_rt4(f,frq_str)
   grid_z: do nz = 1, nlyr  ! loop over all layers
 ! print *,temp(nz)
      if (verbose .gt. 1) print*, 'Layer: ', nz
+
+  !jacobian mode take profile 1,1 as a reference, all other are compared to this one
+
+
+  if (jacobian_mode .and. ((nx .ne. 1) .or. (ny .ne. 1))) then
+    !check whether profil is the same as in the one of ny=1, nx=1
+    !make boolean
+    didNotChange= ( &
+      (jac_temp_lev(nz) .eq. temp_lev(nz)) .and. &
+      (jac_relhum_lev(nz) .eq. relhum_lev(nz)) .and. &
+      (jac_temp_lev(nz-1) .eq. temp_lev(nz-1)) .and. &
+      (jac_relhum_lev(nz-1) .eq. relhum_lev(nz-1)) .and. &
+      (jac_cwc_q(nz) .eq. cwc_q(nz)) .and. &
+      (jac_iwc_q(nz) .eq. iwc_q(nz)) .and. &
+      (jac_rwc_q(nz) .eq. rwc_q(nz)) .and. &
+      (jac_swc_q(nz) .eq. swc_q(nz)) .and. &
+      (jac_gwc_q(nz) .eq. gwc_q(nz)))
+
+    if (n_moments .eq. 2) then
+      didNotChange = (didNotChange .and. &
+	(jac_hwc_q(nz) .eq. hwc_q(nz)) .and. &
+	(jac_cwc_n(nz) .eq. cwc_n(nz)) .and. &
+	(jac_iwc_n(nz) .eq. iwc_n(nz)) .and. &
+	(jac_rwc_n(nz) .eq. rwc_n(nz)) .and. &
+	(jac_swc_n(nz) .eq. swc_n(nz)) .and. &
+	(jac_gwc_n(nz) .eq. gwc_n(nz)) .and. &
+	(jac_hwc_n(nz) .eq. hwc_n(nz)))
+      end if
+
+    if (verbose .gt. 1) print*,"jacobian_mode:",nx,ny,nz,didNotChange
+    !if layer is identical, then reference jac_xx is used
+    if (didNotChange) then
+      scattermatrix(nz,:,:,:,:,:)=jac_scattermatrix(nz,:,:,:,:,:)
+      extmatrix(nz,:,:,:,:)=jac_extmatrix(nz,:,:,:,:)
+      emisvec(nz,:,:,:)=jac_emisvec(nz,:,:,:)
+
+      kextsn(nz) = jac_kextsn(nz)
+      backsn(nz) = jac_backsn(nz)
+      kextcw(nz) = jac_kextcw(nz)
+      backcw(nz) = jac_backcw(nz)
+      kextrr(nz) = jac_kextrr(nz)
+      backrr(nz) = jac_backrr(nz)
+      kextgr(nz) = jac_kextgr(nz)
+      backgr(nz) = jac_backgr(nz)
+      kextci(nz) = jac_kextci(nz)
+      backci(nz) = jac_backci(nz)
+      kextha(nz) = jac_kextha(nz)
+      backha(nz) = jac_backha(nz)
+
+      kexttot(nz) = kextsn(nz) + kextcw(nz) + kextrr(nz) + kextgr(nz) + kextci(nz) + kextha(nz)
+      back(nz) = backcw(nz) + backrr(nz) + backci(nz) + backsn(nz) + backgr(nz) + backha(nz)
+
+      CYCLE
+
+      end if
+    end if
+
+
 
      !---------------------------salinity------------------------------
      ! calculation of the single scattering properties

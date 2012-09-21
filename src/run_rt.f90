@@ -110,7 +110,46 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
     if (rt_mode .eq. 'rt3') then
         call hydrometeor_extinction_rt3(freq,frq_str)
     elseif (rt_mode .eq. 'rt4') then
-        call hydrometeor_extinction_rt4(freq,frq_str)
+        call hydrometeor_extinction_rt4(freq,frq_str,nx,ny)!hier nx, ny
+    end if
+  end if
+
+  if ((nx .eq. 1 ) .and. (ny .eq. 1 ) .and. jacobian_mode) then
+    !for jacobian mode safe results of 1,1 grid
+    jac_scattermatrix=scattermatrix
+    jac_extmatrix=extmatrix
+    jac_emisvec=emisvec
+
+    jac_kextsn = kextsn
+    jac_backsn = backsn
+    jac_kextcw = kextcw
+    jac_backcw = backcw
+    jac_kextrr = kextrr
+    jac_backrr = backrr
+    jac_kextgr = kextgr
+    jac_backgr = backgr
+    jac_kextci = kextci
+    jac_backci = backci
+    jac_kextha = kextha
+    jac_backha = backha
+
+
+    !to see what was changed we need also the profile
+    jac_temp_lev=temp_lev
+    jac_relhum_lev=relhum_lev
+    jac_cwc_q=cwc_q
+    jac_iwc_q=iwc_q
+    jac_rwc_q=rwc_q
+    jac_swc_q=swc_q
+    jac_gwc_q=gwc_q
+    if (n_moments .eq. 2) then
+      jac_hwc_q=hwc_q
+      jac_cwc_n=cwc_n
+      jac_iwc_n=iwc_n
+      jac_rwc_n=rwc_n
+      jac_swc_n=swc_n
+      jac_gwc_n=gwc_n
+      jac_hwc_n=hwc_n
     end if
   end if
 

@@ -77,6 +77,9 @@ subroutine allocate_profile_vars
   allocate(rt4emis_vec(nlyr,nstokes,nummu,4),stat=alloc_status)
   allocate(emisvec(nlyr,nstokes,nummu,4),stat=alloc_status)
 
+
+
+
   allocate(hydros_present(nlyr),stat=alloc_status)
   allocate(rt4hydros_present(nlyr),stat=alloc_status)
 
