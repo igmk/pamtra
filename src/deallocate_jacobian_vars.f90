@@ -8,7 +8,7 @@ subroutine deallocate_jacobian_vars
 
 
   deallocate(jac_scattermatrix,jac_extmatrix,&
-      jac_emisvec,jac_salbtot,jac_hydros_present)
+      jac_emisvec,jac_hydros_present)
   deallocate(jac_kextsn, jac_backsn, jac_kextcw, &
       jac_backcw, jac_kextrr, jac_backrr, jac_kextgr,&
       jac_backgr, jac_kextci, jac_backci, jac_kextha,&

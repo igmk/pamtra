@@ -226,7 +226,6 @@ subroutine RT4(nstokes,nummu,mu_values,out_file,quad_type,ground_temp,&
   temperatures(1:nlyr+1) = temp_lev(nlyr:0:-1)      ! [K]
   gas_extinct(1:nlyr) = kextatmo(nlyr:1:-1)         ! [Np/m]
 
-  rt4salbtot(1:nlyr) = salbtot(nlyr:1:-1)
   rt4hydros_present(1:nlyr) = hydros_present(nlyr:1:-1)
 
   rt4scatter_matrix(1:nlyr,:,:,:,:,:) = scattermatrix(nlyr:1:-1,:,:,:,:,:)

@@ -121,7 +121,6 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
       scattermatrix(nz,:,:,:,:,:)=jac_scattermatrix(nz,:,:,:,:,:)
       extmatrix(nz,:,:,:,:)=jac_extmatrix(nz,:,:,:,:)
       emisvec(nz,:,:,:)=jac_emisvec(nz,:,:,:)
-      salbtot(nz)=jac_salbtot(nz)
       hydros_present(nz)=jac_hydros_present(nz)
             
       kextsn(nz) = jac_kextsn(nz)
@@ -532,7 +531,6 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
     jac_scattermatrix=scattermatrix
     jac_extmatrix=extmatrix
     jac_emisvec=emisvec
-    jac_salbtot=salbtot
     jac_hydros_present = hydros_present
     
     jac_kextsn = kextsn

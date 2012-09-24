@@ -21,7 +21,6 @@ subroutine allocate_jacobian_vars
   allocate(jac_backci(nlyr),stat=alloc_status)
   allocate(jac_kextha(nlyr),stat=alloc_status)
   allocate(jac_backha(nlyr),stat=alloc_status)
-  allocate(jac_salbtot(nlyr),stat=alloc_status)
   allocate(jac_hydros_present(nlyr),stat=alloc_status)
   
   allocate(jac_temp_lev(0:nlyr),stat=alloc_status)
