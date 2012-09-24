@@ -107,7 +107,7 @@ contains
     crm_data=''
     crm_data2=''
     crm_constants=''
-    jacobian_mode=.false. !profile 1,1 is reference, for all other collums only layers with different values are calculated
+    jacobian_mode=.false. !profile 1,1 is reference, for all other colums only layers with different values are calculated
     ! sec output
     obs_height=833000.
     units='T'

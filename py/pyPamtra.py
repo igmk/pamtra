@@ -890,9 +890,7 @@ class pyPamtra(object):
 		tttt = time.time()
 		
 		self._checkData()
-		
-		
-		
+				
 		#if the namelist file is empty, write it. Otherwise existing one is used.
 		if not os.path.isfile(self.set["namelist_file"]):
 			self.writeNmlFile(self.set["namelist_file"])

@@ -86,6 +86,8 @@ module vars_atmosphere
   real(kind=dbl), allocatable, dimension(:) :: jac_backci
   real(kind=dbl), allocatable, dimension(:) :: jac_kextha
   real(kind=dbl), allocatable, dimension(:) :: jac_backha
+  real(kind=dbl), allocatable, dimension(:) :: jac_salbtot
+  logical, allocatable, dimension(:) :: jac_hydros_present
   !jacobian mode
   real(kind=dbl), allocatable, dimension(:) :: jac_cwc_q, &
        jac_iwc_q, &
