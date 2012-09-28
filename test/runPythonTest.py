@@ -31,7 +31,8 @@ t.set["pyVerbose"]=1
 
 if testNo == "1":
 
-	t.runPamtra([24,90,150])#Parallel,pp_local_workers=2,pp_deltaF=1,pp_deltaX=1)
+	#t.runPamtra([24,90,150])
+	t.runParallelPamtra([24,90,150],pp_local_workers=2,pp_deltaF=1,pp_deltaX=1)
 	
 elif testNo == "2":
 

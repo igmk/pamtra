@@ -3,8 +3,8 @@
 hosts="albe euros refoli notos roumet   helm   irifi trombe   habagat   embat caspar"
 
 #  hosts=`ls /net`
-hosts="roumet habagat"
-hosts="karif"
+hosts="roumet habagat karif"
+#hosts="karif"
 
 
 # hosts="orkan ramier rebat" 
