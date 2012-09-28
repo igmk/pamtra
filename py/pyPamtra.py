@@ -25,7 +25,7 @@ except:
 
 import meteoSI
 try: 
-	from pyPamtraLibWrapper import PamtraFortranWrapper
+	import pyPamtraLibWrapper 
 except: 
 	warnings.warn("pyPamtraLib not available", Warning)
 
@@ -131,8 +131,7 @@ class pyPamtra(object):
 		self.set["pyVerbose"] = 0
 		self.set["freqs"] = []
 		self.set["nfreqs"] = 0
-		self.set["namelist_file"] = "pyPamtra_namelist_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nml.tmp"
-
+		self.set["namelist_file"] = os.getenv("HOME")+"/pyPamtra_namelist_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nml.tmp"
 				
 		self._nmlDefaultKeys = list()
 		for keyGr in self.nmlSet.keys()	:  
@@ -971,7 +970,7 @@ class pyPamtra(object):
 					
 					pp_ii+=1
 					
-					pp_jobs[pp_ii] = self.job_server.submit(PamtraFortranWrapper, (
+					pp_jobs[pp_ii] = self.job_server.submit(pyPamtraLibWrapper.PamtraFortranWrapper, (
 					#self.set
 					self.set["namelist_file"],
 					#input
@@ -1114,7 +1113,7 @@ class pyPamtra(object):
 		self.r["tb"],
 		self.r["angles"],
 		), host = \
-		PamtraFortranWrapper(
+		pyPamtraLibWrapper.PamtraFortranWrapper(
 		#self.set
 		self.set["namelist_file"],
 		#input
