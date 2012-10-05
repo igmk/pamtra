@@ -1,0 +1,11 @@
+#rename to nodesConfig.sh
+
+igmkNodes=$(ls /net)
+igmkNodes="karif roumet"
+igmkUser=hatpro
+igmkBranch="rt4"
+igmkPort=50010
+igmkSaveCPUs=0.5
+
+timeout=300
+

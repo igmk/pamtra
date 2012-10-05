@@ -132,7 +132,6 @@ class pyPamtra(object):
 		self.set["freqs"] = []
 		self.set["nfreqs"] = 0
 		self.set["namelist_file"] = os.getenv("HOME")+"/pyPamtra_namelist_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nml.tmp"
-
 				
 		self._nmlDefaultKeys = list()
 		for keyGr in self.nmlSet.keys()	:  

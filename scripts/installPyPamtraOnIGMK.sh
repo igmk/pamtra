@@ -1,26 +1,19 @@
 #!/bin/bash
 
-hosts="albe euros refoli notos roumet   helm   irifi trombe   habagat   embat caspar"
+source nodesConfig.sh
 
+<<<<<<< HEAD
 #  hosts=`ls /net`
 hosts="roumet habagat karif"
 #hosts="karif"
+=======
+hosts=$igmkNodes
+>>>>>>> rt4
 
+timeout="$timeout"
+user="$igmkUser"
+branch="$igmkBranch"
 
-# hosts="orkan ramier rebat" 
-# 
-# hosts="roumet"
-# hosts="lomar karif orkan ramier rebat"
-# hosts="ramier"
-# hosts="albe"
-
-# sudo apt-get install python-dev
-# zapod viracao trombe tivano terral tempest taifun seistan schirokko refoli ramier qeb notos molan kaus irifi habagat garbi gales frog forano1 euros embat ecir chinook caspar albe
-
-timeout=300
-
-user=hatpro
-branch="rt4"
 date=`date "+%Y%m%d"`
 
 
