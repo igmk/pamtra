@@ -292,8 +292,8 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
 	        call snow_ssp(f,qwc,temp(nz),&
 	             maxleg,kextsn(nz), salbsn, backsn(nz),  &
 	             nlegensn, legensn, legen2sn, legen3sn, legen4sn)
-	        call legendre2phasefunction(legensn, nlegensn, 2, 200,p11, ang)
-	        backsn(nz) = kextsn(nz) * salbsn * P11 (2)
+! 	        call legendre2phasefunction(legensn, nlegensn, 2, 200,p11, ang)
+! 	        backsn(nz) = kextsn(nz) * salbsn * P11 (2)
 	     else if (n_moments .eq. 2) then
 	     	qwc = q2abs(swc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(swc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
@@ -309,8 +309,8 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
     	      	call snow_ssp(f,qwc,temp(nz),&
 	                 maxleg,kextsn(nz), salbsn, backsn(nz),  &
 	                 nlegensn, legensn, legen2sn, legen3sn, legen4sn, nc)
-	            call legendre2phasefunction(legensn, nlegensn, 2, 200,p11, ang)
-	            backsn(nz) = kextsn(nz) * salbsn * P11 (2)
+! 	            call legendre2phasefunction(legensn, nlegensn, 2, 200,p11, ang)
+! 	            backsn(nz) = kextsn(nz) * salbsn * P11 (2)
 	        end if
 	     end if
      else
@@ -336,16 +336,16 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
 	        call grau_ssp(f,qwc,temp(nz),&
 	             maxleg,kextgr(nz), salbgr, backgr(nz),  &
 	             nlegengr, legengr, legen2gr, legen3gr, legen4gr)
-	        call legendre2phasefunction(legengr, nlegengr, 2, 200, p11, ang)
-	        backgr(nz) = kextgr(nz) * salbgr * p11 (2)
+! 	        call legendre2phasefunction(legengr, nlegengr, 2, 200, p11, ang)
+! 	        backgr(nz) = kextgr(nz) * salbgr * p11 (2)
 	     else if (n_moments .eq. 2) then
 	     	qwc = q2abs(gwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(gwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	      	call grau_ssp(f,qwc,temp(nz),&
 	             maxleg,kextgr(nz), salbgr, backgr(nz),  &
 	             nlegengr, legengr, legen2gr, legen3gr, legen4gr, nc)
-	      	call legendre2phasefunction(legengr, nlegengr, 2, 200, p11, ang)
-	        backgr(nz) = kextgr(nz) * salbgr * p11 (2)
+! 	      	call legendre2phasefunction(legengr, nlegengr, 2, 200, p11, ang)
+! 	        backgr(nz) = kextgr(nz) * salbgr * p11 (2)
 	     end if
      else
         kextgr(nz) = 0.0d0
@@ -371,7 +371,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
            call hail_ssp(f,qwc,temp(nz),&
                 maxleg,kextha(nz), salbha, backha(nz),  &
                 nlegenha, legenha, legen2ha, legen3ha, legen4ha, nc)
-           call legendre2phasefunction(legenha, nlegenha, 2, 200, p11, ang)
+!            call legendre2phasefunction(legenha, nlegenha, 2, 200, p11, ang)
         else
            kextha(nz) = 0.0d0
            salbha = 0.0d0
