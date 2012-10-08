@@ -51,7 +51,7 @@ module nml_params
        activeLogScale, & !save ze and att in log scale or linear
        jacobian_mode  ! special jacobian mode which does not calculate the whole scattering properties each time. only rt4!
 
-  character(5) :: EM_ice, EM_snow, EM_grau, EM_hail
+  character(5) :: EM_ice, EM_snow, EM_grau, EM_hail, EM_cloud, EM_rain
   character(1) :: SD_cloud, SD_ice, SD_rain, SD_snow, SD_grau, SD_hail
   character(3) :: gas_mod
   character(20) :: moments_file,file_desc
@@ -82,9 +82,9 @@ contains
     namelist / surface_params / ground_type,salinity, emissivity
     namelist / gas_abs_mod / lgas_extinction, gas_mod
     namelist / hyd_opts / lhyd_extinction, lphase_flag
-    namelist / cloud_params / SD_cloud
+    namelist / cloud_params / SD_cloud, EM_cloud
     namelist / ice_params / SD_ice, EM_ice
-    namelist / rain_params / SD_rain, N_0rainD, use_rain_db
+    namelist / rain_params / SD_rain, N_0rainD, use_rain_db, EM_rain
     namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, use_snow_db, as_ratio,snow_density, SP, isnow_n0, liu_type
     namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau, graupel_density
     namelist / hail_params / SD_hail, N_0hailDhail, EM_hail, hail_density
@@ -133,18 +133,20 @@ contains
     lphase_flag = .true.
     ! sec cloud_params
     SD_cloud='C'
+    EM_cloud="miecl"
     ! sec ice_params
     SD_ice='C'
     EM_ice='mieic'
     ! sec rain_params
     SD_rain='C'
     N_0rainD=8.0
-    use_rain_db=.false.
+    use_rain_db=.true.
+    EM_rain="miera"
     ! sec snow_params
     SD_snow='C'
     N_0snowDsnow=7.628 
     EM_snow='densi'
-    use_snow_db=.false.
+    use_snow_db=.true.
     as_ratio=0.5d0
     snow_density=200.d0
     SP=0.2 

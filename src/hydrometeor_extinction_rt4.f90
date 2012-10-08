@@ -4,7 +4,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
   use vars_atmosphere
   use nml_params, only:verbose, tmp_path, active, passive, dump_to_file, &
                        n_moments, quad_type, nummu, EM_snow, EM_grau, &
-		       EM_hail, EM_ice, as_ratio, &
+		       EM_hail, EM_ice, EM_rain, EM_cloud, as_ratio, &
                        use_rain_db, use_snow_db, data_path, &
 		       jacobian_mode
   use constants
@@ -34,7 +34,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
        LEGEN4cw, LEGEN4rr, LEGEN4ci, LEGEN4gr, LEGEN4sn, LEGEN4ha
 
 
-  real(kind=dbl), dimension(2) :: P11, ang
+!   real(kind=dbl), dimension(2) :: P11, ang
 
   real(kind=dbl) :: threshold ! threshold value for hydrometeor extinction as mass mixing ratio
 
@@ -42,9 +42,12 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
 
   integer :: i1,i2,i12
 
-  real(kind=dbl), dimension(nstokes,nummu,nstokes,nummu,4) :: rain_scat,snow_scat
-  real(kind=dbl), dimension(nstokes,nstokes,nummu,2) :: rain_ext,snow_ext
-  real(kind=dbl), dimension(nstokes,nummu,2) :: rain_emis,snow_emis
+  real(kind=dbl), dimension(nstokes,nummu,nstokes,nummu,4) :: rain_scat,snow_scat,&
+      ice_scat,graupel_scat,hail_scat,cloud_scat
+  real(kind=dbl), dimension(nstokes,nstokes,nummu,2) :: rain_ext,snow_ext,&
+      ice_ext,graupel_ext,hail_ext,cloud_ext
+  real(kind=dbl), dimension(nstokes,nummu,2) :: rain_emis,snow_emis,&
+      ice_emis,graupel_emis,hail_emis,cloud_emis
 
   character(6), intent(in) :: frq_str !from commandline
   CHARACTER*64 SCATFILES(nlyr)
@@ -162,29 +165,26 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
      legen2cw = 0.d0
      legen3cw = 0.d0
      legen4cw = 0.d0
-
+     cloud_scat = 0.d0
+     cloud_emis= 0.d0
+     cloud_ext = 0.d0
      kextcw(nz) = 0.d0 
      salbcw = 0.d0 
      backcw(nz) = 0.d0 
-!to do: add option to disable clouds!
-     if (cwc_q(nz) .ge. threshold) then
+     if ((cwc_q(nz) .ge. threshold) .and. (EM_cloud .ne. 'disab')) then
         hydros_present(nz) = .true.
      	if (n_moments .eq. 1) then
 	     	qwc = q2abs(cwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
-    		call cloud_ssp(f,qwc,temp(nz),&
-             	maxleg, kextcw(nz), salbcw, backcw(nz),  &
-             	nlegencw, legencw, legen2cw, legen3cw, legen4cw)
+		nc = 0.d0
      	else if (n_moments .eq. 2) then
 	     	qwc = q2abs(cwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc =  q2abs(cwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
-    		call cloud_ssp(f,qwc,temp(nz),&
-             	maxleg, kextcw(nz), salbcw, backcw(nz),  &
-             	nlegencw, legencw, legen2cw, legen3cw, legen4cw, nc)
        	end if
-     else
-        kextcw(nz) = 0.0d0
-        salbcw = 0.0d0
-        backcw(nz) = 0.0d0
+    	call cloud_ssp(f,qwc,temp(nz),&
+             	maxleg, nc, kextcw(nz), salbcw, backcw(nz),  &
+             	nlegencw, legencw, legen2cw, legen3cw, legen4cw, &
+		cloud_scat, cloud_ext, cloud_emis)
+
      end if
 
 
@@ -197,7 +197,9 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
      legen2ci = 0.d0
      legen3ci = 0.d0
      legen4ci = 0.d0
-
+     ice_scat = 0.d0
+     ice_emis= 0.d0
+     ice_ext = 0.d0
      kextci(nz) = 0.0d0 
      salbci = 0.0d0 
      backci(nz) = 0.0d0 
@@ -206,21 +208,16 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
         hydros_present(nz) = .true.
 	     if (n_moments .eq. 1) then
 	     	qwc = q2abs(iwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
-	        call ice_ssp(f,qwc,temp(nz),&
-	             maxleg,kextci(nz), salbci, backci(nz),  &
-	             nlegenci, legenci, legen2ci, legen3ci, legen4ci)
+		nc = 0.d0
 	     else if (n_moments .eq. 2) then
 	     	qwc = q2abs(iwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(iwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
-	      	call ice_ssp(f,qwc,temp(nz),&
-	             maxleg,kextci(nz), salbci, backci(nz),  &
-	             nlegenci, legenci, legen2ci, legen3ci, legen4ci, nc)
 	     end if
+	     call ice_ssp(f,qwc,temp(nz),&
+	             maxleg,nc,kextci(nz), salbci, backci(nz),  &
+	             nlegenci, legenci, legen2ci, legen3ci, legen4ci, &
+			ice_scat, ice_ext, ice_emis)
 
-     else
-        kextci(nz) = 0.0d0
-        salbci = 0.0d0
-        backci(nz) = 0.0d0
      end if
 
      !---------------------------------------------------------
@@ -241,36 +238,22 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
      backrr(nz) = 0.d0
 !to do: add option to disable clouds!
 
-     if ((rwc_q(nz) .ge. threshold)) then
+     if ((rwc_q(nz) .ge. threshold) .and. EM_rain .ne. "disab") then
         hydros_present(nz) = .true.
      	if (n_moments .eq. 1) then
 	       qwc = q2abs(rwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
-           cwc = q2abs(cwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
-	       call rain_ssp(f,qwc,cwc,temp(nz),&
-	            maxleg,kextrr(nz), salbrr, backrr(nz),  &
-	            nlegenrr, legenrr, legen2rr, legen3rr, legen4rr)
-	    else if (n_moments .eq. 2) then
+	       cwc = q2abs(cwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
+	       nc = 0.d0
+	else if (n_moments .eq. 2) then
             qwc = q2abs(rwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
             cwc = q2abs(cwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
-	        nc = q2abs(rwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
-            if (use_rain_db) then
-                call rain_ssp_tmat(f,qwc,cwc,temp(nz),kextrr(nz), backsn(nz),rain_scat, rain_ext, rain_emis,nc)
-                 nlegenrr = 0
-                 legenrr = 0.0d0
-                 legen2rr = 0.0d0
-                 legen3rr = 0.0d0
-                 legen4rr = 0.0d0
-                 salbrr = 0.d0
-            else
+	    nc = q2abs(rwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
+         end if
     	     	call rain_ssp(f,qwc,cwc,temp(nz),&
-	                maxleg,kextrr(nz), salbrr, backrr(nz),  &
-	                nlegenrr, legenrr, legen2rr, legen3rr, legen4rr, nc)
-            end if
-	    end if
-     else
-        kextrr(nz) = 0.0d0
-        salbrr = 0.0d0
-        backrr(nz) = 0.0d0
+	                maxleg,nc,kextrr(nz), salbrr, backrr(nz),  &
+	                nlegenrr, legenrr, legen2rr, legen3rr, legen4rr, &
+			rain_scat, rain_ext, rain_emis)
+
      end if
 
      !---------------------------------------------------------
@@ -285,38 +268,23 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
      snow_scat = 0.0d0
      snow_ext = 0.0d0
      snow_emis = 0.0d0
+    kextsn(nz) = 0.0d0
+    salbsn = 0.0d0
+    backsn(nz) = 0.0d0
      if ((swc_q(nz) .ge. threshold) .and. (EM_snow .ne. 'disab')) then
         hydros_present(nz) = .true.
      	 if (n_moments .eq. 1) then
 	     	qwc = q2abs(swc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
-	        call snow_ssp(f,qwc,temp(nz),&
-	             maxleg,kextsn(nz), salbsn, backsn(nz),  &
-	             nlegensn, legensn, legen2sn, legen3sn, legen4sn)
-! 	        call legendre2phasefunction(legensn, nlegensn, 2, 200,p11, ang)
-! 	        backsn(nz) = kextsn(nz) * salbsn * P11 (2)
+		nc = 0.d0
 	     else if (n_moments .eq. 2) then
 	     	qwc = q2abs(swc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(swc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
-	     if (EM_snow .eq. 'tmatr') then
-                call snow_ssp_tmat(f,qwc,temp(nz),kextsn(nz), backsn(nz),snow_scat, snow_ext, snow_emis,nc)
-                 nlegensn = 0
-                 legensn = 0.0d0
-                 legen2sn = 0.0d0
-                 legen3sn = 0.0d0
-                 legen4sn = 0.0d0
-                 salbsn = 0.0d0
-            else
-    	      	call snow_ssp(f,qwc,temp(nz),&
-	                 maxleg,kextsn(nz), salbsn, backsn(nz),  &
-	                 nlegensn, legensn, legen2sn, legen3sn, legen4sn, nc)
-! 	            call legendre2phasefunction(legensn, nlegensn, 2, 200,p11, ang)
-! 	            backsn(nz) = kextsn(nz) * salbsn * P11 (2)
-	        end if
-	     end if
-     else
-        kextsn(nz) = 0.0d0
-        salbsn = 0.0d0
-        backsn(nz) = 0.0d0
+	  end if
+    	  call snow_ssp(f,qwc,temp(nz),&
+	                 maxleg,nc,kextsn(nz), salbsn, backsn(nz),  &
+	                 nlegensn, legensn, legen2sn, legen3sn, legen4sn,&
+			 snow_scat, snow_ext, snow_emis)
+
      endif
 
      !---------------------------------------------------------
@@ -328,29 +296,26 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
      legen2gr = 0.0d0
      legen3gr = 0.0d0
      legen4gr = 0.0d0
-
+     graupel_scat = 0.0d0
+     graupel_ext = 0.0d0
+     graupel_emis = 0.0d0
+        kextgr(nz) = 0.0d0
+        salbgr = 0.0d0
+        backgr(nz) = 0.0d0
      if ((gwc_q(nz) .ge. threshold) .and. (EM_grau .ne. 'disab'))then
         hydros_present(nz) = .true.
 	     if (n_moments .eq. 1) then
 	     	qwc = q2abs(gwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
-	        call grau_ssp(f,qwc,temp(nz),&
-	             maxleg,kextgr(nz), salbgr, backgr(nz),  &
-	             nlegengr, legengr, legen2gr, legen3gr, legen4gr)
-! 	        call legendre2phasefunction(legengr, nlegengr, 2, 200, p11, ang)
-! 	        backgr(nz) = kextgr(nz) * salbgr * p11 (2)
+		nc = 0.d0
 	     else if (n_moments .eq. 2) then
 	     	qwc = q2abs(gwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(gwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
-	      	call grau_ssp(f,qwc,temp(nz),&
-	             maxleg,kextgr(nz), salbgr, backgr(nz),  &
-	             nlegengr, legengr, legen2gr, legen3gr, legen4gr, nc)
-! 	      	call legendre2phasefunction(legengr, nlegengr, 2, 200, p11, ang)
-! 	        backgr(nz) = kextgr(nz) * salbgr * p11 (2)
 	     end if
-     else
-        kextgr(nz) = 0.0d0
-        salbgr = 0.0d0
-        backgr(nz) = 0.0d0
+	      	call grau_ssp(f,qwc,temp(nz),&
+	             maxleg,nc, kextgr(nz), salbgr, backgr(nz),  &
+	             nlegengr, legengr, legen2gr, legen3gr, legen4gr,&
+		     graupel_scat, graupel_ext, graupel_emis)
+
      endif
 
      !---------------------------------------------------------
@@ -362,25 +327,23 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
      legen2ha = 0.0d0
      legen3ha = 0.0d0
      legen4ha = 0.0d0
+     hail_scat = 0.0d0
+     hail_ext = 0.0d0
+     hail_emis = 0.0d0
 
+      kextha(nz) = 0.0d0
+      salbha = 0.0d0
+      backha(nz) = 0.0d0
      if (n_moments .eq. 2) then
         if ((hwc_q(nz) .ge. threshold) .and. (EM_hail .ne. 'disab')) then
            hydros_present(nz) = .true.
 	       qwc = q2abs(hwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	       nc = q2abs(hwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
            call hail_ssp(f,qwc,temp(nz),&
-                maxleg,kextha(nz), salbha, backha(nz),  &
-                nlegenha, legenha, legen2ha, legen3ha, legen4ha, nc)
-!            call legendre2phasefunction(legenha, nlegenha, 2, 200, p11, ang)
-        else
-           kextha(nz) = 0.0d0
-           salbha = 0.0d0
-           backha(nz) = 0.0d0
+                maxleg,nc,kextha(nz), salbha, backha(nz),  &
+                nlegenha, legenha, legen2ha, legen3ha, legen4ha,&
+		     hail_scat, hail_ext, hail_emis)
         endif
-     else
-        kextha(nz) = 0.0d0
-        salbha = 0.0d0
-        backha(nz) = 0.0d0
      endif
 
      nlegen(nz) = max(nlegen(nz),nlegencw,nlegenci,nlegenrr,nlegensn,nlegengr,nlegenha)
@@ -415,6 +378,8 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
 
 !     if (kexttot(nz) .gt. 0.0 .or. salbtot(nz) .gt. 0.0) then ! there are hydrometeors present
      if (hydros_present(nz)) then ! there are hydrometeors present
+      if (nlegen(nz) .gt. 0) then
+
         do jj = 1, Nlegen(nz)
            legen(nz,jj) = (legencw (jj) * salbcw * kextcw(nz) + legenrr ( &
                 jj) * salbrr * kextrr(nz) + legenci (jj) * salbci * kextci(nz) + &
@@ -451,75 +416,28 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
                    legen3(nz,jj), legen4(nz,jj), legen(nz,jj), legen3(nz,jj)
            end if
 	    end do ! end of cycle over Legendre coefficient
-!     write(ly,'(I2)') nz
-!     ly = adjustl(ly)
-!     scatfiles(nz) = trim(ly)//'.txt'
 
-!     nlegen(nz) = 12
-!     kexttot(nz) = .1000000d+01
-!     salbtot(nz) = .99000000000000d0
-!     coef = 0.d0
-!     coef(1,1:12) = (/1.00000000d0,1.45529318d0,1.05402631d0,.39758994d0,.11659302d0,.02387477d0,&
-!     .00395010d0,.00053888d0,.00006372d0,.00000667d0,.00000063d0,.00000006d0/)
-!     coef(2,1:12) = (/-.32071711d0,-.20350675d0,.24638948d0,.18605748d0,.07124848d0,.01700757d0,&
-!     .00302534d0,.00043592d0,.00005326d0,.00000572d0,.00000055d0,.00000005d0/)
-!     coef(3,1:12) = (/.71206342d0,1.76014119d0,1.06682431d0,.39651104d0,.09576412d0,.01765088d0,&
-!     .00261549d0,.00032713d0,.00003583d0,.00000351d0,.00000031d0,.00000003d0/)
-!     coef(4,1:12) = (/-.01882245d0,-.04725108d0,.00894436d0,.04505815d0,.00958275d0,.00215761d0,&
-!     .00029195d0,.00003502d0,.00000337d0,.00000029d0,.00000002d0,.00000000d0/)
-!     coef(5,1:12) = (/1.00000000d0,1.45529318d0,1.05402631d0,.39758994d0,.11659302d0,.02387477d0,&
-!     .00395010d0,.00053888d0,.00006372d0,.00000667d0,.00000063d0,.00000006d0/)
-!     coef(6,1:12) = (/.71206342d0,1.76014119d0,1.06682431d0,.39651104d0,.09576412d0,.01765088d0,&
-!     .00261549d0,.00032713d0,.00003583d0,.00000351d0,.00000031d0,.00000003d0/)
 
 
      call scatcnv(scatfiles(nz),nlegen(nz),coef,kexttot(nz),salbtot(nz),&
      scattermatrix(nz,:,:,:,:,:),extmatrix(nz,:,:,:,:),emisvec(nz,:,:,:))
 
-     scattermatrix(nz,:,:,:,:,:)=scattermatrix(nz,:,:,:,:,:)+rain_scat+snow_scat
-     extmatrix(nz,:,:,:,:)=extmatrix(nz,:,:,:,:)+rain_ext+snow_ext
-     emisvec(nz,:,:,:)=emisvec(nz,:,:,:)+rain_emis+snow_emis
+    else
+     scattermatrix(nz,:,:,:,:,:)=0.d0
+     extmatrix(nz,:,:,:,:)=0.d0
+     emisvec(nz,:,:,:)=0.d0
 
-!                  call lobatto_quadrature(nquad,qua_angle(1:nquad),qua_weights(1:nquad))
-!
-!      DO L1 = 1, 2
-!        DO J1 = 1, nquad
-!          DO L2 = 1, 2
-!            L = 2*(L2-1)+L1
-!            DO J2 = 1, nquad
-!              WRITE(232,*) (-1.0)**(L1+1.0)*QUA_ANGLE(J1),&
-!                (-1.0)**(L2+1.0)*QUA_ANGLE(J2), 0E0
-!              DO I2 = 1, NSTOKES
-!                WRITE(232,*)&
-!            (scattermatrix(nz,I2,J2,I1,J1,L), I1=1,NSTOKES), 0E0, 0
-!              ENDDO
-!              DO I2 = NSTOKES+1,4
-!                WRITE(232,*) 0E0, 0E0, 0E0, 0E0
-!              ENDDO
-!            ENDDO
-!          ENDDO
-!        ENDDO
-!      ENDDO
 
-!      DO L = 1, 2
-!        DO J = 1, nquad
-!          WRITE(232,*) (-1.0)**(L+1.0)*QUA_ANGLE(J)
-!          DO I2 = 1, NSTOKES
-!           WRITE(232,*)(extmatrix(nz,I2,I1,J,L), I1=1,NSTOKES), 0E0, 0E0
-!          ENDDO
-!          DO I2 = NSTOKES+1,4
-!             WRITE(232,*) 0E0, 0E0, 0E0, 0E0
-!          ENDDO
-!        ENDDO
-!      ENDDO
+    end if
 
-!      DO L = 1, 2
-!        DO J = 1, nquad
-!          WRITE(232,*) (-1.0)**(L+1.0)*QUA_ANGLE(J),&
-!            (emisvec(nz,I,J,L), I=1,NSTOKES), 0E0, 0E0
-!        ENDDO
-!      ENDDO
-!
+     scattermatrix(nz,:,:,:,:,:)=scattermatrix(nz,:,:,:,:,:)+&
+	rain_scat+snow_scat+ice_scat+graupel_scat+hail_scat+cloud_scat
+     extmatrix(nz,:,:,:,:)=extmatrix(nz,:,:,:,:)+&
+	rain_ext+snow_ext+ice_ext+graupel_ext+hail_ext+cloud_ext
+     emisvec(nz,:,:,:)=emisvec(nz,:,:,:)+&
+	rain_emis+snow_emis+ice_emis+graupel_emis+hail_emis+cloud_emis
+
+
      end if
 
   end do grid_z !end of cycle over the vertical layers

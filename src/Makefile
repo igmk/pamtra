@@ -45,7 +45,7 @@ OBJECTS=kinds.o constants.o file_mod.o nml_params.o mod_fastem4_coef.o conversio
 	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o  \
 	get_scat_coefs.o dump_profile.o collect_boundary_output.o \
 	rt4.o radtran4.o radintg4.o radscat4.o tmat_rain_db.o tmat_snow_db.o hydrometeor_extinction_rt4.o scatcnv.o \
-	tmatrix_rain.o tmatrix_snow.o matrix_cal.o tmatrix_cal.o lpd.o get_scat_mat.o rain_ssp_tmat.o snow_ssp_tmat.o \
+	tmatrix_rain.o tmatrix_snow.o matrix_cal.o tmatrix_cal.o lpd.o get_scat_mat.o \
 	mass_size_rel.o refractive_index.o \
 	versionNumber.auto.o
 
