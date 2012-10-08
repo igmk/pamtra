@@ -147,8 +147,10 @@ subroutine mieangle_amplScatMat (nterms, a, b, mu, s1, s2)
   !  mie coefficients an's and bn's. the matrix elements are for the 
   !  stokes intensity vector (i,q,u,v) and are calculated from the    
   !  complex scattering amplitudes s1 and s2. 
-  use kinds
 
+
+
+  use kinds
   implicit none 
   integer :: nterms 
   real(kind=dbl) :: mu
@@ -237,12 +239,14 @@ end subroutine amplScatMat_to_scatMat
 subroutine amplScatMat_to_extinctionMatrix(s1,s2,f,extinctionMatrix)
 
   use kinds
-  implicit none 
   use constants, only: pi, c
+  implicit none 
+
   integer, parameter :: nstokes = 2
 
 
   real(kind=dbl), intent(in) :: f
+  complex(kind=dbl) :: s1,s2
   real(kind=dbl),intent(out), dimension(nstokes,nstokes) :: extinctionMatrix
   real(kind=dbl) :: k
 
