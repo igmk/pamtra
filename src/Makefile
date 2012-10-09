@@ -1,28 +1,24 @@
 ARCH=$(shell uname -s)
-FC=gfortran
-CC=gcc
 
-FCFLAGS=-c -fPIC -Wuninitialized 
-#-pg
 
-#analyse gprof output with
-# gprof ./pamtra | gprof2dot.py | dot -Tpng -o output_old.png
 
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 
+FC=gfortran
+CC=gcc
+FCFLAGS=-c -fPIC -Wuninitialized
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran
-	NCFLAGS=-I/opt/local/include/ #-g
-	NCFLAGS_F2PY=-I/opt/local/include/ #-g
+	NCFLAGS=-I/opt/local/include/ 
+	NCFLAGS_F2PY=-I/opt/local/include/ 
 	LFLAGS=-L/opt/local/lib/ -llapack
 	LDFLAGS=-lnetcdf -lnetcdff 
 else
 	NCFLAGS :=  $(shell nc-config --fflags)
 	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
 	LFLAGS := -llapack
-#-pg 
 	LDFLAGS := $(shell nc-config --flibs)
 endif
 
@@ -59,7 +55,29 @@ all: precompile pamtra py
 pamtra: pamtra.f90 $(OBJECTS) $(pamtraOBJECTS)
 	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(pamtraOBJECTS) $(LFLAGS) $(LDFLAGS) 
 	mv $(BIN) ../
- 
+
+
+
+pamtraDebug: FCFLAGS += -g
+pamtraDebug: LFLAGS += -g
+pamtraDebug: pamtra
+	@echo ""
+	@echo "####################################################################################"
+	@echo "start debugging with:"
+	@echo "gdb ./pamtra"
+	@echo "run -n namelist -p profile ..."	
+	@echo "####################################################################################"
+
+
+pamtraProfile: FCFLAGS += -pg
+pamtraProfile: LFLAGS += -pg
+pamtraProfile: 	pamtra
+	@echo ""
+	@echo "####################################################################################"
+	@echo "analyse gprof output with"
+	@echo "gprof ./pamtra | gprof2dot.py | dot -Tpng -o output_old.png"
+	@echo "####################################################################################"
+
 scatdb.o:
 	$(CC) -O  -fPIC -c scatdb.c 
 
