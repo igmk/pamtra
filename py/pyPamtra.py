@@ -45,7 +45,7 @@ class pyPamtra(object):
   def __init__(self):
     #set setting default values
   
-    self.nmlSet = OrderedDict() #settings which are required for the nml file. keeping the order is important for Fortran""
+    self.nmlSet = OrderedDict() #settings which are required for the nml file. keeping the order is important for Fortran
 
     self.nmlSet["verbose_mode"] = dict()
     self.nmlSet["inoutput_mode"] = dict()
@@ -61,6 +61,7 @@ class pyPamtra(object):
     self.nmlSet["graupel_params"] = dict()
     self.nmlSet["hail_params"] = dict()
     self.nmlSet["moments"] = dict()
+    self.nmlSet["radar_simulator"] = dict()
     
     self.nmlSet["verbose_mode"]["verbose"] = 0
     
@@ -95,11 +96,13 @@ class pyPamtra(object):
     self.nmlSet["hyd_opts"]["lphase_flag"]= True
 
     self.nmlSet["cloud_params"]["SD_cloud"]='C'
+    self.nmlSet["cloud_params"]["EM_cloud"]='miecl'
     
     self.nmlSet["ice_params"]["SD_ice"]='C'
     self.nmlSet["ice_params"]["EM_ice"]='mieic'
     
     self.nmlSet["rain_params"]["SD_rain"]='C' 
+    self.nmlSet["rain_params"]["EM_rain"]='miera' 
     self.nmlSet["rain_params"]["N_0rainD"]=8.0
     self.nmlSet["rain_params"]["use_rain_db"]=False
     
@@ -125,6 +128,8 @@ class pyPamtra(object):
 
     self.nmlSet["moments"]["n_moments"]=1
     self.nmlSet["moments"]["moments_file"]='snowCRYSTAL'
+    
+    self.nmlSet["radar_simulator"]["run_simulator"]=False
     
     #all settings which do not go into the nml file go here:
     self.set = dict()

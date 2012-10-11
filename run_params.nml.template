@@ -72,3 +72,6 @@ EM_hail='surus'
 n_moments=1
 moments_file='snowCRYSTAL'
 /
+&radar_simulator
+run_simulator=.false.
+/

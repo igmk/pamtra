@@ -49,7 +49,8 @@ module nml_params
        passive, &     ! calculate passive stuff (with RT3)
        zeSplitUp, &     ! save Ze and Att for every hydrometeor seperately. has only effect on netcdf file!
        activeLogScale, & !save ze and att in log scale or linear
-       jacobian_mode  ! special jacobian mode which does not calculate the whole scattering properties each time. only rt4!
+       jacobian_mode, &  ! special jacobian mode which does not calculate the whole scattering properties each time. only rt4!
+       run_simulator !run radar simulator
 
   character(5) :: EM_ice, EM_snow, EM_grau, EM_hail, EM_cloud, EM_rain
   character(1) :: SD_cloud, SD_ice, SD_rain, SD_snow, SD_grau, SD_hail
@@ -89,7 +90,7 @@ contains
     namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau, graupel_density
     namelist / hail_params / SD_hail, N_0hailDhail, EM_hail, hail_density
     namelist / moments / n_moments, moments_file
-
+    namelist / radar_simulator / run_simulator
 
 
     !set namelist defaults!
@@ -165,6 +166,8 @@ contains
     ! sec moments
     n_moments=1
     moments_file='snowCRYSTAL'
+    ! radar_simulator
+    run_simulator=.false.
 
     ! read name list parameter file
 
@@ -196,6 +199,7 @@ contains
 !    if (verbose .gt. 1) print*, SD_hail, N_0hailDhail, EM_hail, hail_density
     read(7,nml=moments)
 !    if (verbose .gt. 1) print*, n_moments, moments_file
+    read(7,nml=radar_simulator)
     close(7)
 
     if (n_moments .ne. 1 .and. n_moments .ne. 2) stop "n_moments is not 1 or 2"
