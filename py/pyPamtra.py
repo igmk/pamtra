@@ -398,9 +398,41 @@ class pyPamtra(object):
     f.close()
 
     
+  def writePamtraProfile(self,filename):
     
+    #the ASCII format has no support for changing dates, thus tkae the first one for all!
+    firstTime = datetime.datetime.utcfromtimestamp(self.p["unixtime"][0,0])
+    year=str(firstTime.year)
+    mon=str(firstTime.month).zfill(2)
+    day=str(firstTime.day).zfill(2)
+    hhmm=datetime.datetime.strftime(firstTime,"%H%M")
+    
+    if "iwv" not in self.p.keys():
+      self.addIntegratedValues()
+
+    s = ""
+    s += year+" "+mon+" "+day+" "+hhmm+" "+str(self._shape2D[0])+" "+str(self._shape2D[1])+" "+str(self._shape3D[2])+" "+str(self.p["deltax"])+" "+str(self.p["deltay"])+"\n"
+    
+    for xx in range(self._shape2D[0]):
+      for yy in range(self._shape2D[1]):
+	s += str(xx+1)+" "+str(yy+1)+"\n"
+	s += '%3.2f'%self.p["lat"][xx,yy]+" "+'%3.2f'%self.p["lon"][xx,yy]+" "+str(self.p["lfrac"][xx,yy])+" "+str(self.p["wind10u"][xx,yy])+" "+str(self.p["wind10v"][xx,yy])+"\n"
+	s += str(self.p["iwv"][xx,yy])+" "+str(self.p["cwp"][xx,yy])+" "+str(self.p["iwp"][xx,yy])+" "+str(self.p["rwp"][xx,yy])+" "+str(self.p["swp"][xx,yy])+" "+str(self.p["gwp"][xx,yy])
+	if (self.nmlSet["moments"]["n_moments"]) == 2: s += " "+str(self.p["hwp"][xx,yy])
+	s += "\n"
+	s += '%6.1f'%self.p["hgt_lev"][xx,yy,0]+" "+'%6.1f'%self.p["press_lev"][xx,yy,0]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,0]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,0]*100)+"\n"
+	for zz in range(1,self._shape3D[2]+1):
+	  s += '%6.1f'%self.p["hgt_lev"][xx,yy,zz]+" "+'%6.1f'%self.p["press_lev"][xx,yy,zz]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,zz]*100)+\
+	  " "+'%9e'%self.p["cwc_q"][xx,yy,zz-1]+" "+'%9e'%self.p["iwc_q"][xx,yy,zz-1]+" "+'%9e'%self.p["rwc_q"][xx,yy,zz-1]+" "+'%9e'%self.p["swc_q"][xx,yy,zz-1]+" "+'%9e'%self.p["gwc_q"][xx,yy,zz-1]
+	  if (self.nmlSet["moments"]["n_moments"]) == 2: s += " "+'%9e'%self.p["hwc_q"][xx,yy,zz-1]
+	  s += "\n"
 
     
+    # write stuff to file
+    f = open(filename, 'w')
+    f.write(s)
+    f.close()
+
     
   def createProfile(self,**kwargs):
     '''

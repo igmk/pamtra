@@ -2,13 +2,7 @@
 
 source nodesConfig.sh
 
-<<<<<<< HEAD
-#  hosts=`ls /net`
-hosts="roumet habagat karif"
-#hosts="karif"
-=======
 hosts=$igmkNodes
->>>>>>> rt4
 
 timeout="$timeout"
 user="$igmkUser"
