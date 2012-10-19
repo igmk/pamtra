@@ -35,7 +35,13 @@ module nml_params
   real(kind=dbl) :: N_0rainD, N_0snowDsnow, N_0grauDgrau, N_0hailDhail,  SP
   real(kind=dbl) :: as_ratio, snow_density, graupel_density, hail_density
   real(kind=dbl) :: salinity         ! sea surface salinity
-
+  integer :: radar_nfft !number of FFT points in the Doppler spectrum [typically 256 or 512]
+  integer :: radar_no_Ave !number of average spectra for noise variance reduction, typical range [1 40]
+  real(kind=dbl) :: radar_max_V !MinimumNyquistVelocity in m/sec
+  real(kind=dbl) :: radar_min_V !MaximumNyquistVelocity in m/sec
+  real(kind=dbl) :: radar_turbulence_st !turbulence broadening standard deviation st, typical range [0.1 - 0.4] m/sec
+  real(kind=dbl) :: radar_pnoise !radar noise
+  
   logical ::  in_python !are we in python
 
   logical :: dump_to_file, &   ! flag for profile and ssp dump
@@ -50,7 +56,7 @@ module nml_params
        zeSplitUp, &     ! save Ze and Att for every hydrometeor seperately. has only effect on netcdf file!
        activeLogScale, & !save ze and att in log scale or linear
        jacobian_mode, &  ! special jacobian mode which does not calculate the whole scattering properties each time. only rt4!
-       run_simulator !run radar simulator
+       radar_spectrum !run radar simulator
 
   character(5) :: EM_ice, EM_snow, EM_grau, EM_hail, EM_cloud, EM_rain
   character(1) :: SD_cloud, SD_ice, SD_rain, SD_snow, SD_grau, SD_hail
@@ -90,7 +96,8 @@ contains
     namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau, graupel_density
     namelist / hail_params / SD_hail, N_0hailDhail, EM_hail, hail_density
     namelist / moments / n_moments, moments_file
-    namelist / radar_simulator / run_simulator
+    namelist / radar_simulator / radar_spectrum, radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
+	       radar_turbulence_st, radar_pnoise
 
 
     !set namelist defaults!
@@ -167,10 +174,21 @@ contains
     n_moments=1
     moments_file='snowCRYSTAL'
     ! radar_simulator
-    run_simulator=.false.
+    radar_spectrum=.true.
+    !number of FFT points in the Doppler spectrum [typically 256 or 512]
+    radar_nfft=256
+    !number of average spectra for noise variance reduction, typical range [1 150]
+    radar_no_Ave=150
+    !MinimumNyquistVelocity in m/sec
+    radar_max_V=7.885
+    !MaximumNyquistVelocity in m/sec
+    radar_min_V=-7.885
+    !turbulence broadening standard deviation st, typical range [0.1 - 0.4] m/sec
+    radar_turbulence_st=0.15
+      !radar noise in same unit as Ze mm⁶/m³
+    radar_pnoise=1.d-3
 
     ! read name list parameter file
-
     open(7, file=namelist_file,delim='APOSTROPHE')
     read(7,nml=verbose_mode)
     read(7,nml=inoutput_mode)

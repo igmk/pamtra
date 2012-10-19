@@ -2,6 +2,7 @@ module vars_output
 
   use kinds
   implicit none
+
   save
 
   integer, allocatable, dimension(:,:) :: is, js
@@ -19,6 +20,11 @@ module vars_output
   real(kind=dbl), allocatable, dimension(:,:,:,:) :: Att_atmo
   real(kind=dbl), allocatable, dimension(:,:,:,:) :: Att_hydro, &
                                Att_cw,Att_rr,Att_ci,Att_sn,Att_gr,Att_ha
+
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: radar_spectra
+  real(kind=dbl), allocatable, dimension(:,:,:,:) ::    radar_snr
+
+  real(kind=dbl), allocatable, dimension(:) :: radar_vel
   
 end module vars_output
 

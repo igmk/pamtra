@@ -32,4 +32,5 @@ rt_mode='rt4'
 /
 &moments
 /
-
+&radar_simulator
+/

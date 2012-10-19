@@ -1,6 +1,6 @@
-subroutine cloud_ssp(f,cwc,t, maxleg,nc, kext, salb, back,  &
+subroutine cloud_ssp(f,cwc,t, press,maxleg,nc, kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
-     scatter_matrix,extinct_matrix, emis_vector)
+     scatter_matrix,extinct_matrix, emis_vector,cloud_spec)
 
   ! This subroutine prepares the input parameters for the routines
   ! calculating the extinction, absorption, and backscattering coefficients.
@@ -18,8 +18,9 @@ subroutine cloud_ssp(f,cwc,t, maxleg,nc, kext, salb, back,  &
 
   use kinds
   use nml_params, only: verbose, lphase_flag, n_moments, SD_cloud, &
-      nstokes, EM_cloud
+      nstokes, EM_cloud, radar_nfft, radar_spectrum
   use constants, only: pi, im
+  use vars_atmosphere, only: alloc_status
   use double_moments_module
   use conversions
 
@@ -31,7 +32,7 @@ subroutine cloud_ssp(f,cwc,t, maxleg,nc, kext, salb, back,  &
 
   real(kind=dbl), intent(in) :: &
        cwc,&
-       t,&
+       t, press, &
        f
 
   real(kind=dbl), intent(in) :: nc
@@ -47,6 +48,7 @@ subroutine cloud_ssp(f,cwc,t, maxleg,nc, kext, salb, back,  &
        kext,&
        salb,&
        back
+  real(kind=dbl), intent(out), dimension(radar_nfft) :: cloud_spec
 
   real(kind=dbl), dimension(200), intent(out) :: legen, legen2, legen3, legen4
     integer, parameter ::  nquad = 16
@@ -54,7 +56,10 @@ subroutine cloud_ssp(f,cwc,t, maxleg,nc, kext, salb, back,  &
     real(kind=dbl), dimension(nstokes,nstokes,nquad,2), intent(out) :: extinct_matrix
     real(kind=dbl), dimension(nstokes,nquad,2), intent(out) :: emis_vector
   complex(kind=dbl) :: mindex
+  real(kind=dbl), allocatable, dimension(:):: diameter_spec, qback_spec
+  character(5) ::  particle_type
 
+real(kind=dbl) :: re, Nt
   if (verbose .gt. 1) print*, 'Entering cloud_ssp'
 
   ! absind  absorptive index 
@@ -68,24 +73,38 @@ subroutine cloud_ssp(f,cwc,t, maxleg,nc, kext, salb, back,  &
   if (n_moments .eq. 1) then
 	if (SD_cloud .eq. 'C') then
 	    del_d = 1.d-8 	! delta_diameter for mie calculation [m]
-        dia1 = 2.d-5 	! [m] 20 micron diameter monodisperse
-        dia2 = dia1 + del_d
-        drop_mass = pi/6.d0 * den_liq * dia1**3 		    	! [kg]
-        ad = cwc / (drop_mass*del_d)	! intercept parameter [1/m^4]
+	    dia1 = 2.d-5 	! [m] 20 micron diameter monodisperse
+	    dia2 = dia1 + del_d
+	    drop_mass = pi/6.d0 * den_liq * dia1**3 		    	! [kg]
+	    ad = cwc / (drop_mass*del_d)	! intercept parameter [1/m^4]
 	    bd = 0.d0
 	    nbins = 2
 	    alpha = 0.d0 ! exponential SD
 	    gamma = 1.d0
 	else if (SD_cloud .eq. 'M') then
-	    del_d = 1.d-8 	! delta_diameter for mie calculation [m]
-        dia1 = 2.d-5 	! [m] 20 micron diameter monodisperse
-        dia2 = dia1 + del_d
-        drop_mass = pi/6.d0 * den_liq * dia1**3 		    	! [kg]
-        ad = cwc / (drop_mass*del_d)	! intercept parameter [1/m^4]
+	    del_d = 1.d-8 	!delta_diameter for mie calculation [m]
+	    dia1 = 2.d-5 	! [m] 20 micron diameter monodisperse
+	    dia2 = dia1 + del_d
+	    drop_mass = pi/6.d0 * den_liq * dia1**3 		    	! [kg]
+	    ad = cwc / (drop_mass*del_d)	! intercept parameter [1/m^4]
 	    bd = 0.d0
 	    nbins = 2
 	    alpha = 0.d0 ! exponential SD
 	    gamma = 1.d0
+	else if (SD_cloud .eq. 'L') then !lognormal cloud distribution to test Pavlos Radar Spectrum
+!teh hard and ugly way:
+
+	    dia1 = 2.d-6 ! [m] 2 micron diameter 
+	    dia2 = 50.d-6 ! [m] 50 micron diameter 
+	    nbins = 48
+	    alpha = 0.3 !S_x in Pavlos code
+	    re=10.d-6
+	    bd = re/exp(2.5d0*alpha**2); !ro in Pavlos Code
+	    Nt = (3*CWC*1.d3)/(4*pi*1*(bd*1d2)**3*exp(4.5d0*alpha**2))
+	    ad = Nt/(sqrt(2*pi) *alpha)
+
+        else
+	    stop "did not understand SD_cloud"
 	end if
   else if (n_moments .eq. 2) then
      if (nc .eq. 0.d0) stop 'STOP in routine cloud_ssp'
@@ -98,10 +117,14 @@ subroutine cloud_ssp(f,cwc,t, maxleg,nc, kext, salb, back,  &
      stop 'Number of moments is not specified'
   end if
 
+  allocate(diameter_spec(nbins+1),stat=alloc_status)
+  allocate(qback_spec(nbins+1),stat=alloc_status)
+
   if (EM_cloud .eq. 'miecl') then
-  call mie(f, mindex, dia1, dia2, nbins, maxleg, ad,       &
+  call mie_spec(f, mindex, dia1, dia2, nbins, maxleg, ad,       &
        bd, alpha, gamma, lphase_flag, kext, salb, back,  &
-       nlegen, legen, legen2, legen3, legen4, SD_cloud,den_liq,cwc)
+       nlegen, legen, legen2, legen3, legen4, SD_cloud,den_liq,cwc,&
+       diameter_spec, qback_spec)
       scatter_matrix= 0.d0
       extinct_matrix= 0.d0
       emis_vector= 0.d0
@@ -109,6 +132,16 @@ subroutine cloud_ssp(f,cwc,t, maxleg,nc, kext, salb, back,  &
     stop "unknown EM_cloud"
   end if
   if (verbose .gt. 1) print*, 'Exiting cloud_ssp'
+
+  particle_type="cloud" 
+
+  if (radar_spectrum) then
+    call calc_radar_spectrum(nbins+1,diameter_spec, qback_spec,t,press,f,particle_type,cloud_spec)
+  else
+    cloud_spec(:)=0.d0
+  end if
+
+  deallocate(diameter_spec, qback_spec)
 
   return
 

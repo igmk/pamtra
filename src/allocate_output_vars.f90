@@ -47,5 +47,12 @@ subroutine allocate_output_vars(no_allocated_lyrs)
      allocate(hgt(ngridx,ngridy,no_allocated_lyrs))
   end if
 
+  if(radar_spectrum)  allocate(&
+      radar_spectra(ngridx,ngridy,no_allocated_lyrs,nfrq,radar_nfft),&
+      radar_snr(ngridx,ngridy,no_allocated_lyrs,nfrq),&
+      radar_vel(radar_nfft))
 
+      radar_spectra = -9999.d0
+      radar_snr = -9999.d0
+      radar_vel = -9999.d0
 end subroutine allocate_output_vars

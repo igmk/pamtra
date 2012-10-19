@@ -1,4 +1,4 @@
-subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
+subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
 
   use kinds
   use vars_atmosphere
@@ -6,7 +6,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
                        n_moments, quad_type, nummu, EM_snow, EM_grau, &
 		       EM_hail, EM_ice, EM_rain, EM_cloud, as_ratio, &
                        use_rain_db, use_snow_db, data_path, &
-		       jacobian_mode
+		       jacobian_mode, radar_nfft, radar_spectrum
   use constants
   use mod_io_strings
   use conversions
@@ -15,7 +15,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
 
   implicit none
 
-  integer, intent(in) :: nx,ny
+  integer, intent(in) :: nx,ny,fi
   integer, parameter :: maxleg = 200
   integer, parameter :: nstokes = 2
 
@@ -48,6 +48,10 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
       ice_ext,graupel_ext,hail_ext,cloud_ext
   real(kind=dbl), dimension(nstokes,nummu,2) :: rain_emis,snow_emis,&
       ice_emis,graupel_emis,hail_emis,cloud_emis
+
+
+  real(kind=dbl), dimension(radar_nfft) :: cloud_spec, rain_spec, snow_spec,&
+      ice_spec, graupel_spec, hail_spec, full_spec
 
   character(6), intent(in) :: frq_str !from commandline
   CHARACTER*64 SCATFILES(nlyr)
@@ -171,6 +175,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
      kextcw(nz) = 0.d0 
      salbcw = 0.d0 
      backcw(nz) = 0.d0 
+     cloud_spec(:) = 0.d0
      if ((cwc_q(nz) .ge. threshold) .and. (EM_cloud .ne. 'disab')) then
         hydros_present(nz) = .true.
      	if (n_moments .eq. 1) then
@@ -180,11 +185,10 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
 	     	qwc = q2abs(cwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc =  q2abs(cwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
        	end if
-    	call cloud_ssp(f,qwc,temp(nz),&
+    	call cloud_ssp(f,qwc,temp(nz),press(nz),&
              	maxleg, nc, kextcw(nz), salbcw, backcw(nz),  &
              	nlegencw, legencw, legen2cw, legen3cw, legen4cw, &
-		cloud_scat, cloud_ext, cloud_emis)
-
+		cloud_scat, cloud_ext, cloud_emis,cloud_spec)
      end if
 
 
@@ -203,7 +207,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
      kextci(nz) = 0.0d0 
      salbci = 0.0d0 
      backci(nz) = 0.0d0 
-
+     ice_spec(:) = 0.d0
      if ((iwc_q(nz) .ge. threshold) .and. (EM_ice .ne. 'disab')) then
         hydros_present(nz) = .true.
 	     if (n_moments .eq. 1) then
@@ -236,8 +240,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
      kextrr(nz) = 0.d0
      salbrr = 0.d0
      backrr(nz) = 0.d0
-!to do: add option to disable clouds!
-
+     rain_spec(:) = 0.d0
      if ((rwc_q(nz) .ge. threshold) .and. EM_rain .ne. "disab") then
         hydros_present(nz) = .true.
      	if (n_moments .eq. 1) then
@@ -271,6 +274,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
     kextsn(nz) = 0.0d0
     salbsn = 0.0d0
     backsn(nz) = 0.0d0
+     snow_spec(:) = 0.d0
      if ((swc_q(nz) .ge. threshold) .and. (EM_snow .ne. 'disab')) then
         hydros_present(nz) = .true.
      	 if (n_moments .eq. 1) then
@@ -302,6 +306,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
         kextgr(nz) = 0.0d0
         salbgr = 0.0d0
         backgr(nz) = 0.0d0
+     graupel_spec(:) = 0.d0
      if ((gwc_q(nz) .ge. threshold) .and. (EM_grau .ne. 'disab'))then
         hydros_present(nz) = .true.
 	     if (n_moments .eq. 1) then
@@ -334,6 +339,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
       kextha(nz) = 0.0d0
       salbha = 0.0d0
       backha(nz) = 0.0d0
+     hail_spec(:) = 0.d0
      if (n_moments .eq. 2) then
         if ((hwc_q(nz) .ge. threshold) .and. (EM_hail .ne. 'disab')) then
            hydros_present(nz) = .true.
@@ -437,8 +443,18 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny)
      emisvec(nz,:,:,:)=emisvec(nz,:,:,:)+&
 	rain_emis+snow_emis+ice_emis+graupel_emis+hail_emis+cloud_emis
 
+     full_spec = cloud_spec+rain_spec+snow_spec+ &
+      ice_spec+graupel_spec+hail_spec
 
-     end if
+
+
+  if (radar_spectrum) then
+     call radar_simulator(full_spec, back(nz), f, temp(nz),nz,nx,ny,fi)
+!   else
+!     cloud_spec(:)=0.d0
+  end if
+
+     end if !end if hydrometeors present
 
   end do grid_z !end of cycle over the vertical layers
 

@@ -5,13 +5,13 @@ subroutine write_nc_results
   use vars_atmosphere, only: ngridx, ngridy,nlyr,freqs,nfrq, year, month, day, time
   use netcdf
   use nml_params, only: active, passive, creator, verbose, zeSplitUp, &
-			n_moments, activeLogScale
+			n_moments, activeLogScale, radar_nfft, radar_spectrum
   use file_mod, only: nc_out_file
 
   implicit none
 
   integer :: ncid
-  integer :: dlonID, dlatID, dangID, dfrqID, doutID, dstokesID, dlayerID
+  integer :: dlonID, dlatID, dangID, dfrqID, doutID, dstokesID, dlayerID,dnfftID
 
   integer :: isVarID, jsVarID, lonVarID, latVarID, lfracVarID, iwvVarID, cwpVarID,&
        iwpVarID, rwpVarID, swpVarID, gwpVarID, hwpVarID, &
@@ -19,7 +19,7 @@ subroutine write_nc_results
        ZeVarID,ZeCwVarID,ZeRrVarID,ZeCiVarID,ZeSnVarID,ZeGrVarID,ZeHaVarID, &
        AttAtmoVarID, AttHydroVarID,&
        AttCwVarID, AttRrVarID, AttCiVarID, AttSnVarID, AttGrVarID, AttHaVarID, &
-       frequencyVarID, anglesVarID
+       frequencyVarID, anglesVarID, RadarVelID, RadarSpecID, RadarSNRID
           
           
   integer :: nang = 32, nout = 2, nstokes = 2
@@ -27,6 +27,7 @@ subroutine write_nc_results
   integer, dimension(2) :: dim2d
   integer, dimension(3) :: dim3d
   integer, dimension(4) :: dim4d
+  integer, dimension(5) :: dim5d
   integer, dimension(6) :: dim6d
 
   integer :: today(3), now(3)
@@ -72,6 +73,9 @@ subroutine write_nc_results
   end if
   if (active) then
      call check(nf90_def_dim(ncid, 'nlyr', nlyr, dlayerID))
+  end if
+  if (radar_spectrum) then
+     call check(nf90_def_dim(ncid, 'nfft', radar_nfft, dnfftID))
   end if
 
   !1dim
@@ -213,6 +217,24 @@ subroutine write_nc_results
      call check(nf90_put_att(ncid, AttAtmoVarID, "units", attUnit))
      call check(nf90_put_att(ncid, AttAtmoVarID, "missing_value", -9999))
 
+  end if
+
+  if (radar_spectrum) then
+     dim5d = (/dnfftID,dfrqID,dlayerID,dlatID,dlonID/)
+
+      call check(nf90_def_var(ncid,'Radar_Spectrum', nf90_double,dim5d, RadarSpecID))
+      call check(nf90_put_att(ncid, RadarSpecID, "units", "dB(z/(m/s))"))
+      call check(nf90_put_att(ncid, RadarSpecID, "missing_value", -9999))
+
+      call check(nf90_def_var(ncid,'Radar_Velocity', nf90_double,(/dnfftID/), RadarVelID))
+      call check(nf90_put_att(ncid, RadarVelID, "units", "m/s"))
+      call check(nf90_put_att(ncid, RadarVelID, "missing_value", -9999))
+
+      call check(nf90_def_var(ncid,'Radar_SNR', nf90_double,dim4d, RadarSNRID))
+      call check(nf90_put_att(ncid, RadarSNRID, "units", "dB"))
+      call check(nf90_put_att(ncid, RadarSNRID, "missing_value", -9999))
+
+
 
   end if
 
@@ -286,7 +308,14 @@ subroutine write_nc_results
           RESHAPE( Att_hydro, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
      end if
 
+  if (radar_spectrum) then
+        call check(nf90_put_var(ncid, RadarSNRID, &
+          RESHAPE( radar_snr, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+        call check(nf90_put_var(ncid, RadarSpecID, &
+          RESHAPE( radar_spectra, (/ radar_nfft, nfrq, nlyr, ngridy, ngridx/), ORDER = (/5,4,3,2,1/))))
+	call check(nf90_put_var(ncid, RadarVelID, radar_vel))
 
+  end if
 
      call check(nf90_put_var(ncid, AttAtmoVarID, &
           RESHAPE( Att_atmo, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))

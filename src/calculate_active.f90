@@ -4,7 +4,7 @@ subroutine calculate_active(OUT_FILE_ACT,freq,hgt,&
   ! This function computes and writes Ze and PIA
  
   use kinds 
-  use vars_atmosphere !gives kextatmo, kexttot, temp, nlyr
+  use vars_atmosphere !gives kextatmo, kexttot, temp, nlyr, back
   use constants
   use nml_params
 

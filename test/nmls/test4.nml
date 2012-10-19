@@ -34,3 +34,5 @@ EM_grau='densi'
 /
 &moments
 /
+&radar_simulator
+/

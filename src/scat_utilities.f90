@@ -278,15 +278,17 @@ function distribution(a, b, alpha, gamma, d, distflag)
 
   real(kind=dbl), intent(in) :: a, b, d
   real(kind=dbl), intent(in) :: alpha, gamma
-  real(kind=dbl) :: distribution
+  real(kind=dbl) :: distribution, r
   character :: distflag*1
 
   if (distflag .eq. 'G') then
      !   modified gamma distribution
-     distribution = a * d**alpha * exp( - b * d**gamma)
+     !r = d/2.d0 !Why d instead of r? it is present in batta_model! Max
+     distribution = a * d**alpha * exp( - b * r**gamma)
   elseif (distflag .eq. 'L') then
      !   log-normal distribution
-     distribution = a / d * exp( -0.5*(log(d / b) )**2 / alpha**2)
+     r = d/2.d0
+     distribution = a / r * exp( -0.5*(log(r / b) )**2 / alpha**2)
   elseif (distflag .eq. 'C' .or. distflag .eq. 'M' ) then
      !   distribution according to cosmo-de or mesonh model
      distribution = a * exp(-b*d)

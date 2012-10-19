@@ -6,6 +6,7 @@ in_ngridx,&
  in_nlyrs,&
  in_nfreq,&
  in_freqs,&
+in_nfft,&
 in_timestamp,&
 in_deltax,&
 in_deltay,&
@@ -53,6 +54,9 @@ out_Att_ha,&
 out_Att_atmo,&
 out_hgt,&
 out_tb,&
+out_radar_spectra,&
+out_radar_snr,&
+out_radar_vel,&
 out_angles&
 )
 
@@ -84,7 +88,7 @@ out_angles&
 
 
  !!Settings
-!   integer,intent(in) :: set_verbose, set_n_moments, set_isnow_n0, set_liu_type
+!   integer,intent(in) :: set_verbose, set_n_moments, set_isnow_n0, set_liu_type, 
 ! 
 !   real(kind=sgl),intent(in) :: set_obs_height     ! upper level output height [m] (> 100000. for satellite)
 !   real(kind=sgl),intent(in) :: set_emissivity
@@ -114,7 +118,7 @@ character(300),intent(in) :: set_namelist_file
 
 !Input
 
-  integer, intent(in) :: in_nfreq, max_in_nlyrs, in_ngridx, in_ngridy
+  integer, intent(in) :: in_nfreq, max_in_nlyrs, in_ngridx, in_ngridy, in_nfft
   real(kind=sgl), dimension(in_nfreq), intent(in) :: in_freqs
 
 
@@ -141,12 +145,14 @@ character(300),intent(in) :: set_namelist_file
   real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(out) :: out_hgt
   real(kind=sgl), dimension(32),intent(out) :: out_angles !2*NUMMU instead of 32 does not work, because f2py does not know dimensions!
   real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: out_tb !same here: noutlevels=2, 2*NUMMU = 32, NSTOKES = 2
-
+  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq,in_nfft),intent(out):: out_radar_spectra
+  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out):: out_radar_snr
+  real(kind=sgl), dimension(in_nfft),intent(out):: out_radar_vel
   !settings
   !f2py intent(in) :: set_namelist_file
   !input
   !f2py intent(in) :: max_in_nlyrs, in_nlyrs, in_ngridx, in_ngridy,in_nfreq, in_freqs
-  !f2py intent(in) :: in_timestamp
+  !f2py intent(in) :: in_timestamp, in_nfft
   !f2py intent(in) :: in_deltax,in_deltay, in_lat,in_lon,in_model_i,in_model_j
   !f2py intent(in) :: in_wind10u,in_wind10v,in_lfrac
   !f2py intent(in) :: in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev
@@ -158,7 +164,7 @@ character(300),intent(in) :: set_namelist_file
   !f2py intent(out) :: out_Ze,out_Att_hydro,out_Att_atmo,out_hgt,out_tb
   !f2py intent(out) :: out_Ze_cw,out_Ze_rr,out_Ze_ci,out_Ze_sn,out_Ze_gr,out_Ze_ha
   !f2py intent(out) :: out_Att_cw,out_Att_rr,out_Att_ci,out_Att_sn,out_Att_gr,out_Att_ha
-  !f2py intent(out) :: out_angles
+  !f2py intent(out) :: out_radar_spectra,out_radar_snr,out_radar_vel,out_angles
 
 
 
@@ -181,6 +187,8 @@ character(300),intent(in) :: set_namelist_file
 
   !!! read variables from namelist file
   call nml_params_read !from nml_params.f90
+
+  if (radar_nfft .ne. in_nfft) stop "nfft in python input and nml file must be equal!"
 
   if (verbose .gt. 1) print*,in_freqs, in_nlyrs, max_in_nlyrs
 
@@ -222,8 +230,9 @@ character(300),intent(in) :: set_namelist_file
    out_Att_sn = -9999.
    out_Att_gr = -9999.
    out_Att_ha = -9999.
-
-
+   out_radar_spectra = -9999.
+   out_radar_snr = -9999.
+   out_radar_vel = -9999.
    out_hgt = -9999.
    out_angles = -9999.
    out_tb = -9999
@@ -320,7 +329,6 @@ character(300),intent(in) :: set_namelist_file
             out_Att_gr(nx,ny,1:nlyr,:) = REAL(Att_gr(nx,ny,1:nlyr,:))
             out_Att_ha(nx,ny,1:nlyr,:) = REAL(Att_ha(nx,ny,1:nlyr,:))
 
-
             out_hgt(nx,ny,1:nlyr) = REAL(hgt(nx,ny,1:nlyr))
           end if
 
@@ -328,6 +336,11 @@ character(300),intent(in) :: set_namelist_file
 
          end do grid_x
     end do grid_y
+    if (radar_spectrum) then
+      out_radar_spectra(:,:,:,:,:) = REAL(radar_spectra(:,:,:,:,:))
+      out_radar_snr(:,:,:,:) = REAL(radar_snr(:,:,:,:))
+      out_radar_vel(:) = REAL(radar_vel(:))
+    end if
   if (jacobian_mode) then
   !for jacobian mode
       call deallocate_jacobian_vars
