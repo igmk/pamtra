@@ -9,6 +9,7 @@ data_path='/home/mech/models/pamtra/data/'
 &output
 /
 &run_mode
+rt_mode='rt4'
 /
 &surface_params
 /

@@ -1,16 +1,16 @@
 #!/bin/bash
 
-hosts=`ls /net`
-# hosts="zapod viracao trombe tivano tempest seistan schirokko roumet refoli rebat ramier qeb orkan notos nemere molan meltemi kaus karif irifi habagat gargal garbi gales frog forano1 euros embat chinook aure albe"
+source nodesConfig.sh
+
+hosts=$igmkNodes
+
+user="$igmkUser"
+
+port="$igmkPort"
+saveCPUs="$igmkSaveCPUs"
+
+
 ppTimeout=10000
-
-#how many cpus shall be saved?
-saveCPUs=0.98
-
-port=50010
-
-user=hatpro
-
 totalWorkers=0
 OkHosts=()
 

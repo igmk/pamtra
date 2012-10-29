@@ -110,9 +110,10 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
     if (rt_mode .eq. 'rt3') then
         call hydrometeor_extinction_rt3(freq,frq_str)
     elseif (rt_mode .eq. 'rt4') then
-        call hydrometeor_extinction_rt4(freq,frq_str)
+        call hydrometeor_extinction_rt4(freq,frq_str,nx,ny)!hier nx, ny
     end if
   end if
+
 
   !
   if (dump_to_file) call dump_profile(frq_str)

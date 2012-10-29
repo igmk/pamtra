@@ -115,25 +115,30 @@ def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp
 	if len(files) == 0: raise RuntimeError( "no files found")
 	files.sort()
 	
+	ffOK = 0 #successfull runs
+	
 	for ff, fname in enumerate(files):
 	  if verbosity>0: print fname
 	  try:
 	    if fname.split(".")[-1]!="nc":
 		  tmpFile = tmpDir+"/pyPamtraImport_netcdf_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nc"
 		  if fname.split(".")[-1]=="tar":
-		    if verbosity>2:print "tar -O --wildcards -x "+fnameInTar+" -f "+fname+">"+tmpFile+".gz"
+		    if verbosity>3:print "tar -O --wildcards -x "+fnameInTar+" -f "+fname+">"+tmpFile+".gz"
 		    os.system("tar -O --wildcards -x "+fnameInTar+" -f "+fname+">"+tmpFile+".gz")
 		    gzFile = tmpFile+".gz"
-		    if verbosity>1:print "created ", gzFile
+		    if os.stat(gzFile).st_size == 0:
+		      os.system("rm -f "+tmpFile+"*")
+		      raise IOError("fnameInTar not found in "+fname)
+		    if verbosity>2:print "created ", gzFile
 		  else:
 		    gzFile = fname
 		  os.system("zcat "+gzFile+">"+tmpFile)
-		  if verbosity>0:print "created ", tmpFile
+		  if verbosity>1:print "created ", tmpFile
 		  ncFile = netCDF4.Dataset(tmpFile,"r")
-		  if verbosity>0:print "opend ", tmpFile	  
+		  if verbosity>1:print "opend ", tmpFile	  
 	    else:  
 		  ncFile = netCDF4.Dataset(fname,"r")
-		  if verbosity>0:print "opend ", fname
+		  if verbosity>1:print "opend ", fname
 
 	    dataSingle = dict()  
 	    for var in variables1Dx:	
@@ -148,9 +153,9 @@ def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp
 		    dataSingle[var] = np.swapaxes(ncFile.variables[var][[colIndex],:,forecastIndex,:],1,2)[...,::-1]#reverse height order	
 		    
 	    ncFile.close()
-	    if verbosity>0:print "closed nc"
+	    if verbosity>1:print "closed nc"
 	    if fname.split(".")[-1]!="nc":
-		  if verbosity>0:print "removing ", glob.glob(tmpFile+"*")
+		  if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
 		  os.system("rm -f "+tmpFile+"*")
 	    shape2D = (np.shape(dataSingle["latitude"])[0],np.shape(dataSingle["time1h"])[0],)
 	    shape3Dplus = (np.shape(dataSingle["latitude"])[0],np.shape(dataSingle["time1h"])[0],np.shape(dataSingle["temperature"])[2]+1)
@@ -179,12 +184,20 @@ def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp
 	    
 	    del time1h, longitude, latitude, fr_land, hhl, hfl
 	    
-	    if ff == 0:
+	    
+	    
+	    if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
 		  data = deepcopy(dataSingle)
 	    else:
 		  for key in data.keys():
 		    data[key] = np.ma.concatenate((data[key],dataSingle[key],),axis=concatenateAxis)
+		    
+	    ffOK += 1	
+	    
 	  except Exception as inst:
+	    if fname.split(".")[-1]!="nc":
+		  if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+		  os.system("rm -f "+tmpFile+"*")
 	    print "ERROR:", fname	    
 	    print type(inst)     # the exception instance
 	    print inst.args      # arguments stored in .args
@@ -194,7 +207,7 @@ def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp
 
 
 	#shapes have changed!
-	shape2D = np.shape(data["latitude"])
+	shape2D = np.shape(data["t_2m"])
 	shape3Dplus = np.shape(data["hhl"])
 	shape3D = np.shape(data["hfl"])
 	  

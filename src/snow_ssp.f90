@@ -1,12 +1,13 @@
 ! Subroutine for the setup of the parameters of the snow particle size distribution.
 !
 !
-subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
-     nlegen, legen, legen2, legen3, legen4, nc)
+subroutine snow_ssp(f,swc,t,maxleg,nc,kext, salb, back,  &
+     nlegen, legen, legen2, legen3, legen4,&
+     scatter_matrix,extinct_matrix, emis_vector)
 
   use kinds
   use nml_params, only: verbose, lphase_flag, n_0snowDsnow, EM_snow, &
-	n_moments, isnow_n0, SD_snow, snow_density,liu_type
+	n_moments, isnow_n0, SD_snow, snow_density,liu_type,nstokes
   use constants, only: pi, im
   use double_moments_module
   use conversions
@@ -16,13 +17,13 @@ subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
   integer :: nbins, nlegen, nn
 
   integer, intent(in) :: maxleg
-
+    integer, parameter ::  nquad = 16
   real(kind=dbl), intent(in) :: &
        swc,&
        t,&
        f
 
-  real(kind=dbl), optional, intent(in) :: nc
+  real(kind=dbl), intent(in) :: nc
 
   real(kind=dbl) :: refre, refim
 
@@ -34,7 +35,9 @@ subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
        back
 
   real(kind=dbl), dimension(200), intent(out) :: legen, legen2, legen3, legen4
-
+    real(kind=dbl), dimension(nstokes,nquad,nstokes,nquad,4), intent(out) :: scatter_matrix
+    real(kind=dbl), dimension(nstokes,nstokes,nquad,2), intent(out) :: extinct_matrix
+    real(kind=dbl), dimension(nstokes,nquad,2), intent(out) :: emis_vector
   complex(kind=dbl) :: mindex, m_air
 
   real(kind=dbl) :: gammln
@@ -44,6 +47,7 @@ subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
   real(kind=dbl) :: ztc, hlp, alf, bet, m2s, m3s
 
   if (verbose .gt. 1) print*, 'Entering snow_ssp'
+  if ((n_moments .eq. 1) .and. (EM_snow .eq. "tmatr")) stop "1moment tmatr not tested yet for snow"
 
   call ref_ice(t, f, refre, refim)
 
@@ -126,7 +130,7 @@ subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
      gamma = 1.d0
 	end if
   else if (n_moments .eq. 2) then
-     if (.not. present(nc)) stop 'STOP in routine snow_ssp'
+     if (nc .eq. 0.d0) stop 'STOP in routine snow_ssp'
      call double_moments(swc,nc,gamma_snow(1),gamma_snow(2),gamma_snow(3),gamma_snow(4), &
           ad,bd,alpha,gamma,a_msnow,b_snow)
      nbins = 100
@@ -143,6 +147,9 @@ subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
           LEGEN4, SD_snow,snow_density,swc)
+      scatter_matrix= 0.d0
+      extinct_matrix= 0.d0
+      emis_vector= 0.d0
   elseif (EM_snow .eq. 'liudb') then
      dia1 = 1.02d-4
      dia2 = 2.d-2
@@ -151,6 +158,23 @@ subroutine snow_ssp(f,swc,t,maxleg,kext, salb, back,  &
           bd, alpha, gamma, lphase_flag,kext, salb,&
           back, nlegen, legen, legen2, legen3,&
           legen4, SD_snow)
+      scatter_matrix= 0.d0
+      extinct_matrix= 0.d0
+      emis_vector= 0.d0
+  elseif (EM_snow .eq. 'tmatr') then
+    call tmatrix_snow(f, swc, t, nc, &
+          ad, bd, alpha, gamma, a_msnow, b_snow, SD_snow, scatter_matrix,extinct_matrix, emis_vector)
+    back = scatter_matrix(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
+    back = 4*pi*back!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squard entries!
+    kext = extinct_matrix(1,1,16,1) !11 of extinction matrix (=not polarized), at 0°, first quadrature. equal to extinct_matrix(1,1,16,2)
+
+    !not needed by rt4
+    salb = 0.d0
+    nlegen = 0
+    legen = 0.0d0
+    legen2 = 0.0d0
+    legen3 = 0.0d0
+    legen4 = 0.0d0
   else 
      write (*, *) 'no em mod', EM_snow
      stop

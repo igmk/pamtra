@@ -1,24 +1,12 @@
 #!/bin/bash
 
-hosts="albe euros refoli notos roumet   helm   irifi trombe   habagat   embat caspar"
+source nodesConfig.sh
 
+hosts=$igmkNodes
 
-# hosts="roumet habagat"
- hosts=`ls /net`
-
-# hosts="orkan ramier rebat" 
-# 
-# hosts="roumet"
-# hosts="lomar karif orkan ramier rebat"
-# hosts="ramier"
-# hosts="albe"
-
-# sudo apt-get install python-dev
-# zapod viracao trombe tivano terral tempest taifun seistan schirokko refoli ramier qeb notos molan kaus irifi habagat garbi gales frog forano1 euros embat ecir chinook caspar albe
-
-timeout=300
-
-user=hatpro
+timeout="$timeout"
+user="$igmkUser"
+branch="$igmkBranch"
 
 date=`date "+%Y%m%d"`
 
@@ -34,7 +22,7 @@ if [ "$1" == "prepare" ]
 then
 	mkdir -p /tmp/pyPamtra
 	cd /tmp/pyPamtra
-	git clone /home/mmaahn/projects/pamtra -b pyPamtra
+	git clone /home/mmaahn/projects/pamtra -b $branch
 	cd /tmp/pyPamtra/pamtra/src/
 	make precompile
 	tar -czf /tmp/pyPamtra.tar.gz /tmp/pyPamtra

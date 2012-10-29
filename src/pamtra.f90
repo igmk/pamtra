@@ -110,8 +110,12 @@ program pamtra
     if (verbose .gt. 1) print*, 'Start loop over frequencies & profiles!'
 
     grid_f: do fi =1, nfrq
-        grid_y: do ny = 1, ngridy !ny_in, ny_fin
-            grid_x: do nx = 1, ngridx !nx_in, nx_fin
+	if (jacobian_mode) then
+	!for jacobian mode. non disturbed profile is expected in grid 1,1!
+	  call allocate_jacobian_vars
+	end if
+        grid_y: do ny = 1, ngridy !nx_in, nx_fin
+	      grid_x: do nx = 1, ngridx !ny_in, ny_fin
          
                 call allocate_profile_vars
          
@@ -158,8 +162,13 @@ program pamtra
 
                 call deallocate_profile_vars()
 
-            end do grid_x
+
+             end do grid_x
         end do grid_y
+      if (jacobian_mode) then
+      !for jacobian mode
+	  call deallocate_jacobian_vars
+      end if
     end do grid_f
 
     if (write_nc) then
