@@ -28,7 +28,8 @@ module vars_atmosphere
        relhum,&
        vapor_pressure, &
        rho_vap, &
-       q_hum
+       q_hum,&
+       hgt
 
   real(kind=dbl), allocatable, dimension(:) :: cwc_q, &
        iwc_q, &

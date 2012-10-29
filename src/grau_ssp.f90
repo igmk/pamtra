@@ -1,23 +1,24 @@
-subroutine grau_ssp(f,gwc,t,maxleg,nc, kext, salb, back,  &
+subroutine grau_ssp(f,gwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
-     scatter_matrix,extinct_matrix, emis_vector)
+     scatter_matrix,extinct_matrix, emis_vector,grau_spec)
 
   use kinds
   use nml_params, only: verbose, lphase_flag, n_0grauDgrau, EM_grau, n_moments, SD_grau, &
-  graupel_density,	nstokes
+  graupel_density, nstokes, radar_nfft, radar_spectrum
   use constants, only: pi, im
   use double_moments_module
   use conversions
 
+
   implicit none
 
-  integer :: nbins, nlegen
+  integer :: nbins, nlegen,alloc_status
   integer, intent(in) :: maxleg
 
   real(kind=dbl), intent(in) :: &
        gwc,&
        t,&
-       f
+       f,press,hgt
 
   real(kind=dbl), intent(in) :: nc
 
@@ -29,14 +30,15 @@ subroutine grau_ssp(f,gwc,t,maxleg,nc, kext, salb, back,  &
        kext,&
        salb,&
        back
-
+  real(kind=dbl), intent(out), dimension(radar_nfft) :: grau_spec
+  real(kind=dbl), allocatable, dimension(:):: diameter_spec, qback_spec
   real(kind=dbl), dimension(200), intent(out) :: legen, legen2, legen3, legen4
     integer, parameter ::  nquad = 16
     real(kind=dbl), dimension(nstokes,nquad,nstokes,nquad,4), intent(out) :: scatter_matrix
     real(kind=dbl), dimension(nstokes,nstokes,nquad,2), intent(out) :: extinct_matrix
     real(kind=dbl), dimension(nstokes,nquad,2), intent(out) :: emis_vector
   complex(kind=dbl) :: mindex, m_air
-
+  character(5) ::  particle_type
   real(kind=dbl) :: gammln
 
   if (verbose .gt. 1) print*, 'Entering grau_ssp'
@@ -81,13 +83,17 @@ subroutine grau_ssp(f,gwc,t,maxleg,nc, kext, salb, back,  &
      stop 'Number of moments is not specified'
   end if
 
+  allocate(diameter_spec(nbins+1),stat=alloc_status)
+  allocate(qback_spec(nbins+1),stat=alloc_status)
+
   if (EM_grau .eq. 'densi' .or. EM_grau .eq. 'surus') then
      if (EM_grau .eq. 'surus') graupel_density =  0.815*f+11.2d0
      call mie_densitydep_spheremasseq(f, t,mindex,      &
           a_mgrau, b_grau, dia1, dia2, nbins, maxleg,   &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
-          LEGEN4, SD_grau,graupel_density,gwc)
+          LEGEN4, SD_grau,graupel_density,gwc,&
+          diameter_spec, qback_spec)
       scatter_matrix= 0.d0
       extinct_matrix= 0.d0
       emis_vector= 0.d0
@@ -95,6 +101,18 @@ subroutine grau_ssp(f,gwc,t,maxleg,nc, kext, salb, back,  &
      write (*, *) 'no em mod for grau'
      stop
   end if
+
+  particle_type="graup" 
+
+  if (radar_spectrum) then
+    call calc_radar_spectrum(nbins+1,diameter_spec, qback_spec,t,press,hgt,f,particle_type,grau_spec)
+  else
+    grau_spec(:)=0.d0
+  end if
+
+  deallocate(diameter_spec, qback_spec)
+
+
   if (verbose .gt. 1) print*, 'Exiting grau_ssp'
 
   return

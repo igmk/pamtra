@@ -1,24 +1,24 @@
-subroutine rain_ssp(f,rwc,cwc,t,maxleg,nc,kext, salb, back,  &
+subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
-     scatter_matrix,extinct_matrix, emis_vector)
+     scatter_matrix,extinct_matrix, emis_vector,rain_spec)
 
   use kinds
   use nml_params, only: verbose, lphase_flag, n_0rainD, SD_rain, &
-	  n_moments,nstokes, EM_rain, use_rain_db
+	  n_moments,nstokes, EM_rain, use_rain_db, radar_nfft, radar_spectrum
   use constants, only: pi, im
   use double_moments_module
   use conversions
 
   implicit none
 
-  integer :: nbins, nlegen
+  integer :: nbins, nlegen,alloc_status
   integer, intent(in) :: maxleg
     integer, parameter ::  nquad = 16
   real(kind=dbl), intent(in) :: &
        rwc,&
        cwc,&
        t,&
-       f
+       f,press,hgt
 
   real(kind=dbl), intent(in) :: nc
 
@@ -38,8 +38,10 @@ subroutine rain_ssp(f,rwc,cwc,t,maxleg,nc,kext, salb, back,  &
   real(kind=dbl), dimension(200), intent(out) :: legen, legen2, legen3, legen4
 
   complex(kind=dbl) :: mindex
-
+  character(5) ::  particle_type
   real(kind=dbl) :: gammln
+  real(kind=dbl), allocatable, dimension(:):: diameter_spec, qback_spec
+  real(kind=dbl), intent(out), dimension(radar_nfft) :: rain_spec
 
   if (verbose .gt. 1) print*, 'Entering rain_ssp'
   if ((n_moments .eq. 1) .and. (EM_rain .eq. "tmatr")) stop "1moment tmatr not tested yet for rain"
@@ -84,11 +86,16 @@ subroutine rain_ssp(f,rwc,cwc,t,maxleg,nc,kext, salb, back,  &
      stop 'Number of moments is not specified'
   end if
 
+
+  allocate(diameter_spec(nbins+1),stat=alloc_status)
+  allocate(qback_spec(nbins+1),stat=alloc_status)
+
   if (EM_rain .eq. "miera") then
 
     call mie(f, mindex, dia1, dia2, nbins, maxleg, ad,    &
 	bd, alpha, gamma, lphase_flag, kext, salb, back,     &
-	nlegen, legen, legen2, legen3, legen4, SD_rain,den_liq,rwc)
+	nlegen, legen, legen2, legen3, legen4, SD_rain,den_liq,rwc,&
+       diameter_spec, qback_spec)
       scatter_matrix= 0.d0
       extinct_matrix= 0.d0
       emis_vector= 0.d0
@@ -115,6 +122,12 @@ subroutine rain_ssp(f,rwc,cwc,t,maxleg,nc,kext, salb, back,  &
   else
     stop "unknown EM_rain"
   end if
+  if (radar_spectrum) then
+    call calc_radar_spectrum(nbins+1,diameter_spec, qback_spec,t,press,hgt,f,particle_type,ice_spec)
+  else
+    rain_spec(:)=0.d0
+  end if
+  deallocate(diameter_spec, qback_spec)
 
   if (verbose .gt. 1) print*, 'Exiting rain_ssp'
 

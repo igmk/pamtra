@@ -1,24 +1,24 @@
-subroutine ice_ssp(f,iwc,t,maxleg,nc, kext, salb, back,  &
+subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
-     scatter_matrix,extinct_matrix, emis_vector)
+     scatter_matrix,extinct_matrix, emis_vector,ice_spec)
 
   use kinds
   use nml_params, only: verbose, lphase_flag, n_moments, EM_ice, SD_ice,&
-      nstokes
+      nstokes, radar_nfft, radar_spectrum
   use constants, only: pi, im
   use double_moments_module
   use conversions
 
   implicit none
 
-  integer :: nbins, nlegen
+  integer :: nbins, nlegen,alloc_status
 
   integer, intent(in) :: maxleg
 
   real(kind=dbl), intent(in) :: &
        iwc,&
        t,&
-       f
+       f,press,hgt
 
   real(kind=dbl), intent(in) :: nc
 
@@ -38,7 +38,10 @@ subroutine ice_ssp(f,iwc,t,maxleg,nc, kext, salb, back,  &
     real(kind=dbl), dimension(nstokes,nstokes,nquad,2), intent(out) :: extinct_matrix
     real(kind=dbl), dimension(nstokes,nquad,2), intent(out) :: emis_vector
   complex(kind=dbl) :: mindex
+  real(kind=dbl), allocatable, dimension(:):: diameter_spec, qback_spec
+  real(kind=dbl), intent(out), dimension(radar_nfft) :: ice_spec
 
+  character(5) ::  particle_type
   if (verbose .gt. 1) print*, 'Entering ice_ssp'
 
   call ref_ice(t,f, refre, refim)
@@ -94,12 +97,16 @@ subroutine ice_ssp(f,iwc,t,maxleg,nc, kext, salb, back,  &
      stop 'Number of moments is not specified'
   end if
 
+  allocate(diameter_spec(nbins+1),stat=alloc_status)
+  allocate(qback_spec(nbins+1),stat=alloc_status)
+
   if (EM_ice .eq. 'mieic') then
      call mie(f, mindex,      &
           dia1, dia2, nbins, maxleg,   &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
-          LEGEN4, SD_ice,den_ice,iwc)
+          LEGEN4, SD_ice,den_ice,iwc,&
+       diameter_spec, qback_spec)
       scatter_matrix= 0.d0
       extinct_matrix= 0.d0
       emis_vector= 0.d0
@@ -116,6 +123,14 @@ subroutine ice_ssp(f,iwc,t,maxleg,nc, kext, salb, back,  &
      write (*, *) 'no em mod', EM_ice
      stop
   endif
+
+  if (radar_spectrum) then
+    call calc_radar_spectrum(nbins+1,diameter_spec, qback_spec,t,press,hgt,f,particle_type,ice_spec)
+  else
+    ice_spec(:)=0.d0
+  end if
+  deallocate(diameter_spec, qback_spec)
+
   if (verbose .gt. 1) print*, 'Exiting ice_ssp'
 
   return

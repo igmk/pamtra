@@ -1,4 +1,4 @@
-subroutine cloud_ssp(f,cwc,t, press,maxleg,nc, kext, salb, back,  &
+subroutine cloud_ssp(f,cwc,t, press,hgt,maxleg,nc, kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
      scatter_matrix,extinct_matrix, emis_vector,cloud_spec)
 
@@ -20,20 +20,19 @@ subroutine cloud_ssp(f,cwc,t, press,maxleg,nc, kext, salb, back,  &
   use nml_params, only: verbose, lphase_flag, n_moments, SD_cloud, &
       nstokes, EM_cloud, radar_nfft, radar_spectrum
   use constants, only: pi, im
-  use vars_atmosphere, only: alloc_status
   use double_moments_module
   use conversions
 
   implicit none
 
-  integer :: nbins, nlegen, iautocon
+  integer :: nbins, nlegen, iautocon,alloc_status
 
   integer, intent(in) :: maxleg
 
   real(kind=dbl), intent(in) :: &
        cwc,&
-       t, press, &
-       f
+       t, &
+       f, press,hgt
 
   real(kind=dbl), intent(in) :: nc
 
@@ -121,7 +120,7 @@ real(kind=dbl) :: re, Nt
   allocate(qback_spec(nbins+1),stat=alloc_status)
 
   if (EM_cloud .eq. 'miecl') then
-  call mie_spec(f, mindex, dia1, dia2, nbins, maxleg, ad,       &
+  call mie(f, mindex, dia1, dia2, nbins, maxleg, ad,       &
        bd, alpha, gamma, lphase_flag, kext, salb, back,  &
        nlegen, legen, legen2, legen3, legen4, SD_cloud,den_liq,cwc,&
        diameter_spec, qback_spec)
@@ -131,18 +130,19 @@ real(kind=dbl) :: re, Nt
   else
     stop "unknown EM_cloud"
   end if
-  if (verbose .gt. 1) print*, 'Exiting cloud_ssp'
+
 
   particle_type="cloud" 
 
   if (radar_spectrum) then
-    call calc_radar_spectrum(nbins+1,diameter_spec, qback_spec,t,press,f,particle_type,cloud_spec)
+    call calc_radar_spectrum(nbins+1,diameter_spec, qback_spec,t,press,hgt,f,particle_type,cloud_spec)
   else
     cloud_spec(:)=0.d0
   end if
 
   deallocate(diameter_spec, qback_spec)
 
+  if (verbose .gt. 1) print*, 'Exiting cloud_ssp'
   return
 
 end subroutine cloud_ssp

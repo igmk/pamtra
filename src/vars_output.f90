@@ -14,7 +14,7 @@ module vars_output
   real(kind=dbl), dimension(32) :: angles_deg !2*NUMMU=32
 
   !for active 
-  real(kind=dbl), allocatable, dimension(:,:,:) :: hgt
+  real(kind=dbl), allocatable, dimension(:,:,:) :: radar_hgt
   real(kind=dbl), allocatable, dimension(:,:,:,:) :: Ze,&
                                Ze_cw,Ze_rr,Ze_ci,Ze_sn,Ze_gr,Ze_ha
   real(kind=dbl), allocatable, dimension(:,:,:,:) :: Att_atmo

@@ -1,27 +1,28 @@
 ! Subroutine for the setup of the parameters of the snow particle size distribution.
 !
 !
-subroutine snow_ssp(f,swc,t,maxleg,nc,kext, salb, back,  &
+subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
-     scatter_matrix,extinct_matrix, emis_vector)
+     scatter_matrix,extinct_matrix, emis_vector,snow_spec)
 
   use kinds
   use nml_params, only: verbose, lphase_flag, n_0snowDsnow, EM_snow, &
-	n_moments, isnow_n0, SD_snow, snow_density,liu_type,nstokes
+	n_moments, isnow_n0, SD_snow, snow_density,liu_type,nstokes,&
+        radar_nfft, radar_spectrum
   use constants, only: pi, im
   use double_moments_module
   use conversions
 
   implicit none
 
-  integer :: nbins, nlegen, nn
+  integer :: nbins, nlegen, nn,alloc_status
 
   integer, intent(in) :: maxleg
     integer, parameter ::  nquad = 16
   real(kind=dbl), intent(in) :: &
        swc,&
        t,&
-       f
+       f,press,hgt
 
   real(kind=dbl), intent(in) :: nc
 
@@ -39,12 +40,14 @@ subroutine snow_ssp(f,swc,t,maxleg,nc,kext, salb, back,  &
     real(kind=dbl), dimension(nstokes,nstokes,nquad,2), intent(out) :: extinct_matrix
     real(kind=dbl), dimension(nstokes,nquad,2), intent(out) :: emis_vector
   complex(kind=dbl) :: mindex, m_air
-
+  real(kind=dbl), allocatable, dimension(:):: diameter_spec, qback_spec
   real(kind=dbl) :: gammln
 
   real(kind=dbl), dimension(10) :: mma, mmb
 
   real(kind=dbl) :: ztc, hlp, alf, bet, m2s, m3s
+  real(kind=dbl), intent(out), dimension(radar_nfft) :: snow_spec
+  character(5) ::  particle_type
 
   if (verbose .gt. 1) print*, 'Entering snow_ssp'
   if ((n_moments .eq. 1) .and. (EM_snow .eq. "tmatr")) stop "1moment tmatr not tested yet for snow"
@@ -140,13 +143,17 @@ subroutine snow_ssp(f,swc,t,maxleg,nc,kext, salb, back,  &
      stop'Number of moments is not specified'
   end if
 
+  allocate(diameter_spec(nbins+1),stat=alloc_status)
+  allocate(qback_spec(nbins+1),stat=alloc_status)
+
   if (EM_snow .eq. 'densi' .or. EM_snow .eq. 'surus') then
    if (EM_snow .eq. 'surus') snow_density = 0.863*f+115.d0
      call mie_densitydep_spheremasseq(f, t,mindex,      &
           a_msnow, b_snow, dia1, dia2, nbins, maxleg,   &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
-          LEGEN4, SD_snow,snow_density,swc)
+          LEGEN4, SD_snow,snow_density,swc,&
+          diameter_spec, qback_spec)
       scatter_matrix= 0.d0
       extinct_matrix= 0.d0
       emis_vector= 0.d0
@@ -179,6 +186,16 @@ subroutine snow_ssp(f,swc,t,maxleg,nc,kext, salb, back,  &
      write (*, *) 'no em mod', EM_snow
      stop
   endif
+
+  particle_type="snow" 
+
+  if (radar_spectrum) then
+    call calc_radar_spectrum(nbins+1,diameter_spec, qback_spec,t,press,hgt,f,particle_type,snow_spec)
+  else
+    snow_spec(:)=0.d0
+  end if
+
+  deallocate(diameter_spec, qback_spec)
 
   if (verbose .gt. 1) print*, 'Exiting snow_ssp'
 

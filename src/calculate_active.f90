@@ -1,4 +1,4 @@
-subroutine calculate_active(OUT_FILE_ACT,freq,hgt,&
+subroutine calculate_active(OUT_FILE_ACT,freq,&
   Ze,Ze_cw,Ze_rr,Ze_ci,Ze_sn,Ze_gr,Ze_ha,&
   Att_atmo, Att_hydro, Att_cw,Att_rr,Att_ci,Att_sn,Att_gr,Att_ha)
   ! This function computes and writes Ze and PIA
@@ -14,7 +14,7 @@ subroutine calculate_active(OUT_FILE_ACT,freq,hgt,&
   real(kind=dbl) :: K2, dielec_water, tau_hydro, tau_atmo, d_hgt,wavelength
   character(300), intent(in) ::OUT_FILE_ACT 
   real(kind=dbl), intent(in) :: freq
-  real(kind=dbl), dimension(nlyr), intent(out) :: hgt, &
+  real(kind=dbl), dimension(nlyr), intent(out) :: &
           Ze,Ze_cw,Ze_rr,Ze_ci,Ze_sn,Ze_gr,Ze_ha, &
           Att_atmo, Att_hydro, Att_cw,Att_rr,Att_ci,Att_sn,Att_gr,Att_ha
 
@@ -22,7 +22,6 @@ subroutine calculate_active(OUT_FILE_ACT,freq,hgt,&
   tau_hydro = 0.d0
   tau_atmo = 0.d0
   do nz = 1, nlyr
-     hgt(nz) = (hgt_lev(nz-1)+hgt_lev(nz))*0.5d0
      d_hgt = hgt_lev(nz) - hgt_lev(nz-1)
      K2 = dielec_water(0.D0,temp(nz)-t_abs,freq)
 

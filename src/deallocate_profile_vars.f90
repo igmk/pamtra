@@ -9,7 +9,7 @@ subroutine deallocate_profile_vars
 
 
   deallocate(hgt_lev,press_lev,press,temp_lev,temp,relhum_lev,relhum,&
-    vapor_pressure,rho_vap,q_hum,cwc_q,iwc_q,rwc_q,swc_q,gwc_q)
+    vapor_pressure,rho_vap,q_hum,cwc_q,iwc_q,rwc_q,swc_q,gwc_q,hgt)
 
   if (n_moments .eq. 2) then
      deallocate(hwc_q,cwc_n,iwc_n,rwc_n,swc_n,gwc_n,hwc_n)

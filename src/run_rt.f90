@@ -128,12 +128,13 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
        date_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_active"
 
   if (active) then
-     call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),&
+     call calculate_active(OUT_FILE_ACT,freq,&
           Ze(nx,ny,:,fi),Ze_cw(nx,ny,:,fi),Ze_rr(nx,ny,:,fi),Ze_ci(nx,ny,:,fi),&
           Ze_sn(nx,ny,:,fi),Ze_gr(nx,ny,:,fi),Ze_ha(nx,ny,:,fi),&
           Att_atmo(nx,ny,:,fi),Att_hydro(nx,ny,:,fi),Att_cw(nx,ny,:,fi),Att_rr(nx,ny,:,fi),&
           Att_ci(nx,ny,:,fi),Att_sn(nx,ny,:,fi),Att_gr(nx,ny,:,fi),Att_ha(nx,ny,:,fi))
      if (verbose .gt. 1) print*, nx,ny, 'calculate_active done'
+     radar_hgt(nx,ny,:) = hgt(:)
   end if
 
   if (write_nc) then

@@ -174,7 +174,7 @@ contains
     n_moments=1
     moments_file='snowCRYSTAL'
     ! radar_simulator
-    radar_spectrum=.true.
+    radar_spectrum=.false.
     !number of FFT points in the Doppler spectrum [typically 256 or 512]
     radar_nfft=256
     !number of average spectra for noise variance reduction, typical range [1 150]

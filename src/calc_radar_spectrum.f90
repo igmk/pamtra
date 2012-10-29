@@ -1,5 +1,5 @@
 subroutine calc_radar_spectrum(nbins1,diameter_spec, back_spec,&
-  temp,press,frequency,particle_type,particle_spec)
+  temp,press,hgt,frequency,particle_type,particle_spec)
 !in
 !nbins: No of bins + 1
 !diameter_spec: Diameter Spectrum (SI)
@@ -20,7 +20,7 @@ subroutine calc_radar_spectrum(nbins1,diameter_spec, back_spec,&
   integer,intent(in) ::  nbins1 !nbins+1
   real(kind=dbl), dimension(nbins1),intent(in):: diameter_spec, back_spec
   character(5),intent(in) ::  particle_type
-  real(kind=dbl), intent(in):: temp, frequency, press
+  real(kind=dbl), intent(in):: temp, frequency, press,hgt
 
   real(kind=dbl), dimension(nbins1):: vel_spec,dD_dU,back_vel_spec, back_spec_ref
   real(kind=dbl), intent(out), dimension(radar_nfft):: particle_spec
@@ -29,17 +29,35 @@ subroutine calc_radar_spectrum(nbins1,diameter_spec, back_spec,&
 !   real(kind=dbl):: del_d, Ze
   integer :: ii, jj
 
-  if (verbose .gt. 1) print*, 'Entering radar_spectrum.f90'
+  if (verbose .gt. 1) print*, 'Entering calc_radar_spectrum.f90'
 
   ! get |K|**2 and lambda
   K2 = dielec_water(0.D0,temp-t_abs,frequency)
   wavelength = c / (frequency*1.d9)   ! m
 
+
+
+  !get the particle velocities depending on particle type!
   if (particle_type .eq. "cloud") then
     vel_spec = 30.d0*(diameter_spec*1.d3)**2 ! [m/s], diameter_spec in m!
   else if (particle_type .eq. "rain") then 
-    press_correction = 0.d0
+    press_correction = 0.d0 !todo
     vel_spec = (9.65 - 10.3*exp(-0.6*diameter_spec)) ! [m/s], diameter_spec in m!
+  else if (particle_type .eq. "ice") then 
+    press_correction = 0.d0 !todo
+    vel_spec = 0.5d0 ! [m/s], diameter_spec in m!
+  else if (particle_type .eq. "snow") then 
+    press_correction = 0.d0 !todo
+    vel_spec = 1.d0 ! [m/s], diameter_spec in m!
+  else if (particle_type .eq. "graup") then 
+    press_correction = 0.d0 !todo
+    vel_spec = 2.d0 ! [m/s], diameter_spec in m!
+  else if (particle_type .eq. "hail") then 
+    press_correction = 0.d0 !todo
+    vel_spec = 5.d0 ! [m/s], diameter_spec in m!
+  else
+    print*, particle_type, ": did not understand particle_type in calc_radar_spectrum"
+    stop
   end if
 
 
@@ -72,9 +90,10 @@ subroutine calc_radar_spectrum(nbins1,diameter_spec, back_spec,&
   radar_velo = (/(((ii*del_v)+radar_min_V),ii=0,radar_nfft)/) ! [m/s]
   
   !interpolate from N(D) bins to radar bins. Why not average?
+
   call interpolate_spectra(nbins1,radar_nfft,vel_spec,back_vel_spec,radar_velo,particle_spec) ! particle_spec in [mm⁶/m³/mm * mm/(m/s)]
 
-  if (verbose .gt. 1) print*, 'Done radar_spectrum.f90'
+  if (verbose .gt. 1) print*, 'Done calc_radar_spectrum.f90'
 
   return
 

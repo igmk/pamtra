@@ -52,7 +52,7 @@ out_Att_sn,&
 out_Att_gr,&
 out_Att_ha,&
 out_Att_atmo,&
-out_hgt,&
+out_radar_hgt,&
 out_tb,&
 out_radar_spectra,&
 out_radar_snr,&
@@ -142,7 +142,7 @@ character(300),intent(in) :: set_namelist_file
                   out_Ze_sn,out_Ze_gr,out_Ze_ha
   real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out)::out_Att_cw,out_Att_rr,out_Att_ci,&
                   out_Att_sn,out_Att_gr,out_Att_ha
-  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(out) :: out_hgt
+  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(out) :: out_radar_hgt
   real(kind=sgl), dimension(32),intent(out) :: out_angles !2*NUMMU instead of 32 does not work, because f2py does not know dimensions!
   real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: out_tb !same here: noutlevels=2, 2*NUMMU = 32, NSTOKES = 2
   real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq,in_nfft),intent(out):: out_radar_spectra
@@ -161,7 +161,7 @@ character(300),intent(in) :: set_namelist_file
   !meta out
   !f2py intent(out) :: out_gitVersion,out_gitHash
   !data out
-  !f2py intent(out) :: out_Ze,out_Att_hydro,out_Att_atmo,out_hgt,out_tb
+  !f2py intent(out) :: out_Ze,out_Att_hydro,out_Att_atmo,out_radar_hgt,out_tb
   !f2py intent(out) :: out_Ze_cw,out_Ze_rr,out_Ze_ci,out_Ze_sn,out_Ze_gr,out_Ze_ha
   !f2py intent(out) :: out_Att_cw,out_Att_rr,out_Att_ci,out_Att_sn,out_Att_gr,out_Att_ha
   !f2py intent(out) :: out_radar_spectra,out_radar_snr,out_radar_vel,out_angles
@@ -233,7 +233,7 @@ character(300),intent(in) :: set_namelist_file
    out_radar_spectra = -9999.
    out_radar_snr = -9999.
    out_radar_vel = -9999.
-   out_hgt = -9999.
+   out_radar_hgt = -9999.
    out_angles = -9999.
    out_tb = -9999
 
@@ -329,7 +329,7 @@ character(300),intent(in) :: set_namelist_file
             out_Att_gr(nx,ny,1:nlyr,:) = REAL(Att_gr(nx,ny,1:nlyr,:))
             out_Att_ha(nx,ny,1:nlyr,:) = REAL(Att_ha(nx,ny,1:nlyr,:))
 
-            out_hgt(nx,ny,1:nlyr) = REAL(hgt(nx,ny,1:nlyr))
+            out_radar_hgt(nx,ny,1:nlyr) = REAL(radar_hgt(nx,ny,1:nlyr))
           end if
 
           call deallocate_profile_vars()

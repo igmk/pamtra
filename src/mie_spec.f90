@@ -2,6 +2,13 @@ subroutine mie_spec(f, mindex, dia1, dia2, nbins, maxleg,   &
      ad, bd, alpha, gamma, lphase_flag, extinction, albedo, back_scatt,  &
      nlegen, legen, legen2, legen3, legen4, aerodist,density,wc,&
      diameter, qback_spec)
+
+! subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
+!      a_mtox, bcoeff, dia1, dia2, nbins, maxleg, ad, bd, alpha, &
+!      gamma, lphase_flag, extinction, albedo, back_scatt, nlegen, legen,  &
+!      legen2, legen3, legen4, aerodist,density,wc)
+
+
   ! note that mindex has the convention with negative imaginary part
   !     
   ! computes the mie scattering properties for a gamma or lognormal 
@@ -11,6 +18,7 @@ subroutine mie_spec(f, mindex, dia1, dia2, nbins, maxleg,   &
 
   use kinds
   use nml_params, only: verbose
+  use constants, only: pi,c
 
   implicit none
 
@@ -25,7 +33,6 @@ subroutine mie_spec(f, mindex, dia1, dia2, nbins, maxleg,   &
   real(kind=dbl) :: extinction, albedo, back_scatt
   real(kind=dbl), dimension(200) :: legen, legen2, legen3, legen4
   integer, parameter :: maxn = 5000
-  real(kind=dbl), parameter :: pi = 3.14159265358979d0
   integer :: nterms, nquad, nmie, nleg 
   integer :: i, l, m, ir
   real(kind=dbl) :: x, del_d, tmp, tot_mass, wc, density
@@ -44,7 +51,6 @@ subroutine mie_spec(f, mindex, dia1, dia2, nbins, maxleg,   &
 
   character :: aerodist*1 
 
-  real(kind=dbl), parameter :: c = 299792458.d0
 
 
   if (verbose .gt. 1) print*, 'Entering mie'
@@ -81,18 +87,16 @@ subroutine mie_spec(f, mindex, dia1, dia2, nbins, maxleg,   &
   do ir = 1, nbins+1
      diameter(ir) = dia1 + (ir - 1) * del_d
      ndens = distribution(ad, bd, alpha, gamma, diameter(ir), aerodist)  ! number density [1/m⁴]
-!removed for TESTING only by MAX
-!      if ((ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
-!         ndens = 0.5 * ndens
-!      end if
+     !first and last bin get only have of the particles (Why actually?)
+     if ((ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
+        ndens = 0.5 * ndens
+     end if
      tot_mass = tot_mass + ndens*del_d*pi/6.d0*density*diameter(ir)**3.d0
-!removed for TESTING only by MAX
-!      if ((ir .eq. nbins+1) .and. (tot_mass/wc*100. .lt. 99.9d0)) then
-!       ndens = ndens + (wc-tot_mass)/(del_d*pi/6.d0*density*diameter(ir)**3.d0)
-!       tot_mass = wc
-!      end if
-
-
+     !if mass is missing put into last bin
+     if ((ir .eq. nbins+1) .and. (tot_mass/wc*100. .lt. 99.9d0)) then
+      ndens = ndens + (wc-tot_mass)/(del_d*pi/6.d0*density*diameter(ir)**3.d0)
+      tot_mass = wc
+     end if
 
      x = pi * diameter(ir) / wavelength ! size parameter
      nmie = 0 

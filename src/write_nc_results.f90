@@ -272,7 +272,7 @@ subroutine write_nc_results
 
   if (active) then                             !reshapeing needed due to Fortran's crazy Netcdf handling...
      call check(nf90_put_var(ncid, heightVarID, &
-          RESHAPE( hgt, (/ nlyr, ngridy, ngridx/), ORDER = (/3,2,1/))))
+          RESHAPE( radar_hgt, (/ nlyr, ngridy, ngridx/), ORDER = (/3,2,1/))))
      if (zeSplitUp) then
         call check(nf90_put_var(ncid, ZeCwVarID, &
           RESHAPE( Ze_cw, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
@@ -302,6 +302,7 @@ subroutine write_nc_results
              RESHAPE( Att_ha, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
         end if           
      else
+
         call check(nf90_put_var(ncid, ZeVarID, &
           RESHAPE( Ze, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
         call check(nf90_put_var(ncid, AttHydroVarID, &

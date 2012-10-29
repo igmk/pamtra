@@ -8,7 +8,7 @@ subroutine allocate_output_vars(no_allocated_lyrs)
   implicit none
   integer, intent(in) :: no_allocated_lyrs
 
-
+  if (verbose .gt. 1) print*, 'Entering allocate_output_vars'
 
   if (write_nc) then
      allocate(is(ngridy,ngridx),js(ngridy,ngridx))
@@ -44,15 +44,18 @@ subroutine allocate_output_vars(no_allocated_lyrs)
              Att_gr(ngridx,ngridy,no_allocated_lyrs,nfrq),&
              Att_ha(ngridx,ngridy,no_allocated_lyrs,nfrq))
      allocate(Att_atmo(ngridx,ngridy,no_allocated_lyrs,nfrq))
-     allocate(hgt(ngridx,ngridy,no_allocated_lyrs))
+     allocate(radar_hgt(ngridx,ngridy,no_allocated_lyrs))
   end if
+  if(radar_spectrum)  then
 
-  if(radar_spectrum)  allocate(&
+allocate(&
       radar_spectra(ngridx,ngridy,no_allocated_lyrs,nfrq,radar_nfft),&
       radar_snr(ngridx,ngridy,no_allocated_lyrs,nfrq),&
       radar_vel(radar_nfft))
-
       radar_spectra = -9999.d0
       radar_snr = -9999.d0
       radar_vel = -9999.d0
+  end if
+  if (verbose .gt. 1) print*, 'Done allocate_output_vars'
+
 end subroutine allocate_output_vars
