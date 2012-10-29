@@ -41,8 +41,8 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
 
 
   if (verbose .gt. 1) print*, 'Entering mie'
-  legen4 = 0._dbl
 
+  legen4 = 0._dbl
   wavelength = c/(f*1.e9) !
 
   ! find the maximum number of terms required in the mie series,

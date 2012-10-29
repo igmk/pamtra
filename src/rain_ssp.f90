@@ -31,7 +31,7 @@ subroutine rain_ssp(f,rwc,cwc,t,maxleg,kext, salb, back,  &
        salb,&
        back
 
-  real(kind=dbl), dimension(200), intent(out) :: legen, legen2, legen3, legen4
+  real(kind=dbl), dimension(200):: legen, legen2, legen3, legen4
 
   complex(kind=dbl) :: mindex
 
@@ -78,7 +78,6 @@ subroutine rain_ssp(f,rwc,cwc,t,maxleg,kext, salb, back,  &
   else
      stop 'Number of moments is not specified'
   end if
-
   call mie(f, mindex, dia1, dia2, nbins, maxleg, ad,    &
        bd, alpha, gamma, lphase_flag, kext, salb, back,     &
        nlegen, legen, legen2, legen3, legen4, SD_rain,den_liq,rwc)
