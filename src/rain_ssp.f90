@@ -35,7 +35,7 @@ subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
        salb,&
        back
 
-  real(kind=dbl), dimension(200), intent(out) :: legen, legen2, legen3, legen4
+  real(kind=dbl), dimension(200):: legen, legen2, legen3, legen4
 
   complex(kind=dbl) :: mindex
   character(5) ::  particle_type

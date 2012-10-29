@@ -143,7 +143,7 @@ subroutine hydrometeor_extinction_rt3(f,frq_str)
      if (rwc_q(nz) .ge. threshold) then
      	if (n_moments .eq. 1) then
 	       qwc = q2abs(rwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
-	       call rain_ssp(f,qwc,temp(nz),&
+	       call rain_ssp(f,qwc,cwc,temp(nz),&
 	            maxleg,kextrr(nz), salbrr, backrr(nz),  &
 	            nlegenrr, legenrr, legen2rr, legen3rr, legen4rr)
 	    else if (n_moments .eq. 2) then

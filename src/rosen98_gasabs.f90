@@ -419,8 +419,6 @@ function ABLIQ(WATER,FREQ,TEMP)
 
 end function ABLIQ
 
-
-
 function VAPOR(T)
   !
   !  COMPUTES SATURATION H2O VAPOR PRESSURE (OVER LIQUID)

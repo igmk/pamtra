@@ -242,6 +242,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
      salbrr = 0.d0
      backrr(nz) = 0.d0
      rain_spec(:) = 0.d0
+
      if ((rwc_q(nz) .ge. threshold) .and. EM_rain .ne. "disab") then
         hydros_present(nz) = .true.
      	if (n_moments .eq. 1) then
