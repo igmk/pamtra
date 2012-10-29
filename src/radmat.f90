@@ -153,36 +153,75 @@
       END SUBROUTINE MMULT                          
                                                                         
                                                                         
+!       SUBROUTINE MINVERT_OLD (N, MATRIX1, MATRIX2) 
+!       use kinds
+!       INTEGER N 
+!       REAL(kind=dbl) MATRIX1 (N, N), MATRIX2 (N, N) 
+!       INTEGER NMAX 
+!       PARAMETER (NMAX = 256) 
+!       INTEGER I, J, INDX (NMAX), IZ 
+!       REAL(kind=dbl) DET (2), WORK (NMAX) 
+!                                                                         
+!       IF (N.GT.NMAX) THEN 
+!       WRITE ( * , '(1X,A,I3)') 'Exceeded maximum matrix size for inversi&
+!      &on.  Max = ', NMAX                                                
+!          STOP 
+!       ENDIF 
+!       CALL DGEFA (MATRIX1, N, N, INDX, IZ) 
+!       IF (IZ.GT.0) THEN 
+!       WRITE ( * , '(1X,A,I3)') 'Encountered a zero pivot at element ', I&
+!      &Z                                                                 
+!          STOP 
+!       ENDIF 
+!       DO 100 I = 1, N 
+!          DO 110 J = 1, N 
+!             MATRIX2 (I, J) = MATRIX1 (I, J) 
+!   110    END DO 
+!   100 END DO 
+!       CALL DGEDI (MATRIX2, N, N, INDX, DET, WORK, 1) 
+!                                                                         
+!       RETURN 
+!       END SUBROUTINE MINVERT_OLD
+                                                                        
+
       SUBROUTINE MINVERT (N, MATRIX1, MATRIX2) 
       use kinds
       INTEGER N 
       REAL(kind=dbl) MATRIX1 (N, N), MATRIX2 (N, N) 
-      INTEGER NMAX 
-      PARAMETER (NMAX = 256) 
-      INTEGER I, J, INDX (NMAX), IZ 
-      REAL(kind=dbl) DET (2), WORK (NMAX) 
-                                                                        
-      IF (N.GT.NMAX) THEN 
-      WRITE ( * , '(1X,A,I3)') 'Exceeded maximum matrix size for inversi&
-     &on.  Max = ', NMAX                                                
-         STOP 
-      ENDIF 
-      CALL DGEFA (MATRIX1, N, N, INDX, IZ) 
-      IF (IZ.GT.0) THEN 
-      WRITE ( * , '(1X,A,I3)') 'Encountered a zero pivot at element ', I&
-     &Z                                                                 
-         STOP 
-      ENDIF 
-      DO 100 I = 1, N 
-         DO 110 J = 1, N 
-            MATRIX2 (I, J) = MATRIX1 (I, J) 
-  110    END DO 
-  100 END DO 
-      CALL DGEDI (MATRIX2, N, N, INDX, DET, WORK, 1) 
-                                                                        
-      RETURN 
-      END SUBROUTINE MINVERT                        
-                                                                        
+      INTEGER IPIV (N), WORK (N*N)
+      INTEGER INFO, LDA, M, LWORK
+      ! method found at
+      ! http://vibrationdata.com/python-wiki/index.php?title=Matrix_Inversion
+      external DGETRF
+      external DGETRI                                                                      
+
+!     DGETRF computes an LU factorization of a general M-by-N matrix A
+!     using partial pivoting with row interchanges.
+
+      LWORK = N*N
+      M=N
+      LDA=N
+
+!      Store MATRIX1 in MATRIX2 to prevent it from being overwritten by LAPACK
+      MATRIX2 = MATRIX1
+      CALL DGETRF( M, N, MATRIX2, LDA, IPIV, INFO )
+      IF(INFO.LT.0)THEN
+	  WRITE ( * , '(1X,A)') 'LU decomposition:  illegal value'
+	  STOP
+	ENDIF
+
+      CALL DGETRI(N, MATRIX2, N, IPIV, WORK, LWORK, INFO)
+      IF (info.NE.0) THEN
+	  WRITE ( * , '(1X,A)') 'Matrix inversion failed!'
+          STOP 
+      ENDIF
+
+      RETURN
+      END SUBROUTINE MINVERT                
+
+
+
+
                                                                         
       SUBROUTINE dgefa (a, lda, n, ipvt, info) 
   use kinds

@@ -133,13 +133,137 @@ subroutine mieangle (nterms, a, b, mu, p1, p2, p3, p4)
      pim = tmp 
   end do
   ! calculate the first stokes parameter scattering matrix element
-  p1 = 0.5 * (abs(s2) **2 + abs(s1) **2) 
-  p2 = 0.5 * (abs(s2) **2 - abs(s1) **2) 
-  p3 = real(conjg(s2) * s1) 
-  p4 = imag(conjg(s1) * s2) 
-
+  p1 = 0.5 * (abs(s2) **2 + abs(s1) **2) ! =M11 = M22
+  p2 = 0.5 * (abs(s2) **2 - abs(s1) **2)  !=M12 = M21
+  p3 = real(conjg(s2) * s1) !=M33 = M44
+  p4 = imag(conjg(s1) * s2) !=M34 =-M43
+  ! looks like S2=F_vv and S1=F_hh according to Xinxin's Thesis (p.18/19) [Max]
   return 
 end subroutine mieangle
+
+subroutine mieangle_amplScatMat (nterms, a, b, mu, s1, s2) 
+  !  mieangle calculates the intensity scattering matrix elements   
+  !  (p1,p2,p3,p4) for a particular value of mu (cos(theta)) from the 
+  !  mie coefficients an's and bn's. the matrix elements are for the 
+  !  stokes intensity vector (i,q,u,v) and are calculated from the    
+  !  complex scattering amplitudes s1 and s2. 
+
+
+
+  use kinds
+  implicit none 
+  integer :: nterms 
+  real(kind=dbl) :: mu
+  complex(kind=dbl) :: a(*), b(*) 
+  integer :: n 
+  real(kind=dbl) :: tmp, pin, pim, taun, c 
+  complex(kind=dbl) :: s1, s2 
+
+
+  s1 = cmplx(0.0, 0.0) 
+  s2 = cmplx(0.0, 0.0) 
+  ! sum up the series using the an's and bn's               
+  pin = 1.0d0 
+  pim = 0.0d0 
+  do n = 1, nterms 
+     taun = n * mu * pin - (n + 1) * pim 
+     ! calculate the scattering functions at +mu and -mu       
+     ! using the pin's and the taun's.                       
+     c = (2 * n + 1) / real(n * (n + 1) ) 
+     s1 = s1 + c * (a(n) * pin + b(n) * taun)
+     s2 = s2 + c * (b(n) * pin + a(n) * taun)
+     ! calculate the angular function pin by up recurrence     
+     tmp = pin 
+     pin = ((2 * n + 1) * mu * pin - (n + 1) * pim) / n 
+     pim = tmp 
+  end do
+!   ! calculate the first stokes parameter scattering matrix element
+!   p1 = 0.5 * (abs(s2) **2 + abs(s1) **2) ! =M11 = M22
+!   p2 = 0.5 * (abs(s2) **2 - abs(s1) **2)  !=M12 = M21
+!   p3 = real(conjg(s2) * s1) !=M33 = M44
+!   p4 = imag(conjg(s1) * s2) !=M34 =-M43
+  ! looks like S2=F_vv and S1=F_hh according to Xinxin's Thesis (p.18/19) [Max]
+  return 
+end subroutine mieangle_amplScatMat
+
+
+
+subroutine amplScatMat_to_scatMat(s1,s2,scatMat)
+  ! convertes the amplitude scattering matrix elements S1 and S2 to
+  ! scattering or Mueller Matrix!
+  use kinds
+
+  implicit none 
+
+  integer, parameter :: nstokes = 2
+
+  complex(kind=dbl),intent(in) :: s1, s2 
+  real(kind=dbl) :: p1,p2!,p3,p4
+  real(kind=dbl),intent(out), dimension(nstokes,nstokes) :: scatMat
+
+
+  p1 = 0.5d0 * (abs(s2) **2 + abs(s1) **2) 
+  p2 = 0.5d0 * (abs(s2) **2 - abs(s1) **2) 
+  !p3 = real(conjg(s2) * s1)
+  !p4 = imag(conjg(s1) * s2)
+
+  scatMat(:,:) = 0d0
+
+  !see Evans and Stephans 1991, eq6
+  scatMat(1,1) = p1
+  scatMat(2,2) = p1 !for spheres
+  scatMat(1,2) = p2
+  scatMat(2,1) = p2
+  
+!   scatMat(3,3) = p3
+!   scatMat(4,4) = p3 !for spheres
+!   scatMat(3,4) = p4 !check plus or minus!
+!   scatMat(4,3) = -p4 !check plus or minus!
+! 
+  return
+end subroutine amplScatMat_to_scatMat
+
+
+! subroutine amplScatMat_to_emissionVector(s1,s2,emissionVector)
+! 
+!   use kinds
+! 
+!   implicit none 
+! 
+!   integer, parameter :: nstokes = 2
+! 
+! 
+!   return
+! end subroutine amplScatMat_to_emissionVector
+
+subroutine amplScatMat_to_extinctionMatrix(s1,s2,f,extinctionMatrix)
+
+  use kinds
+  use constants, only: pi, c
+  implicit none 
+
+  integer, parameter :: nstokes = 2
+
+
+  real(kind=dbl), intent(in) :: f
+  complex(kind=dbl) :: s1,s2
+  real(kind=dbl),intent(out), dimension(nstokes,nstokes) :: extinctionMatrix
+  real(kind=dbl) :: k
+
+
+  k = 2* pi*f*1d9/c
+
+  extinctionMatrix(:,:) = 0d0
+!extinctionMatrix(row,colum)
+  extinctionMatrix(1,1) = imag(s1+s2)*2*pi/k
+  extinctionMatrix(1,2) = imag(s1-s2)*2*pi/k
+  extinctionMatrix(2,2) = imag(s1+s2)*2*pi/k
+  extinctionMatrix(2,1) = imag(s1-s2)*2*pi/k
+
+  return
+end subroutine amplScatMat_to_extinctionMatrix
+
+
 
 function distribution(a, b, alpha, gamma, d, distflag)
   !   distribution returns the particle density for a given radius r

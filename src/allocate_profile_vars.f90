@@ -69,10 +69,24 @@ subroutine allocate_profile_vars
   allocate(rt3legen3(nlyr,200), stat=alloc_status)
   allocate(rt3legen4(nlyr,200), stat=alloc_status)
 
+  allocate(rt4salbtot(nlyr),stat=alloc_status)
+  allocate(rt4scatter_matrix(nlyr,nstokes,nummu,nstokes,nummu,4),stat=alloc_status)
+  allocate(scattermatrix(nlyr,nstokes,nummu,nstokes,nummu,4),stat=alloc_status)
+  allocate(rt4ext_matrix(nlyr,nstokes,nstokes,nummu,4),stat=alloc_status)
+  allocate(extmatrix(nlyr,nstokes,nstokes,nummu,4),stat=alloc_status)
+  allocate(rt4emis_vec(nlyr,nstokes,nummu,4),stat=alloc_status)
+  allocate(emisvec(nlyr,nstokes,nummu,4),stat=alloc_status)
+
+
+
+
+  allocate(hydros_present(nlyr),stat=alloc_status)
+  allocate(rt4hydros_present(nlyr),stat=alloc_status)
+
 !   allocate(ics(ngridx, ngridy))
   if (dump_to_file) then
 	allocate(file_ph(nlyr))
-end if
+  end if
 
 !   allocate(angles_deg(2*NUMMU))
 

@@ -1,4 +1,4 @@
-subroutine dda_db_liu(f, t, mindex, dia1, dia2, nbins, maxleg,   &
+subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
      ad, bd, alpha, gamma, lphase_flag, extinction, albedo, back_scatt,  &
      nlegen, legen, legen2, legen3, legen4, aerodist)
 
@@ -8,7 +8,7 @@ subroutine dda_db_liu(f, t, mindex, dia1, dia2, nbins, maxleg,   &
 
   use kinds
   use constants, only: pi,c
-  use nml_params, only: verbose, liu_type, data_path
+  use nml_params, only: verbose, data_path
 
   implicit none
 
@@ -18,6 +18,7 @@ subroutine dda_db_liu(f, t, mindex, dia1, dia2, nbins, maxleg,   &
 
   real(kind=dbl), intent(in) :: f,  &! frequency [GHz]
        t    ! temperature [K]
+  integer, intent(in) :: liu_type
 
   real(kind=dbl) :: wavelength, dia1, dia2,mass_eq_dia
   real(kind=dbl) :: ad, bd, alpha, gamma 
@@ -137,7 +138,7 @@ subroutine dda_db_liu(f, t, mindex, dia1, dia2, nbins, maxleg,   &
   !  do ir = 1, nbins+1
   do ir = 1, nbins
      !    diameter = dia1 + (ir - 1) * del_d
-     diameter = (dia2-dia1)/2.d0*xi(ir)+(dia1+dia2)/2.d0
+     diameter = (dia2-dia1)/2.d0*xi(ir)+(dia1+dia2)/2.d0 !because ir goes from -1 to 1
      ndens = distribution(ad, bd, alpha, gamma, dble(diameter), aerodist)  ! number density
      !    if ((ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
      !		ndens = 0.5d0 * ndens

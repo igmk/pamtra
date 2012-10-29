@@ -1,8 +1,10 @@
-subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
-     nlegen, legen, legen2, legen3, legen4, nc)
+subroutine ice_ssp(f,iwc,t,maxleg,nc, kext, salb, back,  &
+     nlegen, legen, legen2, legen3, legen4,&
+     scatter_matrix,extinct_matrix, emis_vector)
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_moments, EM_ice, SD_ice
+  use nml_params, only: verbose, lphase_flag, n_moments, EM_ice, SD_ice,&
+      nstokes
   use constants, only: pi, im
   use double_moments_module
   use conversions
@@ -18,7 +20,7 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
        t,&
        f
 
-  real(kind=dbl), optional, intent(in) :: nc
+  real(kind=dbl), intent(in) :: nc
 
   real(kind=dbl) :: refre, refim
 
@@ -31,7 +33,10 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
        back
 
   real(kind=dbl), dimension(200), intent(out) :: legen, legen2, legen3, legen4
-
+    integer, parameter ::  nquad = 16
+    real(kind=dbl), dimension(nstokes,nquad,nstokes,nquad,4), intent(out) :: scatter_matrix
+    real(kind=dbl), dimension(nstokes,nstokes,nquad,2), intent(out) :: extinct_matrix
+    real(kind=dbl), dimension(nstokes,nquad,2), intent(out) :: emis_vector
   complex(kind=dbl) :: mindex
 
   if (verbose .gt. 1) print*, 'Entering ice_ssp'
@@ -51,7 +56,7 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
      del_d = 1.d-8											! [m]
      dia1 = (drop_mass/130.0d0)**(1.0d0/3.0d0)				! [m]
 !    CHECK if dia1 > maxdiam=2.d-4 (maximum diameter for COSMO)
-! 	 then ricalculate the drop mass using 2.d-4 as particle diameter
+! 	 then recalculate the drop mass using 2.d-4 as particle diameter
 	 if (dia1 .gt. 2.d-4) then
 	 	dia1 = 2.d-4 										! [m] maximum allowed diameter
 		drop_mass = 130.d0 * dia1**3						! [kg]
@@ -78,7 +83,7 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
      gamma = 1.0d0 
     end if
   else if (n_moments .eq. 2) then
-     if (.not. present(nc)) stop 'STOP in routine ice_ssp'
+     if (nc .eq. 0.d0) stop 'STOP in routine ice_ssp'
      call double_moments(iwc,nc,gamma_ice(1),gamma_ice(2),gamma_ice(3),gamma_ice(4), &
           ad,bd,alpha,gamma,a_mice,b_ice)
      nbins = 100
@@ -95,12 +100,18 @@ subroutine ice_ssp(f,iwc,t,maxleg,kext, salb, back,  &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
           LEGEN4, SD_ice,den_ice,iwc)
+      scatter_matrix= 0.d0
+      extinct_matrix= 0.d0
+      emis_vector= 0.d0
   elseif (EM_ice .eq. 'liudb') then
      call dda_db_liu(f,t,9,mindex, &
           dia1,dia2,nbins,maxleg,ad,&
           bd, alpha, gamma, lphase_flag,kext, salb,&
           back, nlegen, legen, legen2, legen3,&
           legen4, SD_ice)
+      scatter_matrix= 0.d0
+      extinct_matrix= 0.d0
+      emis_vector= 0.d0
   else
      write (*, *) 'no em mod', EM_ice
      stop

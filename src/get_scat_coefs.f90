@@ -45,7 +45,7 @@ subroutine get_scat_coefs(nz,DELTAM, NUMMU, NLEG, COEF, EXTINCTION, SCATTER)
      ALBEDO = (1 - F) * ALBEDO / (1 - ALBEDO * F)
      SCATTER = ALBEDO * EXTINCTION
      NLEGEN = NUMMU - 1
-     !          Scale only the diagonal phase matrix elements
+     !  Scale only the diagonal phase matrix elements
      DO L = 0, NLEG
         COEF (1, L + 1) = (2 * L + 1) * MAX (0.0d0, (COEF (1, L + 1) / (2 * L + 1) - F) / (1 - F) )
         COEF (3, L + 1) = (2 * L + 1) * MAX (0.0d0, (COEF (3, L + 1) / (2 * L + 1) - F) / (1 - F) )

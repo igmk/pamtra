@@ -1,8 +1,10 @@
-subroutine grau_ssp(f,gwc,t,maxleg,kext, salb, back,  &
-     nlegen, legen, legen2, legen3, legen4, nc)
+subroutine grau_ssp(f,gwc,t,maxleg,nc, kext, salb, back,  &
+     nlegen, legen, legen2, legen3, legen4,&
+     scatter_matrix,extinct_matrix, emis_vector)
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_0grauDgrau, EM_grau, n_moments, SD_grau, graupel_density
+  use nml_params, only: verbose, lphase_flag, n_0grauDgrau, EM_grau, n_moments, SD_grau, &
+  graupel_density,	nstokes
   use constants, only: pi, im
   use double_moments_module
   use conversions
@@ -17,7 +19,7 @@ subroutine grau_ssp(f,gwc,t,maxleg,kext, salb, back,  &
        t,&
        f
 
-  real(kind=dbl), optional, intent(in) :: nc
+  real(kind=dbl), intent(in) :: nc
 
   real(kind=dbl) :: refre, refim
 
@@ -29,7 +31,10 @@ subroutine grau_ssp(f,gwc,t,maxleg,kext, salb, back,  &
        back
 
   real(kind=dbl), dimension(200), intent(out) :: legen, legen2, legen3, legen4
-
+    integer, parameter ::  nquad = 16
+    real(kind=dbl), dimension(nstokes,nquad,nstokes,nquad,4), intent(out) :: scatter_matrix
+    real(kind=dbl), dimension(nstokes,nstokes,nquad,2), intent(out) :: extinct_matrix
+    real(kind=dbl), dimension(nstokes,nquad,2), intent(out) :: emis_vector
   complex(kind=dbl) :: mindex, m_air
 
   real(kind=dbl) :: gammln
@@ -66,7 +71,7 @@ subroutine grau_ssp(f,gwc,t,maxleg,kext, salb, back,  &
      gamma = 1.d0
 	end if
   else if (n_moments .eq. 2) then
-     if (.not. present(nc)) stop 'STOP in routine grau_ssp'
+     if (nc .eq. 0.d0) stop 'STOP in routine grau_ssp'
      call double_moments(gwc,nc,gamma_graupel(1),gamma_graupel(2),gamma_graupel(3),gamma_graupel(4), &
           ad,bd,alpha,gamma,a_mgrau, b_grau)
      nbins = 100
@@ -83,6 +88,9 @@ subroutine grau_ssp(f,gwc,t,maxleg,kext, salb, back,  &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
           LEGEN4, SD_grau,graupel_density,gwc)
+      scatter_matrix= 0.d0
+      extinct_matrix= 0.d0
+      emis_vector= 0.d0
   else 
      write (*, *) 'no em mod for grau'
      stop

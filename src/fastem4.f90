@@ -54,6 +54,7 @@ subroutine fastem4( wavelength   , &  ! Input
        fp, ZERO, POINT_5, ONE, TWO, THREE,PI,DEGREES_TO_RADIANS,transmittance_limit_lower,&
        transmittance_limit_upper, e0, min_f, max_f, min_wind, max_wind, A_COEF, Lcoef,&
        Scoef, t_c, b_coef, FR_COEFF,x,y
+
   IMPLICIT NONE
   ! Arguments
   integer, intent(in) :: nummu
@@ -382,7 +383,6 @@ subroutine fastem4( wavelength   , &  ! Input
 
      RADIANCE (1, k) = (1.0 - (reflectivity(1)+reflectivity(2))/2.) * PLANCK
      RADIANCE (2, k) = -(reflectivity(1)-reflectivity(2))/2.  * PLANCK
-
   end do
   RETURN
 

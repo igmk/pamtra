@@ -213,13 +213,13 @@
 SUBROUTINE RT3 (NSTOKES, NUMMU, AZIORDER, MU_VALUES, SRC_CODE,    &
      OUT_FILE, QUAD_TYPE, DELTAM, DIRECT_FLUX, DIRECT_MU,  &
      GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO, GROUND_INDEX, SKY_TEMP,  &
-     WAVELENGTH, UNITS, OUTPOL, NOUTLEVELS, OUTLEVELS, NUMAZIMUTHS,    &
+     WAVELENGTH, UNITS, OUTPOL, NOUTLEVELS, OUTLEVELS,    &
      nx,ny,fi)
 
 
   use kinds
   use vars_atmosphere
-  use nml_params, only: verbose, write_nc, in_python
+  use nml_params, only: verbose, write_nc, in_python, numazimuths
 
   implicit none
 
@@ -227,11 +227,11 @@ SUBROUTINE RT3 (NSTOKES, NUMMU, AZIORDER, MU_VALUES, SRC_CODE,    &
 
   INTEGER MAXV, MAXA, MAXLAY 
   PARAMETER (MAXV = 64, MAXA = 32) 
-  PARAMETER (MAXLAY = 200) 
+  PARAMETER (MAXLAY = 600)
 
   INTEGER NSTOKES, NUMMU, AZIORDER
   INTEGER NUM_LAYERS, SRC_CODE 
-  INTEGER NOUTLEVELS, OUTLEVELS (MAXLAY), NUMAZIMUTHS 
+  INTEGER NOUTLEVELS, OUTLEVELS (MAXLAY)
   REAL(kind=dbl) GROUND_TEMP, GROUND_ALBEDO 
   COMPLEX(kind=dbl) GROUND_INDEX 
   REAL(kind=dbl) SKY_TEMP, WAVELENGTH, MAX_DELTA_TAU 
@@ -246,11 +246,6 @@ SUBROUTINE RT3 (NSTOKES, NUMMU, AZIORDER, MU_VALUES, SRC_CODE,    &
        GROUND_TYPE * 1                                                   
   CHARACTER(100) OUT_FILE
 
-
-
-
-
-
   if (verbose .gt. 1) print*, "entered rt3"
 
   ! initialization
@@ -258,7 +253,7 @@ SUBROUTINE RT3 (NSTOKES, NUMMU, AZIORDER, MU_VALUES, SRC_CODE,    &
   height = 0.
   temperatures = 0.
   gas_extinct = 0.
-  MAX_DELTA_TAU = 1.0E-6
+  MAX_DELTA_TAU = 1.0d-6
 
 
 
