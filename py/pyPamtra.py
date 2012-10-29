@@ -37,6 +37,7 @@ except:
 missingNumber=-9999.
 
 class pyPamtra(object):
+
   '''
   Class for pamtra calculations. Initalisations fill dictonary 'set' with default values and 
   also fills 'dimensions' and 'units'

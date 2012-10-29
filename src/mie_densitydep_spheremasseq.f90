@@ -112,7 +112,6 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
            sump4 (i) = sump4 (i) + p4 * ndens 
         end do
      end if
-     tot_mass = tot_mass + ndens*del_d*a_mtox*diameter**bcoeff
   end do
 
   !           multiply the sums by the integration delta and other constan
