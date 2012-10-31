@@ -34,4 +34,4 @@ testc.lay
 testc.out
 testc.out.check
 src/scatcnv
-scripts/nodesConfig.sh
+tools/pp_scripts/nodesConfig.sh
