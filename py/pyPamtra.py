@@ -412,7 +412,7 @@ class pyPamtra(object):
     self.p["unixtime"] = np.ones(self._shape2D,dtype=int)*self.p["unixtime"]
 
     f.close()
-
+    return
     
   def writePamtraProfile(self,filename):
     
@@ -448,8 +448,8 @@ class pyPamtra(object):
     f = open(filename, 'w')
     f.write(s)
     f.close()
+    return
 
-    
   def createProfile(self,**kwargs):
     '''
     Function to create Pamtra Profiles.

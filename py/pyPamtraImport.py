@@ -252,3 +252,39 @@ def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp
 	
 	return pam
 	
+def createUsStandardProfile(**kwargs):
+	'''
+	Function to create clear sky US Standard Atmosphere.
+	
+	hgt_lev is teh only mandatory variables
+	humidity will be set to zero if not provided, all other variables are guessed by "createProfile"
+	
+	values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwritte us staandard if provided 
+	
+	'''    
+	
+	import usStandard #see in tools
+	
+	assert "hgt_lev" in kwargs.keys() #hgt_lev is mandatory
+	assert len(np.shape(kwargs["hgt_lev"]))==1 #right now it is only available for single column
+	
+	pamData = dict()
+	
+	density, pamData["press_lev"], pamData["temp_lev"]  =  usStandard.usStandard(kwargs["hgt_lev"])
+	
+	for kk in kwargs.keys():
+	      pamData[kk] = np.array(kwargs[kk])
+	
+	if ("relhum_lev" not in kwargs.keys()) and ("q" not in kwargs.keys()):
+		pamData["relhum_lev"] = np.zeros_like(kwargs["hgt_lev"])
+	
+	pam = pyPamtra.pyPamtra()
+
+	pam.createProfile(**pamData)
+	del kwargs
+	
+	return pam
+	
+
+	
+	    
