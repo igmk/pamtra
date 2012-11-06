@@ -70,6 +70,10 @@ subroutine miecross (nterms, x, a, b, qext, qscat, qbackscat)
   !    qext          extinction efficiency
   !    qscat         scattering efficiency
   !    qbackscat     backscattering efficiency
+  !
+  ! Note qbackscat*pi*r² = back scattering crossection INCLUDING the 
+  ! akward 4*pi, i.e. identical to sigma_b of eq 4.82 in Bohren & Huffmann
+  ! (Max, 10/12)
 
   use kinds
 
@@ -266,7 +270,9 @@ end subroutine amplScatMat_to_extinctionMatrix
 
 
 function distribution(a, b, alpha, gamma, d, distflag)
-  !   distribution returns the particle density for a given radius r
+  !   distribution returns the particle density for a given radius 
+  !   OR diameter d depending on how the coefficients are defined
+  !   in Pamtra distfalgs C, M, G assume diameter, L radius (has to be fixed!!)
   !   for a modified gamma distribution specified by a, b, alpha, gamma
   !      n(r) = a * r^alpha * exp(-b * r^gamma)     .
   !   or a log-normal distribution:
@@ -283,8 +289,7 @@ function distribution(a, b, alpha, gamma, d, distflag)
 
   if (distflag .eq. 'G') then
      !   modified gamma distribution
-     !r = d/2.d0 !Why d instead of r? it is present in batta_model! Max
-     distribution = a * d**alpha * exp( - b * r**gamma)
+     distribution = a * d**alpha * exp( - b * d**gamma)
   elseif (distflag .eq. 'L') then
      !   log-normal distribution
      r = d/2.d0

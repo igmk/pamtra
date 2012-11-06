@@ -40,5 +40,4 @@ subroutine allocate_jacobian_vars
     allocate(jac_hwc_n(nlyr),stat=alloc_status)
   end if
 
-
 end subroutine allocate_jacobian_vars

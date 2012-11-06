@@ -125,7 +125,11 @@ subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
   endif
 
   if (radar_spectrum) then
+    particle_type ="ice"
+print*, "D", diameter_spec
+print*, "Q", qback_spec
     call calc_radar_spectrum(nbins+1,diameter_spec, qback_spec,t,press,hgt,f,particle_type,ice_spec)
+print*, "I", MAXVAL(ice_spec)
   else
     ice_spec(:)=0.d0
   end if

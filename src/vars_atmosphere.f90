@@ -106,8 +106,6 @@ module vars_atmosphere
   real(kind=dbl), allocatable, dimension(:) :: jac_relhum_lev,&
        jac_temp_lev
 
-
-
   logical, allocatable, dimension(:) :: hydros_present, rt4hydros_present
 
   integer :: alloc_status

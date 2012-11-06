@@ -102,9 +102,10 @@ subroutine grau_ssp(f,gwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
      stop
   end if
 
-  particle_type="graup" 
+
 
   if (radar_spectrum) then
+    particle_type="graup" 
     call calc_radar_spectrum(nbins+1,diameter_spec, qback_spec,t,press,hgt,f,particle_type,grau_spec)
   else
     grau_spec(:)=0.d0

@@ -123,7 +123,8 @@ subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
     stop "unknown EM_rain"
   end if
   if (radar_spectrum) then
-    call calc_radar_spectrum(nbins+1,diameter_spec, qback_spec,t,press,hgt,f,particle_type,ice_spec)
+    particle_type = "rain"
+    call calc_radar_spectrum(nbins+1,diameter_spec, qback_spec,t,press,hgt,f,particle_type,rain_spec)
   else
     rain_spec(:)=0.d0
   end if

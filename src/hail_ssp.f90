@@ -72,9 +72,10 @@ subroutine hail_ssp(f,hwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
      stop
   end if
 
-  particle_type="hail" 
+
 
   if (radar_spectrum) then
+    particle_type="hail" 
     call calc_radar_spectrum(nbins+1,diameter_spec, qback_spec,t,press,hgt,f,particle_type,hail_spec)
   else
     hail_spec(:)=0.d0

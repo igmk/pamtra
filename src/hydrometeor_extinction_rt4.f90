@@ -12,6 +12,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
   use conversions
   use tmat_snow_db
   use tmat_rain_db
+  use vars_output, only: radar_spectra, radar_snr !output of the radar simulator for jacobian mode
 
   implicit none
 
@@ -145,6 +146,12 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
 
       kexttot(nz) = kextsn(nz) + kextcw(nz) + kextrr(nz) + kextgr(nz) + kextci(nz) + kextha(nz)
       back(nz) = backcw(nz) + backrr(nz) + backci(nz) + backsn(nz) + backgr(nz) + backha(nz)
+
+  !short cut for the radar simulator: the ouput is taken directly from the final arrays at position 1,1.
+  if (radar_spectrum) then
+    radar_spectra(nx,ny,nz,fi,:) = radar_spectra(1,1,nz,fi,:)
+    radar_snr(nx,ny,nz,fi) =   radar_snr(1,1,nz,fi)
+  end if
 
       CYCLE
 
@@ -456,7 +463,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
 !     cloud_spec(:)=0.d0
   end if
 
-     end if !end if hydrometeors present
+ end if !end if hydrometeors present
 
   end do grid_z !end of cycle over the vertical layers
 
@@ -500,8 +507,6 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
       jac_hwc_n=hwc_n
     end if
   end if
-
-
 
 
 

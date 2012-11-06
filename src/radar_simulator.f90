@@ -1,12 +1,16 @@
 subroutine radar_simulator(particle_spectrum,back,frequency,temp,&
-      nz,nx,ny,fi)!, &
-!   spectra_velo, noise_turb_spectra, snr_turb_spectra)
-!nbins: No of bins + 1
-!diameter_spec: Diameter Spectrum (SI)
-!qback_spec: backscattering cross section in 1/m
-!the reflectivity of all hydrometeors in 1/m
-!particle_type: cl cloud|
-!frequency, frequency [GHz]
+      nz,nx,ny,fi)
+! This routine takes the backscattering spectrum depending on Doppler velocity, 
+! adds noise and turbulence and simulates temporal averaging
+!
+! based on Spectra_simulator by P. Kollias
+! converted from Matlab to Fortran by M. Maahn (2012)
+
+! particle_spectrum: backscattering particle spectrum per Doppler velocity [mm⁶/m³/(m/s)] NON-SI
+! back: volumetric backscattering crossection in m²/m³
+! frequency: Frequency in GHz
+! temp: temperature in K
+! nz,nx,ny,fi: level, grid x, y, frequency index
 
   use kinds
   use nml_params
@@ -20,8 +24,6 @@ subroutine radar_simulator(particle_spectrum,back,frequency,temp,&
   real(kind=dbl),intent(in) ::  frequency, temp, back
   integer,intent(in) ::  nz,nx,ny,fi
   real(kind=dbl), dimension(radar_nfft),intent(in):: particle_spectrum
-
-
 
   real(kind=dbl), dimension(maxTurbTerms):: turb
   real(kind=dbl), dimension(radar_nfft*radar_no_Ave):: x_noise
@@ -38,7 +40,7 @@ subroutine radar_simulator(particle_spectrum,back,frequency,temp,&
 
   !transform backscattering in linear reflectivity units, 10*log10(back) would be in dBz
   Ze_back = 1.d18* (1.d0/ (K2*pi**5) ) * back * (wavelength)**4 *0.5 ![mm⁶/m³] !@Pavlos why /2????
-print*,10*log10(Ze_back)
+ print*,"Ze ref", 10*log10(Ze_back)
   !get delta velocity
   del_v = (radar_max_V-radar_min_V)/radar_nfft ![m/s]
   !create array from min_v to max_v iwth del_v spacing -> velocity spectrum of radar
@@ -78,9 +80,10 @@ print*,10*log10(Ze_back)
   ts_imax = floor(3/del_v+1)+radar_nfft-1
   SNR = 10.d0*log10(Ze_back/radar_Pnoise)
 
-  snr_turb_spectra = ((Ze_back/SUM(turb_spectra(ts_imin:ts_imax)*del_v))*&
-      turb_spectra(ts_imin:ts_imax) + radar_pnoise/(radar_nfft*del_v))
-
+!   snr_turb_spectra = ((Ze_back/SUM(turb_spectra(ts_imin:ts_imax)*del_v))*&
+!       turb_spectra(ts_imin:ts_imax) + radar_pnoise/(radar_nfft*del_v))
+  snr_turb_spectra =turb_spectra(ts_imin:ts_imax) + radar_pnoise/(radar_nfft*del_v)
+print*,"K",(Ze_back/SUM(turb_spectra(ts_imin:ts_imax)*del_v)), back, Ze_back
   !init_random_seed works with system clock, so if called very often it creates the same random numbers. Thus, create a big one now
   call init_random_seed()
   call RANDOM_NUMBER(x_noise)
@@ -95,8 +98,8 @@ print*,10*log10(Ze_back)
   else
     noise_turb_spectra = SUM(noise_turb_spectra_tmp,DIM=1)/radar_no_Ave
   end if
-
-  radar_spectra(nx,ny,nz,fi,:) = 10*log10(noise_turb_spectra(:))
+tt=1
+  radar_spectra(nx,ny,nz,fi,:) = 10*log10(noise_turb_spectra)
   radar_snr(nx,ny,nz,fi) = SNR
   radar_vel(:) = spectra_velo(:)
 
