@@ -82,16 +82,18 @@ out_angles&
 
   implicit none
 
+!NOTE: f2py cannot deal with kind=dbl or kind=sgl declarations!
+!see http://cens.ioc.ee/projects/f2py2e/FAQ.html#q-what-if-fortran-90-code-uses-type-spec-kind-kinds
 
  !!Settings
 !   integer,intent(in) :: set_verbose, set_n_moments, set_isnow_n0, set_liu_type
 ! 
-!   real(kind=sgl),intent(in) :: set_obs_height     ! upper level output height [m] (> 100000. for satellite)
-!   real(kind=sgl),intent(in) :: set_emissivity
-!   real(kind=sgl),intent(in) :: set_N_0snowDsnow, set_N_0grauDgrau, set_N_0rainD, set_N_0hailDhail
-!   real(kind=sgl),intent(in) :: set_SP, set_as_ratio
-!   real(kind=sgl),intent(in) :: set_salinity         ! sea surface salinity
-!   real(kind=sgl),intent(in) :: set_snow_density, set_graupel_density, set_hail_density   
+!   real,intent(in) :: set_obs_height     ! upper level output height [m] (> 100000. for satellite)
+!   real,intent(in) :: set_emissivity
+!   real,intent(in) :: set_N_0snowDsnow, set_N_0grauDgrau, set_N_0rainD, set_N_0hailDhail
+!   real,intent(in) :: set_SP, set_as_ratio
+!   real,intent(in) :: set_salinity         ! sea surface salinity
+!   real,intent(in) :: set_snow_density, set_graupel_density, set_hail_density   
 ! 
 !   logical,intent(in) :: set_dump_to_file   ! flag for profile and ssp dump
 !   logical,intent(in) :: set_lphase_flag, &        ! flag for phase function calculation
@@ -115,32 +117,32 @@ character(300),intent(in) :: set_namelist_file
 !Input
 
   integer, intent(in) :: in_nfreq, max_in_nlyrs, in_ngridx, in_ngridy
-  real(kind=sgl), dimension(in_nfreq), intent(in) :: in_freqs
+  real, dimension(in_nfreq), intent(in) :: in_freqs
 
 
   integer, dimension(in_ngridx,in_ngridy), intent(in) :: in_timestamp
-  real(kind=sgl), intent(in) :: in_deltax, in_deltay
+  real, intent(in) :: in_deltax, in_deltay
 
   integer, dimension(in_ngridx,in_ngridy), intent(in) :: in_nlyrs
 
-  real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_lat,in_lon
+  real, dimension(in_ngridx,in_ngridy), intent(in) :: in_lat,in_lon
   integer, dimension(in_ngridx,in_ngridy), intent(in) :: in_model_i,in_model_j
-  real(kind=sgl), dimension(in_ngridx,in_ngridy), intent(in) :: in_wind10u,in_wind10v,in_lfrac
-  real(kind=sgl), dimension(in_ngridx,in_ngridy,1+max_in_nlyrs), intent(in) :: in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev
-  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs), intent(in) :: in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q
-  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs), intent(in) :: in_hwc_q,in_cwc_n,in_iwc_n,in_rwc_n
-  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs), intent(in) :: in_swc_n,in_gwc_n,in_hwc_n
+  real, dimension(in_ngridx,in_ngridy), intent(in) :: in_wind10u,in_wind10v,in_lfrac
+  real, dimension(in_ngridx,in_ngridy,1+max_in_nlyrs), intent(in) :: in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev
+  real, dimension(in_ngridx,in_ngridy,max_in_nlyrs), intent(in) :: in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q
+  real, dimension(in_ngridx,in_ngridy,max_in_nlyrs), intent(in) :: in_hwc_q,in_cwc_n,in_iwc_n,in_rwc_n
+  real, dimension(in_ngridx,in_ngridy,max_in_nlyrs), intent(in) :: in_swc_n,in_gwc_n,in_hwc_n
     character(40),intent(out) :: out_gitHash, out_gitVersion
 
   !Output
-  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out) :: out_Ze,out_Att_hydro,out_Att_atmo
-  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out)::out_Ze_cw,out_Ze_rr,out_Ze_ci,&
+  real, dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out) :: out_Ze,out_Att_hydro,out_Att_atmo
+  real, dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out)::out_Ze_cw,out_Ze_rr,out_Ze_ci,&
                   out_Ze_sn,out_Ze_gr,out_Ze_ha
-  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out)::out_Att_cw,out_Att_rr,out_Att_ci,&
+  real, dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out)::out_Att_cw,out_Att_rr,out_Att_ci,&
                   out_Att_sn,out_Att_gr,out_Att_ha
-  real(kind=sgl), dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(out) :: out_hgt
-  real(kind=sgl), dimension(32),intent(out) :: out_angles !2*NUMMU instead of 32 does not work, because f2py does not know dimensions!
-  real(kind=sgl), dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: out_tb !same here: noutlevels=2, 2*NUMMU = 32, NSTOKES = 2
+  real, dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(out) :: out_hgt
+  real, dimension(32),intent(out) :: out_angles !2*NUMMU instead of 32 does not work, because f2py does not know dimensions!
+  real, dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: out_tb !same here: noutlevels=2, 2*NUMMU = 32, NSTOKES = 2
 
   !settings
   !f2py intent(in) :: set_namelist_file
