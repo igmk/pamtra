@@ -36,13 +36,13 @@ OBJECTS=kinds.o constants.o file_mod.o nml_params.o mod_fastem4_coef.o conversio
 	mie_spec.o calc_radar_spectrum.o radar_simulator.o deallocate_jacobian_vars.o allocate_jacobian_vars.o\
 	slant_profile.o allocate_profile_vars.o allocate_output_vars.o rosen98_gasabs.o surface.o eps_water.o eps_ice.o eps_mix.o \
 	equcom.o land_emis.o equare.o scatdb.o dda_db_liu.o dielec_water.o ref_water.o ref_ice.o  \
-	e_sat_gg_water.o spec2abs.o interpolation.o  interpolate_spectra.o average_spectra.o deallocate_profile_vars.o deallocate_output_vars.o \
+	e_sat_gg_water.o spec2abs.o interpolation.o  rescale_spectra.o deallocate_profile_vars.o deallocate_output_vars.o \
 	hydrometeor_extinction_rt3.o cloud_ssp.o ice_ssp.o rain_ssp.o snow_ssp.o grau_ssp.o hail_ssp.o legendre2phasefunction.o \
-	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o  \
+	collect_output.o calculate_active.o fastem4.o specular_surface.o error_msg.o\
 	get_scat_coefs.o dump_profile.o collect_boundary_output.o init_random_seed.o \
 	rt4.o radtran4.o radintg4.o radscat4.o tmat_rain_db.o tmat_snow_db.o hydrometeor_extinction_rt4.o scatcnv.o \
 	tmatrix_rain.o tmatrix_snow.o matrix_cal.o tmatrix_cal.o lpd.o get_scat_mat.o \
-	mass_size_rel.o refractive_index.o avint.o\
+	mass_size_rel.o refractive_index.o avint.o dsort.o\
 	versionNumber.auto.o
 
 pamtraOBJECTS=formatted_frqstr.o write_nc_results.o 
@@ -78,10 +78,18 @@ pamtraProfile: 	pamtra
 	@echo "gprof ./pamtra | gprof2dot.py | dot -Tpng -o output_old.png"
 	@echo "####################################################################################"
 
+pyProfile: NCFLAGS_F2PY += -DF2PY_REPORT_ATEXIT
+pyProfile: 	py
+
+
+
 scatdb.o:
 	$(CC) -O  -fPIC -c scatdb.c 
 
 %.o: %.f90
+	$(FC) $(FCFLAGS) $<
+
+%.o: %.f
 	$(FC) $(FCFLAGS) $<
 
 write_nc_results.o: write_nc_results.f90
@@ -161,7 +169,7 @@ test4:
 	../test/compareNetcdf.sh 4
 	@echo "TEST 4 OK"
 
-pytest: pyinstall pytest1 pytest2 pytest3 pytest4 cleantest
+pytest: pyinstall pytest2 pytest3 pytest4 pytest1 cleantest
 pytest123: pytest1 pytest2 pytest3 cleantest
 
 

@@ -57,7 +57,7 @@ subroutine calc_radar_spectrum(nbins1,diameter_spec, back_spec,&
     vel_spec = 1.d0 ! [m/s], diameter_spec in m!
   else if (particle_type .eq. "graup") then 
     press_correction = 0.d0 !todo
-    vel_spec = 30.d0*(diameter_spec*1.d3)**2+6.d0 ! [m/s], diameter_spec in m!
+    vel_spec = 30.d0*(diameter_spec*1.d3)**2+3.d0 ! [m/s], diameter_spec in m!
   else if (particle_type .eq. "hail") then 
     press_correction = 0.d0 !todo
     vel_spec = 5.d0 ! [m/s], diameter_spec in m!
@@ -89,7 +89,6 @@ print*,particle_type," Ze SUM(back_spec_ref)*del_d",10*log10(SUM(back_spec_ref *
     if (abs(dD_dU(jj)) .ge. huge(dD_dU(jj))) stop "Stop in calc_radar_spectrum: dD_dU is infinitive"
     if (verbose .gt. 3) print*,"jj,dD_dU(jj)",jj,dD_dU(jj)
     del_v_model(jj) = ABS(vel_spec(jj+1)-vel_spec(jj))
-print*, jj,(diameter_spec(jj+1)-diameter_spec(jj)),(vel_spec(jj+1)-vel_spec(jj)),dD_dU(jj)
 
 
 
@@ -105,8 +104,9 @@ print*, jj,(diameter_spec(jj+1)-diameter_spec(jj)),(vel_spec(jj+1)-vel_spec(jj))
   !create array from min_v to max_v iwth del_v_radar spacing -> velocity spectrum of radar
   radar_velo = (/(((ii*del_v_radar)+radar_min_V),ii=0,radar_nfft)/) ! [m/s]
 
-
-print*, "TODO make sure that nyquist range is not overspend!"
+  if ((MAXVAL(vel_spec) .gt. radar_max_V) .or.(MINVAL(vel_spec) .lt. radar_min_V)) then
+    print*, "WARNING: Nyquist range is overspend for particle: ", particle_type
+  end if
   
   !interpolate OR average (depending whos bins size is greater) from N(D) bins to radar bins. 
 
@@ -115,7 +115,7 @@ print*, "TODO make sure that nyquist range is not overspend!"
 !     call interpolate_spectra(nbins1,radar_nfft,vel_spec,back_vel_spec,radar_velo,particle_spec) ! particle_spec in [mm⁶/m³/m * m/(m/s)]
 !   else
   if (verbose .gt. 2) print*, "AVERAGING particle spectrum"
-    call average_spectra(nbins1,radar_nfft,vel_spec,back_vel_spec,radar_velo,particle_spec) ! particle_spec in [mm⁶/m³/m * m/(m/s)]
+    call rescale_spectra(nbins1,radar_nfft,vel_spec,back_vel_spec,radar_velo,particle_spec) ! particle_spec in [mm⁶/m³/m * m/(m/s)]
 !   end if
 
 print*,particle_type," Ze SUM(back_spec_ref)*del_d",      10*log10(SUM(back_spec_ref * 1d-3)*del_d*0.5)
