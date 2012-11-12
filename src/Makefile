@@ -81,6 +81,12 @@ pamtraProfile: 	pamtra
 pyProfile: NCFLAGS_F2PY += -DF2PY_REPORT_ATEXIT
 pyProfile: 	py
 
+pyDebug: NCFLAGS_F2PY += --debug-capi
+pyDebug: 	py
+	@echo ""
+	@echo "####################################################################################"
+	@echo "This causes the extension modules to print detailed information while in operation. "
+	@echo "####################################################################################"
 
 
 scatdb.o:

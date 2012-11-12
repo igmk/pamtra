@@ -2,13 +2,16 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
      a_mtox, bcoeff, dia1, dia2, nbins, maxleg, ad, bd, alpha, &
      gamma, lphase_flag, extinction, albedo, back_scatt, nlegen, legen,  &
      legen2, legen3, legen4, aerodist,density,wc,&
-     diameter_ice, qback_spec)
+     diameter, back_spec)
   !    computing the scattering properties according to                  
   !    ice sphere model, i.e. the electromagnetic properties of the      
   !     particle are computed by assuming that they are the same          
   !     as the equivalent mass sphere
   !                                     
   ! note that mindex has the convention with negative imaginary part      
+  !out
+  !diameter: diameter spectrum [m]
+  !back_spec: backscattering cross section per volume per del_d [m²/m⁴]
 
   use kinds
   use constants, only: pi,c
@@ -29,7 +32,7 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
   integer, parameter :: maxn  = 5000
   integer :: nterms, nquad, nmie, nleg 
   integer :: i, l, m, ir
-  real(kind=dbl) :: x, del_d, diameter, ndens, tmp, density,diameter_ice_x
+  real(kind=dbl) :: x, del_d, ndens, tmp, density,diameter_ice
   real(kind=dbl) :: qext, qscat, qback, scatter 
   real(kind=dbl) :: distribution 
   real(kind=dbl) :: mu(maxn), wts(maxn)
@@ -37,8 +40,8 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
   real(kind=dbl) :: sumqe, sumqs, sumqback
   real(kind=dbl), dimension(maxn) :: sump1, coef1, sump2, coef2,   &
        sump3, coef3, sump4, coef4            
-  real(kind=dbl), intent(out) :: diameter_ice(nbins+1)
-  real(kind=dbl), intent(out) :: qback_spec(nbins+1)
+  real(kind=dbl), intent(out) :: diameter(nbins+1)
+  real(kind=dbl), intent(out) :: back_spec(nbins+1)
   complex(kind=dbl), dimension(maxn) :: a, b
   complex(kind=dbl) :: msphere, eps_mix
   character :: aerodist * 1
@@ -49,11 +52,11 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
   !       call density_ice(a_mtox, bcoeff, rad2, dens_graup) 
   !       rad2_ice = (dens_graup / 917.) **0.33333333 * rad2 
   !diameter of sphere with same mass
-  diameter_ice_x = (6.*a_mtox*dia2**bcoeff/(pi*density))**(1./3.)
+  diameter_ice = (6.*a_mtox*dia2**bcoeff/(pi*density))**(1./3.)
 
   msphere = eps_mix((1.d0,0.d0),m_ice,density)
 
-  x = pi * diameter_ice_x / wavelength
+  x = pi * diameter_ice / wavelength
   nterms = 0 
   call miecalc (nterms, x, msphere, a, b) 
   nlegen = 2 * nterms 
@@ -79,14 +82,14 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
   tot_mass = 0.
    do ir = 1, nbins+1
      !diameter is here the maximum extebd of the particle
-     diameter = dia1 + (ir - 1) * del_d
-     ndens = distribution(ad, bd, alpha, gamma, diameter, aerodist)
+     diameter(ir) = dia1 + (ir - 1) * del_d
+     ndens = distribution(ad, bd, alpha, gamma, diameter(ir), aerodist)
      if ( (ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
         ndens = 0.5 * ndens 
      end if
-     tot_mass = tot_mass + ndens*del_d*a_mtox*diameter**bcoeff
+     tot_mass = tot_mass + ndens*del_d*a_mtox*diameter(ir)**bcoeff
      if ((ir .eq. nbins+1) .and. (tot_mass/wc*100. .lt. 99.9d0)) then
-      ndens = ndens + (wc-tot_mass)/(del_d*a_mtox*(diameter)**bcoeff)
+      ndens = ndens + (wc-tot_mass)/(del_d*a_mtox*(diameter(ir))**bcoeff)
       tot_mass = wc
      end if
 
@@ -96,19 +99,25 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
      ! !         write(18,*)'dens',dens_graup                                  
      !       radius_ice = (dens_graup / 917.) **0.33333333 * radius 
      !diameter of sphere with same mass
-     diameter_ice(ir) = (6.*a_mtox*diameter**bcoeff/(pi*density))**(1./3.)
-     x = pi * diameter_ice(ir) / wavelength
+     diameter_ice = (6.*a_mtox*diameter(ir)**bcoeff/(pi*density))**(1./3.)
+     x = pi * diameter_ice / wavelength
 
 	 msphere = eps_mix((1.d0,0.d0),m_ice,density)
 
      call miecalc (nmie, x, msphere, a, b) 
      call miecross (nmie, x, a, b, qext, qscat, qback)
-     ! sum up extinction, scattering, and backscattering as cross-sections/pi
-     sumqe = sumqe+qext * ndens * (diameter_ice(ir)/2.)**2         ! [1/m^2]
-     sumqs = sumqs + qscat * ndens * (diameter_ice(ir)/2.)**2      ! [1/m^2]
-     sumqback = sumqback + qback * ndens * (diameter_ice(ir)/2.)**2! [1/m^2]
 
-     qback_spec(ir) =  qback * pi  ! volumetric backscattering corss section for radar simulator in [m²/m³]
+     ! sum up extinction, scattering, and backscattering as cross-sections/pi .pi is added in a later step
+     qext =   qext  * ndens * (diameter_ice/2.d0)**2         ! [m²/m⁴]!
+     qscat =  qscat * ndens * (diameter_ice/2.d0)**2        ! [m²/m⁴]!
+     qback =  qback * ndens * (diameter_ice/2.d0)**2        !  [m²/m⁴]! cross section per volume per del_d
+ 
+     !integrate=sum up . del_d is added at a later step!
+     sumqe = sumqe + qext 
+     sumqs = sumqs + qscat
+     sumqback = sumqback + qback 
+
+     back_spec(ir) =  qback * pi  ! volumetric backscattering corss section for radar simulator in [m²/m⁴]
 
      if (lphase_flag) then 
         nmie = min0(nmie, nterms) 
@@ -174,6 +183,7 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
      legen4 (m) = (2 * l + 1) / 2.0 * coef4 (m) 
      if (legen (m) .gt. 1.0e-7) nlegen = l 
   end do
+
 
   return 
 

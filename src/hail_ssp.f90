@@ -11,7 +11,7 @@ subroutine hail_ssp(f,hwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
 
   implicit none
 
-  integer :: nbins, nlegen,alloc_status
+  integer :: nbins, nbins_spec, nlegen,alloc_status
   integer, intent(in) :: maxleg
 
   real(kind=dbl), intent(in) :: &
@@ -29,7 +29,7 @@ subroutine hail_ssp(f,hwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
        kext,&
        salb,&
        back
-  real(kind=dbl), allocatable, dimension(:):: diameter_spec, qback_spec
+  real(kind=dbl), allocatable, dimension(:):: diameter_spec, back_spec
   real(kind=dbl), dimension(200), intent(out) :: legen, legen2, legen3, legen4
     integer, parameter ::  nquad = 16
     real(kind=dbl), dimension(nstokes,nquad,nstokes,nquad,4), intent(out) :: scatter_matrix
@@ -53,8 +53,13 @@ subroutine hail_ssp(f,hwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
   dia1 = 1.d-8	! minimum diameter [m]
   dia2 = 2.d-2	! maximum diameter [m]
 
-  allocate(diameter_spec(nbins+1),stat=alloc_status)
-  allocate(qback_spec(nbins+1),stat=alloc_status)
+  if ((EM_hail .eq. 'densi') .or. (EM_hail .eq. 'surus')) then
+    nbins_spec = nbins+1 !Mie routine uses nbins+1 bins!
+  else
+    nbins_spec = nbins
+  end if
+  allocate(diameter_spec(nbins_spec),stat=alloc_status)
+  allocate(back_spec(nbins_spec),stat=alloc_status)
 
   if (EM_hail .eq. 'densi' .or. EM_hail .eq. 'surus') then
   	if (EM_hail .eq. 'surus') hail_density = 0.815*f+11.2d0
@@ -63,7 +68,7 @@ subroutine hail_ssp(f,hwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, nlegen, legen, legen2, legen3,        &
           legen4, SD_hail,hail_density,hwc,&
-          diameter_spec, qback_spec)
+          diameter_spec, back_spec)
       scatter_matrix= 0.d0
       extinct_matrix= 0.d0
       emis_vector= 0.d0
@@ -76,12 +81,12 @@ subroutine hail_ssp(f,hwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
 
   if (radar_spectrum) then
     particle_type="hail" 
-    call calc_radar_spectrum(nbins+1,diameter_spec, qback_spec,t,press,hgt,f,particle_type,hail_spec)
+    call calc_radar_spectrum(nbins_spec,diameter_spec, back_spec,t,press,hgt,f,particle_type,hail_spec)
   else
     hail_spec(:)=0.d0
   end if
 
-  deallocate(diameter_spec, qback_spec)
+  deallocate(diameter_spec, back_spec)
 
   if (verbose .gt. 1) print*, 'Exiting hail_ssp'
 

@@ -46,7 +46,7 @@ class pyPamtra(object):
   def __init__(self):
     #set setting default values
   
-    self.nmlSet = OrderedDict() #settings which are required for the nml file. keeping the order is important for Fortran
+    self.nmlSet = OrderedDict() #settings which are required for the nml file. keeping the order is important for fortran
 
     self.nmlSet["verbose_mode"] = dict()
     self.nmlSet["inoutput_mode"] = dict()
@@ -78,9 +78,9 @@ class pyPamtra(object):
     self.nmlSet["output"]["obs_height"]=833000.
     self.nmlSet["output"]["units"]='T'
     self.nmlSet["output"]["outpol"]='VH'
-    self.nmlSet["output"]["creator"]='pyPamtrauser'
-    self.nmlSet["output"]["zeSplitUp"]=True # only locally in PYpamtra
-    self.nmlSet["output"]["activeLogScale"]=True
+    self.nmlSet["output"]["creator"]='pyPamtraUser'
+    self.nmlSet["output"]["zesplitup"]=True # only locally in pypamtra
+    self.nmlSet["output"]["activelogscale"]=True
 
     self.nmlSet["run_mode"]["active"]=True
     self.nmlSet["run_mode"]["passive"]=True
@@ -96,35 +96,35 @@ class pyPamtra(object):
     self.nmlSet["hyd_opts"]["lhyd_extinction"]=True
     self.nmlSet["hyd_opts"]["lphase_flag"]= True
 
-    self.nmlSet["cloud_params"]["SD_cloud"]='C'
-    self.nmlSet["cloud_params"]["EM_cloud"]='miecl'
+    self.nmlSet["cloud_params"]["sd_cloud"]='C'
+    self.nmlSet["cloud_params"]["em_cloud"]='miecl'
     
-    self.nmlSet["ice_params"]["SD_ice"]='C'
-    self.nmlSet["ice_params"]["EM_ice"]='mieic'
+    self.nmlSet["ice_params"]["sd_ice"]='C'
+    self.nmlSet["ice_params"]["em_ice"]='mieic'
     
-    self.nmlSet["rain_params"]["SD_rain"]='C' 
-    self.nmlSet["rain_params"]["EM_rain"]='miera' 
-    self.nmlSet["rain_params"]["N_0rainD"]=8.0
+    self.nmlSet["rain_params"]["sd_rain"]='C' 
+    self.nmlSet["rain_params"]["em_rain"]='miera' 
+    self.nmlSet["rain_params"]["n_0raind"]=8.0
     self.nmlSet["rain_params"]["use_rain_db"]=False
     
-    self.nmlSet["snow_params"]["SD_snow"]='C' 
+    self.nmlSet["snow_params"]["sd_snow"]='C' 
     self.nmlSet["snow_params"]["use_snow_db"]=False    
     self.nmlSet["snow_params"]["as_ratio"]=0.5    
-    self.nmlSet["snow_params"]["N_0snowDsnow"]=7.628 
-    self.nmlSet["snow_params"]["EM_snow"]='densi' 
+    self.nmlSet["snow_params"]["n_0snowdsnow"]=7.628 
+    self.nmlSet["snow_params"]["em_snow"]='densi' 
     self.nmlSet["snow_params"]["snow_density"]=200.
-    self.nmlSet["snow_params"]["SP"]=0.2 
+    self.nmlSet["snow_params"]["sp"]=0.2 
     self.nmlSet["snow_params"]["isnow_n0"]=1
     self.nmlSet["snow_params"]["liu_type"]=8
 
-    self.nmlSet["graupel_params"]["SD_grau"]='C' 
-    self.nmlSet["graupel_params"]["N_0grauDgrau"]=4.0 
-    self.nmlSet["graupel_params"]["EM_grau"]='densi'
+    self.nmlSet["graupel_params"]["sd_grau"]='C' 
+    self.nmlSet["graupel_params"]["n_0graudgrau"]=4.0 
+    self.nmlSet["graupel_params"]["em_grau"]='densi'
     self.nmlSet["graupel_params"]["graupel_density"]=400.
 
-    self.nmlSet["hail_params"]["SD_hail"]='C' 
-    self.nmlSet["hail_params"]["N_0hailDhail"]=4.0 
-    self.nmlSet["hail_params"]["EM_hail"]='densi'
+    self.nmlSet["hail_params"]["sd_hail"]='C' 
+    self.nmlSet["hail_params"]["n_0haildhail"]=4.0 
+    self.nmlSet["hail_params"]["em_hail"]='densi'
     self.nmlSet["hail_params"]["hail_density"]=917.
 
     self.nmlSet["moments"]["n_moments"]=1
@@ -132,11 +132,11 @@ class pyPamtra(object):
     
     self.nmlSet["radar_simulator"]["radar_spectrum"]=True
     self.nmlSet["radar_simulator"]["radar_nfft"]=256
-    self.nmlSet["radar_simulator"]["radar_no_Ave"]=150
-	#!MinimumNyquistVelocity in m/sec
-    self.nmlSet["radar_simulator"]["radar_max_V"]=7.885
-	#!MaximumNyquistVelocity in m/sec
-    self.nmlSet["radar_simulator"]["radar_min_V"]=-7.885
+    self.nmlSet["radar_simulator"]["radar_no_ave"]=150
+	#!minimumnyquistvelocity in m/sec
+    self.nmlSet["radar_simulator"]["radar_max_v"]=7.885
+	#!maximumnyquistvelocity in m/sec
+    self.nmlSet["radar_simulator"]["radar_min_v"]=-7.885
 	#!turbulence broadening standard deviation st, typical range [0.1 - 0.4] m/sec
     self.nmlSet["radar_simulator"]["radar_turbulence_st"]=0.15
 	 #!radar noise
@@ -303,7 +303,7 @@ class pyPamtra(object):
     
     for key in nmlFile.keys():
       for subkey in nmlFile[key]["par"][0].keys():
-        if subkey in self._nmlDefaultKeys:
+        if subkey.lower() in self._nmlDefaultKeys:
           if nmlFile[key]["par"][0][subkey][0] == ".true.": value = True
           elif nmlFile[key]["par"][0][subkey][0] == ".false.": value = False
           else: value = nmlFile[key]["par"][0][subkey][0]

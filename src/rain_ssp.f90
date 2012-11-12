@@ -11,7 +11,7 @@ subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
 
   implicit none
 
-  integer :: nbins, nlegen,alloc_status
+  integer :: nbins, nbins_spec, nlegen,alloc_status
   integer, intent(in) :: maxleg
     integer, parameter ::  nquad = 16
   real(kind=dbl), intent(in) :: &
@@ -40,7 +40,7 @@ subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
   complex(kind=dbl) :: mindex
   character(5) ::  particle_type
   real(kind=dbl) :: gammln
-  real(kind=dbl), allocatable, dimension(:):: diameter_spec, qback_spec
+  real(kind=dbl), allocatable, dimension(:):: diameter_spec, back_spec
   real(kind=dbl), intent(out), dimension(radar_nfft) :: rain_spec
 
   if (verbose .gt. 1) print*, 'Entering rain_ssp'
@@ -86,23 +86,29 @@ subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
      stop 'Number of moments is not specified'
   end if
 
-
-  allocate(diameter_spec(nbins+1),stat=alloc_status)
-  allocate(qback_spec(nbins+1),stat=alloc_status)
+  if ((EM_rain .eq. 'miera')) then
+    nbins_spec = nbins+1 !Mie routine uses nbins+1 bins!
+  else
+    nbins_spec = nbins
+  end if
+  allocate(diameter_spec(nbins_spec),stat=alloc_status)
+  allocate(back_spec(nbins_spec),stat=alloc_status)
 
   if (EM_rain .eq. "miera") then
 
     call mie(f, mindex, dia1, dia2, nbins, maxleg, ad,    &
 	bd, alpha, gamma, lphase_flag, kext, salb, back,     &
 	nlegen, legen, legen2, legen3, legen4, SD_rain,den_liq,rwc,&
-       diameter_spec, qback_spec)
+       diameter_spec, back_spec)
       scatter_matrix= 0.d0
       extinct_matrix= 0.d0
       emis_vector= 0.d0
   else if (EM_rain .eq. "tmatr") then
     if (use_rain_db) then
       call tmatrix_rain(f, rwc, t, nc, &
-	    ad, bd, alpha, gamma, a_mrain, b_rain, SD_rain, scatter_matrix,extinct_matrix, emis_vector)
+	    ad, bd, alpha, gamma, a_mrain, b_rain, SD_rain, nbins,&
+	    scatter_matrix,extinct_matrix, emis_vector,&
+	    diameter_spec, back_spec)
     else
       stop "tmatr without database not yet implemented yet"
     end if
@@ -124,11 +130,11 @@ subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
   end if
   if (radar_spectrum) then
     particle_type = "rain"
-    call calc_radar_spectrum(nbins+1,diameter_spec, qback_spec,t,press,hgt,f,particle_type,rain_spec)
+    call calc_radar_spectrum(nbins_spec,diameter_spec, back_spec,t,press,hgt,f,particle_type,rain_spec)
   else
     rain_spec(:)=0.d0
   end if
-  deallocate(diameter_spec, qback_spec)
+  deallocate(diameter_spec, back_spec)
 
   if (verbose .gt. 1) print*, 'Exiting rain_ssp'
 

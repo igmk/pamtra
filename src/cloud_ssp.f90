@@ -25,7 +25,7 @@ subroutine cloud_ssp(f,cwc,t, press,hgt,maxleg,nc, kext, salb, back,  &
 
   implicit none
 
-  integer :: nbins, nlegen, iautocon,alloc_status
+  integer :: nbins,nbins_spec, nlegen, iautocon,alloc_status
 
   integer, intent(in) :: maxleg
 
@@ -116,8 +116,13 @@ real(kind=dbl) :: re, Nt
      stop 'Number of moments is not specified'
   end if
 
-  allocate(diameter_spec(nbins+1),stat=alloc_status)
-  allocate(qback_spec(nbins+1),stat=alloc_status)
+  if ((EM_cloud .eq. 'miecl')) then
+    nbins_spec = nbins+1 !Mie routine uses nbins+1 bins!
+  else
+    nbins_spec = nbins
+  end if
+  allocate(diameter_spec(nbins_spec),stat=alloc_status)
+  allocate(qback_spec(nbins_spec),stat=alloc_status)
 
   if (EM_cloud .eq. 'miecl') then
   call mie(f, mindex, dia1, dia2, nbins, maxleg, ad,       &
@@ -135,10 +140,12 @@ real(kind=dbl) :: re, Nt
   particle_type="cloud" 
 
   if (radar_spectrum) then
-    call calc_radar_spectrum(nbins+1,diameter_spec, qback_spec,t,press,hgt,f,particle_type,cloud_spec)
+    call calc_radar_spectrum(nbins_spec,diameter_spec, qback_spec,t,press,hgt,f,particle_type,cloud_spec)
   else
     cloud_spec(:)=0.d0
   end if
+
+
 
   deallocate(diameter_spec, qback_spec)
 

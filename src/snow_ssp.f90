@@ -15,7 +15,7 @@ subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
 
   implicit none
 
-  integer :: nbins, nlegen, nn,alloc_status
+  integer :: nbins, nbins_spec, nlegen, nn,alloc_status
 
   integer, intent(in) :: maxleg
     integer, parameter ::  nquad = 16
@@ -40,7 +40,7 @@ subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
     real(kind=dbl), dimension(nstokes,nstokes,nquad,2), intent(out) :: extinct_matrix
     real(kind=dbl), dimension(nstokes,nquad,2), intent(out) :: emis_vector
   complex(kind=dbl) :: mindex, m_air
-  real(kind=dbl), allocatable, dimension(:):: diameter_spec, qback_spec
+  real(kind=dbl), allocatable, dimension(:):: diameter_spec, back_spec
   real(kind=dbl) :: gammln
 
   real(kind=dbl), dimension(10) :: mma, mmb
@@ -115,7 +115,6 @@ subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
         stop "Wrong isnow_n0 value"
      endif
      bd = (exp(gammln(b_snow + 1)) * a_msnow * ad/swc)**(1.0d0/(1.0d0 + b_snow))  ! [m**-1]
-     nbins = 100
      alpha = 0.d0 ! exponential SD
      gamma = 1.d0
     else if (SD_snow .eq. 'M') then
@@ -128,7 +127,6 @@ subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
 	 ad = 5.d0*bd**2.d0
 	 dia2 = log(ad)/bd
      if (dia2 .gt. 2.d-2) dia2 = 2.d-2
-     nbins = 100
      alpha = 0.d0 ! exponential SD
      gamma = 1.d0
 	end if
@@ -136,15 +134,29 @@ subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
      if (nc .eq. 0.d0) stop 'STOP in routine snow_ssp'
      call double_moments(swc,nc,gamma_snow(1),gamma_snow(2),gamma_snow(3),gamma_snow(4), &
           ad,bd,alpha,gamma,a_msnow,b_snow)
-     nbins = 100
      dia1 = 1.d-10
      dia2 = 2.d-2
   else
      stop'Number of moments is not specified'
   end if
 
-  allocate(diameter_spec(nbins+1),stat=alloc_status)
-  allocate(qback_spec(nbins+1),stat=alloc_status)
+
+  if ((EM_snow .eq. 'densi') .or. (EM_snow .eq. 'surus')) then
+    nbins = 100
+    nbins_spec = nbins+1 !Mie routine uses nbins+1 bins!
+  elseif (EM_snow .eq. 'liudb') then
+    nbins = 100
+    nbins_spec = nbins
+  elseif (EM_snow .eq. 'tmatr') then
+    nbins = 50
+    nbins_spec = nbins
+  else
+     write (*, *) 'no em mod', EM_snow
+     stop
+  end if
+
+  allocate(diameter_spec(nbins_spec),stat=alloc_status)
+  allocate(back_spec(nbins_spec),stat=alloc_status)
 
   if (EM_snow .eq. 'densi' .or. EM_snow .eq. 'surus') then
    if (EM_snow .eq. 'surus') snow_density = 0.863*f+115.d0
@@ -153,7 +165,7 @@ subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
           LEGEN4, SD_snow,snow_density,swc,&
-          diameter_spec, qback_spec)
+          diameter_spec, back_spec)
       scatter_matrix= 0.d0
       extinct_matrix= 0.d0
       emis_vector= 0.d0
@@ -164,13 +176,15 @@ subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
           dia1,dia2,nbins,maxleg,ad,&
           bd, alpha, gamma, lphase_flag,kext, salb,&
           back, nlegen, legen, legen2, legen3,&
-          legen4, SD_snow)
+          legen4, SD_snow,&
+          diameter_spec, back_spec)
       scatter_matrix= 0.d0
       extinct_matrix= 0.d0
       emis_vector= 0.d0
   elseif (EM_snow .eq. 'tmatr') then
     call tmatrix_snow(f, swc, t, nc, &
-          ad, bd, alpha, gamma, a_msnow, b_snow, SD_snow, scatter_matrix,extinct_matrix, emis_vector)
+          ad, bd, alpha, gamma, a_msnow, b_snow, SD_snow, nbins, scatter_matrix,extinct_matrix, emis_vector,&
+          diameter_spec, back_spec)
     back = scatter_matrix(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
     back = 4*pi*back!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squard entries!
     kext = extinct_matrix(1,1,16,1) !11 of extinction matrix (=not polarized), at 0°, first quadrature. equal to extinct_matrix(1,1,16,2)
@@ -190,12 +204,12 @@ subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
   particle_type="snow" 
 
   if (radar_spectrum) then
-    call calc_radar_spectrum(nbins+1,diameter_spec, qback_spec,t,press,hgt,f,particle_type,snow_spec)
+    call calc_radar_spectrum(nbins_spec,diameter_spec, back_spec,t,press,hgt,f,particle_type,snow_spec)
   else
     snow_spec(:)=0.d0
   end if
 
-  deallocate(diameter_spec, qback_spec)
+  deallocate(diameter_spec, back_spec)
 
   if (verbose .gt. 1) print*, 'Exiting snow_ssp'
 

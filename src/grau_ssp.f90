@@ -12,7 +12,7 @@ subroutine grau_ssp(f,gwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
 
   implicit none
 
-  integer :: nbins, nlegen,alloc_status
+  integer :: nbins, nbins_spec, nlegen,alloc_status
   integer, intent(in) :: maxleg
 
   real(kind=dbl), intent(in) :: &
@@ -31,7 +31,7 @@ subroutine grau_ssp(f,gwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
        salb,&
        back
   real(kind=dbl), intent(out), dimension(radar_nfft) :: grau_spec
-  real(kind=dbl), allocatable, dimension(:):: diameter_spec, qback_spec
+  real(kind=dbl), allocatable, dimension(:):: diameter_spec, back_spec
   real(kind=dbl), dimension(200), intent(out) :: legen, legen2, legen3, legen4
     integer, parameter ::  nquad = 16
     real(kind=dbl), dimension(nstokes,nquad,nstokes,nquad,4), intent(out) :: scatter_matrix
@@ -83,8 +83,13 @@ subroutine grau_ssp(f,gwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
      stop 'Number of moments is not specified'
   end if
 
-  allocate(diameter_spec(nbins+1),stat=alloc_status)
-  allocate(qback_spec(nbins+1),stat=alloc_status)
+  if ((EM_grau .eq. 'densi') .or. (EM_grau .eq. 'surus')) then
+    nbins_spec = nbins+1 !Mie routine uses nbins+1 bins!
+  else
+    nbins_spec = nbins
+  end if
+  allocate(diameter_spec(nbins_spec),stat=alloc_status)
+  allocate(back_spec(nbins_spec),stat=alloc_status)
 
   if (EM_grau .eq. 'densi' .or. EM_grau .eq. 'surus') then
      if (EM_grau .eq. 'surus') graupel_density =  0.815*f+11.2d0
@@ -93,7 +98,7 @@ subroutine grau_ssp(f,gwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
           LEGEN4, SD_grau,graupel_density,gwc,&
-          diameter_spec, qback_spec)
+          diameter_spec, back_spec)
       scatter_matrix= 0.d0
       extinct_matrix= 0.d0
       emis_vector= 0.d0
@@ -106,12 +111,12 @@ subroutine grau_ssp(f,gwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
 
   if (radar_spectrum) then
     particle_type="graup" 
-    call calc_radar_spectrum(nbins+1,diameter_spec, qback_spec,t,press,hgt,f,particle_type,grau_spec)
+    call calc_radar_spectrum(nbins_spec,diameter_spec, back_spec,t,press,hgt,f,particle_type,grau_spec)
   else
     grau_spec(:)=0.d0
   end if
 
-  deallocate(diameter_spec, qback_spec)
+  deallocate(diameter_spec, back_spec)
 
 
   if (verbose .gt. 1) print*, 'Exiting grau_ssp'

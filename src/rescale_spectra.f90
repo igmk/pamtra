@@ -37,7 +37,7 @@ subroutine rescale_spectra(nx1,nx2,x1,y1,x2,y2)
   x2_shift(nx2+1) = x2(nx2) +  0.5d0*(x2(nx2) - x2(nx2-1))  
 
 
-  call interpolate_spectra(nx1,nx2,x1,y1,x2_shift,y2_interp)
+  call interpolate_spectra(nx1,nx2+1,x1,y1,x2_shift,y2_interp)
 
   !join interpolated and original array
   x12(1:nx1)=x1
@@ -49,7 +49,6 @@ subroutine rescale_spectra(nx1,nx2,x1,y1,x2,y2)
   x12_sorted = x12
   y12_sorted=y12
   call dsort(x12_sorted, y12_sorted, nx1+nx2+1, 2)
-
 
   call average_spectra(nx1+nx2+1,nx2+1,x12_sorted,y12_sorted,x2_shift,y2)
 
@@ -139,6 +138,7 @@ subroutine interpolate_spectra(nx1,nx2,x1,y1,x2,y2)
   y1_ext(2:nx1+1) = y1
 
   ix2 = 0
+  y2(:) = 0.d0
 
   do i = 1, nx2
      call locate(x1_ext,nx1+2,x2(i),ix2)

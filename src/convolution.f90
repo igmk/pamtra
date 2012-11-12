@@ -29,8 +29,8 @@ subroutine convolution(X,M,A,N,Y)
 !    A = (/9, 7, 1, 8/)  ! Contents of convolution filter A
 
 !  Initialize dummy arrays DX and DY.
-   DX = 0
-   DY = 0
+   DX = 0.d0
+   DY = 0.d0
 
 !  Do the convolution
    DO I=0, 2*M+N
