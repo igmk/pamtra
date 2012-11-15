@@ -69,6 +69,7 @@ subroutine gasabsR98(f,Tk,Rhowv,Pa,absair,abswv)
   ! get volume extinction coefficients
   absair = absn2(Tk,pmb,f) + o2abs(Tk,pmb,vapden,f)
   abswv = abh2o(Tk,pmb,vapden,f)
+
   !       abs_n2 = absn2(Tk,pmb,f)
   !       abs_o2 = o2abs(Tk,pmb,vapden,f)
 
@@ -309,6 +310,10 @@ function ABH2O(T,P,RHO,F)
   !          OCT. 24, 95  PWR -ADD 1 LINE.
   !          JULY 7, 97   PWR -SEPARATE COEFF. FOR SELF-BROADENING, 
   !                       REVISED CONTINUUM.
+  !    DATE  SEP.3, 2012  SELF- AND FOREIGN-BROADENING PARAMETER FOR H2O LINE AT 22.235 GHz
+  !                           CHANGED ACCORDING TO Liljegren et al.,2005, IEEE TGaRS
+  !                       SELF- AND FOREIGN-CONTINUUM CONTRIBUTION CHANGED
+  !                           ACCORDING TO Turner et al., 2009, IEEE TGaRS
   !
   !   LOCAL VARIABLES:
 
@@ -334,13 +339,13 @@ function ABH2O(T,P,RHO,F)
   data B2/ 2.144, .668, 6.179, 1.541, 1.048, 3.595, 5.048, 1.405,&
        3.597, 2.379, 2.852, .159, 2.391, .396, 1.441/
   !     AIR-BROADENED WIDTH PARAMETERS AT 300K:
-  data W3/.00281, .00281, .0023, .00278, .00287, .0021, .00186,&
+  data W3/.002656, .00281, .0023, .00278, .00287, .0021, .00186,&
        .00263, .00215, .00236, .0026, .00321, .00244, .00306, .00267/
   !     T-EXPONENT OF AIR-BROADENING:
   data X/.69, .64, .67, .68, .54, .63, .60, .66, .66, .65, .69, .69,&
        .71, .68, .70/
   !     SELF-BROADENED WIDTH PARAMETERS AT 300K:
-  data WS/.01349, .01491, .0108, .0135, .01541, .0090, .00788,&
+  data WS/.0127488, .01491, .0108, .0135, .01541, .0090, .00788,&
        .01275, .00983, .01095, .01313, .01320, .01140, .01253, .01275/
   !     T-EXPONENT OF SELF-BROADENING:
   data XS/ .61, .85, .54, .74, .89, .52, .50, .67, .65, .64, .72,&
@@ -357,7 +362,7 @@ function ABH2O(T,P,RHO,F)
   TI2 = TI**2.5
   !
   !      CONTINUUM TERMS
-  CON = (5.43E-10*PDA*TI**3 + 1.8E-8*PVAP*TI**7.5)*PVAP*F*F 
+  CON = (5.43E-10*1.105*PDA*TI**3 + 1.8E-8*0.79*PVAP*TI**7.5)*PVAP*F*F
   !
   !      ADD RESONANCES
   SUM = 0.
@@ -418,6 +423,8 @@ function ABLIQ(WATER,FREQ,TEMP)
   return
 
 end function ABLIQ
+
+
 
 function VAPOR(T)
   !
