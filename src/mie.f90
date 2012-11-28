@@ -189,7 +189,7 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
 
 
   !for debuging puposes, calculate the Rayleigh Backscattering! makes only sence for SMALL spheres
-  if (verbose .gt. -2) then
+  if (verbose .gt. 2) then
     K2=dielec_water(0.D0,10.d0,f)
     print*,"RAYLEIGH BACKSCATTERING with K2 at 10deg"
     print*,"Z=",10.d0*log10(K2*SUM((1d3*diameter)**6*(ndens*1d-3)*&

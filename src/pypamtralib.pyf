@@ -6,7 +6,7 @@
 
 python module pyPamtraLib ! in 
     interface  ! in :pyPamtraLib
-        subroutine pypamtralib(set_namelist_file,in_ngridx,in_ngridy,max_in_nlyrs,in_nlyrs,in_nfreq,in_freqs,in_nfft,in_timestamp,in_deltax,in_deltay,in_lat,in_lon,in_model_i,in_model_j,in_wind10u,in_wind10v,in_lfrac,in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev,in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q,in_hwc_q,in_cwc_n,in_iwc_n,in_rwc_n,in_swc_n,in_gwc_n,in_hwc_n,out_gitversion,out_githash,out_ze,out_ze_cw,out_ze_rr,out_ze_ci,out_ze_sn,out_ze_gr,out_ze_ha,out_att_hydro,out_att_cw,out_att_rr,out_att_ci,out_att_sn,out_att_gr,out_att_ha,out_att_atmo,out_radar_hgt,out_tb,out_radar_spectra,out_radar_snr, out_radar_vel,out_angles) ! in :pypamtralib:pypamtralib.f90
+        subroutine pypamtralib(set_namelist_file,in_ngridx,in_ngridy,max_in_nlyrs,in_nlyrs,in_nfreq,in_freqs,in_nfft,in_timestamp,in_deltax,in_deltay,in_lat,in_lon,in_model_i,in_model_j,in_wind10u,in_wind10v,in_lfrac,in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev,in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q,in_hwc_q,in_cwc_n,in_iwc_n,in_rwc_n,in_swc_n,in_gwc_n,in_hwc_n,out_gitversion,out_githash,out_ze,out_ze_cw,out_ze_rr,out_ze_ci,out_ze_sn,out_ze_gr,out_ze_ha,out_att_hydro,out_att_cw,out_att_rr,out_att_ci,out_att_sn,out_att_gr,out_att_ha,out_att_atmo,out_radar_hgt,out_tb,out_radar_spectra,out_radar_snr,out_radar_moments,out_radar_slope,out_radar_quality,out_radar_vel,out_angles) ! in :pypamtralib:pypamtralib.f90
 
             use kinds
             use vars_output
@@ -70,6 +70,9 @@ python module pyPamtraLib ! in
             real dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out),depend(in_ngridx,in_ngridy,in_nfreq) :: out_tb
             real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq,in_nfft),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq,in_nfft) :: out_radar_spectra
             real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_radar_snr
+            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq,4),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_radar_moments
+            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq,2),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_radar_slope
+            integer dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_radar_quality
             real dimension(in_nfft),intent(out),depend(in_nfft) :: out_radar_vel
             real dimension(32),intent(out) :: out_angles
         end subroutine pypamtralib

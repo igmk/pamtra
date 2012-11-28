@@ -1,9 +1,10 @@
 
-subroutine rescale_spectra(nx1,nx2,x1,y1,x2,y2)
+subroutine rescale_spectra(nx1,nx2,sort,x1,y1,x2,y2)
   !(c) M.Maahn, IGMK, 11/2012
 
   !nx1,in: length of x1, y1
   !nx2,in: length of x2, y2
+  !sort: logical: sort x1 and y1 before interpolation?
   !x1, in: x-values original data
   !y1, in: y-values original values
   !x2, in: center of new bins
@@ -24,7 +25,8 @@ subroutine rescale_spectra(nx1,nx2,x1,y1,x2,y2)
   real(kind=dbl), intent(in), dimension(nx1) :: x1,y1
   real(kind=dbl), intent(in), dimension(nx2) :: x2
   real(kind=dbl), intent(out), dimension(nx2) :: y2
-
+  logical, intent(in) :: sort
+  real(kind=dbl), dimension(nx1) :: x1_sorted,y1_sorted
   real(kind=dbl), dimension(nx2+1) :: x2_shift
 
   integer :: i
@@ -32,17 +34,25 @@ subroutine rescale_spectra(nx1,nx2,x1,y1,x2,y2)
   real(kind=dbl), dimension(nx1+nx2+1) :: y12,y12_sorted
   real(kind=dbl), dimension(nx2+1) :: y2_interp
 
+  x1_sorted = x1
+  y1_sorted = y1
+
+  if (sort) then
+    call dsort(x1_sorted, y1_sorted, nx1, 2)
+  end if
+
+
   x2_shift(2:nx2) = x2(2:) - 0.5d0*(x2(2:) - x2(1:nx2-1))
   x2_shift(1) = x2(1) -  0.5d0*(x2(2) - x2(1))
   x2_shift(nx2+1) = x2(nx2) +  0.5d0*(x2(nx2) - x2(nx2-1))  
 
 
-  call interpolate_spectra(nx1,nx2+1,x1,y1,x2_shift,y2_interp)
+  call interpolate_spectra(nx1,nx2+1,x1_sorted,y1_sorted,x2_shift,y2_interp)
 
   !join interpolated and original array
-  x12(1:nx1)=x1
+  x12(1:nx1)=x1_sorted
   x12(nx1+1:nx1+nx2+1)=x2_shift
-  y12(1:nx1)=y1
+  y12(1:nx1)=y1_sorted
   y12(nx1+1:nx1+nx2+1)=y2_interp
 
   !make order right

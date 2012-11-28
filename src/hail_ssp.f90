@@ -4,7 +4,7 @@ subroutine hail_ssp(f,hwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
 
   use kinds
   use nml_params, only: verbose, lphase_flag, EM_hail, n_moments, SD_hail, hail_density,&
-	nstokes, radar_nfft, radar_spectrum
+	nstokes, radar_nfft_aliased, radar_mode, active
   use constants, only: pi, im
   use double_moments_module
   use conversions
@@ -36,7 +36,7 @@ subroutine hail_ssp(f,hwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
     real(kind=dbl), dimension(nstokes,nstokes,nquad,2), intent(out) :: extinct_matrix
     real(kind=dbl), dimension(nstokes,nquad,2), intent(out) :: emis_vector
   character(5) ::  particle_type
-  real(kind=dbl), intent(out), dimension(radar_nfft) :: hail_spec
+  real(kind=dbl), intent(out), dimension(radar_nfft_aliased) :: hail_spec
 
   complex(kind=dbl) :: mindex, m_air
 
@@ -52,7 +52,7 @@ subroutine hail_ssp(f,hwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
   nbins = 100
   dia1 = 1.d-8	! minimum diameter [m]
   dia2 = 2.d-2	! maximum diameter [m]
-
+print*, "a_mhail, b_hail", a_mhail, b_hail
   if ((EM_hail .eq. 'densi') .or. (EM_hail .eq. 'surus')) then
     nbins_spec = nbins+1 !Mie routine uses nbins+1 bins!
   else
@@ -79,9 +79,10 @@ subroutine hail_ssp(f,hwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
 
 
 
-  if (radar_spectrum) then
+  if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
     particle_type="hail" 
-    call calc_radar_spectrum(nbins_spec,diameter_spec, back_spec,t,press,hgt,f,particle_type,hail_spec)
+    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,hgt,f,&
+      particle_type,a_mhail,b_hail,-1.d0,-1.d0,hail_spec)
   else
     hail_spec(:)=0.d0
   end if

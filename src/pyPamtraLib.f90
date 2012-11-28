@@ -56,6 +56,9 @@ out_radar_hgt,&
 out_tb,&
 out_radar_spectra,&
 out_radar_snr,&
+out_radar_moments,&
+out_radar_slope,&
+out_radar_quality,&
 out_radar_vel,&
 out_angles&
 )
@@ -66,7 +69,7 @@ out_angles&
 
 ! 1) PyPamtra expects relative humidity in Pa/Pa, Pamtra wants relative humidity in % for backwards compatibility
 ! 2) Only PyPamtra can deal with variing height numbers (Pamtra file format has to be changed for that, otherwise implementation is easy!)
-! 3) PyPamtra wants the time as unix timestamp (seconds since 1070) and can handle different times per gridpoint
+! 3) PyPamtra wants the time as unix timestamp (seconds since 1970) and can handle a different time for each gridpoint
 
   use kinds
   use constants !physical constants live here
@@ -151,6 +154,9 @@ character(300),intent(in) :: set_namelist_file
   real, dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out) :: out_tb !same here: noutlevels=2, 2*NUMMU = 32, NSTOKES = 2
   real, dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq,in_nfft),intent(out):: out_radar_spectra
   real, dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out):: out_radar_snr
+  real, dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq,4),intent(out):: out_radar_moments
+  real, dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq,2),intent(out):: out_radar_slope
+  integer, dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out):: out_radar_quality
   real, dimension(in_nfft),intent(out):: out_radar_vel
 
   !settings
@@ -170,7 +176,7 @@ character(300),intent(in) :: set_namelist_file
   !f2py intent(out) :: out_Ze_cw,out_Ze_rr,out_Ze_ci,out_Ze_sn,out_Ze_gr,out_Ze_ha
   !f2py intent(out) :: out_Att_cw,out_Att_rr,out_Att_ci,out_Att_sn,out_Att_gr,out_Att_ha
   !f2py intent(out) :: out_radar_spectra,out_radar_snr,out_radar_vel,out_angles
-
+  !f2py intent(out) :: out_radar_moments,out_radar_slope,out_radar_quality
 
 
   !!!loop variables
@@ -239,6 +245,9 @@ character(300),intent(in) :: set_namelist_file
    out_radar_snr = -9999.
    out_radar_vel = -9999.
    out_radar_hgt = -9999.
+   out_radar_moments = -9999.
+   out_radar_slope = -9999.
+   out_radar_quality = -9999
    out_angles = -9999.
    out_tb = -9999
 
@@ -257,9 +266,7 @@ character(300),intent(in) :: set_namelist_file
       grid_y: do ny = 1, ngridy !nx_in, nx_fin   
           grid_x: do nx = 1, ngridx !ny_in, ny_fin  
 
-
           call GMTIME(in_timestamp(nx,ny),timestamp)
-
 
           write(year,"(i4.4)") timestamp(6)+1900
           write(month,"(i2.2)") timestamp(5)+1
@@ -271,7 +278,6 @@ character(300),intent(in) :: set_namelist_file
           
           call allocate_profile_vars
 
-
           !   ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
           lat = in_lat(nx,ny)                  ! °
           lon = in_lon(nx,ny)                 ! °
@@ -280,7 +286,6 @@ character(300),intent(in) :: set_namelist_file
           model_j = in_model_j(nx,ny)
           wind10u = in_wind10u(nx,ny)
           wind10v = in_wind10v(nx,ny)
-
 
 
           relhum_lev = 100.*in_relhum_lev(nx,ny,1:nlyr+1)         ! %
@@ -312,11 +317,9 @@ character(300),intent(in) :: set_namelist_file
             gwc_n = in_gwc_n(nx,ny,1:nlyr)              ! #/kg
             hwc_n = in_hwc_n(nx,ny,1:nlyr)              ! #/kg
          end if
-
            !run the model
            call run_rt(nx,ny,fi,freqs(fi),freq_str)
-
-          if (active) then
+          if ((active) .and. ((radar_mode .eq. "simple") .or. (radar_mode .eq. "splitted"))) then
             out_Ze(nx,ny,1:nlyr,:) = REAL(Ze(nx,ny,1:nlyr,:))
             out_Att_hydro(nx,ny,1:nlyr,:) = REAL(Att_hydro(nx,ny,1:nlyr,:))
             out_Att_atmo(nx,ny,1:nlyr,:) = REAL(Att_atmo(nx,ny,1:nlyr,:))
@@ -336,22 +339,23 @@ character(300),intent(in) :: set_namelist_file
 
             out_radar_hgt(nx,ny,1:nlyr) = REAL(radar_hgt(nx,ny,1:nlyr))
           end if
-
           call deallocate_profile_vars()
-
          end do grid_x
     end do grid_y
-    if (radar_spectrum) then
-      out_radar_spectra(:,:,:,:,:) = REAL(radar_spectra(:,:,:,:,:))
-      out_radar_snr(:,:,:,:) = REAL(radar_snr(:,:,:,:))
-      out_radar_vel(:) = REAL(radar_vel(:))
-    end if
   if (jacobian_mode) then
   !for jacobian mode
       call deallocate_jacobian_vars
   end if
   end do grid_f
 
+if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
+  out_radar_spectra(:,:,:,:,:) = REAL(radar_spectra(:,:,:,:,:))
+  out_radar_snr(:,:,:,:) = REAL(radar_snr(:,:,:,:))
+  out_radar_vel(:) = REAL(radar_vel(:))
+  out_radar_moments(:,:,:,:,:) = REAL(radar_moments(:,:,:,:,:))
+  out_radar_slope(:,:,:,:,:) = REAL(radar_slope(:,:,:,:,:))
+  out_radar_quality(:,:,:,:) = REAL(radar_quality(:,:,:,:))
+end if
 
 
   if (passive) then

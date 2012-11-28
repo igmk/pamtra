@@ -6,13 +6,13 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
                        n_moments, quad_type, nummu, EM_snow, EM_grau, &
 		       EM_hail, EM_ice, EM_rain, EM_cloud, as_ratio, &
                        use_rain_db, use_snow_db, data_path, &
-		       jacobian_mode, radar_nfft, radar_spectrum
+		       jacobian_mode, radar_nfft_aliased, radar_mode
   use constants
   use mod_io_strings
   use conversions
   use tmat_snow_db
   use tmat_rain_db
-  use vars_output, only: radar_spectra, radar_snr !output of the radar simulator for jacobian mode
+  use vars_output, only: radar_spectra, radar_snr, radar_moments, radar_quality, radar_slope !output of the radar simulator for jacobian mode
 
   implicit none
 
@@ -51,7 +51,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
       ice_emis,graupel_emis,hail_emis,cloud_emis
 
 
-  real(kind=dbl), dimension(radar_nfft) :: cloud_spec, rain_spec, snow_spec,&
+  real(kind=dbl), dimension(radar_nfft_aliased) :: cloud_spec, rain_spec, snow_spec,&
       ice_spec, graupel_spec, hail_spec, full_spec
 
   character(6), intent(in) :: frq_str !from commandline
@@ -148,9 +148,12 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
       back(nz) = backcw(nz) + backrr(nz) + backci(nz) + backsn(nz) + backgr(nz) + backha(nz)
 
   !short cut for the radar simulator: the ouput is taken directly from the final arrays at position 1,1.
-  if (radar_spectrum) then
+  if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
     radar_spectra(nx,ny,nz,fi,:) = radar_spectra(1,1,nz,fi,:)
     radar_snr(nx,ny,nz,fi) =   radar_snr(1,1,nz,fi)
+    radar_moments(nx,ny,nz,fi,:) =   radar_moments(1,1,nz,fi,:)
+    radar_slope(nx,ny,nz,fi,:) =   radar_slope(1,1,nz,fi,:)
+    radar_quality(nx,ny,nz,fi) =   radar_quality(1,1,nz,fi)
   end if
 
       CYCLE
@@ -457,7 +460,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
 
 
 
-  if (radar_spectrum) then
+  if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
      call radar_simulator(full_spec, back(nz), f, temp(nz),nz,nx,ny,fi)
 !   else
 !     cloud_spec(:)=0.d0

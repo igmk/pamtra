@@ -8,7 +8,7 @@ subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
   use kinds
   use nml_params, only: verbose, lphase_flag, n_0snowDsnow, EM_snow, &
 	n_moments, isnow_n0, SD_snow, snow_density,liu_type,nstokes,&
-        radar_nfft, radar_spectrum
+        radar_nfft_aliased, radar_mode, active
   use constants, only: pi, im
   use double_moments_module
   use conversions
@@ -45,8 +45,8 @@ subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
 
   real(kind=dbl), dimension(10) :: mma, mmb
 
-  real(kind=dbl) :: ztc, hlp, alf, bet, m2s, m3s
-  real(kind=dbl), intent(out), dimension(radar_nfft) :: snow_spec
+  real(kind=dbl) :: ztc, hlp, alf, bet, m2s, m3s, a_as_snow, b_as_snow
+  real(kind=dbl), intent(out), dimension(radar_nfft_aliased) :: snow_spec
   character(5) ::  particle_type
 
   if (verbose .gt. 1) print*, 'Entering snow_ssp'
@@ -62,7 +62,10 @@ subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
   if (n_moments .eq. 1) then
   	if (SD_snow .eq. 'C') then
      	b_snow = 2.0d0
-     	a_msnow = 0.038d0
+     	a_msnow = 0.038d0 ! Locatelli and Hobbs (1974)
+	!area-size relation in SI
+        a_as_snow = 0.3970874893692325d0 !0.2285 in CGS
+        b_as_snow = 1.88d0 !from mitchell 1996 similar to a_msnow&b_snow
 !     b_snow = 2.2850d0
 !     a_msnow = 0.2124d0
 
@@ -123,19 +126,28 @@ subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
 
      a_msnow = 0.02d0
      b_snow = 1.9d0
+     !area-size relation in SI
+     a_as_snow = 0.3970874893692325d0 !0.2285 in CGS
+     b_as_snow = 1.88d0 !from mitchell 1996 similar to a_msnow&b_snow
      bd = (swc/(a_msnow*5.d0*exp(gammln(b_snow+1.))))**(1.d0/(1.d0-b_snow))  ! [m**-1]
 	 ad = 5.d0*bd**2.d0
 	 dia2 = log(ad)/bd
      if (dia2 .gt. 2.d-2) dia2 = 2.d-2
      alpha = 0.d0 ! exponential SD
      gamma = 1.d0
-	end if
-  else if (n_moments .eq. 2) then
-     if (nc .eq. 0.d0) stop 'STOP in routine snow_ssp'
+    else
+      print*, "did not understand SD_snow: ", SD_snow
+      stop
+     end if
+  else if (n_moments .eq. 2)  then
+     if ((nc .eq. 0.d0) .or. (SD_snow .ne. "G"))stop 'STOP in routine snow_ssp'
      call double_moments(swc,nc,gamma_snow(1),gamma_snow(2),gamma_snow(3),gamma_snow(4), &
           ad,bd,alpha,gamma,a_msnow,b_snow)
      dia1 = 1.d-10
      dia2 = 2.d-2
+     !to do: implement area-size in double_moments file!
+     a_as_snow = 0.3970874893692325d0 !0.2285 in CGS
+     b_as_snow = 1.88d0 !from mitchell 1996 similar to a_msnow&b_snow
   else
      stop'Number of moments is not specified'
   end if
@@ -203,8 +215,9 @@ subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
 
   particle_type="snow" 
 
-  if (radar_spectrum) then
-    call calc_radar_spectrum(nbins_spec,diameter_spec, back_spec,t,press,hgt,f,particle_type,snow_spec)
+  if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
+    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,hgt,f,&
+      particle_type,a_msnow,b_snow,a_as_snow,b_as_snow,snow_spec)
   else
     snow_spec(:)=0.d0
   end if

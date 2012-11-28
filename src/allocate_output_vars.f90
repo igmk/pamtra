@@ -28,7 +28,7 @@ subroutine allocate_output_vars(no_allocated_lyrs)
      tb = 0.
   end if
 
-  if (active) then
+  if ((active) .and. ((radar_mode .eq. "simple") .or. (radar_mode .eq. "splitted"))) then
      allocate(Ze(ngridx,ngridy,no_allocated_lyrs,nfrq),&
              Ze_cw(ngridx,ngridy,no_allocated_lyrs,nfrq),&
              Ze_rr(ngridx,ngridy,no_allocated_lyrs,nfrq),&
@@ -46,15 +46,20 @@ subroutine allocate_output_vars(no_allocated_lyrs)
      allocate(Att_atmo(ngridx,ngridy,no_allocated_lyrs,nfrq))
      allocate(radar_hgt(ngridx,ngridy,no_allocated_lyrs))
   end if
-  if(radar_spectrum)  then
-
-allocate(&
-      radar_spectra(ngridx,ngridy,no_allocated_lyrs,nfrq,radar_nfft),&
-      radar_snr(ngridx,ngridy,no_allocated_lyrs,nfrq),&
-      radar_vel(radar_nfft))
-      radar_spectra = -9999.d0
-      radar_snr = -9999.d0
-      radar_vel = -9999.d0
+  if((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments")))  then
+    allocate(&
+	  radar_spectra(ngridx,ngridy,no_allocated_lyrs,nfrq,radar_nfft),&
+	  radar_snr(ngridx,ngridy,no_allocated_lyrs,nfrq),&
+	  radar_moments(ngridx,ngridy,no_allocated_lyrs,nfrq,4),&
+	  radar_slope(ngridx,ngridy,no_allocated_lyrs,nfrq,2),&
+	  radar_quality(ngridx,ngridy,no_allocated_lyrs,nfrq),&
+	  radar_vel(radar_nfft))
+	  radar_spectra = -9999.d0
+	  radar_snr = -9999.d0
+	  radar_vel = -9999.d0
+	  radar_moments = -9999.d0
+	  radar_slope = -9999.d0
+	  radar_quality = -9999
   end if
   if (verbose .gt. 1) print*, 'Done allocate_output_vars'
 

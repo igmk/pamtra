@@ -4,7 +4,7 @@ subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
 
   use kinds
   use nml_params, only: verbose, lphase_flag, n_moments, EM_ice, SD_ice,&
-      nstokes, radar_nfft, radar_spectrum
+      nstokes, radar_nfft_aliased, radar_mode, active
   use constants, only: pi, im
   use double_moments_module
   use conversions
@@ -25,7 +25,7 @@ subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
   real(kind=dbl) :: refre, refim
 
   real(kind=dbl) :: dia1, dia2, del_d, den_ice, drop_mass, b_ice, a_mice
-  real(kind=dbl) :: ad, bd, alpha, gamma, number_concentration
+  real(kind=dbl) :: ad, bd, alpha, gamma, number_concentration,a_as_ice, b_as_ice
 
   real(kind=dbl), intent(out) :: &
        kext,&
@@ -39,7 +39,7 @@ subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
     real(kind=dbl), dimension(nstokes,nquad,2), intent(out) :: emis_vector
   complex(kind=dbl) :: mindex
   real(kind=dbl), allocatable, dimension(:):: diameter_spec, back_spec
-  real(kind=dbl), intent(out), dimension(radar_nfft) :: ice_spec
+  real(kind=dbl), intent(out), dimension(radar_nfft_aliased) :: ice_spec
 
   character(5) ::  particle_type
   if (verbose .gt. 1) print*, 'Entering ice_ssp'
@@ -71,6 +71,12 @@ subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
      alpha = 0.0d0     ! exponential SD
      gamma = 1.0d0
      den_ice=917.d0
+
+     a_mice = 130d0
+     b_ice = 3.d0
+     !area-size relation in SI
+     a_as_ice = 0.684 !0.684 also in CGS
+     b_as_ice = 2.d0 !from mitchell 1996 similar to a_msnow&b_snow
     else if (SD_ice .eq. 'M') then
      del_d = 1.d-8    ! [m]
      dia1 = 6.d-5     ! [m] 60 micron diameter
@@ -79,11 +85,17 @@ subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
      drop_mass = pi/6.d0 * dia1**3 * den_ice
      a_mice = 0.82d0
      b_ice = 2.5d0
+     !area-size relation in SI
+     a_as_ice = 0.12028493607054538 !0.24 in CGS
+     b_as_ice = 1.85d0 !from mitchell 1996 similar to a_msnow&b_snow
      ad = iwc/(drop_mass*del_d) 	!intercept parameter [1/m^4]
      bd = 0.0d0
      nbins = 2
      alpha = 0.0d0     ! exponential SD
      gamma = 1.0d0 
+    else
+      print*, "did not understand SD_ice: ", SD_ice
+      stop
     end if
   else if (n_moments .eq. 2) then
      if (nc .eq. 0.d0) stop 'STOP in routine ice_ssp'
@@ -93,6 +105,10 @@ subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
      den_ice=917.d0
      dia1 = 1.d-10	! minimum diameter [m]
      dia2 = 6.d-5	! maximum diameter [m]
+     !to_do: implement area-size relation in two-moments!
+     !area-size relation in SI
+     a_as_ice = 0.684 !0.684 also in CGS
+     b_as_ice = 2.d0 !from mitchell 1996 similar to a_msnow&b_snow
   else
      stop 'Number of moments is not specified'
   end if
@@ -130,10 +146,10 @@ subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
      stop
   endif
 
-  if (radar_spectrum) then
+  if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
     particle_type ="ice"
-
-    call calc_radar_spectrum(nbins_spec,diameter_spec, back_spec,t,press,hgt,f,particle_type,ice_spec)
+    call radar_spectrum(nbins_spec,diameter_spec, back,  back_spec,t,press,hgt,f,&
+      particle_type,a_mice,b_ice,a_as_ice,b_as_ice,ice_spec)
   else
     ice_spec(:)=0.d0
   end if

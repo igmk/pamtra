@@ -4,8 +4,8 @@ subroutine write_nc_results
   use vars_output
   use vars_atmosphere, only: ngridx, ngridy,nlyr,freqs,nfrq, year, month, day, time
   use netcdf
-  use nml_params, only: active, passive, creator, verbose, zeSplitUp, &
-			n_moments, activeLogScale, radar_nfft, radar_spectrum
+  use nml_params, only: active, passive, creator, verbose, radar_mode, &
+			n_moments, activeLogScale, radar_nfft, radar_mode
   use file_mod, only: nc_out_file
 
   implicit none
@@ -74,7 +74,7 @@ subroutine write_nc_results
   if (active) then
      call check(nf90_def_dim(ncid, 'nlyr', nlyr, dlayerID))
   end if
-  if (radar_spectrum) then
+  if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
      call check(nf90_def_dim(ncid, 'nfft', radar_nfft, dnfftID))
   end if
 
@@ -150,7 +150,7 @@ subroutine write_nc_results
 
      dim4d = (/dfrqID,dlayerID,dlatID,dlonID/)
 
-     if (zeSplitUp) then
+     if (radar_mode == "splitted") then
 
         call check(nf90_def_var(ncid,'Ze_cloud water', nf90_double,dim4d, ZeCwVarID))
         call check(nf90_put_att(ncid, ZeCwVarID, "units", zeUnit))
@@ -202,7 +202,7 @@ subroutine write_nc_results
            call check(nf90_put_att(ncid, AttHaVarID, "missing_value", -9999))
         end if
         
-     else
+     else if (radar_mode == "simple") then
      
         call check(nf90_def_var(ncid,'Ze', nf90_double,dim4d, ZeVarID))
         call check(nf90_put_att(ncid, ZeVarID, "units", zeUnit))
@@ -211,7 +211,9 @@ subroutine write_nc_results
         call check(nf90_def_var(ncid,'Attenuation_Hydrometeors', nf90_double,dim4d, AttHydroVarID))
         call check(nf90_put_att(ncid, AttHydroVarID, "units", attUnit))
         call check(nf90_put_att(ncid, AttHydroVarID, "missing_value", -9999))
-
+     else
+	print*,"radar spectra cannot be saved to netcdf file yet"
+	stop
      end if
      call check(nf90_def_var(ncid,'Attenuation_Atmosphere', nf90_double,dim4d, AttAtmoVarID))
      call check(nf90_put_att(ncid, AttAtmoVarID, "units", attUnit))
@@ -219,7 +221,7 @@ subroutine write_nc_results
 
   end if
 
-  if (radar_spectrum) then
+  if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
      dim5d = (/dnfftID,dfrqID,dlayerID,dlatID,dlonID/)
 
       call check(nf90_def_var(ncid,'Radar_Spectrum', nf90_double,dim5d, RadarSpecID))
@@ -273,7 +275,7 @@ subroutine write_nc_results
   if (active) then                             !reshapeing needed due to Fortran's crazy Netcdf handling...
      call check(nf90_put_var(ncid, heightVarID, &
           RESHAPE( radar_hgt, (/ nlyr, ngridy, ngridx/), ORDER = (/3,2,1/))))
-     if (zeSplitUp) then
+     if (radar_mode == "splitted") then
         call check(nf90_put_var(ncid, ZeCwVarID, &
           RESHAPE( Ze_cw, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
         call check(nf90_put_var(ncid, ZeRrVarID, &
@@ -301,22 +303,25 @@ subroutine write_nc_results
            call check(nf90_put_var(ncid, AttHaVarID, &
              RESHAPE( Att_ha, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
         end if           
-     else
+     else if (radar_mode == "simple") then
 
         call check(nf90_put_var(ncid, ZeVarID, &
           RESHAPE( Ze, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
         call check(nf90_put_var(ncid, AttHydroVarID, &
           RESHAPE( Att_hydro, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-     end if
 
-  if (radar_spectrum) then
+    else if ((radar_mode == "spectrum")) then
         call check(nf90_put_var(ncid, RadarSNRID, &
           RESHAPE( radar_snr, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
         call check(nf90_put_var(ncid, RadarSpecID, &
           RESHAPE( radar_spectra, (/ radar_nfft, nfrq, nlyr, ngridy, ngridx/), ORDER = (/5,4,3,2,1/))))
 	call check(nf90_put_var(ncid, RadarVelID, radar_vel))
+     else
+	print*,"radar moments cannot be saved to netcdf file yet"
+	stop
+     end if
 
-  end if
+
 
      call check(nf90_put_var(ncid, AttAtmoVarID, &
           RESHAPE( Att_atmo, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))

@@ -4,7 +4,7 @@ subroutine grau_ssp(f,gwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
 
   use kinds
   use nml_params, only: verbose, lphase_flag, n_0grauDgrau, EM_grau, n_moments, SD_grau, &
-  graupel_density, nstokes, radar_nfft, radar_spectrum
+  graupel_density, nstokes, radar_nfft_aliased, radar_mode, active
   use constants, only: pi, im
   use double_moments_module
   use conversions
@@ -30,7 +30,7 @@ subroutine grau_ssp(f,gwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
        kext,&
        salb,&
        back
-  real(kind=dbl), intent(out), dimension(radar_nfft) :: grau_spec
+  real(kind=dbl), intent(out), dimension(radar_nfft_aliased) :: grau_spec
   real(kind=dbl), allocatable, dimension(:):: diameter_spec, back_spec
   real(kind=dbl), dimension(200), intent(out) :: legen, legen2, legen3, legen4
     integer, parameter ::  nquad = 16
@@ -71,7 +71,10 @@ subroutine grau_ssp(f,gwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
 	 nbins = 100
      alpha = 0.d0
      gamma = 1.d0
-	end if
+    else
+      print*, "did not understand SD_grau: ", SD_grau
+      stop
+    end if
   else if (n_moments .eq. 2) then
      if (nc .eq. 0.d0) stop 'STOP in routine grau_ssp'
      call double_moments(gwc,nc,gamma_graupel(1),gamma_graupel(2),gamma_graupel(3),gamma_graupel(4), &
@@ -109,9 +112,10 @@ subroutine grau_ssp(f,gwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
 
 
 
-  if (radar_spectrum) then
+  if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
     particle_type="graup" 
-    call calc_radar_spectrum(nbins_spec,diameter_spec, back_spec,t,press,hgt,f,particle_type,grau_spec)
+    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,hgt,f,&
+      particle_type,a_mgrau, b_grau,-1.d0,-1.d0,grau_spec)
   else
     grau_spec(:)=0.d0
   end if

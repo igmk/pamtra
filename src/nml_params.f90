@@ -37,11 +37,16 @@ module nml_params
   real(kind=dbl) :: salinity         ! sea surface salinity
   integer :: radar_nfft !number of FFT points in the Doppler spectrum [typically 256 or 512]
   integer :: radar_no_Ave !number of average spectra for noise variance reduction, typical range [1 40]
+  integer :: radar_airmotion_linear_steps !for linear air velocity model, how many staps shall be calculated?
+  integer :: radar_aliasing_nyquist_interv !how many additional nyquists intervalls shall be added to the spectrum to deal with aliasing effects
   real(kind=dbl) :: radar_max_V !MinimumNyquistVelocity in m/sec
   real(kind=dbl) :: radar_min_V !MaximumNyquistVelocity in m/sec
   real(kind=dbl) :: radar_turbulence_st !turbulence broadening standard deviation st, typical range [0.1 - 0.4] m/sec
   real(kind=dbl) :: radar_pnoise !radar noise
-  
+  real(kind=dbl) :: radar_airmotion_vmin
+  real(kind=dbl) :: radar_airmotion_vmax
+  real(kind=dbl) :: radar_airmotion_step_vmin
+
   logical ::  in_python !are we in python
 
   logical :: dump_to_file, &   ! flag for profile and ssp dump
@@ -53,10 +58,11 @@ module nml_params
        write_nc, &  ! write netcdf or ascii output
        active, &  	   ! calculate active stuff
        passive, &     ! calculate passive stuff (with RT3)
-       zeSplitUp, &     ! save Ze and Att for every hydrometeor seperately. has only effect on netcdf file!
        activeLogScale, & !save ze and att in log scale or linear
        jacobian_mode, &  ! special jacobian mode which does not calculate the whole scattering properties each time. only rt4!
-       radar_spectrum !run radar simulator
+       radar_airmotion, &   ! apply vertical air motion
+       radar_save_noise_corrected_spectra, & !remove the noise from the calculated spectrum again (for testing) 
+       radar_use_hildebrand  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise) we can skip that.
 
   character(5) :: EM_ice, EM_snow, EM_grau, EM_hail, EM_cloud, EM_rain
   character(1) :: SD_cloud, SD_ice, SD_rain, SD_snow, SD_grau, SD_hail
@@ -69,8 +75,11 @@ module nml_params
   character(3) :: rt_mode
   character(10) :: input_type, crm_case
   character(100) :: crm_data, crm_data2, crm_constants
+  character(8) :: radar_airmotion_model, radar_mode
+  character(30) :: radar_fallVel_cloud, radar_fallVel_rain, radar_fallVel_ice,&
+		    radar_fallVel_snow, radar_fallVel_graupel, radar_fallVel_hail
 
-
+  integer :: radar_nfft_aliased, radar_maxTurbTerms !are gained from radar_aliasing_nyquist_interv and radar_nfft
 contains
 
   subroutine nml_params_read
@@ -83,9 +92,9 @@ contains
          tmp_path, dump_to_file, write_nc, data_path,&
          input_type, crm_case, crm_data, crm_data2, crm_constants, &
 	 jacobian_mode
-    namelist / output / obs_height,units,outpol,freq_str,file_desc,creator,zeSplitUp, &
+    namelist / output / obs_height,units,outpol,freq_str,file_desc,creator, &
 	  activeLogScale
-    namelist / run_mode / active, passive,rt_mode
+    namelist / run_mode / active, passive,rt_mode, radar_mode
     namelist / surface_params / ground_type,salinity, emissivity
     namelist / gas_abs_mod / lgas_extinction, gas_mod
     namelist / hyd_opts / lhyd_extinction, lphase_flag
@@ -96,9 +105,12 @@ contains
     namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau, graupel_density
     namelist / hail_params / SD_hail, N_0hailDhail, EM_hail, hail_density
     namelist / moments / n_moments, moments_file
-    namelist / radar_simulator / radar_spectrum, radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
-	       radar_turbulence_st, radar_pnoise
-
+    namelist / radar_simulator / radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
+	       radar_turbulence_st, radar_pnoise, radar_airmotion, radar_airmotion_model, &
+	       radar_airmotion_vmin, radar_airmotion_vmax, radar_airmotion_linear_steps, &
+	       radar_airmotion_step_vmin, radar_fallVel_cloud, radar_fallVel_rain, radar_fallVel_ice,&
+	       radar_fallVel_snow, radar_fallVel_graupel, radar_fallVel_hail, radar_aliasing_nyquist_interv, &
+	       radar_save_noise_corrected_spectra, radar_use_hildebrand
 
     !set namelist defaults!
     ! sec verbose_mode
@@ -123,12 +135,12 @@ contains
     freq_str=''
     file_desc=''
     creator='Pamtrauser'
-    zeSplitUp = .true. 
     activeLogScale = .true.
     ! sec run_mode
     active=.true.
     passive=.true.
     rt_mode='rt3'
+    radar_mode="simple" !"splitted"|"moments"|"spectrum"
     ! sec surface params
     ground_type='S'
     salinity=33.0
@@ -174,7 +186,6 @@ contains
     n_moments=1
     moments_file='snowCRYSTAL'
     ! radar_simulator
-    radar_spectrum=.false.
     !number of FFT points in the Doppler spectrum [typically 256 or 512]
     radar_nfft=256
     !number of average spectra for noise variance reduction, typical range [1 150]
@@ -187,6 +198,24 @@ contains
     radar_turbulence_st=0.15
       !radar noise in same unit as Ze mm⁶/m³
     radar_pnoise=1.d-3
+
+    radar_airmotion = .true.
+    radar_airmotion_model = "step" !"constant","linear","step"
+    radar_airmotion_vmin = -4.d0
+    radar_airmotion_vmax = +4.d0
+    radar_airmotion_linear_steps = 30
+    radar_airmotion_step_vmin = 0.5d0
+
+    radar_fallVel_cloud ="khvorostyanov01_drops"
+    radar_fallVel_rain = "khvorostyanov01_drops"
+    radar_fallVel_ice ="khvorostyanov01_particles"
+    radar_fallVel_snow ="khvorostyanov01_particles"
+    radar_fallVel_graupel ="khvorostyanov01_spheres"
+    radar_fallVel_hail ="khvorostyanov01_spheres"
+
+    radar_aliasing_nyquist_interv = 1
+    radar_save_noise_corrected_spectra = .false.
+    radar_use_hildebrand = .false.
 
     ! read name list parameter file
     open(7, file=namelist_file,delim='APOSTROPHE')
@@ -218,7 +247,39 @@ contains
     read(7,nml=moments)
 !    if (verbose .gt. 1) print*, n_moments, moments_file
     read(7,nml=radar_simulator)
+
     close(7)
+
+!mix some variables to make new ones:
+  radar_nfft_aliased = radar_nfft *(1+2*radar_aliasing_nyquist_interv)
+  radar_maxTurbTerms = radar_nfft_aliased * 3
+
+
+     if (verbose .gt. 3) then  
+    print*, "verbose_mode ",  verbose
+    print*, "inoutput_mode ",  input_path, output_path,&
+         tmp_path, dump_to_file, write_nc, data_path,&
+         input_type, crm_case, crm_data, crm_data2, crm_constants, &
+	 jacobian_mode
+    print*, "output ",  obs_height,units,outpol,freq_str,file_desc,creator, &
+	  activeLogScale
+    print*, "run_mode ",  active, passive,rt_mode, radar_mode
+    print*, "surface_params ",  ground_type,salinity, emissivity
+    print*, "gas_abs_mod ",  lgas_extinction, gas_mod
+    print*, "hyd_opts ",  lhyd_extinction, lphase_flag
+    print*, "cloud_params ",  SD_cloud, EM_cloud
+    print*, "ice_params ",  SD_ice, EM_ice
+    print*, "rain_params ",  SD_rain, N_0rainD, use_rain_db, EM_rain
+    print*, "snow_params ",  SD_snow, N_0snowDsnow, EM_snow, use_snow_db, as_ratio,snow_density, SP, isnow_n0, liu_type
+    print*, "graupel_params ",  SD_grau, N_0grauDgrau, EM_grau, graupel_density
+    print*, "hail_params ",  SD_hail, N_0hailDhail, EM_hail, hail_density
+    print*, "moments ",  n_moments, moments_file
+    print*, "radar_simulator ",  radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
+	       radar_turbulence_st, radar_pnoise, radar_airmotion, radar_airmotion_model, &
+	       radar_airmotion_vmin, radar_airmotion_vmax, radar_airmotion_linear_steps, &
+	       radar_airmotion_step_vmin, radar_save_noise_corrected_spectra, radar_use_hildebrand
+
+  end if
 
     if (n_moments .ne. 1 .and. n_moments .ne. 2) stop "n_moments is not 1 or 2"
 

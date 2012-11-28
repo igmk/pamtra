@@ -127,7 +127,7 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
   OUT_FILE_ACT = output_path(:len_trim(output_path))//"/"//&
        date_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_active"
 
-  if (active) then
+  if ((active) .and. ((radar_mode == "simple") .or. (radar_mode == "splitted")))  then
      call calculate_active(OUT_FILE_ACT,freq,&
           Ze(nx,ny,:,fi),Ze_cw(nx,ny,:,fi),Ze_rr(nx,ny,:,fi),Ze_ci(nx,ny,:,fi),&
           Ze_sn(nx,ny,:,fi),Ze_gr(nx,ny,:,fi),Ze_ha(nx,ny,:,fi),&

@@ -18,7 +18,7 @@ subroutine cloud_ssp(f,cwc,t, press,hgt,maxleg,nc, kext, salb, back,  &
 
   use kinds
   use nml_params, only: verbose, lphase_flag, n_moments, SD_cloud, &
-      nstokes, EM_cloud, radar_nfft, radar_spectrum
+      nstokes, EM_cloud, radar_nfft_aliased, radar_mode, active
   use constants, only: pi, im
   use double_moments_module
   use conversions
@@ -47,7 +47,7 @@ subroutine cloud_ssp(f,cwc,t, press,hgt,maxleg,nc, kext, salb, back,  &
        kext,&
        salb,&
        back
-  real(kind=dbl), intent(out), dimension(radar_nfft) :: cloud_spec
+  real(kind=dbl), intent(out), dimension(radar_nfft_aliased) :: cloud_spec
 
   real(kind=dbl), dimension(200), intent(out) :: legen, legen2, legen3, legen4
     integer, parameter ::  nquad = 16
@@ -55,7 +55,7 @@ subroutine cloud_ssp(f,cwc,t, press,hgt,maxleg,nc, kext, salb, back,  &
     real(kind=dbl), dimension(nstokes,nstokes,nquad,2), intent(out) :: extinct_matrix
     real(kind=dbl), dimension(nstokes,nquad,2), intent(out) :: emis_vector
   complex(kind=dbl) :: mindex
-  real(kind=dbl), allocatable, dimension(:):: diameter_spec, qback_spec
+  real(kind=dbl), allocatable, dimension(:):: diameter_spec, back_spec
   character(5) ::  particle_type
 
 real(kind=dbl) :: re, Nt
@@ -122,13 +122,13 @@ real(kind=dbl) :: re, Nt
     nbins_spec = nbins
   end if
   allocate(diameter_spec(nbins_spec),stat=alloc_status)
-  allocate(qback_spec(nbins_spec),stat=alloc_status)
+  allocate(back_spec(nbins_spec),stat=alloc_status)
 
   if (EM_cloud .eq. 'miecl') then
   call mie(f, mindex, dia1, dia2, nbins, maxleg, ad,       &
        bd, alpha, gamma, lphase_flag, kext, salb, back,  &
        nlegen, legen, legen2, legen3, legen4, SD_cloud,den_liq,cwc,&
-       diameter_spec, qback_spec)
+       diameter_spec, back_spec)
       scatter_matrix= 0.d0
       extinct_matrix= 0.d0
       emis_vector= 0.d0
@@ -139,15 +139,16 @@ real(kind=dbl) :: re, Nt
 
   particle_type="cloud" 
 
-  if (radar_spectrum) then
-    call calc_radar_spectrum(nbins_spec,diameter_spec, qback_spec,t,press,hgt,f,particle_type,cloud_spec)
+  if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
+    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,hgt,f,&
+      particle_type,-1.d0,-1.d0,-1.d0,-1.d0,cloud_spec)
   else
     cloud_spec(:)=0.d0
   end if
 
 
 
-  deallocate(diameter_spec, qback_spec)
+  deallocate(diameter_spec, back_spec)
 
   if (verbose .gt. 1) print*, 'Exiting cloud_ssp'
   return

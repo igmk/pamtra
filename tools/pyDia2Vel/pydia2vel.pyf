@@ -1,0 +1,19 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module pyDia2vel ! in 
+    interface  ! in :pyDia2vel
+        subroutine pydia2vel(model,nbins,diameter_spec,velspec) ! in :pyDia2vel:pyDia2vel.f90
+            use kinds
+            use nml_params, only: verbose
+            use constants
+            character*100 intent(in) :: model
+            integer, optional,intent(in),check(len(diameter_spec)>=nbins),depend(diameter_spec) :: nbins=len(diameter_spec)
+            real dimension(nbins),intent(in) :: diameter_spec
+            real dimension(nbins),intent(out),depend(nbins) :: velspec
+        end subroutine pydia2vel
+    end interface 
+end python module pyDia2vel
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/

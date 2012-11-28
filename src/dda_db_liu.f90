@@ -155,16 +155,22 @@ subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
   !  do ir = 1, nbins+1
   do ir = 1, nbins
      !    dia_liu = dia1 + (ir - 1) * del_d
-     dia_liu = (dia2-dia1)/2.d0*xi(ir)+(dia1+dia2)/2.d0 !because ir goes from -1 to 1, not equidistant!
-
+     diameter(ir) = (dia2-dia1)/2.d0*xi(ir)+(dia1+dia2)/2.d0 !because ir goes from -1 to 1, not equidistant!
+     dia_liu = REAL(diameter(ir))
      ndens = distribution(ad, bd, alpha, gamma, dble(dia_liu), aerodist)  ! number density
      !    if ((ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
      !		ndens = 0.5d0 * ndens
      !    end if
      ntot = ntot + ndens*weights(ir) !weights are required as integration coefficient instead of del_d
 
-     if (dia_liu .gt. dmax(liu_type)) dia_liu = dmax(liu_type)
-     if (dia_liu .lt. dmin(liu_type)) dia_liu = dmin(liu_type)
+     if (dia_liu .gt. dmax(liu_type)) then
+       dia_liu = dmax(liu_type)
+       if (verbose .gt. 0) print*, 'WARNING dda_liu: particles larger than d_max of liu database'
+     end if
+     if (dia_liu .lt. dmin(liu_type)) then
+       dia_liu = dmin(liu_type)
+       if (verbose .gt. 0) print*, 'WARNING dda_liu: particles smaller than d_min of liu database'
+     end if
      if (verbose .gt. 2) print*, ir, ' with: ',f_liu,t_liu,liu_type,dia_liu*1.e6
      call scatdb(f_liu,t_liu,liu_type,dia_liu*1.e6,abs_liu,sca_liu,bsc_liu,g,p_liu,r_ice_eq,iret,is_loaded,&
           trim(data_path))
@@ -180,7 +186,7 @@ subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
      sumqback = sumqback + qback * ndens * weights(ir)
      back_spec(ir) = qback * ndens !* weights(ir) *(dia2-dia1)/2.d0![m²/m⁴]
 
-     diameter(ir) = DBLE(dia_liu)
+
 
      if (lphase_flag) then
         ang_quad = acos(mu(nquad:1:-1))*180.d0/pi

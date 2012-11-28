@@ -31,8 +31,9 @@ t.set["pyVerbose"]=1
 
 if testNo == "1":
 
+	pp_servers=()
 	#t.runPamtra([24,90,150])
-	t.runParallelPamtra([24,90,150],pp_local_workers=2,pp_deltaF=1,pp_deltaX=1)
+	t.runParallelPamtra([24,90,150],pp_local_workers=2,pp_servers=pp_servers,pp_deltaF=1,pp_deltaX=1)
 	
 elif testNo == "2":
 
