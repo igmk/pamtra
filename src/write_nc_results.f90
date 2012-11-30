@@ -16,9 +16,9 @@ subroutine write_nc_results
   integer :: isVarID, jsVarID, lonVarID, latVarID, lfracVarID, iwvVarID, cwpVarID,&
        iwpVarID, rwpVarID, swpVarID, gwpVarID, hwpVarID, &
        tbVarID, heightVarID, &
-       ZeVarID,ZeCwVarID,ZeRrVarID,ZeCiVarID,ZeSnVarID,ZeGrVarID,ZeHaVarID, &
+       ZeVarID, &
        AttAtmoVarID, AttHydroVarID,&
-       AttCwVarID, AttRrVarID, AttCiVarID, AttSnVarID, AttGrVarID, AttHaVarID, &
+       lSloVarID,rSloVarID, kurtVarID, skewVarID, swVarID, velVarID,&
        frequencyVarID, anglesVarID, RadarVelID, RadarSpecID, RadarSNRID
           
           
@@ -74,7 +74,7 @@ subroutine write_nc_results
   if (active) then
      call check(nf90_def_dim(ncid, 'nlyr', nlyr, dlayerID))
   end if
-  if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
+  if ((active) .and. (radar_mode .eq. "spectrum")) then
      call check(nf90_def_dim(ncid, 'nfft', radar_nfft, dnfftID))
   end if
 
@@ -150,94 +150,59 @@ subroutine write_nc_results
 
      dim4d = (/dfrqID,dlayerID,dlatID,dlonID/)
 
-     if (radar_mode == "splitted") then
-
-        call check(nf90_def_var(ncid,'Ze_cloud water', nf90_double,dim4d, ZeCwVarID))
-        call check(nf90_put_att(ncid, ZeCwVarID, "units", zeUnit))
-        call check(nf90_put_att(ncid, ZeCwVarID, "missing_value", -9999))
-
-        call check(nf90_def_var(ncid,'Ze_rain_water', nf90_double,dim4d, ZeRrVarID))
-        call check(nf90_put_att(ncid, ZeRrVarID, "units", zeUnit))
-        call check(nf90_put_att(ncid, ZeRrVarID, "missing_value", -9999))
-
-        call check(nf90_def_var(ncid,'Ze_cloud_ice', nf90_double,dim4d, ZeCiVarID))
-        call check(nf90_put_att(ncid, ZeCiVarID, "units", zeUnit))
-        call check(nf90_put_att(ncid, ZeCiVarID, "missing_value", -9999))
-
-        call check(nf90_def_var(ncid,'Ze_snow', nf90_double,dim4d, ZeSnVarID))
-        call check(nf90_put_att(ncid, ZeSnVarID, "units", zeUnit))
-        call check(nf90_put_att(ncid, ZeSnVarID, "missing_value", -9999))
-
-        call check(nf90_def_var(ncid,'Ze_graupel', nf90_double,dim4d, ZeGrVarID))
-        call check(nf90_put_att(ncid, ZeGrVarID, "units", zeUnit))
-        call check(nf90_put_att(ncid, ZeGrVarID, "missing_value", -9999))
-
-        call check(nf90_def_var(ncid,'Attenuation_cloud_water', nf90_double,dim4d, AttCwVarID))
-        call check(nf90_put_att(ncid, AttCwVarID, "units", attUnit))
-        call check(nf90_put_att(ncid, AttCwVarID, "missing_value", -9999))
-
-        call check(nf90_def_var(ncid,'Attenuation_rain', nf90_double,dim4d, AttRrVarID))
-        call check(nf90_put_att(ncid, AttRrVarID, "units", attUnit))
-        call check(nf90_put_att(ncid, AttRrVarID, "missing_value", -9999))
-
-        call check(nf90_def_var(ncid,'Attenuation_cloud_ice', nf90_double,dim4d, AttCiVarID))
-        call check(nf90_put_att(ncid, AttCiVarID, "units", attUnit))
-        call check(nf90_put_att(ncid, AttCiVarID, "missing_value", -9999))
-
-        call check(nf90_def_var(ncid,'Attenuation_snow', nf90_double,dim4d, AttSnVarID))
-        call check(nf90_put_att(ncid, AttSnVarID, "units", attUnit))
-        call check(nf90_put_att(ncid, AttSnVarID, "missing_value", -9999))
-
-        call check(nf90_def_var(ncid,'Attenuation_graupel', nf90_double,dim4d, AttGrVarID))
-        call check(nf90_put_att(ncid, AttGrVarID, "units", attUnit))
-        call check(nf90_put_att(ncid, AttGrVarID, "missing_value", -9999))
-
-        if (n_moments .eq. 2) then
-           call check(nf90_def_var(ncid,'Ze_hail', nf90_double,dim4d, ZeHaVarID))
-           call check(nf90_put_att(ncid, ZeHaVarID, "units", zeUnit))
-           call check(nf90_put_att(ncid, ZeHaVarID, "missing_value", -9999))
-       
-           call check(nf90_def_var(ncid,'Attenuation_hail', nf90_double,dim4d, AttHaVarID))
-           call check(nf90_put_att(ncid, AttHaVarID, "units", attUnit))
-           call check(nf90_put_att(ncid, AttHaVarID, "missing_value", -9999))
-        end if
-        
-     else if (radar_mode == "simple") then
-     
-        call check(nf90_def_var(ncid,'Ze', nf90_double,dim4d, ZeVarID))
-        call check(nf90_put_att(ncid, ZeVarID, "units", zeUnit))
-        call check(nf90_put_att(ncid, ZeVarID, "missing_value", -9999))
-
-        call check(nf90_def_var(ncid,'Attenuation_Hydrometeors', nf90_double,dim4d, AttHydroVarID))
-        call check(nf90_put_att(ncid, AttHydroVarID, "units", attUnit))
-        call check(nf90_put_att(ncid, AttHydroVarID, "missing_value", -9999))
-     else
-	print*,"radar spectra cannot be saved to netcdf file yet"
-	stop
-     end if
      call check(nf90_def_var(ncid,'Attenuation_Atmosphere', nf90_double,dim4d, AttAtmoVarID))
      call check(nf90_put_att(ncid, AttAtmoVarID, "units", attUnit))
      call check(nf90_put_att(ncid, AttAtmoVarID, "missing_value", -9999))
 
-  end if
+      call check(nf90_def_var(ncid,'Ze', nf90_double,dim4d, ZeVarID))
+      call check(nf90_put_att(ncid, ZeVarID, "units", zeUnit))
+      call check(nf90_put_att(ncid, ZeVarID, "missing_value", -9999))
 
-  if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
-     dim5d = (/dnfftID,dfrqID,dlayerID,dlatID,dlonID/)
+      call check(nf90_def_var(ncid,'Attenuation_Hydrometeors', nf90_double,dim4d, AttHydroVarID))
+      call check(nf90_put_att(ncid, AttHydroVarID, "units", attUnit))
+      call check(nf90_put_att(ncid, AttHydroVarID, "missing_value", -9999))
+      if ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments")) then
 
-      call check(nf90_def_var(ncid,'Radar_Spectrum', nf90_double,dim5d, RadarSpecID))
-      call check(nf90_put_att(ncid, RadarSpecID, "units", "dB(z/(m/s))"))
-      call check(nf90_put_att(ncid, RadarSpecID, "missing_value", -9999))
+	call check(nf90_def_var(ncid,'Radar_SNR', nf90_double,dim4d, RadarSNRID))
+	call check(nf90_put_att(ncid, RadarSNRID, "units", "dB"))
+	call check(nf90_put_att(ncid, RadarSNRID, "missing_value", -9999))    
 
-      call check(nf90_def_var(ncid,'Radar_Velocity', nf90_double,(/dnfftID/), RadarVelID))
-      call check(nf90_put_att(ncid, RadarVelID, "units", "m/s"))
-      call check(nf90_put_att(ncid, RadarVelID, "missing_value", -9999))
+	call check(nf90_def_var(ncid,'Radar_FallVelocity', nf90_double,dim4d, velVarID))
+	call check(nf90_put_att(ncid, velVarID, "units", "m/s"))
+	call check(nf90_put_att(ncid, velVarID, "missing_value", -9999))   
 
-      call check(nf90_def_var(ncid,'Radar_SNR', nf90_double,dim4d, RadarSNRID))
-      call check(nf90_put_att(ncid, RadarSNRID, "units", "dB"))
-      call check(nf90_put_att(ncid, RadarSNRID, "missing_value", -9999))
+	call check(nf90_def_var(ncid,'Radar_SpectralWidth', nf90_double,dim4d, swVarID))
+	call check(nf90_put_att(ncid, swVarID, "units", "m/s"))
+	call check(nf90_put_att(ncid, swVarID, "missing_value", -9999))   
 
+	call check(nf90_def_var(ncid,'Radar_Skewness', nf90_double,dim4d, skewVarID))
+	call check(nf90_put_att(ncid, skewVarID, "units", "-"))
+	call check(nf90_put_att(ncid, skewVarID, "missing_value", -9999))   
 
+	call check(nf90_def_var(ncid,'Radar_Kurtosis', nf90_double,dim4d, kurtVarID))
+	call check(nf90_put_att(ncid, kurtVarID, "units", "dB"))
+	call check(nf90_put_att(ncid, kurtVarID, "missing_value", -9999))   
 
+	call check(nf90_def_var(ncid,'Radar_LeftSlope', nf90_double,dim4d, lSloVarID))
+	call check(nf90_put_att(ncid, lSloVarID, "units", "dB"))
+	call check(nf90_put_att(ncid, lSloVarID, "missing_value", -9999))   
+
+	call check(nf90_def_var(ncid,'Radar_RightSlope', nf90_double,dim4d, rSloVarID))
+	call check(nf90_put_att(ncid, rSloVarID, "units", "dB"))
+	call check(nf90_put_att(ncid, rSloVarID, "missing_value", -9999))   
+
+	if (radar_mode == "spectrum") then
+	  call check(nf90_def_var(ncid,'Radar_Velocity', nf90_double,(/dnfftID/), RadarVelID))
+	  call check(nf90_put_att(ncid, RadarVelID, "units", "m/s"))
+	  call check(nf90_put_att(ncid, RadarVelID, "missing_value", -9999))
+
+	  dim5d = (/dnfftID,dfrqID,dlayerID,dlatID,dlonID/)
+	  call check(nf90_def_var(ncid,'Radar_Spectrum', nf90_double,dim5d, RadarSpecID))
+	  call check(nf90_put_att(ncid, RadarSpecID, "units", "dB(z/(m/s))"))
+	  call check(nf90_put_att(ncid, RadarSpecID, "missing_value", -9999))
+ 
+      end if 
+     end if
   end if
 
   if (passive) then
@@ -248,9 +213,6 @@ subroutine write_nc_results
   end if
 
   call check(nf90_enddef(ncid))
-  !  call check(nf90_inq_varid(ncid, 'longitude', VarId))
-
-
 
   call check(nf90_put_var(ncid, frequencyVarID, freqs(1:nfrq)))
   if (passive) then
@@ -275,56 +237,35 @@ subroutine write_nc_results
   if (active) then                             !reshapeing needed due to Fortran's crazy Netcdf handling...
      call check(nf90_put_var(ncid, heightVarID, &
           RESHAPE( radar_hgt, (/ nlyr, ngridy, ngridx/), ORDER = (/3,2,1/))))
-     if (radar_mode == "splitted") then
-        call check(nf90_put_var(ncid, ZeCwVarID, &
-          RESHAPE( Ze_cw, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-        call check(nf90_put_var(ncid, ZeRrVarID, &
-          RESHAPE( Ze_rr, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-        call check(nf90_put_var(ncid, ZeCiVarID, &
-          RESHAPE( Ze_ci, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-        call check(nf90_put_var(ncid, ZeSnVarID, &
-          RESHAPE( Ze_sn, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-        call check(nf90_put_var(ncid, ZeGrVarID, &
-          RESHAPE( Ze_gr, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-
-        call check(nf90_put_var(ncid, AttCwVarID, &
-          RESHAPE( Att_cw, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-        call check(nf90_put_var(ncid, AttRrVarID, &
-          RESHAPE( Att_rr, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-        call check(nf90_put_var(ncid, AttCiVarID, &
-          RESHAPE( Att_ci, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-        call check(nf90_put_var(ncid, AttSnVarID, &
-          RESHAPE( Att_sn, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-        call check(nf90_put_var(ncid, AttGrVarID, &
-          RESHAPE( Att_gr, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-        if (n_moments .eq. 2) then
-           call check(nf90_put_var(ncid, ZeHaVarID, &
-             RESHAPE( Ze_ha, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-           call check(nf90_put_var(ncid, AttHaVarID, &
-             RESHAPE( Att_ha, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-        end if           
-     else if (radar_mode == "simple") then
-
-        call check(nf90_put_var(ncid, ZeVarID, &
-          RESHAPE( Ze, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-        call check(nf90_put_var(ncid, AttHydroVarID, &
-          RESHAPE( Att_hydro, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-
-    else if ((radar_mode == "spectrum")) then
-        call check(nf90_put_var(ncid, RadarSNRID, &
-          RESHAPE( radar_snr, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
-        call check(nf90_put_var(ncid, RadarSpecID, &
-          RESHAPE( radar_spectra, (/ radar_nfft, nfrq, nlyr, ngridy, ngridx/), ORDER = (/5,4,3,2,1/))))
-	call check(nf90_put_var(ncid, RadarVelID, radar_vel))
-     else
-	print*,"radar moments cannot be saved to netcdf file yet"
-	stop
-     end if
-
-
-
+     call check(nf90_put_var(ncid, ZeVarID, &
+      RESHAPE( Ze, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+     call check(nf90_put_var(ncid, AttHydroVarID, &
+      RESHAPE( Att_hydro, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
      call check(nf90_put_var(ncid, AttAtmoVarID, &
           RESHAPE( Att_atmo, (/nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+     if ((radar_mode == "moments") .or.(radar_mode == "spectrum") ) then
+        call check(nf90_put_var(ncid, velVarID, &
+          RESHAPE( radar_moments(:,:,:,:,1), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+        call check(nf90_put_var(ncid, swVarID, &
+          RESHAPE( radar_moments(:,:,:,:,2), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+        call check(nf90_put_var(ncid, skewVarID, &
+          RESHAPE( radar_moments(:,:,:,:,3), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+        call check(nf90_put_var(ncid, kurtVarID, &
+          RESHAPE( radar_moments(:,:,:,:,4), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+        call check(nf90_put_var(ncid, lSloVarID, &
+          RESHAPE( radar_slope(:,:,:,:,1), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+        call check(nf90_put_var(ncid, rSloVarID, &
+          RESHAPE( radar_slope(:,:,:,:,2), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+        call check(nf90_put_var(ncid, RadarSNRID, &
+          RESHAPE( radar_snr, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+	if (radar_mode == "spectrum") then
+	  call check(nf90_put_var(ncid, RadarVelID, radar_vel))
+	  call check(nf90_put_var(ncid, RadarSpecID, &
+	    RESHAPE( radar_spectra, (/ radar_nfft, nfrq, nlyr, ngridy, ngridx/), ORDER = (/5,4,3,2,1/))))
+	end if
+      end if
+
+
   end if
 
   call check(nf90_close(ncid))
@@ -333,20 +274,6 @@ subroutine write_nc_results
 
 contains
 
-  !   subroutine put_2d_var(ncid,varname,var,ndims,dims)
-  ! 
-  !   use kinds 
-  !   implicit none
-  ! 
-  !   integer :: ncid, ndims, VarID
-  !   integer, dimension(:) :: dims
-  !   real(kind=dbl) , dimension(:) :: var
-  !   character(:) :: varname
-  ! 
-  ! 
-  !   return
-  ! 
-  !   end subroutine put_2d_var
 
   subroutine check(status)
 

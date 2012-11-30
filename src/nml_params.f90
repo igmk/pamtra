@@ -252,8 +252,7 @@ contains
 
 !mix some variables to make new ones:
   radar_nfft_aliased = radar_nfft *(1+2*radar_aliasing_nyquist_interv)
-  radar_maxTurbTerms = radar_nfft_aliased * 3
-
+  radar_maxTurbTerms = radar_nfft_aliased * 12
 
      if (verbose .gt. 3) then  
     print*, "verbose_mode ",  verbose

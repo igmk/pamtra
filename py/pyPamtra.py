@@ -36,6 +36,7 @@ except:
   warnings.warn("parallel python not available", Warning)
 
 missingNumber=-9999.
+#logging.basicConfig(filename='example.log',level=logging.DEBUG)
 
 class pyPamtra(object):
 
@@ -1014,11 +1015,11 @@ class pyPamtra(object):
 
     self.r["hgt"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],))*missingNumber
     
-    self.r["radar_spectra"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.nmlSet["radar_simulator"]["radar_nfft"],))*missingNumber
-    self.r["radar_snr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.nmlSet["radar_simulator"]["radar_nfft"],))*missingNumber
-    self.r["radar_moments"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.nmlSet["radar_simulator"]["radar_nfft"],4,))*missingNumber
-    self.r["radar_slope"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.nmlSet["radar_simulator"]["radar_nfft"],2,))*missingNumber
-    self.r["radar_quality"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.nmlSet["radar_simulator"]["radar_nfft"],),dtype=int)*missingNumber
+    self.r["radar_spectra"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],int(self.nmlSet["radar_simulator"]["radar_nfft"]),))*missingNumber
+    self.r["radar_snr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+    self.r["radar_moments"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],4,))*missingNumber
+    self.r["radar_slope"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],2,))*missingNumber
+    self.r["radar_quality"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],),dtype=int)*missingNumber
     self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles,self.set["nfreqs"],self._nstokes))*missingNumber
     
     self.pp_noJobs = len(np.arange(0,self.set["nfreqs"],pp_deltaF))*len(np.arange(0,self.p["ngridx"],pp_deltaX))*len(np.arange(0,self.p["ngridy"],pp_deltaY))
@@ -1044,7 +1045,6 @@ class pyPamtra(object):
           pp_ngridy = pp_endY - pp_startY
           
           pp_ii+=1
-          
           pp_jobs[pp_ii] = self.job_server.submit(pyPamtraLibWrapper.PamtraFortranWrapper, (
           #self.set
           self.set["namelist_file"],
@@ -1055,7 +1055,7 @@ class pyPamtra(object):
           self.p["nlyrs"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
           pp_nfreqs,
           self.set["freqs"][pp_startF:pp_endF],
-          self.nmlSet["radar_simulator"]["radar_nfft"],
+          int(self.nmlSet["radar_simulator"]["radar_nfft"]),
           self.p["unixtime"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
           self.p["deltax"],self.p["deltay"],
           self.p["lat"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
@@ -1081,13 +1081,51 @@ class pyPamtra(object):
           self.p["swc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
           self.p["gwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
           self.p["hwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist()
-          ),tuple(), ("pyPamtraLibWrapper","pyPamtraLib","os",),callback=self._ppCallback,
+          ),tuple(), ("pyPamtraLibWrapper","pyPamtraLib","os","logging"),callback=self._ppCallback,
           callbackargs=(pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii,))
           
+          #res = pyPamtraLibWrapper.PamtraFortranWrapper(
+          ##self.set
+          #self.set["namelist_file"],
+          ##input
+          #pp_ngridx,
+          #pp_ngridy,
+          #self.p["max_nlyrs"],
+          #self.p["nlyrs"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #pp_nfreqs,
+          #self.set["freqs"][pp_startF:pp_endF],
+          #int(self.nmlSet["radar_simulator"]["radar_nfft"]),
+          #self.p["unixtime"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["deltax"],self.p["deltay"],
+          #self.p["lat"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["lon"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["model_i"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["model_j"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["wind10u"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["wind10v"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["lfrac"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["relhum_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["press_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["temp_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["hgt_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["cwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["iwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["rwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["swc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["gwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["hwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["cwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["iwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["rwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["swc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["gwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
+          #self.p["hwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist()
+          #)
+          #print(res[-1],res[-2])
+          #sys.exit()
           if self.set["pyVerbose"] > 0: 
             sys.stdout.write("\r"+20*" "+"\r"+ "%i, %5.3f%% submitted"%(pp_ii+1,(pp_ii+1)/float(self.pp_noJobs)*100))
             sys.stdout.flush()
-
     if self.set["pyVerbose"] > 0: 
       print " "
       print self.pp_noJobs, "jobs submitted"
@@ -1114,8 +1152,22 @@ class pyPamtra(object):
     '''
     Collect the data of parallel pyPamtra    
     '''
-    (((
-    self.r["pamtraVersion"],self.r["pamtraHash"], 
+    #if pp_ii == 1: import pdb;pdb.set_trace()
+    #logging.debug(str(pp_ii)+": callback started ")
+    #print "toll", results[0][0][1]
+    #print "toller", np.shape(self.r["radar_snr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF])    
+    if self.set["pyVerbose"] > 2: print "Callback started:", pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii
+
+    
+    ((data,host,),) = results
+
+    #print "am tollsten", shape(data[0]), shape(data[0][0]),shape(data[0][20])
+  
+    if self.set["pyVerbose"] > 2: print "Callback received:", pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii
+ 
+  
+    (self.r["pamtraVersion"],
+    self.r["pamtraHash"], 
     self.r["Ze"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
     self.r["Ze_cw"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
     self.r["Ze_rr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
@@ -1140,15 +1192,20 @@ class pyPamtra(object):
     self.r["radar_quality"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
     self.r["radar_vel"],
     self.r["angles"],
-    ),host,),) = results
+    )= data
+        
+    if self.set["pyVerbose"] > 2: print "Callback parsed:", pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii
+
     self.pp_jobsDone += 1
     if self.set["pyVerbose"] > 0: 
       sys.stdout.write("\r"+50*" "+"\r"+ "%s: %6i, %8.3f%% collected (#%6i, %s)"%(datetime.datetime.now().strftime("%Y%m%d-%H:%M:%S"),self.pp_jobsDone,(self.pp_jobsDone)/float(self.pp_noJobs)*100,pp_ii+1,host))
       sys.stdout.flush()
     if self.set["pyVerbose"] > 1: print " "; self.job_server.print_stats()
-    #fi = open("/tmp/pp_logfile.txt","a")
-    #fi.write("%s: %6i, %8.3f%% collected (#%6i, %s)\n\r"%(datetime.datetime.now().strftime("%Y%m%d-%H:%M:%S"),self.pp_jobsDone,(self.pp_jobsDone)/float(self.pp_noJobs)*100,pp_ii+1,host))
-    #fi.close()
+    ##fi = open("/tmp/pp_logfile.txt","a")
+    ##fi.write("%s: %6i, %8.3f%% collected (#%6i, %s)\n\r"%(datetime.datetime.now().strftime("%Y%m%d-%H:%M:%S"),self.pp_jobsDone,(self.pp_jobsDone)/float(self.pp_noJobs)*100,pp_ii+1,host))
+    ##fi.close()
+    return
+    
     
   def runPamtra(self,freqs):
     '''
@@ -1207,7 +1264,7 @@ class pyPamtra(object):
       self.set["namelist_file"],
       #input
       self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.p["nlyrs"],self.set["nfreqs"],self.set["freqs"],
-      self.nmlSet["radar_simulator"]["radar_nfft"], self.p["unixtime"],
+      int(self.nmlSet["radar_simulator"]["radar_nfft"]), self.p["unixtime"],
       self.p["deltax"],self.p["deltay"], self.p["lat"],self.p["lon"],self.p["model_i"],self.p["model_j"],
       self.p["wind10u"],self.p["wind10v"],self.p["lfrac"],
       self.p["relhum_lev"],self.p["press_lev"],self.p["temp_lev"],self.p["hgt_lev"],

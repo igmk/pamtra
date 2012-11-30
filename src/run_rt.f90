@@ -143,6 +143,10 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
 !      
 !   end if
 
+  !save active to ASCII
+  if (active .and. (write_nc .eqv. .false.) .and. (in_python .eqv. .false.)) then
+    call save_active(OUT_FILE_ACT,nx,ny,fi)
+  end if
 
 
   if (write_nc) then

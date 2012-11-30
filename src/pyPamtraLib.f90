@@ -320,8 +320,6 @@ character(300),intent(in) :: set_namelist_file
            !run the model
            call run_rt(nx,ny,fi,freqs(fi),freq_str)
           if ((active) .and. ((radar_mode .eq. "simple") .or. (radar_mode .eq. "splitted"))) then
-
-
             out_Ze_cw(nx,ny,1:nlyr,:) = REAL(Ze_cw(nx,ny,1:nlyr,:))
             out_Ze_rr(nx,ny,1:nlyr,:) = REAL(Ze_rr(nx,ny,1:nlyr,:))
             out_Ze_ci(nx,ny,1:nlyr,:) = REAL(Ze_ci(nx,ny,1:nlyr,:))

@@ -45,7 +45,7 @@ subroutine radar_spectrum(nbins,diameter_spec, back,back_spec,&
 
   
 
-  if (verbose .gt. 1) print*, 'Entering calc_radar_spectrum.f90, particle type: ', particle_type
+  if (verbose .gt. 1) print*, 'Entering radar_spectrum.f90, particle type: ', particle_type
 
   ! get |K|**2 and lambda
   K2 = dielec_water(0.D0,temp-t_abs,frequency)
@@ -53,38 +53,6 @@ subroutine radar_spectrum(nbins,diameter_spec, back,back_spec,&
 
   diameter_spec_cp(:) = diameter_spec(:)
 
-!   not needed any more due to change in dda_db_liu
-!   !liu_db has certain maximum and minimum diameter, if this range is overspend, teh diameter is constant.
-!   !hence, dU_dV becomes infinitive. Thus, we find all bins iwth equal diameter and collect all back in one of them
-!   if (((particle_type .eq. "snow") .and. (EM_snow .eq. 'liudb')) &
-!       .or.&
-!       ((particle_type .eq. "ice") .and. (EM_ice .eq. 'liudb'))) then
-!     !do the loop to find d_max
-!     do ii=nbins,2,-1
-!        !check whetehr equal
-!        if (diameter_spec_cp(ii) .eq. diameter_spec_cp(ii-1)) then
-!         !add to next bin
-! 	 back_spec_ref(ii-1) = back_spec_ref(ii-1) + back_spec_ref(ii)
-!         !set original bin to zero
-! 	 back_spec_ref(ii) = 0.d0
-! 	!some decreasing random mnumber for diameter...
-! 	 diameter_spec_cp(ii) = 0.01*ii
-!       else
-!         !only borders are affected, so exit here
-!         EXIT
-!       end if
-!     end do 
-! !     now d_min
-!     do ii=1,nbins-1
-!        if (diameter_spec_cp(ii) .eq. diameter_spec_cp(ii+1)) then
-! 	  back_spec_ref(ii+1) = back_spec_ref(ii+1) + back_spec_ref(ii)
-! 	  back_spec_ref(ii) = 0.d0
-! 	  diameter_spec_cp(ii) = -0.01*(nbins-ii) !some increasing random mnumber...
-!       else
-!        EXIT
-!       end if
-!     end do 
-!   end if
 
   rho = rho_air(temp, press)
   my = viscosity_air(temp)/rho !kinematic viscosity
@@ -177,19 +145,19 @@ subroutine radar_spectrum(nbins,diameter_spec, back,back_spec,&
   del_d = (diameter_spec_cp(2)-diameter_spec_cp(1)) * 1.d3 ![mm]
 ! print*,"SUM(back_spec_ref * 1d-3)*del_d",SUM(back_spec_ref * 1d-3)*del_d*0.5
 
-print*,particle_type," Ze log SUM(back_spec_ref)*del_d",10*log10(SUM(back_spec_ref * 1d-3)*del_d),&
-      "assumes equidistant d"
-
-
-
-if (nbins > 2) then
- call avint( back_spec_ref * 1d-3, diameter_spec_cp * 1.d3, SIZE(diameter_spec_cp), &
-  diameter_spec_cp(1) * 1.d3, diameter_spec_cp(SIZE(diameter_spec_cp)) * 1.d3, Ze )
- !print*, "Ze", Ze
- print*, "Ze log INT(back_spec_ref)", 10*log10(Ze)
-else
- print*, "Ze log INT(back_spec_ref)", "too few bins to integrate"
-end if
+! print*,particle_type," Ze log SUM(back_spec_ref)*del_d",10*log10(SUM(back_spec_ref * 1d-3)*del_d),&
+!       "assumes equidistant d"
+! 
+! 
+! 
+! if (nbins > 2) then
+!  call avint( back_spec_ref * 1d-3, diameter_spec_cp * 1.d3, SIZE(diameter_spec_cp), &
+!   diameter_spec_cp(1) * 1.d3, diameter_spec_cp(SIZE(diameter_spec_cp)) * 1.d3, Ze )
+!  !print*, "Ze", Ze
+!  print*, "Ze log INT(back_spec_ref)", 10*log10(Ze)
+! else
+!  print*, "Ze log INT(back_spec_ref)", "too few bins to integrate"
+! end if
 
 Ze = 1d18* (1d0/ (K2*pi**5) ) * back * (wavelength)**4
 
@@ -231,7 +199,7 @@ Ze = 1d18* (1d0/ (K2*pi**5) ) * back * (wavelength)**4
     !constant air motion
     if (radar_airmotion_model .eq. "constant") then
       vel_spec = vel_spec + radar_airmotion_vmin
-      !interpolate OR average (depending whos bins size is greater) from N(D) bins to radar bins. 
+      !interpolate OR average (depending who's bins size is greater) from N(D) bins to radar bins. 
       call rescale_spectra(nbins,radar_nfft_aliased,.false.,vel_spec,back_vel_spec,radar_velo_aliased,particle_spec) ! particle_spec in [mm⁶/m³/m * m/(m/s)]
     !step function
     else if (radar_airmotion_model .eq. "step") then
@@ -240,13 +208,13 @@ Ze = 1d18* (1d0/ (K2*pi**5) ) * back * (wavelength)**4
       !for vmin
       vel_spec_ext = vel_spec + radar_airmotion_vmin
       back_vel_spec_ext = back_vel_spec * radar_airmotion_step_vmin
-      !interpolate OR average (depending whos bins size is greater) from N(D) bins to radar bins. 
+      !interpolate OR average (depending who's bins size is greater) from N(D) bins to radar bins. 
       call rescale_spectra(nbins,radar_nfft_aliased,.false.,vel_spec_ext,back_vel_spec_ext,radar_velo_aliased,&
 	   particle_spec_ext(1,:))! particle_spec in [mm⁶/m³/m * m/(m/s)]
       !for vmax
       vel_spec_ext = vel_spec + radar_airmotion_vmax
       back_vel_spec_ext = back_vel_spec *(1.d0-radar_airmotion_step_vmin)
-      !interpolate OR average (depending whos bins size is greater) from N(D) bins to radar bins. 
+      !interpolate OR average (depending who's bins size is greater) from N(D) bins to radar bins. 
       call rescale_spectra(nbins,radar_nfft_aliased,.false.,vel_spec_ext,back_vel_spec_ext,radar_velo_aliased,&
 	   particle_spec_ext(2,:))
       !join results
@@ -280,17 +248,17 @@ Ze = 1d18* (1d0/ (K2*pi**5) ) * back * (wavelength)**4
 
 
   K = (Ze/SUM(particle_spec*del_v_radar))
-print*,particle_type,"K",K
-particle_spec = K* particle_spec
+  particle_spec = K* particle_spec
 
-print*,particle_type," Ze SUM(back_vel_spec)*del_v_model",10*log10(SUM(back_vel_spec*del_v_model))
-print*,particle_type," Ze SUM(back_vel_spec_ext)*del_v_model",10*log10(SUM(back_vel_spec_ext*del_v_model))
-print*,particle_type," Ze SUM(particle_spec)*del_v_radar",10*log10(SUM(particle_spec)*del_v_radar)
-
-
+  if (verbose .gt. 3) print*,particle_type,"K",K
+  if (verbose .gt. 3) print*,particle_type," Ze SUM(back_vel_spec)*del_v_model",10*log10(SUM(back_vel_spec*del_v_model))
+  if (verbose .gt. 3) print*,particle_type," Ze SUM(back_vel_spec_ext)*del_v_model",10*log10(SUM(back_vel_spec_ext*del_v_model))
+  if (verbose .gt. 3) print*,particle_type," Ze SUM(particle_spec)*del_v_radar",10*log10(SUM(particle_spec)*del_v_radar)
 
 
-  if (verbose .gt. -1) print*, 'Done calc_radar_spectrum.f90'
+
+
+  if (verbose .gt. 1) print*, 'Done radar_spectrum.f90'
 
   return
 

@@ -22,14 +22,14 @@ subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope
   real(kind=dbl), dimension(0:4), intent(out):: moments  
   real(kind=dbl), dimension(2), intent(out):: slope  
   
-  real(kind=dbl) :: del_v, noise, noise_hilde
+  real(kind=dbl) :: del_v, noise
   integer :: spec_max, spec_max_a(1), right_edge, left_edge, ii, jj
   real(kind=dbl), dimension(radar_nfft) :: spectra_velo, specLog
 
   if (verbose .gt. 1) print*, 'Entering radar_moments.f90'
 
   del_v = (radar_max_V-radar_min_V) / radar_nfft
-  noise = radar_pnoise/radar_nfft !no devison by del_v neccessary!
+
   spectra_velo = (/(((ii*del_v)+radar_min_V),ii=0,radar_nfft)/) ! [m/s]
 
   !make the spectrum smooth
@@ -42,6 +42,14 @@ subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope
   end if
   spec_max = spec_max_a(1)
 
+  !calculate noise level (actually we know already the result which is radar_pnoise)
+  if (radar_use_hildebrand) then
+    call radar_hildebrand_sekhon(radar_spectrum_out,radar_no_Ave,radar_nfft,noise)
+      if (verbose .gt. 2) print*, 'calculated noise:', noise
+  else
+    noise = radar_pnoise/radar_nfft !no devison by del_v neccessary!
+  end if
+
   !!get the borders of the most significant peak
   do ii = spec_max+1, radar_nfft
     if (radar_spectrum_out(ii) - noise <= 0 ) EXIT
@@ -51,13 +59,6 @@ subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope
     if (radar_spectrum_out(jj) - noise <= 0 ) EXIT
   end do
   left_edge = jj
-
-  !calculate noise level (actually we know already the result which is radar_pnoise)
-  if (radar_use_hildebrand) then
-    call radar_hildebrand_sekhon(radar_spectrum_out,radar_no_Ave,radar_nfft,noise_hilde)
-      if (verbose .gt. 2) print*, 'calculated noise:', noise_hilde, noise
-    noise = noise_hilde
-  end if
 
 
   !remove noise and set remaining sectrum to zero
@@ -70,6 +71,7 @@ subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope
   slope(:) = 0.d0 ! dB/(m/s)
   slope(1) = (specLog(spec_max)-specLog(left_edge+1))/(spectra_velo(spec_max)-spectra_velo(left_edge+1))
   slope(2) = (specLog(right_edge-1)-specLog(spec_max))/(spectra_velo(right_edge-1)-spectra_velo(spec_max))
+
 
   !calculate the moments
   moments(0) = SUM(radar_spectrum_out) ! mm⁶/m³

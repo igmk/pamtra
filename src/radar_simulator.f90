@@ -71,26 +71,26 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
     max_V_aliased = radar_max_V + radar_aliasing_nyquist_interv*(radar_max_V-radar_min_V)
     spectra_velo_aliased = (/(((ii*del_v)+min_V_aliased),ii=0,radar_nfft_aliased)/) ! [m/s]
 
+    !get turbulence
     if (radar_turbulence_st > 0.d0) then
-      !get turbulence
       ss = radar_turbulence_st/del_v; !in array indices!
 
       turb(:) = 0.d0
       tt = 1
-      do while (tt .le. 6.d0/del_v+1.d0) 
+      do while (tt .le. 24.d0/del_v+1) 
 	if (tt .gt. radar_maxTurbTerms) then
-	  print*,tt, INT(6.d0/del_v+1.d0), ": maximum of turbulence terms reached. increase radar_maxTurbTerms (nml_params.f90)"
+	  print*,radar_maxTurbTerms, INT(12.d0/del_v+1.d0),&
+	  ": maximum of turbulence terms reached. increase radar_maxTurbTerms (nml_params.f90)"
 	  stop
 	end if
-	!
-	turb(tt) = 1.d0/(sqrt(2.d0*pi)*ss) * exp(-(tt-(3.d0/del_v+1.d0))**2.d0/(2.d0*ss**2.d0))
+	turb(tt) = 1.d0/(sqrt(2.d0*pi)*ss) * exp(-(tt-(12.d0/del_v+1))**2.d0/(2.d0*ss**2.d0))
 	tt = tt+1
       end do
 
       turbLen=tt-1
 
-      if (SIZE(particle_spectrum)+turbLen-1 .lt. floor(3/del_v+1)+radar_nfft-1) then
-	print*, SIZE(particle_spectrum)+turbLen-1,floor(3/del_v+1)+radar_nfft-1,&
+      if (SIZE(particle_spectrum)+turbLen-1 .lt. floor(12.d0/del_v+1)+radar_nfft-1) then
+	print*, SIZE(particle_spectrum)+turbLen-1,floor(12.d0/del_v+1)+radar_nfft-1,&
 	    "vector resulting from convolution to short!  (radar_simulator.f90)"
 	stop
       end if
@@ -102,8 +102,8 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
 
       !I don't like Nans here'
       where(ISNAN(turb_spectra)) turb_spectra = 0.d0
-      ts_imin = floor(3/del_v+1)
-      ts_imax = floor(3/del_v+1)+radar_nfft_aliased-1
+      ts_imin = floor(12.d0/del_v+1)
+      ts_imax = floor(12.d0/del_v+1)+radar_nfft_aliased-1
     else
       !add no turbulence
       ts_imin = 1
@@ -158,24 +158,26 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
   !apply spectral resolution
   noise_turb_spectra = noise_turb_spectra * del_v
 
+  if (verbose .gt. 3) then
+    print*,"second K",K
+    print*,"TOTAL"," Ze back",10*log10(Ze_back)
+    print*,"TOTAL"," Ze SUM(particle_spectrum)*del_v",10*log10(SUM(particle_spectrum)*del_v)
+    print*,"TOTAL"," Ze SUM(turb_spectra)*del_v",10*log10(SUM(turb_spectra)*del_v)
+    print*,"TOTAL"," Ze SUM(turb_spectra_aliased)*del_v",10*log10(SUM(turb_spectra_aliased)*del_v)
+    print*,"TOTAL"," Ze SUM(snr_turb_spectra)*del_v",10*log10(SUM(snr_turb_spectra)*del_v)
+    print*,"TOTAL"," Ze SUM(noise_turb_spectra)*del_v",10*log10(SUM(noise_turb_spectra))
+    print*,"TOTAL"," Ze SUM(snr_turb_spectra)*del_v-radar_Pnoise",10*log10(SUM(snr_turb_spectra)*del_v-radar_Pnoise)
+    print*,"TOTAL"," Ze SUM(noise_turb_spectra)*del_v-radar_Pnoise",10*log10(SUM(noise_turb_spectra)-radar_Pnoise)
+  end if
 
-print*,"second K",K
-print*,"TOTAL"," Ze back",10*log10(Ze_back)
-print*,"TOTAL"," Ze SUM(particle_spectrum)*del_v",10*log10(SUM(particle_spectrum)*del_v)
-print*,"TOTAL"," Ze SUM(turb_spectra)*del_v",10*log10(SUM(turb_spectra)*del_v)
-print*,"TOTAL"," Ze SUM(turb_spectra_aliased)*del_v",10*log10(SUM(turb_spectra_aliased)*del_v)
-print*,"TOTAL"," Ze SUM(snr_turb_spectra)*del_v",10*log10(SUM(snr_turb_spectra)*del_v)
-print*,"TOTAL"," Ze SUM(noise_turb_spectra)*del_v",10*log10(SUM(noise_turb_spectra))
-print*,"TOTAL"," Ze SUM(snr_turb_spectra)*del_v-radar_Pnoise",10*log10(SUM(snr_turb_spectra)*del_v-radar_Pnoise)
-print*,"TOTAL"," Ze SUM(noise_turb_spectra)*del_v-radar_Pnoise",10*log10(SUM(noise_turb_spectra)-radar_Pnoise)
 
+  call radar_calc_moments(noise_turb_spectra,noise_removed_turb_spectra,moments,slope)
+  if (verbose .gt. 3) then
+    print*,"TOTAL"," Ze moments",10*log10(moments(0))
+    print*,"#####################"
+  end if
 
-
-    call radar_calc_moments(noise_turb_spectra,noise_removed_turb_spectra,moments,slope)
-print*,"TOTAL"," Ze moments",10*log10(moments(0))
-print*,"TOTAL"," Ze moments",moments(0)
-print*,"#####################"
-  ! collect results for output
+      ! collect results for output
   !   radar_spectra(nx,ny,nz,fi,:) = 10*log10(particle_spectrum(513:1024))
 
     !if wanted, apply the noise correction to the spectrum to be saved.

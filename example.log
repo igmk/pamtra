@@ -1,0 +1,64 @@
+INFO:pp:Creating server instance (pp-1.6.2)
+INFO:pp:Running on Python 2.7.3 linux2
+INFO:pp:pp local server started with 4 workers
+DEBUG:root:0: submitting... 
+DEBUG:pp:Task 0 submited, function='PamtraFortranWrapper'
+INFO:pp:Task 0 started
+DEBUG:root:0: submitting done 
+DEBUG:root:Starting pyPamtraLib...karif
+DEBUG:root:Done pyPamtraLib...karif
+DEBUG:root:result[[[[-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [   41.84950256]]]]
+DEBUG:root:resultLen 26
+DEBUG:root:resultType <type 'tuple'>
+DEBUG:pp:Task 0 ended
+INFO:pp:Creating server instance (pp-1.6.2)
+INFO:pp:Running on Python 2.7.3 linux2
+INFO:pp:pp local server started with 4 workers
+DEBUG:root:0: submitting... 
+DEBUG:pp:Task 0 submited, function='PamtraFortranWrapper'
+INFO:pp:Task 0 started
+DEBUG:root:0: submitting done 
+DEBUG:root:Starting pyPamtraLib...karif
+DEBUG:root:Done pyPamtraLib...karif
+DEBUG:root:result[[[[-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [-9999.        ]
+   [   41.83636856]]]]
+DEBUG:root:resultLen 26
+DEBUG:root:resultType <type 'tuple'>
+DEBUG:pp:Task 0 ended
