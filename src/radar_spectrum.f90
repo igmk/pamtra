@@ -25,7 +25,6 @@ subroutine radar_spectrum(nbins,diameter_spec, back,back_spec,&
   use constants
   implicit none
 
-
   integer,intent(in) ::  nbins !for Mie it is actually nbins+1
   real(kind=dbl), dimension(nbins),intent(in):: diameter_spec, back_spec
   character(5),intent(in) ::  particle_type

@@ -26,6 +26,7 @@ subroutine get_atmosG0
      relhum(nz) = 0.5 * (relhum_lev(nz - 1) + relhum_lev(nz))
      press(nz) = (press_lev(nz) - press_lev(nz - 1))/log(press_lev(nz) / press_lev (nz - 1))  ! [Pa]
      hgt(nz) = (hgt_lev(nz-1)+hgt_lev(nz))*0.5d0
+     delta_hgt_lev(nz) = hgt_lev(nz) - hgt_lev(nz-1)
      vapor_pressure(nz) = relhum(nz) * e_sat_gg_water(temp(nz)) ! Pa
      rho_vap(nz) = vapor_pressure(nz)/(temp(nz) * 461.5)  ! [kg/m3]
      q_hum(nz) = 0.622*vapor_pressure(nz)/(press(nz) - (1.- 0.622) * vapor_pressure(nz))  ! [kg/kg]

@@ -320,9 +320,7 @@ character(300),intent(in) :: set_namelist_file
            !run the model
            call run_rt(nx,ny,fi,freqs(fi),freq_str)
           if ((active) .and. ((radar_mode .eq. "simple") .or. (radar_mode .eq. "splitted"))) then
-            out_Ze(nx,ny,1:nlyr,:) = REAL(Ze(nx,ny,1:nlyr,:))
-            out_Att_hydro(nx,ny,1:nlyr,:) = REAL(Att_hydro(nx,ny,1:nlyr,:))
-            out_Att_atmo(nx,ny,1:nlyr,:) = REAL(Att_atmo(nx,ny,1:nlyr,:))
+
 
             out_Ze_cw(nx,ny,1:nlyr,:) = REAL(Ze_cw(nx,ny,1:nlyr,:))
             out_Ze_rr(nx,ny,1:nlyr,:) = REAL(Ze_rr(nx,ny,1:nlyr,:))
@@ -336,8 +334,6 @@ character(300),intent(in) :: set_namelist_file
             out_Att_sn(nx,ny,1:nlyr,:) = REAL(Att_sn(nx,ny,1:nlyr,:))
             out_Att_gr(nx,ny,1:nlyr,:) = REAL(Att_gr(nx,ny,1:nlyr,:))
             out_Att_ha(nx,ny,1:nlyr,:) = REAL(Att_ha(nx,ny,1:nlyr,:))
-
-            out_radar_hgt(nx,ny,1:nlyr) = REAL(radar_hgt(nx,ny,1:nlyr))
           end if
           call deallocate_profile_vars()
          end do grid_x
@@ -348,14 +344,22 @@ character(300),intent(in) :: set_namelist_file
   end if
   end do grid_f
 
-if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
-  out_radar_spectra(:,:,:,:,:) = REAL(radar_spectra(:,:,:,:,:))
-  out_radar_snr(:,:,:,:) = REAL(radar_snr(:,:,:,:))
-  out_radar_vel(:) = REAL(radar_vel(:))
-  out_radar_moments(:,:,:,:,:) = REAL(radar_moments(:,:,:,:,:))
-  out_radar_slope(:,:,:,:,:) = REAL(radar_slope(:,:,:,:,:))
-  out_radar_quality(:,:,:,:) = REAL(radar_quality(:,:,:,:))
-end if
+  if (active) then
+    out_Ze(:,:,:,:) = REAL(Ze(:,:,:,:))
+    out_Att_hydro(:,:,:,:) = REAL(Att_hydro(:,:,:,:))
+    out_Att_atmo(:,:,:,:) = REAL(Att_atmo(:,:,:,:))
+    out_radar_hgt(:,:,:) = REAL(radar_hgt(:,:,:))
+  end if
+
+
+  if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
+    out_radar_spectra(:,:,:,:,:) = REAL(radar_spectra(:,:,:,:,:))
+    out_radar_snr(:,:,:,:) = REAL(radar_snr(:,:,:,:))
+    out_radar_vel(:) = REAL(radar_vel(:))
+    out_radar_moments(:,:,:,:,:) = REAL(radar_moments(:,:,:,:,:))
+    out_radar_slope(:,:,:,:,:) = REAL(radar_slope(:,:,:,:,:))
+    out_radar_quality(:,:,:,:) = radar_quality(:,:,:,:)
+  end if
 
 
   if (passive) then

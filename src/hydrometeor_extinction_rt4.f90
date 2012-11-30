@@ -151,7 +151,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
   if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
     radar_spectra(nx,ny,nz,fi,:) = radar_spectra(1,1,nz,fi,:)
     radar_snr(nx,ny,nz,fi) =   radar_snr(1,1,nz,fi)
-    radar_moments(nx,ny,nz,fi,:) =   radar_moments(1,1,nz,fi,:)
+    radar_moments(nx,ny,nz,fi,:) = radar_moments(1,1,nz,fi,:)
     radar_slope(nx,ny,nz,fi,:) =   radar_slope(1,1,nz,fi,:)
     radar_quality(nx,ny,nz,fi) =   radar_quality(1,1,nz,fi)
   end if
@@ -460,8 +460,9 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
 
 
 
-  if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
-     call radar_simulator(full_spec, back(nz), f, temp(nz),nz,nx,ny,fi)
+  if (active) then
+     call radar_simulator(full_spec, back(nz), kexttot(nz), f,&
+      temp(nz),delta_hgt_lev(nz),nz,nx,ny,fi)
 !   else
 !     cloud_spec(:)=0.d0
   end if

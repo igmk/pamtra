@@ -45,7 +45,7 @@ module vars_atmosphere
        gwc_n, &
        hwc_n
 
-
+  real(kind=dbl), allocatable, dimension(:) ::	delta_hgt_lev
 
 
   real(kind=dbl), allocatable, dimension(:) :: kextatmo, &

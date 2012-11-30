@@ -25,7 +25,6 @@ subroutine calculate_active(OUT_FILE_ACT,freq,&
      d_hgt = hgt_lev(nz) - hgt_lev(nz-1)
      K2 = dielec_water(0.D0,temp(nz)-t_abs,freq)
 
-
      Ze(nz) = 1d18* (1d0/ (K2*pi**5) ) * back(nz) * (wavelength)**4
      Ze_cw(nz) = 1d18* (1d0/ (K2*pi**5) ) * backcw(nz) * (wavelength)**4
      Ze_rr(nz) = 1d18* (1d0/ (K2*pi**5) ) * backrr(nz) * (wavelength)**4

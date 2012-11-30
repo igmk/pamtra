@@ -11,7 +11,7 @@ data_path='/home/mech/models/pamtra/data/'
 /
 &run_mode
 rt_mode='rt4'
-radar_mode="splitted"
+radar_mode="simple"
 /
 &surface_params
 /
