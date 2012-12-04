@@ -195,7 +195,7 @@ Ze = 1d18* (1d0/ (K2*pi**5) ) * back * (wavelength)**4
 
   !add vertical air motion to the observations
   if (radar_airmotion) then
-    if (verbose .gt. -2) print*, "Averaging spectrum and Adding vertical air motion", radar_airmotion_model
+    if (verbose .gt. 2) print*, "Averaging spectrum and Adding vertical air motion: ", radar_airmotion_model
     !constant air motion
     if (radar_airmotion_model .eq. "constant") then
       vel_spec = vel_spec + radar_airmotion_vmin

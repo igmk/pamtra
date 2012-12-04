@@ -48,6 +48,19 @@ class pyPamtra(object):
   def __init__(self):
     #set setting default values
   
+  
+    self.prepareNmlUnitsDimensions()
+  
+    self._nstokes = 2
+    self._noutlevels = 2
+    self._nangles = 32
+    
+    self.p = dict()
+    self._helperP = dict()
+    self.r = dict()
+  
+  def prepareNmlUnitsDimensions(self):
+  
     self.nmlSet = OrderedDict() #settings which are required for the nml file. keeping the order is important for fortran
 
     self.nmlSet["verbose_mode"] = dict()
@@ -270,16 +283,11 @@ class pyPamtra(object):
     self.units["Ze"] = "dBz OR mm^6 m^-3"
     self.units["Att_hydros"] = "dB OR linear"
     self.units["Att_atmo"] = "dB OR linear"
-    self.units["tb"] = "K"
+    self.units["tb"] = "K"  
   
-    self._nstokes = 2
-    self._noutlevels = 2
-    self._nangles = 32
-    
-    self.p = dict()
-    self._helperP = dict()
-    self.r = dict()
-    
+    return
+  
+  
   def writeNmlFile(self,nmlFile):
     for keygr in self.nmlSet.keys():
       for key in self.nmlSet[keygr].keys():
@@ -1282,28 +1290,71 @@ class pyPamtra(object):
     if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
 
 
-  def writeResultsToNumpy(self,fname):
-    '''
-    write the complete state of the session (profile,results,settings to a file
-    '''
-    f = open(fname, "w")
-    pickle.dump([self.r,self.p,self._helperP,self.nmlSet,self.set], f)
-    f.close()
+  def writeResultsToNumpy(self,fname,seperateFiles=False):
+    
+    if not seperateFiles:
+      '''
+      write the complete state of the session (profile,results,settings to a file
+      '''
+      f = open(fname, "w")
+      pickle.dump([self.r,self.p,self._helperP,self.nmlSet,self.set], f)
+      f.close()
+    else:
+      '''
+      write the complete state of the session (profile,results,settings to several files
+      '''      
+      os.makedirs(fname)
+      for dic in ["r","p", "_helperP","nmlSet","set"]:
+	for key in self.__dict__[dic].keys():
+	  if self.set["pyVerbose"]>1: print "saving: "+fname+"/"+dic+"%"+key+"%"+".npy"  
+	  data = self.__dict__[dic][key]
+	  if  type(data) == np.ma.core.MaskedArray:
+	    data = data.filled(-9999)
+	  
+	  if type(data) in [str,OrderedDict,int,float,dict,list]:
+	    np.save(fname+"/"+dic+"%"+key+"%"+".npy",data)
+	  elif data.dtype == np.float64:
+	    np.save(fname+"/"+dic+"%"+key+"%"+".npy",data.astype("f4"))
+	  elif data.dtype == np.int64:
+	    np.save(fname+"/"+dic+"%"+key+"%"+".npy",data.astype("i4"))
+	  else:
+	    np.save(fname+"/"+dic+"%"+key+"%"+".npy",data)
+    return
 
+    
+    
   def loadResultsFromNumpy(self,fname):
     '''
-    load the complete state of the session (profile,results,settings to a file
+    load the complete state of the session (profile,results,settings from (a) file(s)
     '''
-    try: 
-      f = open(fname, "r")
-      [self.r,self.p,self._helperP,self.nmlSet,self.set] = pickle.load(f)
-      f.close()
+    if os.path.isdir(fname):
+      try: 
+	for key in ["r","p", "_helperP","set"]:
+	  self.__dict__[key] = dict()
+	self.__dict__["nmlSet"] = OrderedDict()
+	for fnames in os.listdir(fname):
+	  key,subkey,dummy = fnames.split("%")
+	  self.__dict__[key][subkey] = np.load(fname+"/"+fnames)
+      except:
+	print formatExceptionInfo()
+	raise IOError ("Could not read data from dir")
+    else:  
+      try: 
+	f = open(fname, "r")
+	[self.r,self.p,self._helperP,self.nmlSet,self.set] = pickle.load(f)
+	f.close()
+      except:
+	print formatExceptionInfo()	
+	raise IOError ("Could not read data from file")
+      
       self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
       self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],)
       self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"]+1,)
-    except:
-      raise IOError ("Could not read data")
-    
+      return
+  
+
+  
+  
   def writeResultsToNetCDF(self,fname,profileVars="all",ncForm="NETCDF3_CLASSIC"):
     '''
     write the results to a netcdf file
@@ -1463,111 +1514,79 @@ class pyPamtra(object):
     
     
     if (self.r["nmlSettings"]["run_mode"]["active"]):
-      
-      if self.r["nmlSettings"]["run_mode"]["radar_mode"] == "splitted":
-
-        nc_Ze_cw = cdfFile.createVariable('Ze_cloud_water', 'f',dim4d,**fillVDict)
-        nc_Ze_cw.units = zeUnit
-        nc_Ze_cw[:] = np.array(self.r["Ze_cw"],dtype='f')
-        if not pyNc: nc_Ze_cw._FillValue =missingNumber
-    
-        nc_Ze_rr = cdfFile.createVariable('Ze_rain', 'f',dim4d,**fillVDict)
-        nc_Ze_rr.units = zeUnit
-        nc_Ze_rr[:] = np.array(self.r["Ze_rr"],dtype='f')
-        if not pyNc: nc_Ze_rr._FillValue =missingNumber
-    
-        nc_Ze_ci = cdfFile.createVariable('Ze_cloud_ice', 'f',dim4d,**fillVDict)
-        nc_Ze_ci.units = zeUnit
-        nc_Ze_ci[:] = np.array(self.r["Ze_ci"],dtype='f')
-        if not pyNc: nc_Ze_ci._FillValue = missingNumber
-      
-        nc_Ze_sn = cdfFile.createVariable('Ze_snow', 'f',dim4d,**fillVDict)
-        nc_Ze_sn.units = zeUnit
-        nc_Ze_sn[:] = np.array(self.r["Ze_sn"],dtype='f')
-        if not pyNc: nc_Ze_sn._FillValue =missingNumber
-    
-        nc_Ze_gr = cdfFile.createVariable('Ze_graupel', 'f',dim4d,**fillVDict)
-        nc_Ze_gr.units = zeUnit
-        nc_Ze_gr[:] = np.array(self.r["Ze_gr"],dtype='f')
-        if not pyNc: nc_Ze_gr._FillValue =missingNumber
-    
-        nc_Att_cw = cdfFile.createVariable('Attenuation_cloud_water', 'f',dim4d,**fillVDict)
-        nc_Att_cw.units = attUnit
-        nc_Att_cw[:] = np.array(self.r["Att_cw"],dtype='f')
-        if not pyNc: nc_Att_cw._FillValue =missingNumber
-    
-        nc_Att_rrrs = cdfFile.createVariable('Attenuation_rain', 'f',dim4d,**fillVDict)
-        nc_Att_rrrs.units = attUnit
-        nc_Att_rrrs[:] = np.array(self.r["Att_rr"],dtype='f')
-        if not pyNc: nc_Att_rrrs._FillValue =missingNumber
-        
-        nc_Att_ci = cdfFile.createVariable('Attenuation_cloud_ice', 'f',dim4d,**fillVDict)
-        nc_Att_ci.units = attUnit
-        nc_Att_ci[:] = np.array(self.r["Att_ci"],dtype='f')
-        if not pyNc: nc_Att_ci._FillValue =missingNumber
-        
-        nc_Att_sn = cdfFile.createVariable('Attenuation_snow', 'f',dim4d,**fillVDict)
-        nc_Att_sn.units = attUnit
-        nc_Att_sn[:] = np.array(self.r["Att_sn"],dtype='f')
-        if not pyNc: nc_Att_sn._FillValue =missingNumber
-    
-        nc_Att_gr = cdfFile.createVariable('Attenuation_graupel', 'f',dim4d,**fillVDict)
-        nc_Att_gr.units = attUnit
-        nc_Att_gr[:] = np.array(self.r["Att_gr"],dtype='f')
-        if not pyNc: nc_Att_gr._FillValue =missingNumber
-    
-        if self.r["nmlSettings"]["moments"]["n_moments"]==2:
-
-          nc_Ze_ha = cdfFile.createVariable('Ze_hail', 'f',dim4d,**fillVDict)
-          nc_Ze_ha.units = zeUnit
-          nc_Ze_ha[:] = np.array(self.r["Ze_ha"],dtype='f')
-          if not pyNc: nc_Ze_ha._FillValue =missingNumber
-    
-          nc_Att_ha = cdfFile.createVariable('Attenuation_hail', 'f',dim4d,**fillVDict)
-          nc_Att_ha.units = attUnit
-          nc_Att_ha[:] = np.array(self.r["Att_ha"],dtype='f')
-          if not pyNc: nc_Att_ha._FillValue =missingNumber
-    
-      elif self.r["nmlSettings"]["run_mode"]["radar_mode"] == "simple": 
          
-        nc_Ze = cdfFile.createVariable('Ze', 'f',dim4d,**fillVDict)
-        nc_Ze.units = zeUnit
-        nc_Ze[:] = np.array(self.r["Ze"],dtype='f')
-        if not pyNc: nc_Ze._FillValue =missingNumber
-    
-        nc_Attenuation_Hydrometeors = cdfFile.createVariable('Attenuation_Hydrometeors', 'f',dim4d,**fillVDict)
-        nc_Attenuation_Hydrometeors.units = attUnit
-        nc_Attenuation_Hydrometeors[:] = np.array(self.r["Att_hydro"],dtype='f')
-        if not pyNc: nc_Attenuation_Hydrometeors._FillValue =missingNumber
-        
+      nc_Ze = cdfFile.createVariable('Ze', 'f',dim4d,**fillVDict)
+      nc_Ze.units = zeUnit
+      nc_Ze[:] = np.array(self.r["Ze"],dtype='f')
+      if not pyNc: nc_Ze._FillValue =missingNumber
 
-      elif (self.r["nmlSettings"]["run_mode"]["radar_mode"] == "spectrum"):
+      nc_Attenuation_Hydrometeors = cdfFile.createVariable('Attenuation_Hydrometeors', 'f',dim4d,**fillVDict)
+      nc_Attenuation_Hydrometeors.units = attUnit
+      nc_Attenuation_Hydrometeors[:] = np.array(self.r["Att_hydro"],dtype='f')
+      if not pyNc: nc_Attenuation_Hydrometeors._FillValue =missingNumber
+        
+      nc_Attenuation_Atmosphere = cdfFile.createVariable('Attenuation_Atmosphere', 'f',dim4d,**fillVDict)
+      nc_Attenuation_Atmosphere.units = attUnit
+      nc_Attenuation_Atmosphere[:] = np.array(self.r["Att_atmo"],dtype='f')
+      if not pyNc: nc_Attenuation_Atmosphere._FillValue =missingNumber
+      
+      if ((self.r["nmlSettings"]["run_mode"]["radar_mode"] == "spectrum") or (self.r["nmlSettings"]["run_mode"]["radar_mode"] == "moments")):
 	nc_snr=cdfFile.createVariable('Radar_SNR', 'f',dim4d,**fillVDict)
 	nc_snr.units="dB"
 	nc_snr[:] = np.array(self.r["radar_snr"],dtype='f')
 	if not pyNc: nc_snr._FillValue =missingNumber
 
-	nc_vel=cdfFile.createVariable('Radar_Velocity', 'f',("nfft",),**fillVDict)
-	nc_vel.units="m/s"
-	nc_vel[:] = np.array(self.r["radar_vel"],dtype='f')
-	if not pyNc: nc_vel._FillValue =missingNumber
-
-	nc_snr=cdfFile.createVariable('Radar_Spectrum', 'f',dim5d,**fillVDict)
-	nc_snr.units="dB"
-	nc_snr[:] = np.array(self.r["radar_spectra"],dtype='f')
-	if not pyNc: nc_snr._FillValue =missingNumber
+	nc_fvel=cdfFile.createVariable('Radar_FallVelocity', 'f',dim4d,**fillVDict)
+	nc_fvel.units="m/s"
+	nc_fvel[:] = np.array(self.r["radar_moments"][...,0],dtype='f')
+	if not pyNc: nc_fvel._FillValue =missingNumber
 	
-      else: 
-	raise("So far, only radar_mode simple, splitted and spectrum implemented in netcdf export")
-    #self.r["radar_moments"],
-    #self.r["radar_slope"],
-    #self.r["radar_quality"],
-    
-      nc_Attenuation_Atmosphere = cdfFile.createVariable('Attenuation_Atmosphere', 'f',dim4d,**fillVDict)
-      nc_Attenuation_Atmosphere.units = attUnit
-      nc_Attenuation_Atmosphere[:] = np.array(self.r["Att_atmo"],dtype='f')
-      if not pyNc: nc_Attenuation_Atmosphere._FillValue =missingNumber
+	nc_specw=cdfFile.createVariable('Radar_SpectralWidth', 'f',dim4d,**fillVDict)
+	nc_specw.units="m/s"
+	nc_specw[:] = np.array(self.r["radar_moments"][...,1],dtype='f')
+	if not pyNc: nc_specw._FillValue =missingNumber
+	
+	nc_skew=cdfFile.createVariable('Radar_Skewness', 'f',dim4d,**fillVDict)
+	nc_skew.units="-"
+	nc_skew[:] = np.array(self.r["radar_moments"][...,2],dtype='f')
+	if not pyNc: nc_skew._FillValue =missingNumber
+	
+	nc_kurt=cdfFile.createVariable('Radar_Kurtosis', 'f',dim4d,**fillVDict)
+	nc_kurt.units="-"
+	nc_kurt[:] = np.array(self.r["radar_moments"][...,3],dtype='f')
+	if not pyNc: nc_kurt._FillValue =missingNumber
+	
+	nc_lslop=cdfFile.createVariable('Radar_LeftSlope', 'f',dim4d,**fillVDict)
+	nc_lslop.units="dB/(m/s)"
+	nc_lslop[:] = np.array(self.r["radar_slope"][...,0],dtype='f')
+	if not pyNc: nc_lslop._FillValue =missingNumber
+	
+	nc_rslop=cdfFile.createVariable('Radar_RightSlope', 'f',dim4d,**fillVDict)
+	nc_rslop.units="dB/(m/s)"
+	nc_rslop[:] = np.array(self.r["radar_slope"][...,1],dtype='f')
+	if not pyNc: nc_rslop._FillValue =missingNumber
 
+	nc_qual=cdfFile.createVariable('Radar_Quality', 'i',dim4d,**fillVDict)
+	nc_qual.units="bytes"
+	nc_qual.description="1st byte: aliasing; 2nd byte: 2nd peak present"
+	nc_qual[:] = np.array(self.r["radar_quality"],dtype='i')
+	if not pyNc: nc_qual._FillValue =missingNumber
+	
+	
+	if ((self.r["nmlSettings"]["run_mode"]["radar_mode"] == "spectrum")): 
+
+	  nc_vel=cdfFile.createVariable('Radar_Velocity', 'f',("nfft",),**fillVDict)
+	  nc_vel.units="m/s"
+	  nc_vel[:] = np.array(self.r["radar_vel"],dtype='f')
+	  if not pyNc: nc_vel._FillValue =missingNumber
+	  
+	  nc_spec=cdfFile.createVariable('Radar_Spectrum', 'f',dim5d,**fillVDict)
+	  nc_spec.units="dB"
+	  nc_spec[:] = np.array(self.r["radar_spectra"],dtype='f')
+	  if not pyNc: nc_spec._FillValue =missingNumber
+	  
+      else: 
+	raise("Do not kn ow radar_mode")
     
     if (self.r["nmlSettings"]["run_mode"]["passive"]):
       nc_tb = cdfFile.createVariable('tb', 'f',dim6d,**fillVDict)

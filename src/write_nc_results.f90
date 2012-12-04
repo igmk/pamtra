@@ -16,7 +16,7 @@ subroutine write_nc_results
   integer :: isVarID, jsVarID, lonVarID, latVarID, lfracVarID, iwvVarID, cwpVarID,&
        iwpVarID, rwpVarID, swpVarID, gwpVarID, hwpVarID, &
        tbVarID, heightVarID, &
-       ZeVarID, &
+       ZeVarID,rQualVarID, &
        AttAtmoVarID, AttHydroVarID,&
        lSloVarID,rSloVarID, kurtVarID, skewVarID, swVarID, velVarID,&
        frequencyVarID, anglesVarID, RadarVelID, RadarSpecID, RadarSNRID
@@ -180,16 +180,21 @@ subroutine write_nc_results
 	call check(nf90_put_att(ncid, skewVarID, "missing_value", -9999))   
 
 	call check(nf90_def_var(ncid,'Radar_Kurtosis', nf90_double,dim4d, kurtVarID))
-	call check(nf90_put_att(ncid, kurtVarID, "units", "dB"))
+	call check(nf90_put_att(ncid, kurtVarID, "units", "-"))
 	call check(nf90_put_att(ncid, kurtVarID, "missing_value", -9999))   
 
 	call check(nf90_def_var(ncid,'Radar_LeftSlope', nf90_double,dim4d, lSloVarID))
-	call check(nf90_put_att(ncid, lSloVarID, "units", "dB"))
+	call check(nf90_put_att(ncid, lSloVarID, "units", "dB/(m/s)"))
 	call check(nf90_put_att(ncid, lSloVarID, "missing_value", -9999))   
 
 	call check(nf90_def_var(ncid,'Radar_RightSlope', nf90_double,dim4d, rSloVarID))
-	call check(nf90_put_att(ncid, rSloVarID, "units", "dB"))
+	call check(nf90_put_att(ncid, rSloVarID, "units", "dB/(m/s)"))
 	call check(nf90_put_att(ncid, rSloVarID, "missing_value", -9999))   
+
+	call check(nf90_def_var(ncid,'Radar_Quality', nf90_int,dim4d, rQualVarID))
+	call check(nf90_put_att(ncid, rQualVarID, "units", "bytes"))
+	call check(nf90_put_att(ncid, rQualVarID, "description", "1st byte: aliasing; 2nd byte: 2nd peak present"))
+	call check(nf90_put_att(ncid, rQualVarID, "missing_value", -9999))   
 
 	if (radar_mode == "spectrum") then
 	  call check(nf90_def_var(ncid,'Radar_Velocity', nf90_double,(/dnfftID/), RadarVelID))
@@ -258,6 +263,8 @@ subroutine write_nc_results
           RESHAPE( radar_slope(:,:,:,:,2), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
         call check(nf90_put_var(ncid, RadarSNRID, &
           RESHAPE( radar_snr, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+       call check(nf90_put_var(ncid, rQualVarID, &
+          RESHAPE( radar_quality(:,:,:,:), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
 	if (radar_mode == "spectrum") then
 	  call check(nf90_put_var(ncid, RadarVelID, radar_vel))
 	  call check(nf90_put_var(ncid, RadarSpecID, &

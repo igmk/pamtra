@@ -35,6 +35,7 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
   real(kind=dbl), dimension(radar_no_Ave,radar_nfft):: noise_turb_spectra_tmp
   real(kind=dbl), dimension(radar_nfft):: noise_turb_spectra,&
       snr_turb_spectra,spectra_velo, turb_spectra_aliased, noise_removed_turb_spectra
+  integer::quality_2ndPeak, quailty_aliasing
   real(kind=dbl), dimension(:),allocatable:: turb_spectra
   real(kind=dbl), dimension(0:4):: moments  
   real(kind=dbl), dimension(2):: slope  
@@ -59,8 +60,6 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
     Ze(nx,ny,nz,fi) = 10*log10(Ze_back)
 
   else if ((radar_mode == "moments") .or. (radar_mode == "spectrum")) then
-
-
     !get delta velocity
     del_v = (radar_max_V-radar_min_V) / radar_nfft ![m/s]
     !create array from min_v to max_v iwth del_v spacing -> velocity spectrum of radar
@@ -118,6 +117,8 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
       stop
     end if
     
+    
+    quailty_aliasing = 0
     !lets look for aliasing effects. if we calculated radar_aliasing_nyquist_interv for a broader spectrum than necessary, fold it again:
     if (radar_aliasing_nyquist_interv > 0) then
       turb_spectra_aliased(:) = 0.d0
@@ -125,12 +126,25 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
 	!get indices
 	startI = ts_imin + (ii-1)*radar_nfft
 	stopI =  ts_imax -  (1+2*radar_aliasing_nyquist_interv - ii)*radar_nfft
+	if ((ii .ne. radar_aliasing_nyquist_interv + 1) &
+	      .and. (SUM(turb_spectra(startI:stopI)) .gt. 0.d0)) then
+	  quailty_aliasing = 1
+	end if
 	!appy aliasing
-	turb_spectra_aliased = turb_spectra_aliased + turb_spectra(startI:stopI)
+	turb_spectra_aliased = turb_spectra_aliased + turb_spectra(startI:stopI)	  
       end do
     else
       turb_spectra_aliased = turb_spectra(ts_imin:ts_imax)
     end if
+
+    if (verbose > 2) then
+      if (quailty_aliasing .ne. 0) then
+	print*, "radar quality: aliasing found"
+      else
+	print*, "radar quality: NO aliasing found"
+      end if
+    end if
+
 
     !get the SNR
     SNR = 10.d0*log10(Ze_back/radar_Pnoise)
@@ -171,7 +185,7 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
   end if
 
 
-  call radar_calc_moments(noise_turb_spectra,noise_removed_turb_spectra,moments,slope)
+  call radar_calc_moments(noise_turb_spectra,noise_removed_turb_spectra,moments,slope,quality_2ndPeak)
   if (verbose .gt. 3) then
     print*,"TOTAL"," Ze moments",10*log10(moments(0))
     print*,"#####################"
@@ -188,7 +202,7 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
     radar_vel(:) = spectra_velo(:)
     radar_moments(nx,ny,nz,fi,:) = moments(1:4)
     radar_slope(nx,ny,nz,fi,:) = slope(:)
-    radar_quality(nx,ny,nz,fi) = 0
+    radar_quality(nx,ny,nz,fi) = quailty_aliasing + quality_2ndPeak
     Ze(nx,ny,nz,fi) = 10*log10(moments(0))
 
 
