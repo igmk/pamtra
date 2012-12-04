@@ -12,7 +12,8 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
   use conversions
   use tmat_snow_db
   use tmat_rain_db
-  use vars_output, only: radar_spectra, radar_snr, radar_moments, radar_quality, radar_slope !output of the radar simulator for jacobian mode
+  use vars_output, only: radar_spectra, radar_snr, radar_moments,&
+	radar_quality, radar_slope, Ze, Att_hydro !output of the radar simulator for jacobian mode
 
   implicit none
 
@@ -148,12 +149,17 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
       back(nz) = backcw(nz) + backrr(nz) + backci(nz) + backsn(nz) + backgr(nz) + backha(nz)
 
   !short cut for the radar simulator: the ouput is taken directly from the final arrays at position 1,1.
-  if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
-    radar_spectra(nx,ny,nz,fi,:) = radar_spectra(1,1,nz,fi,:)
-    radar_snr(nx,ny,nz,fi) =   radar_snr(1,1,nz,fi)
-    radar_moments(nx,ny,nz,fi,:) = radar_moments(1,1,nz,fi,:)
-    radar_slope(nx,ny,nz,fi,:) =   radar_slope(1,1,nz,fi,:)
-    radar_quality(nx,ny,nz,fi) =   radar_quality(1,1,nz,fi)
+  if (active) then
+    Ze(nx,ny,nz,fi) = Ze(1,1,nz,fi)
+    Att_hydro(nx,ny,nz,fi) = Att_hydro(1,1,nz,fi)
+
+    if ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments")) then
+      radar_spectra(nx,ny,nz,fi,:) = radar_spectra(1,1,nz,fi,:)
+      radar_snr(nx,ny,nz,fi) =   radar_snr(1,1,nz,fi)
+      radar_moments(nx,ny,nz,fi,:) = radar_moments(1,1,nz,fi,:)
+      radar_slope(nx,ny,nz,fi,:) =   radar_slope(1,1,nz,fi,:)
+      radar_quality(nx,ny,nz,fi) =   radar_quality(1,1,nz,fi)
+    end if
   end if
 
       CYCLE
