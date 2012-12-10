@@ -47,6 +47,15 @@ subroutine radar_hildebrand_sekhon(spectrum,n_ave,n_ffts,noise_mean)
   integer :: n, i, numNs
 
 
+  interface
+    SUBROUTINE DSORT (DX, DY, N, KFLAG)
+      use kinds
+      implicit none
+      real(kind=dbl), dimension(N), intent(inout) :: DX, DY
+      integer, intent(in) :: N, KFLAG
+    END SUBROUTINE DSORT
+  end interface
+
   spectrum_sorted = spectrum
   dummy=0.d0
   call dsort(spectrum_sorted, dummy, n_ffts, 1)

@@ -193,7 +193,7 @@ subroutine write_nc_results
 
 	call check(nf90_def_var(ncid,'Radar_Quality', nf90_int,dim4d, rQualVarID))
 	call check(nf90_put_att(ncid, rQualVarID, "units", "bytes"))
-	call check(nf90_put_att(ncid, rQualVarID, "description", "1st byte: aliasing; 2nd byte: 2nd peak present"))
+	call check(nf90_put_att(ncid, rQualVarID, "description", "1st byte: aliasing; 2nd byte: 2nd peak present; 7th: no peak found"))
 	call check(nf90_put_att(ncid, rQualVarID, "missing_value", -9999))   
 
 	if (radar_mode == "spectrum") then
@@ -203,7 +203,7 @@ subroutine write_nc_results
 
 	  dim5d = (/dnfftID,dfrqID,dlayerID,dlatID,dlonID/)
 	  call check(nf90_def_var(ncid,'Radar_Spectrum', nf90_double,dim5d, RadarSpecID))
-	  call check(nf90_put_att(ncid, RadarSpecID, "units", "dB(z/(m/s))"))
+	  call check(nf90_put_att(ncid, RadarSpecID, "units", "dBz"))
 	  call check(nf90_put_att(ncid, RadarSpecID, "missing_value", -9999))
  
       end if 

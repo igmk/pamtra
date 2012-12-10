@@ -172,6 +172,7 @@ class pyPamtra(object):
     self.nmlSet["radar_simulator"]["radar_aliasing_nyquist_interv"] = 0
     self.nmlSet["radar_simulator"]["radar_save_noise_corrected_spectra"] = False
     self.nmlSet["radar_simulator"]["radar_use_hildebrand"] = False
+    self.nmlSet["radar_simulator"]["radar_min_spectral_snr"] = 1.2
     #all settings which do not go into the nml file go here:
     self.set = dict()
     self.set["pyVerbose"] = 0
@@ -1568,7 +1569,7 @@ class pyPamtra(object):
 
 	nc_qual=cdfFile.createVariable('Radar_Quality', 'i',dim4d,**fillVDict)
 	nc_qual.units="bytes"
-	nc_qual.description="1st byte: aliasing; 2nd byte: 2nd peak present"
+	nc_qual.description="1st byte: aliasing; 2nd byte: 2nd peak present; 7th: no peak found"
 	nc_qual[:] = np.array(self.r["radar_quality"],dtype='i')
 	if not pyNc: nc_qual._FillValue =missingNumber
 	
@@ -1581,7 +1582,7 @@ class pyPamtra(object):
 	  if not pyNc: nc_vel._FillValue =missingNumber
 	  
 	  nc_spec=cdfFile.createVariable('Radar_Spectrum', 'f',dim5d,**fillVDict)
-	  nc_spec.units="dB"
+	  nc_spec.units="dBz"
 	  nc_spec[:] = np.array(self.r["radar_spectra"],dtype='f')
 	  if not pyNc: nc_spec._FillValue =missingNumber
 	  

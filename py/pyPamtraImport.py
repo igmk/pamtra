@@ -86,8 +86,6 @@ def readWrfDataset(fname,kind):
 
 	
 def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp/",fnameInTar="",concatenateAxis=1,debug=False,verbosity=0):
-	import netCDF4
-	
 	'''
 	import wrf Dataset with fname of kind 
 	
@@ -99,6 +97,7 @@ def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp
 	concatenateAxis: axis to concatenate the grids
 	debug: stop and load debugger on exception
 	'''
+	import netCDF4
 	
 	if kind not in ["collum"]:
 		raise TypeError("unknown Cosmo DE data type")

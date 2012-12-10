@@ -187,7 +187,25 @@ character(300),intent(in) :: set_namelist_file
 ! 		set_sd_cloud, set_sd_ice, set_em_ice, set_sd_rain, set_n_0raind, set_sd_snow, set_n_0snowdsnow, set_em_snow, set_snow_density, set_sp, set_isnow_n0, set_liu_type, set_sd_grau, set_n_0graudgrau, set_em_grau, set_graupel_density, set_sd_hail, set_n_0haildhail, set_em_hail, set_hail_density,
 
 
+  interface
+    subroutine versionNumber(gitVersion,gitHash)
+      implicit none
+      character(40), intent(out) ::gitVersion,gitHash
+    end subroutine versionNumber
 
+    subroutine allocate_output_vars(no_allocated_lyrs)
+      implicit none
+      integer, intent(in) :: no_allocated_lyrs
+    end  subroutine allocate_output_vars
+
+    subroutine run_rt(nx,ny,fi,freq,frq_str)
+      use kinds
+      implicit none
+      integer, intent(in) :: nx,ny,fi 
+      real(kind=dbl), intent(in) :: freq ! frequency [GHz]
+      character(8), intent(in) :: frq_str !from commandline
+    end subroutine run_rt
+  end interface
 
 
 

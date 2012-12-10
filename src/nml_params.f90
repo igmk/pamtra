@@ -46,6 +46,7 @@ module nml_params
   real(kind=dbl) :: radar_airmotion_vmin
   real(kind=dbl) :: radar_airmotion_vmax
   real(kind=dbl) :: radar_airmotion_step_vmin
+  real(kind=dbl) :: radar_min_spectral_snr !threshold for peak detection
 
   logical ::  in_python !are we in python
 
@@ -110,7 +111,7 @@ contains
 	       radar_airmotion_vmin, radar_airmotion_vmax, radar_airmotion_linear_steps, &
 	       radar_airmotion_step_vmin, radar_fallVel_cloud, radar_fallVel_rain, radar_fallVel_ice,&
 	       radar_fallVel_snow, radar_fallVel_graupel, radar_fallVel_hail, radar_aliasing_nyquist_interv, &
-	       radar_save_noise_corrected_spectra, radar_use_hildebrand
+	       radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr
 
     !set namelist defaults!
     ! sec verbose_mode
@@ -216,6 +217,7 @@ contains
     radar_aliasing_nyquist_interv = 1
     radar_save_noise_corrected_spectra = .false.
     radar_use_hildebrand = .false.
+    radar_min_spectral_snr = 1.2!threshold for peak detection. if radar_no_Ave >> 150, it can be set to 1.1
 
     ! read name list parameter file
     open(7, file=namelist_file,delim='APOSTROPHE')
@@ -249,6 +251,10 @@ contains
     read(7,nml=radar_simulator)
 
     close(7)
+
+!test some variables
+  if (MOD(radar_nfft, 2) == 1) STOP "radar_nfft has to be even!"
+
 
 !mix some variables to make new ones:
   radar_nfft_aliased = radar_nfft *(1+2*radar_aliasing_nyquist_interv)

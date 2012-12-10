@@ -34,6 +34,35 @@ subroutine rescale_spectra(nx1,nx2,sort,x1,y1,x2,y2)
   real(kind=dbl), dimension(nx1+nx2+1) :: y12,y12_sorted
   real(kind=dbl), dimension(nx2+1) :: y2_interp
 
+
+  interface
+    subroutine dsort (dx, dy, n, kflag)
+      use kinds
+      implicit none
+      real(kind=dbl), dimension(n), intent(inout) :: dx, dy
+      integer, intent(in) :: n, kflag
+    end subroutine dsort
+
+    subroutine interpolate_spectra(nx1,nx2,x1,y1,x2,y2)
+      use kinds
+      implicit none
+      integer, intent(in) :: nx1,nx2
+      real(kind=dbl), intent(in), dimension(nx1) :: x1,y1
+      real(kind=dbl), intent(in), dimension(nx2) :: x2
+      real(kind=dbl), intent(out), dimension(nx2) :: y2
+    end subroutine interpolate_spectra
+
+    subroutine average_spectra(nx12,nx2,x12_sorted,y12_sorted,x2,y_result)
+      use kinds
+      implicit none
+      integer, intent(in) :: nx12,nx2
+      real(kind=dbl), intent(in), dimension(nx12) :: x12_sorted,y12_sorted
+      real(kind=dbl), intent(in), dimension(nx2) :: x2
+      real(kind=dbl), intent(out), dimension(nx2-1) :: y_result
+    end subroutine average_spectra
+  end interface
+
+
   x1_sorted = x1
   y1_sorted = y1
 
@@ -82,6 +111,14 @@ subroutine average_spectra(nx12,nx2,x12_sorted,y12_sorted,x2,y_result)
   real(kind=dbl), intent(out), dimension(nx2-1) :: y_result
 
   integer :: ii,jj1,jj2
+
+  interface
+    SUBROUTINE locate (xx, n, x, j) 
+      use kinds                                                                 
+      INTEGER j, n 
+      REAL(kind=dbl) x, xx (n) 
+    end SUBROUTINE locate 
+  end interface
 
   if (verbose .gt. 1) print*, 'entering rescale_spectra averaging'
 

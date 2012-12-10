@@ -43,6 +43,40 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
       min_V_aliased, max_V_aliased
   integer :: ii, tt, turbLen,alloc_status,ts_imin, ts_imax, startI, stopI
 
+
+  interface
+    subroutine convolution(X,M,A,N,Y)
+      use kinds
+      implicit none
+      INTEGER, intent(in) :: M  ! Size of input vector X
+      INTEGER, intent(in) :: N   ! Size of convolution filter A
+      REAL(kind=dbl), intent(in), DIMENSION(M) :: X
+      REAL(kind=dbl), intent(in), DIMENSION(N) :: A
+      REAL(kind=dbl), intent(out), DIMENSION(M+N-1) :: Y
+    end subroutine convolution    
+
+    subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope,quality)
+      use kinds
+      use nml_params, only: radar_nfft
+      implicit none
+      real(kind=dbl), dimension(radar_nfft), intent(in):: radar_spectrum_in
+      real(kind=dbl), dimension(radar_nfft), intent(out):: radar_spectrum_out
+      real(kind=dbl), dimension(0:4), intent(out):: moments  
+      real(kind=dbl), dimension(2), intent(out):: slope  
+      integer, intent(out) :: quality
+      end subroutine radar_calc_moments    
+
+    subroutine random(n, pseudo, x_noise)
+      use kinds
+      implicit none
+      integer, intent(in) :: n
+      logical, intent(in) :: pseudo
+      real(kind=dbl), intent(out), dimension(n) :: x_noise
+    end subroutine random
+  
+  end interface
+
+
   if (verbose .gt. 1) print*, 'Entering radar_simulator.f90'
 
   ! get |K|**2 and lambda
@@ -148,29 +182,34 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
 
     !get the SNR
     SNR = 10.d0*log10(Ze_back/radar_Pnoise)
-
     !this here is for scaling, if we have now a wrong Ze due to all the turbulence, rescaling etc...
     K = (Ze_back/SUM(turb_spectra_aliased*del_v))
     snr_turb_spectra = (K* turb_spectra_aliased + radar_Pnoise/(radar_nfft*del_v))
   !   snr_turb_spectra =turb_spectra_aliased + radar_Pnoise/(radar_nfft*del_v)
 
-    !init_random_seed works with system clock, so if called very often it creates the same random numbers. Thus, create a big one now
-    call init_random_seed()
-    call RANDOM_NUMBER(x_noise)
 
-    do tt = 1, radar_no_Ave
-      noise_turb_spectra_tmp(tt,:) = -log(x_noise((tt-1)*radar_nfft+1:tt*radar_nfft))*snr_turb_spectra
-    end do
 
-    
-    if (radar_no_Ave .eq. 1) then
-      noise_turb_spectra = noise_turb_spectra_tmp(1,:)
+    if (radar_no_Ave .eq. 0) then !0 means infinity-> no noise
+      noise_turb_spectra = snr_turb_spectra
     else
-      noise_turb_spectra = SUM(noise_turb_spectra_tmp,DIM=1)/radar_no_Ave
+
+      !get noise. if jacobian_mode, random number generator is always initiated with the same number
+      if (verbose > 2) print*, "get noise"
+      call random(radar_no_Ave*radar_nfft,jacobian_mode,x_noise)
+      
+      do tt = 1, radar_no_Ave
+	noise_turb_spectra_tmp(tt,:) = -log(x_noise((tt-1)*radar_nfft+1:tt*radar_nfft))*snr_turb_spectra
+      end do
+
+      if (radar_no_Ave .eq. 1) then
+	noise_turb_spectra = noise_turb_spectra_tmp(1,:)
+      else
+	noise_turb_spectra = SUM(noise_turb_spectra_tmp,DIM=1)/radar_no_Ave
+      end if
     end if
 
   !apply spectral resolution
-  noise_turb_spectra = noise_turb_spectra * del_v
+  noise_turb_spectra = noise_turb_spectra * del_v !now [mm⁶/m³]
 
   if (verbose .gt. 3) then
     print*,"second K",K
@@ -196,6 +235,9 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
 
     !if wanted, apply the noise correction to the spectrum to be saved.
     if (radar_save_noise_corrected_spectra) noise_turb_spectra = noise_removed_turb_spectra
+
+    WHERE (ISNAN(noise_turb_spectra)) noise_turb_spectra = -9999.d0
+    IF (ISNAN(moments(0))) moments(0) = -9999.d0
 
     radar_spectra(nx,ny,nz,fi,:) = 10*log10(noise_turb_spectra)
     radar_snr(nx,ny,nz,fi) = SNR

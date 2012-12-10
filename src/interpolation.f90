@@ -13,6 +13,15 @@ subroutine interpolation(nx1,nx2,x1,y1,x2,y2)
   real(kind=dbl), intent(in), dimension(nx2) :: x2
   real(kind=dbl), intent(out), dimension(nx2) :: y2
 
+  interface
+    SUBROUTINE locate (xx, n, x, j) 
+      use kinds                                                                 
+      INTEGER j, n 
+      REAL(kind=dbl) x, xx (n) 
+    end SUBROUTINE locate 
+  end interface
+
+
   if (verbose .gt. 1) print*, 'entering interpolation'
 
   ix2 = 0

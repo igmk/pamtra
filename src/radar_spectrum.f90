@@ -42,7 +42,89 @@ subroutine radar_spectrum(nbins,diameter_spec, back,back_spec,&
 	min_V_aliased, max_V_aliased
   integer :: ii, jj
 
+  interface
+    subroutine dia2vel_khvorostyanov01_particles(nDia,diaSpec_SI,rho_air_SI,my_SI,&
+		  mass_size_a_SI,mass_size_b,area_size_a_SI,area_size_b,velSpec)
+      use kinds
+      implicit none
+      integer, intent(in) :: nDia
+      real(kind=dbl), intent(in), dimension(ndia)::diaSpec_SI
+      real(kind=dbl), intent(in) :: rho_air_SI, my_SI,mass_size_a_SI,mass_size_b,&
+	      area_size_a_SI,area_size_b
+      real(kind=dbl), dimension(ndia), intent(out) :: velSpec      
+    end subroutine dia2vel_khvorostyanov01_particles
 
+    subroutine dia2vel_khvorostyanov01_spheres(nDia,diaSpec,rho_air,my,rho_particle,velSpec)
+      use kinds
+      implicit none
+      integer, intent(in) :: nDia
+      real(kind=dbl), intent(in), dimension(ndia)::diaSpec, rho_particle
+      real(kind=dbl), intent(in) :: rho_air, my
+      real(kind=dbl), dimension(ndia), intent(out) :: velSpec      
+    end subroutine dia2vel_khvorostyanov01_spheres
+
+    subroutine dia2vel_khvorostyanov01_drops(nDia,diaSpec,rho_air,my,velSpec)
+      use kinds
+      implicit none
+      integer, intent(in) :: nDia
+      real(kind=dbl), intent(in), dimension(ndia)::diaSpec
+      real(kind=dbl), intent(in) :: rho_air, my
+      real(kind=dbl), dimension(ndia), intent(out) :: velSpec      
+    end subroutine dia2vel_khvorostyanov01_drops
+
+    subroutine dia2vel_foote69_rain(nDia,diaSpec,rho_air,temp,velSpec)
+      use kinds
+      implicit none
+      integer, intent(in) :: nDia
+      real(kind=dbl), intent(in), dimension(ndia)::diaSpec
+      real(kind=dbl), intent(in) :: rho_air, temp
+      real(kind=dbl), dimension(ndia), intent(out) :: velSpec      
+    end subroutine dia2vel_foote69_rain
+
+    subroutine dia2vel_pavlos_cloud(nDia,diaSpec,velSpec)
+      use kinds
+      implicit none
+      integer, intent(in) :: nDia
+      real(kind=dbl), intent(in), dimension(ndia)::diaSpec
+      real(kind=dbl), dimension(ndia), intent(out) :: velSpec      
+    end subroutine dia2vel_pavlos_cloud
+
+    subroutine dia2vel_metek_rain(nDia,diaSpec,rho_air,temp,velSpec)
+      use kinds
+      implicit none
+      integer, intent(in) :: nDia
+      real(kind=dbl), intent(in), dimension(ndia)::diaSpec
+      real(kind=dbl), intent(in) :: rho_air, temp
+      real(kind=dbl), dimension(ndia), intent(out) :: velSpec      
+    end subroutine dia2vel_metek_rain
+
+    subroutine dia2vel_rogers_drops(nDia,diaSpec,rho_air,velSpec)
+      use kinds
+      implicit none
+      integer, intent(in) :: nDia
+      real(kind=dbl), intent(in), dimension(ndia)::diaSpec
+      real(kind=dbl), intent(in) :: rho_air
+      real(kind=dbl), dimension(ndia), intent(out) :: velSpec
+    end subroutine dia2vel_rogers_drops
+
+    subroutine dia2vel_rogers_graupel(nDia,diaSpec,velSpec)
+      use kinds
+      implicit none
+      integer, intent(in) :: nDia
+      real(kind=dbl), intent(in), dimension(ndia)::diaSpec
+      real(kind=dbl), dimension(ndia), intent(out) :: velSpec      
+    end subroutine dia2vel_rogers_graupel
+
+    subroutine rescale_spectra(nx1,nx2,sort,x1,y1,x2,y2)
+      use kinds
+      implicit none
+      integer, intent(in) :: nx1,nx2
+      real(kind=dbl), intent(in), dimension(nx1) :: x1,y1
+      real(kind=dbl), intent(in), dimension(nx2) :: x2
+      real(kind=dbl), intent(out), dimension(nx2) :: y2
+      logical, intent(in) :: sort
+    end subroutine rescale_spectra
+  end interface
   
 
   if (verbose .gt. 1) print*, 'Entering radar_spectrum.f90, particle type: ', particle_type
@@ -62,7 +144,7 @@ subroutine radar_spectrum(nbins,diameter_spec, back,back_spec,&
     if (verbose .gt. 3) print*, 'using: ', radar_fallVel_cloud, 'to calculate fall velocity for cloud'
     if (radar_fallVel_cloud .eq. "khvorostyanov01_spheres") then
       rho_particle(:) = rho_water
-      call dia2vel_khvorostyanov01_spheres(nbins,diameter_spec_cp,rho,my,vel_spec)
+      call dia2vel_khvorostyanov01_spheres(nbins,diameter_spec_cp,rho,my,rho_particle,vel_spec)
     else if (radar_fallVel_cloud .eq. "khvorostyanov01_drops") then
       call dia2vel_khvorostyanov01_drops(nbins,diameter_spec_cp,rho,my,vel_spec)
     else if (radar_fallVel_cloud .eq. "rogers_drops") then

@@ -98,7 +98,6 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
 
   !jacobian mode take profile 1,1 as a reference, all other are compared to this one
 
-
   if (jacobian_mode .and. ((nx .ne. 1) .or. (ny .ne. 1))) then
     !check whether profil is the same as in the one of ny=1, nx=1
     !make boolean
