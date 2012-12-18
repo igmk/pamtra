@@ -12,6 +12,7 @@ import traceback
 import os
 import random
 import string
+import itertools
 from copy import deepcopy
 from collections import OrderedDict
 
@@ -178,8 +179,8 @@ class pyPamtra(object):
     self.set["pyVerbose"] = 0
     self.set["freqs"] = []
     self.set["nfreqs"] = 0
-    self.set["namelist_file"] = os.getenv("HOME")+"/pyPamtra_namelist_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nml.tmp"
-        
+    self.set["namelist_file"] = "TMPFILE"
+    
     self._nmlDefaultKeys = list()
     for keyGr in self.nmlSet.keys()  :  
       for key in self.nmlSet[keyGr].keys():
@@ -950,7 +951,7 @@ class pyPamtra(object):
 
     
     
-  def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0):
+  def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto"):
     '''
     run Pamtra analouge to runPamtra, but with with parallel python
     
@@ -960,6 +961,7 @@ class pyPamtra(object):
     pp_servers: tuple with servers, ("*") activates auto detection
     pp_local_workers: number of local workers, "auto" is usually amount of cores
     pp_deltaF,pp_deltaX,pp_deltaY: length of the peaces in frequency,x and y direction. 0 means no slicing
+    activeFreqs, passiveFreqs: if not "auto", run_mode active/passive is set according to frequenccies found here. Can speed up calculations, if radar AND radiometer are simulated.
     
     In my experience, smaller pieces (e.g. pp_deltaF=0,pp_deltaX=1,pp_deltaY=1) work much better than bigger ones, even though overhead might be bigger.
     
@@ -970,13 +972,13 @@ class pyPamtra(object):
     self._checkData()
         
     #if the namelist file is empty, write it. Otherwise existing one is used.
-    if not os.path.isfile(self.set["namelist_file"]):
-      self.writeNmlFile(self.set["namelist_file"])
-    else: 
-      if self.set["namelist_file"].split(".")[-1] == "tmp": 
-        raise ValueError("Namelitsfile "+ self.set["namelist_file"] +" ends with .tmp, but is existing already")
-      elif self.set["pyVerbose"] > 0:
-        print("NOT writing temporary nml file to run pamtra using exisiting nml file instead: "+self.set["namelist_file"])
+    #if not os.path.isfile(self.set["namelist_file"]):
+      #self.writeNmlFile(self.set["namelist_file"])
+    #else: 
+      #if self.set["namelist_file"].split(".")[-1] == "tmp": 
+        #raise ValueError("Namelitsfile "+ self.set["namelist_file"] +" ends with .tmp, but is existing already")
+      #elif self.set["pyVerbose"] > 0:
+        #print("NOT writing temporary nml file to run pamtra using exisiting nml file instead: "+self.set["namelist_file"])
 
     if pp_local_workers == "auto":
       self.job_server = pp.Server(ppservers=pp_servers,secret="pyPamtra") 
@@ -1054,8 +1056,25 @@ class pyPamtra(object):
           pp_ngridy = pp_endY - pp_startY
           
           pp_ii+=1
+          
+          #if activeFreqs or passiveFreqs is given, change runMode accordingly!
+          ii_nmlSet = deepcopy(self.nmlSet)
+          subFreqs = set(self.set["freqs"][pp_startF:pp_endF])
+          if activeFreqs != "auto":
+	    if len(subFreqs.intersection(activeFreqs)) > 0:
+	      ii_nmlSet["run_mode"]["active"] = True
+	    else:
+	      ii_nmlSet["run_mode"]["active"] = False
+          if passiveFreqs != "auto":
+	    if len(subFreqs.intersection(passiveFreqs)) > 0:
+	      ii_nmlSet["run_mode"]["passive"] = True
+	    else:
+	      ii_nmlSet["run_mode"]["passive"] = False
+
           pp_jobs[pp_ii] = self.job_server.submit(pyPamtraLibWrapper.PamtraFortranWrapper, (
           #self.set
+          ii_nmlSet,
+          self._nmlDefaultValues,
           self.set["namelist_file"],
           #input
           pp_ngridx,
@@ -1090,7 +1109,9 @@ class pyPamtra(object):
           self.p["swc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
           self.p["gwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
           self.p["hwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist()
-          ),tuple(), ("pyPamtraLibWrapper","pyPamtraLib","os","logging"),callback=self._ppCallback,
+          ),tuple(), 
+          ("pyPamtraLibWrapper","pyPamtraLib","os","logging","collections","numpy","string","random"),
+          callback=self._ppCallback,
           callbackargs=(pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii,))
           
           #res = pyPamtraLibWrapper.PamtraFortranWrapper(
@@ -1153,7 +1174,7 @@ class pyPamtra(object):
     del self.job_server
     
     #remove temporary nml file
-    if self.set["namelist_file"].split(".")[-1] == "tmp": os.remove(self.set["namelist_file"])
+    #if self.set["namelist_file"].split(".")[-1] == "tmp": os.remove(self.set["namelist_file"])
     
     if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
   
@@ -1230,13 +1251,13 @@ class pyPamtra(object):
     
     self._checkData()
 
-    if not os.path.isfile(self.set["namelist_file"]):
-      self.writeNmlFile(self.set["namelist_file"])
-    else: 
-      if self.set["namelist_file"].split(".")[-1] == "tmp": 
-        raise ValueError("Namelitsfile "+ self.set["namelist_file"] +" ends with .tmp, but is existing already")
-      elif self.set["pyVerbose"] > 0:
-        print("NOT writing temporary nml file to run pamtra using exisiting nml file instead: "+self.set["namelist_file"])
+    #if not os.path.isfile(self.set["namelist_file"]):
+      #self.writeNmlFile(self.set["namelist_file"])
+    #else: 
+      #if self.set["namelist_file"].split(".")[-1] == "tmp": 
+        #raise ValueError("Namelitsfile "+ self.set["namelist_file"] +" ends with .tmp, but is existing already")
+      #elif self.set["pyVerbose"] > 0:
+        #print("NOT writing temporary nml file to run pamtra using exisiting nml file instead: "+self.set["namelist_file"])
 
     try:
       #output
@@ -1270,6 +1291,8 @@ class pyPamtra(object):
       ), host = \
       pyPamtraLibWrapper.PamtraFortranWrapper(
       #self.set
+      self.nmlSet,
+      self._nmlDefaultValues,
       self.set["namelist_file"],
       #input
       self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.p["nlyrs"],self.set["nfreqs"],self.set["freqs"],
@@ -1282,7 +1305,8 @@ class pyPamtra(object):
     finally:
       #remove temporary nml file
       #does not work, since fortran exceptions cannot be caught...
-      if self.set["namelist_file"].split(".")[-1] == "tmp": os.remove(self.set["namelist_file"])
+      #if self.set["namelist_file"].split(".")[-1] == "tmp": os.remove(self.set["namelist_file"])
+      pass
       
     self.r["nmlSettings"] = self.nmlSet
     self.r["pamtraVersion"] = self.r["pamtraVersion"].strip()
@@ -1587,7 +1611,7 @@ class pyPamtra(object):
 	  if not pyNc: nc_spec._FillValue =missingNumber
 	  
       else: 
-	raise("Do not kn ow radar_mode")
+	raise("Do not know radar_mode")
     
     if (self.r["nmlSettings"]["run_mode"]["passive"]):
       nc_tb = cdfFile.createVariable('tb', 'f',dim6d,**fillVDict)

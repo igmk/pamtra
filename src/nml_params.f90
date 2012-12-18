@@ -63,7 +63,8 @@ module nml_params
        jacobian_mode, &  ! special jacobian mode which does not calculate the whole scattering properties each time. only rt4!
        radar_airmotion, &   ! apply vertical air motion
        radar_save_noise_corrected_spectra, & !remove the noise from the calculated spectrum again (for testing) 
-       radar_use_hildebrand  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise) we can skip that.
+       radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise) we can skip that.
+       radar_convolution_fft !use fft for convolution of spectrum
 
   character(5) :: EM_ice, EM_snow, EM_grau, EM_hail, EM_cloud, EM_rain
   character(1) :: SD_cloud, SD_ice, SD_rain, SD_snow, SD_grau, SD_hail
@@ -111,7 +112,7 @@ contains
 	       radar_airmotion_vmin, radar_airmotion_vmax, radar_airmotion_linear_steps, &
 	       radar_airmotion_step_vmin, radar_fallVel_cloud, radar_fallVel_rain, radar_fallVel_ice,&
 	       radar_fallVel_snow, radar_fallVel_graupel, radar_fallVel_hail, radar_aliasing_nyquist_interv, &
-	       radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr
+	       radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr, radar_convolution_fft
 
     !set namelist defaults!
     ! sec verbose_mode
@@ -218,6 +219,7 @@ contains
     radar_save_noise_corrected_spectra = .false.
     radar_use_hildebrand = .false.
     radar_min_spectral_snr = 1.2!threshold for peak detection. if radar_no_Ave >> 150, it can be set to 1.1
+    radar_convolution_fft = .true. !use fft for convolution of spectrum. is alomst 10 times faster, but can introduce aretfacts for radars with *extremely* low noise levels or if noise is turned off at all. 
 
     ! read name list parameter file
     open(7, file=namelist_file,delim='APOSTROPHE')
@@ -282,7 +284,8 @@ contains
     print*, "radar_simulator ",  radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
 	       radar_turbulence_st, radar_pnoise, radar_airmotion, radar_airmotion_model, &
 	       radar_airmotion_vmin, radar_airmotion_vmax, radar_airmotion_linear_steps, &
-	       radar_airmotion_step_vmin, radar_save_noise_corrected_spectra, radar_use_hildebrand
+	       radar_airmotion_step_vmin, radar_save_noise_corrected_spectra, radar_use_hildebrand,&
+	       radar_convolution_fft
 
   end if
 

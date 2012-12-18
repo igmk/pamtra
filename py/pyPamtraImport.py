@@ -184,7 +184,6 @@ def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp
 	    del time1h, longitude, latitude, fr_land, hhl, hfl
 	    
 	    
-	    
 	    if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
 		  data = deepcopy(dataSingle)
 	    else:

@@ -27,8 +27,6 @@ t.readNmlFile("../test/nmls/test"+testNo+".nml")
 t.set["verbose"]=0
 t.set["pyVerbose"]=1
 
-
-
 if testNo == "1":
 
 	pp_servers=()

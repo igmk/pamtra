@@ -49,6 +49,18 @@ SUBROUTINE SMOOTH_SAVITZKY_GOLAY(dataIn,length,dataOut)
   real(kind=dbl), dimension(window+length-1) :: dataExt
   integer :: half_window
 
+  interface
+    subroutine convolution(X,M,A,N,Y)
+      use kinds
+      implicit none
+      INTEGER, intent(in) :: M  ! Size of input vector X
+      INTEGER, intent(in) :: N   ! Size of convolution filter A
+      REAL(kind=dbl), intent(in), DIMENSION(M) :: X
+      REAL(kind=dbl), intent(in), DIMENSION(N) :: A
+      REAL(kind=dbl), intent(out), DIMENSION(M+N-1) :: Y
+    end subroutine convolution
+  end interface
+
 ! coefficients, gained from http://www.scipy.org/Cookbook/SavitzkyGolay
   m = (/ -0.0952381d0 ,  0.14285714d0,  0.28571429d0,  0.33333333d0, &
         0.28571429d0, 0.14285714d0, -0.0952381d0 /)

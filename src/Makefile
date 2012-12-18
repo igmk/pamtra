@@ -8,17 +8,17 @@ gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 FC=gfortran
 CC=gcc
-FCFLAGS=-c -fPIC -Wuninitialized
+FCFLAGS=-c -fPIC -Wuninitialized -O2
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran
 	NCFLAGS=-I/opt/local/include/ 
 	NCFLAGS_F2PY=-I/opt/local/include/ 
-	LFLAGS=-L/opt/local/lib/ -llapack
+	LFLAGS=-L/opt/local/lib/ -llapack -ldfftpack
 	LDFLAGS=-lnetcdf -lnetcdff 
 else
-	NCFLAGS :=  $(shell nc-config --fflags)
+	NCFLAGS :=  $(shell nc-config --fflags)  -O2
 	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
-	LFLAGS := -llapack
+	LFLAGS := -llapack -ldfftpack
 	LDFLAGS := $(shell nc-config --flibs)
 endif
 
@@ -28,32 +28,114 @@ endif
 #-	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm -lsz
 
 
-OBJECTS=kinds.o constants.o file_mod.o nml_params.o mod_fastem4_coef.o conversions.o double_moments_module.o cosmo_netcdf.o  vars_profile.o \
-	vars_atmosphere.o mod_io_strings.o getopt.o parse_options.o radmat.o convolution.o\
-	get_atmosphere.o vars_output.o run_rt.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o \
-	scat_utilities.o dsd_utilities.o mpm93.o get_atmosG0.o get_atmosG.o mie.o mie_densitydep_spheremasseq.o\
-	mie_spec.o radar_spectrum.o radar_simulator.o deallocate_jacobian_vars.o allocate_jacobian_vars.o\
-	slant_profile.o allocate_profile_vars.o allocate_output_vars.o rosen98_gasabs.o surface.o eps_water.o eps_ice.o eps_mix.o \
-	equcom.o land_emis.o equare.o scatdb.o dda_db_liu.o dielec_water.o ref_water.o ref_ice.o  \
-	e_sat_gg_water.o spec2abs.o interpolation.o  rescale_spectra.o deallocate_profile_vars.o deallocate_output_vars.o \
-	hydrometeor_extinction_rt3.o cloud_ssp.o ice_ssp.o rain_ssp.o snow_ssp.o grau_ssp.o hail_ssp.o legendre2phasefunction.o \
-	collect_output.o save_active.o fastem4.o specular_surface.o error_msg.o\
-	get_scat_coefs.o dump_profile.o collect_boundary_output.o random.o \
-	rt4.o radtran4.o radintg4.o radscat4.o tmat_rain_db.o tmat_snow_db.o hydrometeor_extinction_rt4.o scatcnv.o \
-	tmatrix_rain.o tmatrix_snow.o matrix_cal.o tmatrix_cal.o lpd.o get_scat_mat.o \
-	mass_size_rel.o refractive_index.o avint.o dsort.o rho_air.o viscosity_air.o\
-	versionNumber.auto.o dia2vel.o smooth_savitzky_golay.o radar_calc_moments.o \
-	radar_hildebrand_sekhon.o
-
-pamtraOBJECTS=formatted_frqstr.o write_nc_results.o 
+OBJECTS=kinds.o \
+	constants.o \
+	file_mod.o \
+	nml_params.o \
+	mod_fastem4_coef.o \
+	conversions.o \
+	double_moments_module.o \
+	cosmo_netcdf.o \
+	vars_profile.o \
+	vars_atmosphere.o \
+	mod_io_strings.o \
+	getopt.o \
+	parse_options.o \
+	radmat.o \
+	convolution.o\
+	get_atmosphere.o \
+	vars_output.o \
+	run_rt.o \
+	rt3.o \
+	radtran3.o \
+	radutil3.o \
+	radscat3.o \
+	radintg3.o \
+	scat_utilities.o \
+	dsd_utilities.o \
+	mpm93.o \
+	get_atmosG0.o \
+	get_atmosG.o \
+	mie.o \
+	mie_densitydep_spheremasseq.o\
+	radar_spectrum.o \
+	radar_simulator.o \
+	deallocate_jacobian_vars.o \
+	allocate_jacobian_vars.o\
+	slant_profile.o \
+	allocate_profile_vars.o \
+	allocate_output_vars.o \
+	rosen98_gasabs.o \
+	surface.o \
+	eps_water.o \
+	eps_ice.o \
+	eps_mix.o \
+	equcom.o \
+	land_emis.o \
+	equare.o \
+	scatdb.o \
+	dda_db_liu.o \
+	dielec_water.o \
+	ref_water.o \
+	ref_ice.o \
+	e_sat_gg_water.o \
+	spec2abs.o \
+	interpolation.o \
+	rescale_spectra.o \
+	deallocate_profile_vars.o \
+	deallocate_output_vars.o \
+	hydrometeor_extinction_rt3.o \
+	cloud_ssp.o \
+	ice_ssp.o \
+	rain_ssp.o \
+	snow_ssp.o \
+	grau_ssp.o \
+	hail_ssp.o \
+	legendre2phasefunction.o \
+	collect_output.o \
+	save_active.o \
+	fastem4.o \
+	specular_surface.o \
+	error_msg.o\
+	get_scat_coefs.o \
+	dump_profile.o \
+	collect_boundary_output.o \
+	random.o \
+	rt4.o \
+	radtran4.o \
+	radintg4.o \
+	radscat4.o \
+	tmat_rain_db.o \
+	tmat_snow_db.o \
+	hydrometeor_extinction_rt4.o \
+	scatcnv.o \
+	tmatrix_rain.o \
+	tmatrix_snow.o \
+	matrix_cal.o \
+	tmatrix_cal.o \
+	lpd.o \
+	get_scat_mat.o \
+	mass_size_rel.o \
+	refractive_index.o \
+	avint.o \
+	dsort.o \
+	rho_air.o \
+	viscosity_air.o\
+	versionNumber.auto.o \
+	dia2vel.o \
+	smooth_savitzky_golay.o \
+	radar_calc_moments.o \
+	radar_hildebrand_sekhon.o \
+	formatted_frqstr.o \
+	write_nc_results.o 
 
 BIN=pamtra
 
 all: precompile pamtra py
 
 
-pamtra: pamtra.f90 $(OBJECTS) $(pamtraOBJECTS)
-	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(pamtraOBJECTS) $(LFLAGS) $(LDFLAGS) 
+pamtra: pamtra.f90 $(OBJECTS)
+	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS) 
 	mv $(BIN) ../
 
 
@@ -79,7 +161,10 @@ pamtraProfile: 	pamtra
 
 pyProfile: NCFLAGS_F2PY += -DF2PY_REPORT_ATEXIT
 pyProfile: 	py
-
+	@echo ""
+	@echo "####################################################################################"
+	@echo "performance report displayed at exit of python"
+	@echo "####################################################################################"
 pyDebug: NCFLAGS_F2PY += --debug-capi
 pyDebug: 	py
 	@echo ""
@@ -111,12 +196,12 @@ pyprecompile:
 	@echo ""
 	f2py -m pyPamtraLib -h pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90
 
-py: pyPamtraLib.f90 precompile $(OBJECTS) $(pamtraOBJECTS)
-	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS)  -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) $(pamtraOBJECTS) pyPamtraLib.f90 
+py: pyPamtraLib.f90 precompile $(OBJECTS)
+	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS)  -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ../py/
 
-pyNode: pyPamtraLib.f90 $(OBJECTS)  $(pamtraOBJECTS)
-	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS)  -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) $(pamtraOBJECTS) pyPamtraLib.f90 
+pyNode: pyPamtraLib.f90 $(OBJECTS) 
+	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS)  -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ../py/
 
 pyinstall:
@@ -136,7 +221,7 @@ precompile:
 	echo "end subroutine versionNumber" >> versionNumber.auto.f90
 	$(FC) $(FCFLAGS) versionNumber.auto.f90 #otherwise error on first make run!
 clean:
-	rm -rf $(OBJECTS) $(pamtraOBJECTS) $(BIN) *.mod *~
+	rm -rf $(OBJECTS) $(BIN) *.mod *~
 
 test: test1 test2 test3 test4 cleantest
 

@@ -53,7 +53,7 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
       REAL(kind=dbl), intent(in), DIMENSION(M) :: X
       REAL(kind=dbl), intent(in), DIMENSION(N) :: A
       REAL(kind=dbl), intent(out), DIMENSION(M+N-1) :: Y
-    end subroutine convolution    
+    end subroutine convolution
 
     subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope,quality)
       use kinds
@@ -146,10 +146,10 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
     end if
 
 
-    if ((turb_spectra(ts_imin) .ne. 0.d0) .or.(turb_spectra(ts_imax) .ne. 0.d0)) then
-      print*, "WARNING: radar_aliasing_nyquist_interv too small to handle aliasing effects, increase it!"
-      stop
-    end if
+!     if ((turb_spectra(ts_imin) .ne. 0.d0) .or.(turb_spectra(ts_imax) .ne. 0.d0)) then
+!       print*, "WARNING: radar_aliasing_nyquist_interv too small to handle aliasing effects, increase it!"
+!       stop
+!     end if
     
     
     quailty_aliasing = 0

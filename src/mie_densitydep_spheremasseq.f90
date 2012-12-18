@@ -78,7 +78,12 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
   end do
 
   !               integration loop over diameter of spheres
-  if (nbins .gt. 0) del_d = (dia2 - dia1) / nbins
+  if (nbins .gt. 0) then
+    del_d = (dia2 - dia1) / nbins
+  else
+    del_d = 1.d0
+  end if
+
   tot_mass = 0.
    do ir = 1, nbins+1
      !diameter is here the maximum extebd of the particle
@@ -133,7 +138,6 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
 
   !           multiply the sums by the integration delta and other constan
   !             put quadrature weights in angular array for later         
-  if (nbins.eq.0) del_d = 1.0d0
 
   extinction = pi * sumqe * del_d
   scatter = pi * sumqs * del_d
