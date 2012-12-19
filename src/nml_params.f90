@@ -59,7 +59,6 @@ module nml_params
        write_nc, &  ! write netcdf or ascii output
        active, &  	   ! calculate active stuff
        passive, &     ! calculate passive stuff (with RT3)
-       activeLogScale, & !save ze and att in log scale or linear
        jacobian_mode, &  ! special jacobian mode which does not calculate the whole scattering properties each time. only rt4!
        radar_airmotion, &   ! apply vertical air motion
        radar_save_noise_corrected_spectra, & !remove the noise from the calculated spectrum again (for testing) 
@@ -94,8 +93,7 @@ contains
          tmp_path, dump_to_file, write_nc, data_path,&
          input_type, crm_case, crm_data, crm_data2, crm_constants, &
 	 jacobian_mode
-    namelist / output / obs_height,units,outpol,freq_str,file_desc,creator, &
-	  activeLogScale
+    namelist / output / obs_height,units,outpol,freq_str,file_desc,creator
     namelist / run_mode / active, passive,rt_mode, radar_mode
     namelist / surface_params / ground_type,salinity, emissivity
     namelist / gas_abs_mod / lgas_extinction, gas_mod
@@ -137,11 +135,10 @@ contains
     freq_str=''
     file_desc=''
     creator='Pamtrauser'
-    activeLogScale = .true.
     ! sec run_mode
     active=.true.
     passive=.true.
-    rt_mode='rt3'
+    rt_mode='rt4'
     radar_mode="simple" !"splitted"|"moments"|"spectrum"
     ! sec surface params
     ground_type='S'
@@ -201,7 +198,7 @@ contains
       !radar noise in same unit as Ze mm⁶/m³
     radar_pnoise=1.d-3
 
-    radar_airmotion = .true.
+    radar_airmotion = .false.
     radar_airmotion_model = "step" !"constant","linear","step"
     radar_airmotion_vmin = -4.d0
     radar_airmotion_vmax = +4.d0
@@ -268,8 +265,7 @@ contains
          tmp_path, dump_to_file, write_nc, data_path,&
          input_type, crm_case, crm_data, crm_data2, crm_constants, &
 	 jacobian_mode
-    print*, "output ",  obs_height,units,outpol,freq_str,file_desc,creator, &
-	  activeLogScale
+    print*, "output ",  obs_height,units,outpol,freq_str,file_desc,creator
     print*, "run_mode ",  active, passive,rt_mode, radar_mode
     print*, "surface_params ",  ground_type,salinity, emissivity
     print*, "gas_abs_mod ",  lgas_extinction, gas_mod

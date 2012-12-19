@@ -223,7 +223,7 @@ precompile:
 clean:
 	rm -rf $(OBJECTS) $(BIN) *.mod *~
 
-test: test1 test2 test3 test4 cleantest
+test: test1 test2 test3 test4 test5 test6 cleantest
 
 alltest: test pytest
 
@@ -232,34 +232,48 @@ cleantest:
 	rm -fr ../test/tmp/*
 
 test1:
-	@echo "=== TEST 1 ==="
+	@echo "=== TEST 1: no hydrometeors & Rosenkranz ==="
 	rm -fr ../test/tmp/*
-	../pamtra -p testProfiles.dat -n ../test/nmls/test1.nml -f 24,90,150
+	../pamtra -p usStandard.dat -n ../test/nmls/test1.nml -f 35,90,150
 	../test/compareAscii.sh 1
 	@echo "TEST 1 OK"
 
 test2:
-	@echo "=== TEST 2 active only === "
+	@echo "=== TEST 2: no hydrometeors & Liebe === "
 	rm -fr ../test/tmp/*
-	../pamtra -p testProfiles.dat -n ../test/nmls/test2.nml -f 35
+	../pamtra -p usStandard.dat -n ../test/nmls/test2.nml -f 35,90,150
 	../test/compareAscii.sh 2
 	@echo "TEST 2 OK"
 
 test3:
 	@echo "=== TEST 3 passive only === "
 	rm -fr ../test/tmp/*
-	../pamtra -p testProfiles.dat -n ../test/nmls/test3.nml -f 35
+	../pamtra -p hydrometeors.dat -n ../test/nmls/test3.nml -f 35,90,150
 	../test/compareAscii.sh 3
 	@echo "TEST 3 OK"
 
 test4:
-	@echo "=== TEST 4 Netcdf Data === "
+	@echo "=== TEST 4 active only, simple radar=== "
 	rm -fr ../test/tmp/*
-	../pamtra -p testProfiles.dat -n ../test/nmls/test4.nml -f 35
-	../test/compareNetcdf.sh 4
+	../pamtra -p hydrometeors.dat -n ../test/nmls/test4.nml -f 35,90,150
+	../test/compareAscii.sh 4
 	@echo "TEST 4 OK"
 
-pytest: pyinstall pytest2 pytest3 pytest4 pytest1 cleantest
+test5:
+	@echo "=== TEST 5 active only, moments === "
+	rm -fr ../test/tmp/*
+	../pamtra -p hydrometeors.dat -n ../test/nmls/test5.nml -f 35,90,150
+	../test/compareAscii.sh 5
+	@echo "TEST 5 OK"
+
+test6:
+	@echo "=== TEST 6 everything, netcdf === "
+	rm -fr ../test/tmp/*
+	../pamtra -p hydrometeors.dat -n ../test/nmls/test6.nml -f 35,90,150
+	../test/compareNetcdf.sh 6
+	@echo "TEST 6 OK"
+
+pytest: pyinstall pytest1 pytest2 pytest3 pytest4 pytest5 pytest6 cleantest
 pytest123: pytest1 pytest2 pytest3 cleantest
 pytest234: pytest2 pytest3 pytest4 cleantest
 
@@ -280,11 +294,20 @@ pytest3:
 	rm -fr ../test/tmp/*
 	python ../test/runPythonTest.py 3
 	@echo "TEST 3 OK"
-
 pytest4:
-	@echo "=== Python TEST 4 Netcdf Data  === "
+	@echo "=== Python TEST 4 active only, simple radar === "
 	rm -fr ../test/tmp/*
 	python ../test/runPythonTest.py 4
-	../test/compareNetcdf.sh 4
 	@echo "TEST 4 OK"
+pytest5:
+	@echo "=== Python TEST 5 active only, moments === "
+	rm -fr ../test/tmp/*
+	python ../test/runPythonTest.py 5
+	@echo "TEST 5 OK"
+pytest6:
+	@echo "=== Python TEST 6 everything, netcdf  === "
+	rm -fr ../test/tmp/*
+	python ../test/runPythonTest.py 6
+	../test/compareNetcdf.sh 6
+	@echo "TEST 6 OK"
 

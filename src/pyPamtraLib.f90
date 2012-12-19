@@ -337,20 +337,20 @@ character(300),intent(in) :: set_namelist_file
          end if
            !run the model
            call run_rt(nx,ny,fi,freqs(fi),freq_str)
-          if ((active) .and. ((radar_mode .eq. "simple") .or. (radar_mode .eq. "splitted"))) then
-            out_Ze_cw(nx,ny,1:nlyr,:) = REAL(Ze_cw(nx,ny,1:nlyr,:))
-            out_Ze_rr(nx,ny,1:nlyr,:) = REAL(Ze_rr(nx,ny,1:nlyr,:))
-            out_Ze_ci(nx,ny,1:nlyr,:) = REAL(Ze_ci(nx,ny,1:nlyr,:))
-            out_Ze_sn(nx,ny,1:nlyr,:) = REAL(Ze_sn(nx,ny,1:nlyr,:))
-            out_Ze_gr(nx,ny,1:nlyr,:) = REAL(Ze_gr(nx,ny,1:nlyr,:))
-            out_Ze_ha(nx,ny,1:nlyr,:) = REAL(Ze_ha(nx,ny,1:nlyr,:))
-            out_Att_cw(nx,ny,1:nlyr,:) = REAL(Att_cw(nx,ny,1:nlyr,:))
-            out_Att_rr(nx,ny,1:nlyr,:) = REAL(Att_rr(nx,ny,1:nlyr,:))
-            out_Att_ci(nx,ny,1:nlyr,:) = REAL(Att_ci(nx,ny,1:nlyr,:))
-            out_Att_sn(nx,ny,1:nlyr,:) = REAL(Att_sn(nx,ny,1:nlyr,:))
-            out_Att_gr(nx,ny,1:nlyr,:) = REAL(Att_gr(nx,ny,1:nlyr,:))
-            out_Att_ha(nx,ny,1:nlyr,:) = REAL(Att_ha(nx,ny,1:nlyr,:))
-          end if
+!           if ((active) .and. ((radar_mode .eq. "simple") .or. (radar_mode .eq. "splitted"))) then
+!             out_Ze_cw(nx,ny,1:nlyr,:) = REAL(Ze_cw(nx,ny,1:nlyr,:))
+!             out_Ze_rr(nx,ny,1:nlyr,:) = REAL(Ze_rr(nx,ny,1:nlyr,:))
+!             out_Ze_ci(nx,ny,1:nlyr,:) = REAL(Ze_ci(nx,ny,1:nlyr,:))
+!             out_Ze_sn(nx,ny,1:nlyr,:) = REAL(Ze_sn(nx,ny,1:nlyr,:))
+!             out_Ze_gr(nx,ny,1:nlyr,:) = REAL(Ze_gr(nx,ny,1:nlyr,:))
+!             out_Ze_ha(nx,ny,1:nlyr,:) = REAL(Ze_ha(nx,ny,1:nlyr,:))
+!             out_Att_cw(nx,ny,1:nlyr,:) = REAL(Att_cw(nx,ny,1:nlyr,:))
+!             out_Att_rr(nx,ny,1:nlyr,:) = REAL(Att_rr(nx,ny,1:nlyr,:))
+!             out_Att_ci(nx,ny,1:nlyr,:) = REAL(Att_ci(nx,ny,1:nlyr,:))
+!             out_Att_sn(nx,ny,1:nlyr,:) = REAL(Att_sn(nx,ny,1:nlyr,:))
+!             out_Att_gr(nx,ny,1:nlyr,:) = REAL(Att_gr(nx,ny,1:nlyr,:))
+!             out_Att_ha(nx,ny,1:nlyr,:) = REAL(Att_ha(nx,ny,1:nlyr,:))
+!           end if
           call deallocate_profile_vars()
          end do grid_x
     end do grid_y

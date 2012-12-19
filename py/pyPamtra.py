@@ -95,7 +95,6 @@ class pyPamtra(object):
     self.nmlSet["output"]["units"]='T'
     self.nmlSet["output"]["outpol"]='VH'
     self.nmlSet["output"]["creator"]='pyPamtraUser'
-    self.nmlSet["output"]["activelogscale"]=True
 
     self.nmlSet["run_mode"]["active"]=True
     self.nmlSet["run_mode"]["passive"]=True
@@ -1443,12 +1442,10 @@ class pyPamtra(object):
       
       
       
-    if (self.r["nmlSettings"]["output"]["activelogscale"]):
-      attUnit = "dBz"
-      zeUnit = "dBz"
-    else:
-       attUnit = "linear"
-       zeUnit = "mm^6 m^-3"    
+
+    attUnit = "dBz"
+    zeUnit = "dBz"
+ 
     #create and write dim variables
     
     fillVDict = dict()

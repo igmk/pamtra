@@ -12,7 +12,6 @@ data_path='/home/mech/models/pamtra/data//'
 &run_mode
 passive=.true.
 active=.false.
-rt_mode='rt4'
 /
 &surface_params
 /
@@ -27,11 +26,6 @@ rt_mode='rt4'
 &rain_params
 /
 &snow_params
-EM_snow='liudb'
-isnow_n0=0
-N_0snowDsnow=1
-liu_type=8
-
 /
 &graupel_params
 /

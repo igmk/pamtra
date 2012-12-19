@@ -5,7 +5,7 @@ subroutine write_nc_results
   use vars_atmosphere, only: ngridx, ngridy,nlyr,freqs,nfrq, year, month, day, time
   use netcdf
   use nml_params, only: active, passive, creator, verbose, radar_mode, &
-			n_moments, activeLogScale, radar_nfft, radar_mode
+			n_moments, radar_nfft, radar_mode
   use file_mod, only: nc_out_file
 
   implicit none
@@ -39,14 +39,6 @@ subroutine write_nc_results
   if (verbose .gt. 0) print*,"writing: ", nc_out_file
   !get git data
   call versionNumber(gitVersion,gitHash)
-
-  if (activeLogScale) then
-    attUnit = "dBz"
-    zeUnit = "dBz"
-  else
-    attUnit = "linear"
-    zeUnit = "mm^6 m^-3"    
-  end if
 
 
   call check(nf90_create(path=nc_out_file,cmode=nf90_clobber,ncid=ncid))

@@ -5,16 +5,18 @@ verbose=0
 write_nc=.false.
 input_path='../test/referenceProfile'
 output_path='../test/tmp'
-data_path='/home/mech/models/pamtra/data/'
+data_path='/home/mech/models/pamtra/data//'
 /
 &output
 /
 &run_mode
+passive=.false.
+active=.true.
+radar_mode="moments"
 /
 &surface_params
 /
 &gas_abs_mod
-gas_mod='R98'
 /
 &hyd_opts
 /
@@ -25,6 +27,8 @@ gas_mod='R98'
 &rain_params
 /
 &snow_params
+EM_snow="liudb"
+isnow_n0=2
 /
 &graupel_params
 /
@@ -33,4 +37,9 @@ gas_mod='R98'
 &moments
 /
 &radar_simulator
+radar_no_Ave=0
+radar_use_hildebrand =.true.
+radar_airmotion = .false.
+
 /
+
