@@ -994,6 +994,13 @@ class pyPamtra(object):
     
     if type(freqs) in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
     
+    #save memory if no spectrum is needed!
+    if self.nmlSet["run_mode"]["radar_mode"] == "spectrum":
+      radar_spectrum_length = int(self.nmlSet["radar_simulator"]["radar_nfft"])
+    else:
+      radar_spectrum_length = 1
+
+    
     self.set["freqs"] = freqs
     self.set["nfreqs"] = len(freqs)
     
@@ -1025,7 +1032,7 @@ class pyPamtra(object):
 
     self.r["hgt"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],))*missingNumber
     
-    self.r["radar_spectra"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],int(self.nmlSet["radar_simulator"]["radar_nfft"]),))*missingNumber
+    self.r["radar_spectra"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],radar_spectrum_length,))*missingNumber
     self.r["radar_snr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
     self.r["radar_moments"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],4,))*missingNumber
     self.r["radar_slope"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],2,))*missingNumber
@@ -1082,7 +1089,7 @@ class pyPamtra(object):
           self.p["nlyrs"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
           pp_nfreqs,
           self.set["freqs"][pp_startF:pp_endF],
-          int(self.nmlSet["radar_simulator"]["radar_nfft"]),
+          radar_spectrum_length,
           self.p["unixtime"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
           self.p["deltax"],self.p["deltay"],
           self.p["lat"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
@@ -1123,7 +1130,7 @@ class pyPamtra(object):
           #self.p["nlyrs"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
           #pp_nfreqs,
           #self.set["freqs"][pp_startF:pp_endF],
-          #int(self.nmlSet["radar_simulator"]["radar_nfft"]),
+          #radar_spectrum_length,
           #self.p["unixtime"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
           #self.p["deltax"],self.p["deltay"],
           #self.p["lat"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
@@ -1247,7 +1254,13 @@ class pyPamtra(object):
     self.set["freqs"] = freqs
     self.set["nfreqs"] = len(freqs)
     assert self.set["nfreqs"] > 0
-    
+
+    #save memory if no spectrum is needed!
+    if self.nmlSet["run_mode"]["radar_mode"] == "spectrum":
+      radar_spectrum_length = int(self.nmlSet["radar_simulator"]["radar_nfft"])
+    else:
+      radar_spectrum_length = 1
+
     self._checkData()
 
     #if not os.path.isfile(self.set["namelist_file"]):
@@ -1295,7 +1308,7 @@ class pyPamtra(object):
       self.set["namelist_file"],
       #input
       self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.p["nlyrs"],self.set["nfreqs"],self.set["freqs"],
-      int(self.nmlSet["radar_simulator"]["radar_nfft"]), self.p["unixtime"],
+      radar_spectrum_length, self.p["unixtime"],
       self.p["deltax"],self.p["deltay"], self.p["lat"],self.p["lon"],self.p["model_i"],self.p["model_j"],
       self.p["wind10u"],self.p["wind10v"],self.p["lfrac"],
       self.p["relhum_lev"],self.p["press_lev"],self.p["temp_lev"],self.p["hgt_lev"],

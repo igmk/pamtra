@@ -217,7 +217,7 @@ character(300),intent(in) :: set_namelist_file
   !!! read variables from namelist file
   call nml_params_read !from nml_params.f90
 
-  if (radar_nfft .ne. in_nfft) stop "nfft in python input and nml file must be equal!"
+  if ((radar_mode .eq. "spectrum") .and. (radar_nfft .ne. in_nfft)) stop "nfft in python input and nml file must be equal!"
 
   if (verbose .gt. 1) print*,in_freqs, in_nlyrs, max_in_nlyrs
 
