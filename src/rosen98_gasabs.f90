@@ -1,38 +1,70 @@
-!=======================================================
+!+ gaseous absorption after Rosenkranz 98 model
+subroutine gasAbsR98 &
+ (freq,  &      ! in
+  tempK, &      ! in
+  rhoWv, &      ! in
+  pres,  &      ! in
+  absAir,&      ! out
+  absWv)        ! out
+
+! Description:
+!  Based on freuqency, temperature, water vapor density, and pressure, this routine
+!  calculates the absorption due to air (N2 and O2) and water vapor in the frequency
+!  range from 0.1 to 800.0 GHz, pressure range from 10 to 1.2e5 Pa, and absolute
+!  temperatures larger than 100 K.
+!
+! Method:
 !  ROSENKRANZ (1998) model  -- reference "Water vapor microwave
 !  continuum absorption: a comparison of measurements and results"
 !  To appear in Radio Science
 !
-! Top level interface (GasabsR98) by G. Petty
+! Owner: IGMK
 !
-!   This subroutine calculates the mass extinction coefficient of the
-!   dry and vapor components of air.
+! History:
 !
-! Input:
-!     F  = frequency (GHz),
-!     Tk = absolute temperature (K)
-!     Rhowv = water vapor density (kg/m**3).
-!     Pa = Total air pressure (Pascals).
-! Output:
-!     Absair = extinction by dry air  (Np/km)
-!     Abswv  = extinction by water vapor (Np/km)
+! Version Date         Comment
+! ------- ----         -------
+! 0.01    02/08/2001   Fixed division by zero when rhowv = 0 - G. Petty
+! 0.1     21/09/2009   Code adaption from G. Petty - M. Mech
+! 0.2     27/10/2012   Corrections to WV bands and continuum - E. Orlandi
+! 0.3     13/11/2012   Application of European Standards for Writing and
+! 0.3                   Documenting Exchangeable Fortran 90 Code - M. Mech
 !
-!  2/8/2001 - fixed division by zero when rhowv = 0  (G. Petty)
+! Code Description:
+!  Language: Fortran 90.
+!  Software Standards: "European Standards for Writing and
+!   Documenting Exchangeable Fortran 90 Code".
 !
+! Parent Module: get_atmosG
+!
+! Declarations:
 
-subroutine gasabsR98(f,Tk,Rhowv,Pa,absair,abswv)
+! Modules used:
 
-  use kinds
+use kinds, only:  dbl      ! integer parameter specifying double precision
 
-  implicit none
+! Imported Scalar Variables with intent (in):
 
-  real(kind=dbl), intent(in) :: f        ! frequency [GHz]
-  real(kind=dbl), intent(in) :: Tk       ! temperature [K]
-  real(kind=dbl), intent(in) :: pa       ! pressure [Pa]
-  real(kind=dbl), intent(in) :: rhowv    ! water vapor density [kg/m**3]
+implicit none
 
-  real(kind=dbl), intent(out) :: absair  ! extinction by dry air [Np/km]
-  real(kind=dbl), intent(out) :: abswv   ! extinction by water vapor [Np/km]
+!- End of header ---------------------------------------------------------------
+
+! Subroutine arguments
+! Scalar arguments with intent(in):
+
+  real(kind=dbl), intent(in) :: freq     ! frequency [GHz]
+  real(kind=dbl), intent(in) :: tempK    ! temperature [K]
+  real(kind=dbl), intent(in) :: pres     ! pressure [Pa]
+  real(kind=dbl), intent(in) :: rhoWv    ! water vapor density [kg/m**3]
+
+! Scalar arguments with intent(out):
+
+  real(kind=dbl), intent(out) :: absAir  ! extinction by dry air [Np/km]
+  real(kind=dbl), intent(out) :: absWv   ! extinction by water vapor [Np/km]
+
+! End of Subroutine arguments
+
+! Local scalars:
 
   real(kind=dbl) :: pmb         ! pressure [mb]
   real(kind=dbl) :: vapden      ! water vpor density [g/m**3]
@@ -41,55 +73,50 @@ subroutine gasabsR98(f,Tk,Rhowv,Pa,absair,abswv)
   real(kind=dbl) :: Tv          ! virtuel temperature [K]
   real(kind=dbl) :: rhoair      ! moist air density [kg/m**3]
 
+! Used Functions
+
   real(kind=dbl) :: absn2       ! function to calculate extinction by n_2
   real(kind=dbl) :: o2abs       ! function to calculate extinction by o2
   real(kind=dbl) :: abh2o       ! function to calculate extinction by h_2o
 
   ! check for "reasonable" input values
 
-  if (f .le. 0.0 .or. F .gt. 800.0) then
-     print*, 'Frequency out of range in GasabsR98:', F
-     stop
-  endif
-  if (Tk .lt. 100.0) then
-     print *, 'Temperature out of range in GasabsR98: ', Tk
-     stop
-  endif
-  if (pa .lt. 10.0 .or. pa .gt. 1.2e5) then
-     print *, 'Pressure out of range in GasabsR98: ', pa
-     stop
-  endif
+  if (freq <= 0.0 .or. freq > 800.0) then
+     err_msg = 'Frequency not between 0 and 800 GHz in gasAbsR98!'
+     error_status = 1
+     return
+  elseif (tempK <= 100.0) then
+     err_msg = 'Temperature lower than 100 K in gasAbsR98!'
+     error_status = 1
+     return
+  elseif (pres < 10.0 .or. pres > 1.2e5) then
+     err_msg = 'Pressure not between 10 and 1.2e5 Pa in gasAbsR98!'
+     error_status = 1
+     return
+  else
+     err_msg = ''
+     error_status = 0
+  end if
+
   ! convert pressure from Pa to Mb
-  pmb = pa/100.0
+  pmb = pres / 100.0
 
   ! convert vapor density from kg/m**3 to g/m**3
 
-  vapden = rhowv*1000.0
+  vapden = rhoWv * 1000.0
 
   ! get volume extinction coefficients
-  absair = absn2(Tk,pmb,f) + o2abs(Tk,pmb,vapden,f)
-  abswv = abh2o(Tk,pmb,vapden,f)
-
-  !       abs_n2 = absn2(Tk,pmb,f)
-  !       abs_o2 = o2abs(Tk,pmb,vapden,f)
+  absair = absn2(tempK,pmb,freq) + o2abs(tempK,pmb,vapden,freq)
+  abswv = abh2o(tempK,pmb,vapden,freq)
 
   ! convert vapor density to vapor pressure
-  e = rhowv*(Tk*461.5) 
+  e = rhowWv * (tempK * 461.5)
   ! calculate specific humidity
-  q = 0.622*e/pa
+  q = 0.622 * e / pres
   ! calculate virtual temperature
-  Tv = (1. + 0.61*q)*Tk
+  Tv = (1. + 0.61 * q) * tempK
   ! moist air density
-  rhoair = pa/(Tv*287.06)
-
-  ! convert above from Np/km to m**2/kg
-
-  !      absair = 0.001*absair/rhoair
-  !      if (rhowv .eq. 0.0) then
-  !         abswv = 0.0
-  !      else
-  !         abswv = 0.001*abswv/rhowv
-  !      endif
+  rhoair = pres / (Tv * 287.06)
 
   return
 
