@@ -39,7 +39,7 @@ p16
 tp17
 bsS'pamtraVersion'
 p18
-S'v0.3-85-gcba7d9f-rt4-radar'
+S'v0.3-90-g0b7a8f7-master'
 p19
 sS'Att_sn'
 p20
@@ -808,7 +808,7 @@ p321
 tp322
 bsS'pamtraHash'
 p323
-S'cba7d9fe9754f71ed1e31564494d3c7f10c32a7b'
+S'0b7a8f7eea7888d9d5752d6d705643f60626e765'
 p324
 sS'radar_vel'
 p325

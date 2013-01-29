@@ -26,7 +26,7 @@ subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope
   integer :: spec_max, spec_max_a(1), right_edge,left_edge, &
 	spec_max_cp, right_edge_cp, left_edge_cp, ii, jj
   real(kind=dbl), dimension(radar_nfft) :: spectra_velo, specLog,&
-      radar_spectrum_cp, radar_spectrum_noisy
+      radar_spectrum_cp, radar_spectrum_smooth
 
   interface
     SUBROUTINE SMOOTH_SAVITZKY_GOLAY(dataIn,length,dataOut)
@@ -50,28 +50,25 @@ subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope
 
   del_v = (radar_max_V-radar_min_V) / radar_nfft
 
-  spectra_velo = (/(((ii*del_v)+radar_min_V),ii=0,radar_nfft)/) ! [m/s]
-
-  !make the spectrum smooth
-  call smooth_savitzky_golay(radar_spectrum_in, radar_nfft, radar_spectrum_noisy)
+  spectra_velo = (/(((ii*del_v)+radar_min_V),ii=0,radar_nfft-1)/) ! [m/s]
 
   !find maximum of spectrum -> most significant peak
-  spec_max_a = MAXLOC(radar_spectrum_noisy)
+  spec_max_a = MAXLOC(radar_spectrum_in)
   if ((spec_max_a(1) == 1) .or. (spec_max_a(1) == radar_nfft)) then
-    spec_max_a = MAXLOC(radar_spectrum_noisy(2:radar_nfft-1))
+    spec_max_a = MAXLOC(radar_spectrum_in(2:radar_nfft-1))
   end if
   spec_max = spec_max_a(1)
 
   !calculate noise level (actually we know already the result which is radar_pnoise)
   if (radar_use_hildebrand) then
-    call radar_hildebrand_sekhon(radar_spectrum_noisy,radar_no_Ave,radar_nfft,noise)
+    call radar_hildebrand_sekhon(radar_spectrum_in,radar_no_Ave,radar_nfft,noise)
       if (verbose .gt. 2) print*, 'calculated noise:', noise
   else
     noise = radar_pnoise/radar_nfft !no devison by del_v neccessary!
   end if
 
   !remove noise
-  radar_spectrum_out = radar_spectrum_noisy - noise ! mm⁶/m³
+  radar_spectrum_out = radar_spectrum_in - noise ! mm⁶/m³
 
   !!get the borders of the most significant peak
   do ii = spec_max+1, radar_nfft
@@ -85,7 +82,7 @@ subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope
 
 
   !check whether peak is present:
-  if (SUM(radar_spectrum_noisy(left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise <radar_min_spectral_snr) then
+  if (SUM(radar_spectrum_in(left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise <radar_min_spectral_snr) then
     !no peak
     radar_spectrum_out = -9999
     moments = -9999
@@ -118,24 +115,29 @@ subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope
 
     !second peak needs to fullfill: width min 0.01*radar_nfft+3, power min 1% of primary
 !     if ((right_edge_cp - left_edge_cp > 0.01*radar_nfft+3) .and. (secPeak > 0.01d0*fstPeak)) then
-    if (SUM(radar_spectrum_noisy(left_edge_cp+1:right_edge_cp-1))/(right_edge_cp-left_edge_cp-1)/noise >radar_min_spectral_snr) then
+    if (SUM(radar_spectrum_in(left_edge_cp+1:right_edge_cp-1))/(right_edge_cp-left_edge_cp-1)/noise >radar_min_spectral_snr) then
       quality = 2
       if (verbose > 2) print*, "second peak found", &
-	SUM(radar_spectrum_noisy(left_edge_cp+1:right_edge_cp-1))/(right_edge_cp-left_edge_cp-1)/noise
+	SUM(radar_spectrum_in(left_edge_cp+1:right_edge_cp-1))/(right_edge_cp-left_edge_cp-1)/noise
     else
       quality = 0
       if (verbose > 2) print*, "NO second peak found", &
-	SUM(radar_spectrum_noisy(left_edge_cp+1:right_edge_cp-1))/(right_edge_cp-left_edge_cp-1)/noise
+	SUM(radar_spectrum_in(left_edge_cp+1:right_edge_cp-1))/(right_edge_cp-left_edge_cp-1)/noise
     end if
 
+
+    !make the spectrum smooth
+    call smooth_savitzky_golay(radar_spectrum_in, radar_nfft, radar_spectrum_smooth)
 
     !set remaining sectrum to zero
 
     radar_spectrum_out(1:left_edge) = 0.d0
     radar_spectrum_out(right_edge:radar_nfft) = 0.d0
+    radar_spectrum_smooth(1:left_edge) = 0.d0
+    radar_spectrum_smooth(right_edge:radar_nfft) = 0.d0
 
     !get the (log)slope of the peak
-    specLog = 10*log10(radar_spectrum_out)
+    specLog = 10*log10(radar_spectrum_smooth)
     slope(:) = 0.d0 ! dB/(m/s)
     slope(1) = (specLog(spec_max)-specLog(left_edge+1))/(spectra_velo(spec_max)-spectra_velo(left_edge+1))
     slope(2) = (specLog(right_edge-1)-specLog(spec_max))/(spectra_velo(right_edge-1)-spectra_velo(spec_max))
@@ -143,11 +145,11 @@ subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope
     WHERE (ISNAN(slope)) slope = -9999.d0
 
     !calculate the moments
-    moments(0) = SUM(radar_spectrum_out) ! mm⁶/m³
-    moments(1) = SUM(radar_spectrum_out*spectra_velo)/moments(0) ! m/s
-    moments(2) = SQRT(SUM(radar_spectrum_out * (spectra_velo-moments(1))**2)/moments(0)) ! m/s
-    moments(3) = SUM(radar_spectrum_out * (spectra_velo-moments(1))**3)/(moments(0)*moments(2)**3) ![-]
-    moments(4) = SUM(radar_spectrum_out * (spectra_velo-moments(1))**4)/(moments(0)*moments(2)**4) ![-]
+    moments(0) = SUM(radar_spectrum_smooth) ! mm⁶/m³
+    moments(1) = SUM(radar_spectrum_smooth*spectra_velo)/moments(0) ! m/s
+    moments(2) = SQRT(SUM(radar_spectrum_smooth * (spectra_velo-moments(1))**2)/moments(0)) ! m/s
+    moments(3) = SUM(radar_spectrum_smooth * (spectra_velo-moments(1))**3)/(moments(0)*moments(2)**3) ![-]
+    moments(4) = SUM(radar_spectrum_smooth * (spectra_velo-moments(1))**4)/(moments(0)*moments(2)**4) ![-]
 
   end if
 

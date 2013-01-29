@@ -1,10 +1,7 @@
 ARCH=$(shell uname -s)
 
-
-
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
-
 
 FC=gfortran
 CC=gcc

@@ -264,11 +264,23 @@ def createUsStandardProfile(**kwargs):
 	import usStandard #see in tools
 	
 	assert "hgt_lev" in kwargs.keys() #hgt_lev is mandatory
-	assert len(np.shape(kwargs["hgt_lev"]))==1 #right now it is only available for single column
 	
 	pamData = dict()
 	
-	density, pamData["press_lev"], pamData["temp_lev"]  =  usStandard.usStandard(kwargs["hgt_lev"])
+	density = np.zeros_like(kwargs["hgt_lev"])
+	pamData["press_lev"] = np.zeros_like(kwargs["hgt_lev"])
+	pamData["temp_lev"] = np.zeros_like(kwargs["hgt_lev"])
+	
+	if len(np.shape(kwargs["hgt_lev"]))==1:
+	  density[:], pamData["press_lev"][:], pamData["temp_lev"][:]  =  usStandard.usStandard(kwargs["hgt_lev"])
+	elif  len(np.shape(kwargs["hgt_lev"]))==2:
+	  for xx in range(np.shape(kwargs["hgt_lev"])[0]):
+	    density[xx], pamData["press_lev"][xx], pamData["temp_lev"][xx]  =  usStandard.usStandard(kwargs["hgt_lev"][xx])
+	elif  len(np.shape(kwargs["hgt_lev"]))==3:
+	  for xx in range(np.shape(kwargs["hgt_lev"])[0]):
+	    for yy in range(np.shape(kwargs["hgt_lev"])[1]):
+	      density[xx,yy], pamData["press_lev"][xx,yy], pamData["temp_lev"][xx,yy]  =  usStandard.usStandard(kwargs["hgt_lev"][xx,yy])
+	else: raise IOError("hgt_lev has wrong number of dimensions")
 	
 	for kk in kwargs.keys():
 	      pamData[kk] = np.array(kwargs[kk])
