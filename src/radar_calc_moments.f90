@@ -72,14 +72,13 @@ subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope
 
   !!get the borders of the most significant peak
   do ii = spec_max+1, radar_nfft
-    if (radar_spectrum_out(ii) <= 0 ) EXIT
+    if (radar_spectrum_out(ii) <= 0.25*noise ) EXIT
   end do
   right_edge = ii
   do jj = spec_max-1, 1, -1
-    if (radar_spectrum_out(jj) <= 0 ) EXIT
+    if (radar_spectrum_out(jj) <= 0.25*noise ) EXIT
   end do
   left_edge = jj
-
 
   !check whether peak is present:
   if (SUM(radar_spectrum_in(left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise <radar_min_spectral_snr) then
@@ -125,7 +124,6 @@ subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope
 	SUM(radar_spectrum_in(left_edge_cp+1:right_edge_cp-1))/(right_edge_cp-left_edge_cp-1)/noise
     end if
 
-
     !make the spectrum smooth
     call smooth_savitzky_golay(radar_spectrum_in, radar_nfft, radar_spectrum_smooth)
 
@@ -152,8 +150,6 @@ subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope
     moments(4) = SUM(radar_spectrum_smooth * (spectra_velo-moments(1))**4)/(moments(0)*moments(2)**4) ![-]
 
   end if
-
-
 
   if (verbose .gt. 1) print*, 'Exiting radar_moments.f90'
 
