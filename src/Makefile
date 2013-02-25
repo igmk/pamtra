@@ -8,7 +8,7 @@ gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 FC=gfortran
 CC=gcc
-FCFLAGS=-c -fPIC -Wuninitialized
+FCFLAGS=-c -fPIC -Wuninitialized -I../include/
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran
 	NCFLAGS=-I/opt/local/include/ 
@@ -82,6 +82,9 @@ scatdb.o:
 	$(CC) -O  -fPIC -c scatdb.c 
 
 %.o: %.f90
+	$(FC) $(FCFLAGS) $<
+
+%.o: %.F90
 	$(FC) $(FCFLAGS) $<
 
 write_nc_results.o: write_nc_results.f90
