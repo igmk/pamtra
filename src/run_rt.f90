@@ -101,6 +101,12 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
   else
      kextatmo = 0.0D0 ! for the whole column
   end if
+  !save atmospheric attenuation and height for radar
+  if (active) then
+    Att_atmo(nx,ny,:,fi)  = 10*log10(exp(kextatmo*delta_hgt_lev))
+    radar_hgt(nx,ny,:) = hgt(:)
+  end if
+
 
   if (verbose .gt. 1) print*, nx,ny, 'Gas absorption calculated'
 
@@ -110,9 +116,10 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
     if (rt_mode .eq. 'rt3') then
         call hydrometeor_extinction_rt3(freq,frq_str)
     elseif (rt_mode .eq. 'rt4') then
-        call hydrometeor_extinction_rt4(freq,frq_str,nx,ny)!hier nx, ny
+        call hydrometeor_extinction_rt4(freq,frq_str,nx,ny,fi)!hier nx, ny
     end if
   end if
+
 
 
   !
@@ -125,15 +132,22 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
 
   OUT_FILE_ACT = output_path(:len_trim(output_path))//"/"//&
        date_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_active"
+! 
+!   if ((active) .and. ((radar_mode == "simple") .or. (radar_mode == "splitted")))  then
+!      call calculate_active(OUT_FILE_ACT,freq,&
+!           Ze(nx,ny,:,fi),Ze_cw(nx,ny,:,fi),Ze_rr(nx,ny,:,fi),Ze_ci(nx,ny,:,fi),&
+!           Ze_sn(nx,ny,:,fi),Ze_gr(nx,ny,:,fi),Ze_ha(nx,ny,:,fi),&
+!           Att_atmo(nx,ny,:,fi),Att_hydro(nx,ny,:,fi),Att_cw(nx,ny,:,fi),Att_rr(nx,ny,:,fi),&
+!           Att_ci(nx,ny,:,fi),Att_sn(nx,ny,:,fi),Att_gr(nx,ny,:,fi),Att_ha(nx,ny,:,fi))
+!      if (verbose .gt. 1) print*, nx,ny, 'calculate_active done'
+!      
+!   end if
 
-  if (active) then
-     call calculate_active(OUT_FILE_ACT,freq,hgt(nx,ny,:),&
-          Ze(nx,ny,:,fi),Ze_cw(nx,ny,:,fi),Ze_rr(nx,ny,:,fi),Ze_ci(nx,ny,:,fi),&
-          Ze_sn(nx,ny,:,fi),Ze_gr(nx,ny,:,fi),Ze_ha(nx,ny,:,fi),&
-          Att_atmo(nx,ny,:,fi),Att_hydro(nx,ny,:,fi),Att_cw(nx,ny,:,fi),Att_rr(nx,ny,:,fi),&
-          Att_ci(nx,ny,:,fi),Att_sn(nx,ny,:,fi),Att_gr(nx,ny,:,fi),Att_ha(nx,ny,:,fi))
-     if (verbose .gt. 1) print*, nx,ny, 'calculate_active done'
+  !save active to ASCII
+  if (active .and. (write_nc .eqv. .false.) .and. (in_python .eqv. .false.)) then
+    call save_active(OUT_FILE_ACT,nx,ny,fi)
   end if
+
 
   if (write_nc) then
      !      Output integrated quantities
@@ -170,10 +184,10 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
     if (rt_mode .eq. 'rt3') then
         if (verbose .gt. 1) print*, nx,ny, "Entering rt3 ...."
 
-        call RT3(NSTOKES, NUMMU, AZIORDER, MU_VALUES, src_code,     &
+        call RT3(NSTOKES, NUMMU, AZIORDER, MU_VALUES, src_code, &
           out_file_pas, QUAD_TYPE, deltam, DIRECT_FLUX,     &
-          DIRECT_MU, GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO,         &
-          GROUND_INDEX, SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,          &
+          DIRECT_MU, GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO,  &
+          GROUND_INDEX, SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,  &
           NOUTLEVELS, OUTLEVELS, nx,ny,fi)
 
         if (verbose .gt. 1) print*, nx,ny, "....rt3 finished"

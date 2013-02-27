@@ -1,14 +1,27 @@
 subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
      ad, bd, alpha, gamma, lphase_flag, extinction, albedo, back_scatt,  &
-     nlegen, legen, legen2, legen3, legen4, aerodist,density,wc)
+     nlegen, legen, legen2, legen3, legen4, aerodist,density,wc,&
+     diameter, back_spec)
+
+! subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
+!      a_mtox, bcoeff, dia1, dia2, nbins, maxleg, ad, bd, alpha, &
+!      gamma, lphase_flag, extinction, albedo, back_scatt, nlegen, legen,  &
+!      legen2, legen3, legen4, aerodist,density,wc)
+
+  !out
+  !diameter: diameter spectrum [m]
+  !back_spec: backscattering cross section per volume per del_d [m²/m⁴]
 
   ! note that mindex has the convention with negative imaginary part
   !     
   ! computes the mie scattering properties for a gamma or lognormal 
-  ! distribution of spheres.                                          
+  ! distribution of spheres.          
+  ! in addition to mie routine spectra of diamter and qback are returned
+                                
 
   use kinds
   use nml_params, only: verbose
+  use constants, only: pi,c
 
   implicit none
 
@@ -23,10 +36,9 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
   real(kind=dbl) :: extinction, albedo, back_scatt
   real(kind=dbl), dimension(200) :: legen, legen2, legen3, legen4
   integer, parameter :: maxn = 5000
-  real(kind=dbl), parameter :: pi = 3.14159265358979d0
   integer :: nterms, nquad, nmie, nleg 
   integer :: i, l, m, ir
-  real(kind=dbl) :: x, del_d, diameter, ndens, tmp, tot_mass, wc, density
+  real(kind=dbl) :: x, del_d, tmp, tot_mass, wc, density
   real(kind=dbl) :: qext, qscat, qback, scatter
   real(kind=dbl) :: distribution 
   real(kind=dbl) :: mu(maxn), wts(maxn) 
@@ -35,9 +47,14 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
   real(kind=dbl) :: sump1(maxn), coef1(maxn), sump2(maxn), coef2(maxn),   &
        sump3(maxn), coef3(maxn), sump4(maxn), coef4(maxn)            
   complex(kind=dbl) :: a(maxn), b(maxn), msphere 
+
+  real(kind=dbl), intent(out) :: diameter(nbins+1)
+  real(kind=dbl), intent(out) :: back_spec(nbins+1)
+  real(kind=dbl):: ndens(nbins+1)
+  real(kind=dbl) :: K2, dielec_water !for debuging only
+
   character :: aerodist*1 
 
-  real(kind=dbl), parameter :: c = 299792458.d0
 
 
   if (verbose .gt. 1) print*, 'Entering mie'
@@ -69,47 +86,64 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
   end do
 
   !   integration loop over diameter of spheres
-  if (nbins .gt. 0) del_d = (dia2 - dia1) / nbins
+  if (nbins .gt. 0) then
+    del_d = (dia2 - dia1) / nbins
+  else
+    del_d = 1.d0
+  end if
+  
   tot_mass = 0.
   do ir = 1, nbins+1
-     diameter = dia1 + (ir - 1) * del_d
-     ndens = distribution(ad, bd, alpha, gamma, diameter, aerodist)  ! number density
+     diameter(ir) = dia1 + (ir - 1) * del_d
+     ndens(ir) = distribution(ad, bd, alpha, gamma, diameter(ir), aerodist)  ! number density [1/m⁴]
+     !first and last bin get only have of the particles (Why actually?)
      if ((ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
-        ndens = 0.5 * ndens
+        ndens(ir) = 0.5 * ndens(ir)
      end if
-     tot_mass = tot_mass + ndens*del_d*pi/6.d0*density*diameter**3.d0
+     tot_mass = tot_mass + ndens(ir)*del_d*pi/6.d0*density*diameter(ir)**3.d0
+     !if mass is missing put into last bin
      if ((ir .eq. nbins+1) .and. (tot_mass/wc*100. .lt. 99.9d0)) then
-      ndens = ndens + (wc-tot_mass)/(del_d*pi/6.d0*density*diameter**3.d0)
+      ndens(ir) = ndens(ir) + (wc-tot_mass)/(del_d*pi/6.d0*density*diameter(ir)**3.d0)
       tot_mass = wc
      end if
-     x = pi * diameter / wavelength ! size parameter
+
+     x = pi * diameter(ir) / wavelength ! size parameter
      nmie = 0 
      call miecalc(nmie, x, msphere, a, b) ! calculate a and b
+     !calculate the efficencies
      call miecross(nmie, x, a, b, qext, qscat, qback)
-     ! sum up extinction, scattering, and backscattering as cross-sections/pi
-     sumqe = sumqe + qext * ndens * (diameter/2.)**2         ! [1/m^2]
-     sumqs = sumqs + qscat * ndens * (diameter/2.)**2        ! [1/m^2]
-     sumqback = sumqback + qback * ndens * (diameter/2.)**2  ! [1/m^2]
+     ! sum up extinction, scattering, and backscattering as cross-sections/pi .pi is added in a later step
+     qext =   qext  * ndens(ir) * (diameter(ir)/2.d0)**2         ! [m²/m⁴]!
+     qscat =  qscat * ndens(ir) * (diameter(ir)/2.d0)**2        ! [m²/m⁴]!
+     qback =  qback * ndens(ir) * (diameter(ir)/2.d0)**2        !  [m²/m⁴]! cross section per volume per del_d
+ 
+     !integrate=sum up . del_d is added at a later step!
+     sumqe = sumqe + qext 
+     sumqs = sumqs + qscat
+     sumqback = sumqback + qback 
+
+     back_spec(ir) =  qback * pi  ! volumetric backscattering corss section for radar simulator per del_d in [m²/m⁴]
+
      if (lphase_flag) then 
         nmie = min(nmie, nterms) 
         do i = 1, nquad 
            call mieangle(nmie, a, b, mu(i), p1, p2, p3, p4)
-           sump1(i) = sump1(i) + p1 * ndens
-           sump2(i) = sump2(i) + p2 * ndens
-           sump3(i) = sump3(i) + p3 * ndens
-           sump4(i) = sump4(i) + p4 * ndens
+           sump1(i) = sump1(i) + p1 * ndens(ir)
+           sump2(i) = sump2(i) + p2 * ndens(ir)
+           sump3(i) = sump3(i) + p3 * ndens(ir)
+           sump4(i) = sump4(i) + p4 * ndens(ir)
         end do
      end if
   end do
 
   !   multiply the sums by the integration delta and other constants
   !   put quadrature weights in angular array for later usage    
-  if (nbins .eq. 0) del_d = 1.0d0
 
-  extinction = pi * sumqe * del_d      ! extinction [1/m]
-  scatter = pi * sumqs * del_d         ! scattering  [1/m]
-  back_scatt = pi * sumqback * del_d   ! back scattering [1/m]
+  extinction = pi * sumqe * del_d      ! extinction  [m*m²/m⁴]!
+  scatter = pi * sumqs * del_d         ! scattering [m*m²/m⁴]!
+  back_scatt = pi * sumqback * del_d   ! back scattering [m*m²/m⁴]!
   albedo = scatter / extinction        ! single scattering albedo
+
 
   ! if the phase function is not desired then leave now           
   if ( .not. lphase_flag) return 
@@ -156,6 +190,15 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
      legen4(m) = (2 * l + 1) / 2.0 * coef4(m)
      if (legen(m) .gt. 1.0e-7) nlegen = l 
   end do
+
+
+  !for debuging puposes, calculate the Rayleigh Backscattering! makes only sence for SMALL spheres
+  if (verbose .gt. 2) then
+    K2=dielec_water(0.D0,10.d0,f)
+    print*,"RAYLEIGH BACKSCATTERING with K2 at 10deg"
+    print*,"Z=",10.d0*log10(K2*SUM((1d3*diameter)**6*(ndens*1d-3)*&
+	  1d3*(diameter(2)-diameter(1)))),"dBz"
+  end if
 
   if (verbose .gt. 1) print*, 'finished with mie'
   return 

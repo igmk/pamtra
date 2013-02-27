@@ -1,10 +1,17 @@
 subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
      ad, bd, alpha, gamma, lphase_flag, extinction, albedo, back_scatt,  &
-     nlegen, legen, legen2, legen3, legen4, aerodist)
+     nlegen, legen, legen2, legen3, legen4, aerodist,&
+     diameter, back_spec)
 
   ! note that mindex has the convention with negative imaginary part      
   ! computes the mie scattering properties for a gamma or lognormal 
   ! distribution of spheres.
+
+  !out
+  !...
+  !diameter: diameter spectrum [m]
+  !back_spec: backscattering cross section per volume per del_d [m²/m⁴]
+
 
   use kinds
   use constants, only: pi,c
@@ -25,6 +32,8 @@ subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
   complex(kind=dbl) :: mindex 
   real(kind=dbl) :: extinction, albedo, back_scatt
   real(kind=dbl) :: legen(200), legen2(200), legen3(200), legen4(200)
+  real(kind=dbl), intent(out) :: diameter(nbins)
+  real(kind=dbl), intent(out) :: back_spec(nbins)
   integer, parameter :: maxn = 5000
   integer :: nterms, nquad, nmie, nleg 
   integer :: i, l, m, ir
@@ -51,7 +60,7 @@ subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
   integer :: iret, is_loaded
   integer, parameter :: nang_db = 37
   real(kind=sgl) :: t_liu, f_liu
-  real(kind=sgl) :: diameter
+  real(kind=sgl) :: dia_liu
   real(kind=sgl) :: abs_liu,sca_liu,bsc_liu,g, r_ice_eq
   real(kind=sgl), dimension(nang_db) :: p_liu
   real(kind=sgl), dimension(nang_db) :: ang_db
@@ -68,6 +77,8 @@ subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
 
   if (verbose .gt. 1) print*, 'Entering dda_db_liu'
 
+
+
   ! initialize database phase function angles
   do i = 0,36
      ang_db(i+1) = i*5.
@@ -76,6 +87,12 @@ subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
   t_liu = real(t)   ! convert to 4byte real (database requirement!)
   f_liu = real(f)   ! convert to 4byte real (database requirement!)
   is_loaded = 0
+
+! print*,"###"
+! call scatdb(89.d0,255.3790d0,8,203.13146955642290,abs_liu,sca_liu,bsc_liu,g,p_liu,r_ice_eq,iret,is_loaded,&
+!           trim(data_path))
+! print*,abs_liu,sca_liu,bsc_liu,g,p_liu,r_ice_eq,iret
+! print*,"###"
 
   qext = 0.d0;  qscat = 0.d0;  qback = 0.d0
   nlegen = 0
@@ -126,7 +143,7 @@ subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
   !  get the Gauss-Legendre quadrature abscissas and weights for the phase function integration
   call gausquad(nquad, mu, wts)
 
-  !  get the Gauss-Legendre quadrature abscissas and weights for abs, bsc, and ext
+  !  get the Gauss-Legendre quadrature abscissas and weights for abs, bsc, and ext, because we do aGauss Integral!
   call gausquad(nbins, xi , weights)
 
   if (verbose .gt. 2) print*, 'done calling quadratures'
@@ -137,21 +154,27 @@ subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
   if (verbose .gt. 3) print*, 'Doing database search for diameter intervall: '
   !  do ir = 1, nbins+1
   do ir = 1, nbins
-     !    diameter = dia1 + (ir - 1) * del_d
-     diameter = (dia2-dia1)/2.d0*xi(ir)+(dia1+dia2)/2.d0 !because ir goes from -1 to 1
-     ndens = distribution(ad, bd, alpha, gamma, dble(diameter), aerodist)  ! number density
+     !    dia_liu = dia1 + (ir - 1) * del_d
+     diameter(ir) = (dia2-dia1)/2.d0*xi(ir)+(dia1+dia2)/2.d0 !because ir goes from -1 to 1, not equidistant!
+     dia_liu = REAL(diameter(ir))
+     ndens = distribution(ad, bd, alpha, gamma, dble(dia_liu), aerodist)  ! number density
      !    if ((ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
      !		ndens = 0.5d0 * ndens
      !    end if
-     ntot = ntot + ndens*weights(ir)
+     ntot = ntot + ndens*weights(ir) !weights are required as integration coefficient instead of del_d
 
-     if (diameter .gt. dmax(liu_type)) diameter = dmax(liu_type)
-     if (diameter .lt. dmin(liu_type)) diameter = dmin(liu_type)
-     if (verbose .gt. 2) print*, ir, ' with: ',f_liu,t_liu,liu_type,diameter*1.e6
-     call scatdb(f_liu,t_liu,liu_type,diameter*1.e6,abs_liu,sca_liu,bsc_liu,g,p_liu,r_ice_eq,iret,is_loaded,&
+     if (dia_liu .gt. dmax(liu_type)) then
+       dia_liu = dmax(liu_type)
+       if (verbose .gt. 0) print*, 'WARNING dda_liu: particles larger than d_max of liu database'
+     end if
+     if (dia_liu .lt. dmin(liu_type)) then
+       dia_liu = dmin(liu_type)
+       if (verbose .gt. 0) print*, 'WARNING dda_liu: particles smaller than d_min of liu database'
+     end if
+     if (verbose .gt. 2) print*, ir, ' with: ',f_liu,t_liu,liu_type,dia_liu*1.e6
+     call scatdb(f_liu,t_liu,liu_type,dia_liu*1.e6,abs_liu,sca_liu,bsc_liu,g,p_liu,r_ice_eq,iret,is_loaded,&
           trim(data_path))
-     !   if (verbose .gt. 2) print*, 'got: ',iret, abs_liu,sca_liu,bsc_liu,g
-     if (verbose .gt. 1) print*, iret,f_liu,t_liu,liu_type,diameter*1.e6, abs_liu,sca_liu,bsc_liu
+     if (verbose .gt. 1) print*, iret,f_liu,t_liu,liu_type,dia_liu*1.e6, abs_liu,sca_liu,bsc_liu
 
      qext = (abs_liu+sca_liu)
      qscat = sca_liu
@@ -161,6 +184,10 @@ subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
      sumqe = sumqe + qext * ndens * weights(ir)
      sumqs = sumqs + qscat * ndens * weights(ir)
      sumqback = sumqback + qback * ndens * weights(ir)
+     back_spec(ir) = qback * ndens !* weights(ir) *(dia2-dia1)/2.d0![m²/m⁴]
+
+
+
      if (lphase_flag) then
         ang_quad = acos(mu(nquad:1:-1))*180.d0/pi
         call interpolation(nang_db,nquad,dble(ang_db),dble(p_liu),ang_quad,P1_quad)
@@ -174,6 +201,9 @@ subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
         end do
      end if
   end do
+
+
+  ! (dia2-dia1)/2.d0 because of Integral via Gauss Quadrature, see eq 19.83 in Bronstein.
   sumqe = sumqe*(dia2-dia1)/2.d0
   sumqs = sumqs*(dia2-dia1)/2.d0
   sumqback = sumqback*(dia2-dia1)/2.d0

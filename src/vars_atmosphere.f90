@@ -28,7 +28,8 @@ module vars_atmosphere
        relhum,&
        vapor_pressure, &
        rho_vap, &
-       q_hum
+       q_hum,&
+       hgt
 
   real(kind=dbl), allocatable, dimension(:) :: cwc_q, &
        iwc_q, &
@@ -44,7 +45,7 @@ module vars_atmosphere
        gwc_n, &
        hwc_n
 
-
+  real(kind=dbl), allocatable, dimension(:) ::	delta_hgt_lev
 
 
   real(kind=dbl), allocatable, dimension(:) :: kextatmo, &
@@ -87,6 +88,7 @@ module vars_atmosphere
   real(kind=dbl), allocatable, dimension(:) :: jac_kextha
   real(kind=dbl), allocatable, dimension(:) :: jac_backha
   logical, allocatable, dimension(:) :: jac_hydros_present
+
   !jacobian mode
   real(kind=dbl), allocatable, dimension(:) :: jac_cwc_q, &
        jac_iwc_q, &
@@ -104,8 +106,6 @@ module vars_atmosphere
 
   real(kind=dbl), allocatable, dimension(:) :: jac_relhum_lev,&
        jac_temp_lev
-
-
 
   logical, allocatable, dimension(:) :: hydros_present, rt4hydros_present
 

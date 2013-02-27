@@ -70,6 +70,10 @@ subroutine miecross (nterms, x, a, b, qext, qscat, qbackscat)
   !    qext          extinction efficiency
   !    qscat         scattering efficiency
   !    qbackscat     backscattering efficiency
+  !
+  ! Note: qbackscat*pi*r² = back scattering crossection INCLUDING the 
+  ! akward 4*pi, i.e. identical to sigma_b of eq 4.82 in Bohren & Huffmann
+  ! (Max, 10/12)
 
   use kinds
 
@@ -266,7 +270,9 @@ end subroutine amplScatMat_to_extinctionMatrix
 
 
 function distribution(a, b, alpha, gamma, d, distflag)
-  !   distribution returns the particle density for a given radius r
+  !   distribution returns the particle density for a given radius 
+  !   OR diameter d depending on how the coefficients are defined
+  !   in Pamtra distfalgs C, M, G assume diameter, L radius (has to be fixed!!)
   !   for a modified gamma distribution specified by a, b, alpha, gamma
   !      n(r) = a * r^alpha * exp(-b * r^gamma)     .
   !   or a log-normal distribution:
@@ -278,7 +284,7 @@ function distribution(a, b, alpha, gamma, d, distflag)
 
   real(kind=dbl), intent(in) :: a, b, d
   real(kind=dbl), intent(in) :: alpha, gamma
-  real(kind=dbl) :: distribution
+  real(kind=dbl) :: distribution, r
   character :: distflag*1
 
   if (distflag .eq. 'G') then
@@ -286,7 +292,8 @@ function distribution(a, b, alpha, gamma, d, distflag)
      distribution = a * d**alpha * exp( - b * d**gamma)
   elseif (distflag .eq. 'L') then
      !   log-normal distribution
-     distribution = a / d * exp( -0.5*(log(d / b) )**2 / alpha**2)
+     r = d/2.d0
+     distribution = a / r * exp( -0.5*(log(r / b) )**2 / alpha**2)
   elseif (distflag .eq. 'C' .or. distflag .eq. 'M' ) then
      !   distribution according to cosmo-de or mesonh model
      distribution = a * exp(-b*d)

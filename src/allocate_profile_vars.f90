@@ -13,6 +13,8 @@ subroutine allocate_profile_vars
   allocate(press(nlyr),stat=alloc_status)
   allocate(temp_lev(0:nlyr),stat=alloc_status)
   allocate(temp(nlyr),stat=alloc_status)
+  allocate(hgt(nlyr),stat=alloc_status)
+  allocate(delta_hgt_lev(nlyr),stat=alloc_status)
   allocate(relhum_lev(0:nlyr),stat=alloc_status)
   allocate(relhum(nlyr),stat=alloc_status)
 

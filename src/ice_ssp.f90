@@ -1,31 +1,31 @@
-subroutine ice_ssp(f,iwc,t,maxleg,nc, kext, salb, back,  &
+subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
-     scatter_matrix,extinct_matrix, emis_vector)
+     scatter_matrix,extinct_matrix, emis_vector,ice_spec)
 
   use kinds
   use nml_params, only: verbose, lphase_flag, n_moments, EM_ice, SD_ice,&
-      nstokes
+      nstokes, radar_nfft_aliased, radar_mode, active
   use constants, only: pi, im
   use double_moments_module
   use conversions
 
   implicit none
 
-  integer :: nbins, nlegen
+  integer :: nbins, nbins_spec, nlegen,alloc_status
 
   integer, intent(in) :: maxleg
 
   real(kind=dbl), intent(in) :: &
        iwc,&
        t,&
-       f
+       f,press,hgt
 
   real(kind=dbl), intent(in) :: nc
 
   real(kind=dbl) :: refre, refim
 
   real(kind=dbl) :: dia1, dia2, del_d, den_ice, drop_mass, b_ice, a_mice
-  real(kind=dbl) :: ad, bd, alpha, gamma, number_concentration
+  real(kind=dbl) :: ad, bd, alpha, gamma, number_concentration,a_as_ice, b_as_ice
 
   real(kind=dbl), intent(out) :: &
        kext,&
@@ -38,7 +38,10 @@ subroutine ice_ssp(f,iwc,t,maxleg,nc, kext, salb, back,  &
     real(kind=dbl), dimension(nstokes,nstokes,nquad,2), intent(out) :: extinct_matrix
     real(kind=dbl), dimension(nstokes,nquad,2), intent(out) :: emis_vector
   complex(kind=dbl) :: mindex
+  real(kind=dbl), allocatable, dimension(:):: diameter_spec, back_spec
+  real(kind=dbl), intent(out), dimension(radar_nfft_aliased) :: ice_spec
 
+  character(5) ::  particle_type
   if (verbose .gt. 1) print*, 'Entering ice_ssp'
 
   call ref_ice(t,f, refre, refim)
@@ -53,7 +56,7 @@ subroutine ice_ssp(f,iwc,t,maxleg,nc, kext, salb, back,  &
      !	 a=130 kg/m^3 (hexagonal plates with aspect ratio of 0.2 -> thickness=0.2*Diameter)
      number_concentration = 1.0d2*DEXP(0.2d0*(273.15d0-t)) 	! [1/m^3]
      drop_mass = iwc/number_concentration 					! [kg]
-     del_d = 1.d-8											! [m]
+     del_d = 1.d-8	
      dia1 = (drop_mass/130.0d0)**(1.0d0/3.0d0)				! [m]
 !    CHECK if dia1 > maxdiam=2.d-4 (maximum diameter for COSMO)
 ! 	 then recalculate the drop mass using 2.d-4 as particle diameter
@@ -68,6 +71,12 @@ subroutine ice_ssp(f,iwc,t,maxleg,nc, kext, salb, back,  &
      alpha = 0.0d0     ! exponential SD
      gamma = 1.0d0
      den_ice=917.d0
+
+     a_mice = 130d0
+     b_ice = 3.d0
+     !area-size relation in SI
+     a_as_ice = 0.684 !0.684 also in CGS
+     b_as_ice = 2.d0 !from mitchell 1996 similar to a_msnow&b_snow
     else if (SD_ice .eq. 'M') then
      del_d = 1.d-8    ! [m]
      dia1 = 6.d-5     ! [m] 60 micron diameter
@@ -76,11 +85,17 @@ subroutine ice_ssp(f,iwc,t,maxleg,nc, kext, salb, back,  &
      drop_mass = pi/6.d0 * dia1**3 * den_ice
      a_mice = 0.82d0
      b_ice = 2.5d0
+     !area-size relation in SI
+     a_as_ice = 0.12028493607054538 !0.24 in CGS
+     b_as_ice = 1.85d0 !from mitchell 1996 similar to a_msnow&b_snow
      ad = iwc/(drop_mass*del_d) 	!intercept parameter [1/m^4]
      bd = 0.0d0
      nbins = 2
      alpha = 0.0d0     ! exponential SD
      gamma = 1.0d0 
+    else
+      print*, "did not understand SD_ice: ", SD_ice
+      stop
     end if
   else if (n_moments .eq. 2) then
      if (nc .eq. 0.d0) stop 'STOP in routine ice_ssp'
@@ -90,16 +105,29 @@ subroutine ice_ssp(f,iwc,t,maxleg,nc, kext, salb, back,  &
      den_ice=917.d0
      dia1 = 1.d-10	! minimum diameter [m]
      dia2 = 6.d-5	! maximum diameter [m]
+     !to_do: implement area-size relation in two-moments!
+     !area-size relation in SI
+     a_as_ice = 0.684 !0.684 also in CGS
+     b_as_ice = 2.d0 !from mitchell 1996 similar to a_msnow&b_snow
   else
      stop 'Number of moments is not specified'
   end if
+
+  if ((EM_ice .eq. 'mieic')) then
+    nbins_spec = nbins+1 !Mie routine uses nbins+1 bins!
+  else
+    nbins_spec = nbins
+  end if
+  allocate(diameter_spec(nbins_spec),stat=alloc_status)
+  allocate(back_spec(nbins_spec),stat=alloc_status)
 
   if (EM_ice .eq. 'mieic') then
      call mie(f, mindex,      &
           dia1, dia2, nbins, maxleg,   &
           ad, bd, alpha, gamma, lphase_flag, kext, salb,      &
           back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
-          LEGEN4, SD_ice,den_ice,iwc)
+          LEGEN4, SD_ice,den_ice,iwc,&
+          diameter_spec, back_spec)
       scatter_matrix= 0.d0
       extinct_matrix= 0.d0
       emis_vector= 0.d0
@@ -108,7 +136,8 @@ subroutine ice_ssp(f,iwc,t,maxleg,nc, kext, salb, back,  &
           dia1,dia2,nbins,maxleg,ad,&
           bd, alpha, gamma, lphase_flag,kext, salb,&
           back, nlegen, legen, legen2, legen3,&
-          legen4, SD_ice)
+          legen4, SD_ice,&
+          diameter_spec, back_spec)
       scatter_matrix= 0.d0
       extinct_matrix= 0.d0
       emis_vector= 0.d0
@@ -116,6 +145,16 @@ subroutine ice_ssp(f,iwc,t,maxleg,nc, kext, salb, back,  &
      write (*, *) 'no em mod', EM_ice
      stop
   endif
+
+  if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
+    particle_type ="ice"
+    call radar_spectrum(nbins_spec,diameter_spec, back,  back_spec,t,press,hgt,f,&
+      particle_type,a_mice,b_ice,a_as_ice,b_as_ice,ice_spec)
+  else
+    ice_spec(:)=0.d0
+  end if
+  deallocate(diameter_spec, back_spec)
+
   if (verbose .gt. 1) print*, 'Exiting ice_ssp'
 
   return
