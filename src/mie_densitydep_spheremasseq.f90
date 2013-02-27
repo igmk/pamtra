@@ -93,10 +93,11 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
         ndens = 0.5 * ndens 
      end if
      tot_mass = tot_mass + ndens*del_d*a_mtox*diameter(ir)**bcoeff
-     if ((ir .eq. nbins+1) .and. (tot_mass/wc*100. .lt. 99.9d0)) then
-      ndens = ndens + (wc-tot_mass)/(del_d*a_mtox*(diameter(ir))**bcoeff)
-      tot_mass = wc
-     end if
+!      if ((ir .eq. nbins+1) .and. (tot_mass/wc*100. .lt. 99.9d0)) then
+!       ndens = ndens + (wc-tot_mass)/(del_d*a_mtox*(diameter(ir))**bcoeff)
+!       tot_mass = wc
+!      end if
+
 
      nmie = 0 
 

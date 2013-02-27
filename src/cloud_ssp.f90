@@ -18,7 +18,9 @@ subroutine cloud_ssp(f,cwc,t, press,hgt,maxleg,nc, kext, salb, back,  &
 
   use kinds
   use nml_params, only: verbose, lphase_flag, n_moments, SD_cloud, &
-      nstokes, EM_cloud, radar_nfft_aliased, radar_mode, active
+      nstokes, EM_cloud, radar_nfft_aliased, radar_mode, active,&
+	ad_cloud, bd_cloud,&
+      alphad_cloud, gammad_cloud
   use constants, only: pi, im
   use double_moments_module
   use conversions
@@ -82,7 +84,7 @@ real(kind=dbl) :: re, Nt
 	    gamma = 1.d0
 	else if (SD_cloud .eq. 'M') then
 	    del_d = 1.d-8 	!delta_diameter for mie calculation [m]
-	    dia1 = 2.d-5 	! [m] 20 micron diameter monodisperse
+	    dia1 = 4.d-5 	! [m] 20 micron diameter monodisperse
 	    dia2 = dia1 + del_d
 	    drop_mass = pi/6.d0 * den_liq * dia1**3 		    	! [kg]
 	    ad = cwc / (drop_mass*del_d)	! intercept parameter [1/m^4]
@@ -93,14 +95,23 @@ real(kind=dbl) :: re, Nt
 	else if (SD_cloud .eq. 'L') then !lognormal cloud distribution to test Pavlos Radar Spectrum
 !teh hard and ugly way:
 
-	    dia1 = 2.d-6 ! [m] 2 micron diameter 
-	    dia2 = 50.d-6 ! [m] 50 micron diameter 
+! 	    dia1 = 20.d-6 ! [m] 2 micron diameter 
+! 	    dia2 = 50.d-6 ! [m] 50 micron diameter 
+! 	    nbins = 48
+! 	    alpha = 0.3 !S_x in Pavlos code
+! 	    re=30.d-6
+! 	    bd = re/exp(2.5d0*alpha**2); !ro in Pavlos Code
+! 	    Nt = (3*CWC*1.d3)/(4*pi*1*(bd*1d2)**3*exp(4.5d0*alpha**2))
+! 	    ad = Nt/(sqrt(2*pi) *alpha)
+! 	    gamma = 1.d0#
+!MPACE
+	    dia1 = 4.d-6 ! [m] 4 micron diameter 
+	    dia2 = 5.d-5 ! [m] 50 micron diameter 
 	    nbins = 48
-	    alpha = 0.3 !S_x in Pavlos code
-	    re=10.d-6
-	    bd = re/exp(2.5d0*alpha**2); !ro in Pavlos Code
-	    Nt = (3*CWC*1.d3)/(4*pi*1*(bd*1d2)**3*exp(4.5d0*alpha**2))
-	    ad = Nt/(sqrt(2*pi) *alpha)
+	    alpha = alphad_cloud
+	    bd = bd_cloud
+	    ad = ad_cloud
+	    gamma = gammad_cloud
 
         else
 	    stop "did not understand SD_cloud"

@@ -292,7 +292,7 @@ function distribution(a, b, alpha, gamma, d, distflag)
      distribution = a * d**alpha * exp( - b * d**gamma)
   elseif (distflag .eq. 'L') then
      !   log-normal distribution
-     r = d/2.d0
+     r = d!/2.d0
      distribution = a / r * exp( -0.5*(log(r / b) )**2 / alpha**2)
   elseif (distflag .eq. 'C' .or. distflag .eq. 'M' ) then
      !   distribution according to cosmo-de or mesonh model

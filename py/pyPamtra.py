@@ -113,9 +113,17 @@ class pyPamtra(object):
 
     self.nmlSet["cloud_params"]["sd_cloud"]='C'
     self.nmlSet["cloud_params"]["em_cloud"]='miecl'
-    
+    self.nmlSet["cloud_params"]["ad_cloud"]=1000.
+    self.nmlSet["cloud_params"]["bd_cloud"]=2.0
+    self.nmlSet["cloud_params"]["alphad_cloud"]=0.
+    self.nmlSet["cloud_params"]["gammad_cloud"]=1.
+
     self.nmlSet["ice_params"]["sd_ice"]='C'
     self.nmlSet["ice_params"]["em_ice"]='mieic'
+    self.nmlSet["ice_params"]["ad_ice"]=1000.
+    self.nmlSet["ice_params"]["bd_ice"]=2.0
+    self.nmlSet["ice_params"]["alphad_ice"]=0.
+    self.nmlSet["ice_params"]["gammad_ice"]=1.
     
     self.nmlSet["rain_params"]["sd_rain"]='C' 
     self.nmlSet["rain_params"]["em_rain"]='miera' 
@@ -950,7 +958,7 @@ class pyPamtra(object):
 
     
     
-  def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto"):
+  def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto",checkData=True):
     '''
     run Pamtra analouge to runPamtra, but with with parallel python
     
@@ -968,7 +976,7 @@ class pyPamtra(object):
     '''
     tttt = time.time()
     
-    self._checkData()
+    if checkData: self._checkData()
         
     #if the namelist file is empty, write it. Otherwise existing one is used.
     #if not os.path.isfile(self.set["namelist_file"]):
@@ -1243,7 +1251,7 @@ class pyPamtra(object):
     return
     
     
-  def runPamtra(self,freqs):
+  def runPamtra(self,freqs,checkData=True):
     '''
     run Pamtra from python
     '''
@@ -1261,7 +1269,7 @@ class pyPamtra(object):
     else:
       radar_spectrum_length = 1
 
-    self._checkData()
+    if checkData: self._checkData()
 
     #if not os.path.isfile(self.set["namelist_file"]):
       #self.writeNmlFile(self.set["namelist_file"])

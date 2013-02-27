@@ -47,7 +47,7 @@ module nml_params
   real(kind=dbl) :: radar_airmotion_vmax
   real(kind=dbl) :: radar_airmotion_step_vmin
   real(kind=dbl) :: radar_min_spectral_snr !threshold for peak detection
-
+  real(kind=dbl) :: ad_cloud, bd_cloud, alphad_cloud, gammad_cloud, ad_ice, bd_ice, alphad_ice, gammad_ice
   logical ::  in_python !are we in python
 
   logical :: dump_to_file, &   ! flag for profile and ssp dump
@@ -98,8 +98,8 @@ contains
     namelist / surface_params / ground_type,salinity, emissivity
     namelist / gas_abs_mod / lgas_extinction, gas_mod
     namelist / hyd_opts / lhyd_extinction, lphase_flag
-    namelist / cloud_params / SD_cloud, EM_cloud
-    namelist / ice_params / SD_ice, EM_ice
+    namelist / cloud_params / SD_cloud, EM_cloud,  ad_cloud, bd_cloud, alphad_cloud, gammad_cloud
+    namelist / ice_params / SD_ice, EM_ice, ad_ice, bd_ice, alphad_ice, gammad_ice
     namelist / rain_params / SD_rain, N_0rainD, use_rain_db, EM_rain
     namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, use_snow_db, as_ratio,snow_density, SP, isnow_n0, liu_type
     namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau, graupel_density
@@ -153,9 +153,18 @@ contains
     ! sec cloud_params
     SD_cloud='C'
     EM_cloud="miecl"
+    ad_cloud = 1000.
+    bd_cloud = 2.0
+    alphad_cloud = 0.
+    gammad_cloud = 1.
+    ! sec rain_para
     ! sec ice_params
     SD_ice='C'
     EM_ice='mieic'
+    ad_ice = 1000.
+    bd_ice = 2.0
+    alphad_ice = 0.
+    gammad_ice = 1.
     ! sec rain_params
     SD_rain='C'
     N_0rainD=8.0
@@ -270,8 +279,8 @@ contains
     print*, "surface_params ",  ground_type,salinity, emissivity
     print*, "gas_abs_mod ",  lgas_extinction, gas_mod
     print*, "hyd_opts ",  lhyd_extinction, lphase_flag
-    print*, "cloud_params ",  SD_cloud, EM_cloud
-    print*, "ice_params ",  SD_ice, EM_ice
+    print*, "cloud_params ",  SD_cloud, EM_cloud, ad_cloud, bd_cloud, alphad_cloud, gammad_cloud
+    print*, "ice_params ",  SD_ice, EM_ice, ad_ice, bd_ice, alphad_ice, gammad_ice
     print*, "rain_params ",  SD_rain, N_0rainD, use_rain_db, EM_rain
     print*, "snow_params ",  SD_snow, N_0snowDsnow, EM_snow, use_snow_db, as_ratio,snow_density, SP, isnow_n0, liu_type
     print*, "graupel_params ",  SD_grau, N_0grauDgrau, EM_grau, graupel_density

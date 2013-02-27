@@ -102,10 +102,11 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
      end if
      tot_mass = tot_mass + ndens(ir)*del_d*pi/6.d0*density*diameter(ir)**3.d0
      !if mass is missing put into last bin
-     if ((ir .eq. nbins+1) .and. (tot_mass/wc*100. .lt. 99.9d0)) then
-      ndens(ir) = ndens(ir) + (wc-tot_mass)/(del_d*pi/6.d0*density*diameter(ir)**3.d0)
-      tot_mass = wc
-     end if
+!      if ((ir .eq. nbins+1) .and. (tot_mass/wc*100. .lt. 99.9d0)) then
+!       ndens(ir) = ndens(ir) + (wc-tot_mass)/(del_d*pi/6.d0*density*diameter(ir)**3.d0)
+!       tot_mass = wc
+!      end if
+
 
      x = pi * diameter(ir) / wavelength ! size parameter
      nmie = 0 
