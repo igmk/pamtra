@@ -34,6 +34,9 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
   ! i/o-length test for the emissivity file
   integer :: iolsgl
 
+  ! error reporting
+  integer(kind=long) :: errstat
+
   inquire(iolength=iolsgl) 1._sgl
 
   wavelength = c / (freq*1.d3)   ! microns
@@ -97,7 +100,7 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
   !
   if (lgas_extinction) then
      !returns kextatmo!
-     call get_atmosg(freq)
+     call get_gasabs(freq,errstat)
   else
      kextatmo = 0.0D0 ! for the whole column
   end if

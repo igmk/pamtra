@@ -29,10 +29,11 @@ endif
 #-	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm -lsz
 
 
-OBJECTS=kinds.o constants.o file_mod.o nml_params.o mod_fastem4_coef.o conversions.o double_moments_module.o cosmo_netcdf.o  vars_profile.o \
+OBJECTS=kinds.o constants.o file_mod.o nml_params.o mod_fastem4_coef.o conversions.o double_moments_module.o error_report.o \
+	cosmo_netcdf.o  vars_profile.o \
 	vars_atmosphere.o mod_io_strings.o getopt.o parse_options.o radmat.o\
 	get_atmosphere.o vars_output.o run_rt.o rt3.o radtran3.o radutil3.o radscat3.o radintg3.o \
-	scat_utilities.o dsd_utilities.o mpm93.o get_atmosG0.o get_atmosG.o mie.o mie_densitydep_spheremasseq.o\
+	scat_utilities.o dsd_utilities.o mpm93.o get_atmosG0.o gasabs_module.o get_gasabs.o mie.o mie_densitydep_spheremasseq.o\
 	deallocate_jacobian_vars.o allocate_jacobian_vars.o\
 	slant_profile.o allocate_profile_vars.o allocate_output_vars.o rosen98_gasabs.o surface.o eps_water.o eps_ice.o eps_mix.o \
 	equcom.o land_emis.o equare.o scatdb.o dda_db_liu.o dielec_water.o ref_water.o \
