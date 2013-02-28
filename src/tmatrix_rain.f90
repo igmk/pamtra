@@ -1,5 +1,6 @@
 subroutine tmatrix_rain(f, wc, t, nc, &
-     ad, bd, alpha, gamma, a_m, b, aerodist,scatter_matrix,extinct_matrix, emis_vector)
+     ad, bd, alpha, gamma, a_m, b, aerodist,nbins,scatter_matrix,extinct_matrix, emis_vector,&
+     diameter, back_spec)
 
   ! note that mindex has the convention with negative imaginary part
   !     
@@ -18,7 +19,7 @@ subroutine tmatrix_rain(f, wc, t, nc, &
 
   implicit none
 
-  integer :: nbins
+  integer, intent(in) :: nbins
 
   real(kind=dbl), intent(in) :: f, &  ! frequency [ghz]
                                 t
@@ -39,6 +40,8 @@ subroutine tmatrix_rain(f, wc, t, nc, &
   real(kind=dbl), dimension(nstokes,nquad,nstokes,nquad,4), intent(out) :: scatter_matrix
   real(kind=dbl), dimension(nstokes,nstokes,nquad,2), intent(out) :: extinct_matrix
   real(kind=dbl), dimension(nstokes,nquad,2), intent(out) :: emis_vector
+  real(kind=dbl), intent(out) :: diameter(nbins)
+  real(kind=dbl), intent(out) :: back_spec(nbins)
   real(kind=dbl), dimension(nstokes,nquad,nstokes,nquad,4) :: scat_mat_sgl
   real(kind=dbl), dimension(nstokes,nstokes,nquad,2) :: ext_mat_sgl
   real(kind=dbl), dimension(nstokes,nquad,2) :: emis_vec_sgl
@@ -62,21 +65,16 @@ subroutine tmatrix_rain(f, wc, t, nc, &
   tot_mass = 0.0_dbl
   ntot = 0.d0
   del_d = 1.8d-4
-  nbins = 50
-!  ad = 8000000.0000000000
-!  bd = 3042.9097944151281
-!  aerodist = 'C'
-!  ad = 512509621802.85608
-!  bd = 2189.0396688372957
-!  print*, ad, bd
-  do ir = 1, nbins
-     dia = ir * del_d
-     ndens = distribution(ad, bd, alpha, gamma, dia, aerodist)  ! number density [1/m^4]
-     if (dia .gt. 1.d-3) &
-            as_ratio = 1.101668d0-0.09806d0*dia*1.d2-2.52686d0*(dia*1.d2)**2&
-            +3.75061d0*(dia*1.d2)**3-1.68692d0*(dia*1.d2)**4
 
-     particle_mass = a_m*dia**b ! particle mass [kg]
+
+  do ir = 1, nbins
+     diameter(ir) = ir * del_d
+     ndens = distribution(ad, bd, alpha, gamma, diameter(ir), aerodist)  ! number density [1/m^4]
+     if (diameter(ir) .gt. 1.d-3) &
+            as_ratio = 1.101668d0-0.09806d0*diameter(ir)*1.d2-2.52686d0*(diameter(ir)*1.d2)**2&
+            +3.75061d0*(diameter(ir)*1.d2)**3-1.68692d0*(diameter(ir)*1.d2)**4
+
+     particle_mass = a_m*diameter(ir)**b ! particle mass [kg]
      if (ir .eq. 1 .or. ir .eq. nbins) then
         ndens = 0.5_dbl * ndens
      end if
@@ -90,9 +88,9 @@ subroutine tmatrix_rain(f, wc, t, nc, &
         call get_rain_data(real(f),real(t),ir,scat_mat_sgl,ext_mat_sgl,emis_vec_sgl)
 !        print*, ir,diameter,ndens*del_d, tot_mass/wc*100.,ntot/nc*100.
      else
-        equiv_radius = 0.5_dbl*dia*as_ratio**(1.0_dbl/3.0_dbl)
-        CALL CAL_REFRACTIVE_INDEX('L',t,freq, dia, as_ratio, particle_mass*1.d3, equiv_radius, mindex)
-        print*, ir,dia,ndens*del_d, tot_mass/wc*100.,ntot/nc*100., mindex
+        equiv_radius = 0.5_dbl*diameter(ir)*as_ratio**(1.0_dbl/3.0_dbl)
+        CALL CAL_REFRACTIVE_INDEX('L',t,freq, diameter(ir), as_ratio, particle_mass*1.d3, equiv_radius, mindex)
+        print*, ir,diameter(ir),ndens*del_d, tot_mass/wc*100.,ntot/nc*100., mindex
     !     write(25,*) ir,equiv_radius,diameter,density,ntot,ntot/nc*100.0_dbl,tot_mass,tot_mass/wc*100.0_dbl
         call matrix_cal('L',nquad,freq,wave_num,mindex,equiv_radius,nstokes,&
             as_ratio, eu_alpha, eu_beta, azimuth_num, azimuth0_num, &
@@ -101,6 +99,7 @@ subroutine tmatrix_rain(f, wc, t, nc, &
      scatter_matrix = scatter_matrix + scat_mat_sgl*bin_wgt
      extinct_matrix = extinct_matrix + ext_mat_sgl*bin_wgt
      emis_vector = emis_vector + emis_vec_sgl*bin_wgt
+     back_spec(ir) = 4*pi*ndens*scat_mat_sgl(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
 
 
 !     ! WRITE OUT THE MATRIX FILE IN THE FILE OPENED AT THE BEGINNING OF THIS SUBROUTINE

@@ -86,8 +86,6 @@ def readWrfDataset(fname,kind):
 
 	
 def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp/",fnameInTar="",concatenateAxis=1,debug=False,verbosity=0):
-	import netCDF4
-	
 	'''
 	import wrf Dataset with fname of kind 
 	
@@ -99,6 +97,7 @@ def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp
 	concatenateAxis: axis to concatenate the grids
 	debug: stop and load debugger on exception
 	'''
+	import netCDF4
 	
 	if kind not in ["collum"]:
 		raise TypeError("unknown Cosmo DE data type")
@@ -185,7 +184,6 @@ def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp
 	    del time1h, longitude, latitude, fr_land, hhl, hfl
 	    
 	    
-	    
 	    if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
 		  data = deepcopy(dataSingle)
 	    else:
@@ -252,3 +250,51 @@ def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp
 	
 	return pam
 	
+def createUsStandardProfile(**kwargs):
+	'''
+	Function to create clear sky US Standard Atmosphere.
+	
+	hgt_lev is teh only mandatory variables
+	humidity will be set to zero if not provided, all other variables are guessed by "createProfile"
+	
+	values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwritte us staandard if provided 
+	
+	'''    
+	
+	import usStandard #see in tools
+	
+	assert "hgt_lev" in kwargs.keys() #hgt_lev is mandatory
+	
+	pamData = dict()
+	
+	density = np.zeros_like(kwargs["hgt_lev"])
+	pamData["press_lev"] = np.zeros_like(kwargs["hgt_lev"])
+	pamData["temp_lev"] = np.zeros_like(kwargs["hgt_lev"])
+	
+	if len(np.shape(kwargs["hgt_lev"]))==1:
+	  density[:], pamData["press_lev"][:], pamData["temp_lev"][:]  =  usStandard.usStandard(kwargs["hgt_lev"])
+	elif  len(np.shape(kwargs["hgt_lev"]))==2:
+	  for xx in range(np.shape(kwargs["hgt_lev"])[0]):
+	    density[xx], pamData["press_lev"][xx], pamData["temp_lev"][xx]  =  usStandard.usStandard(kwargs["hgt_lev"][xx])
+	elif  len(np.shape(kwargs["hgt_lev"]))==3:
+	  for xx in range(np.shape(kwargs["hgt_lev"])[0]):
+	    for yy in range(np.shape(kwargs["hgt_lev"])[1]):
+	      density[xx,yy], pamData["press_lev"][xx,yy], pamData["temp_lev"][xx,yy]  =  usStandard.usStandard(kwargs["hgt_lev"][xx,yy])
+	else: raise IOError("hgt_lev has wrong number of dimensions")
+	
+	for kk in kwargs.keys():
+	      pamData[kk] = np.array(kwargs[kk])
+	
+	if ("relhum_lev" not in kwargs.keys()) and ("q" not in kwargs.keys()):
+		pamData["relhum_lev"] = np.zeros_like(kwargs["hgt_lev"])
+	
+	pam = pyPamtra.pyPamtra()
+
+	pam.createProfile(**pamData)
+	del kwargs
+	
+	return pam
+	
+
+	
+	    

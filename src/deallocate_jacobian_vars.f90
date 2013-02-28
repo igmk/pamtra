@@ -20,4 +20,5 @@ subroutine deallocate_jacobian_vars
       deallocate(jac_hwc_q, jac_cwc_n, jac_iwc_n,&
 	jac_rwc_n, jac_swc_n, jac_gwc_n, jac_hwc_n)
   end if
+
 end subroutine deallocate_jacobian_vars

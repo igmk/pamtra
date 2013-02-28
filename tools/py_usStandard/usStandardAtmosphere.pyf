@@ -1,0 +1,16 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module usStandardAtmosphere ! in 
+    interface  ! in :usStandardAtmosphere
+        subroutine atmosphere(alt,sigma,delta,theta) ! in :usStandardAtmosphere:usStandard.f90
+            real docstring(geometric altitude, km.) intent(in),intent(in) :: alt
+            real intent(out) :: sigma
+            real intent(out) :: delta
+            real intent(out) :: theta
+        end subroutine atmosphere
+    end interface 
+end python module usStandardAtmosphere
+
+! This file was auto-generated with f2py (version:1).
+! See http://cens.ioc.ee/projects/f2py2e/

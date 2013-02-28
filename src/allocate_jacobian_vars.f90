@@ -22,7 +22,7 @@ subroutine allocate_jacobian_vars
   allocate(jac_kextha(nlyr),stat=alloc_status)
   allocate(jac_backha(nlyr),stat=alloc_status)
   allocate(jac_hydros_present(nlyr),stat=alloc_status)
-  
+
   allocate(jac_temp_lev(0:nlyr),stat=alloc_status)
   allocate(jac_relhum_lev(0:nlyr),stat=alloc_status)
   allocate(jac_cwc_q(nlyr),stat=alloc_status)
@@ -39,6 +39,5 @@ subroutine allocate_jacobian_vars
     allocate(jac_gwc_n(nlyr),stat=alloc_status)
     allocate(jac_hwc_n(nlyr),stat=alloc_status)
   end if
-
 
 end subroutine allocate_jacobian_vars

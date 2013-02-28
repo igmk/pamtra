@@ -121,6 +121,33 @@ def T_virt_q(T,q):
 	  '''
 	  return T + T * (Rvapor/Rair-1) * q
 
+def e2q(e,p):
+	'''
+	Calculate the specific humidity from water vapour pressure and air pressure. 
+
+	Input:
+	e is in Pa
+	p is in Pa
+	
+	Output
+	q in kg/kg
+	'''
+	q = Mwml*e/(p-(1-Mwml)*e)
+	return q
+  
+def q2e(q,p):
+	'''
+	Calculate water vapour pressure from the specific humidity and air pressure. 
+
+	Input:
+	q in kg/kg
+	p is in Pa
+	
+	Output
+	e is in Pa
+	'''
+	e=p/((Mwml/q)+1-Mwml)
+	return e
 
 def rh2q(rh,T,p):
 	'''
@@ -139,9 +166,10 @@ def rh2q(rh,T,p):
 	
 	eStar = e_sat_gg_water(T)
 	e = rh*eStar
-	q = Mwml*e/(p-(1-Mwml)*e)
+	q = e2q(e,p)
 	del e, eStar
 	return q
+
 	
 def rh2a(rh,T):
 	'''
