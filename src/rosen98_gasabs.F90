@@ -1,12 +1,12 @@
 !+ gaseous absorption after Rosenkranz 98 model
 subroutine rosen98_gasabs &
- (freq,  &      ! in
+ (errStat,&     ! out
+  freq,  &      ! in
   tempK, &      ! in
   rhoWv, &      ! in
   pres,  &      ! in
   absAir,&      ! out
-  absWv, &      ! out
-  errstat)      ! out
+  absWv  )      ! out
 
 ! Description:
 !  Based on frequency, temperature, water vapor density, and pressure, this routine

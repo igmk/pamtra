@@ -1,6 +1,6 @@
 subroutine parse_options(gitVersion,gitHash,frqs_str,nfrq)
 
-    use kinds
+    use kinds, only: long
     use getopt_m
     use nml_params, only: maxfreq
     use file_mod, only: namelist_file, input_file
@@ -8,8 +8,8 @@ subroutine parse_options(gitVersion,gitHash,frqs_str,nfrq)
 
     implicit none
 
-    integer :: nfrq
-    !    real(kind=dbl), allocatable,dimension(:) :: freqs
+    integer(kind=long) :: nfrq
+
     character:: ch
     character(40) :: gitHash, gitVersion
     character(8), dimension(maxfreq) :: frqs_str
@@ -72,11 +72,12 @@ contains
 
     subroutine process_freq(arg,frqs_str,nfrq)
 
+        use kinds, only: long
         use nml_params, only: maxfreq
 
         implicit none
 
-        integer :: nfrq, ind
+        integer(kind=long) :: nfrq, ind
         character(len=*), intent(in) :: arg
         character(150) :: arg_loc
         character(8), dimension(maxfreq) :: frqs_str
@@ -101,11 +102,15 @@ contains
 
     subroutine process_grid(arg,coords)
 
-        integer :: cc, ind
+        use kinds, only: long
+
+        implicit none
+
+        integer(kind=long) :: cc, ind
         character(len=*), intent(in) :: arg
         character(150) :: arg_loc
 
-        integer, dimension(4), intent(out) :: coords
+        integer(kind=long), dimension(4), intent(out) :: coords
 
         cc = 1
         arg_loc = arg

@@ -1,6 +1,9 @@
-subroutine run_rt(nx,ny,fi,freq,frq_str)
-  use kinds
-  use constants
+subroutine run_rt(errorstatus, nx,ny,fi,freq,frq_str)
+
+  use kinds, only: long, dbl
+  use constants, only: c,&
+                        pi,&
+                        errorstatus_fatal
   use nml_params !all settings go here
   use vars_atmosphere !input variables and reading routine
   use vars_output !output variables
@@ -11,13 +14,13 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
 
 #include "error_report.interface"
 
-  integer, intent(in) :: nx,ny,fi 
+  integer(kind=long), intent(in) :: nx,ny,fi
   real(kind=dbl), intent(in) :: freq ! frequency [GHz]
   character(8), intent(in) :: frq_str !from commandline
 
-  integer, dimension(maxlay) :: OUTLEVELS
-  integer :: ise, imonth ! filehandle for the emissivity data
-  integer :: nz
+  integer(kind=long), dimension(maxlay) :: OUTLEVELS
+  integer(kind=long) :: ise, imonth ! filehandle for the emissivity data
+  integer(kind=long) :: nz
 
   real(kind=dbl), dimension(maxv) :: MU_VALUES
   real(kind=dbl) :: wavelength       ! microns
@@ -34,11 +37,11 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
   character(3) :: xstr, ystr
 
   ! i/o-length test for the emissivity file
-  integer :: iolsgl
+  integer(kind=long) :: iolsgl
 
   ! Error handling
 
-  integer(kind=long) :: ErrStat
+  integer(kind=long), intent(out) :: errorstatus
   character(len=80) :: ErrMsg
   character(len=14) :: NameOfRoutine = 'run_rt'
 
@@ -105,10 +108,10 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
   !
   if (lgas_extinction) then
     !returns kextatmo!
-    call get_gasabs(freq,errstat)
-    if (errstat == errorstatus_fatal) Then
+    call get_gasabs(errorstatus,freq)
+    if (errorstatus == errorstatus_fatal) Then
        errmsg = 'error in get_gasabs'
-       call error_report(errstat, errmsg, NameOfRoutine)
+       call error_report(errorstatus, errmsg, NameOfRoutine)
        return
     end if
   else
