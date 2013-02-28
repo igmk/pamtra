@@ -85,17 +85,12 @@ real function vapor2rh(temp_p,pres_p,hum_massmix)
 
   !     * humidit351 relative par rapport 340 l'eau liquide
 
-  if (ZTEMP.ge.XTT) then
-
+  if (ZTEMP >= XTT) then
      ZWORK31=EXP(XALPW - XBETAW/ZTEMP - XGAMW*ALOG(ZTEMP))
      ZWORK31=(XMV/XMD)*ZWORK31/(XPABSM-ZWORK31)
      ZWORK32=100.*XRM/ZWORK31
-
-  end if
-
+  elseif (ZTEMP < XTT) then
   !     * humidit351 relative par rapport 340 la glace
-
-  if (ZTEMP.lt.XTT) then
      ZWORK31= EXP( XALPI - XBETAI/ZTEMP - XGAMI*ALOG(ZTEMP) )
      ZWORK31=(XMV/XMD)*ZWORK31/(XPABSM-ZWORK31)
      ZWORK32=100.*XRM/ZWORK31

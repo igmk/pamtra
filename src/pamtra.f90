@@ -1,7 +1,7 @@
 program pamtra
 
-    use kinds
-    use constants !physical constants live here
+    use kinds, only: long
+!    use constants !physical constants live here
     use nml_params !all settings go here
     use file_mod
     use vars_atmosphere !input variables and reading routine
@@ -20,10 +20,9 @@ program pamtra
 
     implicit none
 
-
     !!! internal "handle command line parameters" !!!
 
-    integer :: inarg, ff
+    integer(kind=long) :: inarg, ff
     character(40) :: gitHash, gitVersion
     character(8) :: formatted_frqstr !function call
 
@@ -33,7 +32,10 @@ program pamtra
     character(9) :: frq_str_s,frq_str_e
 
     !!!loop variables
-    integer ::  fi,nx, ny,i
+    integer(kind=long) ::  fi,nx, ny,i
+
+    ! error handling
+    integer(kind=long) :: errorstatus
 
     !get git data
     call versionNumber(gitVersion,gitHash)
@@ -41,25 +43,6 @@ program pamtra
     !get and process command line parameters
     call parse_options(gitVersion,gitHash,frqs_str,nfrq)
 
-    !  inarg = iargc()
-    !
-    !  if (inarg .lt. 3) then
-    !     print *,'Usage: pamtra profile_file namelist_file (list of frequencies)'
-    !     print *,'Example: ./pamtra rt_comp_single.dat run_params.nml 35 94'
-    !     print *,'See namelist file for further pamtra options'
-    !     print *,''
-    !     print *,'Version:  '//gitVersion
-    !     print *,'Git Hash: '//gitHash
-    !     stop
-    !  else if (inarg .gt. maxfreq + 2) then
-    !     print *,'Too many frequencies! Increase maxfreq!'
-    !     stop
-    !  end if
-    !  call getarg(1,input_file)
-    !  call getarg(2,namelist_file)
-    !
-    !  nfrq = inarg - 2
-    !
     do ff = 1, nfrq
         !     call getarg(ff+2,frqs_str(ff))
         read(frqs_str(ff),*) freqs(ff)
@@ -72,7 +55,7 @@ program pamtra
     in_python = .false.! we are _not_ in python
     
     ! create frequency string if not set in pamtra
-    if (freq_str .eq. "") then
+    if (freq_str == "") then
          ! get integer and character frequencies
         frq_str_s = "_"//frqs_str(1)
         if (nfrq .eq. 1) then
@@ -84,11 +67,11 @@ program pamtra
     end if
     !      frq_str_list = frq_str_list(:len_trim(frq_str_list)) // "_" //  frqs_str(ff)
 
-    if (verbose .gt. 1) print *,"input_file: ",input_file(:len_trim(input_file)),&
+    if (verbose > 1) print *,"input_file: ",input_file(:len_trim(input_file)),&
     " namelist file: ",namelist_file," freq: ",freq_str
 
     !!! read n-moments file
-    if (n_moments .eq. 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
+    if (n_moments == 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
 
     !!! read the data
     call get_atmosphere
@@ -141,7 +124,6 @@ program pamtra
                 gwp = profiles(nx,ny)%gwp
                 hwp = profiles(nx,ny)%hwp
 
-
                 cwc_q = profiles(nx,ny)%cloud_water_q           ! kg/kg
                 iwc_q = profiles(nx,ny)%cloud_ice_q             ! kg/kg
                 rwc_q = profiles(nx,ny)%rain_q                  ! kg/kg
@@ -158,7 +140,7 @@ program pamtra
                 end if
 
                 !run the model
-                call run_rt(nx,ny,fi,freqs(fi),frqs_str(fi))
+                call run_rt(errorstatus,nx,ny,fi,freqs(fi),frqs_str(fi))
 
                 call deallocate_profile_vars()
 

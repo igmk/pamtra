@@ -1,4 +1,4 @@
-SUBROUTINE mpm93(freq, Pbkpa, Ekpa, Tc, W, ABSCOF,errstat)
+SUBROUTINE mpm93(errstat,freq, Pbkpa, Ekpa, Tc, W, abscof)
   !  MPM93 - subroutines adapted by Jeff Haferman (NASA/GSFC 5/97)
   !  from Liebe's MPM93 model.  His comments are included below.
   !  I've based this adaptation on Frank Evans' MPM92 extraction.
@@ -122,6 +122,7 @@ SUBROUTINE mpm93(freq, Pbkpa, Ekpa, Tc, W, ABSCOF,errstat)
   !      ABSCOF  absorption coefficient (km^-1)
   !****************************************************************** 
   use kinds, only: dbl, long
+  use nml_params, only: verbose
 
   implicit none
 
@@ -237,6 +238,9 @@ SUBROUTINE mpm93(freq, Pbkpa, Ekpa, Tc, W, ABSCOF,errstat)
 
   !---------------------------------------------------------------------  
   !                                                                       
+
+  if (verbose > 1) print*, 'start of ' // NameOfRoutine
+
   DO i = 1, 44 
      A (1, i) = A1 (i) 
      A (2, i) = A2 (i) 
@@ -357,6 +361,8 @@ SUBROUTINE mpm93(freq, Pbkpa, Ekpa, Tc, W, ABSCOF,errstat)
   AT4 = .182 * freq * AIMAG (ZNw)
   !>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>    <<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<                                                                        
   ABSCOF = 0.23026 * (AT1 + AT2 + AT3 + AT4) 
+
+  if (verbose > 1) print*, 'finished in ' // NameOfRoutine
 
   RETURN 
 

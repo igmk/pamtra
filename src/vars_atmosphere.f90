@@ -2,18 +2,19 @@ module vars_atmosphere
 
   use kinds
   use nml_params, only: maxfreq
+
   implicit none
   save
 
-  integer :: nlyr, nfrq
-  integer :: ngridx, ngridy
+  integer(kind=long) :: nlyr, nfrq
+  integer(kind=long) :: ngridx, ngridy
   character(2) :: month, day
   character(4) :: year, time
   character(12) :: date_str
   real(kind=sgl) :: deltax, deltay
 
-  integer, allocatable, dimension(:) :: nlegen
-  integer, allocatable, dimension(:) :: rt3nlegen
+  integer(kind=long), allocatable, dimension(:) :: nlegen
+  integer(kind=long), allocatable, dimension(:) :: rt3nlegen
 
   !is allocated in pamtra.f90!
   real(kind=dbl), dimension(maxfreq) :: freqs
@@ -109,9 +110,9 @@ module vars_atmosphere
 
   logical, allocatable, dimension(:) :: hydros_present, rt4hydros_present
 
-  integer :: alloc_status
+  integer(kind=long) :: alloc_status
 
-  integer :: model_i, model_j
+  integer(kind=long) :: model_i, model_j
   real(kind=sgl) :: lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp,hwp
 
 end module vars_atmosphere
