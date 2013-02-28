@@ -9,6 +9,8 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
 
   implicit none
 
+#include "error_report.interface"
+
   integer, intent(in) :: nx,ny,fi 
   real(kind=dbl), intent(in) :: freq ! frequency [GHz]
   character(8), intent(in) :: frq_str !from commandline
@@ -34,8 +36,11 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
   ! i/o-length test for the emissivity file
   integer :: iolsgl
 
-  ! error reporting
-  integer(kind=long) :: errstat
+  ! Error handling
+
+  integer(kind=long) :: ErrStat
+  character(len=80) :: ErrMsg
+  character(len=14) :: NameOfRoutine = 'run_rt'
 
   inquire(iolength=iolsgl) 1._sgl
 
@@ -99,8 +104,13 @@ subroutine run_rt(nx,ny,fi,freq,frq_str)
   ! kextatmo   extinction by moist air [Np/m]
   !
   if (lgas_extinction) then
-     !returns kextatmo!
-     call get_gasabs(freq,errstat)
+    !returns kextatmo!
+    call get_gasabs(freq,errstat)
+    if (errstat == errorstatus_fatal) Then
+       errmsg = 'error in get_gasabs'
+       call error_report(errstat, errmsg, NameOfRoutine)
+       return
+    end if
   else
      kextatmo = 0.0D0 ! for the whole column
   end if
