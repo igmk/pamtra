@@ -19,15 +19,4 @@ module constants
 
   complex(kind=dbl), parameter :: im = (0.0_dbl, 1.0_dbl)
 
-  !error status values
-  Integer(Kind=long), Parameter :: nerrorstatus = 3
-  Integer(Kind=long), Parameter :: errorstatus_success = 0
-  Integer(Kind=long), Parameter :: errorstatus_warning = 1
-  Integer(Kind=long), Parameter :: errorstatus_fatal   = 2
-  Integer(Kind=long), Parameter :: errorstatus_info    = 3
-  Character(len=*), Parameter :: errorstatus_text(0:nerrorstatus) = &
-       & (/ 'success', &
-       & 'warning', &
-       & 'fatal  ', &
-       & 'info   '  /)
 end module constants

@@ -8,7 +8,7 @@ program pamtra
     use vars_output !output variables
     use vars_profile
     use double_moments_module !double moments variables are stored here
-
+    use report_module
 
     !     The code reads a full (e.g. COSMO) grid and computes for each
     !     profile the radiative transfer for the given frequencies
@@ -34,8 +34,12 @@ program pamtra
     !!!loop variables
     integer(kind=long) ::  fi,nx, ny,i
 
-    ! error handling
-    integer(kind=long) :: errorstatus
+  ! Error handling
+
+  integer(kind=long) :: errorstatus
+  integer(kind=long) :: err = 0
+  character(len=80) :: msg
+  character(len=14) :: nameOfRoutine = 'pamtra'
 
     !get git data
     call versionNumber(gitVersion,gitHash)
@@ -67,8 +71,10 @@ program pamtra
     end if
     !      frq_str_list = frq_str_list(:len_trim(frq_str_list)) // "_" //  frqs_str(ff)
 
-    if (verbose > 1) print *,"input_file: ",input_file(:len_trim(input_file)),&
-    " namelist file: ",namelist_file," freq: ",freq_str
+    msg = "input_file: "//input_file(:len_trim(input_file))//&
+    " namelist file: "//namelist_file//" freq: "//freq_str
+
+    if (verbose >= 1) call report(info, msg, nameOfRoutine)
 
     !!! read n-moments file
     if (n_moments == 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
@@ -90,7 +96,8 @@ program pamtra
     ! now allocate variables
     call allocate_output_vars(nlyr)
 
-    if (verbose .gt. 1) print*, 'Start loop over frequencies & profiles!'
+    msg = 'Start loop over frequencies & profiles!'
+    if (verbose >= 2)  call report(info, msg, nameOfRoutine)
 
     grid_f: do fi =1, nfrq
 	if (jacobian_mode) then
@@ -159,4 +166,12 @@ program pamtra
 
     call deallocate_output_vars()
 
+    if (verbose >= 1 .and. errorstatus == 0) then
+        msg = 'Progam finished successfully'
+        call report(info, msg, nameOfRoutine)
+    end if
+    if (errorstatus /= 0) then
+       msg = 'Something went wrong!'
+       call report(fatal, msg, nameOfRoutine)
+    end if
 end program pamtra

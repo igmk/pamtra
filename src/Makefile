@@ -5,7 +5,7 @@ gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 FC=gfortran
 CC=gcc
-FCFLAGS=-c -fPIC -Wuninitialized -O2 -I../include/
+FCFLAGS=-c -fPIC -Wuninitialized -O2 #-I../include/
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran
 	NCFLAGS=-I/opt/local/include/ 
@@ -29,6 +29,7 @@ OBJECTS=kinds.o \
 	file_mod.o \
 	nml_params.o \
 	mod_fastem4_coef.o \
+	report_module.o \
 	gasabs_module.o \
 	conversions.o \
 	double_moments_module.o \
@@ -38,7 +39,6 @@ OBJECTS=kinds.o \
 	mod_io_strings.o \
 	getopt.o \
 	parse_options.o \
-	error_report.o \
 	radmat.o \
 	convolution.o \
 	get_gasabs.o\
@@ -94,7 +94,6 @@ OBJECTS=kinds.o \
 	save_active.o \
 	fastem4.o \
 	specular_surface.o \
-	error_msg.o\
 	get_scat_coefs.o \
 	dump_profile.o \
 	collect_boundary_output.o \

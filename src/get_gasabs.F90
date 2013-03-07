@@ -36,18 +36,20 @@ subroutine get_gasabs &
 !
 ! Declarations:
 
+! Imported Parameters:
 ! Modules used:
-
   use kinds, only: dbl, & ! integer parameter specifying double precision
                     long   ! integer parameter specifying long integer
   use vars_atmosphere, only: nlyr, press, temp, vapor_pressure, rho_vap, kextatmo
-  use constants, only: t_abs, &
-                        errorstatus_fatal
-  use nml_params, only: gas_mod, verbose
+  use constants, only: t_abs
+  use nml_params, only: gas_mod, &
+                    verbose
+
+  use report_module
 
   implicit none
 
-#include "error_report.interface"
+!#include "error_report.interface"
 !- End of header ---------------------------------------------------------------
 
 ! Subroutine arguments
@@ -64,46 +66,51 @@ subroutine get_gasabs &
 ! Error handling
 
   integer(kind=long), intent(out) :: errorstatus
-  integer(kind=long) :: err
-  character(len=80) :: ErrMsg
-  character(len=14) :: NameOfRoutine = 'get_gasabs'
+  integer(kind=long) :: err = 0
+  character(len=80) :: msg
+  character(len=14) :: nameOfRoutine = 'get_gasabs'
 
-  if (verbose > 1) print*, 'start of ' // NameOfRoutine
+!  INIT_REPORT
 
-  err = 0
+  if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
 
   do nz = 1, nlyr          
      tc = temp(nz) - t_abs
      if (gas_mod .eq. 'L93') then
         call mpm93(err,freq, press(nz)/1.d3, vapor_pressure(nz)/1.d3,tc, 0.d0, kextatmo(nz))
-        if (err == errorstatus_fatal) Then
-           errmsg = 'error in mpm93'
-           call error_report(err, errmsg, NameOfRoutine)
-           return
+        if (err /= 0) then
+        msg = 'error in mpm93'
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
+        return
         end if
         kextatmo(nz) = kextatmo(nz)/1.d3
      else if (gas_mod .eq. 'R98') then
         call rosen98_gasabs(err,freq,temp(nz),rho_vap(nz),press(nz),absair,abswv)
-        if (err == errorstatus_fatal) Then
-           errmsg = 'error in rosen98_gasabs'
-           call error_report(err, errmsg, NameOfRoutine)
-           return
+        if (err /= 0) then
+        msg = 'Error in rosen98_gasabs!'
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
+        return
         end if
+!        ERRORM(err /= 0, errMsg)
         kextatmo(nz) = (absair + abswv)/1.d3    ! conversion to Np/m
      else
         ! here is the question whether we want the possibility to switch off the gas absorption
         kextatmo(nz) = 0
-        errmsg = 'No gas absorption model specified!'
-        err = errorstatus_fatal
-        call error_report(err, errmsg, NameOfRoutine)
+        msg = 'No gas absorption model specified!'
+        err = fatal
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
         return
+!        ERRORM(err /= 0, errMsg)
      end if
   end do
 
-  if (verbose > 1) print*, 'finished in ' // NameOfRoutine
-
   errorstatus = err
 
-  return 
+  if (verbose >= 1) call report(info,'End of ', nameOfRoutine)
+
+  return
 
 end subroutine get_gasabs
