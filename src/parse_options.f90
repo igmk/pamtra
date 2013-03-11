@@ -1,24 +1,24 @@
-subroutine parse_options(gitVersion,gitHash,frqs_str,nfrq)
+subroutine parse_options(gitVersion,gitHash)
 
     use kinds, only: long
     use getopt_m
-    use nml_params, only: maxfreq
+    use nml_params, only: maxfreq, nfrq, frqs_str
     use file_mod, only: namelist_file, input_file
     use vars_profile, only: coords
+    use report_module, only: verbose
+    use vars_atmosphere, only: freqs
 
     implicit none
 
-    integer(kind=long) :: nfrq
-
     character:: ch
     character(40) :: gitHash, gitVersion
-    character(8), dimension(maxfreq) :: frqs_str
-    type(option_s):: opts(5)
+    type(option_s):: opts(6)
     opts(1) = option_s( "namelist", .true.,  'n' )
     opts(2) = option_s( "profile", .true.,  'p' )
     opts(3) = option_s( "grid", .true.,  'g' )
     opts(4) = option_s( "freqs", .true., 'f' )
-    opts(5) = option_s( "help", .false., 'h' )
+    opts(5) = option_s( "verbose", .true., 'v' )
+    opts(6) = option_s( "help", .false., 'h' )
 
     namelist_file = 'run_params.nml'
     input_file = 'standard.dat'
@@ -26,9 +26,10 @@ subroutine parse_options(gitVersion,gitHash,frqs_str,nfrq)
     frqs_str = ''
     frqs_str(1) = '89.0'
     nfrq = 1
+    verbose = 0
 
     do
-        select case( getopt( "n:cp:cg:cf:ch", opts ))
+        select case( getopt( "n:cp:cg:cf:cv:ch", opts ))
             case( char(0))
                 exit
             case( 'n' )
@@ -44,7 +45,9 @@ subroutine parse_options(gitVersion,gitHash,frqs_str,nfrq)
                 optarg = trim(optarg)//','
                 !                nf = countsubstring(optarg,',')
                 !                allocate(freqs(nf))
-                call process_freq(optarg,frqs_str,nfrq)
+                call process_freq(optarg)
+            case( 'v' )
+                read(optarg,'(i2)') verbose
             case( '?' )
                 print *, 'unknown option ', optopt
                 stop
@@ -56,9 +59,11 @@ subroutine parse_options(gitVersion,gitHash,frqs_str,nfrq)
                 print*,'   -p|--profile      profile file  (default standard.dat)'
                 print*,'   -g|--grid         start_lon,end_lon,start_lat,end_lat (number of grid point)'
                 print*,'   -f|--freqs        comma seperated list of frequencies (no blanks) (default 89.0)'
+                print*,'   -v|--verbose      integer specifying verbose level between -1 (required by parallel python)'
+                print*,'                     and 4 (default 0)'
                 print*,'   -h|--help         print this help'
                 print*,''
-                print*,'Example: ./pamtra -p rt_comp_single.dat -n run_params.nml -f 35,94,'
+                print*,'Example: ./pamtra -v 1 -p rt_comp_single.dat -n run_params.nml -f 35,94,'
                 print*,'See namelist file for further pamtra options'
                 print*,''
                 print*,'Version:  '//gitVersion
@@ -70,17 +75,16 @@ subroutine parse_options(gitVersion,gitHash,frqs_str,nfrq)
     end do
 contains
 
-    subroutine process_freq(arg,frqs_str,nfrq)
+    subroutine process_freq(arg)
 
         use kinds, only: long
-        use nml_params, only: maxfreq
 
         implicit none
 
-        integer(kind=long) :: nfrq, ind
+        integer(kind=long) :: ind, ff
         character(len=*), intent(in) :: arg
         character(150) :: arg_loc
-        character(8), dimension(maxfreq) :: frqs_str
+        character(8) :: formatted_frqstr !function call
 
         nfrq = 0
         arg_loc = arg
@@ -94,6 +98,11 @@ contains
             !    print*, freqs(ff)
             arg_loc = trim(arg_loc(ind+1:))
         !    print*, arg_loc
+        end do
+
+        do ff = 1, nfrq
+            read(frqs_str(ff),*) freqs(ff)
+            frqs_str(ff) = formatted_frqstr(frqs_str(ff))
         end do
 
         return

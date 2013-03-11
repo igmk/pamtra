@@ -6,6 +6,7 @@ subroutine save_active(OUT_FILE_ACT,nx,ny,fi)
   use vars_output
 !   use constants
   use nml_params
+        use report_module
 
   implicit none
 

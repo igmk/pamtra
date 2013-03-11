@@ -20,8 +20,9 @@ subroutine mie(f, mindex, dia1, dia2, nbins, maxleg,   &
                                 
 
   use kinds
-  use nml_params, only: verbose
+!  use nml_params, only: verbose
   use constants, only: pi,c
+        use report_module
 
   implicit none
 

@@ -6,7 +6,7 @@ module vars_atmosphere
   implicit none
   save
 
-  integer(kind=long) :: nlyr, nfrq
+  integer(kind=long) :: nlyr
   integer(kind=long) :: ngridx, ngridy
   character(2) :: month, day
   character(4) :: year, time

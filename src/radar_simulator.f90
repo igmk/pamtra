@@ -23,6 +23,7 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
   use constants
   use vars_output, only: radar_spectra, radar_snr, radar_vel,&
 	  radar_moments, radar_slope, radar_quality, Ze, Att_hydro !output of the radar simulator
+        use report_module
   implicit none
   
 

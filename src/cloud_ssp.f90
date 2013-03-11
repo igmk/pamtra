@@ -17,11 +17,12 @@ subroutine cloud_ssp(f,cwc,t, press,hgt,maxleg,nc, kext, salb, back,  &
   !  legen[2-4] legendre coefficients for the phase function
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_moments, SD_cloud, &
+  use nml_params, only: lphase_flag, n_moments, SD_cloud, &
       nstokes, EM_cloud, radar_nfft_aliased, radar_mode, active
   use constants, only: pi, im
   use double_moments_module
   use conversions
+        use report_module
 
   implicit none
 

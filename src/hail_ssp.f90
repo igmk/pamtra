@@ -3,11 +3,12 @@ subroutine hail_ssp(f,hwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
      scatter_matrix,extinct_matrix, emis_vector,hail_spec)
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, EM_hail, n_moments, SD_hail, hail_density,&
+  use nml_params, only: lphase_flag, EM_hail, n_moments, SD_hail, hail_density,&
 	nstokes, radar_nfft_aliased, radar_mode, active
   use constants, only: pi, im
   use double_moments_module
   use conversions
+        use report_module
 
   implicit none
 

@@ -187,7 +187,8 @@ subroutine RT4(nstokes,nummu,mu_values,out_file,quad_type,ground_temp,&
 
   use kinds
   use vars_atmosphere
-  use nml_params, only: verbose, write_nc, in_python, numazimuths
+  use nml_params, only: write_nc, in_python, numazimuths
+        use report_module
 
   implicit none
 

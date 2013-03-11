@@ -5,6 +5,7 @@ subroutine allocate_output_vars(no_allocated_lyrs)
   use vars_output
   use nml_params
   use mod_io_strings
+        use report_module
   implicit none
   integer, intent(in) :: no_allocated_lyrs
 

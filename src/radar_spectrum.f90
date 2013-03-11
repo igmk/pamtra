@@ -23,6 +23,7 @@ subroutine radar_spectrum(nbins,diameter_spec, back,back_spec,&
   use kinds
   use nml_params
   use constants
+        use report_module
   implicit none
 
   integer,intent(in) ::  nbins !for Mie it is actually nbins+1

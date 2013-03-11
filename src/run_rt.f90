@@ -1,4 +1,4 @@
-subroutine run_rt(errorstatus, nx,ny,fi,freq,frq_str)
+subroutine run_rt(errorstatus, nx,ny,fi)
 
   use kinds, only: long, dbl
   use constants, only: c,&
@@ -15,8 +15,8 @@ subroutine run_rt(errorstatus, nx,ny,fi,freq,frq_str)
 !#include "error_report.interface"
 
   integer(kind=long), intent(in) :: nx,ny,fi
-  real(kind=dbl), intent(in) :: freq ! frequency [GHz]
-  character(8), intent(in) :: frq_str !from commandline
+  real(kind=dbl) :: freq ! frequency [GHz]
+  character(8) :: frq_str !from commandline
 
   integer(kind=long), dimension(maxlay) :: OUTLEVELS
   integer(kind=long) :: ise, imonth ! filehandle for the emissivity data
@@ -50,6 +50,8 @@ subroutine run_rt(errorstatus, nx,ny,fi,freq,frq_str)
 
   inquire(iolength=iolsgl) 1._sgl
 
+  freq = freqs(fi)
+  frq_str = frqs_str(fi)
   wavelength = c / (freq*1.d3)   ! microns
   GROUND_TEMP = temp_lev(0)
 

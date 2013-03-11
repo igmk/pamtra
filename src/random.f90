@@ -12,7 +12,8 @@ subroutine random(n, pseudo, x_noise)
   !  0.1   1/12/2012    creation of file 
 
 
-  use nml_params, only: verbose
+!  use nml_params, only: verbose
+        use report_module
 
   use kinds
   implicit none

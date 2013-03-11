@@ -1,7 +1,8 @@
 module tmat_snow_db
 
     use kinds
-    use nml_params, only: verbose
+!    use nml_params, only: verbose
+        use report_module
 
     implicit none
 

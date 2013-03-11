@@ -80,6 +80,7 @@ out_angles&
   use double_moments_module !double moments variables are stored here
   use mod_io_strings !some strings for nice filenames
   use file_mod, only: namelist_file
+        use report_module
 
  !                                                                      
   !     By convention, the quantities followed  by "_lev"

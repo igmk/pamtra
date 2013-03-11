@@ -6,12 +6,13 @@ subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
      scatter_matrix,extinct_matrix, emis_vector,snow_spec)
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_0snowDsnow, EM_snow, &
+  use nml_params, only: lphase_flag, n_0snowDsnow, EM_snow, &
 	n_moments, isnow_n0, SD_snow, snow_density,liu_type,nstokes,&
         radar_nfft_aliased, radar_mode, active
   use constants, only: pi, im
   use double_moments_module
   use conversions
+        use report_module
 
   implicit none
 

@@ -9,7 +9,8 @@ subroutine convolution(X,M,A,N,Y)
 !uses either standard approach or fft method
 
   use kinds
-  use nml_params, only: verbose, radar_convolution_fft
+  use nml_params, only: radar_convolution_fft
+  use report_module
   implicit none
 
    INTEGER, intent(in) :: M  ! Size of input vector X

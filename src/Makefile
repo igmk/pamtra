@@ -25,11 +25,11 @@ endif
 #-	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm -lsz
 
 OBJECTS=kinds.o \
+	report_module.o \
 	constants.o \
 	file_mod.o \
 	nml_params.o \
 	mod_fastem4_coef.o \
-	report_module.o \
 	gasabs_module.o \
 	conversions.o \
 	double_moments_module.o \

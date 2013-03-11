@@ -62,7 +62,8 @@ contains
 
     subroutine allocate_profiles
 
-        use nml_params, only: verbose, n_moments
+        use nml_params, only: n_moments
+        use report_module
 
         implicit none
 
@@ -109,12 +110,12 @@ contains
         integer :: i,j,k
         integer :: ngridx, ngridy
 
-  ! Error handling
+        ! Error handling
 
-  integer(kind=long),intent(out) :: errorstatus
-  integer(kind=long) :: err = 0
-  character(len=80) :: msg
-  character(len=25) :: nameOfRoutine = 'vars_profile_read_profile'
+        integer(kind=long),intent(out) :: errorstatus
+        integer(kind=long) :: err = 0
+        character(len=80) :: msg
+        character(len=25) :: nameOfRoutine = 'vars_profile_read_profile'
 
 
         if (verbose .gt. 0) print *,"opening: ",input_file
@@ -166,24 +167,24 @@ contains
         do i = 1, profiles_ngridx
             do j = 1, profiles_ngridy
                 read(14,*,iostat=err) profiles(i,j)%isamp, profiles(i,j)%jsamp !
-        if (err /= 0) then
-            msg = "Read error 3: Cannot read profile index i,j in"//input_file
-            call report(err,msg,nameOfRoutine)
-            errorstatus = err
-            return
-        end if
+                if (err /= 0) then
+                    msg = "Read error 3: Cannot read profile index i,j in"//input_file
+                    call report(err,msg,nameOfRoutine)
+                    errorstatus = err
+                    return
+                end if
                 read(14,*,iostat=err) &
                 profiles(i,j)%latitude, &         ! degree
                 profiles(i,j)%longitude,&         ! degree
                 profiles(i,j)%land_fraction,&     !
                 profiles(i,j)%wind_10u,&          ! m/s
                 profiles(i,j)%wind_10v            ! m/s
-        if (err /= 0) then
-            msg = "Read error 4: Cannot read profile lat/lon/lfrac/wind in"//input_file
-            call report(err,msg,nameOfRoutine)
-            errorstatus = err
-            return
-        end if
+                if (err /= 0) then
+                    msg = "Read error 4: Cannot read profile lat/lon/lfrac/wind in"//input_file
+                    call report(err,msg,nameOfRoutine)
+                    errorstatus = err
+                    return
+                end if
 
                 ! integrated quantities
                 if (n_moments .eq. 1) then
@@ -206,12 +207,12 @@ contains
                     profiles(i,j)%gwp,&               ! kg/m^2
                     profiles(i,j)%hwp                 ! kg/m^2
                 end if
-        if (err /= 0) then
-            msg = "Read error 5: Cannot read profile integrated quantities in"//input_file
-            call report(err,msg,nameOfRoutine)
-            errorstatus = err
-            return
-        end if
+                if (err /= 0) then
+                    msg = "Read error 5: Cannot read profile integrated quantities in"//input_file
+                    call report(err,msg,nameOfRoutine)
+                    errorstatus = err
+                    return
+                end if
                 ! surface values
                 read(14,*,iostat=err) &
                 profiles(i,j)%hgt_lev(0),&
@@ -219,10 +220,10 @@ contains
                 profiles(i,j)%temp_lev(0),&
                 profiles(i,j)%relhum_lev(0)
                 if (err /= 0) then
-                   write(msg,'(a,i3,x,i3)') "Error in reading profile ",i,j
-                   call report(err,msg,nameOfRoutine)
-                   errorstatus = err
-                   return
+                    write(msg,'(a,i3,x,i3)') "Error in reading profile ",i,j
+                    call report(err,msg,nameOfRoutine)
+                    errorstatus = err
+                    return
                 end if
                 do k = 1, profiles_nlyr
                     if (n_moments .eq. 1) then
@@ -257,13 +258,13 @@ contains
                         profiles(i,j)%graupel_n(k), &           ! #/kg
                         profiles(i,j)%hail_n(k)                 ! #/kg
                     end if
-        if (err /= 0) then
-            write(msg, '(a,i3)') "Read error 6: Cannot read profile values in layer ", k
-            call report(err,msg,nameOfRoutine)
-            errorstatus = err
-            return
-        end if
-                        end do
+                    if (err /= 0) then
+                        write(msg, '(a,i3)') "Read error 6: Cannot read profile values in layer ", k
+                        call report(err,msg,nameOfRoutine)
+                        errorstatus = err
+                        return
+                    end if
+                end do
             end do
         end do
         close(14)
@@ -279,11 +280,12 @@ contains
 
     subroutine vars_profile_read_cosmo
 
-        use nml_params, only: verbose, crm_case, n_moments, freq_str, output_path, file_desc
+        use nml_params, only: crm_case, n_moments, freq_str, output_path, file_desc
         use file_mod
         use conversions
         use cosmo_netcdf
         use double_moments_module
+        use report_module
 
         implicit none
 
@@ -385,7 +387,7 @@ contains
             end do
         end do
 
-!call write_profile
+        !call write_profile
         date_str = yyyy//mm//dd//hhmm
         write(grid_str,'(I4.4,I4.4,I4.4,I4.4)') coords
         nc_out_file = trim(output_path)//"/"//'cosmo_'//date_str//'_'//grid_str//&

@@ -48,7 +48,7 @@ subroutine rosen98_gasabs &
 
   use gasabs_module            ! functions for calculating absorption by gases
 
-  use nml_params, only: verbose
+!  use nml_params, only: verbose
 
   use report_module
 ! Imported Scalar Variables with intent (in):
@@ -99,19 +99,19 @@ subroutine rosen98_gasabs &
 
   ! check for "reasonable" input values
 
-  if (freq <= 0.0 .or. freq > 800.0) then
+  if (freq <= 0.0_dbl .or. freq > 800.0_dbl) then
      errorstatus = fatal
      msg = 'Frequency not between 0 and 800 GHz in rosen98_gasabs!'
      call report(errorstatus, msg, nameOfRoutine)
      return
-  elseif (tempK <= 100.0) then
+  elseif (tempK <= 100.0_dbl) then
      errorstatus = fatal
      msg = 'Temperature lower than 100 K in rosen98_gasabs!'
      call report(errorstatus, msg, nameOfRoutine)
      return
-  elseif (pres < 10.0 .or. pres > 1.2e5) then
+  elseif (pres < 10.0_dbl .or. pres > 1.2d5) then
      errorstatus = fatal
-     msg = 'Pressure not between 10 and 1.2e5 Pa in rosen98_gasabs!'
+     msg = 'Pressure not between 10 and 1.2d5 Pa in rosen98_gasabs!'
      call report(errorstatus, msg, nameOfRoutine)
      return
   else
@@ -139,7 +139,9 @@ subroutine rosen98_gasabs &
   rhoair = pres / (Tv * 287.06_dbl)
 
   errorstatus = err
+
   if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+
   return
 
 end subroutine rosen98_gasabs

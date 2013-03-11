@@ -47,7 +47,7 @@ contains
         !beta_md      : beta parameter for mass-diameter relation
 
         use constants, only: pi
-        use nml_params, only: verbose
+        use report_module
 
         implicit none
 

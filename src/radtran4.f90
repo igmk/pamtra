@@ -131,7 +131,8 @@
 
       use kinds
       use vars_atmosphere
-      use nml_params, only: verbose
+!      use nml_params, only: verbose
+        use report_module
 
       implicit none
 

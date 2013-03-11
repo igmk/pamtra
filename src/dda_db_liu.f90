@@ -15,7 +15,8 @@ subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
 
   use kinds
   use constants, only: pi,c
-  use nml_params, only: verbose, data_path
+  use nml_params, only: data_path
+        use report_module
 
   implicit none
 

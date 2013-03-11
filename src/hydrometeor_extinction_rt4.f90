@@ -2,7 +2,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
 
   use kinds
   use vars_atmosphere
-  use nml_params, only:verbose, tmp_path, active, passive, dump_to_file, &
+  use nml_params, only: tmp_path, active, passive, dump_to_file, &
                        n_moments, quad_type, nummu, EM_snow, EM_grau, &
 		       EM_hail, EM_ice, EM_rain, EM_cloud, as_ratio, &
                        use_rain_db, use_snow_db, data_path, &
@@ -14,6 +14,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
   use tmat_rain_db
   use vars_output, only: radar_spectra, radar_snr, radar_moments,&
 	radar_quality, radar_slope, Ze, Att_hydro !output of the radar simulator for jacobian mode
+        use report_module
 
   implicit none
 

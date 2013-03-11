@@ -3,11 +3,12 @@ subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
      scatter_matrix,extinct_matrix, emis_vector,ice_spec)
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_moments, EM_ice, SD_ice,&
+  use nml_params, only: lphase_flag, n_moments, EM_ice, SD_ice,&
       nstokes, radar_nfft_aliased, radar_mode, active
   use constants, only: pi, im
   use double_moments_module
   use conversions
+        use report_module
 
   implicit none
 
