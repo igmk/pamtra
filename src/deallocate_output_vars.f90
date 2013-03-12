@@ -2,7 +2,7 @@ subroutine deallocate_output_vars
 
   use vars_atmosphere
   use vars_output
-  use nml_params
+  use settings
   use mod_io_strings
 
   implicit none

@@ -6,6 +6,8 @@ module mod_io_strings
   character(2) :: Nzstr
   character(3) :: xstr, ystr,&
        theta_str, H_str
+  character(4) :: nxstr, nystr
+  character(8) :: frq_str
   character(10) :: surf_type
   character(78) :: file_profile
 

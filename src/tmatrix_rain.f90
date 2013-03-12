@@ -13,7 +13,7 @@ subroutine tmatrix_rain(f, wc, t, nc, &
 
   use kinds
   use constants, only: pi, c
-  use nml_params, only: use_rain_db
+  use settings, only: use_rain_db
 
   use tmat_rain_db
 

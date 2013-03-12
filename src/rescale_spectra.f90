@@ -16,7 +16,7 @@ subroutine rescale_spectra(nx1,nx2,sort,x1,y1,x2,y2)
   !interpolated and original values are combined and sorted
   !then we average each interval.
 
-!  use nml_params, only: verbose
+!  use settings, only: verbose
   use kinds
         use report_module
   implicit none
@@ -102,7 +102,7 @@ subroutine average_spectra(nx12,nx2,x12_sorted,y12_sorted,x2,y_result)
 
   !(c) M.Maahn, IGMK, 11/2012
 
-!  use nml_params, only: verbose
+!  use settings, only: verbose
   use kinds
         use report_module
   implicit none
@@ -159,7 +159,7 @@ subroutine interpolate_spectra(nx1,nx2,x1,y1,x2,y2)
 
   !interpolation which gives back ZERO if x2 is more than 1bin out of range of x1!
   !values MUST be sorted
-!  use nml_params, only: verbose
+!  use settings, only: verbose
   use kinds
         use report_module
   implicit none

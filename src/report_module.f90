@@ -1,9 +1,11 @@
 !
 Module report_module
+
     use kinds, only: long
+    use settings, only: verbose
 
     implicit none
-    integer(kind=long) :: verbose = 0
+    save
     ! status values
     Integer(Kind=long), Parameter :: nstatus = 3
     Integer(Kind=long), Parameter :: success = 0
@@ -57,7 +59,7 @@ contains
         !
         ! Subroutine arguments
         !   Scalar arguments with intent(in):
-        Integer(Kind=long) , Intent (in) :: status     ! +ve => fatal error, -ve => warning
+        Integer(Kind=long) , Intent (in) :: status     !
         Character (len=*) , Intent (in) :: message    ! ..to output
         Character (len=*) , Intent (in) :: nameOfRoutine ! ..calling this one
 

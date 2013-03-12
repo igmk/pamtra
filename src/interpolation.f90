@@ -1,6 +1,6 @@
 subroutine interpolation(nx1,nx2,x1,y1,x2,y2)
 
-!  use nml_params, only: verbose
+!  use settings, only: verbose
   use kinds
         use report_module
   implicit none

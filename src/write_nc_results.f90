@@ -2,11 +2,10 @@ subroutine write_nc_results
 
     use kinds
     use vars_output
-    use vars_atmosphere, only: ngridx, ngridy,nlyr,freqs, year, month, day, time
+    use vars_atmosphere, only: ngridx, ngridy, nlyr, year, month, day, time
     use netcdf
-    use nml_params, only: active, passive, creator, radar_mode, &
-    n_moments, radar_nfft, radar_mode, nfrq
-    use file_mod, only: nc_out_file
+    use settings, only: active, passive, creator, radar_mode, &
+    n_moments, radar_nfft, radar_mode, nfrq, freqs, nc_out_file
     use report_module
 
     implicit none

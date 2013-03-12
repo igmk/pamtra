@@ -20,7 +20,7 @@ subroutine tmatrix_snow(f, wc, t, nc, &
 
   use kinds
   use constants, only: pi, c
-  use nml_params, only: use_snow_db, as_ratio
+  use settings, only: use_snow_db, as_ratio
 
   use tmat_snow_db
 

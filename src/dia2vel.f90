@@ -22,7 +22,7 @@ mass_size_a_SI,mass_size_b,area_size_a_SI,area_size_b,velSpec)
     ! equation 3.3
 
 
-    !  use nml_params, only: verbose
+    !  use settings, only: verbose
     use kinds
     use constants
     use report_module
@@ -95,7 +95,7 @@ subroutine dia2vel_khvorostyanov01_spheres(nDia,diaSpec,rho_air,my,rho_particle,
     ! equation 3.3
 
 
-    ! use nml_params, only: verbose
+    ! use settings, only: verbose
     use kinds
     use constants
     use report_module
@@ -158,7 +158,7 @@ subroutine dia2vel_khvorostyanov01_drops(nDia,diaSpec,rho_air,my,velSpec)
 
     ! defined for diameters from 0 to 8.5 mm, non spherical shape is corrected
 
-    !  use nml_params, only: verbose
+    !  use settings, only: verbose
     use kinds
     use constants
     use report_module
@@ -229,7 +229,7 @@ subroutine dia2vel_foote69_rain(nDia,diaSpec,rho_air,temp,velSpec)
     !Foote, G. B. & Du Toit, P. S. Terminal Velocity of Raindrops Aloft. Journal of Applied Meteorology 8, 249–253 (1969).
     ! defined for 0.1-5.8 mm diameter
 
-    !  use nml_params, only: verbose
+    !  use settings, only: verbose
     use kinds
     use constants
     use report_module
@@ -281,7 +281,7 @@ subroutine dia2vel_pavlos_cloud(nDia,diaSpec,velSpec)
 
     !from Pavlos Radar Simulator
 
-    !  use nml_params, only: verbose
+    !  use settings, only: verbose
     use kinds
     use constants
     use report_module
@@ -308,7 +308,7 @@ subroutine dia2vel_metek_rain(nDia,diaSpec,rho_air,temp,velSpec)
     ! for 0.109 ≤ D ≤ 6 mm
 
 
-    !  use nml_params, only: verbose
+    !  use settings, only: verbose
     use kinds
     use constants
     use report_module
@@ -358,7 +358,7 @@ subroutine dia2vel_rogers_drops(nDia,diaSpec,rho_air,velSpec)
     ! D from 0 to 8.5 mm (breackup of drops)
     ! this function is NOT homegenous!
 
-    !  use nml_params, only: verbose
+    !  use settings, only: verbose
     use kinds
     use constants
     use report_module
@@ -402,7 +402,7 @@ subroutine dia2vel_rogers_graupel(nDia,diaSpec,velSpec)
 
     ! Rogers, R. R. & Yau, M. K. A short course in cloud physics. (Pergamon Press: 1989). eq. 9.5
     ! attention, this formula is without any density correction!
-    !  use nml_params, only: verbose
+    !  use settings, only: verbose
     use kinds
     use constants
     use report_module

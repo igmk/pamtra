@@ -21,7 +21,7 @@ subroutine radar_spectrum(nbins,diameter_spec, back,back_spec,&
 !particle_spec particle spectrum in dependence of radar Dopple velocity in m6m-3/ms-1
 
   use kinds
-  use nml_params
+  use settings
   use constants
         use report_module
   implicit none

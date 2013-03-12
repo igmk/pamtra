@@ -1,8 +1,8 @@
-subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
+subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
 
   use kinds
   use vars_atmosphere
-  use nml_params, only: tmp_path, active, passive, dump_to_file, &
+  use settings, only: tmp_path, active, passive, dump_to_file, &
                        n_moments, quad_type, nummu, EM_snow, EM_grau, &
 		       EM_hail, EM_ice, EM_rain, EM_cloud, as_ratio, &
                        use_rain_db, use_snow_db, data_path, &
@@ -56,7 +56,6 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
   real(kind=dbl), dimension(radar_nfft_aliased) :: cloud_spec, rain_spec, snow_spec,&
       ice_spec, graupel_spec, hail_spec, full_spec
 
-  character(6), intent(in) :: frq_str !from commandline
   CHARACTER*64 SCATFILES(nlyr)
   character*10 ly
   integer :: l1, j1, l2, j2, j, l,i

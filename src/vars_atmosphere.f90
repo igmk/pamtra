@@ -1,7 +1,7 @@
 module vars_atmosphere
 
   use kinds
-  use nml_params, only: maxfreq
+  use settings, only: maxfreq
 
   implicit none
   save
@@ -17,7 +17,6 @@ module vars_atmosphere
   integer(kind=long), allocatable, dimension(:) :: rt3nlegen
 
   !is allocated in pamtra.f90!
-  real(kind=dbl), dimension(maxfreq) :: freqs
 
   real(kind=dbl), allocatable, dimension(:) :: relhum_lev,&
        press_lev, &

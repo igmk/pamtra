@@ -53,7 +53,7 @@ module cosmo_netcdf
 contains
     subroutine read_cosmo_netcdf_acp(coords, nlvl)
 
-        use nml_params, only: crm_data, crm_constants, n_moments
+        use settings, only: crm_data, crm_constants, n_moments
         use report_module
 
         implicit none
@@ -175,7 +175,7 @@ contains
 
     subroutine read_cosmo_netcdf_narval(coords, nlvl)
 
-        use nml_params, only: crm_data, crm_data2, crm_constants, n_moments
+        use settings, only: crm_data, crm_data2, crm_constants, n_moments
         use report_module
 
         implicit none
@@ -445,7 +445,7 @@ contains
 
     subroutine integrate_profiles(hhl,p,t,qc,qr,qi,qs,qg,qh,qv,cwp,iwp,rwp,swp,gwp,hwp,iwv,nlvl)
 
-        use nml_params, only: n_moments
+        use settings, only: n_moments
 
         implicit none
 

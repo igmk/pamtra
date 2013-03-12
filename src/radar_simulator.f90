@@ -19,7 +19,7 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
 
 
   use kinds
-  use nml_params
+  use settings
   use constants
   use vars_output, only: radar_spectra, radar_snr, radar_vel,&
 	  radar_moments, radar_slope, radar_quality, Ze, Att_hydro !output of the radar simulator
@@ -58,7 +58,7 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
 
     subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope,quality)
       use kinds
-      use nml_params, only: radar_nfft
+      use settings, only: radar_nfft
       implicit none
       real(kind=dbl), dimension(radar_nfft), intent(in):: radar_spectrum_in
       real(kind=dbl), dimension(radar_nfft), intent(out):: radar_spectrum_out
@@ -114,7 +114,7 @@ subroutine radar_simulator(particle_spectrum,back,kexthydro,&
       do while (tt .le. 24.d0/del_v+1) 
 	if (tt .gt. radar_maxTurbTerms) then
 	  print*,radar_maxTurbTerms, INT(12.d0/del_v+1.d0),&
-	  ": maximum of turbulence terms reached. increase radar_maxTurbTerms (nml_params.f90)"
+	  ": maximum of turbulence terms reached. increase radar_maxTurbTerms (settings.f90)"
 	  stop
 	end if
 	turb(tt) = 1.d0/(sqrt(2.d0*pi)*ss) * exp(-(tt-(12.d0/del_v+1))**2.d0/(2.d0*ss**2.d0))

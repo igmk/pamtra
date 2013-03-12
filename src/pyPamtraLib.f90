@@ -73,14 +73,13 @@ out_angles&
 
   use kinds
   use constants !physical constants live here
-  use nml_params !all settings go here
+  use settings !all settings go here
   use vars_atmosphere !input variables and reading routine
   use vars_output !output variables
   use vars_profile
   use double_moments_module !double moments variables are stored here
   use mod_io_strings !some strings for nice filenames
-  use file_mod, only: namelist_file
-        use report_module
+!  use report_module
 
  !                                                                      
   !     By convention, the quantities followed  by "_lev"
@@ -199,12 +198,10 @@ character(300),intent(in) :: set_namelist_file
       integer, intent(in) :: no_allocated_lyrs
     end  subroutine allocate_output_vars
 
-    subroutine run_rt(nx,ny,fi,freq,frq_str)
+    subroutine run_rt(nx,ny,fi)
       use kinds
       implicit none
       integer, intent(in) :: nx,ny,fi 
-      real(kind=dbl), intent(in) :: freq ! frequency [GHz]
-      character(8), intent(in) :: frq_str !from commandline
     end subroutine run_rt
   end interface
 
@@ -216,7 +213,7 @@ character(300),intent(in) :: set_namelist_file
   namelist_file = set_namelist_file !temporary solution!
 
   !!! read variables from namelist file
-  call nml_params_read !from nml_params.f90
+  call settings_read !from settings.f90
 
   if ((radar_mode .eq. "spectrum") .and. (radar_nfft .ne. in_nfft)) stop "nfft in python input and nml file must be equal!"
 
@@ -337,7 +334,7 @@ character(300),intent(in) :: set_namelist_file
             hwc_n = in_hwc_n(nx,ny,1:nlyr)              ! #/kg
          end if
            !run the model
-           call run_rt(nx,ny,fi,freqs(fi),freq_str)
+           call run_rt(nx,ny,fi)
 !           if ((active) .and. ((radar_mode .eq. "simple") .or. (radar_mode .eq. "splitted"))) then
 !             out_Ze_cw(nx,ny,1:nlyr,:) = REAL(Ze_cw(nx,ny,1:nlyr,:))
 !             out_Ze_rr(nx,ny,1:nlyr,:) = REAL(Ze_rr(nx,ny,1:nlyr,:))

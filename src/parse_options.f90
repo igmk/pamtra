@@ -2,14 +2,13 @@ subroutine parse_options(gitVersion,gitHash)
 
     use kinds, only: long
     use getopt_m
-    use nml_params, only: maxfreq, nfrq, frqs_str
-    use file_mod, only: namelist_file, input_file
+    use settings, only: maxfreq, nfrq, freqs,frqs_str,namelist_file, input_file,verbose
     use vars_profile, only: coords
-    use report_module, only: verbose
-    use vars_atmosphere, only: freqs
 
     implicit none
 
+    integer(kind=long) :: ff
+    character(8) :: formatted_frqstr !function call
     character:: ch
     character(40) :: gitHash, gitVersion
     type(option_s):: opts(6)
@@ -26,7 +25,6 @@ subroutine parse_options(gitVersion,gitHash)
     frqs_str = ''
     frqs_str(1) = '89.0'
     nfrq = 1
-    verbose = 0
 
     do
         select case( getopt( "n:cp:cg:cf:cv:ch", opts ))
@@ -72,6 +70,13 @@ subroutine parse_options(gitVersion,gitHash)
             case default
                 print *, 'unhandled option ', optopt, ' (this is a bug)'
         end select
+
+    end do
+    ! the frequency string needs to be converted to a real array
+
+    do ff = 1, nfrq
+        read(frqs_str(ff),*) freqs(ff)
+        frqs_str(ff) = formatted_frqstr(frqs_str(ff))
     end do
 contains
 
@@ -81,10 +86,9 @@ contains
 
         implicit none
 
-        integer(kind=long) :: ind, ff
+        integer(kind=long) :: ind
         character(len=*), intent(in) :: arg
         character(150) :: arg_loc
-        character(8) :: formatted_frqstr !function call
 
         nfrq = 0
         arg_loc = arg
@@ -98,11 +102,6 @@ contains
             !    print*, freqs(ff)
             arg_loc = trim(arg_loc(ind+1:))
         !    print*, arg_loc
-        end do
-
-        do ff = 1, nfrq
-            read(frqs_str(ff),*) freqs(ff)
-            frqs_str(ff) = formatted_frqstr(frqs_str(ff))
         end do
 
         return

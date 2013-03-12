@@ -219,7 +219,7 @@ SUBROUTINE RT3 (NSTOKES, NUMMU, AZIORDER, MU_VALUES, SRC_CODE,    &
 
   use kinds
   use vars_atmosphere
-  use nml_params, only: write_nc, in_python, numazimuths
+  use settings, only: write_nc, in_python, numazimuths
   use report_module
 
   implicit none

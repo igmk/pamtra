@@ -25,10 +25,9 @@ endif
 #-	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm -lsz
 
 OBJECTS=kinds.o \
+	settings.o \
 	report_module.o \
 	constants.o \
-	file_mod.o \
-	nml_params.o \
 	mod_fastem4_coef.o \
 	gasabs_module.o \
 	conversions.o \
@@ -54,6 +53,7 @@ OBJECTS=kinds.o \
 	dsd_utilities.o \
 	mpm93.o \
 	get_atmosG0.o \
+	get_surface.o \
 	mie.o \
 	mie_densitydep_spheremasseq.o\
 	radar_spectrum.o \

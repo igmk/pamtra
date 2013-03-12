@@ -48,7 +48,7 @@ subroutine rosen98_gasabs &
 
   use gasabs_module            ! functions for calculating absorption by gases
 
-!  use nml_params, only: verbose
+!  use settings, only: verbose
 
   use report_module
 ! Imported Scalar Variables with intent (in):
@@ -99,6 +99,7 @@ subroutine rosen98_gasabs &
 
   ! check for "reasonable" input values
 
+!  print*, freq
   if (freq <= 0.0_dbl .or. freq > 800.0_dbl) then
      errorstatus = fatal
      msg = 'Frequency not between 0 and 800 GHz in rosen98_gasabs!'

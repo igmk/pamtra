@@ -2,8 +2,7 @@ program pamtra
 
     use kinds, only: long
     !    use constants !physical constants live here
-    use nml_params !all settings go here
-    use file_mod
+    use settings !all settings go here
     use vars_atmosphere !input variables and reading routine
     use vars_output !output variables
     use vars_profile
@@ -22,7 +21,7 @@ program pamtra
 
     !!! internal "handle command line parameters" !!!
 
-    integer(kind=long) :: inarg, ff
+    integer(kind=long) :: inarg
     character(40) :: gitHash, gitVersion
 
     !!! set by "handle command line parameters" !!!
@@ -35,7 +34,7 @@ program pamtra
 
     integer(kind=long) :: errorstatus
     integer(kind=long) :: err = 0
-    character(len=80) :: msg
+    character(len=200) :: msg
     character(len=14) :: nameOfRoutine = 'pamtra'
 
     !get git data
@@ -45,13 +44,14 @@ program pamtra
     call parse_options(gitVersion,gitHash)
 
     !!! read variables from namelist file
-    call nml_params_read !from nml_params.f90
+    call settings_read !from settings.f90
 
     in_python = .false.! we are _not_ in python
 
     if (verbose >= 1) then
         msg = "input_file: "//input_file(:len_trim(input_file))//&
-        " namelist file: "//namelist_file//" freq: "//freq_str
+        " namelist file: "//trim(namelist_file)//&
+        " freqs: "//trim(frqs_str(1))//" to "//trim(frqs_str(nfrq))
         call report(info, msg, nameOfRoutine)
     end if
 

@@ -12,7 +12,7 @@ subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope
 
 
   use kinds
-  use nml_params
+  use settings
   use constants
         use report_module
   implicit none

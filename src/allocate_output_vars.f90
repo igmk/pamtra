@@ -3,7 +3,7 @@ subroutine allocate_output_vars(no_allocated_lyrs)
 
   use vars_atmosphere
   use vars_output
-  use nml_params
+  use settings
   use mod_io_strings
         use report_module
   implicit none

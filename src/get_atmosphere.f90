@@ -1,6 +1,6 @@
 subroutine get_atmosphere(errorstatus)
 
-    use nml_params, only: input_type
+    use settings, only: input_type
     use vars_profile
     use kinds, only: long
 

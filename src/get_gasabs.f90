@@ -33,6 +33,9 @@ freq)              ! in
     !
     ! Parent Module: run_rt
     !
+    ! Child modules: mpm93
+    !                rosen_gasabs98
+    !
     ! Declarations:
 
     ! Imported Parameters:
@@ -41,7 +44,7 @@ freq)              ! in
     long   ! integer parameter specifying long integer
     use vars_atmosphere, only: nlyr, press, temp, vapor_pressure, rho_vap, kextatmo
     use constants, only: t_abs
-    use nml_params, only: gas_mod
+    use settings, only: gas_mod
 
     use report_module
 

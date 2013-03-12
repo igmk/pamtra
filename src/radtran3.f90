@@ -102,7 +102,7 @@ SUBROUTINE RADTRAN(NSTOKES, NUMMU, AZIORDER, MAX_DELTA_TAU,      &
 
   use kinds
   use vars_atmosphere
-!  use nml_params, only: verbose
+!  use settings, only: verbose
         use report_module
 
   INTEGER NSTOKES, NUMMU, AZIORDER 

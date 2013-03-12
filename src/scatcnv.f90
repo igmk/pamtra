@@ -13,7 +13,7 @@
 !       The guts of the code are taken from RADSCAT3.FOR.
 !
 
-      use nml_params, only: dump_to_file, nstokes,nummu, aziorder, quad_type
+      use settings, only: dump_to_file, nstokes,nummu, aziorder, quad_type
 
       implicit none
 
@@ -58,7 +58,7 @@
       subroutine transform_ext_emis(mu_values,extinct,albedo,ext_matrix,emis_vec)
 
       use kinds
-      use nml_params, only: nstokes, nummu
+      use settings, only: nstokes, nummu
       implicit none
 
       integer :: j, l
@@ -91,7 +91,7 @@
       SUBROUTINE transform_scatter(CONST,MU_VALUES, NLEGEN, COEF,scatter_matrix)
 
       use kinds
-      use nml_params, only: nummu, aziorder, nstokes
+      use settings, only: nummu, aziorder, nstokes
 
       implicit none
 
@@ -197,7 +197,7 @@
 
       SUBROUTINE SCATTERING_CNV(CONST, MU_VALUES, NLEGEN, COEF)
 
-      use nml_params, only: nstokes, nummu, aziorder
+      use settings, only: nstokes, nummu, aziorder
 
       implicit none
 

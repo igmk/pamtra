@@ -62,7 +62,7 @@ contains
 
     subroutine allocate_profiles
 
-        use nml_params, only: n_moments
+        use settings, only: n_moments
         use report_module
 
         implicit none
@@ -103,8 +103,9 @@ contains
 
     subroutine vars_profile_read_profile(errorstatus)
 
-        use nml_params
-        use file_mod, only: input_file, nc_out_file
+        use settings, only: verbose, input_path, input_file, &
+        output_path, nc_out_file, file_desc, n_moments, freq_str
+
         use report_module
 
         integer :: i,j,k
@@ -118,7 +119,7 @@ contains
         character(len=25) :: nameOfRoutine = 'vars_profile_read_profile'
 
 
-        if (verbose .gt. 0) print *,"opening: ",input_file
+        if (verbose >= 1) print *,"opening: ",input_file
 
         !
         !     read atmospheric profiles
@@ -272,7 +273,7 @@ contains
         nc_out_file = trim(output_path)//"/"//trim(input_file(1:len_trim(input_file)-4))//&
         trim(freq_str)//trim(file_desc)//'.nc'
 
-        if (verbose .gt. 0) print*, 'profile reading done!'
+        if (verbose >= 1) print*, 'profile reading done!'
 
         return
 
@@ -280,8 +281,7 @@ contains
 
     subroutine vars_profile_read_cosmo
 
-        use nml_params, only: crm_case, n_moments, freq_str, output_path, file_desc
-        use file_mod
+        use settings, only: crm_case, n_moments, freq_str, output_path, file_desc, nc_out_file
         use conversions
         use cosmo_netcdf
         use double_moments_module
