@@ -84,7 +84,7 @@ real(kind=dbl) :: re, Nt
 	    gamma = 1.d0
 	else if (SD_cloud .eq. 'M') then
 	    del_d = 1.d-8 	!delta_diameter for mie calculation [m]
-	    dia1 = 4.d-5 	! [m] 20 micron diameter monodisperse
+	    dia1 = 2.d-5 	! [m] 20 micron diameter monodisperse
 	    dia2 = dia1 + del_d
 	    drop_mass = pi/6.d0 * den_liq * dia1**3 		    	! [kg]
 	    ad = cwc / (drop_mass*del_d)	! intercept parameter [1/m^4]

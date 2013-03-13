@@ -82,7 +82,7 @@ subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
      b_as_ice = 2.d0 !from mitchell 1996 similar to a_msnow&b_snow
     else if (SD_ice .eq. 'M') then
      del_d = 1.d-8    ! [m]
-     dia1 = 10.d-5     ! [m] 60 micron diameter
+     dia1 = 6.d-5     ! [m] 60 micron diameter
      dia2 = dia1 + del_d
      den_ice = 917.d0  ! [kg/m^3]
      drop_mass = pi/6.d0 * dia1**3 * den_ice
