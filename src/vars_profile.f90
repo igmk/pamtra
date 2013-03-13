@@ -109,7 +109,6 @@ contains
         use report_module
 
         integer :: i,j,k
-        integer :: ngridx, ngridy
 
         ! Error handling
 

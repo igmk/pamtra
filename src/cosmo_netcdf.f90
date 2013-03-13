@@ -60,8 +60,7 @@ contains
 
         ! This will be the netCDF ID for the file and data variable.
         integer :: nx,ny,nlvl,nlvl1
-        integer :: ncid,ncidc, ncidn, timeID, time
-        integer, dimension(9) :: gmtvalues
+        integer :: ncid,ncidc
 
         integer, dimension(2) :: start_2d, count_2d
         integer, dimension(3) :: start_3d, count_fl, count_hl
@@ -182,8 +181,7 @@ contains
 
         ! This will be the netCDF ID for the file and data variable.
         integer :: nx,ny,nlvl,nlvl1
-        integer :: ncid,ncidc, ncidn, timeID, time
-        integer, dimension(9) :: gmtvalues
+        integer :: ncid,ncidc, ncidn
 
         integer, dimension(2) :: start_2d, count_2d
         integer, dimension(3) :: start_3d, count_fl, count_hl
@@ -392,11 +390,11 @@ contains
 
         implicit none
 
-        integer :: i,j,idimz,k
+        integer :: i,j,k
         integer :: nx,ny,nlvl, nlvl1
 
         real :: meant,dz_for_pb,dz,xp
-        real :: r_d,r_v,wet_rho
+        real :: r_d,r_v
 
         r_d=287.05        ! [J/(kg*K)] = [m^2/(s^2*K)]
         r_v=461.5

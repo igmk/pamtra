@@ -9,7 +9,6 @@ subroutine parse_options(gitVersion,gitHash)
 
     integer(kind=long) :: ff
     character(8) :: formatted_frqstr !function call
-    character:: ch
     character(40) :: gitHash, gitVersion
     type(option_s):: opts(6)
     opts(1) = option_s( "namelist", .true.,  'n' )

@@ -36,13 +36,13 @@ subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
   real(kind=dbl), intent(out) :: diameter(nbins)
   real(kind=dbl), intent(out) :: back_spec(nbins)
   integer, parameter :: maxn = 5000
-  integer :: nterms, nquad, nmie, nleg 
+  integer :: nterms, nquad, nleg
   integer :: i, l, m, ir
   real(kind=dbl) :: x, del_d,  ndens, tmp, fac
   real(kind=dbl) :: qext, qscat, qback, scatter 
   real(kind=dbl) :: distribution 
   !  real(kind=dbl) :: mu(maxn), wts(maxn)
-  real(kind=dbl) :: p1, pl, pl1, pl2, p2, p3, p4 
+  real(kind=dbl) :: pl, pl1, pl2
   real(kind=dbl) :: sumqe, sumqs, sumqback 
   !  real(kind=dbl) :: sump1(maxn), coef1(maxn), sump2(maxn), coef2(maxn),   &
   !    sump3(maxn), coef3(maxn), sump4(maxn), coef4(maxn)
@@ -54,7 +54,7 @@ subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
 
   real(kind=dbl), dimension(nbins) :: xi, weights
 
-  real(kind=dbl) :: ntot, swc
+  real(kind=dbl) :: ntot
 
   ! variables communicating with the database. need to be single precission !!!
 

@@ -36,7 +36,7 @@ mass_size_a_SI,mass_size_b,area_size_a_SI,area_size_b,velSpec)
     real(kind=dbl) :: rho_air, g_cp, my
     real(kind=dbl) :: c1, delta0, mass_size_a, area_size_a
     real(kind=dbl), dimension(ndia):: X, bRe, aRe, Av, Bv
-    real(kind=dbl), dimension(ndia)::diaSpec, rho_particle
+    real(kind=dbl), dimension(ndia)::diaSpec
 
 
     if (verbose .gt. 1) print*, 'Entering dia2vel_khvorostyanov01_particles in dia2vel.f90'
@@ -239,7 +239,7 @@ subroutine dia2vel_foote69_rain(nDia,diaSpec,rho_air,temp,velSpec)
     real(kind=dbl), intent(in), dimension(ndia)::diaSpec
     real(kind=dbl), intent(in) :: rho_air, temp
     real(kind=dbl), dimension(ndia), intent(out) :: velSpec
-    real(kind=dbl) ::   aRe, Bv, Avr, aj(10), Y, rho0
+    real(kind=dbl) :: aj(10), Y, rho0
     integer :: jj
 
     !check for boundaries (including 1% numerical tolerance)

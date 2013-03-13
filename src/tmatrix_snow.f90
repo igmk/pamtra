@@ -33,12 +33,12 @@ subroutine tmatrix_snow(f, wc, t, nc, &
   real(kind=dbl) :: wavelength, wave_num, freq
   real(kind=dbl) :: ad, bd, alpha, gamma, a_m,b
   complex(kind=dbl) :: mindex
-  real(kind=dbl) :: extinction, albedo, back_scatt
+
   integer, parameter :: nquad = 16
   integer, parameter :: nstokes = 2
-  integer :: i, l, m, ir, azimuth_num, azimuth0_num
-  real(kind=dbl) :: del_d, ndens, tmp, tot_mass, wc, density
-  real(kind=dbl) :: qext, qscat, qback, scatter
+  integer :: ir, azimuth_num, azimuth0_num
+  real(kind=dbl) :: del_d, ndens, tot_mass, wc
+
   real(kind=dbl) :: distribution
   real(kind=dbl) :: eu_alpha, eu_beta, bin_wgt, equiv_radius, particle_mass
 
@@ -52,9 +52,9 @@ subroutine tmatrix_snow(f, wc, t, nc, &
   real(kind=dbl), dimension(nstokes,nquad,nstokes,nquad,4) :: scat_mat_sgl
   real(kind=dbl), dimension(nstokes,nstokes,nquad,2) :: ext_mat_sgl
   real(kind=dbl), dimension(nstokes,nquad,2) :: emis_vec_sgl
-  real(kind=dbl), dimension(nquad) :: qua_angle, qua_weights
-  integer :: l1, j1, l2, j2, j, i1, i2
-  real(kind=dbl) :: gammln, ntot,nc
+
+
+  real(kind=dbl) :: ntot,nc
 
   freq = f*1.d9
   wavelength = c/freq !

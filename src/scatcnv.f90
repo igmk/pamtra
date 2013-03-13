@@ -20,7 +20,7 @@
       INTEGER  NLEGEN
       REAL*8   MU_VALUES(32), QUAD_WEIGHTS(32)
       REAL*8   COEF(6,100),  EXTINCT, ALBEDO, CONST
-      CHARACTER*64  SCAT_FILE, OUT_FILE
+      CHARACTER*64  OUT_FILE
       CHARACTER*8   QUADTYPE
       real*8 scatter_matrix(nstokes,nummu,nstokes,nummu,4)
       real*8 ext_matrix(nstokes,nstokes,nummu,2)
@@ -64,7 +64,7 @@
       integer :: j, l
       real(kind=dbl), dimension(nummu) :: mu_values
       real(kind=dbl) :: extinct, albedo
-      real(kind=dbl) :: mu, absorb
+      real(kind=dbl) :: absorb
       real(kind=dbl), dimension(nstokes,nstokes,nummu,2) :: ext_matrix
       real(kind=dbl), dimension(nstokes,nummu,2) :: emis_vec
 
@@ -99,9 +99,9 @@
       REAL(kind=dbl) :: MU_VALUES(NUMMU), CONST, COEF(6,1)
       INTEGER  MAXLEG
       PARAMETER (MAXLEG=64)
-      INTEGER  I1, I2, I, J1, J2, K, L1, L2, M
+      INTEGER  I1, I2, I, J1, J2, K, L1, L2
       INTEGER  NUMPTS, DOSUM(6)
-      REAL(kind=dbl) :: C, MU1, MU2,  DELPHI, COS_SCAT
+      REAL(kind=dbl) :: MU1, MU2,  DELPHI, COS_SCAT
       REAL(kind=dbl) :: PHASE_MATRIX(4,4)
       REAL(kind=dbl) :: SCAT_MATRIX(4,4,4*MAXLEG), BASIS_MATRIX(4,4,4*MAXLEG)
       REAL(kind=dbl) :: ZERO, TWOPI
@@ -205,9 +205,9 @@
       REAL*8   MU_VALUES(NUMMU), CONST, COEF(6,1)
       INTEGER  MAXLEG
       PARAMETER (MAXLEG=64)
-      INTEGER  I1, I2, I, J1, J2, K, L1, L2, M
+      INTEGER  I1, I2, I, J1, J2, K, L1, L2
       INTEGER  NUMPTS, DOSUM(6)
-      REAL*8   C, MU1, MU2,  DELPHI, COS_SCAT
+      REAL*8   MU1, MU2,  DELPHI, COS_SCAT
       REAL*8   PHASE_MATRIX(4,4)
       REAL*8   SCAT_MATRIX(4,4,4*MAXLEG), BASIS_MATRIX(4,4,4*MAXLEG)
       REAL*8   ZERO, TWOPI

@@ -26,7 +26,7 @@ subroutine cloud_ssp(f,cwc,t, press,hgt,maxleg,nc, kext, salb, back,  &
 
   implicit none
 
-  integer :: nbins,nbins_spec, nlegen, iautocon,alloc_status
+  integer :: nbins,nbins_spec, nlegen, alloc_status
 
   integer, intent(in) :: maxleg
 
@@ -42,7 +42,7 @@ subroutine cloud_ssp(f,cwc,t, press,hgt,maxleg,nc, kext, salb, back,  &
   real(kind=dbl) :: absind, abscof
 
   real(kind=dbl) :: dia1, dia2, del_d, den_liq, drop_mass, b_cloud, a_mcloud
-  real(kind=dbl) :: ad, bd, alpha, gamma, number_density
+  real(kind=dbl) :: ad, bd, alpha, gamma
 
   real(kind=dbl), intent(out) :: &
        kext,&

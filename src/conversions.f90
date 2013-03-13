@@ -46,7 +46,7 @@ real function vapor2rh(temp_p,pres_p,hum_massmix)
   REAL :: XBOLTZ             ! Boltzman constant
   REAL :: XAVOGADRO          ! Avogadro number
   REAL :: XRD,XRV            ! Gaz constant for dry air, gaz const for vapor
-  REAL :: XCPD,XCPV          ! Cpd (dry air), Cpv (vapor)
+  REAL :: XCPV               ! Cpv (vapor)
   REAL :: XCL,XCI            ! Cl (liquid), Ci (ice)
   REAL :: XTT                ! Triple point temperature
   REAL :: XLVTT              ! Vaporization heat constant

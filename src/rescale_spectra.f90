@@ -30,7 +30,6 @@ subroutine rescale_spectra(nx1,nx2,sort,x1,y1,x2,y2)
   real(kind=dbl), dimension(nx1) :: x1_sorted,y1_sorted
   real(kind=dbl), dimension(nx2+1) :: x2_shift
 
-  integer :: i
   real(kind=dbl), dimension(nx1+nx2+1) :: x12,x12_sorted
   real(kind=dbl), dimension(nx1+nx2+1) :: y12,y12_sorted
   real(kind=dbl), dimension(nx2+1) :: y2_interp

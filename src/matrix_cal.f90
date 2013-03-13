@@ -26,14 +26,14 @@ subroutine matrix_cal(quad,qua_num,frequency,wave_num,snow_ref,axi, nstokes,&
 
     implicit none
 
-    real*8 maximum_size, minimum_size, frequency, &
-        as_ratio, num_0, lambda_0, temperature, &
-        particle_size, particle_mass, pi
+    real*8 frequency, &
+        as_ratio, &
+        pi
     real*8  wave_num, axi, thet0, thet, phi, phi0,&
-        alpha, beta, rat, sum_tmp, phi_weights, phi0_weights
-    integer i, j, k, l, m, n, azimuth_num, &
-       particle_num, azimuth0_num, qua_num,&
-       ii,jj,kk,ll,kkk, nstokes,kkk1,kkk2
+        alpha, beta, rat, phi_weights, phi0_weights
+    integer m, n, azimuth_num, &
+       azimuth0_num, qua_num,&
+       ii,jj,kk,ll,nstokes,kkk1,kkk2
 
     !       parameter(qua_num=8, nstokes = 4)
 

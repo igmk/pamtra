@@ -142,10 +142,9 @@ subroutine convolutionFFT(Xin,M,Ain,N,Yout)
 
    REAL(kind=dbl), intent(in), DIMENSION(M) :: Xin
    REAL(kind=dbl), intent(in), DIMENSION(N) :: Ain
-   REAL(kind=dbl), DIMENSION(N) :: DX, DY
    REAL(kind=dbl), intent(out), DIMENSION(M+N-1) :: Yout
   INTEGER :: MN, MNext
-  INTEGER I, J, K, IFAIL
+  INTEGER :: I
   REAL(kind=dbl) :: A, B, C, D
   REAL(kind=dbl),allocatable :: R1(:),R2(:),RF(:), &
 		  WSAVE(:)

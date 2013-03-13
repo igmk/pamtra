@@ -43,7 +43,7 @@ subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
 
   real(kind=dbl), dimension(6,100) :: coef
 
-  integer :: i1,i2,i12
+
 
   real(kind=dbl), dimension(nstokes,nummu,nstokes,nummu,4) :: rain_scat,snow_scat,&
       ice_scat,graupel_scat,hail_scat,cloud_scat
@@ -57,10 +57,10 @@ subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
       ice_spec, graupel_spec, hail_spec, full_spec
 
   CHARACTER*64 SCATFILES(nlyr)
-  character*10 ly
-  integer :: l1, j1, l2, j2, j, l,i
+
+
   integer, parameter :: nquad = 16
-  real(kind=dbl), dimension(nquad) :: qua_angle, qua_weights
+
   logical :: didNotChange 
 
   if (verbose .gt. 1) print*, nx, ny, 'Entering hydrometeor_extinction_rt4'
