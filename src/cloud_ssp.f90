@@ -1,4 +1,4 @@
-subroutine cloud_ssp(f,cwc,t, press,hgt,maxleg,nc, kext, salb, back,  &
+subroutine cloud_ssp(f,cwc,t, press,maxleg,nc, kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
      scatter_matrix,extinct_matrix, emis_vector,cloud_spec)
 
@@ -33,7 +33,7 @@ subroutine cloud_ssp(f,cwc,t, press,hgt,maxleg,nc, kext, salb, back,  &
   real(kind=dbl), intent(in) :: &
        cwc,&
        t, &
-       f, press,hgt
+       f, press
 
   real(kind=dbl), intent(in) :: nc
 
@@ -141,7 +141,7 @@ real(kind=dbl) :: re, Nt
   particle_type="cloud" 
 
   if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
-    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,hgt,f,&
+    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,f,&
       particle_type,-1.d0,-1.d0,-1.d0,-1.d0,cloud_spec)
   else
     cloud_spec(:)=0.d0

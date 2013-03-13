@@ -5,7 +5,7 @@ gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 FC=gfortran
 CC=gcc
-FCFLAGS=-c -fPIC -Wunused -O2 #-I../include/ uninitialized
+FCFLAGS=-c -fPIC -O2 #-I../include/ uninitialized
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran
 	NCFLAGS=-I/opt/local/include/ 
@@ -38,17 +38,13 @@ OBJECTS=kinds.o \
 	mod_io_strings.o \
 	getopt.o \
 	parse_options.o \
+	rt_utilities.o \
 	radmat.o \
 	convolution.o \
 	get_gasabs.o\
 	get_atmosphere.o \
 	vars_output.o \
 	run_rt.o \
-	rt3.o \
-	radtran3.o \
-	radutil3.o \
-	radscat3.o \
-	radintg3.o \
 	scat_utilities.o \
 	dsd_utilities.o \
 	mpm93.o \
@@ -82,7 +78,6 @@ OBJECTS=kinds.o \
 	rescale_spectra.o \
 	deallocate_profile_vars.o \
 	deallocate_output_vars.o \
-	hydrometeor_extinction_rt3.o \
 	cloud_ssp.o \
 	ice_ssp.o \
 	rain_ssp.o \
@@ -123,8 +118,13 @@ OBJECTS=kinds.o \
 	smooth_savitzky_golay.o \
 	radar_calc_moments.o \
 	radar_hildebrand_sekhon.o \
-	formatted_frqstr.o \
 	write_nc_results.o 
+#	rt3.o \
+	radtran3.o \
+	radutil3.o \
+	radscat3.o \
+	radintg3.o \
+	hydrometeor_extinction_rt3.o \
 
 BIN=pamtra
 

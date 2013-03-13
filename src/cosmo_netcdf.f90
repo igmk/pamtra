@@ -267,7 +267,7 @@ contains
             call get_3d_vars(ncidn, 'QNS', snow_n, nx,ny, nlvl, start_3d, count_fl)
             call get_3d_vars(ncidn, 'QNH', hail_n, nx,ny, nlvl, start_3d, count_fl)
 
-         	call check(nf90_close(ncidn))
+            call check(nf90_close(ncidn))
         else
             allocate(hail(nx,ny,nlvl))
             hail = 0.

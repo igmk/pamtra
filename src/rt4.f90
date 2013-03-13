@@ -211,7 +211,6 @@ subroutine RT4(nstokes,nummu,mu_values,out_file,quad_type,ground_temp,&
   real(kind=dbl)    UP_FLUX(4*(MAXLAY+1)), DOWN_FLUX(4*(MAXLAY+1))
   CHARACTER QUAD_TYPE*1, UNITS*1, OUTPOL*2, GROUND_TYPE*1
   CHARACTER*64 LAYER_FILE, OUT_FILE
-  CHARACTER*64 SCAT_FILES(MAXLAY)
 
   height = 0.
   temperatures = 0.
@@ -242,7 +241,7 @@ subroutine RT4(nstokes,nummu,mu_values,out_file,quad_type,ground_temp,&
                     GROUND_ALBEDO, GROUND_INDEX,&
                     SKY_TEMP, WAVELENGTH,&
                     NUM_LAYERS, HEIGHT, TEMPERATURES,&
-                    GAS_EXTINCT, SCAT_FILES,&
+                    GAS_EXTINCT,&
                     NOUTLEVELS, OUTLEVELS,&
                     MU_VALUES, UP_FLUX, DOWN_FLUX,&
                     UP_RAD, DOWN_RAD)

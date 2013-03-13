@@ -5,7 +5,7 @@ module double_moments_module
     implicit none
 
     !Parameter of the drop size distribution when 2moments scheme is used
-    real (kind=dbl), dimension(5) :: 	gamma_cloud,&
+    real (kind=dbl), dimension(5) :: gamma_cloud,&
     gamma_rain, &
     gamma_ice, &
     gamma_snow, &

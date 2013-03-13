@@ -1,4 +1,4 @@
-subroutine grau_ssp(f,gwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
+subroutine grau_ssp(f,gwc,t,press,maxleg,nc, kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
      scatter_matrix,extinct_matrix, emis_vector,grau_spec)
 
@@ -19,7 +19,7 @@ subroutine grau_ssp(f,gwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
   real(kind=dbl), intent(in) :: &
        gwc,&
        t,&
-       f,press,hgt
+       f,press
 
   real(kind=dbl), intent(in) :: nc
 
@@ -115,7 +115,7 @@ subroutine grau_ssp(f,gwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
 
   if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
     particle_type="graup" 
-    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,hgt,f,&
+    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,f,&
       particle_type,a_mgrau, b_grau,-1.d0,-1.d0,grau_spec)
   else
     grau_spec(:)=0.d0

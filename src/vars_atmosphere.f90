@@ -38,14 +38,14 @@ module vars_atmosphere
        gwc_q, &
        hwc_q
 
-  real(kind=dbl), allocatable, dimension(:) ::	cwc_n, &
+  real(kind=dbl), allocatable, dimension(:) :: cwc_n, &
        iwc_n, &
        rwc_n, &
        swc_n, &
        gwc_n, &
        hwc_n
 
-  real(kind=dbl), allocatable, dimension(:) ::	delta_hgt_lev
+  real(kind=dbl), allocatable, dimension(:) :: delta_hgt_lev
 
 
   real(kind=dbl), allocatable, dimension(:) :: kextatmo, &
@@ -97,7 +97,7 @@ module vars_atmosphere
        jac_gwc_q, &
        jac_hwc_q
 
-  real(kind=dbl), allocatable, dimension(:) ::	jac_cwc_n, &
+  real(kind=dbl), allocatable, dimension(:) :: jac_cwc_n, &
        jac_iwc_n, &
        jac_rwc_n, &
        jac_swc_n, &

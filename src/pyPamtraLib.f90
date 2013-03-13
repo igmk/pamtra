@@ -113,7 +113,7 @@ out_angles&
 ! 
 !   character(5),intent(in) :: set_EM_snow, set_EM_grau, set_EM_ice, set_EM_hail
 !   character(1),intent(in) :: set_SD_snow, set_SD_grau, set_SD_rain, set_SD_cloud, set_SD_ice, set_SD_hail
-!   character(3),intent(in) :: set_gas_mod, set_rt_mode
+!   character(3),intent(in) :: set_gas_mod
 !   character(20),intent(in) :: set_moments_file
 !   character(100),intent(in) :: set_tmp_path,set_creator, set_data_path
 !   character(2),intent(in) :: set_OUTPOL

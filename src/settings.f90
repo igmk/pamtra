@@ -78,7 +78,6 @@ module settings
     character(18) :: freq_str
     character(2) :: OUTPOL
     character(1) :: GROUND_TYPE, UNITS
-    character(3) :: rt_mode
     character(10) :: input_type, crm_case
     character(100) :: crm_data, crm_data2, crm_constants
     character(8) :: radar_airmotion_model, radar_mode
@@ -103,7 +102,7 @@ contains
         input_type, crm_case, crm_data, crm_data2, crm_constants, &
         jacobian_mode
         namelist / output / obs_height,units,outpol,freq_str,file_desc,creator
-        namelist / run_mode / active, passive,rt_mode, radar_mode
+        namelist / run_mode / active, passive,radar_mode
         namelist / surface_params / ground_type,salinity, emissivity
         namelist / gas_abs_mod / lgas_extinction, gas_mod
         namelist / hyd_opts / lhyd_extinction, lphase_flag
@@ -145,7 +144,6 @@ contains
         ! sec run_mode
         active=.true.
         passive=.true.
-        rt_mode='rt4'
         radar_mode="simple" !"splitted"|"moments"|"spectrum"
         ! sec surface params
         ground_type='S'
@@ -232,7 +230,7 @@ contains
         read(7,nml=output)
         !    if (verbose .gt. 1) print*, obs_height,units,outpol,freq_str,file_desc,creator,zeSplitUp
         read(7,nml=run_mode)
-        !    if (verbose .gt. 1) print*, active, passive,rt_mode
+        !    if (verbose .gt. 1) print*, active, passive
         read(7,nml=surface_params)
         !    if (verbose .gt. 1) print*, ground_type,salinity, emissivity
         read(7,nml=gas_abs_mod)
@@ -283,7 +281,7 @@ contains
             input_type, crm_case, crm_data, crm_data2, crm_constants, &
             jacobian_mode
             print*, "output ",  obs_height,units,outpol,freq_str,file_desc,creator
-            print*, "run_mode ",  active, passive,rt_mode, radar_mode
+            print*, "run_mode ",  active, passive,radar_mode
             print*, "surface_params ",  ground_type,salinity, emissivity
             print*, "gas_abs_mod ",  lgas_extinction, gas_mod
             print*, "hyd_opts ",  lhyd_extinction, lphase_flag

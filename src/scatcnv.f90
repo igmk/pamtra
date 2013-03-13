@@ -14,7 +14,7 @@
 !
 
       use settings, only: dump_to_file, nstokes,nummu, aziorder, quad_type
-
+use rt_utilities, only: lobatto_quadrature
       implicit none
 
       INTEGER  NLEGEN
@@ -92,7 +92,11 @@
 
       use kinds
       use settings, only: nummu, aziorder, nstokes
-
+      use rt_utilities, only: number_sums,&
+sum_legendre,&
+rotate_phase_matrix,&
+matrix_symmetry,&
+fourier_matrix
       implicit none
 
       INTEGER  NLEGEN, l
@@ -198,7 +202,11 @@
       SUBROUTINE SCATTERING_CNV(CONST, MU_VALUES, NLEGEN, COEF)
 
       use settings, only: nstokes, nummu, aziorder
-
+use rt_utilities, only: number_sums,&
+sum_legendre,&
+rotate_phase_matrix,&
+matrix_symmetry,&
+fourier_matrix
       implicit none
 
       INTEGER  NLEGEN, l

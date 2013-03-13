@@ -114,7 +114,7 @@ contains
 
         integer(kind=long),intent(out) :: errorstatus
         integer(kind=long) :: err = 0
-        character(len=80) :: msg
+        character(len=200) :: msg
         character(len=25) :: nameOfRoutine = 'vars_profile_read_profile'
 
 
@@ -145,7 +145,7 @@ contains
         STATUS='OLD', form='formatted',iostat=err)
 
         if (err /= 0) then
-            msg = "Read error 1: Cannot open file "//input_file
+            msg = "Read error 1: Cannot open file "//input_path(:len_trim(input_path))//"/"//input_file(:len_trim(input_file))
             call report(err,msg,nameOfRoutine)
             errorstatus = err
             return
@@ -155,7 +155,7 @@ contains
         profiles_ngridx, profiles_ngridy, profiles_nlyr, profiles_deltax, profiles_deltay
 
         if (err /= 0) then
-            msg = "Read error 2: Cannot read first line of file "//input_file
+            msg = "Read error 2: Cannot read first line of file "//trim(input_file)
             call report(err,msg,nameOfRoutine)
             errorstatus = err
             return
@@ -168,7 +168,7 @@ contains
             do j = 1, profiles_ngridy
                 read(14,*,iostat=err) profiles(i,j)%isamp, profiles(i,j)%jsamp !
                 if (err /= 0) then
-                    msg = "Read error 3: Cannot read profile index i,j in"//input_file
+                    msg = "Read error 3: Cannot read profile index i,j in"//trim(input_file)
                     call report(err,msg,nameOfRoutine)
                     errorstatus = err
                     return
@@ -180,7 +180,7 @@ contains
                 profiles(i,j)%wind_10u,&          ! m/s
                 profiles(i,j)%wind_10v            ! m/s
                 if (err /= 0) then
-                    msg = "Read error 4: Cannot read profile lat/lon/lfrac/wind in"//input_file
+                    msg = "Read error 4: Cannot read profile lat/lon/lfrac/wind in"//trim(input_file)
                     call report(err,msg,nameOfRoutine)
                     errorstatus = err
                     return
@@ -208,7 +208,7 @@ contains
                     profiles(i,j)%hwp                 ! kg/m^2
                 end if
                 if (err /= 0) then
-                    msg = "Read error 5: Cannot read profile integrated quantities in"//input_file
+                    msg = "Read error 5: Cannot read profile integrated quantities in"//trim(input_file)
                     call report(err,msg,nameOfRoutine)
                     errorstatus = err
                     return

@@ -4,11 +4,11 @@ subroutine parse_options(gitVersion,gitHash)
     use getopt_m
     use settings, only: maxfreq, nfrq, freqs,frqs_str,namelist_file, input_file,verbose
     use vars_profile, only: coords
+    use mod_io_strings, only: formatted_frqstr
 
     implicit none
 
     integer(kind=long) :: ff
-    character(8) :: formatted_frqstr !function call
     character(40) :: gitHash, gitVersion
     type(option_s):: opts(6)
     opts(1) = option_s( "namelist", .true.,  'n' )
@@ -30,9 +30,9 @@ subroutine parse_options(gitVersion,gitHash)
             case( char(0))
                 exit
             case( 'n' )
-                namelist_file = optarg
+                namelist_file = trim(optarg)
             case( 'p' )
-                input_file = optarg
+                input_file = trim(optarg)
             case( 'g' )
                 if (optarg(len_trim(optarg):) .ne. ',') &
                 optarg = trim(optarg)//','

@@ -1,4 +1,4 @@
-subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
+subroutine ice_ssp(f,iwc,t,press,maxleg,nc, kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
      scatter_matrix,extinct_matrix, emis_vector,ice_spec)
 
@@ -19,7 +19,7 @@ subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
   real(kind=dbl), intent(in) :: &
        iwc,&
        t,&
-       f,press,hgt
+       f,press
 
   real(kind=dbl), intent(in) :: nc
 
@@ -149,7 +149,7 @@ subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
 
   if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
     particle_type ="ice"
-    call radar_spectrum(nbins_spec,diameter_spec, back,  back_spec,t,press,hgt,f,&
+    call radar_spectrum(nbins_spec,diameter_spec, back,  back_spec,t,press,f,&
       particle_type,a_mice,b_ice,a_as_ice,b_as_ice,ice_spec)
   else
     ice_spec(:)=0.d0

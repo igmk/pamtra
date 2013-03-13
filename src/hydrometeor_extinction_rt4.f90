@@ -201,7 +201,7 @@ subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
 	        nc =  q2abs(cwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
        	end if
 
-    	call cloud_ssp(f,qwc,temp(nz),press(nz),hgt(nz),&
+    	call cloud_ssp(f,qwc,temp(nz),press(nz),&
              	maxleg, nc, kextcw(nz), salbcw, backcw(nz),  &
              	nlegencw, legencw, legen2cw, legen3cw, legen4cw, &
 		cloud_scat, cloud_ext, cloud_emis,cloud_spec)
@@ -233,7 +233,7 @@ subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
 	     	qwc = q2abs(iwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(iwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	     end if
-	     call ice_ssp(f,qwc,temp(nz),press(nz),hgt(nz),&
+	     call ice_ssp(f,qwc,temp(nz),press(nz),&
 	             maxleg,nc,kextci(nz), salbci, backci(nz),  &
 	             nlegenci, legenci, legen2ci, legen3ci, legen4ci, &
 			ice_scat, ice_ext, ice_emis,ice_spec)
@@ -269,7 +269,7 @@ subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
             cwc = q2abs(cwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	    nc = q2abs(rwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
          end if
-    	     	call rain_ssp(f,qwc,cwc,temp(nz),press(nz),hgt(nz),&
+    	     	call rain_ssp(f,qwc,cwc,temp(nz),press(nz),&
 	                maxleg,nc,kextrr(nz), salbrr, backrr(nz),  &
 	                nlegenrr, legenrr, legen2rr, legen3rr, legen4rr, &
 			rain_scat, rain_ext, rain_emis,rain_spec)
@@ -301,7 +301,7 @@ subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
 	     	qwc = q2abs(swc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(swc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	  end if
-    	  call snow_ssp(f,qwc,temp(nz),press(nz),hgt(nz),&
+    	  call snow_ssp(f,qwc,temp(nz),press(nz),&
 	                 maxleg,nc,kextsn(nz), salbsn, backsn(nz),  &
 	                 nlegensn, legensn, legen2sn, legen3sn, legen4sn,&
 			 snow_scat, snow_ext, snow_emis,snow_spec)
@@ -333,7 +333,7 @@ subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
 	     	qwc = q2abs(gwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(gwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	     end if
-	      	call grau_ssp(f,qwc,temp(nz),press(nz),hgt(nz),&
+	      	call grau_ssp(f,qwc,temp(nz),press(nz),&
 	             maxleg,nc, kextgr(nz), salbgr, backgr(nz),  &
 	             nlegengr, legengr, legen2gr, legen3gr, legen4gr,&
 		     graupel_scat, graupel_ext, graupel_emis,graupel_spec)
@@ -362,7 +362,7 @@ subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
            hydros_present(nz) = .true.
 	       qwc = q2abs(hwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	       nc = q2abs(hwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
-           call hail_ssp(f,qwc,temp(nz),press(nz),hgt(nz),&
+           call hail_ssp(f,qwc,temp(nz),press(nz),&
                 maxleg,nc,kextha(nz), salbha, backha(nz),  &
                 nlegenha, legenha, legen2ha, legen3ha, legen4ha,&
 		     hail_scat, hail_ext, hail_emis,hail_spec)

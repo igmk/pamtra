@@ -98,11 +98,7 @@ subroutine run_rt(errorstatus, nx,ny,fi)
 
     ! hydrometeor extinction desired
     if (lhyd_extinction) then
-        if (rt_mode .eq. 'rt3') then
-            call hydrometeor_extinction_rt3(freq)
-        elseif (rt_mode .eq. 'rt4') then
-            call hydrometeor_extinction_rt4(freq,nx,ny,fi)!hier nx, ny
-        end if
+        call hydrometeor_extinction_rt4(freq,nx,ny,fi)!hier nx, ny
     end if
 
 
@@ -143,7 +139,6 @@ subroutine run_rt(errorstatus, nx,ny,fi)
     end if
 
     ! find the output level
-    ! in rt3 and rt4 layers are reversed
 
     if (obs_height > 99999._dbl .or. obs_height > hgt_lev(nlyr)) then
         outlevels(1) = 1
@@ -166,31 +161,13 @@ subroutine run_rt(errorstatus, nx,ny,fi)
 
     if (passive .eqv. .true.) then
 
-        if (rt_mode .eq. 'rt3') then
-            if (verbose >= 2) print*, nx,ny, "Entering rt3 ...."
+        if (verbose >= 2) print*, nx,ny, "Entering rt4 ...."
 
-            call RT3(NSTOKES, NUMMU, AZIORDER, MU_VALUES, src_code, &
-            out_file_pas, QUAD_TYPE, deltam, DIRECT_FLUX,     &
-            DIRECT_MU, GROUND_TEMP, GROUND_TYPE, GROUND_ALBEDO,  &
-            GROUND_INDEX, SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,  &
-            NOUTLEVELS, OUTLEVELS, nx,ny,fi)
+        call rt4(nstokes,nummu,mu_values,out_file_pas,quad_type,ground_temp,&
+        ground_type,ground_albedo,ground_index,sky_temp,&
+        wavelength,units,outpol,noutlevels,outlevels,nx,ny,fi)
 
-            if (verbose >= 2) print*, nx,ny, "....rt3 finished"
-        elseif (rt_mode .eq. 'rt4') then
-            if (verbose >= 2) print*, nx,ny, "Entering rt4 ...."
-
-            call rt4(nstokes,nummu,mu_values,out_file_pas,quad_type,ground_temp,&
-            ground_type,ground_albedo,ground_index,sky_temp,&
-            wavelength,units,outpol,noutlevels,outlevels,nx,ny,fi)
-
-            if (verbose >= 2) print*, nx,ny, "....rt4 finished"
-
-        else
-            msg = 'no rt_mode selected'
-            errorstatus = fatal
-            call report(errorstatus,msg,nameOfRoutine)
-            return
-        end if
+        if (verbose >= 2) print*, nx,ny, "....rt4 finished"
         !calculate human readable angles!
         angles_deg(1:NUMMU) = 180-(180.*acos(MU_VALUES(NUMMU:1:-1))/pi)
         angles_deg(1+NUMMU:2*NUMMU) = (180.*acos(MU_VALUES(1:NUMMU))/pi)
