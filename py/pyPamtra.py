@@ -117,6 +117,8 @@ class pyPamtra(object):
     self.nmlSet["cloud_params"]["bd_cloud"]=2.0
     self.nmlSet["cloud_params"]["alphad_cloud"]=0.
     self.nmlSet["cloud_params"]["gammad_cloud"]=1.
+    self.nmlSet["cloud_params"]["diamin_cloud"] = 4.e-6# [m] 
+    self.nmlSet["cloud_params"]["diamax_cloud"] = 5.e-5# [m] 
 
     self.nmlSet["ice_params"]["sd_ice"]='C'
     self.nmlSet["ice_params"]["em_ice"]='mieic'
@@ -124,6 +126,9 @@ class pyPamtra(object):
     self.nmlSet["ice_params"]["bd_ice"]=2.0
     self.nmlSet["ice_params"]["alphad_ice"]=0.
     self.nmlSet["ice_params"]["gammad_ice"]=1.
+    self.nmlSet["ice_params"]["liu_type_ice"]=9
+    self.nmlSet["ice_params"]["diamin_ice"] = 7e-5 # [m] 
+    self.nmlSet["ice_params"]["diamax_ice"] = 1e-2 # [m] 
     
     self.nmlSet["rain_params"]["sd_rain"]='C' 
     self.nmlSet["rain_params"]["em_rain"]='miera' 

@@ -20,7 +20,7 @@ subroutine cloud_ssp(f,cwc,t, press,hgt,maxleg,nc, kext, salb, back,  &
   use nml_params, only: verbose, lphase_flag, n_moments, SD_cloud, &
       nstokes, EM_cloud, radar_nfft_aliased, radar_mode, active,&
 	ad_cloud, bd_cloud,&
-      alphad_cloud, gammad_cloud
+      alphad_cloud, gammad_cloud, diamin_cloud, diamax_cloud
   use constants, only: pi, im
   use double_moments_module
   use conversions
@@ -92,7 +92,7 @@ real(kind=dbl) :: re, Nt
 	    nbins = 2
 	    alpha = 0.d0 ! exponential SD
 	    gamma = 1.d0
-	else if (SD_cloud .eq. 'L') then !lognormal cloud distribution to test Pavlos Radar Spectrum
+	else if ((SD_cloud .eq. 'L') .or. (SD_cloud .eq. 'G')) then !lognormal cloud distribution to test Pavlos Radar Spectrum
 !teh hard and ugly way:
 
 ! 	    dia1 = 20.d-6 ! [m] 2 micron diameter 
@@ -114,7 +114,8 @@ real(kind=dbl) :: re, Nt
 	    gamma = gammad_cloud
 
         else
-	    stop "did not understand SD_cloud"
+	    print*, "did not understand SD_cloud: ", SD_cloud
+	    stop
 	end if
   else if (n_moments .eq. 2) then
      if (nc .eq. 0.d0) stop 'STOP in routine cloud_ssp'

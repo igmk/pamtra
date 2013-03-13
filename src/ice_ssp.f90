@@ -5,7 +5,7 @@ subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
   use kinds
   use nml_params, only: verbose, lphase_flag, n_moments, EM_ice, SD_ice,&
       nstokes, radar_nfft_aliased, radar_mode, active, ad_ice, bd_ice,&
-      alphad_ice, gammad_ice
+      alphad_ice, gammad_ice, liu_type_ice, diamin_ice, diamax_ice
   use constants, only: pi, im
   use double_moments_module
   use conversions
@@ -116,18 +116,35 @@ subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
 
 
 	else if (SD_ice .eq. 'G') then !lMPACE
-	    dia1 = 7e-5 ! [m] 
-	    dia2 = 1e-2 ! [m] 
+	    dia1 = diamin_ice ! [m] 
+	    dia2 = diamax_ice! [m] 
 	    nbins = 48
 	    alpha = alphad_ice!from nml_params
 	    bd = bd_ice !from nml_params
 	    ad = ad_ice !from nml_params
 	    gamma = gammad_ice!from nml_params
 	    den_ice=917.d0
-	    b_mice = 1.7d0
-	    a_mice = 1.07d-10 * 10**(6*b_mice - 3) !in SI
-	    b_as_ice = 1.63d0 !from mitchell 1996 similar to a_msnow&b_snow
-	    a_as_ice = 0.11d0 * 10**(2*b_as_ice-4)
+	    if (EM_ice .eq. 'liudb') then
+	      if (liu_type_ice == 9) then
+		b_mice = 1.511d0 !from Stefan Kneifel
+		a_mice = 1.191d-3 !in SI
+		b_as_ice = -0.377 + 2 !from liu 2004 area ratio
+		a_as_ice = (0.261d0*pi/4.d0) * 10d0**(2d0*b_as_ice-4d0)
+	      else if (liu_type_ice == 10) then
+		b_mice = 1.82d0 !from Stefan Kneifel
+		a_mice = 5.666d-3 !in SI
+		b_as_ice = 0 + 2 !from liu 2004: I found from the den image a fixed area ratio 0f 0.4 (MX,2013) !random orientation is totally ignored!
+		a_as_ice = (0.4*pi/4.d0) * 10d0**(2d0*b_as_ice-4d0)
+	      else
+		print*, "density for liu_type_ice not defined", liu_type_ice
+		STOP
+	      end if
+	    else
+	      b_mice = 1.7d0
+	      a_mice = 1.07d-10 * 10**(6*b_mice - 3) !in SI
+	      b_as_ice = 1.63d0 !from mitchell 1996 similar to a_msnow&b_snow
+	      a_as_ice = 0.11d0 * 10**(2*b_as_ice-4)
+	    end if
     else
       print*, "did not understand SD_ice: ", SD_ice
       stop
@@ -179,7 +196,7 @@ subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
       emis_vector= 0.d0
 
   elseif (EM_ice .eq. 'liudb') then
-     call dda_db_liu(f,t,9,mindex, &
+     call dda_db_liu(f,t,liu_type_ice,mindex, &
           dia1,dia2,nbins,maxleg,ad,&
           bd, alpha, gamma, lphase_flag,kext, salb,&
           back, nlegen, legen, legen2, legen3,&
