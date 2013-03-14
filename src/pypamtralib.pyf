@@ -12,7 +12,7 @@ python module pyPamtraLib ! in
             use vars_output
             use vars_atmosphere
             use vars_profile
-            use nml_params
+            use settings
             use double_moments_module
             use constants
             character*300 intent(in) :: set_namelist_file

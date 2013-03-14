@@ -181,299 +181,313 @@
 !                       MIDENTITY, MTRANSPOSE, MMULT, MINVERT
 !
 !
-subroutine RT4(nstokes,nummu,mu_values,out_file,quad_type,ground_temp,&
-    ground_type,ground_albedo,ground_index,sky_temp,&
-    wavelength,units,outpol,noutlevels,outlevels,nx,ny,fi)
+subroutine RT4(errorstatus, nstokes,nummu,mu_values,out_file,quad_type,ground_temp,&
+ground_type,ground_albedo,ground_index,sky_temp,&
+wavelength,units,outpol,noutlevels,outlevels,nx,ny,fi)
 
-  use kinds
-  use vars_atmosphere
-  use settings, only: write_nc, in_python, numazimuths
-        use report_module
+    use kinds
+    use vars_atmosphere
+    use settings, only: write_nc, in_python, numazimuths
+    use report_module
 
-  implicit none
+    implicit none
 
-  integer :: nx,ny,fi
+    integer :: nx,ny,fi
 
-  INTEGER   MAXV, MAXLAY
-  PARAMETER (MAXV=64)
-  PARAMETER (MAXLAY=200)
+    INTEGER   MAXV, MAXLAY
+    PARAMETER (MAXV=64)
+    PARAMETER (MAXLAY=200)
 
-  INTEGER   NSTOKES, NUMMU
-  INTEGER   NUM_LAYERS
-  INTEGER   NOUTLEVELS, OUTLEVELS(MAXLAY)
-  real(kind=dbl)    GROUND_TEMP, GROUND_ALBEDO
-  COMPLEX*16 GROUND_INDEX
-  real(kind=dbl)    SKY_TEMP, WAVELENGTH, MAX_DELTA_TAU
-  real(kind=dbl)    MU_VALUES(MAXV)
-  real(kind=dbl)    HEIGHT(MAXLAY), TEMPERATURES(MAXLAY)
-  real(kind=dbl)    GAS_EXTINCT(MAXLAY)
-  real(kind=dbl)    UP_RAD(MAXV*(MAXLAY+1)), DOWN_RAD(MAXV*(MAXLAY+1))
-  real(kind=dbl)    UP_FLUX(4*(MAXLAY+1)), DOWN_FLUX(4*(MAXLAY+1))
-  CHARACTER QUAD_TYPE*1, UNITS*1, OUTPOL*2, GROUND_TYPE*1
-  CHARACTER*64 LAYER_FILE, OUT_FILE
+    INTEGER   NSTOKES, NUMMU
+    INTEGER   NUM_LAYERS
+    INTEGER   NOUTLEVELS, OUTLEVELS(MAXLAY)
+    real(kind=dbl)    GROUND_TEMP, GROUND_ALBEDO
+    COMPLEX*16 GROUND_INDEX
+    real(kind=dbl)    SKY_TEMP, WAVELENGTH, MAX_DELTA_TAU
+    real(kind=dbl)    MU_VALUES(MAXV)
+    real(kind=dbl)    HEIGHT(MAXLAY), TEMPERATURES(MAXLAY)
+    real(kind=dbl)    GAS_EXTINCT(MAXLAY)
+    real(kind=dbl)    UP_RAD(MAXV*(MAXLAY+1)), DOWN_RAD(MAXV*(MAXLAY+1))
+    real(kind=dbl)    UP_FLUX(4*(MAXLAY+1)), DOWN_FLUX(4*(MAXLAY+1))
+    CHARACTER QUAD_TYPE*1, UNITS*1, OUTPOL*2, GROUND_TYPE*1
+    CHARACTER*64 LAYER_FILE, OUT_FILE
 
-  height = 0.
-  temperatures = 0.
-  gas_extinct = 0.
-  MAX_DELTA_TAU = 1.0d-6
+    ! Error handling
 
-  LAYER_FILE=""
+    integer(kind=long), intent(out) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
+    character(len=14) :: nameOfRoutine = 'rt4'
 
-!  if (verbose .gt. 0) print*, "entered rt4"
-!scat_files = ''
-!scat_files(nlyr) = '1.txt'
+    height = 0.
+    temperatures = 0.
+    gas_extinct = 0.
+    MAX_DELTA_TAU = 1.0d-6
 
-  num_layers = nlyr
-  height(1:nlyr+1) = hgt_lev(nlyr:0:-1)             ! [m]
-  temperatures(1:nlyr+1) = temp_lev(nlyr:0:-1)      ! [K]
-  gas_extinct(1:nlyr) = kextatmo(nlyr:1:-1)         ! [Np/m]
+    LAYER_FILE=""
 
-  rt4hydros_present(1:nlyr) = hydros_present(nlyr:1:-1)
+    if (verbose >= 1) call report(info, 'Start of ', nameOfRoutine)
+    !scat_files = ''
+    !scat_files(nlyr) = '1.txt'
 
-  rt4scatter_matrix(1:nlyr,:,:,:,:,:) = scattermatrix(nlyr:1:-1,:,:,:,:,:)
-  rt4ext_matrix(1:nlyr,:,:,:,:) = extmatrix(nlyr:1:-1,:,:,:,:)
-  rt4emis_vec(1:nlyr,:,:,:) = emisvec(nlyr:1:-1,:,:,:)
+    num_layers = nlyr
+    height(1:nlyr+1) = hgt_lev(nlyr:0:-1)             ! [m]
+    temperatures(1:nlyr+1) = temp_lev(nlyr:0:-1)      ! [K]
+    gas_extinct(1:nlyr) = kextatmo(nlyr:1:-1)         ! [Np/m]
 
-!  if (verbose .gt. 0) print*, ".... read_layers done!"
+    rt4hydros_present(1:nlyr) = hydros_present(nlyr:1:-1)
 
-      CALL RADTRAN4(NSTOKES, NUMMU, MAX_DELTA_TAU,&
-                    QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&
-                    GROUND_ALBEDO, GROUND_INDEX,&
-                    SKY_TEMP, WAVELENGTH,&
-                    NUM_LAYERS, HEIGHT, TEMPERATURES,&
-                    GAS_EXTINCT,&
-                    NOUTLEVELS, OUTLEVELS,&
-                    MU_VALUES, UP_FLUX, DOWN_FLUX,&
-                    UP_RAD, DOWN_RAD)
+    rt4scatter_matrix(1:nlyr,:,:,:,:,:) = scattermatrix(nlyr:1:-1,:,:,:,:,:)
+    rt4ext_matrix(1:nlyr,:,:,:,:) = extmatrix(nlyr:1:-1,:,:,:,:)
+    rt4emis_vec(1:nlyr,:,:,:) = emisvec(nlyr:1:-1,:,:,:)
 
-!  if (verbose .gt. 0) print*, ".... radtran done!"
+    !  if (verbose .gt. 0) print*, ".... read_layers done!"
 
-  if (write_nc .or. in_python) then
-     call collect_output(NSTOKES, NUMMU, 0, &
-          WAVELENGTH,   &
-          UNITS, OUTPOL,NOUTLEVELS, OUTLEVELS,         &
-          NUMAZIMUTHS,UP_RAD, DOWN_RAD,     &
-          nx,ny,fi)
-  else
-     CALL OUTPUT_FILE4(NSTOKES, NUMMU,&
-                       LAYER_FILE, OUT_FILE,&
-                       QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&
-                       GROUND_ALBEDO, GROUND_INDEX,&
-                       SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,&
-                       NUM_LAYERS, HEIGHT,&
-                       NOUTLEVELS, OUTLEVELS, &
-                       MU_VALUES, UP_FLUX, DOWN_FLUX,&
-                       UP_RAD, DOWN_RAD)
-  end if
-      END subroutine rt4
+    CALL RADTRAN4(NSTOKES, NUMMU, MAX_DELTA_TAU,&
+    QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&
+    GROUND_ALBEDO, GROUND_INDEX,&
+    SKY_TEMP, WAVELENGTH,&
+    NUM_LAYERS, HEIGHT, TEMPERATURES,&
+    GAS_EXTINCT,&
+    NOUTLEVELS, OUTLEVELS,&
+    MU_VALUES, UP_FLUX, DOWN_FLUX,&
+    UP_RAD, DOWN_RAD)
 
+    !  if (verbose .gt. 0) print*, ".... radtran done!"
 
-      SUBROUTINE READ_LAYERS (LAYER_FILE, MAXLAY, NUM_LAYERS,&
-                             HEIGHT, TEMPERATURES,&
-                             GAS_EXTINCT, SCAT_FILES)
-      use kinds
+    if (write_nc .or. in_python) then
+        call collect_output(NSTOKES, NUMMU, 0, &
+        WAVELENGTH,   &
+        UNITS, OUTPOL,NOUTLEVELS, OUTLEVELS,         &
+        NUMAZIMUTHS,UP_RAD, DOWN_RAD,     &
+        nx,ny,fi)
+    else
+        CALL OUTPUT_FILE4(NSTOKES, NUMMU,&
+        LAYER_FILE, OUT_FILE,&
+        QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&
+        GROUND_ALBEDO, GROUND_INDEX,&
+        SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,&
+        NUM_LAYERS, HEIGHT,&
+        NOUTLEVELS, OUTLEVELS, &
+        MU_VALUES, UP_FLUX, DOWN_FLUX,&
+        UP_RAD, DOWN_RAD)
+    end if
 
-      implicit none
+    errorstatus = err
 
-      INTEGER  MAXLAY, NUM_LAYERS
-      real(kind=dbl)   HEIGHT(*), TEMPERATURES(*)
-      real(kind=dbl)   GAS_EXTINCT(*)
-      CHARACTER*(*)  LAYER_FILE, SCAT_FILES(*)
-      INTEGER   I
+    if (verbose >= 1) call report(info, 'End of ', nameOfRoutine)
+    return
 
-!           Read in height, temperature, gaseous extinction, and
-!                 scattering file for the layers
-      OPEN (UNIT=1, FILE=LAYER_FILE, STATUS='OLD')
-      I = 1
-100   CONTINUE
-          READ (1,*,ERR=990,END=110) HEIGHT(I), TEMPERATURES(I),&
-                     GAS_EXTINCT(I), SCAT_FILES(I)
-          I = I + 1
-          IF (I .EQ. MAXLAY) THEN
-              WRITE (*,*) 'Too many layers'
-              STOP
-          ENDIF
-      GOTO 100
-110   CONTINUE
-      CLOSE(1)
-      NUM_LAYERS = I - 2
-      RETURN
-
-990   CONTINUE
-      WRITE (*,*) 'Error reading layers data file'
-      RETURN
-      END
-
-      SUBROUTINE OUTPUT_FILE4(NSTOKES, NUMMU, &
-                         LAYER_FILE, OUT_FILE,&
-                         QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&
-                         GROUND_ALBEDO, GROUND_INDEX,&
-                         SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,&
-                         NUM_LAYERS, HEIGHT,&
-                         NOUTLEVELS, OUTLEVELS, &
-                         MU_VALUES, UP_FLUX, DOWN_FLUX,&
-                         UP_RAD, DOWN_RAD)
-
-      use kinds
-
-      implicit none
-
-      INTEGER  NSTOKES, NUMMU, NUM_LAYERS
-      INTEGER  NOUTLEVELS, OUTLEVELS(*)
-      real(kind=dbl)   GROUND_TEMP, GROUND_ALBEDO
-      real(kind=dbl)   SKY_TEMP, WAVELENGTH
-      real(kind=dbl)   MU_VALUES(NUMMU)
-      real(kind=dbl)   HEIGHT(NUM_LAYERS+1)
-      real(kind=dbl)   UP_FLUX(NSTOKES,NOUTLEVELS)
-      real(kind=dbl)   DOWN_FLUX(NSTOKES,NOUTLEVELS)
-      real(kind=dbl)   UP_RAD(NSTOKES,NUMMU,NOUTLEVELS)
-      real(kind=dbl)   DOWN_RAD(NSTOKES,NUMMU,NOUTLEVELS)
-      COMPLEX*16  GROUND_INDEX
-      CHARACTER*(*) LAYER_FILE, OUT_FILE
-      CHARACTER  QUAD_TYPE*1, UNITS*1, OUTPOL*2, GROUND_TYPE*1
-      CHARACTER*32 QUAD_NAME, UNITS_NAME, GROUND_NAME
-      CHARACTER*64 FORM1
-      INTEGER  I, J, L, LI
+END subroutine rt4
 
 
-      CALL CONVERT_OUTPUT4(UNITS, OUTPOL, NSTOKES, NUMMU*NOUTLEVELS, &
-                          WAVELENGTH, 0, UP_RAD)
-      CALL CONVERT_OUTPUT4(UNITS, OUTPOL, NSTOKES, NUMMU*NOUTLEVELS, &
-                          WAVELENGTH, 0, DOWN_RAD)
-      CALL CONVERT_OUTPUT4(UNITS, OUTPOL, NSTOKES, NOUTLEVELS, &
-                          WAVELENGTH, 1, UP_FLUX)
-      CALL CONVERT_OUTPUT4(UNITS, OUTPOL, NSTOKES, NOUTLEVELS, &
-                          WAVELENGTH, 1, DOWN_FLUX)
+SUBROUTINE READ_LAYERS (LAYER_FILE, MAXLAY, NUM_LAYERS,&
+HEIGHT, TEMPERATURES,&
+GAS_EXTINCT, SCAT_FILES)
+    use kinds
 
-      QUAD_NAME = 'GAUSSIAN'
-      IF (QUAD_TYPE .EQ. 'D')  QUAD_NAME = 'DOUBLEGAUSS'
-      IF (QUAD_TYPE .EQ. 'L')  QUAD_NAME = 'LOBATTO'
-      IF (QUAD_TYPE .EQ. 'E')  QUAD_NAME = 'EXTRA-ANGLES'
-      UNITS_NAME = 'WATTS/(M^2 MICRON STER)'
-      IF (UNITS .EQ. 'T') UNITS_NAME = 'KELVINS - EBB'
-      IF (UNITS .EQ. 'R') UNITS_NAME = 'KELVINS - RJ'
-      GROUND_NAME = 'LAMBERTIAN'
-      IF (GROUND_TYPE .EQ. 'F')  GROUND_NAME = 'FRESNEL'
+    implicit none
 
-      OPEN (UNIT=3, FILE=OUT_FILE, STATUS='UNKNOWN')
+    INTEGER  MAXLAY, NUM_LAYERS
+    real(kind=dbl)   HEIGHT(*), TEMPERATURES(*)
+    real(kind=dbl)   GAS_EXTINCT(*)
+    CHARACTER*(*)  LAYER_FILE, SCAT_FILES(*)
+    INTEGER   I
 
-!           Output the parameters
-      WRITE (3,'(A,I3,A,I3,A,I3,A,I1)')&
-                     'C  NUMMU=', NUMMU,  '  NUMAZI=',1,&
-                     '  AZIORDER=',0, '  NSTOKES=',NSTOKES
-      WRITE (3,'(A,A32)')&
-                     'C  LAYER_FILE=',    LAYER_FILE
-      WRITE (3,'(A,I1,A,A16)')&
-                     'C  SRC_CODE=',      2,&
-                     '   QUAD_TYPE=',     QUAD_NAME
-      WRITE (3,'(A,F8.2,A,A16)')&
-                     'C  GROUND_TEMP=',   GROUND_TEMP,&
-                     '   GROUND_TYPE=',   GROUND_NAME
-      IF (GROUND_TYPE(1:1) .EQ. 'F') THEN
-          WRITE (3,'(A,2F9.4,A,F8.2)')&
-                     'C  GROUND_INDEX=',  GROUND_INDEX,&
-                     '   SKY_TEMP=',      SKY_TEMP
-      ELSE
-          WRITE (3,'(A,F8.5,A,F8.2)')&
-                     'C  GROUND_ALBEDO=', GROUND_ALBEDO,&
-                     '   SKY_TEMP=',      SKY_TEMP
-      ENDIF
-      WRITE (3,'(A,E12.6)') 'C  WAVELENGTH=',    WAVELENGTH
-      WRITE (3,'(A,A25,A,A2)') 'C  UNITS='     ,    UNITS_NAME,&
-                     '   OUTPUT_POLARIZATION=', OUTPOL
+    !           Read in height, temperature, gaseous extinction, and
+    !                 scattering file for the layers
+    OPEN (UNIT=1, FILE=LAYER_FILE, STATUS='OLD')
+    I = 1
+100 CONTINUE
+    READ (1,*,ERR=990,END=110) HEIGHT(I), TEMPERATURES(I),&
+    GAS_EXTINCT(I), SCAT_FILES(I)
+    I = I + 1
+    IF (I .EQ. MAXLAY) THEN
+        WRITE (*,*) 'Too many layers'
+        STOP
+    ENDIF
+    GOTO 100
+110 CONTINUE
+    CLOSE(1)
+    NUM_LAYERS = I - 2
+    RETURN
+
+990 CONTINUE
+    WRITE (*,*) 'Error reading layers data file'
+
+    RETURN
+END
+
+SUBROUTINE OUTPUT_FILE4(NSTOKES, NUMMU, &
+LAYER_FILE, OUT_FILE,&
+QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&
+GROUND_ALBEDO, GROUND_INDEX,&
+SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,&
+NUM_LAYERS, HEIGHT,&
+NOUTLEVELS, OUTLEVELS, &
+MU_VALUES, UP_FLUX, DOWN_FLUX,&
+UP_RAD, DOWN_RAD)
+
+    use kinds
+
+    implicit none
+
+    INTEGER  NSTOKES, NUMMU, NUM_LAYERS
+    INTEGER  NOUTLEVELS, OUTLEVELS(*)
+    real(kind=dbl)   GROUND_TEMP, GROUND_ALBEDO
+    real(kind=dbl)   SKY_TEMP, WAVELENGTH
+    real(kind=dbl)   MU_VALUES(NUMMU)
+    real(kind=dbl)   HEIGHT(NUM_LAYERS+1)
+    real(kind=dbl)   UP_FLUX(NSTOKES,NOUTLEVELS)
+    real(kind=dbl)   DOWN_FLUX(NSTOKES,NOUTLEVELS)
+    real(kind=dbl)   UP_RAD(NSTOKES,NUMMU,NOUTLEVELS)
+    real(kind=dbl)   DOWN_RAD(NSTOKES,NUMMU,NOUTLEVELS)
+    COMPLEX*16  GROUND_INDEX
+    CHARACTER*(*) LAYER_FILE, OUT_FILE
+    CHARACTER  QUAD_TYPE*1, UNITS*1, OUTPOL*2, GROUND_TYPE*1
+    CHARACTER*32 QUAD_NAME, UNITS_NAME, GROUND_NAME
+    CHARACTER*64 FORM1
+    INTEGER  I, J, L, LI
 
 
-      IF (UNITS(1:1) .EQ. 'T') THEN
-          FORM1 = '(F8.1,1X,F8.5,2(1X,F7.2),:)'
-      ELSE
-          FORM1 = '(F8.1,1X,F8.5,2(1X,E13.6),:)'
-      ENDIF
+    CALL CONVERT_OUTPUT4(UNITS, OUTPOL, NSTOKES, NUMMU*NOUTLEVELS, &
+    WAVELENGTH, 0, UP_RAD)
+    CALL CONVERT_OUTPUT4(UNITS, OUTPOL, NSTOKES, NUMMU*NOUTLEVELS, &
+    WAVELENGTH, 0, DOWN_RAD)
+    CALL CONVERT_OUTPUT4(UNITS, OUTPOL, NSTOKES, NOUTLEVELS, &
+    WAVELENGTH, 1, UP_FLUX)
+    CALL CONVERT_OUTPUT4(UNITS, OUTPOL, NSTOKES, NOUTLEVELS, &
+    WAVELENGTH, 1, DOWN_FLUX)
+
+    QUAD_NAME = 'GAUSSIAN'
+    IF (QUAD_TYPE .EQ. 'D')  QUAD_NAME = 'DOUBLEGAUSS'
+    IF (QUAD_TYPE .EQ. 'L')  QUAD_NAME = 'LOBATTO'
+    IF (QUAD_TYPE .EQ. 'E')  QUAD_NAME = 'EXTRA-ANGLES'
+    UNITS_NAME = 'WATTS/(M^2 MICRON STER)'
+    IF (UNITS .EQ. 'T') UNITS_NAME = 'KELVINS - EBB'
+    IF (UNITS .EQ. 'R') UNITS_NAME = 'KELVINS - RJ'
+    GROUND_NAME = 'LAMBERTIAN'
+    IF (GROUND_TYPE .EQ. 'F')  GROUND_NAME = 'FRESNEL'
+
+    OPEN (UNIT=3, FILE=OUT_FILE, STATUS='UNKNOWN')
+
+    !           Output the parameters
+    WRITE (3,'(A,I3,A,I3,A,I3,A,I1)')&
+    'C  NUMMU=', NUMMU,  '  NUMAZI=',1,&
+    '  AZIORDER=',0, '  NSTOKES=',NSTOKES
+    WRITE (3,'(A,A32)')&
+    'C  LAYER_FILE=',    LAYER_FILE
+    WRITE (3,'(A,I1,A,A16)')&
+    'C  SRC_CODE=',      2,&
+    '   QUAD_TYPE=',     QUAD_NAME
+    WRITE (3,'(A,F8.2,A,A16)')&
+    'C  GROUND_TEMP=',   GROUND_TEMP,&
+    '   GROUND_TYPE=',   GROUND_NAME
+    IF (GROUND_TYPE(1:1) .EQ. 'F') THEN
+        WRITE (3,'(A,2F9.4,A,F8.2)')&
+        'C  GROUND_INDEX=',  GROUND_INDEX,&
+        '   SKY_TEMP=',      SKY_TEMP
+    ELSE
+        WRITE (3,'(A,F8.5,A,F8.2)')&
+        'C  GROUND_ALBEDO=', GROUND_ALBEDO,&
+        '   SKY_TEMP=',      SKY_TEMP
+    ENDIF
+    WRITE (3,'(A,E12.6)') 'C  WAVELENGTH=',    WAVELENGTH
+    WRITE (3,'(A,A25,A,A2)') 'C  UNITS='     ,    UNITS_NAME,&
+    '   OUTPUT_POLARIZATION=', OUTPOL
+
+
+    IF (UNITS(1:1) .EQ. 'T') THEN
+        FORM1 = '(F8.1,1X,F8.5,2(1X,F7.2),:)'
+    ELSE
+        FORM1 = '(F8.1,1X,F8.5,2(1X,E13.6),:)'
+    ENDIF
  
-      IF (OUTPOL .EQ. 'VH') THEN
+    IF (OUTPOL .EQ. 'VH') THEN
         WRITE (3,'(A,A)') 'C    Z       MU    FLUX/RADIANCE (V,H)'
-      ELSE
+    ELSE
         WRITE (3,'(A,A)') 'C    Z       MU    FLUX/RADIANCE (I,Q)'
-      ENDIF
+    ENDIF
  
-      DO L = 1, NOUTLEVELS
+    DO L = 1, NOUTLEVELS
         LI = OUTLEVELS(L)
-!               Output fluxes at this level
+        !               Output fluxes at this level
         WRITE (3,FORM1) HEIGHT(LI), -2.0,&
-               (SNGL(UP_FLUX(I,L)),I=1,NSTOKES)
+        (SNGL(UP_FLUX(I,L)),I=1,NSTOKES)
         WRITE (3,FORM1) HEIGHT(LI), +2.0,&
-               (SNGL(DOWN_FLUX(I,L)),I=1,NSTOKES)
+        (SNGL(DOWN_FLUX(I,L)),I=1,NSTOKES)
  
-!           For each zenith at this level output the Stokes parameters.
-!             Output upwelling radiance: -1 < mu < 0
+        !           For each zenith at this level output the Stokes parameters.
+        !             Output upwelling radiance: -1 < mu < 0
         DO J = NUMMU, 1, -1
-          WRITE (3,FORM1) HEIGHT(LI), -MU_VALUES(J),&
-                         (SNGL(UP_RAD(I,J,L)),I=1,NSTOKES)
+            WRITE (3,FORM1) HEIGHT(LI), -MU_VALUES(J),&
+            (SNGL(UP_RAD(I,J,L)),I=1,NSTOKES)
         ENDDO
-!             Output downwelling radiance: 0 < mu < 1
+        !             Output downwelling radiance: 0 < mu < 1
         DO J = 1, NUMMU
-          WRITE (3,FORM1) HEIGHT(LI), MU_VALUES(J),&
-                         (SNGL(DOWN_RAD(I,J,L)),I=1,NSTOKES)
+            WRITE (3,FORM1) HEIGHT(LI), MU_VALUES(J),&
+            (SNGL(DOWN_RAD(I,J,L)),I=1,NSTOKES)
         ENDDO
-      ENDDO
+    ENDDO
 
-      CLOSE (3)
+    CLOSE (3)
 
-      RETURN
-      END
+    RETURN
+END
 
-      SUBROUTINE CONVERT_OUTPUT4(UNITS, OUTPOL, NSTOKES, NOUT,&
-                                WAVELEN, FLUXCODE, OUTPUT)
-!       Converts the output radiance or flux arrays to VH polarization
-!     and effective blackbody temperature if desired.  OUTPOL='VH'
-!     converts the polarization basis of the first two Stokes parameters
-!     to vertical/horizontal polarization.  If UNITS='T' the radiance is
-!     converted to effective blackbody brightness temperature, and if
-!     UNITS='R' the radiance is converted to Rayleigh-Jeans brightness
-!     temperature.  If the output is flux then FLUXCODE=1, and the flux
-!     is divided by pi before converting to brightness temperature.
-      use kinds
+SUBROUTINE CONVERT_OUTPUT4(UNITS, OUTPOL, NSTOKES, NOUT,&
+WAVELEN, FLUXCODE, OUTPUT)
+    !       Converts the output radiance or flux arrays to VH polarization
+    !     and effective blackbody temperature if desired.  OUTPOL='VH'
+    !     converts the polarization basis of the first two Stokes parameters
+    !     to vertical/horizontal polarization.  If UNITS='T' the radiance is
+    !     converted to effective blackbody brightness temperature, and if
+    !     UNITS='R' the radiance is converted to Rayleigh-Jeans brightness
+    !     temperature.  If the output is flux then FLUXCODE=1, and the flux
+    !     is divided by pi before converting to brightness temperature.
+    use kinds
 
-      implicit none
+    implicit none
 
-      INTEGER NSTOKES, NOUT, FLUXCODE
-      real(kind=dbl)  WAVELEN, OUTPUT(NSTOKES,NOUT)
-      CHARACTER UNITS*1, OUTPOL*2
-      INTEGER I, J
-      real(kind=dbl)  IV, IH, RAD, TEMP
+    INTEGER NSTOKES, NOUT, FLUXCODE
+    real(kind=dbl)  WAVELEN, OUTPUT(NSTOKES,NOUT)
+    CHARACTER UNITS*1, OUTPOL*2
+    INTEGER I, J
+    real(kind=dbl)  IV, IH, RAD, TEMP
 
-      DO J = 1, NOUT      
-!           Convert to Vertical and Horizontal polarization if desired
+    DO J = 1, NOUT
+        !           Convert to Vertical and Horizontal polarization if desired
         IF (OUTPOL .EQ. 'VH') THEN
-          IV = 0.5*(OUTPUT(1,J) + OUTPUT(2,J))
-          IH = 0.5*(OUTPUT(1,J) - OUTPUT(2,J))
-          OUTPUT(1,J) = IV
-          OUTPUT(2,J) = IH
+            IV = 0.5*(OUTPUT(1,J) + OUTPUT(2,J))
+            IH = 0.5*(OUTPUT(1,J) - OUTPUT(2,J))
+            OUTPUT(1,J) = IV
+            OUTPUT(2,J) = IH
         ENDIF
-!           Convert to brightness temperature
+        !           Convert to brightness temperature
         IF (UNITS .EQ. 'T' .OR. UNITS .EQ. 'R') THEN
-          DO I = 1, NSTOKES
-            RAD = OUTPUT(I,J)
-            IF (OUTPOL .EQ. 'VH' .AND. I .LE. 2)  RAD = 2.0*RAD
-            IF (FLUXCODE .EQ. 1)  RAD = RAD/ACOS(-1.0)
-            IF (UNITS .EQ. 'R') THEN
-              TEMP = RAD * WAVELEN**4 * 1.4388D4/1.1911D8
-            ELSE
-              IF (RAD .GT. 0.0) THEN
-                TEMP = 1.4388D4 /&
-                 (WAVELEN*DLOG(1.0+ 1.1911D8/(RAD*WAVELEN**5)))
-              ELSE IF (RAD .EQ. 0.0) THEN
-                TEMP = 0.0D0
-              ELSE
-                TEMP = -1.4388D4 /&
-                 (WAVELEN*DLOG(1.0+ 1.1911D8/(-RAD*WAVELEN**5)))
-              ENDIF
-            ENDIF
-            OUTPUT(I,J) = TEMP
-          ENDDO
+            DO I = 1, NSTOKES
+                RAD = OUTPUT(I,J)
+                IF (OUTPOL .EQ. 'VH' .AND. I .LE. 2)  RAD = 2.0*RAD
+                IF (FLUXCODE .EQ. 1)  RAD = RAD/ACOS(-1.0)
+                IF (UNITS .EQ. 'R') THEN
+                    TEMP = RAD * WAVELEN**4 * 1.4388D4/1.1911D8
+                ELSE
+                    IF (RAD .GT. 0.0) THEN
+                        TEMP = 1.4388D4 /&
+                        (WAVELEN*DLOG(1.0+ 1.1911D8/(RAD*WAVELEN**5)))
+                    ELSE IF (RAD .EQ. 0.0) THEN
+                        TEMP = 0.0D0
+                    ELSE
+                        TEMP = -1.4388D4 /&
+                        (WAVELEN*DLOG(1.0+ 1.1911D8/(-RAD*WAVELEN**5)))
+                    ENDIF
+                ENDIF
+                OUTPUT(I,J) = TEMP
+            ENDDO
         ENDIF
-      ENDDO
-      RETURN
-      END
+    ENDDO
+    RETURN
+END
 
 
 

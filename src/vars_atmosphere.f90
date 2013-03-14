@@ -14,7 +14,6 @@ module vars_atmosphere
   real(kind=sgl) :: deltax, deltay
 
   integer(kind=long), allocatable, dimension(:) :: nlegen
-  integer(kind=long), allocatable, dimension(:) :: rt3nlegen
 
   !is allocated in pamtra.f90!
 
@@ -50,9 +49,7 @@ module vars_atmosphere
 
   real(kind=dbl), allocatable, dimension(:) :: kextatmo, &
        kexttot, kextsn, kextcw, kextrr, kextgr, kextci, kextha, &
-       rt3kexttot,&
        salbtot, &
-       rt3salbtot,&
        back, backcw, backrr, backci, backsn, backgr, backha, &
        g_coeff,&
        rt4salbtot
@@ -61,11 +58,6 @@ module vars_atmosphere
        legen2, &
        legen3, &
        legen4
-
-  real(kind=dbl), allocatable, dimension(:,:) :: rt3legen, &
-       rt3legen2, &
-       rt3legen3, &
-       rt3legen4
 
   real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: rt4scatter_matrix,scattermatrix
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: rt4ext_matrix,extmatrix

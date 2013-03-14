@@ -86,7 +86,7 @@ program pamtra
         grid_y: do ny = 1, ngridy !nx_in, nx_fin
             grid_x: do nx = 1, ngridx !ny_in, ny_fin
          
-                call allocate_profile_vars
+                call allocate_profile_vars(err)
          
                 !   ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
                 lat = profiles(nx,ny)%latitude                  ! °

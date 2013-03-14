@@ -1,12 +1,22 @@
-subroutine allocate_profile_vars
+subroutine allocate_profile_vars(errorstatus)
 
     use vars_atmosphere
     use vars_output
     use settings
     use mod_io_strings
+    use kinds, only: long
+    use report_module
 
     implicit none
 
+    ! Error handling
+
+    integer(kind=long) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=200) :: msg
+    character(len=30) :: nameOfRoutine = 'allocate_profile_vars'
+
+    if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
     allocate(hgt_lev(0:nlyr),stat=alloc_status)
     allocate(press_lev(0:nlyr),stat=alloc_status)
@@ -38,7 +48,6 @@ subroutine allocate_profile_vars
     end if
 
     allocate(nlegen(nlyr),stat=alloc_status)
-    allocate(rt3nlegen(nlyr),stat=alloc_status)
   
     allocate(kextatmo(nlyr), stat=alloc_status)
     allocate(kexttot(nlyr), stat=alloc_status)
@@ -50,8 +59,6 @@ subroutine allocate_profile_vars
     allocate(kextha(nlyr), stat=alloc_status)
   
     allocate(salbtot(nlyr), stat=alloc_status)
-    allocate(rt3kexttot(nlyr), stat=alloc_status)
-    allocate(rt3salbtot(nlyr), stat=alloc_status)
     allocate(g_coeff(nlyr), stat=alloc_status)
   
     allocate(back(nlyr), stat=alloc_status)
@@ -66,10 +73,6 @@ subroutine allocate_profile_vars
     allocate(legen2(nlyr,200), stat=alloc_status)
     allocate(legen3(nlyr,200), stat=alloc_status)
     allocate(legen4(nlyr,200), stat=alloc_status)
-    allocate(rt3legen(nlyr,200), stat=alloc_status)
-    allocate(rt3legen2(nlyr,200), stat=alloc_status)
-    allocate(rt3legen3(nlyr,200), stat=alloc_status)
-    allocate(rt3legen4(nlyr,200), stat=alloc_status)
 
     allocate(rt4salbtot(nlyr),stat=alloc_status)
     allocate(rt4scatter_matrix(nlyr,nstokes,nummu,nstokes,nummu,4),stat=alloc_status)
@@ -85,17 +88,19 @@ subroutine allocate_profile_vars
     allocate(hydros_present(nlyr),stat=alloc_status)
     allocate(rt4hydros_present(nlyr),stat=alloc_status)
 
-    !   allocate(ics(ngridx, ngridy))
     if (dump_to_file) then
         allocate(file_ph(nlyr))
     end if
-
-    !   allocate(angles_deg(2*NUMMU))
 
     ! set them to zero, just in case they are not calculated but used for Ze/PIA calculation
     kexttot(:) = 0d0
     kextatmo(:) = 0d0
     back(:) = 0d0
 
+    if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
+
+    errorstatus = err
+
+    return
 
 end subroutine allocate_profile_vars

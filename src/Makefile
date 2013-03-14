@@ -5,7 +5,7 @@ gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 FC=gfortran
 CC=gcc
-FCFLAGS=-c -fPIC -O2 #-I../include/ uninitialized
+FCFLAGS=-c -fPIC -Wunused -O2 #-I../include/ uninitialized
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran
 	NCFLAGS=-I/opt/local/include/ 
@@ -89,7 +89,6 @@ OBJECTS=kinds.o \
 	save_active.o \
 	fastem4.o \
 	specular_surface.o \
-	get_scat_coefs.o \
 	dump_profile.o \
 	collect_boundary_output.o \
 	random.o \
@@ -174,9 +173,6 @@ scatdb.o:
 	$(CC) -O  -fPIC -c scatdb.c 
 
 %.o: %.f90
-	$(FC) $(FCFLAGS) $<
-
-%.o: %.F90
 	$(FC) $(FCFLAGS) $<
 
 %.o: %.f

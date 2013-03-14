@@ -35,6 +35,8 @@ subroutine run_rt(errorstatus, nx,ny,fi)
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'run_rt'
 
+    if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
+
     freq = freqs(fi)
     frq_str = frqs_str(fi)
     wavelength = c / (freq*1.d3)   ! microns
@@ -49,7 +51,7 @@ subroutine run_rt(errorstatus, nx,ny,fi)
 
     msg = "calculating: "// frq_str// " Y: "//ystr//" of "//nystr//" X: "//xstr//" of "//nxstr
 
-    if (verbose >= 1) call report(info,msg, nameOfRoutine)
+    if (verbose >= 2) call report(info,msg, nameOfRoutine)
     ! This GCE model format does not have all the fields expected by
     ! the radiative transfer code (i.e. total pressure, and water vapor
     ! pressure for this model).  Assign/compute the missing fields first
@@ -163,7 +165,7 @@ subroutine run_rt(errorstatus, nx,ny,fi)
 
         if (verbose >= 2) print*, nx,ny, "Entering rt4 ...."
 
-        call rt4(nstokes,nummu,mu_values,out_file_pas,quad_type,ground_temp,&
+        call rt4(err, nstokes,nummu,mu_values,out_file_pas,quad_type,ground_temp,&
         ground_type,ground_albedo,ground_index,sky_temp,&
         wavelength,units,outpol,noutlevels,outlevels,nx,ny,fi)
 

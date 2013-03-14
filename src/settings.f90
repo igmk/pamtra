@@ -63,7 +63,7 @@ module settings
     use_snow_db, &    ! use the tmatrix database for snow
     write_nc, &  ! write netcdf or ascii output
     active, &  	   ! calculate active stuff
-    passive, &     ! calculate passive stuff (with RT3)
+    passive, &     ! calculate passive stuff (with RT4)
     jacobian_mode, &  ! special jacobian mode which does not calculate the whole scattering properties each time. only rt4!
     radar_airmotion, &   ! apply vertical air motion
     radar_save_noise_corrected_spectra, & !remove the noise from the calculated spectrum again (for testing)
