@@ -59,8 +59,12 @@ class pyPamtra(object):
     self.p = dict()
     self._helperP = dict()
     self.r = dict()
+    
+
   
   def prepareNmlUnitsDimensions(self):
+  
+    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","iwv","cwp","iwp","rwp","swp","gwp","hwp","hgt_lev","press_lev","temp_lev","relhum_lev","q","cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n","deltax","deltay","wind10u","wind10v","ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime"]
   
     self.nmlSet = OrderedDict() #settings which are required for the nml file. keeping the order is important for fortran
 
@@ -129,6 +133,8 @@ class pyPamtra(object):
     self.nmlSet["ice_params"]["liu_type_ice"]=9
     self.nmlSet["ice_params"]["diamin_ice"] = 7e-5 # [m] 
     self.nmlSet["ice_params"]["diamax_ice"] = 1e-2 # [m] 
+    self.nmlSet["ice_params"]["mass_size_ice_a"] = 0.0016958357159333887 #aus MPACE
+    self.nmlSet["ice_params"]["mass_size_ice_b"] = 1.7e0 #aus MPACE
     
     self.nmlSet["rain_params"]["sd_rain"]='C' 
     self.nmlSet["rain_params"]["em_rain"]='miera' 
@@ -508,7 +514,8 @@ class pyPamtra(object):
     The following variables are only needed together with the 2 moments scheme!
     "hwc_q","hwp", "cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"
     '''
-    allVars=["timestamp","lat","lon","lfrac","wind10u","wind10v","iwv","cwp","iwp","rwp","swp","gwp","hwp","hgt_lev","press_lev","temp_lev","relhum_lev","q","cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"]
+      
+    allVars = self.default_p_vars  
       
     for key in kwargs.keys():
       if key not in allVars:

@@ -178,7 +178,7 @@ subroutine dia2vel_khvorostyanov01_drops(nDia,diaSpec,rho_air,my,velSpec)
   end if
   !variables to cgs...
   rho_water_cp = rho_water/1000.d0 !g/cm³
-  g_cp = g*100.d0 !cm/s
+  g_cp = g*100.d0 !cm/s	
   rho_air_cp = rho_air/1000.d0 !g/cm³
   diaSpec_cp = 100.d0*diaSpec !cm
   my_cp = my*10000.d0 !cm² /s
