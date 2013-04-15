@@ -52,6 +52,8 @@ OBJECTS=kinds.o \
 	get_surface.o \
 	mie.o \
 	mie_densitydep_spheremasseq.o\
+	dia2vel.o \
+	rescale_spectra.o \
 	radar_spectrum.o \
 	radar_simulator.o \
 	deallocate_jacobian_vars.o \
@@ -75,7 +77,6 @@ OBJECTS=kinds.o \
 	e_sat_gg_water.o \
 	spec2abs.o \
 	interpolation.o \
-	rescale_spectra.o \
 	deallocate_profile_vars.o \
 	deallocate_output_vars.o \
 	cloud_ssp.o \
@@ -113,7 +114,6 @@ OBJECTS=kinds.o \
 	rho_air.o \
 	viscosity_air.o\
 	versionNumber.auto.o \
-	dia2vel.o \
 	smooth_savitzky_golay.o \
 	radar_calc_moments.o \
 	radar_hildebrand_sekhon.o \
