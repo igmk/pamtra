@@ -124,15 +124,19 @@
                     GROUND_ALBEDO, GROUND_INDEX,&
                     SKY_TEMP, WAVELENGTH,&
                     NUM_LAYERS, HEIGHT, TEMPERATURES,&
-                    GAS_EXTINCT, SCAT_FILES,&
+                    GAS_EXTINCT,&
                     NOUTLEVELS, OUTLEVELS,&
                     MU_VALUES, UP_FLUX, DOWN_FLUX,&
                     UP_RAD, DOWN_RAD)
 
       use kinds
       use vars_atmosphere
-      use nml_params, only: verbose
-
+!      use settings, only: verbose
+        use report_module
+use rt_utilities, only: planck_function,&
+gauss_legendre_quadrature,&
+double_gauss_quadrature,&
+lobatto_quadrature
       implicit none
 
       INTEGER   NSTOKES, NUMMU, NUM_LAYERS
@@ -147,7 +151,6 @@
       REAL*8    UP_FLUX(*), DOWN_FLUX(*)
       REAL*8    UP_RAD(*), DOWN_RAD(*)
       CHARACTER*1  QUAD_TYPE, GROUND_TYPE
-      CHARACTER*64 SCAT_FILES(*)
 
       INTEGER   MAXV, MAXM, MAXLAY, MAXLM
       PARAMETER (MAXV=64, MAXM=4096, MAXLAY=200, maxlm=201 * (maxv)**2)!MAXLM=201*256)

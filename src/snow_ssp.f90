@@ -1,17 +1,18 @@
 ! Subroutine for the setup of the parameters of the snow particle size distribution.
 !
 !
-subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
+subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
      scatter_matrix,extinct_matrix, emis_vector,snow_spec)
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_0snowDsnow, EM_snow, &
+  use settings, only: lphase_flag, n_0snowDsnow, EM_snow, &
 	n_moments, isnow_n0, SD_snow, snow_density,liu_type,nstokes,&
         radar_nfft_aliased, radar_mode, active
   use constants, only: pi, im
   use double_moments_module
   use conversions
+        use report_module
 
   implicit none
 
@@ -22,7 +23,7 @@ subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
   real(kind=dbl), intent(in) :: &
        swc,&
        t,&
-       f,press,hgt
+       f,press
 
   real(kind=dbl), intent(in) :: nc
 
@@ -216,7 +217,7 @@ subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
   particle_type="snow" 
 
   if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
-    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,hgt,f,&
+    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,f,&
       particle_type,a_msnow,b_snow,a_as_snow,b_as_snow,snow_spec)
   else
     snow_spec(:)=0.d0

@@ -1,15 +1,18 @@
-subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
+subroutine ice_ssp(f,iwc,t,press,maxleg,nc, kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
      scatter_matrix,extinct_matrix, emis_vector,ice_spec)
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_moments, EM_ice, SD_ice,&
+
+  use settings, only: lphase_flag, n_moments, EM_ice, SD_ice,&
       nstokes, radar_nfft_aliased, radar_mode, active, ad_ice, bd_ice,&
       alphad_ice, gammad_ice, liu_type_ice, diamin_ice, diamax_ice, &
       mass_size_ice_b, mass_size_ice_a
+
   use constants, only: pi, im
   use double_moments_module
   use conversions
+        use report_module
 
   implicit none
 
@@ -20,7 +23,7 @@ subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
   real(kind=dbl), intent(in) :: &
        iwc,&
        t,&
-       f,press,hgt
+       f,press
 
   real(kind=dbl), intent(in) :: nc
 
@@ -215,8 +218,10 @@ subroutine ice_ssp(f,iwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
 
   if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
     particle_type ="ice"
-    call radar_spectrum(nbins_spec,diameter_spec, back,  back_spec,t,press,hgt,f,&
+
+    call radar_spectrum(nbins_spec,diameter_spec, back,  back_spec,t,press,f,&
       particle_type,a_mice,b_mice,a_as_ice,b_as_ice,ice_spec)
+
   else
     ice_spec(:)=0.d0
   end if

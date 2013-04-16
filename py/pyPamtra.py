@@ -68,7 +68,6 @@ class pyPamtra(object):
   
     self.nmlSet = OrderedDict() #settings which are required for the nml file. keeping the order is important for fortran
 
-    self.nmlSet["verbose_mode"] = dict()
     self.nmlSet["inoutput_mode"] = dict()
     self.nmlSet["output"] = dict()
     self.nmlSet["run_mode"] = dict()
@@ -83,8 +82,6 @@ class pyPamtra(object):
     self.nmlSet["hail_params"] = dict()
     self.nmlSet["moments"] = dict()
     self.nmlSet["radar_simulator"] = dict()
-    
-    self.nmlSet["verbose_mode"]["verbose"] = 0
     
     self.nmlSet["inoutput_mode"]["dump_to_file"]=False
     self.nmlSet["inoutput_mode"]["tmp_path"]='/tmp/'
@@ -102,7 +99,6 @@ class pyPamtra(object):
 
     self.nmlSet["run_mode"]["active"]=True
     self.nmlSet["run_mode"]["passive"]=True
-    self.nmlSet["run_mode"]["rt_mode"]="rt4"
     self.nmlSet["run_mode"]["radar_mode"]="simple"    
     
     self.nmlSet["surface_params"]["ground_type"]='S'
@@ -195,6 +191,7 @@ class pyPamtra(object):
     #all settings which do not go into the nml file go here:
     self.set = dict()
     self.set["pyVerbose"] = 0
+    self.set["verbose"] = 0
     self.set["freqs"] = []
     self.set["nfreqs"] = 0
     self.set["namelist_file"] = "TMPFILE"
@@ -1004,8 +1001,8 @@ class pyPamtra(object):
     else:
       self.job_server = pp.Server(pp_local_workers,ppservers=pp_servers,secret="pyPamtra") 
       
-    if int(self.nmlSet["verbose_mode"]["verbose"]) > 0:  
-      raise IOError('There is a weired bug if the fortran part prints anything (i.e. verbosity is larger than 0). Use the non-parallel pyPamtra version for debugging! verbose=', self.nmlSet["verbose_mode"]["verbose"])
+    if int(self.set["verbose"]) > 0:  
+      raise IOError('There is a weired bug if the fortran part prints anything (i.e. verbosity is larger than 0). Use the non-parallel pyPamtra version for debugging! verbose=', self.set["verbose"])
     if self.set["pyVerbose"] > 0: 
       print "Starting pp with: "
       pp_nodes = self.job_server.get_active_nodes()
@@ -1102,6 +1099,7 @@ class pyPamtra(object):
           ii_nmlSet,
           self._nmlDefaultValues,
           self.set["namelist_file"],
+          self.set["verbose"],
           #input
           pp_ngridx,
           pp_ngridy,
@@ -1326,6 +1324,7 @@ class pyPamtra(object):
       self.nmlSet,
       self._nmlDefaultValues,
       self.set["namelist_file"],
+      self.set["verbose"],
       #input
       self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.p["nlyrs"],self.set["nfreqs"],self.set["freqs"],
       radar_spectrum_length, self.p["unixtime"],

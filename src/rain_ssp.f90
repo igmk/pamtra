@@ -1,14 +1,15 @@
-subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
+subroutine rain_ssp(f,rwc,cwc,t,press,maxleg,nc,kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
      scatter_matrix,extinct_matrix, emis_vector,rain_spec)
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_0rainD, SD_rain, &
+  use settings, only: lphase_flag, n_0rainD, SD_rain, &
 	  n_moments,nstokes, EM_rain, use_rain_db, radar_nfft_aliased, radar_mode, &
 	  active
   use constants, only: pi, im
   use double_moments_module
   use conversions
+        use report_module
 
   implicit none
 
@@ -19,7 +20,7 @@ subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
        rwc,&
        cwc,&
        t,&
-       f,press,hgt
+       f,press
 
   real(kind=dbl), intent(in) :: nc
 
@@ -135,7 +136,7 @@ subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
   end if
   if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
     particle_type = "rain"
-    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,hgt,f,&
+    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,f,&
       particle_type,-1.d0,-1.d0,-1.d0,-1.d0,rain_spec)
   else
     rain_spec(:)=0.d0

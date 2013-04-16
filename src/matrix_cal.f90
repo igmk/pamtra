@@ -1,6 +1,6 @@
 subroutine matrix_cal(quad,qua_num,frequency,wave_num,snow_ref,axi, nstokes,&
-    as_ratio, alpha, beta, azimuth_num, azimuth0_num,&
-    scatter_matrix,extinct_matrix,emis_vector)
+as_ratio, alpha, beta, azimuth_num, azimuth0_num,&
+scatter_matrix,extinct_matrix,emis_vector)
     !  calculate the matrix and vectors, for a single particle with a single orientation
     !       program matrix_cal
     !
@@ -23,17 +23,19 @@ subroutine matrix_cal(quad,qua_num,frequency,wave_num,snow_ref,axi, nstokes,&
     !       extinct_matrix  double  extinction matrix []
     !       emis_vector     double  emission vector []
 
-
+    use kinds, only: dbl
+    use rt_utilities, only: gauss_legendre_quadrature,&
+    lobatto_quadrature
     implicit none
 
-    real*8 maximum_size, minimum_size, frequency, &
-        as_ratio, num_0, lambda_0, temperature, &
-        particle_size, particle_mass, pi
+    real*8 frequency, &
+    as_ratio, &
+    pi
     real*8  wave_num, axi, thet0, thet, phi, phi0,&
-        alpha, beta, rat, sum_tmp, phi_weights, phi0_weights
-    integer i, j, k, l, m, n, azimuth_num, &
-       particle_num, azimuth0_num, qua_num,&
-       ii,jj,kk,ll,kkk, nstokes,kkk1,kkk2
+    alpha, beta, rat, phi_weights, phi0_weights
+    integer m, n, azimuth_num, &
+    azimuth0_num, qua_num,&
+    ii,jj,kk,ll,nstokes,kkk1,kkk2
 
     !       parameter(qua_num=8, nstokes = 4)
 
@@ -41,20 +43,20 @@ subroutine matrix_cal(quad,qua_num,frequency,wave_num,snow_ref,axi, nstokes,&
     complex*16 snow_ref, s11, s12, s21, s22
     real*8 qua_angle(qua_num), qua_weights(qua_num)
     real*8 &
-        scatt_matrix_tmp1_11, scatt_matrix_tmp1_12,&! scatt_matrix_tmp1_13, scatt_matrix_tmp1_14,&
-        scatt_matrix_tmp1_21, scatt_matrix_tmp1_22 ! scatt_matrix_tmp1_23, scatt_matrix_tmp1_24,&
-!        scatt_matrix_tmp1_31, scatt_matrix_tmp1_32, scatt_matrix_tmp1_33, scatt_matrix_tmp1_34,&
-!        scatt_matrix_tmp1_41, scatt_matrix_tmp1_42, scatt_matrix_tmp1_43, scatt_matrix_tmp1_44
+    scatt_matrix_tmp1_11, scatt_matrix_tmp1_12,&! scatt_matrix_tmp1_13, scatt_matrix_tmp1_14,&
+    scatt_matrix_tmp1_21, scatt_matrix_tmp1_22 ! scatt_matrix_tmp1_23, scatt_matrix_tmp1_24,&
+    !        scatt_matrix_tmp1_31, scatt_matrix_tmp1_32, scatt_matrix_tmp1_33, scatt_matrix_tmp1_34,&
+    !        scatt_matrix_tmp1_41, scatt_matrix_tmp1_42, scatt_matrix_tmp1_43, scatt_matrix_tmp1_44
     real*8&
-        emis_vector_tmp1_11(2*qua_num), emis_vector_tmp1_12(2*qua_num),&
-        emis_vector_tmp2_11,emis_vector_tmp2_12 !,&
-!        emis_vector_tmp1_13(2*qua_num), emis_vector_tmp1_14(2*qua_num),&
-!        emis_vector_tmp2_13,emis_vector_tmp2_14
+    emis_vector_tmp1_11(2*qua_num), emis_vector_tmp1_12(2*qua_num),&
+    emis_vector_tmp2_11,emis_vector_tmp2_12 !,&
+    !        emis_vector_tmp1_13(2*qua_num), emis_vector_tmp1_14(2*qua_num),&
+    !        emis_vector_tmp2_13,emis_vector_tmp2_14
     real*8 thet0_weights, thet_weights
     real*8  &
-        scatter_matrix(nstokes,qua_num,nstokes,qua_num,4),&
-        extinct_matrix(nstokes,nstokes,qua_num,2),&
-        emis_vector(nstokes,qua_num,2)
+    scatter_matrix(nstokes,qua_num,nstokes,qua_num,4),&
+    extinct_matrix(nstokes,nstokes,qua_num,2),&
+    emis_vector(nstokes,qua_num,2)
 
     ! some factors that stay constant during calculations
     real*8 :: fact_sca
@@ -65,8 +67,8 @@ subroutine matrix_cal(quad,qua_num,frequency,wave_num,snow_ref,axi, nstokes,&
     emis_vector = 0.d0
     emis_vector_tmp2_11 = 0.d0
     emis_vector_tmp2_12 = 0.d0
-!    emis_vector_tmp2_13 = 0.d0
-!    emis_vector_tmp2_14 = 0.d0
+    !    emis_vector_tmp2_13 = 0.d0
+    !    emis_vector_tmp2_14 = 0.d0
     ! if the particle is rotationally-symmetric, reduce calculation time for orientation-averaging
     ! if not, do orientation averaging for incident and scatterred directions
 
@@ -99,8 +101,8 @@ subroutine matrix_cal(quad,qua_num,frequency,wave_num,snow_ref,axi, nstokes,&
         ! initializing the emis vector summation
         emis_vector_tmp1_11 = 0.d0
         emis_vector_tmp1_12 = 0.d0
-!        emis_vector_tmp1_13 = 0.d0
-!        emis_vector_tmp1_14 = 0.d0
+        !        emis_vector_tmp1_13 = 0.d0
+        !        emis_vector_tmp1_14 = 0.d0
 
         do 1242 kk = 1, 2
             kkk1 = (kk-1)*2 + 1
@@ -117,30 +119,30 @@ subroutine matrix_cal(quad,qua_num,frequency,wave_num,snow_ref,axi, nstokes,&
 
                     scatt_matrix_tmp1_11 = 0.d0
                     scatt_matrix_tmp1_12 = 0.d0
-!                    scatt_matrix_tmp1_13 = 0.d0
-!                    scatt_matrix_tmp1_14 = 0.d0
+                    !                    scatt_matrix_tmp1_13 = 0.d0
+                    !                    scatt_matrix_tmp1_14 = 0.d0
 
                     scatt_matrix_tmp1_21 = 0.d0
                     scatt_matrix_tmp1_22 = 0.d0
-!                    scatt_matrix_tmp1_23 = 0.d0
-!                    scatt_matrix_tmp1_24 = 0.d0
-!
-!                    scatt_matrix_tmp1_31 = 0.d0
-!                    scatt_matrix_tmp1_32 = 0.d0
-!                    scatt_matrix_tmp1_33 = 0.d0
-!                    scatt_matrix_tmp1_34 = 0.d0
-!
-!                    scatt_matrix_tmp1_41 = 0.d0
-!                    scatt_matrix_tmp1_42 = 0.d0
-!                    scatt_matrix_tmp1_43 = 0.d0
-!                    scatt_matrix_tmp1_44 = 0.d0
+                    !                    scatt_matrix_tmp1_23 = 0.d0
+                    !                    scatt_matrix_tmp1_24 = 0.d0
+                    !
+                    !                    scatt_matrix_tmp1_31 = 0.d0
+                    !                    scatt_matrix_tmp1_32 = 0.d0
+                    !                    scatt_matrix_tmp1_33 = 0.d0
+                    !                    scatt_matrix_tmp1_34 = 0.d0
+                    !
+                    !                    scatt_matrix_tmp1_41 = 0.d0
+                    !                    scatt_matrix_tmp1_42 = 0.d0
+                    !                    scatt_matrix_tmp1_43 = 0.d0
+                    !                    scatt_matrix_tmp1_44 = 0.d0
 
                     do 1245 n = 1, azimuth_num ! 30
                         phi = 360.d0/real(azimuth_num)*(real(n)-1.d0)
                         phi_weights = 1.d0/360.d0*(360.d0/azimuth_num)
 
                         call tmatrix_cal(frequency, snow_ref, axi, as_ratio, alpha, beta, phi0, &
-                           thet0, phi, thet, rat, s11, s12, s21, s22)
+                        thet0, phi, thet, rat, s11, s12, s21, s22)
 
                         s11 = s11*wave_num
                         s12 = s12*wave_num
@@ -148,52 +150,52 @@ subroutine matrix_cal(quad,qua_num,frequency,wave_num,snow_ref,axi, nstokes,&
                         s22 = s22*wave_num
 
                         scatt_matrix_tmp1_11 = scatt_matrix_tmp1_11 + (fact_sca*&
-                            (s11*dconjg(s11)+s12*dconjg(s12)+s21*dconjg(s21)+s22*dconjg(s22)))*phi_weights
+                        (s11*dconjg(s11)+s12*dconjg(s12)+s21*dconjg(s21)+s22*dconjg(s22)))*phi_weights
 
                         scatt_matrix_tmp1_12 = scatt_matrix_tmp1_12 + (fact_sca*&
-                            (s11*dconjg(s11)-s12*dconjg(s12)+s21*dconjg(s21)-s22*dconjg(s22)))*phi_weights
+                        (s11*dconjg(s11)-s12*dconjg(s12)+s21*dconjg(s21)-s22*dconjg(s22)))*phi_weights
 
                         scatt_matrix_tmp1_21 = scatt_matrix_tmp1_21 + (fact_sca*&
-                            (s11*dconjg(s11)+s12*dconjg(s12)-s21*dconjg(s21)-s22*dconjg(s22)))*phi_weights
+                        (s11*dconjg(s11)+s12*dconjg(s12)-s21*dconjg(s21)-s22*dconjg(s22)))*phi_weights
 
                         scatt_matrix_tmp1_22 = scatt_matrix_tmp1_22 + (fact_sca*&
-                            (s11*dconjg(s11)-s12*dconjg(s12)-s21*dconjg(s21)+s22*dconjg(s22)))*phi_weights
+                        (s11*dconjg(s11)-s12*dconjg(s12)-s21*dconjg(s21)+s22*dconjg(s22)))*phi_weights
 
-!                        scatt_matrix_tmp1_13 = scatt_matrix_tmp1_13 + (fact_sca*&
-!                            real(s11*dconjg(s12)+s21*dconjg(s22)))*phi_weights
-!
-!                        scatt_matrix_tmp1_14 = scatt_matrix_tmp1_14 + (fact_sca*&
-!                            (-imag(s11*dconjg(s12)+s21*dconjg(s22))))*phi_weights
+                        !                        scatt_matrix_tmp1_13 = scatt_matrix_tmp1_13 + (fact_sca*&
+                        !                            real(s11*dconjg(s12)+s21*dconjg(s22)))*phi_weights
+                        !
+                        !                        scatt_matrix_tmp1_14 = scatt_matrix_tmp1_14 + (fact_sca*&
+                        !                            (-imag(s11*dconjg(s12)+s21*dconjg(s22))))*phi_weights
 
-!                            scatt_matrix_tmp1_23 = scatt_matrix_tmp1_23 + (fact_sca*&
-!                                real(s11*dconjg(s12)-s21*dconjg(s22)))*phi_weights
-!
-!                            scatt_matrix_tmp1_24 = scatt_matrix_tmp1_24 + (fact_sca*&
-!                                (-imag(s11*dconjg(s12)-s21*dconjg(s22))))*phi_weights
-!
-!                            scatt_matrix_tmp1_31 = scatt_matrix_tmp1_31 + (fact_sca*&
-!                                real(s11*dconjg(s21)+s12*dconjg(s22)))*phi_weights
-!
-!                            scatt_matrix_tmp1_32 = scatt_matrix_tmp1_32 + (fact_sca*&
-!                                real(s11*dconjg(s21)-s12*dconjg(s22)))*phi_weights
-!
-!                            scatt_matrix_tmp1_33 = scatt_matrix_tmp1_33 + (fact_sca*&
-!                                real(s11*dconjg(s22)+s12*dconjg(s21)))*phi_weights
-!
-!                            scatt_matrix_tmp1_34 = scatt_matrix_tmp1_34 + (fact_sca*&
-!                                (-imag(s11*dconjg(s22)-s12*dconjg(s21))))*phi_weights
-!
-!                            scatt_matrix_tmp1_41 = scatt_matrix_tmp1_41 + (fact_sca*&
-!                                imag(s11*dconjg(s21)+s12*dconjg(s22)))*phi_weights
-!
-!                            scatt_matrix_tmp1_42 = scatt_matrix_tmp1_42 + (fact_sca*&
-!                                imag(s11*dconjg(s21)-s12*dconjg(s22)))*phi_weights
-!
-!                            scatt_matrix_tmp1_43 = scatt_matrix_tmp1_43 + (fact_sca*&
-!                                imag(s11*dconjg(s22)+s12*dconjg(s21)))*phi_weights
-!
-!                            scatt_matrix_tmp1_44 = scatt_matrix_tmp1_44 + (fact_sca*&
-!                                real(s11*dconjg(s22)-s12*dconjg(s21)))*phi_weights
+                        !                            scatt_matrix_tmp1_23 = scatt_matrix_tmp1_23 + (fact_sca*&
+                        !                                real(s11*dconjg(s12)-s21*dconjg(s22)))*phi_weights
+                        !
+                        !                            scatt_matrix_tmp1_24 = scatt_matrix_tmp1_24 + (fact_sca*&
+                        !                                (-imag(s11*dconjg(s12)-s21*dconjg(s22))))*phi_weights
+                        !
+                        !                            scatt_matrix_tmp1_31 = scatt_matrix_tmp1_31 + (fact_sca*&
+                        !                                real(s11*dconjg(s21)+s12*dconjg(s22)))*phi_weights
+                        !
+                        !                            scatt_matrix_tmp1_32 = scatt_matrix_tmp1_32 + (fact_sca*&
+                        !                                real(s11*dconjg(s21)-s12*dconjg(s22)))*phi_weights
+                        !
+                        !                            scatt_matrix_tmp1_33 = scatt_matrix_tmp1_33 + (fact_sca*&
+                        !                                real(s11*dconjg(s22)+s12*dconjg(s21)))*phi_weights
+                        !
+                        !                            scatt_matrix_tmp1_34 = scatt_matrix_tmp1_34 + (fact_sca*&
+                        !                                (-imag(s11*dconjg(s22)-s12*dconjg(s21))))*phi_weights
+                        !
+                        !                            scatt_matrix_tmp1_41 = scatt_matrix_tmp1_41 + (fact_sca*&
+                        !                                imag(s11*dconjg(s21)+s12*dconjg(s22)))*phi_weights
+                        !
+                        !                            scatt_matrix_tmp1_42 = scatt_matrix_tmp1_42 + (fact_sca*&
+                        !                                imag(s11*dconjg(s21)-s12*dconjg(s22)))*phi_weights
+                        !
+                        !                            scatt_matrix_tmp1_43 = scatt_matrix_tmp1_43 + (fact_sca*&
+                        !                                imag(s11*dconjg(s22)+s12*dconjg(s21)))*phi_weights
+                        !
+                        !                            scatt_matrix_tmp1_44 = scatt_matrix_tmp1_44 + (fact_sca*&
+                        !                                real(s11*dconjg(s22)-s12*dconjg(s21)))*phi_weights
 
                         if (phi0 .eq. phi .and. thet0 .eq. thet) then
                             !			  write(*,*)phi0,phi,thet0,thet, wave_num
@@ -202,24 +204,24 @@ subroutine matrix_cal(quad,qua_num,frequency,wave_num,snow_ref,axi, nstokes,&
                             extinct_matrix(1,2,jj,:) = extinct_matrix(1,2,jj,:)+phi0_weights*(-real((s11 - s22)*fact_ext))
                             extinct_matrix(2,1,jj,:) = extinct_matrix(2,1,jj,:)+phi0_weights*(-real((s11 - s22)*fact_ext))
                             extinct_matrix(2,2,jj,:) = extinct_matrix(2,2,jj,:)+phi0_weights*(-real((s11 + s22)*fact_ext))
-!                            extinct_matrix(1,3,jj,:) = extinct_matrix(1,3,jj,:)+phi0_weights*(-real((s12 + s21)*fact_ext))
-!                            extinct_matrix(1,4,jj,:) = extinct_matrix(1,4,jj,:)+phi0_weights*(-imag((s12 - s21)*fact_ext))
-!                            extinct_matrix(2,3,jj,:) = extinct_matrix(2,3,jj,:)+phi0_weights*(-real((s12 - s21)*fact_ext))
-!                            extinct_matrix(2,4,jj,:) = extinct_matrix(2,4,jj,:)+phi0_weights*(-imag((s12 + s21)*fact_ext))
-!                            extinct_matrix(3,1,jj,:) = extinct_matrix(3,1,jj,:)+phi0_weights*(-real((s21 + s12)*fact_ext))
-!                            extinct_matrix(3,2,jj,:) = extinct_matrix(3,2,jj,:)+phi0_weights*(-real((s21 - s12)*fact_ext))
-!                            extinct_matrix(3,3,jj,:) = extinct_matrix(3,3,jj,:)+phi0_weights*(-real((s11 + s22)*fact_ext))
-!                            extinct_matrix(3,4,jj,:) = extinct_matrix(3,4,jj,:)+phi0_weights*(-imag((s22 - s11)*fact_ext))
-!                            extinct_matrix(4,1,jj,:) = extinct_matrix(4,1,jj,:)+phi0_weights*(-imag((s21 - s12)*fact_ext))
-!                            extinct_matrix(4,2,jj,:) = extinct_matrix(4,2,jj,:)+phi0_weights*(imag((s12 - s21)*fact_ext))
-!                            extinct_matrix(4,3,jj,:) = extinct_matrix(4,3,jj,:)+phi0_weights*(-imag((s11 - s22)*fact_ext))
-!                            extinct_matrix(4,4,jj,:) = extinct_matrix(4,4,jj,:)+phi0_weights*(-real((s11 + s22)*fact_ext))
+                        !                            extinct_matrix(1,3,jj,:) = extinct_matrix(1,3,jj,:)+phi0_weights*(-real((s12 + s21)*fact_ext))
+                        !                            extinct_matrix(1,4,jj,:) = extinct_matrix(1,4,jj,:)+phi0_weights*(-imag((s12 - s21)*fact_ext))
+                        !                            extinct_matrix(2,3,jj,:) = extinct_matrix(2,3,jj,:)+phi0_weights*(-real((s12 - s21)*fact_ext))
+                        !                            extinct_matrix(2,4,jj,:) = extinct_matrix(2,4,jj,:)+phi0_weights*(-imag((s12 + s21)*fact_ext))
+                        !                            extinct_matrix(3,1,jj,:) = extinct_matrix(3,1,jj,:)+phi0_weights*(-real((s21 + s12)*fact_ext))
+                        !                            extinct_matrix(3,2,jj,:) = extinct_matrix(3,2,jj,:)+phi0_weights*(-real((s21 - s12)*fact_ext))
+                        !                            extinct_matrix(3,3,jj,:) = extinct_matrix(3,3,jj,:)+phi0_weights*(-real((s11 + s22)*fact_ext))
+                        !                            extinct_matrix(3,4,jj,:) = extinct_matrix(3,4,jj,:)+phi0_weights*(-imag((s22 - s11)*fact_ext))
+                        !                            extinct_matrix(4,1,jj,:) = extinct_matrix(4,1,jj,:)+phi0_weights*(-imag((s21 - s12)*fact_ext))
+                        !                            extinct_matrix(4,2,jj,:) = extinct_matrix(4,2,jj,:)+phi0_weights*(imag((s12 - s21)*fact_ext))
+                        !                            extinct_matrix(4,3,jj,:) = extinct_matrix(4,3,jj,:)+phi0_weights*(-imag((s11 - s22)*fact_ext))
+                        !                            extinct_matrix(4,4,jj,:) = extinct_matrix(4,4,jj,:)+phi0_weights*(-real((s11 + s22)*fact_ext))
                         end if
                     !                    write(1234,*)thet0, phi0, thet,phi
                     !                    write(1234,*)thet0, phi0, thet,phi
                     !                    write(1234,*)s11, s12
                     !                    write(1234,*)s21, s22
-1245                    continue   ! phi
+1245                continue   ! phi
 
                     scatter_matrix(1,ll,1,jj,kkk1) = scatter_matrix(1,ll,1,jj,kkk1) + scatt_matrix_tmp1_11*phi0_weights
                     scatter_matrix(1,ll,2,jj,kkk1) = scatter_matrix(1,ll,2,jj,kkk1) + scatt_matrix_tmp1_12*phi0_weights
@@ -231,22 +233,22 @@ subroutine matrix_cal(quad,qua_num,frequency,wave_num,snow_ref,axi, nstokes,&
                     scatter_matrix(2,ll,1,jj,kkk2) = scatter_matrix(2,ll,1,jj,kkk1)
                     scatter_matrix(2,ll,2,jj,kkk2) = scatter_matrix(2,ll,2,jj,kkk1)
 
-!                        scatter_matrix(1,ll,3,jj,kkk) = scatter_matrix(1,ll,3,jj,kkk) + scatt_matrix_tmp1_13/azimuth0_num
-!                        scatter_matrix(1,ll,4,jj,kkk) = scatter_matrix(1,ll,4,jj,kkk) + scatt_matrix_tmp1_14/azimuth0_num
-!                        scatter_matrix(2,ll,3,jj,kkk) = scatter_matrix(2,ll,3,jj,kkk) + scatt_matrix_tmp1_23/azimuth0_num
-!                        scatter_matrix(2,ll,4,jj,kkk) = scatter_matrix(2,ll,4,jj,kkk) + scatt_matrix_tmp1_24/azimuth0_num
-!
-!                        scatter_matrix(3,ll,1,jj,kkk) = scatter_matrix(3,ll,1,jj,kkk) + scatt_matrix_tmp1_31/azimuth0_num
-!                        scatter_matrix(3,ll,2,jj,kkk) = scatter_matrix(3,ll,2,jj,kkk) + scatt_matrix_tmp1_32/azimuth0_num
-!                        scatter_matrix(3,ll,3,jj,kkk) = scatter_matrix(3,ll,3,jj,kkk) + scatt_matrix_tmp1_33/azimuth0_num
-!                        scatter_matrix(3,ll,4,jj,kkk) = scatter_matrix(3,ll,4,jj,kkk) + scatt_matrix_tmp1_34/azimuth0_num
-!
-!                        scatter_matrix(4,ll,1,jj,kkk) = scatter_matrix(4,ll,1,jj,kkk) + scatt_matrix_tmp1_41/azimuth0_num
-!                        scatter_matrix(4,ll,2,jj,kkk) = scatter_matrix(4,ll,2,jj,kkk) + scatt_matrix_tmp1_42/azimuth0_num
-!                        scatter_matrix(4,ll,3,jj,kkk) = scatter_matrix(4,ll,3,jj,kkk) + scatt_matrix_tmp1_43/azimuth0_num
-!                        scatter_matrix(4,ll,4,jj,kkk) = scatter_matrix(4,ll,4,jj,kkk) + scatt_matrix_tmp1_44/azimuth0_num
+                !                        scatter_matrix(1,ll,3,jj,kkk) = scatter_matrix(1,ll,3,jj,kkk) + scatt_matrix_tmp1_13/azimuth0_num
+                !                        scatter_matrix(1,ll,4,jj,kkk) = scatter_matrix(1,ll,4,jj,kkk) + scatt_matrix_tmp1_14/azimuth0_num
+                !                        scatter_matrix(2,ll,3,jj,kkk) = scatter_matrix(2,ll,3,jj,kkk) + scatt_matrix_tmp1_23/azimuth0_num
+                !                        scatter_matrix(2,ll,4,jj,kkk) = scatter_matrix(2,ll,4,jj,kkk) + scatt_matrix_tmp1_24/azimuth0_num
+                !
+                !                        scatter_matrix(3,ll,1,jj,kkk) = scatter_matrix(3,ll,1,jj,kkk) + scatt_matrix_tmp1_31/azimuth0_num
+                !                        scatter_matrix(3,ll,2,jj,kkk) = scatter_matrix(3,ll,2,jj,kkk) + scatt_matrix_tmp1_32/azimuth0_num
+                !                        scatter_matrix(3,ll,3,jj,kkk) = scatter_matrix(3,ll,3,jj,kkk) + scatt_matrix_tmp1_33/azimuth0_num
+                !                        scatter_matrix(3,ll,4,jj,kkk) = scatter_matrix(3,ll,4,jj,kkk) + scatt_matrix_tmp1_34/azimuth0_num
+                !
+                !                        scatter_matrix(4,ll,1,jj,kkk) = scatter_matrix(4,ll,1,jj,kkk) + scatt_matrix_tmp1_41/azimuth0_num
+                !                        scatter_matrix(4,ll,2,jj,kkk) = scatter_matrix(4,ll,2,jj,kkk) + scatt_matrix_tmp1_42/azimuth0_num
+                !                        scatter_matrix(4,ll,3,jj,kkk) = scatter_matrix(4,ll,3,jj,kkk) + scatt_matrix_tmp1_43/azimuth0_num
+                !                        scatter_matrix(4,ll,4,jj,kkk) = scatter_matrix(4,ll,4,jj,kkk) + scatt_matrix_tmp1_44/azimuth0_num
 
-1244                continue  ! phi0
+1244            continue  ! phi0
                 ! calculate the summation of the scattering matrix in the whole sphere
                 emis_vector_tmp1_11(ll+(kk-1)*qua_num) = scatter_matrix(1,ll,1,jj,kkk1)*thet_weights*2.*pi
                 emis_vector_tmp1_12(ll+(kk-1)*qua_num) = scatter_matrix(1,ll,2,jj,kkk1)*thet_weights*2.*pi
@@ -254,15 +256,15 @@ subroutine matrix_cal(quad,qua_num,frequency,wave_num,snow_ref,axi, nstokes,&
             ! 	 emis_vector_tmp1_14(ll+(kk-1)*qua_num) = scatter_matrix(1,ll,4,jj,kkk)*thet_weights*2.*pi
             !c		write(*,*)'tmp1:',emis_vector_tmp1_11(ll+(kk-1)*qua_num)
 
-1243            continue ! thet
-1242        continue
+1243        continue ! thet
+1242    continue
 
         emis_vector(1,jj,:) = extinct_matrix(1,1,jj,:) - sum(emis_vector_tmp1_11)
         emis_vector(2,jj,:) = extinct_matrix(1,2,jj,:) - sum(emis_vector_tmp1_12)
-!            emis_vector(3,jj,ii) = extinct_matrix(1,3,jj,ii) - sum(emis_vector_tmp1_13)
-!            emis_vector(4,jj,ii) = extinct_matrix(1,4,jj,ii) - sum(emis_vector_tmp1_14)
+    !            emis_vector(3,jj,ii) = extinct_matrix(1,3,jj,ii) - sum(emis_vector_tmp1_13)
+    !            emis_vector(4,jj,ii) = extinct_matrix(1,4,jj,ii) - sum(emis_vector_tmp1_14)
 
-1241    continue ! thet0
+1241 continue ! thet0
 
 
 

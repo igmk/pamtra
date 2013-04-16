@@ -1,4 +1,4 @@
-subroutine cloud_ssp(f,cwc,t, press,hgt,maxleg,nc, kext, salb, back,  &
+subroutine cloud_ssp(f,cwc,t, press,maxleg,nc, kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
      scatter_matrix,extinct_matrix, emis_vector,cloud_spec)
 
@@ -17,24 +17,27 @@ subroutine cloud_ssp(f,cwc,t, press,hgt,maxleg,nc, kext, salb, back,  &
   !  legen[2-4] legendre coefficients for the phase function
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_moments, SD_cloud, &
-      nstokes, EM_cloud, radar_nfft_aliased, radar_mode, active,&
-	ad_cloud, bd_cloud,&
+
+  use settings, only: lphase_flag, n_moments, SD_cloud, &
+      nstokes, EM_cloud, radar_nfft_aliased, radar_mode, active, &
+      ad_cloud, bd_cloud,&
       alphad_cloud, gammad_cloud, diamin_cloud, diamax_cloud
+
   use constants, only: pi, im
   use double_moments_module
   use conversions
+        use report_module
 
   implicit none
 
-  integer :: nbins,nbins_spec, nlegen, iautocon,alloc_status
+  integer :: nbins,nbins_spec, nlegen, alloc_status
 
   integer, intent(in) :: maxleg
 
   real(kind=dbl), intent(in) :: &
        cwc,&
        t, &
-       f, press,hgt
+       f, press
 
   real(kind=dbl), intent(in) :: nc
 
@@ -43,7 +46,7 @@ subroutine cloud_ssp(f,cwc,t, press,hgt,maxleg,nc, kext, salb, back,  &
   real(kind=dbl) :: absind, abscof
 
   real(kind=dbl) :: dia1, dia2, del_d, den_liq, drop_mass, b_cloud, a_mcloud
-  real(kind=dbl) :: ad, bd, alpha, gamma, number_density
+  real(kind=dbl) :: ad, bd, alpha, gamma
 
   real(kind=dbl), intent(out) :: &
        kext,&
@@ -152,7 +155,7 @@ real(kind=dbl) :: re, Nt
   particle_type="cloud" 
 
   if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
-    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,hgt,f,&
+    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,f,&
       particle_type,-1.d0,-1.d0,-1.d0,-1.d0,cloud_spec)
   else
     cloud_spec(:)=0.d0

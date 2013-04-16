@@ -1,14 +1,13 @@
-subroutine dump_profile(frq_str)
+subroutine dump_profile()
 
   use vars_atmosphere
   use mod_io_strings
-  use nml_params, only: tmp_path
+  use settings, only: tmp_path
 
   implicit none
 
   integer :: nz
   character(1) :: str1
-  character(6), intent(in) :: frq_str !from commandline
 
   !      Preparation of the PROFILE file
   str1 = ''''

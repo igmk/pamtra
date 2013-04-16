@@ -1,0 +1,9 @@
+Interface
+Subroutine ErrorReport (ErrStat, ErrMsg, NameOfRoutine)
+  Use kinds, Only : long
+  Implicit None
+  Integer(Kind=long) , Intent (in) :: ErrStat     ! +ve => fatal error, -ve => warning
+  Character (len=*) , Intent (in) :: ErrMsg    ! ..to output
+  Character (len=*) , Intent (in) :: NameOfRoutine ! ..calling this one
+End Subroutine ErrorReport
+End Interface

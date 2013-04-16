@@ -5,7 +5,7 @@ gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 FC=gfortran
 CC=gcc
-FCFLAGS=-c -fPIC -Wuninitialized -O2
+FCFLAGS=-c -fPIC -Wunused -O2 #-I../include/ uninitialized
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran
 	NCFLAGS=-I/opt/local/include/ 
@@ -24,12 +24,12 @@ endif
 #-	LFLAGS=-L$(HOME)/lib -L/usr/local/lib
 #-	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm -lsz
 
-
 OBJECTS=kinds.o \
+	settings.o \
+	report_module.o \
 	constants.o \
-	file_mod.o \
-	nml_params.o \
 	mod_fastem4_coef.o \
+	gasabs_module.o \
 	conversions.o \
 	double_moments_module.o \
 	cosmo_netcdf.o \
@@ -38,23 +38,22 @@ OBJECTS=kinds.o \
 	mod_io_strings.o \
 	getopt.o \
 	parse_options.o \
+	rt_utilities.o \
 	radmat.o \
-	convolution.o\
+	convolution.o \
+	get_gasabs.o\
 	get_atmosphere.o \
 	vars_output.o \
 	run_rt.o \
-	rt3.o \
-	radtran3.o \
-	radutil3.o \
-	radscat3.o \
-	radintg3.o \
 	scat_utilities.o \
 	dsd_utilities.o \
 	mpm93.o \
 	get_atmosG0.o \
-	get_atmosG.o \
+	get_surface.o \
 	mie.o \
 	mie_densitydep_spheremasseq.o\
+	dia2vel.o \
+	rescale_spectra.o \
 	radar_spectrum.o \
 	radar_simulator.o \
 	deallocate_jacobian_vars.o \
@@ -78,10 +77,8 @@ OBJECTS=kinds.o \
 	e_sat_gg_water.o \
 	spec2abs.o \
 	interpolation.o \
-	rescale_spectra.o \
 	deallocate_profile_vars.o \
 	deallocate_output_vars.o \
-	hydrometeor_extinction_rt3.o \
 	cloud_ssp.o \
 	ice_ssp.o \
 	rain_ssp.o \
@@ -93,8 +90,6 @@ OBJECTS=kinds.o \
 	save_active.o \
 	fastem4.o \
 	specular_surface.o \
-	error_msg.o\
-	get_scat_coefs.o \
 	dump_profile.o \
 	collect_boundary_output.o \
 	random.o \
@@ -119,12 +114,16 @@ OBJECTS=kinds.o \
 	rho_air.o \
 	viscosity_air.o\
 	versionNumber.auto.o \
-	dia2vel.o \
 	smooth_savitzky_golay.o \
 	radar_calc_moments.o \
 	radar_hildebrand_sekhon.o \
-	formatted_frqstr.o \
 	write_nc_results.o 
+#	rt3.o \
+	radtran3.o \
+	radutil3.o \
+	radscat3.o \
+	radintg3.o \
+	hydrometeor_extinction_rt3.o \
 
 BIN=pamtra
 

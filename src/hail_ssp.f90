@@ -1,13 +1,14 @@
-subroutine hail_ssp(f,hwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
+subroutine hail_ssp(f,hwc,t,press,maxleg,nc,kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
      scatter_matrix,extinct_matrix, emis_vector,hail_spec)
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, EM_hail, n_moments, SD_hail, hail_density,&
+  use settings, only: lphase_flag, EM_hail, n_moments, SD_hail, hail_density,&
 	nstokes, radar_nfft_aliased, radar_mode, active
   use constants, only: pi, im
   use double_moments_module
   use conversions
+        use report_module
 
   implicit none
 
@@ -17,7 +18,7 @@ subroutine hail_ssp(f,hwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
   real(kind=dbl), intent(in) :: &
        hwc,&
        t,&
-       f,press,hgt
+       f,press
 
   real(kind=dbl), intent(in) :: nc
 
@@ -81,7 +82,7 @@ print*, "a_mhail, b_hail", a_mhail, b_hail
 
   if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
     particle_type="hail" 
-    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,hgt,f,&
+    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,f,&
       particle_type,a_mhail,b_hail,-1.d0,-1.d0,hail_spec)
   else
     hail_spec(:)=0.d0
