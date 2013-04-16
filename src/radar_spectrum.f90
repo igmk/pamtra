@@ -129,7 +129,10 @@ subroutine radar_spectrum(&
 
     else if (particle_type .eq. "ice") then
 	if (verbose >= 3) call report(info,'using: '//radar_fallVel_ice//'to calculate fall velocity for ice', nameOfRoutine)
-        if (radar_fallVel_ice .eq. "khvorostyanov01_particles") then
+        if (radar_fallVel_ice .eq. "heymsfield10_particles") then
+            call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,my,&
+            mass_size_a,mass_size_b,area_size_a,area_size_b,vel_spec)
+        else if (radar_fallVel_ice .eq. "khvorostyanov01_particles") then
             call dia2vel_khvorostyanov01_particles(err,nbins,diameter_spec_cp,rho,my,&
             mass_size_a,mass_size_b,area_size_a,area_size_b,vel_spec)
         else
@@ -139,7 +142,10 @@ subroutine radar_spectrum(&
 
     else if (particle_type .eq. "snow") then
 	if (verbose >= 3) call report(info,'using: '//radar_fallVel_snow//'to calculate fall velocity for snow', nameOfRoutine)
-        if (radar_fallVel_snow .eq. "khvorostyanov01_particles") then
+        if (radar_fallVel_ice .eq. "heymsfield10_particles") then
+            call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,my,&
+            mass_size_a,mass_size_b,area_size_a,area_size_b,vel_spec)
+        else if (radar_fallVel_snow .eq. "khvorostyanov01_particles") then
             call dia2vel_khvorostyanov01_particles(err,nbins,diameter_spec_cp,rho,my,&
             mass_size_a,mass_size_b,area_size_a,area_size_b,vel_spec)
         else
