@@ -231,8 +231,8 @@ contains
 
         radar_fallVel_cloud ="khvorostyanov01_drops"
         radar_fallVel_rain = "khvorostyanov01_drops"
-        radar_fallVel_ice ="khvorostyanov01_particles"
-        radar_fallVel_snow ="khvorostyanov01_particles"
+        radar_fallVel_ice ="heymsfield10_particles"
+        radar_fallVel_snow ="heymsfield10_particles"
         radar_fallVel_graupel ="khvorostyanov01_spheres"
         radar_fallVel_hail ="khvorostyanov01_spheres"
 

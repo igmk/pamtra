@@ -180,8 +180,8 @@ class pyPamtra(object):
     
     self.nmlSet["radar_simulator"]["radar_fallVel_cloud"] ="khvorostyanov01_drops"
     self.nmlSet["radar_simulator"]["radar_fallVel_rain"] = "khvorostyanov01_drops"
-    self.nmlSet["radar_simulator"]["radar_fallVel_ice"] ="khvorostyanov01_particles"
-    self.nmlSet["radar_simulator"]["radar_fallVel_snow"] ="khvorostyanov01_particles"
+    self.nmlSet["radar_simulator"]["radar_fallVel_ice"] ="heymsfield10_particles"
+    self.nmlSet["radar_simulator"]["radar_fallVel_snow"] ="heymsfield10_particles"
     self.nmlSet["radar_simulator"]["radar_fallVel_graupel"] ="khvorostyanov01_spheres"
     self.nmlSet["radar_simulator"]["radar_fallVel_hail"] ="khvorostyanov01_spheres"
     self.nmlSet["radar_simulator"]["radar_aliasing_nyquist_interv"] = 0
