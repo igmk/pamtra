@@ -7,7 +7,7 @@ subroutine ice_ssp(f,iwc,t,press,maxleg,nc, kext, salb, back,  &
   use settings, only: lphase_flag, n_moments, EM_ice, SD_ice,&
       nstokes, radar_nfft_aliased, radar_mode, active, ad_ice, bd_ice,&
       alphad_ice, gammad_ice, liu_type_ice, diamin_ice, diamax_ice, &
-      mass_size_ice_b, mass_size_ice_a
+      mass_size_ice_b, mass_size_ice_a, area_size_ice_b, area_size_ice_a
 
   use constants, only: pi, im
   use double_moments_module
@@ -148,8 +148,8 @@ subroutine ice_ssp(f,iwc,t,press,maxleg,nc, kext, salb, back,  &
 ! 	      a_mice = 1.07d-10 * 10**(6*b_mice - 3) !in SI
 	      b_mice = mass_size_ice_b
 	      a_mice = mass_size_ice_a
-	      b_as_ice = 1.63d0 !from mitchell 1996 similar to a_msnow&b_snow
-	      a_as_ice = 0.11d0 * 10**(2*b_as_ice-4)
+	      b_as_ice = area_size_ice_a !1.63d0 !from mitchell 1996 similar to a_msnow&b_snow
+	      a_as_ice = area_size_ice_b !0.11d0 * 10**(2*b_as_ice-4)
 	    end if
     else
       print*, "did not understand SD_ice: ", SD_ice

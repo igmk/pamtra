@@ -53,7 +53,8 @@ module settings
     real(kind=dbl) :: radar_airmotion_step_vmin
     real(kind=dbl) :: radar_min_spectral_snr !threshold for peak detection
   real(kind=dbl) :: ad_cloud, bd_cloud, alphad_cloud, gammad_cloud, ad_ice, bd_ice, alphad_ice, gammad_ice
-  real(kind=dbl) :: diamin_cloud, diamax_cloud, diamin_ice, diamax_ice, mass_size_ice_a, mass_size_ice_b
+  real(kind=dbl) :: diamin_cloud, diamax_cloud, diamin_ice, diamax_ice, mass_size_ice_a, mass_size_ice_b, &
+		    area_size_ice_a, area_size_ice_b
 
     logical :: in_python !are we in python
 
@@ -111,7 +112,8 @@ contains
 	namelist / cloud_params / SD_cloud, EM_cloud,  ad_cloud, bd_cloud, alphad_cloud, gammad_cloud, &
 				  diamin_cloud, diamax_cloud
 	namelist / ice_params / SD_ice, EM_ice, ad_ice, bd_ice, alphad_ice, gammad_ice, &
-				  liu_type_ice, diamin_ice, diamax_ice, mass_size_ice_a, mass_size_ice_b
+				  liu_type_ice, diamin_ice, diamax_ice, mass_size_ice_a, mass_size_ice_b, &
+				  area_size_ice_a, area_size_ice_b
 	namelist / rain_params / SD_rain, N_0rainD, use_rain_db, EM_rain
 	namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, use_snow_db, as_ratio,snow_density, SP, isnow_n0, liu_type
 	namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau, graupel_density
@@ -180,6 +182,8 @@ contains
         diamax_ice = 1e-2 ! [m] 
         mass_size_ice_a = 0.0016958357159333887 !aus MPACE
         mass_size_ice_b = 1.7d0 !aus MPACE
+        area_size_ice_b = 1.63 !aus mitchell 96 fuer MPACE
+        area_size_ice_a = 0.020016709444709808!aus mitchell 96 fuer MPACE
         ! sec rain_params
         SD_rain='C'
         N_0rainD=8.0
