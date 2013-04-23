@@ -55,7 +55,7 @@ diameter, back_spec)
     real(kind=dbl) :: K2, dielec_water !for debuging only
 
     character :: aerodist*1
-
+    character :: aerodist2*1
 
 
     if (verbose .gt. 1) print*, 'Entering mie'
@@ -97,7 +97,14 @@ diameter, back_spec)
   tot_mass = 0.
   do ir = 1, nbins+1
      diameter(ir) = dia1 + (ir - 1) * del_d
-     ndens(ir) = distribution(ad, bd, alpha, gamma, diameter(ir), aerodist)  ! number density [1/m⁴]
+     if (aerodist == "D") then
+aerodist2 = "C"
+     else if (aerodist == "N") then
+aerodist2 = "M"
+  else
+aerodist2 = aerodist
+end if
+     ndens(ir) = distribution(ad, bd, alpha, gamma, diameter(ir), aerodist2)  ! number density [1/m⁴]
      !first and last bin get only have of the particles (Why actually?)
      if ((ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
         ndens(ir) = 0.5 * ndens(ir)

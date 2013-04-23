@@ -211,8 +211,26 @@ subroutine ice_ssp(f,iwc,t,press,maxleg,nc, kext, salb, back,  &
       scatter_matrix= 0.d0
       extinct_matrix= 0.d0
       emis_vector= 0.d0
+  elseif (EM_ice .eq. 'tmatr') then
+
+
+    call tmatrix_ice(f, iwc, t, nc, &
+          ad, bd, alpha, gamma, a_mice, b_mice, SD_ice, nbins, scatter_matrix,extinct_matrix, emis_vector,&
+          diameter_spec, back_spec)
+    back = scatter_matrix(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
+    back = 4*pi*back!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squard entries!
+    kext = extinct_matrix(1,1,16,1) !11 of extinction matrix (=not polarized), at 0°, first quadrature. equal to extinct_matrix(1,1,16,2)
+
+    !not needed by rt4
+    salb = 0.d0
+    nlegen = 0
+    legen = 0.0d0
+    legen2 = 0.0d0
+    legen3 = 0.0d0
+    legen4 = 0.0d0
+
   else
-     write (*, *) 'no em mod', EM_ice
+     write (*, *) 'no em mod ', EM_ice
      stop
   endif
 

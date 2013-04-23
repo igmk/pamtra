@@ -103,6 +103,7 @@ OBJECTS=kinds.o \
 	scatcnv.o \
 	tmatrix_rain.o \
 	tmatrix_snow.o \
+	tmatrix_ice.o \
 	matrix_cal.o \
 	tmatrix_cal.o \
 	lpd.o \

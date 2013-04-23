@@ -308,8 +308,10 @@ contains
             print*, "surface_params ",  ground_type,salinity, emissivity
             print*, "gas_abs_mod ",  lgas_extinction, gas_mod
             print*, "hyd_opts ",  lhyd_extinction, lphase_flag
-            print*, "cloud_params ",  SD_cloud, EM_cloud
-            print*, "ice_params ",  SD_ice, EM_ice
+            print*, "cloud_params ",  SD_cloud, EM_cloud,ad_cloud, bd_cloud, alphad_cloud, &
+	      gammad_cloud, diamin_cloud, diamax_cloud
+            print*, "ice_params ",  SD_ice,EM_ice,ad_ice,bd_ice,alphad_ice,gammad_ice,liu_type_ice,&
+	      diamin_ice,diamax_ice,mass_size_ice_a,mass_size_ice_b,area_size_ice_b,area_size_ice_a
             print*, "rain_params ",  SD_rain, N_0rainD, use_rain_db, EM_rain
             print*, "snow_params ",  SD_snow, N_0snowDsnow, EM_snow, use_snow_db, as_ratio,snow_density, SP, isnow_n0, liu_type
             print*, "graupel_params ",  SD_grau, N_0grauDgrau, EM_grau, graupel_density

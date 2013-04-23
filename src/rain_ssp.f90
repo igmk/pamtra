@@ -62,7 +62,7 @@ subroutine rain_ssp(f,rwc,cwc,t,press,maxleg,nc,kext, salb, back,  &
 
   if (n_moments .eq. 1) then
 
-	if (SD_rain .eq. 'C') then
+	if (SD_rain .eq. 'C' .or. SD_rain .eq. "D") then
 
 	  ! this is for integration over diameters
 
@@ -70,7 +70,7 @@ subroutine rain_ssp(f,rwc,cwc,t,press,maxleg,nc,kext, salb, back,  &
    	  bd = (pi * den_liq * ad / rwc)**0.25
       alpha = 0.d0 ! exponential SD
       gamma = 1.d0
-    else if (SD_rain .eq. 'M') then
+    else if (SD_rain .eq. 'M' .or. SD_rain .eq. "N") then
       b_rain = 3.
       a_mrain = 524.
 	  bd = (rwc/(a_mrain*1.d7*exp(gammln(b_rain+1.))))**(1./(-1.-b_rain))
