@@ -1,0 +1,5 @@
+createTestFile
+runTest
+somedata.csv
+somedata.db
+libfsqlite.a
