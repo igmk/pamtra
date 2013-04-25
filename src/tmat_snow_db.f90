@@ -101,9 +101,9 @@ contains
         real(kind=dbl), dimension(lbin_data) ::  yu, yl
         real(kind=dbl), dimension(lbin_data) :: ys
 
-        real(kind=dbl), dimension(nstokes,nquad,nstokes,nquad,4), intent(out) :: s_mat
-        real(kind=dbl), dimension(nstokes,nstokes,nquad,2), intent(out) :: e_mat
-        real(kind=dbl), dimension(nstokes,nquad,2), intent(out) :: e_vec
+        real(kind=dbl), dimension(nstokes,nquad,nstokes,nquad,2), intent(out) :: s_mat
+        real(kind=dbl), dimension(nstokes,nstokes,nquad), intent(out) :: e_mat
+        real(kind=dbl), dimension(nstokes,nquad), intent(out) :: e_vec
 
         !        print*, "getting data for: ", f,t
 
@@ -149,24 +149,21 @@ contains
                 end do
             end do
         end do
-        s_mat(:,:,:,:,4) = s_mat(:,:,:,:,1)
-        s_mat(:,:,:,:,2) = s_mat(:,:,:,:,3)
 
         do j = 1, nquad
-            e_mat(1,1,j,1) = ys(id)
-            e_mat(1,2,j,1) = ys(id+1)
-            e_mat(2,1,j,1) = ys(id+2)
-            e_mat(2,2,j,1) = ys(id+3)
+            e_mat(1,1,j) = ys(id)
+            e_mat(1,2,j) = ys(id+1)
+            e_mat(2,1,j) = ys(id+2)
+            e_mat(2,2,j) = ys(id+3)
             id = id + 4
         enddo
-        e_mat(:,:,:,2) = e_mat(:,:,:,1)
 
         do j = 1, nquad
-            e_vec(1,j,1) = ys(id)
-            e_vec(2,j,1) = ys(id+1)
+            e_vec(1,j) = ys(id)
+            e_vec(2,j) = ys(id+1)
             id = id + 2
         enddo
-        e_vec(:,:,2) = e_vec(:,:,1)
+
 
         return
 

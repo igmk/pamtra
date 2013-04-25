@@ -25,7 +25,7 @@ subroutine tmatrix_rain(f, wc, t, nc, &
                                 t
   real(kind=dbl) :: wavelength, wave_num, freq
   real(kind=dbl) :: ad, bd, alpha, gamma, a_m, b
-  complex(kind=dbl) :: mindex
+  complex(kind=ext) :: mindex
 
   integer, parameter :: nquad = 16
   integer, parameter :: nstokes = 2
@@ -92,7 +92,7 @@ subroutine tmatrix_rain(f, wc, t, nc, &
         CALL CAL_REFRACTIVE_INDEX('L',t,freq, diameter(ir), as_ratio, particle_mass*1.d3, equiv_radius, mindex)
         print*, ir,diameter(ir),ndens*del_d, tot_mass/wc*100.,ntot/nc*100., mindex
     !     write(25,*) ir,equiv_radius,diameter,density,ntot,ntot/nc*100.0_dbl,tot_mass,tot_mass/wc*100.0_dbl
-        call matrix_cal('L',nquad,freq,wave_num,mindex,equiv_radius,nstokes,&
+        call tmatrix_calc('L',nquad,freq,wave_num,mindex,equiv_radius,nstokes,&
             as_ratio, eu_alpha, eu_beta, azimuth_num, azimuth0_num, &
             scat_mat_sgl,ext_mat_sgl,emis_vec_sgl)
      end if

@@ -62,6 +62,10 @@ scatter_matrix,extinct_matrix,emis_vector)
     real*8 :: fact_sca
     complex*8 :: fact_ext
 
+print*, "IN"
+print*, quad,qua_num,frequency,wave_num,snow_ref,axi, nstokes,&
+as_ratio, alpha, beta, azimuth_num, azimuth0_num
+
     extinct_matrix = 0.d0
     scatter_matrix = 0.d0
     emis_vector = 0.d0

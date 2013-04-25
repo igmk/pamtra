@@ -110,6 +110,7 @@ class pyPamtra(object):
 
     self.nmlSet["hyd_opts"]["lhyd_extinction"]=True
     self.nmlSet["hyd_opts"]["lphase_flag"]= True
+    self.nmlSet["hyd_opts"]["softsphere_adjust"] ="density"
 
     self.nmlSet["cloud_params"]["sd_cloud"]='C'
     self.nmlSet["cloud_params"]["em_cloud"]='miecl'

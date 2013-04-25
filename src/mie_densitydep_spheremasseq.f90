@@ -15,7 +15,7 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
 
   use kinds
   use constants, only: pi,c
-
+  use settings, only: softsphere_adjust
   implicit none
 
   real(kind=dbl), intent(in) :: f,  &! frequency [GHz]
@@ -32,7 +32,7 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
   integer, parameter :: maxn  = 5000
   integer :: nterms, nquad, nmie, nleg 
   integer :: i, l, m, ir
-  real(kind=dbl) :: x, del_d, ndens, tmp, density,diameter_ice
+  real(kind=dbl) :: x, del_d, ndens, tmp, density,diameter_eff, density_eff
   real(kind=dbl) :: qext, qscat, qback, scatter 
   real(kind=dbl) :: distribution 
   real(kind=dbl) :: mu(maxn), wts(maxn)
@@ -52,11 +52,15 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
   !       call density_ice(a_mtox, bcoeff, rad2, dens_graup) 
   !       rad2_ice = (dens_graup / 917.) **0.33333333 * rad2 
   !diameter of sphere with same mass
-  diameter_ice = (6.*a_mtox*dia2**bcoeff/(pi*density))**(1./3.)
+!   diameter_eff = (6.*a_mtox*dia2**bcoeff/(pi*density))**(1./3.)
+!   density_eff = density
 
-  msphere = eps_mix((1.d0,0.d0),m_ice,density)
+    diameter_eff = dia2
+    density_eff = (6.d0 * a_mtox*dia2**bcoeff) / (pi * dia2**3)
 
-  x = pi * diameter_ice / wavelength
+  msphere = eps_mix((1.d0,0.d0),m_ice,density_eff)
+
+  x = pi * diameter_eff / wavelength
   nterms = 0 
   call miecalc (nterms, x, msphere, a, b) 
   nlegen = 2 * nterms 
@@ -105,19 +109,33 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
      !       call density_ice(a_mtox, bcoeff, radius, dens_graup) 
      ! !         write(18,*)'dens',dens_graup                                  
      !       radius_ice = (dens_graup / 917.) **0.33333333 * radius 
-     !diameter of sphere with same mass
-     diameter_ice = (6.*a_mtox*diameter(ir)**bcoeff/(pi*density))**(1./3.)
-     x = pi * diameter_ice / wavelength
 
-	 msphere = eps_mix((1.d0,0.d0),m_ice,density)
+
+    
+    if (softsphere_adjust .eq. "radius") then
+      !diameter of sphere with same mass
+      diameter_eff = (6.d0*a_mtox*diameter(ir)**bcoeff/(pi*density))**(1./3.)
+      density_eff = density
+    else if (softsphere_adjust .eq. "density") then
+      !adjust density of the particle
+      diameter_eff = diameter(ir)
+      density_eff = (6.d0 * a_mtox*diameter(ir)**bcoeff) / (pi * diameter(ir)**3)
+    else
+      print*, "did not understand softsphere_adjust:",softsphere_adjust
+      stop
+    end if 
+
+     x = pi * diameter_eff / wavelength
+
+	 msphere = eps_mix((1.d0,0.d0),m_ice,density_eff)
 
      call miecalc (nmie, x, msphere, a, b) 
      call miecross (nmie, x, a, b, qext, qscat, qback)
 
      ! sum up extinction, scattering, and backscattering as cross-sections/pi .pi is added in a later step
-     qext =   qext  * ndens * (diameter_ice/2.d0)**2         ! [m²/m⁴]!
-     qscat =  qscat * ndens * (diameter_ice/2.d0)**2        ! [m²/m⁴]!
-     qback =  qback * ndens * (diameter_ice/2.d0)**2        !  [m²/m⁴]! cross section per volume per del_d
+     qext =   qext  * ndens * (diameter_eff/2.d0)**2         ! [m²/m⁴]!
+     qscat =  qscat * ndens * (diameter_eff/2.d0)**2        ! [m²/m⁴]!
+     qback =  qback * ndens * (diameter_eff/2.d0)**2        !  [m²/m⁴]! cross section per volume per del_d
  
      !integrate=sum up . del_d is added at a later step!
      sumqe = sumqe + qext 

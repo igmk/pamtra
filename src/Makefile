@@ -104,9 +104,7 @@ OBJECTS=kinds.o \
 	tmatrix_rain.o \
 	tmatrix_snow.o \
 	tmatrix_ice.o \
-	matrix_cal.o \
-	tmatrix_cal.o \
-	lpd.o \
+	lpq.o \
 	get_scat_mat.o \
 	mass_size_rel.o \
 	refractive_index.o \
@@ -118,13 +116,18 @@ OBJECTS=kinds.o \
 	smooth_savitzky_golay.o \
 	radar_calc_moments.o \
 	radar_hildebrand_sekhon.o \
-	write_nc_results.o 
+	write_nc_results.o \
+	tmatrix_calc.o \
+	amplq.lp.o 
+# 	amplq.par.o
 #	rt3.o \
 	radtran3.o \
 	radutil3.o \
 	radscat3.o \
 	radintg3.o \
 	hydrometeor_extinction_rt3.o \
+#	tmatrix_cal.o \
+#	matrix_cal.o \
 
 BIN=pamtra
 

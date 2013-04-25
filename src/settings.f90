@@ -94,6 +94,8 @@ module settings
     character(9) :: frq_str_s,frq_str_e
     character(8), dimension(maxfreq) :: frqs_str
 
+    character(7) :: softsphere_adjust
+
     integer :: radar_nfft_aliased, radar_maxTurbTerms !are gained from radar_aliasing_nyquist_interv and radar_nfft
 contains
 
@@ -108,7 +110,7 @@ contains
         namelist / run_mode / active, passive,radar_mode
         namelist / surface_params / ground_type,salinity, emissivity
         namelist / gas_abs_mod / lgas_extinction, gas_mod
-        namelist / hyd_opts / lhyd_extinction, lphase_flag
+        namelist / hyd_opts / lhyd_extinction, lphase_flag, softsphere_adjust
 	namelist / cloud_params / SD_cloud, EM_cloud,  ad_cloud, bd_cloud, alphad_cloud, gammad_cloud, &
 				  diamin_cloud, diamax_cloud
 	namelist / ice_params / SD_ice, EM_ice, ad_ice, bd_ice, alphad_ice, gammad_ice, &
@@ -161,6 +163,7 @@ contains
         ! sec hyd_opts
         lhyd_extinction=.true.
         lphase_flag = .true.
+	softsphere_adjust = "density"
         ! sec cloud_params
       SD_cloud='C'
       EM_cloud="miecl"
@@ -307,7 +310,7 @@ contains
             print*, "run_mode ",  active, passive,radar_mode
             print*, "surface_params ",  ground_type,salinity, emissivity
             print*, "gas_abs_mod ",  lgas_extinction, gas_mod
-            print*, "hyd_opts ",  lhyd_extinction, lphase_flag
+            print*, "hyd_opts ",  lhyd_extinction, lphase_flag, softsphere_adjust
             print*, "cloud_params ",  SD_cloud, EM_cloud,ad_cloud, bd_cloud, alphad_cloud, &
 	      gammad_cloud, diamin_cloud, diamax_cloud
             print*, "ice_params ",  SD_ice,EM_ice,ad_ice,bd_ice,alphad_ice,gammad_ice,liu_type_ice,&

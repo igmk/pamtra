@@ -51,7 +51,7 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
   character(5) ::  particle_type
 
   if (verbose .gt. 1) print*, 'Entering snow_ssp'
-  if ((n_moments .eq. 1) .and. (EM_snow .eq. "tmatr")) stop "1moment tmatr not tested yet for snow"
+!   if ((n_moments .eq. 1) .and. (EM_snow .eq. "tmatr")) stop "1moment tmatr not tested yet for snow"
 
   call ref_ice(t, f, refre, refim)
 
@@ -72,6 +72,10 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
 
      dia1 = 0.51d-10 ! minimum maximum diameter [m] after kneifel
      dia2 = 1.d-2 ! maximum maximum diameter [m] after kneifel
+
+     dia1 = 0.51d-10 ! minimum maximum diameter [m] after kneifel
+     dia2 = 1.d-5 ! maximum maximum diameter [m] after kneifel
+
 
      !option isnow_n0 as in COSMO-de 1 moment scheme
      !isnow_n0temp = 2 intercept parameter of snow depend on T and qs (snow mixing ratio) Field 2005
@@ -155,10 +159,10 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
 
 
   if ((EM_snow .eq. 'densi') .or. (EM_snow .eq. 'surus')) then
-    nbins = 100
+    nbins = 50!100
     nbins_spec = nbins+1 !Mie routine uses nbins+1 bins!
   elseif (EM_snow .eq. 'liudb') then
-    nbins = 100
+    nbins = 50!!100
     nbins_spec = nbins
   elseif (EM_snow .eq. 'tmatr') then
     nbins = 50
@@ -195,8 +199,11 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
       extinct_matrix= 0.d0
       emis_vector= 0.d0
   elseif (EM_snow .eq. 'tmatr') then
+
+print*, "mindex", mindex
+
     call tmatrix_snow(f, swc, t, nc, &
-          ad, bd, alpha, gamma, a_msnow, b_snow, SD_snow, nbins, scatter_matrix,extinct_matrix, emis_vector,&
+          ad, bd, alpha, gamma, a_msnow, b_snow, SD_snow, dia1,dia2,nbins, scatter_matrix,extinct_matrix, emis_vector,&
           diameter_spec, back_spec)
     back = scatter_matrix(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
     back = 4*pi*back!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squard entries!
