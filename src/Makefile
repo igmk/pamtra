@@ -12,11 +12,13 @@ ifeq ($(ARCH),Darwin)
 	NCFLAGS_F2PY=-I/opt/local/include/ 
 	LFLAGS=-L/opt/local/lib/ -llapack -ldfftpack
 	LDFLAGS=-lnetcdf -lnetcdff 
+	SQLFLAGS := -lfsqlite -lsqlite3 -L../tools/sqlite -L/usr/lib 
 else
 	NCFLAGS :=  $(shell nc-config --fflags)  -O2
 	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
 	LFLAGS := -llapack -ldfftpack
 	LDFLAGS := $(shell nc-config --flibs)
+	SQLFLAGS := -lfsqlite -lsqlite3 -L../tools/sqlite -L/usr/lib -I../tools/sqlite
 endif
 
 
@@ -136,7 +138,7 @@ all: precompile pamtra py
 
 
 pamtra: pamtra.f90 $(OBJECTS)
-	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS) 
+	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS) $(SQLFLAGS)
 	mv $(BIN) ../
 
 
@@ -198,11 +200,11 @@ pyprecompile:
 	f2py -m pyPamtraLib -h pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90
 
 py: pyPamtraLib.f90 precompile $(OBJECTS)
-	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS)  -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
+	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) $(SQLFLAGS) -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ../py/
 
 pyNode: pyPamtraLib.f90 $(OBJECTS) 
-	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS)  -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
+	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) $(SQLFLAGS) -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ../py/
 
 pyinstall:

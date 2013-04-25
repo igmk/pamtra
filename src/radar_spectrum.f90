@@ -130,6 +130,7 @@ subroutine radar_spectrum(&
     else if (particle_type .eq. "ice") then
 	if (verbose >= 3) call report(info,'using: '//radar_fallVel_ice//'to calculate fall velocity for ice', nameOfRoutine)
 	if (verbose >= 3) print*, "providing:", rho,my,mass_size_a,mass_size_b,area_size_a,area_size_b
+
         if (radar_fallVel_ice .eq. "heymsfield10_particles") then
             call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,my,&
             mass_size_a,mass_size_b,area_size_a,area_size_b,vel_spec)
