@@ -36,7 +36,7 @@ module settings
     real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
     real(kind=dbl) :: emissivity
     real(kind=dbl) :: N_0rainD, N_0snowDsnow, N_0grauDgrau, N_0hailDhail,  SP
-    real(kind=dbl) :: as_ratio, snow_density, graupel_density, hail_density
+    real(kind=dbl) :: as_ratio, snow_density, graupel_density, hail_density, as_ratio_ice
     real(kind=dbl) :: salinity         ! sea surface salinity
     real(kind=dbl), dimension(maxfreq) :: freqs
 
@@ -115,7 +115,7 @@ contains
 				  diamin_cloud, diamax_cloud
 	namelist / ice_params / SD_ice, EM_ice, ad_ice, bd_ice, alphad_ice, gammad_ice, &
 				  liu_type_ice, diamin_ice, diamax_ice, mass_size_ice_a, mass_size_ice_b, &
-				  area_size_ice_a, area_size_ice_b
+				  area_size_ice_a, area_size_ice_b, as_ratio_ice
 	namelist / rain_params / SD_rain, N_0rainD, use_rain_db, EM_rain
 	namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, use_snow_db, as_ratio,snow_density, SP, isnow_n0, liu_type
 	namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau, graupel_density
@@ -187,6 +187,7 @@ contains
         mass_size_ice_b = 1.7d0 !aus MPACE
         area_size_ice_b = 1.63 !aus mitchell 96 fuer MPACE
         area_size_ice_a = 0.020016709444709808!aus mitchell 96 fuer MPACE
+	as_ratio_ice = 0.999999d0 !numerically more stable than 1
         ! sec rain_params
         SD_rain='C'
         N_0rainD=8.0
@@ -314,7 +315,8 @@ contains
             print*, "cloud_params ",  SD_cloud, EM_cloud,ad_cloud, bd_cloud, alphad_cloud, &
 	      gammad_cloud, diamin_cloud, diamax_cloud
             print*, "ice_params ",  SD_ice,EM_ice,ad_ice,bd_ice,alphad_ice,gammad_ice,liu_type_ice,&
-	      diamin_ice,diamax_ice,mass_size_ice_a,mass_size_ice_b,area_size_ice_b,area_size_ice_a
+	      diamin_ice,diamax_ice,mass_size_ice_a,mass_size_ice_b,area_size_ice_b,area_size_ice_a,&
+	      as_ratio_ice
             print*, "rain_params ",  SD_rain, N_0rainD, use_rain_db, EM_rain
             print*, "snow_params ",  SD_snow, N_0snowDsnow, EM_snow, use_snow_db, as_ratio,snow_density, SP, isnow_n0, liu_type
             print*, "graupel_params ",  SD_grau, N_0grauDgrau, EM_grau, graupel_density

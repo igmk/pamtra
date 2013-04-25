@@ -21,7 +21,9 @@ subroutine tmatrix_snow(f, wc, t, nc, &
   use kinds
   use constants, only: pi, c, im
   use settings, only: use_snow_db, as_ratio, softsphere_adjust
-  use rt_utilities, only: lobatto_quadrature
+!   use rt_utilities, only: lobatto_quadrature
+  use report_module
+
   use tmat_snow_db
 
   implicit none
@@ -59,6 +61,11 @@ subroutine tmatrix_snow(f, wc, t, nc, &
 
   real(kind=dbl) :: ntot,nc, density_eff, refre, refim
 
+    integer(kind=long) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
+    character(len=14) :: nameOfRoutine = 'tmatrix_ice'
+
   interface
 
     subroutine tmatrix_calc(quad,qua_num,frequency,wave_num,ref_index,axi, nstokes,&
@@ -89,8 +96,8 @@ subroutine tmatrix_snow(f, wc, t, nc, &
   wavelength = c/freq !
   wave_num = 2.0_dbl*pi/wavelength
 
-  eu_alpha = 0.0_dbl
-  eu_beta = 0.0_dbl
+  eu_alpha = 0.0_dbl    ! orientation of the particle [°]
+  eu_beta = 0.0_dbl!orientation of the particle [°]
   azimuth_num = 30
   azimuth0_num = 1
 
@@ -136,38 +143,34 @@ subroutine tmatrix_snow(f, wc, t, nc, &
 !        print*, ir,diameter(ir),ndens*del_d, tot_mass/wc*100.,ntot/nc*100.
      else
 
-	if (softsphere_adjust .eq. "radius") then
+
+	  !XINXINs code
+! 	    CALL CAL_REFRACTIVE_INDEX('S',t,freq, diameter(ir), as_ratio, particle_mass*1.d3, equiv_radius, mindex)
+
 	  !diameter of sphere with same mass
-	    CALL CAL_REFRACTIVE_INDEX('S',t,freq, diameter(ir), as_ratio, particle_mass*1.d3, equiv_radius, mindex)
-	else if (softsphere_adjust .eq. "density") then
 	  equiv_radius = 0.5_dbl*diameter(ir)*as_ratio**(1.0_dbl/3.0_dbl)
-	  density_eff = (3.d0/4.d0 * a_m*diameter(ir)**b) / (pi * equiv_radius**3)
-
-
+	  density_eff = (3.d0/4.d0 * particle_mass) / (pi * equiv_radius**3)
 	  call ref_ice(t, f, refre, refim)
 	  m_ice = refre-Im*refim  ! mimicking a
-	  mindex = eps_mix((1.d0,0.d0),m_ice,density_eff)
-	else
-	  print*, "did not understand softsphere_adjust:",softsphere_adjust
-	  stop
-	end if 
+
+	if (density_eff > 917.d0) then
+	  print*, "WANRING changed density from ", density_eff, "kg/m3 to 917 kg/m3 for d=", diameter(ir)
+	  density_eff = 917.d0
+	end if
+    if (verbose >= 4) print*, "density_eff, equiv_radius, diameter(ir)"
+    if (verbose >= 4) print*, density_eff, equiv_radius, diameter(ir)
+
+	  msphere = eps_mix((1.d0,0.d0),m_ice,density_eff)
+	  mindex =conjg(msphere) !different convention
 
         call tmatrix_calc('L',nquad,freq,wave_num,mindex,equiv_radius,nstokes,&
             as_ratio, eu_alpha, eu_beta, azimuth_num, azimuth0_num, &
             scat_mat_sgl,ext_mat_sgl,emis_vec_sgl)
 
-
      end if
      scatter_matrix(:,:,:,:,1:2) = scatter_matrix(:,:,:,:,1:2) + scat_mat_sgl*bin_wgt
      extinct_matrix(:,:,:,1) = extinct_matrix(:,:,:,1) + ext_mat_sgl*bin_wgt
      emis_vector(:,:,1) = emis_vector(:,:,1) + emis_vec_sgl*bin_wgt
-
-    !fill up the matrices
-    scatter_matrix(:,:,:,:,4) = scatter_matrix(:,:,:,:,1) 
-    scatter_matrix(:,:,:,:,3) = scatter_matrix(:,:,:,:,2)
-    extinct_matrix(:,:,:,2) = extinct_matrix(:,:,:,1)
-    emis_vector(:,:,2) = emis_vector(:,:,1)
-
 
      back_spec(ir) = 4*pi*ndens*scat_mat_sgl(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
 
@@ -220,6 +223,15 @@ subroutine tmatrix_snow(f, wc, t, nc, &
 !      ENDDO
 ! stop
 end do
+
+!fill up the matrices
+scatter_matrix(:,:,:,:,4) = scatter_matrix(:,:,:,:,1) 
+scatter_matrix(:,:,:,:,3) = scatter_matrix(:,:,:,:,2)
+extinct_matrix(:,:,:,2) = extinct_matrix(:,:,:,1)
+emis_vector(:,:,2) = emis_vector(:,:,1)
+
+    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+
 
   return 
 end subroutine tmatrix_snow

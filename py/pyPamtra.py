@@ -134,7 +134,7 @@ class pyPamtra(object):
     self.nmlSet["ice_params"]["mass_size_ice_b"] = 1.7e0 #aus MPACE
     self.nmlSet["ice_params"]["area_size_ice_b"] = 1.63 #aus mitchell 96 fuer MPACE
     self.nmlSet["ice_params"]["area_size_ice_a"] = 0.020016709444709808 #aus mitchell 96 fuer MPACE
-    
+    self.nmlSet["ice_params"]["as_ratio_ice"] = 0.99999 #numerically more stable than 1
     self.nmlSet["rain_params"]["sd_rain"]='C' 
     self.nmlSet["rain_params"]["em_rain"]='miera' 
     self.nmlSet["rain_params"]["n_0raind"]=8.0

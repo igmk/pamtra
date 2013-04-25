@@ -73,8 +73,8 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
      dia1 = 0.51d-10 ! minimum maximum diameter [m] after kneifel
      dia2 = 1.d-2 ! maximum maximum diameter [m] after kneifel
 
-     dia1 = 0.51d-10 ! minimum maximum diameter [m] after kneifel
-     dia2 = 1.d-5 ! maximum maximum diameter [m] after kneifel
+!      dia1 = 1.d-9 ! minimum maximum diameter [m] after kneifel
+     dia2 =1.d-4 ! maximum maximum diameter [m] after kneifel
 
 
      !option isnow_n0 as in COSMO-de 1 moment scheme
@@ -167,8 +167,11 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
   elseif (EM_snow .eq. 'tmatr') then
     nbins = 50
     nbins_spec = nbins
+  elseif (EM_snow .eq. 'tmSQL') then
+    nbins = 50
+    nbins_spec = nbins
   else
-     write (*, *) 'no em mod', EM_snow
+     write (*, *) 'no em mod: ', EM_snow
      stop
   end if
 
@@ -216,8 +219,27 @@ print*, "mindex", mindex
     legen2 = 0.0d0
     legen3 = 0.0d0
     legen4 = 0.0d0
+  elseif (EM_snow .eq. 'tmSQL') then
+
+print*, "mindex", mindex
+
+    call tmatrix_snow_sql(f, swc, t, nc, &
+          ad, bd, alpha, gamma, a_msnow, b_snow, SD_snow, dia1,dia2,nbins, scatter_matrix,extinct_matrix, emis_vector,&
+          diameter_spec, back_spec)
+    back = scatter_matrix(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
+    back = 4*pi*back!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squard entries!
+    kext = extinct_matrix(1,1,16,1) !11 of extinction matrix (=not polarized), at 0°, first quadrature. equal to extinct_matrix(1,1,16,2)
+
+    !not needed by rt4
+    salb = 0.d0
+    nlegen = 0
+    legen = 0.0d0
+    legen2 = 0.0d0
+    legen3 = 0.0d0
+    legen4 = 0.0d0
+
   else 
-     write (*, *) 'no em mod', EM_snow
+     write (*, *) 'no em mod: ', EM_snow
      stop
   endif
 

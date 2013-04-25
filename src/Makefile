@@ -103,6 +103,7 @@ OBJECTS=kinds.o \
 	scatcnv.o \
 	tmatrix_rain.o \
 	tmatrix_snow.o \
+	tmatrix_snow_sql.o \
 	tmatrix_ice.o \
 	lpq.o \
 	get_scat_mat.o \

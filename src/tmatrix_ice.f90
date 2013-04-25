@@ -1,5 +1,5 @@
 subroutine tmatrix_ice(f, wc, t, nc, &
-     ad, bd, alpha, gamma, a_m,b,aerodist,nbins,scatter_matrix,extinct_matrix, emis_vector,&
+     ad, bd, alpha, gamma, a_m,b,aerodist,dia1,dia2,nbins,scatter_matrix,extinct_matrix, emis_vector,&
      diameter, back_spec)
 
   ! note that mindex has the convention with negative imaginary part
@@ -19,8 +19,9 @@ subroutine tmatrix_ice(f, wc, t, nc, &
 
 
   use kinds
-  use constants, only: pi, c
-  use settings, only:as_ratio!,  use_ice_db, 
+  use constants, only: pi, c, im
+  use report_module
+  use settings, only:as_ratio_ice!,  use_ice_db, 
 
 !   use tmat_ice_db
 
@@ -29,10 +30,11 @@ subroutine tmatrix_ice(f, wc, t, nc, &
   integer, intent(in) :: nbins
 
   real(kind=dbl), intent(in) :: f, &  ! frequency [ghz]
-                                t
+                                t, dia1, dia2
   real(kind=dbl) :: wavelength, wave_num, freq
   real(kind=dbl) :: ad, bd, alpha, gamma, a_m,b
   complex(kind=ext) :: mindex
+  complex(kind=dbl) :: msphere, eps_mix,m_ice
 
   integer, parameter :: nquad = 16
   integer, parameter :: nstokes = 2
@@ -49,12 +51,50 @@ subroutine tmatrix_ice(f, wc, t, nc, &
   real(kind=dbl), dimension(nstokes,nquad,2), intent(out) :: emis_vector
   real(kind=dbl), intent(out) :: diameter(nbins)
   real(kind=dbl), intent(out) :: back_spec(nbins)
-  real(kind=dbl), dimension(nstokes,nquad,nstokes,nquad,4) :: scat_mat_sgl
-  real(kind=dbl), dimension(nstokes,nstokes,nquad,2) :: ext_mat_sgl
-  real(kind=dbl), dimension(nstokes,nquad,2) :: emis_vec_sgl
+  real(kind=dbl), dimension(nstokes,nquad,nstokes,nquad,2) :: scat_mat_sgl
+  real(kind=dbl), dimension(nstokes,nstokes,nquad) :: ext_mat_sgl
+  real(kind=dbl), dimension(nstokes,nquad) :: emis_vec_sgl
 
 
-  real(kind=dbl) :: ntot,nc
+  real(kind=dbl) :: ntot,nc, density_eff, refre, refim
+
+    integer(kind=long) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
+    character(len=14) :: nameOfRoutine = 'tmatrix_ice'
+
+
+  
+
+
+  interface
+
+    subroutine tmatrix_calc(quad,qua_num,frequency,wave_num,ref_index,axi, nstokes,&
+    as_ratio_ice, alpha, beta, azimuth_num, azimuth0_num,&
+    scatter_matrix,extinct_matrix,emis_vector)
+      use kinds
+      implicit none
+      character(1), intent(in) :: quad
+      integer, intent(in) :: qua_num
+      real(kind=dbl), intent(in) :: frequency
+      real(kind=dbl), intent(in) :: wave_num
+      complex(kind=ext) :: ref_index
+      real(kind=dbl), intent(in) :: axi
+      integer, intent(in) :: nstokes
+      real(kind=dbl), intent(in) :: as_ratio_ice
+      real(kind=dbl), intent(in) :: alpha
+      real(kind=dbl), intent(in) :: beta
+      integer, intent(in) :: azimuth_num
+      integer, intent(in) :: azimuth0_num
+      real(kind=dbl), intent(out), dimension(nstokes,qua_num,nstokes,qua_num,2) :: scatter_matrix
+      real(kind=dbl), intent(out), dimension(nstokes,nstokes,qua_num) :: extinct_matrix
+      real(kind=dbl), intent(out), dimension(nstokes,qua_num) :: emis_vector
+    end subroutine tmatrix_calc
+  end interface
+
+
+    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+
 
   freq = f*1.d9
   wavelength = c/freq !
@@ -71,9 +111,16 @@ subroutine tmatrix_ice(f, wc, t, nc, &
   !   integration loop over diameter of spheres
   tot_mass = 0.0_dbl
   ntot = 0.d0
-  del_d = 2.d-4
+
+  if (nbins .gt. 0) then
+    del_d = (dia2 - dia1) / nbins
+  else
+    del_d = 1.d0
+  end if
+
+
   do ir = 1, nbins
-     diameter(ir) = ir * del_d
+     diameter(ir) = dia1 + (ir - 1) * del_d
      ndens = distribution(ad, bd, alpha, gamma, diameter(ir), aerodist)  ! number density [1/m^4]
      particle_mass = a_m*diameter(ir)**b ! particle mass [kg]
 !         IF (diameter(ir)*1.e6.GE.0.005E4.AND.diameter(ir)*1.e6.LE.0.2E4)THEN ! 50um~200um
@@ -84,7 +131,7 @@ subroutine tmatrix_ice(f, wc, t, nc, &
 !            PARTICLE_MASS = 0.0047D0*(diameter(ir)*1.e6/1.0E4)**3.0D0*1.e-3
 !         ENDIF
 !
-!     density = 6.d0*particle_mass/(diameter(ir)**3.d0*pi*as_ratio)
+!     density = 6.d0*particle_mass/(diameter(ir)**3.d0*pi*as_ratio_ice)
      if (ir .eq. 1 .or. ir .eq. nbins) then
         ndens = 0.5_dbl * ndens
      end if
@@ -98,22 +145,36 @@ subroutine tmatrix_ice(f, wc, t, nc, &
 !         call get_ice_data(real(f),real(t),ir,scat_mat_sgl,ext_mat_sgl,emis_vec_sgl)
 ! !        print*, ir,diameter(ir),ndens*del_d, tot_mass/wc*100.,ntot/nc*100.
 !      else
-        equiv_radius = 0.5_dbl*diameter(ir)*as_ratio**(1.0_dbl/3.0_dbl)
-        CALL CAL_REFRACTIVE_INDEX('S',t,freq, diameter(ir), as_ratio, particle_mass*1.d3, equiv_radius, mindex)
-        print*, ir,diameter(ir),ndens*del_d, mindex
+
+	  !XINXINs code
+!         CALL CAL_REFRACTIVE_INDEX('S',t,freq, diameter(ir), as_ratio_ice, particle_mass*1.d3, equiv_radius, mindex)
     !     write(25,*) ir,equiv_radius,diameter(ir),density,ntot,ntot/nc*100.0_dbl,tot_mass,tot_mass/wc*100.0_dbl
 
-print*, "OUT"
-print*, 'l',nquad,freq,wave_num,mindex,equiv_radius,nstokes,&
-            as_ratio, eu_alpha, eu_beta, azimuth_num, azimuth0_num        
+	  !diameter of sphere with same mass
+	  equiv_radius = 0.5_dbl*diameter(ir)*as_ratio_ice**(1.0_dbl/3.0_dbl)
+	  density_eff = (3.d0/4.d0 * particle_mass) / (pi * equiv_radius**3)
+	  call ref_ice(t, f, refre, refim)
+	  m_ice = refre-Im*refim  ! mimicking a
+
+	if (density_eff > 917.d0) then
+	  print*, "WANRING changed density from ", density_eff, "kg/m3 to 917 kg/m3 for d=", diameter(ir)
+	  density_eff = 917.d0
+	end if
+
+	  msphere = eps_mix((1.d0,0.d0),m_ice,density_eff)
+	  mindex =conjg(msphere) !different convention
+
+    if (verbose >= 4) print*, "density_eff, equiv_radius, diameter(ir),mindex"
+    if (verbose >= 4) print*, density_eff, equiv_radius, diameter(ir),mindex
 
 call tmatrix_calc('l',nquad,freq,wave_num,mindex,equiv_radius,nstokes,&
-            as_ratio, eu_alpha, eu_beta, azimuth_num, azimuth0_num, &
+            as_ratio_ice, eu_alpha, eu_beta, azimuth_num, azimuth0_num, &
             scat_mat_sgl,ext_mat_sgl,emis_vec_sgl)
 !      end if
-     scatter_matrix = scatter_matrix + scat_mat_sgl*bin_wgt
-     extinct_matrix = extinct_matrix + ext_mat_sgl*bin_wgt
-     emis_vector = emis_vector + emis_vec_sgl*bin_wgt
+     scatter_matrix(:,:,:,:,1:2) = scatter_matrix(:,:,:,:,1:2) + scat_mat_sgl*bin_wgt
+     extinct_matrix(:,:,:,1) = extinct_matrix(:,:,:,1) + ext_mat_sgl*bin_wgt
+     emis_vector(:,:,1) = emis_vector(:,:,1) + emis_vec_sgl*bin_wgt
+
      back_spec(ir) = 4*pi*ndens*scat_mat_sgl(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
 
 
@@ -164,6 +225,15 @@ call tmatrix_calc('l',nquad,freq,wave_num,mindex,equiv_radius,nstokes,&
 !        ENDDO
 !      ENDDO
 end do
+
+!fill up the matrices
+scatter_matrix(:,:,:,:,4) = scatter_matrix(:,:,:,:,1) 
+scatter_matrix(:,:,:,:,3) = scatter_matrix(:,:,:,:,2)
+extinct_matrix(:,:,:,2) = extinct_matrix(:,:,:,1)
+emis_vector(:,:,2) = emis_vector(:,:,1)
+
+    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+
 
   return 
 end subroutine tmatrix_ice
