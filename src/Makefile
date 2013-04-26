@@ -12,7 +12,7 @@ ifeq ($(ARCH),Darwin)
 	NCFLAGS_F2PY=-I/opt/local/include/ 
 	LFLAGS=-L/opt/local/lib/ -llapack -ldfftpack
 	LDFLAGS=-lnetcdf -lnetcdff 
-	SQLFLAGS := -lfsqlite -lsqlite3 -L../tools/sqlite -L/usr/lib 
+	SQLFLAGS := -lfsqlite -lsqlite3 -L../tools/sqlite -L/usr/lib -I../tools/sqlite
 else
 	NCFLAGS :=  $(shell nc-config --fflags)  -O2
 	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
@@ -71,6 +71,7 @@ OBJECTS=kinds.o \
 	equcom.o \
 	land_emis.o \
 	equare.o \
+	sql_tools.o \
 	scatdb.o \
 	dda_db_liu.o \
 	dielec_water.o \
@@ -191,6 +192,12 @@ write_nc_results.o: write_nc_results.f90
 cosmo_netcdf.o: cosmo_netcdf.f90
 	$(FC) $(FCFLAGS) $(NCFLAGS) cosmo_netcdf.f90
 
+
+sql_tools.o: sql_tools.f90
+	$(FC) $(FCFLAGS) $(SQLFLAGS) sql_tools.f90
+
+tmatrix_calc.o: tmatrix_calc.f90
+	$(FC) $(FCFLAGS) $(SQLFLAGS) tmatrix_calc.f90
 
 
 pyprecompile: 

@@ -8,7 +8,6 @@ program pamtra
     use vars_profile
     use double_moments_module !double moments variables are stored here
     use report_module
-    use sqlite
 
     !     The code reads a full (e.g. COSMO) grid and computes for each
     !     profile the radiative transfer for the given frequencies

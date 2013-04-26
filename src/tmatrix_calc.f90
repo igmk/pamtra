@@ -1,11 +1,13 @@
-subroutine tmatrix_sql(freq,t,as_ratio,diameter,particle_mass,scatter_matrix,extinct_matrix,emis_vector)
+subroutine tmatrix_sql(freq,t,as_ratio,diameter,particle_mass,ptype,scatter_matrix,extinct_matrix,emis_vector)
 
   use kinds
   use report_module
   use constants, only: pi, c, im
   use settings, only : nummu, nstokes
   use report_module
-  
+  use sqlite
+  use sql_tools
+
   implicit none
 
   real(kind=dbl), intent(in) :: freq !in Hz
@@ -13,6 +15,7 @@ subroutine tmatrix_sql(freq,t,as_ratio,diameter,particle_mass,scatter_matrix,ext
   real(kind=dbl), intent(in) :: as_ratio
   real(kind=dbl), intent(in) :: particle_mass
   real(kind=dbl), intent(in) :: diameter
+  character(len=4), intent(in) :: ptype
 
   real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
   real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
@@ -26,13 +29,18 @@ subroutine tmatrix_sql(freq,t,as_ratio,diameter,particle_mass,scatter_matrix,ext
   real(kind=dbl) :: particle_mass_magnitude
   real(kind=dbl) :: diameter_magnitude
 
+character(len=200) :: fname
+character(len=20) :: par_name
+
+  logical :: found
+
   integer(kind=long) :: errorstatus
   integer(kind=long) :: err = 0
   character(len=80) :: msg
   character(len=14) :: nameOfRoutine = 'tmatrix_sql'
 
   interface
-    subroutine tmatrix_refIndex(freq,t,as_ratio,diameter,particle_mass,scatter_matrix,extinct_matrix,emis_vector)
+    subroutine tmatrix_refIndex(freq,t,as_ratio,diameter,particle_mass,ptype,scatter_matrix,extinct_matrix,emis_vector)
       use kinds
       use settings, only : nummu, nstokes
       implicit none
@@ -41,6 +49,7 @@ subroutine tmatrix_sql(freq,t,as_ratio,diameter,particle_mass,scatter_matrix,ext
       real(kind=dbl), intent(in) :: t
       real(kind=dbl), intent(in) :: as_ratio
       real(kind=dbl), intent(in) :: particle_mass
+      character(len=4), intent(in) :: ptype
       real(kind=dbl), intent(in) :: diameter
 
       real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
@@ -50,6 +59,11 @@ subroutine tmatrix_sql(freq,t,as_ratio,diameter,particle_mass,scatter_matrix,ext
   end interface
 
   if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+
+fname="/work/mmaahn/test.sqlite"
+par_name="test"
+
+call sql_open_table(fname,par_name)
 
 
 
@@ -77,20 +91,40 @@ subroutine tmatrix_sql(freq,t,as_ratio,diameter,particle_mass,scatter_matrix,ext
 !   t_round = t
 !   as_ratio_round = as_ratio
 
-  if (verbose >= 4) print*, "freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round"
-  if (verbose >= 4) print*, freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round
+  if (verbose >= 4) print*, "freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype"
+  if (verbose >= 4) print*, freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
 
-  call tmatrix_refIndex(freq_round,t_round,as_ratio_round,diameter_round,&
-    particle_mass_round,&
-    scatter_matrix,extinct_matrix,emis_vector)
+
+ call sql_get_entry(par_name,freq_round,t_round,as_ratio_round,diameter_round,&
+    particle_mass_round,ptype,&
+    scatter_matrix,extinct_matrix,emis_vector,found)
+! 
+
+
+
+
+  if (.not. found) then
+
+    call tmatrix_refIndex(freq_round,t_round,as_ratio_round,diameter_round,&
+      particle_mass_round,ptype,&
+      scatter_matrix,extinct_matrix,emis_vector)
+
+    
+    call sql_write_entry(par_name,freq_round,t_round,as_ratio_round,diameter_round,&
+      particle_mass_round,ptype,&
+      scatter_matrix,extinct_matrix,emis_vector)
+
+  end if
+
+
+  call sql_close_table()
 
   if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
   return
-
 end subroutine tmatrix_sql
 
 
-subroutine tmatrix_refIndex(freq,t,as_ratio_in,diameter,particle_mass,scatter_matrix,extinct_matrix,emis_vector)
+subroutine tmatrix_refIndex(freq,t,as_ratio_in,diameter,particle_mass,ptype,scatter_matrix,extinct_matrix,emis_vector)
 
   use kinds
   use report_module
@@ -103,6 +137,7 @@ subroutine tmatrix_refIndex(freq,t,as_ratio_in,diameter,particle_mass,scatter_ma
   real(kind=dbl), intent(in) :: as_ratio_in
   real(kind=dbl), intent(in) :: particle_mass
   real(kind=dbl), intent(in) :: diameter
+  character(len=4), intent(in) :: ptype
 
   real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
   real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
@@ -126,7 +161,7 @@ subroutine tmatrix_refIndex(freq,t,as_ratio_in,diameter,particle_mass,scatter_ma
   integer(kind=long) :: errorstatus
   integer(kind=long) :: err = 0
   character(len=80) :: msg
-  character(len=14) :: nameOfRoutine = 'tmatrix_sql'
+  character(len=14) :: nameOfRoutine = 'tmatrix_refIndex'
 
   interface
 
@@ -161,32 +196,37 @@ subroutine tmatrix_refIndex(freq,t,as_ratio_in,diameter,particle_mass,scatter_ma
 
   wavelength = c/freq !
   wave_num = 2.0_dbl*pi/wavelength
-
-  call ref_ice(t, freq*1d-9, refre, refim)
-  m_ice = refre-Im*refim  ! mimicking a
-
   eu_alpha = 0.0_dbl    ! orientation of the particle [°]
   eu_beta = 0.0_dbl!orientation of the particle [°]
   azimuth_num = 30
   azimuth0_num = 1
 
-    !XINXINs code
-! 	    CALL CAL_REFRACTIVE_INDEX('S',t,freq, diameter, as_ratio, particle_mass*1.d3, equiv_radius, mindex)
 
-    !diameter of sphere with same mass
-    equiv_radius = 0.5_dbl*diameter*as_ratio_in**(1.0_dbl/3.0_dbl)
-    density_eff = (3.d0/4.d0 * particle_mass) / (pi * equiv_radius**3)
+  if (ptype == "snow" .or. ptype == "ice") then
+    call ref_ice(t, freq*1d-9, refre, refim)
+    m_ice = refre-Im*refim  ! mimicking a
+
+      !XINXINs code
+  ! 	    CALL CAL_REFRACTIVE_INDEX('S',t,freq, diameter, as_ratio, particle_mass*1.d3, equiv_radius, mindex)
+
+      !diameter of sphere with same mass
+      equiv_radius = 0.5_dbl*diameter*as_ratio_in**(1.0_dbl/3.0_dbl)
+      density_eff = (3.d0/4.d0 * particle_mass) / (pi * equiv_radius**3)
 
 
-    if (density_eff > 917.d0) then
-      print*, "WANRING changed density from ", density_eff, "kg/m3 to 917 kg/m3 for d=", diameter
-      density_eff = 917.d0
+      if (density_eff > 917.d0) then
+	print*, "WANRING changed density from ", density_eff, "kg/m3 to 917 kg/m3 for d=", diameter
+	density_eff = 917.d0
+      end if
+      if (verbose >= 4) print*, "density_eff, equiv_radius, diameter, particle_mass,as_ratio, "
+      if (verbose >= 4) print*, density_eff, equiv_radius, diameter, particle_mass, as_ratio_in
+
+      msphere = eps_mix((1.d0,0.d0),m_ice,density_eff)
+      mindex =conjg(msphere) !different convention
+    else
+      print*, nameOfRoutine, " do not know ptype:", ptype
+      stop
     end if
-    if (verbose >= 4) print*, "density_eff, equiv_radius, diameter, particle_mass,as_ratio, "
-    if (verbose >= 4) print*, density_eff, equiv_radius, diameter, particle_mass, as_ratio_in
-
-    msphere = eps_mix((1.d0,0.d0),m_ice,density_eff)
-    mindex =conjg(msphere) !different convention
 
     !make it numerically more stable
     if (as_ratio_in .eq. 1.d0) then

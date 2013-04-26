@@ -540,7 +540,7 @@ subroutine sqlite3_create_table( db, tablename, columns, primary )
    type(SQLITE_COLUMN), dimension(:)  :: columns
    character(len=*), optional         :: primary
 
-   character(len=20+80*size(columns)) :: command
+   character(len=20+30*size(columns)) :: command
    character(len=40)                  :: primary_
    integer                            :: i
    integer                            :: ncols
@@ -551,13 +551,58 @@ subroutine sqlite3_create_table( db, tablename, columns, primary )
    endif
 
    ncols = size(columns)
-   write( command, '(100a)' ) 'create table ', tablename, ' (', &
-      ( trim(columns(i)%name), ' ', trim(typename(columns(i), primary_)), ', ', &
-           i = 1,ncols-1 ), &
-      trim(columns(ncols)%name), ' ', trim(typename(columns(ncols),primary_)), ')'
+! 
+!    write( command, '(100000a)' ) 'create table ', tablename, ' (', &
+!       ( trim(columns(i)%name), ' ', trim(typename(columns(i), primary_)), ', ', &
+!            i = 1,ncols-1 ), &
+!       trim(columns(ncols)%name), ' ', trim(typename(columns(ncols),primary_)), ')'
+
+  command = 'create table '// tablename// ' ('
+  do i = 1,ncols-1
+    command = trim(command)//trim(columns(i)%name)// ' '//trim(typename(columns(i), primary_))// ', '
+  end do
+  command = trim(command)//trim(columns(ncols)%name)// ' '// trim(typename(columns(ncols),primary_))// ')'
+
 
    call sqlite3_do( db, command )
 end subroutine sqlite3_create_table
+
+! sqlite3_create_table --
+!    Add a new columns to existing table
+! Arguments:
+!    db            Structure for the database
+!    tablename     Name of the table
+!    columns       Properties of the columns
+!    primary       Name of the primary key (if any)
+! Side effects:
+!    The new table is created
+!
+
+subroutine sqlite3_add_column( db, tablename, column, primary )
+   type(SQLITE_DATABASE)              :: db
+   character(len=*)                   :: tablename
+   type(SQLITE_COLUMN)  :: column
+   character(len=*), optional         :: primary
+
+   character(len=100) :: command
+   character(len=40)                  :: primary_
+   integer                            :: i
+   integer                            :: ncols
+
+   primary_ = ' '
+   if ( present(primary) ) then
+      primary_ = primary
+   endif
+
+   ncols = 1
+
+   write( command, '(100a)' ) 'alter table ', tablename, ' add ', &
+       trim(column%name), ' ', trim(typename(column, primary_))
+          
+
+   call sqlite3_do( db, command )
+end subroutine sqlite3_add_column
+
 
 
 ! sqlite3_prepare_select --
@@ -588,7 +633,7 @@ subroutine sqlite3_prepare_select( db, tablename, columns, stmt, extra_clause )
    ! TODO: expand the syntax!!
    !
    nocols = size(columns)
-   write( command, '(100a)' ) 'select ', &
+   write( command, '(100000a)' ) 'select ', &
       (trim(column_func(columns(i))), ',', i = 1,nocols-1), &
        trim(column_func(columns(nocols))), &
       ' from ', trim(tablename)
@@ -601,6 +646,7 @@ subroutine sqlite3_prepare_select( db, tablename, columns, stmt, extra_clause )
    endif
 
    call stringtoc( command )
+print*, command
    call sqlite3_prepare( db, command, stmt, columns )
 
 end subroutine sqlite3_prepare_select
@@ -618,12 +664,13 @@ subroutine sqlite3_insert( db, tablename, columns )
    type(SQLITE_DATABASE)                       :: db
    character(len=*)                            :: tablename
    type(SQLITE_COLUMN), dimension(:), target   :: columns
-   character(len=20+80*size(columns))          :: command
+   character(len=100+50*size(columns))          :: command
 
    type(SQLITE_COLUMN), dimension(:), pointer  :: prepared_columns
    type(SQLITE_STATEMENT)                      :: stmt
    integer                                     :: i
    integer                                     :: rc
+   integer                                     :: ncols
 
    interface
       subroutine sqlite3_errmsg_c( handle, errmsg )
@@ -660,8 +707,128 @@ subroutine sqlite3_insert( db, tablename, columns )
    !
    ! Prepare the insert statement for this table
    !
-   write( command, '(100a)' ) 'insert into ', trim(tablename), ' values(', &
-      ('?,', i = 1,size(columns)-1), '?)'
+
+!    write( command, '(10000a)' ) 'insert into ', trim(tablename), ' values(', &
+!       ('?,', i = 1,size(columns)-1), '?)'
+
+   ncols = size(columns)
+
+
+  command = 'insert into '// trim(tablename)// ' ('
+  do i = 1,ncols-1
+    command = trim(command)//trim(columns(i)%name)// ' ,'
+  end do
+  command = trim(command)//trim(columns(ncols)%name)//') values('
+  do i = 1,ncols-1
+    command = trim(command)//'?,'
+  end do
+  command = trim(command)//'?)'
+  
+
+   call stringtoc( command )
+
+   prepared_columns => columns
+   call sqlite3_prepare( db, command, stmt, prepared_columns )
+
+   !
+   ! Bind the values
+   !
+   do i = 1,size(columns)
+      select case (columns(i)%type_set)
+      case (SQLITE_INT)
+         rc = sqlite3_bind_int_c( stmt%stmt_handle, i, columns(i)%int_value )
+      case (SQLITE_DOUBLE)
+         rc = sqlite3_bind_double_c( stmt%stmt_handle, i, columns(i)%double_value )
+      case (SQLITE_CHAR)
+         rc = sqlite3_bind_text_c( stmt%stmt_handle, i, trim(columns(i)%char_value) )
+      end select
+      if ( rc .ne. 0 ) then
+         db%error = rc
+         call sqlite3_errmsg_c( db%db_handle, db%errmsg )
+         call stringtof( db%errmsg )
+	  print*, db%errmsg
+      endif
+   enddo
+
+   !
+   ! Actually perform the insert command
+   !
+   call sqlite3_step( stmt, rc )
+   call sqlite3_finalize( stmt )
+
+end subroutine sqlite3_insert
+
+! sqlite3_update --
+!    Insert a row into the given table
+! Arguments:
+!    db            Structure for the database
+!    tablename     Name of the table
+!    columns       Columns whose value is to be inserted
+! Side effects:
+!    A new row is updated in the database
+
+subroutine sqlite3_update( db, tablename, columns, whereString )
+   type(SQLITE_DATABASE)                       :: db
+   character(len=*)                            :: tablename
+   character(len=*)                            :: whereString
+   type(SQLITE_COLUMN), dimension(:), target   :: columns
+   character(len=100+50*size(columns))          :: command
+
+   type(SQLITE_COLUMN), dimension(:), pointer  :: prepared_columns
+   type(SQLITE_STATEMENT)                      :: stmt
+   integer                                     :: i
+   integer                                     :: rc
+   integer                                     :: ncols
+
+   interface
+      subroutine sqlite3_errmsg_c( handle, errmsg )
+         integer, dimension(*) :: handle
+         character(len=*)      :: errmsg
+      end subroutine sqlite3_errmsg_c
+   end interface
+
+   interface
+      integer function sqlite3_bind_int_c( handle, colidx, value )
+         integer, dimension(*) :: handle
+         integer               :: colidx
+         integer               :: value
+      end function sqlite3_bind_int_c
+   end interface
+
+   interface
+      integer function sqlite3_bind_double_c( handle, colidx, value )
+         use sqlite_types
+         integer, dimension(*) :: handle
+         integer               :: colidx
+         real(kind=dp)         :: value
+      end function sqlite3_bind_double_c
+   end interface
+
+   interface
+      integer function sqlite3_bind_text_c( handle, colidx, value )
+         integer, dimension(*) :: handle
+         integer               :: colidx
+         character(len=*)      :: value
+      end function sqlite3_bind_text_c
+   end interface
+
+   !
+   ! Prepare the insert statement for this table
+   !
+
+!    write( command, '(10000a)' ) 'insert into ', trim(tablename), ' values(', &
+!       ('?,', i = 1,size(columns)-1), '?)'
+
+   ncols = size(columns)
+
+
+  command = 'update '// trim(tablename)// ' set '
+  do i = 1,ncols-1
+    command = trim(command)//' '//trim(columns(i)%name)// '=? ,'
+  end do
+  command = trim(command)//trim(columns(ncols)%name)//'=? WHERE '//trim(whereString)
+
+  
 
    call stringtoc( command )
    prepared_columns => columns
@@ -683,6 +850,7 @@ subroutine sqlite3_insert( db, tablename, columns )
          db%error = rc
          call sqlite3_errmsg_c( db%db_handle, db%errmsg )
          call stringtof( db%errmsg )
+	  print*, db%errmsg
       endif
    enddo
 
@@ -692,7 +860,8 @@ subroutine sqlite3_insert( db, tablename, columns )
    call sqlite3_step( stmt, rc )
    call sqlite3_finalize( stmt )
 
-end subroutine sqlite3_insert
+end subroutine sqlite3_update
+
 
 
 ! sqlite3_next_row --
@@ -702,7 +871,8 @@ end subroutine sqlite3_insert
 !    columns       Columns to be returned
 !    finished      Indicates there are no more data
 !
-subroutine sqlite3_next_row( stmt, columns, finished )
+subroutine sqlite3_next_row( db, stmt, columns, finished )
+   type(SQLITE_DATABASE)                       :: db
    type(SQLITE_STATEMENT)            :: stmt
    type(SQLITE_COLUMN), dimension(:) :: columns
    logical                           :: finished
@@ -755,11 +925,12 @@ subroutine sqlite3_next_row( stmt, columns, finished )
             rc = sqlite3_column_text_c( stmt%stmt_handle, i-1, columns(i)%char_value )
             call stringtof( columns(i)%char_value )
          end select
-        ! if ( rc .ne. 0 ) then
-        !    db%error = rc
-        !    call sqlite3_errmsg_c( db%db_handle, db%errmsg )
-        !    call stringtof( db%errmsg )
-        ! endif
+        if ( rc .ne. 0 ) then
+           db%error = rc
+           call sqlite3_errmsg_c( db%db_handle, db%errmsg )
+           call stringtof( db%errmsg )
+	  print*, db%errmsg
+        endif
       enddo
    else
       finished = .true.
@@ -923,6 +1094,7 @@ subroutine sqlite3_prepare( db, command, stmt, columns )
       enddo
    else
       call sqlite3_errmsg_c( db%db_handle, db%errmsg )
+print*,  db%errmsg
    endif
 
 end subroutine sqlite3_prepare

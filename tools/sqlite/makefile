@@ -47,12 +47,12 @@ SPACE	=	\
 SEP	=	/
 
 FC	=	gfortran
-FFLAGS_NORMAL	=	
+FFLAGS_NORMAL	=-fPIC -Wunused -O2
 FFLAGS_DEBUG	=	-c -g
 FFLAGS_OPTIMISE	=	-c -O
 
 LD	=	gfortran
-LDFLAGS_NORMAL	=	
+LDFLAGS_NORMAL	=
 LDFLAGS_DEBUG	=	-g
 LDFLAGS_OPTIMISE	=	
 #LDOUTPUT	=	-o$(SPACE)
@@ -67,6 +67,7 @@ MODEXT	=	.mod
 DELETE	=	rm -f
 FFLAGS	=	$(FFLAGS_NORMAL)
 LDFLAGS	=	$(LDFLAGS_NORMAL)
+CFLAGS =	-fPIC -Wunused -O2
 
 LIBRARIES	=	libfsqlite.a \
 
@@ -75,7 +76,7 @@ LIBRARIES	=	libfsqlite.a \
 # add the directory where the Sqlite3 header file can be found
 #
 #DEFINES	=	-DDBL_UNDERSCORE -I/usr/include
-DEFINES	=	-DLOWERCASE -I/usr/include
+DEFINES	=	-DLOWERCASE  -I/usr/include
 #DEFINES	=	-I../../../sqlite
 
 

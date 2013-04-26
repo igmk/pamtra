@@ -62,7 +62,7 @@ subroutine tmatrix_snow_sql(f, wc, t, nc, &
     character(len=30) :: nameOfRoutine = 'tmatrix_ice_sql'
 
 interface
-subroutine tmatrix_sql(freq,t,as_ratio,diameter,particle_mass,scatter_matrix,extinct_matrix,emis_vector)
+subroutine tmatrix_sql(freq,t,as_ratio,diameter,particle_mass,ptype,scatter_matrix,extinct_matrix,emis_vector)
 
   use kinds
   use settings, only : nummu, nstokes
@@ -72,6 +72,7 @@ subroutine tmatrix_sql(freq,t,as_ratio,diameter,particle_mass,scatter_matrix,ext
   real(kind=dbl), intent(in) :: as_ratio
   real(kind=dbl), intent(in) :: particle_mass
   real(kind=dbl), intent(in) :: diameter
+  character(len=4), intent(in) :: ptype
 
   real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
   real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
@@ -113,7 +114,7 @@ end do
   do ir = 1, nbins
 
 
-    call tmatrix_sql(freq,t,as_ratio,diameter(ir),particle_mass(ir),&
+    call tmatrix_sql(freq,t,as_ratio,diameter(ir),particle_mass(ir),"snow",&
       scat_mat_sgl,ext_mat_sgl,emis_vec_sgl)
 
      bin_wgt = ndens(ir)*del_d
