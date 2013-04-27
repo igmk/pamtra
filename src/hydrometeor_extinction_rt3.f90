@@ -1,11 +1,12 @@
-subroutine hydrometeor_extinction_rt3(f,frq_str)
+subroutine hydrometeor_extinction_rt3(f)
 
   use kinds
   use vars_atmosphere
-  use nml_params, only: verbose, tmp_path, active, passive, dump_to_file, n_moments
+  use settings, only: tmp_path, active, passive, dump_to_file, n_moments
   use constants
   use mod_io_strings
   use conversions
+  use report_module
 
   implicit none
 
@@ -29,8 +30,6 @@ subroutine hydrometeor_extinction_rt3(f,frq_str)
   real(kind=dbl), dimension(2) :: P11, ang
 
   real(kind=dbl) :: threshold ! threshold value for hydrometeor extinction as mass mixing ratio
-
-  character(6), intent(in) :: frq_str ! from commandline
 
   if (verbose .gt. 1) print*, 'Entering hydrometeor_extinction_rt3'
 

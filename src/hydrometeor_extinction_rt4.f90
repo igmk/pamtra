@@ -1,8 +1,8 @@
-subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
+subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
 
   use kinds
   use vars_atmosphere
-  use nml_params, only:verbose, tmp_path, active, passive, dump_to_file, &
+  use settings, only: tmp_path, active, passive, dump_to_file, &
                        n_moments, quad_type, nummu, EM_snow, EM_grau, &
 		       EM_hail, EM_ice, EM_rain, EM_cloud, as_ratio, &
                        use_rain_db, use_snow_db, data_path, &
@@ -14,6 +14,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
   use tmat_rain_db
   use vars_output, only: radar_spectra, radar_snr, radar_moments,&
 	radar_quality, radar_slope, Ze, Att_hydro !output of the radar simulator for jacobian mode
+        use report_module
 
   implicit none
 
@@ -42,7 +43,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
 
   real(kind=dbl), dimension(6,100) :: coef
 
-  integer :: i1,i2,i12
+
 
   real(kind=dbl), dimension(nstokes,nummu,nstokes,nummu,4) :: rain_scat,snow_scat,&
       ice_scat,graupel_scat,hail_scat,cloud_scat
@@ -55,12 +56,11 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
   real(kind=dbl), dimension(radar_nfft_aliased) :: cloud_spec, rain_spec, snow_spec,&
       ice_spec, graupel_spec, hail_spec, full_spec
 
-  character(6), intent(in) :: frq_str !from commandline
   CHARACTER*64 SCATFILES(nlyr)
-  character*10 ly
-  integer :: l1, j1, l2, j2, j, l,i
+
+
   integer, parameter :: nquad = 16
-  real(kind=dbl), dimension(nquad) :: qua_angle, qua_weights
+
   logical :: didNotChange 
 
   if (verbose .gt. 1) print*, nx, ny, 'Entering hydrometeor_extinction_rt4'
@@ -201,7 +201,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
 	        nc =  q2abs(cwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
        	end if
 
-    	call cloud_ssp(f,qwc,temp(nz),press(nz),hgt(nz),&
+    	call cloud_ssp(f,qwc,temp(nz),press(nz),&
              	maxleg, nc, kextcw(nz), salbcw, backcw(nz),  &
              	nlegencw, legencw, legen2cw, legen3cw, legen4cw, &
 		cloud_scat, cloud_ext, cloud_emis,cloud_spec)
@@ -233,7 +233,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
 	     	qwc = q2abs(iwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(iwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	     end if
-	     call ice_ssp(f,qwc,temp(nz),press(nz),hgt(nz),&
+	     call ice_ssp(f,qwc,temp(nz),press(nz),&
 	             maxleg,nc,kextci(nz), salbci, backci(nz),  &
 	             nlegenci, legenci, legen2ci, legen3ci, legen4ci, &
 			ice_scat, ice_ext, ice_emis,ice_spec)
@@ -269,7 +269,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
             cwc = q2abs(cwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	    nc = q2abs(rwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
          end if
-    	     	call rain_ssp(f,qwc,cwc,temp(nz),press(nz),hgt(nz),&
+    	     	call rain_ssp(f,qwc,cwc,temp(nz),press(nz),&
 	                maxleg,nc,kextrr(nz), salbrr, backrr(nz),  &
 	                nlegenrr, legenrr, legen2rr, legen3rr, legen4rr, &
 			rain_scat, rain_ext, rain_emis,rain_spec)
@@ -301,7 +301,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
 	     	qwc = q2abs(swc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(swc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	  end if
-    	  call snow_ssp(f,qwc,temp(nz),press(nz),hgt(nz),&
+    	  call snow_ssp(f,qwc,temp(nz),press(nz),&
 	                 maxleg,nc,kextsn(nz), salbsn, backsn(nz),  &
 	                 nlegensn, legensn, legen2sn, legen3sn, legen4sn,&
 			 snow_scat, snow_ext, snow_emis,snow_spec)
@@ -333,7 +333,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
 	     	qwc = q2abs(gwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	        nc = q2abs(gwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	     end if
-	      	call grau_ssp(f,qwc,temp(nz),press(nz),hgt(nz),&
+	      	call grau_ssp(f,qwc,temp(nz),press(nz),&
 	             maxleg,nc, kextgr(nz), salbgr, backgr(nz),  &
 	             nlegengr, legengr, legen2gr, legen3gr, legen4gr,&
 		     graupel_scat, graupel_ext, graupel_emis,graupel_spec)
@@ -362,7 +362,7 @@ subroutine hydrometeor_extinction_rt4(f,frq_str,nx,ny,fi)
            hydros_present(nz) = .true.
 	       qwc = q2abs(hwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	       nc = q2abs(hwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
-           call hail_ssp(f,qwc,temp(nz),press(nz),hgt(nz),&
+           call hail_ssp(f,qwc,temp(nz),press(nz),&
                 maxleg,nc,kextha(nz), salbha, backha(nz),  &
                 nlegenha, legenha, legen2ha, legen3ha, legen4ha,&
 		     hail_scat, hail_ext, hail_emis,hail_spec)

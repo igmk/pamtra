@@ -1,14 +1,15 @@
-subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
+subroutine rain_ssp(f,rwc,cwc,t,press,maxleg,nc,kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
      scatter_matrix,extinct_matrix, emis_vector,rain_spec)
 
   use kinds
-  use nml_params, only: verbose, lphase_flag, n_0rainD, SD_rain, &
+  use settings, only: lphase_flag, n_0rainD, SD_rain, &
 	  n_moments,nstokes, EM_rain, use_rain_db, radar_nfft_aliased, radar_mode, &
 	  active
   use constants, only: pi, im
   use double_moments_module
   use conversions
+        use report_module
 
   implicit none
 
@@ -19,7 +20,7 @@ subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
        rwc,&
        cwc,&
        t,&
-       f,press,hgt
+       f,press
 
   real(kind=dbl), intent(in) :: nc
 
@@ -45,7 +46,7 @@ subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
   real(kind=dbl), intent(out), dimension(radar_nfft_aliased) :: rain_spec
 
   if (verbose .gt. 1) print*, 'Entering rain_ssp'
-  if ((n_moments .eq. 1) .and. (EM_rain .eq. "tmatr")) stop "1moment tmatr not tested yet for rain"
+!   if ((n_moments .eq. 1) .and. (EM_rain .eq. "tmatr")) stop "1moment tmatr not tested yet for rain"
 
   call ref_water(0.d0, t-273.15, f, refre, refim, absind, abscof)
   mindex = refre-im*refim
@@ -61,7 +62,7 @@ subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
 
   if (n_moments .eq. 1) then
 
-	if (SD_rain .eq. 'C') then
+	if (SD_rain .eq. 'C' .or. SD_rain .eq. "D") then
 
 	  ! this is for integration over diameters
 
@@ -69,7 +70,7 @@ subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
    	  bd = (pi * den_liq * ad / rwc)**0.25
       alpha = 0.d0 ! exponential SD
       gamma = 1.d0
-    else if (SD_rain .eq. 'M') then
+    else if (SD_rain .eq. 'M' .or. SD_rain .eq. "N") then
       b_rain = 3.
       a_mrain = 524.
 	  bd = (rwc/(a_mrain*1.d7*exp(gammln(b_rain+1.))))**(1./(-1.-b_rain))
@@ -90,7 +91,7 @@ subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
      stop 'Number of moments is not specified or 2-moments combined with non-gamma distribution'
   end if
 
-
+print*, dia1, dia2
   if ((EM_rain .eq. 'miera')) then
     nbins_spec = nbins+1 !Mie routine uses nbins+1 bins!
   else
@@ -109,14 +110,15 @@ subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
       extinct_matrix= 0.d0
       emis_vector= 0.d0
   else if (EM_rain .eq. "tmatr") then
-    if (use_rain_db) then
+!     if (use_rain_db) the
+
       call tmatrix_rain(f, rwc, t, nc, &
 	    ad, bd, alpha, gamma, a_mrain, b_rain, SD_rain, nbins,&
 	    scatter_matrix,extinct_matrix, emis_vector,&
 	    diameter_spec, back_spec)
-    else
-      stop "tmatr without database not implemented"
-    end if
+!     else
+!       stop "tmatr without database not implemented"
+!     end if
 
     !back is for NOT polarized radiation only, if you want to simulate a polarized Radar, use the full scattering matrix!
     back = scatter_matrix(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
@@ -135,7 +137,7 @@ subroutine rain_ssp(f,rwc,cwc,t,press,hgt,maxleg,nc,kext, salb, back,  &
   end if
   if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
     particle_type = "rain"
-    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,hgt,f,&
+    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,f,&
       particle_type,-1.d0,-1.d0,-1.d0,-1.d0,rain_spec)
   else
     rain_spec(:)=0.d0

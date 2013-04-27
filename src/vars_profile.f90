@@ -62,7 +62,8 @@ contains
 
     subroutine allocate_profiles
 
-        use nml_params, only: verbose, n_moments
+        use settings, only: n_moments
+        use report_module
 
         implicit none
 
@@ -100,15 +101,24 @@ contains
 
     end subroutine allocate_profiles
 
-    subroutine vars_profile_read_profile
+    subroutine vars_profile_read_profile(errorstatus)
 
-        use nml_params
-        use file_mod, only: input_file, nc_out_file
+        use settings, only: verbose, input_path, input_file, &
+        output_path, nc_out_file, file_desc, n_moments, freq_str
 
-        integer :: i,j,k,istat,alloc_status
-        integer :: ngridx, ngridy
+        use report_module
 
-        if (verbose .gt. 0) print *,"opening: ",input_file
+        integer :: i,j,k
+
+        ! Error handling
+
+        integer(kind=long),intent(out) :: errorstatus
+        integer(kind=long) :: err = 0
+        character(len=200) :: msg
+        character(len=25) :: nameOfRoutine = 'vars_profile_read_profile'
+
+
+        if (verbose >= 1) print *,"opening: ",input_file
 
         !
         !     read atmospheric profiles
@@ -132,19 +142,23 @@ contains
 
 
         open(UNIT=14, FILE=input_path(:len_trim(input_path))//"/"//input_file(:len_trim(input_file)),&
-        STATUS='OLD', form='formatted',iostat=istat)
+        STATUS='OLD', form='formatted',iostat=err)
 
-        if (istat .ne. 0) then
-            call error_msg(input_file,0,0)
-            stop "Read error 1: Cannot open file"
+        if (err /= 0) then
+            msg = "Read error 1: Cannot open file "//input_path(:len_trim(input_path))//"/"//input_file(:len_trim(input_file))
+            call report(err,msg,nameOfRoutine)
+            errorstatus = err
+            return
         end if
 
-        read(14,*,iostat=istat) profiles_year, profiles_month, profiles_day, profiles_time, &
+        read(14,*,iostat=err) profiles_year, profiles_month, profiles_day, profiles_time, &
         profiles_ngridx, profiles_ngridy, profiles_nlyr, profiles_deltax, profiles_deltay
 
-        if (istat .ne. 0) then
-            call error_msg(input_file,0,0)
-            stop "Read error 2: Cannot read first line of file"
+        if (err /= 0) then
+            msg = "Read error 2: Cannot read first line of file "//trim(input_file)
+            call report(err,msg,nameOfRoutine)
+            errorstatus = err
+            return
         end if
 
         call allocate_profiles!(profiles_ngridx,profiles_ngridy,profiles_nlyr)
@@ -152,24 +166,29 @@ contains
         ! $## think about order of reading
         do i = 1, profiles_ngridx
             do j = 1, profiles_ngridy
-                read(14,*,iostat=istat) profiles(i,j)%isamp, profiles(i,j)%jsamp !
-                if (istat .ne. 0) then
-                    call error_msg(input_file,i,j)
-                    stop "Read error 3: Cannot read profile index i,j"
+                read(14,*,iostat=err) profiles(i,j)%isamp, profiles(i,j)%jsamp !
+                if (err /= 0) then
+                    msg = "Read error 3: Cannot read profile index i,j in"//trim(input_file)
+                    call report(err,msg,nameOfRoutine)
+                    errorstatus = err
+                    return
                 end if
-                read(14,*,iostat=istat) &
+                read(14,*,iostat=err) &
                 profiles(i,j)%latitude, &         ! degree
                 profiles(i,j)%longitude,&         ! degree
                 profiles(i,j)%land_fraction,&     !
                 profiles(i,j)%wind_10u,&          ! m/s
                 profiles(i,j)%wind_10v            ! m/s
-                if (istat .ne. 0) then
-                    call error_msg(input_file,i,j)
-                    stop "Read error 4: Cannot read profile lat/lon/lfrac/wind"
+                if (err /= 0) then
+                    msg = "Read error 4: Cannot read profile lat/lon/lfrac/wind in"//trim(input_file)
+                    call report(err,msg,nameOfRoutine)
+                    errorstatus = err
+                    return
                 end if
+
                 ! integrated quantities
                 if (n_moments .eq. 1) then
-                    read(14,*,iostat=istat) &
+                    read(14,*,iostat=err) &
                     profiles(i,j)%iwv,&               ! kg/m^2
                     profiles(i,j)%cwp,&               ! kg/m^2
                     profiles(i,j)%iwp,&               ! kg/m^2
@@ -179,7 +198,7 @@ contains
                     profiles(i,j)%hwp = 0.
                 end if
                 if (n_moments .eq. 2) then
-                    read(14,*,iostat=istat) &
+                    read(14,*,iostat=err) &
                     profiles(i,j)%iwv,&               ! kg/m^2
                     profiles(i,j)%cwp,&               ! kg/m^2
                     profiles(i,j)%iwp,&               ! kg/m^2
@@ -188,20 +207,27 @@ contains
                     profiles(i,j)%gwp,&               ! kg/m^2
                     profiles(i,j)%hwp                 ! kg/m^2
                 end if
-                if (istat .ne. 0) then
-                    call error_msg(input_file,i,j)
-                    stop "Read error 5: Cannot read profile integrated quantities"
+                if (err /= 0) then
+                    msg = "Read error 5: Cannot read profile integrated quantities in"//trim(input_file)
+                    call report(err,msg,nameOfRoutine)
+                    errorstatus = err
+                    return
                 end if
                 ! surface values
-                read(14,*,iostat=istat) &
+                read(14,*,iostat=err) &
                 profiles(i,j)%hgt_lev(0),&
                 profiles(i,j)%press_lev(0),&
                 profiles(i,j)%temp_lev(0),&
                 profiles(i,j)%relhum_lev(0)
-                if (istat .ne. 0) call error_msg(input_file, i, j)
+                if (err /= 0) then
+                    write(msg,'(a,i3,x,i3)') "Error in reading profile ",i,j
+                    call report(err,msg,nameOfRoutine)
+                    errorstatus = err
+                    return
+                end if
                 do k = 1, profiles_nlyr
                     if (n_moments .eq. 1) then
-                        read(14,*,iostat=istat) &
+                        read(14,*,iostat=err) &
                      
                         profiles(i,j)%hgt_lev(k), &             ! m
                         profiles(i,j)%press_lev(k), &           ! Pa
@@ -214,7 +240,7 @@ contains
                         profiles(i,j)%graupel_q(k)              ! kg/kg
                     end if
                     if (n_moments .eq. 2) then
-                        read(14,*,iostat=istat) &
+                        read(14,*,iostat=err) &
                         profiles(i,j)%hgt_lev(k), &             ! m
                         profiles(i,j)%press_lev(k), &           ! Pa
                         profiles(i,j)%temp_lev(k), &            ! K
@@ -232,10 +258,11 @@ contains
                         profiles(i,j)%graupel_n(k), &           ! #/kg
                         profiles(i,j)%hail_n(k)                 ! #/kg
                     end if
-                    if (istat .ne. 0) then
-                        call error_msg(input_file,i,j,k)
-                        print *,"Error at layer", k
-                        stop "Read error 6: Cannot read profile values"
+                    if (err /= 0) then
+                        write(msg, '(a,i3)') "Read error 6: Cannot read profile values in layer ", k
+                        call report(err,msg,nameOfRoutine)
+                        errorstatus = err
+                        return
                     end if
                 end do
             end do
@@ -245,7 +272,7 @@ contains
         nc_out_file = trim(output_path)//"/"//trim(input_file(1:len_trim(input_file)-4))//&
         trim(freq_str)//trim(file_desc)//'.nc'
 
-        if (verbose .gt. 0) print*, 'profile reading done!'
+        if (verbose >= 1) print*, 'profile reading done!'
 
         return
 
@@ -253,11 +280,11 @@ contains
 
     subroutine vars_profile_read_cosmo
 
-        use nml_params, only: verbose, crm_case, n_moments, freq_str, output_path, file_desc
-        use file_mod
+        use settings, only: crm_case, n_moments, freq_str, output_path, file_desc, nc_out_file
         use conversions
         use cosmo_netcdf
         use double_moments_module
+        use report_module
 
         implicit none
 
@@ -359,7 +386,7 @@ contains
             end do
         end do
 
-!call write_profile
+        !call write_profile
         date_str = yyyy//mm//dd//hhmm
         write(grid_str,'(I4.4,I4.4,I4.4,I4.4)') coords
         nc_out_file = trim(output_path)//"/"//'cosmo_'//date_str//'_'//grid_str//&

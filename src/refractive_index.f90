@@ -1,359 +1,339 @@
-      SUBROUTINE CAL_REFRACTIVE_INDEX(PHASE, TEMPR, FRQ, PARTICLE_SIZE,&
-          AS_RATIO, PARTICLE_MASS, AXI, REF)
+subroutine refractive_index(type, t, f, particle_size, as_ratio, particle_mass, ref)
 
-      IMPLICIT NONE
-      REAL*8 TEMPR, FRQ, FREQ, PARTICLE_SIZE, AS_RATIO, AXI, MASS
-      REAL*8 PARTICLE_MASS
-      COMPLEX*16 REF
-      REAL*8 SAL
-! INPUT:
-!  TEMPR: TEMPERAUTRE, IN K
-!  FRQ: FREQUENCY, IN Hz,
-!  FREQ: in REFRECTIVE INDEX CALCULATION, CONVERT FREQ TO GHz
-!  PARTICLE_SIZE: MAXIMUM DIMENSION OF A SINGLE PARTICLE, IN METER
-!  AS_RATIO: ASPECT RATIO, MINIMUN_DIMENSION/MAXIMUM_DIMENSION
-!  MASS: MASS OF A SINGLE PARTICLE, IN gram
-! OUTPUT:
-!  AXI: EQUIVALENT VOLUME SPHERE RADIUS, IN METER
-!  REF: REFRACTIVE INDEX OF SNOW/ICE
+    use kinds
+    use constants, only: pi
+
+    implicit none
+
+    real(kind=dbl) :: t, f,particle_size, as_ratio, volume
+    real(kind=dbl) :: particle_mass, min_dim
+    real(kind=dbl) ::  sal, mix_de
+    complex(kind=dbl) :: eps_ice, eps_water, eps_mix
+    complex(kind=ext) ::  ref
+    ! input:
+    !  tempr: temperautre, in k
+    !  frq: frequency, in hz,
+    !  freq: in refrective index calculation, convert freq to ghz
+    !  particle_size: maximum dimension of a single particle, in meter
+    !  as_ratio: aspect ratio, minimun_dimension/maximum_dimension
+    !  mass: mass of a single particle, in gram
+    ! output:
+    !  axi: equivalent volume sphere radius, in meter
+    !  ref: refractive index of snow/ice
   
-      CHARACTER*1 PHASE
-      IF(PHASE.EQ.'S'.OR.PHASE.EQ.'s')THEN
-	CALL REFSNOW(TEMPR, FRQ, PARTICLE_SIZE,&
-          AS_RATIO, PARTICLE_MASS, AXI, REF)
-!          print*, TEMPR, FRQ, PARTICLE_SIZE,AS_RATIO, PARTICLE_MASS, AXI, REF
-      ELSEIF(PHASE.EQ.'L'.OR.PHASE.EQ.'l')THEN
-        SAL = 0
-        CALL REFWATER(SAL,FRQ,TEMPR,REF)
-        AXI = PARTICLE_SIZE/2.
-!	WRITE(*,*)'REFRACTIVE_INDEX.f','AXI = ',AXI
-      ENDIF
+    character(1) :: type
 
-      RETURN
-      END
+    !      if(phase.eq.'S'.or.phase.eq.'s')then
+    !	    call refsnow(tempr, frq, particle_size,as_ratio, particle_mass, ref)
+    !          print*, tempr, frq, particle_size,as_ratio, particle_mass, axi, ref
+    !      elseif(phase.eq.'L'.or. phase.eq.'l'.or.phase .eq. 'r') then
+    !        sal = 0
+    !        call refwater(sal,frq,tempr,ref)
+    !      endif
+
+    if (type .eq. 'c' .or. type .eq. 'r') then
+        sal = 0._dbl
+        ref = sqrt(eps_water(sal,t-273.15_dbl,f))
+    else if (type .eq. 'i') then
+        ref = sqrt(eps_ice(t,f))
+    else if (type .eq. 's' .or. type .eq. 'g' .or. type .eq. 'h') then
+        ! the minimum dimension of oblates, particle_size in meter
+        min_dim = particle_size*as_ratio
+        ! particle volume,
+        volume= 4.0_dbl*pi/3.0_dbl*(particle_size/2.0_dbl)**2*(min_dim/2.0_dbl)
+        mix_de = particle_mass/volume
+!        if (mix_de .lt. 100._dbl) mix_de = 100._dbl
+        print*, particle_mass, volume, mix_de
+        ref = sqrt(eps_mix((1._dbl,0._dbl),eps_ice(t,f),mix_de))
+    else
+        print*, 'No appropriate dielectric model found!'
+        stop
+    end if
+
+    return
+end subroutine refractive_index
+
+! xinxins version
+subroutine cal_refractive_index(phase, tempr, frq, particle_size,&
+as_ratio, particle_mass, axi, ref)
+
+    use kinds
+
+    implicit none
+
+    real(kind=dbl) :: tempr, frq, freq, particle_size, as_ratio, axi, mass
+    real(kind=dbl) :: particle_mass, sal
+    complex(kind=ext) :: ref
+    character(1) :: phase
+
+    ! input:
+    !  tempr: temperautre, in k
+    !  frq: frequency, in hz,
+    !  freq: in refrective index calculation, convert freq to ghz
+    !  particle_size: maximum dimension of a single particle, in meter
+    !  as_ratio: aspect ratio, minimun_dimension/maximum_dimension
+    !  mass: mass of a single particle, in gram
+    ! output:
+    !  axi: equivalent volume sphere radius, in meter
+    !  ref: refractive index of snow/ice
+
+    if(phase.eq.'S'.or.phase.eq.'s')then
+        call refsnow(tempr, frq, particle_size,as_ratio, particle_mass, axi, ref)
+    else if(phase.eq.'L'.or. phase.eq.'l'.or.phase .eq. 'r') then
+        sal = 0._dbl
+        call refwater(sal,frq,tempr,ref)
+        axi = particle_size/2._dbl
+    !   write(*,*)'refractive_index.f','axi = ',axi
+    end if
+
+    return
+end subroutine cal_refractive_index
 
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-!     SNOW REFRACTIVE INDEX
+!     snow refractive index
 
-      SUBROUTINE REFSNOW(TEMPR, FRQ, PARTICLE_SIZE,&
-          AS_RATIO, PARTICLE_MASS, AXI, SNOW_REF)
-      
-      IMPLICIT NONE
+subroutine refsnow(tempr, frq, particle_size, as_ratio, particle_mass, axi, snow_ref)
 
-      REAL*8 TEMPR, FRQ,FREQ, PARTICLE_SIZE, AS_RATIO, AXI, MASS
-      REAL*8 PARTICLE_MASS
-! INPUT:
-!  TEMPR: TEMPERAUTRE, IN K
-!  FRQ: FREQUENCY, IN Hz,
-!  FREQ: in REFRECTIVE INDEX CALCULATION, CONVERT FREQ TO GHz
-!  PARTICLE_SIZE: MAXIMUM DIMENSION OF A SINGLE PARTICLE, IN METER
-!  AS_RATIO: ASPECT RATIO, MINIMUN_DIMENSION/MAXIMUM_DIMENSION
-!  MASS: MASS OF A SINGLE PARTICLE, IN gram
-! OUTPUT:
-!  AXI: EQUIVALENT VOLUME SPHERE RADIUS, IN METER
-!  SNOW_REF: REFRACTIVE INDEX OF SNOW
-  
-! INTERNAL VARIABLES
-      REAL*8 MIN_DIM, MAX_DIM, VOLM
-      REAL*8 AIR_DENS, ICE_DENS
-      REAL*8 REALP, ALPHA1, B1, B, B2, BETAM, DELTA_BETA, BETA1, IMAGP
-      COMPLEX*16 ICE_REF, SNOW_REF
-      CHARACTER*1 PHASE
-! MIN_DIM: MINIMUM DIMENSION, IN M
-! MAX_DIM: MAXIMUM DIMENSION, IN M
-! VOLM: PARTICLE VOLUME, IN CM3
-! REALP,...IMAGP, TEMP VALUE FOR SNOW PERMITTIVITY CALCULATION
-! AIR_DENS: THE DENSITY OF AIR, g/cm3 (MIXING ICE WITH AIR -- SNOW)
-! ICE_DENS: THE DENSITY OF ICE, g/cm3
-!      WRITE(*,*)PARTICLE_SIZE, AS_RATIO
-      AIR_DENS = 1.25E-3
-      ICE_DENS = 0.917
-      FREQ = FRQ/1E9
-      MASS = PARTICLE_MASS 
+    use kinds
+    use constants, only: pi
+    implicit none
 
-!      WRITE(*,*)MASS
-! THE MINIMUM DIMENSION OF OBLATES, cm. PARTICLE_SIZE in meter
-      MIN_DIM = PARTICLE_SIZE*AS_RATIO*1.0E2
-! THE MAXIMUM DIMENSION OF OBLATES, cm. PARTICLE_SIZE in meter
-      MAX_DIM = PARTICLE_SIZE*1.0E2
-! PARTICLE VOLUME,
-      VOLM = 4.0E0*3.1415926/3.0E0*(MAX_DIM/2.0)*(MAX_DIM/2.0)&
-          *(MIN_DIM/2.0)
-! EQUIVALENT-VOLUME SPHERE'S RADIUS, in meter
-      AXI = 0.5*(PARTICLE_SIZE**3.0*AS_RATIO)**(1.0E0/3.0E0)
-!====================================================================
-!      WRITE(*,*)MAX_DIM, MIN_DIM,AS_RATIO
+    real(kind=dbl) :: tempr, frq, freq, particle_size, as_ratio, axi, mass
+    real(kind=dbl) :: particle_mass
+    ! input:
+    !  tempr: temperautre, in k
+    !  frq: frequency, in hz,
+    !  freq: in refrective index calculation, convert freq to ghz
+    !  particle_size: maximum dimension of a single particle, in meter
+    !  as_ratio: aspect ratio, minimun_dimension/maximum_dimension
+    !  mass: mass of a single particle, in gram
+    ! output:
+    !  axi: equivalent volume sphere radius, in meter
+    !  snow_ref: refractive index of snow
 
-!=========== calculate refractive index of ice
-!=== real part of ice dielectric
-      REALP = 3.1884E0+9.1*1E-4*(TEMPR-273.0E0)
-!=== imaginary part of ice dielectric%%%%%%%%
-      alpha1 = (0.00504+0.0062*(300D0/TEMPR-1E0))&
-     	*exp(-22.1*(300E0/TEMPR-1.0E0))
-      B1 = 0.0207E0
-      b = 335.0E0
-      B2 = 1.16*1.0E-11
-      betam = B1/TEMPR*exp(b/TEMPR)/(exp(b/TEMPR)-1E0)**2D0+B2*FREQ*FREQ
-      delta_beta = exp(-9.963E0+0.0372E0*(TEMPR-273.16E0))
-      beta1 = betam+delta_beta
-      IMAGP = alpha1/FREQ+beta1*FREQ
+    ! internal variables
+    real(kind=dbl) :: min_dim, max_dim, volm
+    real(kind=dbl) :: air_dens, ice_dens
+    real(kind=dbl) :: realp, alpha1, b1, b, b2, betam, delta_beta, beta1, imagp
+    complex(kind=ext) :: ice_ref, snow_ref
+    character(1) :: phase
 
-      ICE_REF = REALP*(1.0,0)+(alpha1/FREQ+beta1*FREQ)*(0,1E0)
-      ICE_REF = SQRT(ICE_REF)
+    ! min_dim: minimum dimension, in m
+    ! max_dim: maximum dimension, in m
+    ! volm: particle volume, in cm3
+    ! realp,...imagp, temp value for snow permittivity calculation
+    ! air_dens: the density of air, g/cm3 (mixing ice with air -- snow)
+    ! ice_dens: the density of ice, g/cm3
+    !      write(*,*)particle_size, as_ratio
+    air_dens = 1.25e-3_dbl
+    ice_dens = 0.917_dbl
+    freq = frq/1.e9_dbl
+    mass = particle_mass
+    !      write(*,*)mass
+    ! the minimum dimension of oblates, cm. particle_size in meter
+    min_dim = particle_size*as_ratio*1.0e2_dbl
+    ! the maximum dimension of oblates, cm. particle_size in meter
+    max_dim = particle_size*1.0e2_dbl
+    ! particle volume,
+    volm = 4.0_dbl*pi/3.0_dbl*(max_dim/2.0_dbl)*(max_dim/2.0_dbl)*(min_dim/2.0_dbl)
 
-!======================================================================
-!        RELATIVE VOLUME OF ICE IN PARTICLE
-      SNOW_REF = (2*(AIR_DENS-MASS/VOLM)/(AIR_DENS-ICE_DENS)&
-     	     *ICE_REF*ICE_REF-2*(AIR_DENS-MASS/VOLM)/(AIR_DENS-ICE_DENS)&
-            +ICE_REF*ICE_REF+2)/&
-            (ICE_REF*ICE_REF+2-(AIR_DENS-MASS/VOLM)/(AIR_DENS-ICE_DENS)&
-            *ICE_REF*ICE_REF+(AIR_DENS-MASS/VOLM)/(AIR_DENS-ICE_DENS))
-      SNOW_REF = SQRT(SNOW_REF)
-!      WRITE(*,*)AIR_DENS, MASS, VOLM, ICE_DENS, ICE_REF
-!      WRITE(*,*)'ICE_REF',ICE_REF
-!      WRITE(*,*)SNOW_REF
-!**************************************************************************
+    ! equivalent-volume sphere's radius, in meter
+    axi = 0.5_dbl*(particle_size**3.0_dbl*as_ratio)**(1.0_dbl/3.0_dbl)
 
-      RETURN
-      END
+    !====================================================================
+    !      write(*,*)max_dim, min_dim,as_ratio
 
-!     WATER REFRACTIVE INDEX
-      SUBROUTINE REFWATER(SAL1,FREQ,TEMPR,REF)
-      IMPLICIT NONE
-      REAL*8 SAL1, FREQ, Temp, MRR, MRI, FR, SAL,TEMPR
-      COMPLEX*16 first_term,second_term,third_term,EPS,NN,TERM1,TERM2
-      REAL*8 a_1,a_2,a_3,a_4,a_5,a_6,a_7,a_8
-      REAL*8 a_9,a_10,a_11,a_12,a_13,a_14,a_15,a_16,a_17,a_18
-      REAL*8 EPS_S, EPS_1, tau_1, tau_2, EPS_INF
-      REAL*8 c_alpha_0, d_alpha_0, alpha_0, d_P, P, sigma_35
-      REAL*8 SIGMA,PI
-      COMPLEX*16 REF
-      REAL*8 Q,C_P,ALPHA_1
-            
-      SAL = SAL1 * 1E-3
-!      write(*,*)freq,sal
-!*** Check the input ranges:
-! IF FREQ GT 1d12 AND verbose EQ 1 THEN print, '!!!Frequency range: 0-1000 GHz!!!, EXTRAPOLATION'
-! IF T GT 303.15 OR T LT 273.15 AND verbose EQ 1 THEN print, '!!!Temperature range: 0-30 degC!!!, EXTRAPOLATION'
-! IF SAL GT 40. OR SAL LT 0. AND verbose EQ 1 THEN print, '!!!Salinity range: 0-40 ppt!!!, EXTRAPOLATION'
+    !=========== calculate refractive index of ice
+    !=== real part of ice dielectric
+    realp = 3.1884_dbl+9.1_dbl*1.e-4_dbl*(tempr-273.0_dbl)
+    !=== imaginary part of ice dielectric%%%%%%%%
+    alpha1 = (0.00504_dbl+0.0062_dbl*(300._dbl/tempr-1._dbl))*exp(-22.1_dbl*(300._dbl/tempr-1._dbl))
+    b1 = 0.0207_dbl
+    b = 335.0_dbl
+    b2 = 1.16_dbl*1.0e-11_dbl
+    betam = b1/tempr*exp(b/tempr)/(exp(b/tempr)-1._dbl)**2+b2*freq*freq
+    delta_beta = exp(-9.963_dbl+0.0372_dbl*(tempr-273.16_dbl))
+    beta1 = betam+delta_beta
+    imagp = alpha1/freq+beta1*freq
 
-!*** Convert Temperature from Kelvin to degree Celsius
-      Temp = TEMPR - 273.15 
-!;--------------------------------------------------------------------------------------------------------
-!;COEFFS AND CALCULATION OF eps(FREQ, Temp, SAL) according to (5.21, p.445)
-!;--------------------------------------------------------------------------------------------------------
+    ice_ref = realp*(1._ext,0._ext)+(alpha1/freq+beta1*freq)*(0._ext,1._ext)
+    ice_ref = sqrt(ice_ref)
 
-!;*** Coefficients a_i (Table 5.5 or p. 454):
+    !======================================================================
+    !        relative volume of ice in particle
+    snow_ref = (2._ext*(air_dens-mass/volm)/(air_dens-ice_dens)&
+    *ice_ref*ice_ref-2*(air_dens-mass/volm)/(air_dens-ice_dens)&
+    +ice_ref*ice_ref+2)/&
+    (ice_ref*ice_ref+2-(air_dens-mass/volm)/(air_dens-ice_dens)&
+    *ice_ref*ice_ref+(air_dens-mass/volm)/(air_dens-ice_dens))
+    snow_ref = sqrt(snow_ref)
+    !      write(*,*)air_dens, mass, volm, ice_dens, ice_ref
+    !      write(*,*)'ice_ref',ice_ref
+    !      write(*,*)snow_ref
+    !**************************************************************************
 
-      a_1  =  0.46606917e-2
-      a_2  = -0.26087876e-4
-      a_3  = -0.63926782e-5
-      a_4  =  0.63000075e1
-      a_5  =  0.26242021e-2
-      a_6  = -0.42984155e-2
-      a_7  =  0.34414691e-4
-      a_8  =  0.17667420e-3
-      a_9  = -0.20491560e-6
-      a_10 =  0.58366888e3
-      a_11 =  0.12634992e3
-      a_12 =  0.69227972e-4
-      a_13 =  0.38957681e-6
-      a_14 =  0.30742330e3
-      a_15 =  0.12634992e3
-      a_16 =  0.37245044e1
-      a_17 =  0.92609781e-2
-      a_18 = -0.26093754e-1
+    return
+end
+
+!     water refractive index
+subroutine refwater(sal1,freq,tempr,ref)
+
+    use kinds
+    use constants, only: pi
+
+    implicit none
+
+    real(kind=dbl) :: sal1, freq, temp, mrr, mri, fr, sal,tempr
+    complex(kind=ext) :: first_term,second_term,third_term,eps,nn,term1,term2
+    real(kind=dbl) :: a_1,a_2,a_3,a_4,a_5,a_6,a_7,a_8
+    real(kind=dbl) :: a_9,a_10,a_11,a_12,a_13,a_14,a_15,a_16,a_17,a_18
+    real(kind=dbl) :: eps_s, eps_1, tau_1, tau_2, eps_inf
+    real(kind=dbl) :: c_alpha_0, d_alpha_0, alpha_0, d_p, p, sigma_35
+    real(kind=dbl) :: sigma
+    complex(kind=ext) :: ref
+    real(kind=dbl) :: q,c_p,alpha_1
+
+    sal = sal1 * 1.e-3_dbl
+    !      write(*,*)freq,sal
+    !*** check the input ranges:
+    ! if freq gt 1d12 and verbose eq 1 then print, '!!!frequency range: 0-1000 ghz!!!, extrapolation'
+    ! if t gt 303.15 or t lt 273.15 and verbose eq 1 then print, '!!!temperature range: 0-30 degc!!!, extrapolation'
+    ! if sal gt 40. or sal lt 0. and verbose eq 1 then print, '!!!salinity range: 0-40 ppt!!!, extrapolation'
+
+    !*** convert temperature from kelvin to degree celsius
+    temp = tempr - 273.15_dbl
+    !;--------------------------------------------------------------------------------------------------------
+    !;coeffs and calculation of eps(freq, temp, sal) according to (5.21, p.445)
+    !;--------------------------------------------------------------------------------------------------------
+
+    !;*** coefficients a_i (table 5.5 or p. 454):
+
+    a_1  =  0.46606917e-2_dbl
+    a_2  = -0.26087876e-4_dbl
+    a_3  = -0.63926782e-5_dbl
+    a_4  =  0.63000075e1_dbl
+    a_5  =  0.26242021e-2_dbl
+    a_6  = -0.42984155e-2_dbl
+    a_7  =  0.34414691e-4_dbl
+    a_8  =  0.17667420e-3_dbl
+    a_9  = -0.20491560e-6_dbl
+    a_10 =  0.58366888e3_dbl
+    a_11 =  0.12634992e3
+    a_12 =  0.69227972e-4_dbl
+    a_13 =  0.38957681e-6_dbl
+    a_14 =  0.30742330e3_dbl
+    a_15 =  0.12634992e3_dbl
+    a_16 =  0.37245044e1_dbl
+    a_17 =  0.92609781e-2_dbl
+    a_18 = -0.26093754e-1_dbl
 
 
-!;*** Calculate parameter functions (5.24)-(5.28), p.447
+    !;*** calculate parameter functions (5.24)-(5.28), p.447
 
-      EPS_S   = 87.85306 * EXP(-0.00456992 * Temp - a_1*SAL - &
-      		a_2*SAL*SAL - a_3*SAL*Temp)
-      EPS_1   = a_4 * EXP( -a_5*Temp - a_6*SAL - a_7*SAL*Temp)
-      tau_1   = (a_8 + a_9*SAL) * EXP( a_10 / (Temp + a_11)) * 1e-9
-      tau_2   = (a_12 + a_13*SAL) * EXP( a_14 / (Temp + a_15)) * 1e-9
-      EPS_INF = a_16 + a_17*Temp + a_18*SAL
-!      write(*,*)eps_s,eps_1,tau_1,tau_2,eps_inf
+    eps_s   = 87.85306_dbl * exp(-0.00456992_dbl * temp - a_1*sal - &
+    a_2*sal*sal - a_3*sal*temp)
+    eps_1   = a_4 * exp( -a_5*temp - a_6*sal - a_7*sal*temp)
+    tau_1   = (a_8 + a_9*sal) * exp( a_10 / (temp + a_11)) * 1e-9_dbl
+    tau_2   = (a_12 + a_13*sal) * exp( a_14 / (temp + a_15)) * 1e-9_dbl
+    eps_inf = a_16 + a_17*temp + a_18*sal
+    !      write(*,*)eps_s,eps_1,tau_1,tau_2,eps_inf
 
-!;*** Calculate seawater conductivity (5.20), p.437
+    !;*** calculate seawater conductivity (5.20), p.437
 
-      IF (SAL.GT.0.) THEN 
-	c_alpha_0 =  (6.9431 + 3.2841 * SAL - 0.099486 * SAL**2.)
-	d_alpha_0 =  (84.85 + 69.024 * SAL + SAL**2.)
-	alpha_0   =  c_alpha_0 / d_alpha_0 
-	alpha_1   = 49.843 - 0.2276 * SAL + 0.00198 * SAL**2.
-	Q = 1.000 + alpha_0*(Temp - 15.0) / (Temp + alpha_1)
-	c_P = (37.5109 + 5.45216 * SAL + 0.014409 * SAL**2.)
-	d_P = (1004.75 + 182.283 * SAL + SAL**2.)
-	P = SAL * c_P / d_P
-	sigma_35  = 2.903602 + 8.607d-2 * Temp+4.738817d-4*Temp**2. &
-      		-2.991d-6 * Temp**3. + 4.3041d-9 * Temp**4.
-        SIGMA = sigma_35 * P * Q
-      ELSE
-	SIGMA = 0
-      ENDIF
-!;just reduce PC time.... calculation would give the same!
+    if (sal.gt.0.) then
+        c_alpha_0 =  (6.9431_dbl + 3.2841_dbl * sal - 0.099486_dbl * sal**2.)
+        d_alpha_0 =  (84.85_dbl + 69.024_dbl * sal + sal**2.)
+        alpha_0   =  c_alpha_0 / d_alpha_0
+        alpha_1   = 49.843_dbl - 0.2276_dbl * sal + 0.00198_dbl * sal**2.
+        q = 1.000_dbl + alpha_0*(temp - 15.0_dbl) / (temp + alpha_1)
+        c_p = (37.5109_dbl + 5.45216_dbl * sal + 0.014409_dbl * sal**2.)
+        d_p = (1004.75_dbl + 182.283_dbl * sal + sal**2.)
+        p = sal * c_p / d_p
+        sigma_35  = 2.903602_dbl + 8.607e-2_dbl * temp+4.738817e-4_dbl*temp**2. &
+        -2.991e-6_dbl * temp**3. + 4.3041e-9_dbl * temp**4.
+        sigma = sigma_35 * p * q
+    else
+        sigma = 0._dbl
+    endif
+    !;just reduce pc time.... calculation would give the same!
 
-      PI = ACOS(-1.0)
-!;*** Finally apply the interpolation formula (5.21)
-      TERM1 = 1.*(1.0D0,0) -2.*PI*FREQ*tau_1*(0,1.0D0)
-      first_term  = (EPS_S - EPS_1) /  TERM1
-      TERM2 = 1.*(1.0D0,0) -2.*PI*FREQ*tau_2*(0,1.0D0)
-      second_term = (EPS_1 - EPS_INF) / TERM2
-!;third_term  = DCOMPLEX(EPS_INF, (17.9751d * SIGMA / FREQ ))
-      third_term = EPS_INF
+    !;*** finally apply the interpolation formula (5.21)
+    term1 = 1.*(1.0_ext,0._ext) -2._ext*pi*freq*tau_1*(0._ext,1.0_ext)
+    first_term  = (eps_s - eps_1) /  term1
+    term2 = 1._ext*(1.0_ext,0._ext) -2._ext*pi*freq*tau_2*(0._ext,1._ext)
+    second_term = (eps_1 - eps_inf) / term2
+    !;third_term  = dcomplex(eps_inf, (17.9751d * sigma / freq ))
+    third_term = eps_inf
 
-      EPS = first_term + second_term + third_term
-!      write(*,*)  term1,term2
-!      write(*,*)  first_term,second_term,third_term
-!;calculate refractivity and mass/volume absorption coefficient
-!;frequency in Hz, lwc in g/m³
-!      RE = (EPS-1)/(EPS+2)
-!      MASS_ABSCOF = 6.d*3.1415926*IMAG(RE)*FREQ*1d-3/cl
-!      VOL_ABSCOF = MASS_ABSCOF * LWC
-!;*** Convert to refractive index
+    eps = first_term + second_term + third_term
+    !      write(*,*)  term1,term2
+    !      write(*,*)  first_term,second_term,third_term
+    !;calculate refractivity and mass/volume absorption coefficient
+    !;frequency in hz, lwc in g/m³
+    !      re = (eps-1)/(eps+2)
+    !      mass_abscof = 6.d*3.1415926*imag(re)*freq*1d-3/cl
+    !      vol_abscof = mass_abscof * lwc
+    !;*** convert to refractive index
 
-      NN  = SQRT(EPS)
-      MRR = REAL(NN)
-      MRI = IMAG(NN)
-      REF = NN
+    nn  = sqrt(eps)
+    mrr = real(nn)
+    mri = imag(nn)
+    ref = nn
 
-      IF(MRI.LT.0)REF=CONJG(NN)      
+    if(mri.lt.0)ref=conjg(nn)
 
-      RETURN
-      END
+    return
+end
 
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%5
 
 
 
 
-      SUBROUTINE VECTOR_SUM(DIM1, VECTOR, SUM1)
-            
-      INTEGER DIM1
-      REAL*8 SUM1, VECTOR(1:DIM1)
-      INTEGER I
-      SUM1 = 0    ! initialize the value
-      DO I = 1, DIM1, 1
-         SUM1 = SUM1 + VECTOR(I)
-      ENDDO
+subroutine vector_sum(dim1, vector, sum1)
 
-      RETURN
-      END
+    integer dim1
+    real*8 sum1, vector(1:dim1)
+    integer i
+    sum1 = 0    ! initialize the value
+    do i = 1, dim1, 1
+        sum1 = sum1 + vector(i)
+    enddo
 
-      SUBROUTINE GAUSS_DISTRIBUTION(BETA, CANTING_NUM, CANTING_STD, &
-     	CANTING_MEAN, CANTING_WEIGHTS)
-      REAL*8 CANTING_STD, CANTING_MEAN, CANTING_WEIGHTS
-      REAL*8 SUM_P, CANTING_ANGLE, BETA
-      INTEGER CANTING_NUM
-      
-      PI = ACOS(-1.0)
-      SUM_P = 0.0
-      
-      DO 1300 I = 1, CANTING_NUM
-      CANTING_ANGLE = 90.0/(REAL(CANTING_NUM)-1)*(REAL(I)-1)
-      SUM_P = SUM_P + &
-           EXP(-(CANTING_ANGLE-CANTING_MEAN)**2.0/(2.0*CANTING_STD**2))
-1300  CONTINUE      
+    return
+end
 
-      IF (CANTING_STD.EQ.0) THEN
-	  IF (BETA.EQ.0) THEN
-              CANTING_WEIGHTS = 1
-	  ELSE
-	      CANTING_WEIGHTS = 0
-	  ENDIF
-      ELSE 
-          CANTING_WEIGHTS = 1.0/SUM_P*&
-           EXP(-((BETA-CANTING_MEAN)**2.0)/(2.0*CANTING_STD**2.0))
-!      WRITE(*,*)CANTING_WEIGHTS
-      ENDIF
+subroutine gauss_distribution(beta, canting_num, canting_std, &
+canting_mean, canting_weights)
+    real*8 canting_std, canting_mean, canting_weights
+    real*8 sum_p, canting_angle, beta
+    integer canting_num
 
-      IF (CANTING_NUM.EQ.1) THEN
-	CANTING_WEIGHTS = 1D0
-      ENDIF
+    pi = acos(-1.0)
+    sum_p = 0.0
 
+    do 1300 i = 1, canting_num
+        canting_angle = 90.0/(real(canting_num)-1)*(real(i)-1)
+        sum_p = sum_p + &
+        exp(-(canting_angle-canting_mean)**2.0/(2.0*canting_std**2))
+1300 continue
+
+     if (canting_std.eq.0) then
+         if (beta.eq.0) then
+             canting_weights = 1
+         else
+             canting_weights = 0
+         endif
+     else
+         canting_weights = 1.0/sum_p*exp(-((beta-canting_mean)**2.0)/(2.0*canting_std**2.0))
+     !      write(*,*)canting_weights
+     endif
+
+     if (canting_num.eq.1) then
+         canting_weights = 1d0
+     endif
 
 
-      RETURN
-      END
 
-!       SUBROUTINE GAUSS_LEGENDRE_QUADRATURE
-!      .                          (NUM, ABSCISSAS, WEIGHTS)
-! C        Generates the abscissas and weights for an even 2*NUM point
-! C      Gauss-Legendre quadrature.  Only the NUM positive points are returned.
-!       INTEGER  NUM
-!       REAL*8   ABSCISSAS(1), WEIGHTS(1)
-!       INTEGER  N, I, J, L
-!       REAL*8   X, XP, PL, PL1, PL2, DPL, TINY
-!       PARAMETER (TINY=3.0D-14)
-! 
-!       N = 2*NUM
-!       DO J = 1, NUM
-!         X = COS(3.141592654*(J-.25)/(N+.5))
-!         I = 0
-! 100     CONTINUE
-!           PL1 = 1
-!           PL = X
-!           DO L = 2, N
-!             PL2 = PL1
-!             PL1 = PL
-!             PL = ( (2*L-1)*X*PL1 - (L-1)*PL2 )/L
-!           ENDDO
-!           DPL = N*(X*PL-PL1)/(X*X-1)
-!           XP = X
-!           X = XP - PL/DPL
-!           I = I+1
-!         IF (ABS(X-XP).GT.TINY .AND. I.LT.10) GO TO 100
-!         ABSCISSAS(NUM+1-J) = X
-!         WEIGHTS(NUM+1-J) = 2/((1-X*X)*DPL*DPL)
-!       ENDDO
-! 
-!       RETURN
-!       END
-! 
-!       SUBROUTINE LOBATTO_QUADRATURE
-!      .                          (NUM, ABSCISSAS, WEIGHTS)
-! C        Generates the abscissas and weights for an even 2*NUM point
-! C      Gauss-Legendre quadrature.  Only the NUM positive points are returned.
-!       INTEGER  NUM
-!       REAL*8   ABSCISSAS(*), WEIGHTS(*)
-!       INTEGER  N, N1, I, J, L
-!       REAL*8   X, XP, PL, PL1, PL2, DPL, D2PL, CI, TINY
-!       PARAMETER (TINY=3.0D-14)
-!       
-! c	OPEN(UNIT=4,FILE='LOBATTO.DAT')
-!       N = 2*NUM
-!       N1 = N-1
-!       CI = 0.50
-!       IF (MOD(N,2) .EQ. 1) CI = 1.00
-!       DO J = 1, NUM-1
-!         X = SIN(3.141592654*(J-CI)/(N-.5))
-!         I = 0
-! 100     CONTINUE
-!           PL1 = 1
-!           PL = X
-!           DO L = 2, N1
-!             PL2 = PL1
-!             PL1 = PL
-!             PL = ( (2*L-1)*X*PL1 - (L-1)*PL2 )/L
-!           ENDDO
-!           DPL = N1*(X*PL-PL1)/(X*X-1)
-!           D2PL = (2.D0*X*DPL-N1*(N1+1)*PL) / (1D0-X*X)
-!           XP = X
-!           X = XP - DPL/D2PL
-!           I = I+1
-!         IF (ABS(X-XP).GT.TINY .AND. I.LT.10) GO TO 100
-!         ABSCISSAS(J) = X
-!         WEIGHTS(J) = 2.0D0/(N*N1*PL*PL)
-! C        write(*,*) j,abscissas(j),ACOS(ABSCISSAS(J))*180./3.1415926,
-! C     &      ACOS(-ABSCISSAS(J))*180./3.1415926,
-! C     &	  weights(j)
-!       ENDDO
-!       ABSCISSAS(NUM) = 1.D0
-!       WEIGHTS(NUM) = 2.D0/(N*N1)
-! C      write(*,*)NUM,ABSCISSAS(NUM),
-! C     &	ACOS(ABSCISSAS(NUM))*180./3.1415926,
-! C     &	weights(j)
-! 101   FORMAT(I3,4F15.8)
-!       RETURN
-!       END
+     return
+ end

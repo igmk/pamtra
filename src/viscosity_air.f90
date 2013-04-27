@@ -5,8 +5,9 @@ real(kind=dbl) function viscosity_air(T)
 ! coefficients from F. M. White, Viscous Fluid Flow, 2nd ed., McGraw-Hill, (1991). Kim et al., arXiv:physics/0410237v1
           
 
-  use nml_params, only: verbose
+!  use settings, only: verbose
   use kinds
+        use report_module
   implicit none
 
   real(kind=dbl), intent (in) :: T

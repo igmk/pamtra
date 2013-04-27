@@ -197,15 +197,13 @@ SUBROUTINE DOUBLING_INTEGRATION4 (N, NUM_DOUBLES,      &
   REAL(kind=dbl) LIN_SOURCE (N, 2), LINFACTOR
   REAL(kind=dbl) T_REFLECT (N, N, 2), T_TRANS (N, N, 2)
   REAL(kind=dbl) T_SOURCE (N, 2)
-  REAL(kind=dbl) Y_N1(N,1), X_N1(N,1), keep_n2(n,2)
+  REAL(kind=dbl) Y_N1(N,1), X_N1(N,1)
   INTEGER MAXV, MAXM
   PARAMETER (MAXV = 64, MAXM = 4096)
   INTEGER I, NM
-  REAL(kind=dbl) T_EXP (2 * MAXV), T_LIN (2 * MAXV)
+  REAL(kind=dbl) T_LIN (2 * MAXV)
   REAL(kind=dbl) CONST (2 * MAXV), T_CONST (2 * MAXV)
   REAL(kind=dbl) LINFAC
-  REAL(kind=dbl) X (MAXM), Y (MAXM)
-  REAL(kind=dbl) GAMMA (MAXM)
   REAL(kind=dbl) Y_NN(N,N), X_NN(N,N), G_NN(N,N), ID_NN(N,N)
 
   LINFAC = LINFACTOR

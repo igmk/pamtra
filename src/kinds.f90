@@ -16,5 +16,6 @@ module kinds
   !
   integer, parameter :: sgl = selected_real_kind(6,37)
   integer, parameter :: dbl = selected_real_kind(13,200)
+  integer, parameter :: ext = selected_real_kind(25)
   !
 end module kinds

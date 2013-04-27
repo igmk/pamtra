@@ -1,7 +1,8 @@
 module tmat_rain_db
 
     use kinds
-    use nml_params, only: verbose
+!    use settings, only: verbose
+        use report_module
 
     implicit none
 
