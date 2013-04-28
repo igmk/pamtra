@@ -203,8 +203,6 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
       emis_vector= 0.d0
   elseif (EM_snow .eq. 'tmatr') then
 
-print*, "mindex", mindex
-
     call tmatrix_snow(f, swc, t, nc, &
           ad, bd, alpha, gamma, a_msnow, b_snow, SD_snow, dia1,dia2,nbins, scatter_matrix,extinct_matrix, emis_vector,&
           diameter_spec, back_spec)
@@ -220,8 +218,6 @@ print*, "mindex", mindex
     legen3 = 0.0d0
     legen4 = 0.0d0
   elseif (EM_snow .eq. 'tmSQL') then
-
-print*, "mindex", mindex
 
     call tmatrix_snow_sql(f, swc, t, nc, &
           ad, bd, alpha, gamma, a_msnow, b_snow, SD_snow, dia1,dia2,nbins, scatter_matrix,extinct_matrix, emis_vector,&

@@ -9,6 +9,8 @@ import os
 import sys
 import string
 import glob
+import warnings
+
 try: 
 	import numexpr as ne
 	neAvail = True

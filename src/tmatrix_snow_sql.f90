@@ -20,10 +20,10 @@ subroutine tmatrix_snow_sql(f, wc, t, nc, &
 
   use kinds
   use constants, only: pi, c, im
-  use settings, only: use_snow_db, as_ratio, softsphere_adjust, nummu, nstokes
+  use settings, only: use_snow_db, as_ratio, softsphere_adjust, nummu, nstokes, sql_fname
 !   use rt_utilities, only: lobatto_quadrature
   use report_module
-
+  use sql_tools
   use tmat_snow_db
 
   implicit none
@@ -42,6 +42,8 @@ subroutine tmatrix_snow_sql(f, wc, t, nc, &
   real(kind=dbl), dimension(nbins) :: particle_mass, ndens
   character :: aerodist*1 
 
+  character(len=20) :: par_name
+  
   real(kind=dbl), dimension(nstokes,nummu,nstokes,nummu,4), intent(out) :: scatter_matrix
   real(kind=dbl), dimension(nstokes,nstokes,nummu,2), intent(out) :: extinct_matrix
   real(kind=dbl), dimension(nstokes,nummu,2), intent(out) :: emis_vector
@@ -56,30 +58,33 @@ subroutine tmatrix_snow_sql(f, wc, t, nc, &
 
   real(kind=dbl) :: ntot,nc
 
-    integer(kind=long) :: errorstatus
-    integer(kind=long) :: err = 0
-    character(len=80) :: msg
-    character(len=30) :: nameOfRoutine = 'tmatrix_ice_sql'
+  integer(kind=long) :: errorstatus
+  integer(kind=long) :: err = 0
+  character(len=80) :: msg
+  character(len=30) :: nameOfRoutine = 'tmatrix_ice_sql'
 
-interface
-subroutine tmatrix_sql(freq,t,as_ratio,diameter,particle_mass,ptype,scatter_matrix,extinct_matrix,emis_vector)
+  interface
+    subroutine tmatrix_sql(freq,t,as_ratio,diameter,particle_mass,ptype,par_name,scatter_matrix,extinct_matrix,emis_vector)
 
-  use kinds
-  use settings, only : nummu, nstokes
-  implicit none
+      use kinds
+      use settings, only : nummu, nstokes
+      implicit none
 
-  real(kind=dbl), intent(in) :: freq, t
-  real(kind=dbl), intent(in) :: as_ratio
-  real(kind=dbl), intent(in) :: particle_mass
-  real(kind=dbl), intent(in) :: diameter
-  character(len=4), intent(in) :: ptype
+      real(kind=dbl), intent(in) :: freq, t
+      real(kind=dbl), intent(in) :: as_ratio
+      real(kind=dbl), intent(in) :: particle_mass
+      real(kind=dbl), intent(in) :: diameter
+      character(len=4), intent(in) :: ptype
+      character(len=20), intent(in) :: par_name
+      real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
+      real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
+      real(kind=dbl), intent(out), dimension(nstokes,nummu) :: emis_vector
+    end subroutine tmatrix_sql
+  end interface
 
-  real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
-  real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
-  real(kind=dbl), intent(out), dimension(nstokes,nummu) :: emis_vector
-end subroutine tmatrix_sql
-end interface
+  if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
+  
   freq = f*1.d9
   wavelength = c/freq !
   wave_num = 2.0_dbl*pi/wavelength
@@ -107,14 +112,14 @@ end interface
         ndens(ir) = ndens(ir) + (wc-tot_mass)/(particle_mass(ir)*del_d)
      end if
 
+  end do
 
-end do
-
+  par_name="snowice"
+call sql_tools_open_table(sql_fname,par_name)
+!     call sql_tools_create_readCols()
 
   do ir = 1, nbins
-
-
-    call tmatrix_sql(freq,t,as_ratio,diameter(ir),particle_mass(ir),"snow",&
+    call tmatrix_sql(freq,t,as_ratio,diameter(ir),particle_mass(ir),"snow",par_name,&
       scat_mat_sgl,ext_mat_sgl,emis_vec_sgl)
 
      bin_wgt = ndens(ir)*del_d
@@ -124,17 +129,18 @@ end do
      emis_vector(:,:,1) = emis_vector(:,:,1) + emis_vec_sgl*bin_wgt
 
     back_spec(ir) = 4*pi*ndens(ir)*scat_mat_sgl(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
-
-
   end do
+  
+!   deallocate(readCols)
+
+call sql_tools_close_table()
 
 
-
-!fill up the matrices
-scatter_matrix(:,:,:,:,4) = scatter_matrix(:,:,:,:,1) 
-scatter_matrix(:,:,:,:,3) = scatter_matrix(:,:,:,:,2)
-extinct_matrix(:,:,:,2) = extinct_matrix(:,:,:,1)
-emis_vector(:,:,2) = emis_vector(:,:,1)
+    !fill up the matrices
+    scatter_matrix(:,:,:,:,4) = scatter_matrix(:,:,:,:,1) 
+    scatter_matrix(:,:,:,:,3) = scatter_matrix(:,:,:,:,2)
+    extinct_matrix(:,:,:,2) = extinct_matrix(:,:,:,1)
+    emis_vector(:,:,2) = emis_vector(:,:,1)
 
     if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
 

@@ -646,7 +646,6 @@ subroutine sqlite3_prepare_select( db, tablename, columns, stmt, extra_clause )
    endif
 
    call stringtoc( command )
-print*, command
    call sqlite3_prepare( db, command, stmt, columns )
 
 end subroutine sqlite3_prepare_select
@@ -746,7 +745,7 @@ subroutine sqlite3_insert( db, tablename, columns )
          db%error = rc
          call sqlite3_errmsg_c( db%db_handle, db%errmsg )
          call stringtof( db%errmsg )
-	  print*, db%errmsg
+	 print*, "ERROR1 in fsqlite.f90: ", db%errmsg
       endif
    enddo
 
@@ -850,7 +849,7 @@ subroutine sqlite3_update( db, tablename, columns, whereString )
          db%error = rc
          call sqlite3_errmsg_c( db%db_handle, db%errmsg )
          call stringtof( db%errmsg )
-	  print*, db%errmsg
+	  print*, "ERROR2 in fsqlite.f90: ", db%errmsg
       endif
    enddo
 
@@ -929,7 +928,7 @@ subroutine sqlite3_next_row( db, stmt, columns, finished )
            db%error = rc
            call sqlite3_errmsg_c( db%db_handle, db%errmsg )
            call stringtof( db%errmsg )
-	  print*, db%errmsg
+	  print*, "ERROR3 in fsqlite.f90: ", db%errmsg
         endif
       enddo
    else
@@ -1064,7 +1063,6 @@ subroutine sqlite3_prepare( db, command, stmt, columns )
    integer                                     :: count
    integer                                     :: i
    character(len=len(command)+1)               :: commandc
-
    commandc = command
    call stringtoc( commandc )
    db%error = sqlite3_prepare_c( db%db_handle, commandc, stmt%stmt_handle )
@@ -1094,7 +1092,9 @@ subroutine sqlite3_prepare( db, command, stmt, columns )
       enddo
    else
       call sqlite3_errmsg_c( db%db_handle, db%errmsg )
-print*,  db%errmsg
+      call stringtof( db%errmsg )
+      print*, "ERROR4 in fsqlite.f90: ", db%errmsg
+      print*, command
    endif
 
 end subroutine sqlite3_prepare

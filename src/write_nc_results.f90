@@ -36,7 +36,13 @@ subroutine write_nc_results
     character(40) ::gitVersion,gitHash
     character(10) ::attUnit,zeUnit
 
-    if (verbose .gt. 0) print*,"writing: ", nc_out_file
+    integer(kind=long) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
+    character(len=30) :: nameOfRoutine = 'write_nc_results'
+    
+    
+    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
     !get git data
     call versionNumber(gitVersion,gitHash)
 
@@ -265,11 +271,12 @@ subroutine write_nc_results
             end if
         end if
 
-
     end if
 
     call check(nf90_close(ncid))
 
+    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+    
     return
 
 contains
@@ -280,7 +287,7 @@ contains
         integer, intent(in) :: status
 
         if(status /= nf90_noerr) then
-            print *, trim(nf90_strerror(status))
+            print *, "NC ERROR: ",trim(nf90_strerror(status))
             stop "Stopped"
         end if
 

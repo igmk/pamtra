@@ -90,7 +90,7 @@ module settings
     character(99)  :: input_file        ! name of profile
     character(300) :: namelist_file     ! name of nml_file
     character(300) :: nc_out_file       ! name of netcdf output file
-
+    character(200) :: sql_fname
     character(9) :: frq_str_s,frq_str_e
     character(8), dimension(maxfreq) :: frqs_str
 
@@ -110,7 +110,7 @@ contains
         namelist / run_mode / active, passive,radar_mode
         namelist / surface_params / ground_type,salinity, emissivity
         namelist / gas_abs_mod / lgas_extinction, gas_mod
-        namelist / hyd_opts / lhyd_extinction, lphase_flag, softsphere_adjust
+        namelist / hyd_opts / lhyd_extinction, lphase_flag, softsphere_adjust, sql_fname
 	namelist / cloud_params / SD_cloud, EM_cloud,  ad_cloud, bd_cloud, alphad_cloud, gammad_cloud, &
 				  diamin_cloud, diamax_cloud
 	namelist / ice_params / SD_ice, EM_ice, ad_ice, bd_ice, alphad_ice, gammad_ice, &
@@ -164,6 +164,7 @@ contains
         lhyd_extinction=.true.
         lphase_flag = .true.
 	softsphere_adjust = "density"
+	sql_fname="test.sqlite"
         ! sec cloud_params
       SD_cloud='C'
       EM_cloud="miecl"

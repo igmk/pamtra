@@ -1,5 +1,6 @@
 bin
 *.o
+*.a
 *.mod
 pamtra
 .cproject
@@ -11,6 +12,7 @@ fort*
 !py/libs/fortran-namelist
 output/
 profiles/
+profile/
 data/
 *~
 .nfs*
@@ -36,3 +38,5 @@ testc.out.check
 src/scatcnv
 !tools/py_usStandard/*py
 tools/pp_scripts/nodesConfig.sh
+*.sqlite
+gmon.out

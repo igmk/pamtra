@@ -273,10 +273,11 @@ C   VALUES FOR WHICH RESULTS ARE COMPUTED ACCURATELY. FOR THIS REASON,
 C   THE AUTHORS AND THEIR ORGANIZATION DISCLAIM ALL LIABILITY FOR
 C   ANY DAMAGES THAT MAY RESULT FROM THE USE OF THE PROGRAM. 
 
-      SUBROUTINE amplq(LAM, mrr,mri, AXI, AS_RATIO, RAT, NP,nmax)
+      SUBROUTINE tmatrix_amplq(LAM, mrr,mri, AXI, AS_RATIO, RAT,
+     *        NP,nmax)
 
       IMPLICIT REAL*8 (A-H,O-Z)
-      INCLUDE 'amplq.par.f'
+      INCLUDE 'tmatrix_amplq.par.f'
       REAL*16 LAM,MRR,MRI,X(NPNG2),W(NPNG2),S(NPNG2),SS(NPNG2),
      *        AN(NPN1),R(NPNG2),DR(NPNG2),PPI,PIR,PII,P,EPS,A,
      *        DDR(NPNG2),DRR(NPNG2),DRI(NPNG2),ANN(NPN1,NPN1)
@@ -558,9 +559,9 @@ C********************************************************************
                                              
 C   CALCULATION OF THE AMPLITUDE MATRIX          
  
-      SUBROUTINE AMPL (NMAX,DLAM,TL,TL1,PL,PL1,ALPHA,BETA,
+      SUBROUTINE tmatrix_AMPL (NMAX,DLAM,TL,TL1,PL,PL1,ALPHA,BETA,
      &                 VV,VH,HV,HH)  
-      INCLUDE 'amplq.par.f'
+      INCLUDE 'tmatrix_amplq.par.f'
       IMPLICIT REAL*8 (A-B,D-H,O-Z), COMPLEX*16 (C)
       REAL*8 AL(3,2),AL1(3,2),AP(2,3),AP1(2,3),B(3,3),
      *       R(2,2),R1(2,2),C(3,2),CA,CB,CT,CP,CTP,CPP,CT1,CP1,
@@ -847,7 +848,7 @@ C     1.LE.N.LE.NMAX
 C     0.LE.X.LE.1
 
       SUBROUTINE VIGAMPL (X, NMAX, M, DV1, DV2)
-      INCLUDE 'amplq.par.f'
+      INCLUDE 'tmatrix_amplq.par.f'
       IMPLICIT REAL*8 (A-H,O-Z)
       REAL*8 DV1(NPN6), DV2(NPN6)
       DO 1 N=1,NMAX
@@ -930,7 +931,7 @@ C**********************************************************************
  
       SUBROUTINE CONST (NGAUSS,NMAX,MMAX,P,X,W,AN,ANN,S,SS,NP,EPS)
       IMPLICIT REAL*16 (A-H,O-Z)
-      INCLUDE 'amplq.par.f'
+      INCLUDE 'tmatrix_amplq.par.f'
       REAL*16 X(NPNG2),W(NPNG2),X1(NPNG1),W1(NPNG1),
      *        X2(NPNG1),W2(NPNG1),
      *        S(NPNG2),SS(NPNG2),
@@ -1072,7 +1073,7 @@ C**********************************************************************
  
       SUBROUTINE VARY (LAM,MRR,MRI,A,EPS,NP,NGAUSS,X,P,PPI,PIR,PII,
      *                 R,DR,DDR,DRR,DRI,NMAX)
-      INCLUDE 'amplq.par.f'
+      INCLUDE 'tmatrix_amplq.par.f'
       IMPLICIT REAL*16 (A-H,O-Z)
       REAL*16 X(NPNG2),R(NPNG2),DR(NPNG2),MRR,MRI,LAM,
      *        Z(NPNG2),ZR(NPNG2),ZI(NPNG2),
@@ -1282,7 +1283,7 @@ C                                                                     *
 C**********************************************************************
  
       SUBROUTINE BESS (X,XR,XI,NG,NMAX,NNMAX1,NNMAX2)
-      INCLUDE 'amplq.par.f'
+      INCLUDE 'tmatrix_amplq.par.f'
       IMPLICIT REAL*16 (A-H,O-Z)
       REAL*16 X(NG),XR(NG),XI(NG),
      *        J(NPNG2,NPN1),Y(NPNG2,NPN1),JR(NPNG2,NPN1),
@@ -1385,7 +1386,7 @@ C                                                                     *
 C**********************************************************************
  
       SUBROUTINE CJB (XR,XI,YR,YI,UR,UI,NMAX,NNMAX)
-      INCLUDE 'amplq.par.f'
+      INCLUDE 'tmatrix_amplq.par.f'
       IMPLICIT REAL*16 (A-H,O-Z)
       REAL*16 YR(NMAX),YI(NMAX),UR(NMAX),UI(NMAX)
       REAL*16 CYR(NPN1),CYI(NPN1),CZR(1200),CZI(1200),
@@ -1467,7 +1468,7 @@ C**********************************************************************
  
       SUBROUTINE TMATR0 (NGAUSS,X,W,AN,ANN,S,SS,PPI,PIR,PII,R,DR,DDR,
      *                  DRR,DRI,NMAX,NCHECK)
-      INCLUDE 'amplq.par.f'
+      INCLUDE 'tmatrix_amplq.par.f'
       IMPLICIT REAL*16 (A-H,O-Z)
       REAL*16 X(NPNG2),W(NPNG2),AN(NPN1),S(NPNG2),SS(NPNG2),
      *        R(NPNG2),DR(NPNG2),SIG(NPN2),
@@ -1706,7 +1707,7 @@ C**********************************************************************
  
       SUBROUTINE TMATR (M,NGAUSS,X,W,AN,ANN,S,SS,PPI,PIR,PII,R,DR,DDR,
      *                  DRR,DRI,NMAX,NCHECK)
-      INCLUDE 'amplq.par.f'
+      INCLUDE 'tmatrix_amplq.par.f'
       IMPLICIT REAL*16 (A-H,O-Z)
       REAL*16 X(NPNG2),W(NPNG2),AN(NPN1),S(NPNG2),SS(NPNG2),
      *        R(NPNG2),DR(NPNG2),SIG(NPN2),
@@ -1989,7 +1990,7 @@ c     1.LE.N.LE.NMAX
 c     0.LE.x.LE.1
  
       SUBROUTINE VIG (X,NMAX,M,DV1,DV2)
-      INCLUDE 'amplq.par.f'
+      INCLUDE 'tmatrix_amplq.par.f'
       IMPLICIT REAL*16 (A-H,O-Z)
       REAL*16 DV1(NPN1), DV2(NPN1)
       A=1Q0
@@ -2047,7 +2048,7 @@ C                                                                     *
 C**********************************************************************
  
       SUBROUTINE TT(NMAX,NCHECK)
-      INCLUDE 'amplq.par.f'
+      INCLUDE 'tmatrix_amplq.par.f'
       IMPLICIT REAL*8 (A-H,O-Z)
       REAL*16 F(NPN2,NPN2),B(NPN2),WORK(NPN2),COND,
      *       QR(NPN2,NPN2),QI(NPN2,NPN2),

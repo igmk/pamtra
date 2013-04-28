@@ -47,7 +47,7 @@ SPACE	=	\
 SEP	=	/
 
 FC	=	gfortran
-FFLAGS_NORMAL	=-fPIC -Wunused -O2
+FFLAGS_NORMAL	=-fPIC -Wunused -O3 
 FFLAGS_DEBUG	=	-c -g
 FFLAGS_OPTIMISE	=	-c -O
 
@@ -67,8 +67,7 @@ MODEXT	=	.mod
 DELETE	=	rm -f
 FFLAGS	=	$(FFLAGS_NORMAL)
 LDFLAGS	=	$(LDFLAGS_NORMAL)
-CFLAGS =	-fPIC -Wunused -O2
-
+CFLAGS =	-fPIC -Wunused -O3
 LIBRARIES	=	libfsqlite.a \
 
 #
@@ -77,6 +76,8 @@ LIBRARIES	=	libfsqlite.a \
 #
 #DEFINES	=	-DDBL_UNDERSCORE -I/usr/include
 DEFINES	=	-DLOWERCASE  -I/usr/include
+# DEFINES	=	-DLOWERCASE  -I/home/mmaahn/Downloads/sqlite-autoconf-3071602/
+
 #DEFINES	=	-I../../../sqlite
 
 
@@ -98,8 +99,8 @@ clean:
 	$(DELETE) createTestFile runTest somedata.* *.a
 
 example:
-	gfortran -fPIC -Wunused -O2 -o runTest  csvtable.f90 -lfsqlite -lsqlite3 -L. -L/usr/lib   
-	gfortran -fPIC -Wunused -O2  csvdata.f90  -o createTestFile
+	gfortran -fPIC -Wunused -O1 -o runTest  csvtable.f90 -lfsqlite -lsqlite3 -L. -L/usr/lib   
+	gfortran -fPIC -Wunused -O1  csvdata.f90  -o createTestFile
 # 
 
 test:
