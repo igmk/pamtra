@@ -71,7 +71,8 @@ module settings
     radar_airmotion, &   ! apply vertical air motion
     radar_save_noise_corrected_spectra, & !remove the noise from the calculated spectrum again (for testing)
     radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise) we can skip that.
-    radar_convolution_fft !use fft for convolution of spectrum
+    radar_convolution_fft,& !use fft for convolution of spectrum
+    use_sql_db
 
     character(5) :: EM_ice, EM_snow, EM_grau, EM_hail, EM_cloud, EM_rain
     character(1) :: SD_cloud, SD_ice, SD_rain, SD_snow, SD_grau, SD_hail
@@ -110,7 +111,7 @@ contains
         namelist / run_mode / active, passive,radar_mode
         namelist / surface_params / ground_type,salinity, emissivity
         namelist / gas_abs_mod / lgas_extinction, gas_mod
-        namelist / hyd_opts / lhyd_extinction, lphase_flag, softsphere_adjust, sql_fname
+        namelist / hyd_opts / lhyd_extinction, lphase_flag, softsphere_adjust, sql_fname,use_sql_db
 	namelist / cloud_params / SD_cloud, EM_cloud,  ad_cloud, bd_cloud, alphad_cloud, gammad_cloud, &
 				  diamin_cloud, diamax_cloud
 	namelist / ice_params / SD_ice, EM_ice, ad_ice, bd_ice, alphad_ice, gammad_ice, &

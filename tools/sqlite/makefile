@@ -47,7 +47,7 @@ SPACE	=	\
 SEP	=	/
 
 FC	=	gfortran
-FFLAGS_NORMAL	=-fPIC -Wunused -O3 
+FFLAGS_NORMAL	=-fPIC -Wunused -O2 -g
 FFLAGS_DEBUG	=	-c -g
 FFLAGS_OPTIMISE	=	-c -O
 
@@ -67,7 +67,7 @@ MODEXT	=	.mod
 DELETE	=	rm -f
 FFLAGS	=	$(FFLAGS_NORMAL)
 LDFLAGS	=	$(LDFLAGS_NORMAL)
-CFLAGS =	-fPIC -Wunused -O3
+CFLAGS =	-fPIC -Wunused -O2 -g
 LIBRARIES	=	libfsqlite.a \
 
 #

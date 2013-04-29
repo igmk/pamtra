@@ -1,0 +1,2189 @@
+ inoutput_mode profile/                                                                                            output/                                                                                             /tmp/                                                                                                F T /work/mmaahn/pamtra_data/                                                                           profile                                                                                                                                                                                                                                                                                                                          F
+ output    833000.00000000000      TVH_020.1000                             pyPamtraUser                                                                                        
+ run_mode  T T simple  
+ surface_params S   33.000000000000000       0.59999999999999998     
+ gas_abs_mod  T R98
+ hyd_opts  T T density
+ cloud_params Cmiecl   1000.0000000000000        2.0000000000000000        0.0000000000000000        1.0000000000000000        3.9999999999999998E-006   5.0000000000000002E-005
+ ice_params CtmSQL   1000.0000000000000        2.0000000000000000        0.0000000000000000        1.0000000000000000                9   6.9999999999999994E-005   1.0000000000000000E-002   1.6960000000000000E-003   1.7000000000000000        1.6299999999999999        2.0017000000000000E-002  0.99999000000000005     
+ rain_params C   8.0000000000000000      F miera
+ snow_params C   7.6280000000000001      tmSQL F   1.0000000000000000        917.00000000000000       0.20000000000000001                1           8
+ graupel_params C   4.0000000000000000      densi   400.00000000000000     
+ hail_params C   4.0000000000000000      surus   917.00000000000000     
+ moments            1 snowCRYSTAL         
+ radar_simulator          512         150   7.0000000000000000       -7.0000000000000000       0.14999999999999999        1.0000000000000000E-003 F step      -1.2500000000000000        1.2500000000000000               30  0.10000000000000001      F T T
+ PASSIVE:  T ACTIVE:  T
+ 2013/04/28  16:41:14  info   input_file: test_radar.dat namelist file: test_radartmSQL.nml freqs: 020.1000 to 020.1000 pamtra
+ opening: test_radar.dat                                                                                     
+ profile reading done!
+ Entering allocate_output_vars
+ Done allocate_output_vars
+ 2013/04/28  16:41:14  info   Start loop over frequencies & profiles! pamtra
+ 2013/04/28  16:41:14  info   Start of allocate_profile_vars
+ 2013/04/28  16:41:14  info   End of allocate_profile_vars
+ 2013/04/28  16:41:14  info   Start of run_rt
+ 2013/04/28  16:41:14  info   calculating: 020.1000 Y: 001 of    1 X: 001 of    1 run_rt
+ 2013/04/28  16:41:14  info      1    1type to local variables done run_rt
+ 2013/04/28  16:41:14  info   Start of get_surface
+ 2013/04/28  16:41:14  info   End of get_surface
+ 2013/04/28  16:41:14  info   surface emissivity calculated: run_rt
+ 2013/04/28  16:41:14  info   Start of get_gasabs
+ 2013/04/28  16:41:14  info   Start of rosen98_gasabs
+ 2013/04/28  16:41:14  info   End of rosen98_gasabs
+ 2013/04/28  16:41:14  info   Start of rosen98_gasabs
+ 2013/04/28  16:41:14  info   End of rosen98_gasabs
+ 2013/04/28  16:41:14  info   Start of rosen98_gasabs
+ 2013/04/28  16:41:14  info   End of rosen98_gasabs
+ 2013/04/28  16:41:14  info   End of get_gasabs
+           1           1 Gas absorption calculated
+           1           1 Entering hydrometeor_extinction_rt4
+ start loop over layer
+ Layer:            1
+ End of scattering calc for layer:            1
+ Layer:            2
+ End of scattering calc for layer:            2
+ Layer:            3
+ Entering ice_ssp
+ 2013/04/28  16:41:14  info   Start of sql_tools_open_table
+ 2013/04/28  16:41:14  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_create_writeCols
+ 2013/04/28  16:41:14  info   End of sql_tools_open_table
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000000000000001E-004   1.0400000000000001E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   248.28171122335681        9.9999999999999991E-005   1.9999999999999998E-004   1.0399999999999999E-009   1.0000000000000000     
+ 2013/04/28  16:41:14  info   End of tmatrix_refInd
+ 2013/04/28  16:41:14  info   Start of sql_tools_write_entry
+ 2013/04/28  16:41:14  info   table empty sql_tools_write_entry
+ writing index no           1 0000001   
+ 2013/04/28  16:41:14  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_create_writeCols
+ JJ           1
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ           1
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000005000000000E-004   1.0400007800001949E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000010000000002E-004   1.0400015600007803E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000015000000001E-004   1.0400023400017551E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000020000000000E-004   1.0400031200031201E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000025000000001E-004   1.0400039000048753E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000030000000000E-004   1.0400046800070202E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000034999999999E-004   1.0400054600095548E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000040000000001E-004   1.0400062400124801E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000045000000000E-004   1.0400070200157950E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000049999999999E-004   1.0400078000194999E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000055000000001E-004   1.0400085800235950E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000060000000000E-004   1.0400093600280799E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000065000000001E-004   1.0400101400329551E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000070000000000E-004   1.0400109200382201E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000074999999999E-004   1.0400117000438748E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000080000000001E-004   1.0400124800499202E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000085000000000E-004   1.0400132600563553E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000089999999999E-004   1.0400140400631801E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:14  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:14  info   End of tmatrix_sql
+ 2013/04/28  16:41:14  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000095000000001E-004   1.0400148200703953E-009 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-004   1.0399999999999999E-009 snow
+ 2013/04/28  16:41:14  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-04       1.0400000000E-09       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-04" and mass="1.0400000000E-09" and as_ratio="1.0000000000E+00" and type="snow" )
+ found entry!
+ read        1079 of        1079
+ SELECT * FROM snowice_V  WHERE id=0000001
+ found entry!
+ read        1079 of        1079
+ 2013/04/28  16:41:15  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:15  info   End of tmatrix_sql
+ 2013/04/28  16:41:15  info   Start of sql_tools_close_table
+ 2013/04/28  16:41:15  info   End of sql_tools_close_table
+ 2013/04/28  16:41:15  info   End of tmatrix_ice_sql
+ Exiting ice_ssp
+ Entering snow_ssp
+ 2013/04/28  16:41:15  info   Start of sql_tools_open_table
+ 2013/04/28  16:41:15  info   End of sql_tools_open_table
+ 2013/04/28  16:41:15  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.0999999999999998E-011   9.8837999999999989E-023 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.0999999999999998E-011   9.8799999999999988E-023 snow
+ 2013/04/28  16:41:15  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       5.1000000000E-11       9.8800000000E-23       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="5.1000000000E-11" and mass="9.8800000000E-23" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:15  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:15  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:15  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.0999999999999998E-011   9.8799999999999988E-023
+ WANRING changed density from    1422485322.6115980      kg/m3 to 917 kg/m3 for d=   5.0999999999999998E-011
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        2.5499999999999999E-011   5.0999999999999998E-011   9.8799999999999988E-023   1.0000000000000000     
+ 2013/04/28  16:41:15  info   End of tmatrix_refInd
+ 2013/04/28  16:41:15  info   Start of sql_tools_write_entry
+ found entries           1
+ writing index no           2 0000002   
+ 2013/04/28  16:41:15  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:15  info   End of sql_tools_create_writeCols
+ JJ           2
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ           2
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:15  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:15  info   End of tmatrix_sql
+ 2013/04/28  16:41:15  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000499799999999E-006   1.5200759705492398E-013 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999999E-006   1.5200000000000001E-013 snow
+ 2013/04/28  16:41:15  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-06       1.5200000000E-13       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-06" and mass="1.5200000000E-13" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:15  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:15  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:15  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999999E-006   1.5200000000000001E-013
+ WANRING changed density from    36287.327024952145      kg/m3 to 917 kg/m3 for d=   1.9999999999999999E-006
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        9.9999999999999995E-007   1.9999999999999999E-006   1.5200000000000001E-013   1.0000000000000000     
+ 2013/04/28  16:41:15  info   End of tmatrix_refInd
+ 2013/04/28  16:41:15  info   Start of sql_tools_write_entry
+ found entries           2
+ writing index no           3 0000003   
+ 2013/04/28  16:41:15  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:15  info   End of sql_tools_create_writeCols
+ JJ           3
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ           3
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:15  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:15  info   End of tmatrix_sql
+ 2013/04/28  16:41:15  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        4.0000489600000004E-006   6.0801488393108921E-013 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        3.9999999999999998E-006   6.0800000000000003E-013 snow
+ 2013/04/28  16:41:15  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       4.0000000000E-06       6.0800000000E-13       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="4.0000000000E-06" and mass="6.0800000000E-13" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:15  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:15  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:15  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        3.9999999999999998E-006   6.0800000000000003E-013
+ WANRING changed density from    18143.663512476072      kg/m3 to 917 kg/m3 for d=   3.9999999999999998E-006
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        1.9999999999999999E-006   3.9999999999999998E-006   6.0800000000000003E-013   1.0000000000000000     
+ 2013/04/28  16:41:15  info   End of tmatrix_refInd
+ 2013/04/28  16:41:15  info   Start of sql_tools_write_entry
+ found entries           3
+ writing index no           4 0000004   
+ 2013/04/28  16:41:15  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:15  info   End of sql_tools_create_writeCols
+ JJ           4
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ           4
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:15  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:15  info   End of tmatrix_sql
+ 2013/04/28  16:41:15  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.0000479400000000E-006   1.3680218607273331E-012 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.0000000000000002E-006   1.3700000000000000E-012 snow
+ 2013/04/28  16:41:15  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       6.0000000000E-06       1.3700000000E-12       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="6.0000000000E-06" and mass="1.3700000000E-12" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:15  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:15  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:15  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.0000000000000002E-006   1.3700000000000000E-012
+ WANRING changed density from    12113.459557549810      kg/m3 to 917 kg/m3 for d=   6.0000000000000002E-006
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        3.0000000000000001E-006   6.0000000000000002E-006   1.3700000000000000E-012   1.0000000000000000     
+ 2013/04/28  16:41:16  info   End of tmatrix_refInd
+ 2013/04/28  16:41:16  info   Start of sql_tools_write_entry
+ found entries           4
+ writing index no           5 0000005   
+ 2013/04/28  16:41:16  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:16  info   End of sql_tools_create_writeCols
+ JJ           5
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ           5
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:16  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:16  info   End of tmatrix_sql
+ 2013/04/28  16:41:16  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        8.0000469199999996E-006   2.4320285274436564E-012 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        7.9999999999999996E-006   2.4299999999999999E-012 snow
+ 2013/04/28  16:41:16  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       8.0000000000E-06       2.4300000000E-12       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="8.0000000000E-06" and mass="2.4300000000E-12" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:16  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:16  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:16  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        7.9999999999999996E-006   2.4299999999999999E-012
+ WANRING changed density from    9064.3713682806028      kg/m3 to 917 kg/m3 for d=   7.9999999999999996E-006
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        3.9999999999999998E-006   7.9999999999999996E-006   2.4299999999999999E-012   1.0000000000000000     
+ 2013/04/28  16:41:16  info   End of tmatrix_refInd
+ 2013/04/28  16:41:16  info   Start of sql_tools_write_entry
+ found entries           5
+ writing index no           6 0000006   
+ 2013/04/28  16:41:16  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:16  info   End of sql_tools_create_writeCols
+ JJ           6
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ           6
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:16  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:16  info   End of tmatrix_sql
+ 2013/04/28  16:41:16  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.0000045900000000E-005   3.8000348840800584E-012 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        9.9999999999999991E-006   3.8000000000000000E-012 snow
+ 2013/04/28  16:41:16  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       1.0000000000E-05       3.8000000000E-12       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="1.0000000000E-05" and mass="3.8000000000E-12" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:16  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:16  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:16  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        9.9999999999999991E-006   3.8000000000000000E-012
+ WANRING changed density from    7257.4654049904302      kg/m3 to 917 kg/m3 for d=   9.9999999999999991E-006
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        4.9999999999999996E-006   9.9999999999999991E-006   3.8000000000000000E-012   1.0000000000000000     
+ 2013/04/28  16:41:16  info   End of tmatrix_refInd
+ 2013/04/28  16:41:16  info   Start of sql_tools_write_entry
+ found entries           6
+ writing index no           7 0000007   
+ 2013/04/28  16:41:16  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:16  info   End of sql_tools_create_writeCols
+ JJ           7
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ           7
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:16  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:16  info   End of tmatrix_sql
+ 2013/04/28  16:41:16  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.2000044879999999E-005   5.4720409306365391E-012 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.2000000000000000E-005   5.4699999999999999E-012 snow
+ 2013/04/28  16:41:16  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       1.2000000000E-05       5.4700000000E-12       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="1.2000000000E-05" and mass="5.4700000000E-12" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:16  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:16  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:16  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.2000000000000000E-005   5.4699999999999999E-012
+ WANRING changed density from    6045.6773521713003      kg/m3 to 917 kg/m3 for d=   1.2000000000000000E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        6.0000000000000002E-006   1.2000000000000000E-005   5.4699999999999999E-012   1.0000000000000000     
+ 2013/04/28  16:41:16  info   End of tmatrix_refInd
+ 2013/04/28  16:41:16  info   Start of sql_tools_write_entry
+ found entries           7
+ writing index no           8 0000008   
+ 2013/04/28  16:41:16  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:16  info   End of sql_tools_create_writeCols
+ JJ           8
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ           8
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:16  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:16  info   End of tmatrix_sql
+ 2013/04/28  16:41:16  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.4000043859999999E-005   7.4480466671130995E-012 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.4000000000000000E-005   7.4500000000000008E-012 snow
+ 2013/04/28  16:41:16  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       1.4000000000E-05       7.4500000000E-12       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="1.4000000000E-05" and mass="7.4500000000E-12" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:16  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:16  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:16  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.4000000000000000E-005   7.4500000000000008E-012
+ WANRING changed density from    5185.2958864487773      kg/m3 to 917 kg/m3 for d=   1.4000000000000000E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        6.9999999999999999E-006   1.4000000000000000E-005   7.4500000000000008E-012   1.0000000000000000     
+ 2013/04/28  16:41:17  info   End of tmatrix_refInd
+ 2013/04/28  16:41:17  info   Start of sql_tools_write_entry
+ found entries           8
+ writing index no           9 0000009   
+ 2013/04/28  16:41:17  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:17  info   End of sql_tools_create_writeCols
+ JJ           9
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ           9
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:17  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:17  info   End of tmatrix_sql
+ 2013/04/28  16:41:17  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.6000042840000000E-005   9.7280520935097405E-012 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.5999999999999999E-005   9.7299999999999999E-012 snow
+ 2013/04/28  16:41:17  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       1.6000000000E-05       9.7300000000E-12       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="1.6000000000E-05" and mass="9.7300000000E-12" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:17  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:17  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:17  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.5999999999999999E-005   9.7299999999999999E-012
+ WANRING changed density from    4536.8484266136966      kg/m3 to 917 kg/m3 for d=   1.5999999999999999E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        7.9999999999999996E-006   1.5999999999999999E-005   9.7299999999999999E-012   1.0000000000000000     
+ 2013/04/28  16:41:17  info   End of tmatrix_refInd
+ 2013/04/28  16:41:17  info   Start of sql_tools_write_entry
+ found entries           9
+ writing index no          10 0000010   
+ 2013/04/28  16:41:17  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:17  info   End of sql_tools_create_writeCols
+ JJ          10
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          10
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:17  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:17  info   End of tmatrix_sql
+ 2013/04/28  16:41:17  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.8000041819999998E-005   1.2312057209826457E-011 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.8000000000000000E-005   1.2300000000000000E-011 snow
+ 2013/04/28  16:41:17  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       1.8000000000E-05       1.2300000000E-11       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="1.8000000000E-05" and mass="1.2300000000E-11" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:17  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:17  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:17  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.8000000000000000E-005   1.2300000000000000E-011
+ WANRING changed density from    4027.9954733134005      kg/m3 to 917 kg/m3 for d=   1.8000000000000000E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        9.0000000000000002E-006   1.8000000000000000E-005   1.2300000000000000E-011   1.0000000000000000     
+ 2013/04/28  16:41:17  info   End of tmatrix_refInd
+ 2013/04/28  16:41:17  info   Start of sql_tools_write_entry
+ found entries          10
+ writing index no          11 0000011   
+ 2013/04/28  16:41:17  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:17  info   End of sql_tools_create_writeCols
+ JJ          11
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          11
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:17  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:17  info   End of tmatrix_sql
+ 2013/04/28  16:41:17  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.0000040800000001E-005   1.5200062016063256E-011 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-005   1.5200000000000000E-011 snow
+ 2013/04/28  16:41:17  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.0000000000E-05       1.5200000000E-11       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.0000000000E-05" and mass="1.5200000000E-11" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:17  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:17  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:17  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        1.9999999999999998E-005   1.5200000000000000E-011
+ WANRING changed density from    3628.7327024952151      kg/m3 to 917 kg/m3 for d=   1.9999999999999998E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        9.9999999999999991E-006   1.9999999999999998E-005   1.5200000000000000E-011   1.0000000000000000     
+ 2013/04/28  16:41:17  info   End of tmatrix_refInd
+ 2013/04/28  16:41:17  info   Start of sql_tools_write_entry
+ found entries          11
+ writing index no          12 0000012   
+ 2013/04/28  16:41:17  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:17  info   End of sql_tools_create_writeCols
+ JJ          12
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          12
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:17  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:17  info   End of tmatrix_sql
+ 2013/04/28  16:41:17  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.2000039779999999E-005   1.8392066512220131E-011 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.1999999999999999E-005   1.8399999999999999E-011 snow
+ 2013/04/28  16:41:17  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.2000000000E-05       1.8400000000E-11       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.2000000000E-05" and mass="1.8400000000E-11" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:17  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:17  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:17  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.1999999999999999E-005   1.8399999999999999E-011
+ WANRING changed density from    3300.2828169318645      kg/m3 to 917 kg/m3 for d=   2.1999999999999999E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        1.1000000000000000E-005   2.1999999999999999E-005   1.8399999999999999E-011   1.0000000000000000     
+ 2013/04/28  16:41:18  info   End of tmatrix_refInd
+ 2013/04/28  16:41:18  info   Start of sql_tools_write_entry
+ found entries          12
+ writing index no          13 0000013   
+ 2013/04/28  16:41:18  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:18  info   End of sql_tools_create_writeCols
+ JJ          13
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          13
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:18  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:18  info   End of tmatrix_sql
+ 2013/04/28  16:41:18  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.4000038759999998E-005   2.1888070698297083E-011 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.4000000000000001E-005   2.1900000000000000E-011 snow
+ 2013/04/28  16:41:18  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.4000000000E-05       2.1900000000E-11       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.4000000000E-05" and mass="2.1900000000E-11" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:18  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:18  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:18  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.4000000000000001E-005   2.1900000000000000E-011
+ WANRING changed density from    3025.6017827365517      kg/m3 to 917 kg/m3 for d=   2.4000000000000001E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        1.2000000000000000E-005   2.4000000000000001E-005   2.1900000000000000E-011   1.0000000000000000     
+ 2013/04/28  16:41:18  info   End of tmatrix_refInd
+ 2013/04/28  16:41:18  info   Start of sql_tools_write_entry
+ found entries          13
+ writing index no          14 0000014   
+ 2013/04/28  16:41:18  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:18  info   End of sql_tools_create_writeCols
+ JJ          14
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          14
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:18  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:18  info   End of tmatrix_sql
+ 2013/04/28  16:41:18  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.6000037740000000E-005   2.5688074574294126E-011 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.5999999999999998E-005   2.5700000000000002E-011 snow
+ 2013/04/28  16:41:18  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.6000000000E-05       2.5700000000E-11       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.6000000000E-05" and mass="2.5700000000E-11" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:18  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:18  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:18  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.5999999999999998E-005   2.5700000000000002E-011
+ WANRING changed density from    2792.6368030007134      kg/m3 to 917 kg/m3 for d=   2.5999999999999998E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        1.2999999999999999E-005   2.5999999999999998E-005   2.5700000000000002E-011   1.0000000000000000     
+ 2013/04/28  16:41:18  info   End of tmatrix_refInd
+ 2013/04/28  16:41:18  info   Start of sql_tools_write_entry
+ found entries          14
+ writing index no          15 0000015   
+ 2013/04/28  16:41:18  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:18  info   End of sql_tools_create_writeCols
+ JJ          15
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          15
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:18  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:18  info   End of tmatrix_sql
+ 2013/04/28  16:41:18  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.8000036719999999E-005   2.9792078140211236E-011 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.8000000000000000E-005   2.9800000000000003E-011 snow
+ 2013/04/28  16:41:18  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       2.8000000000E-05       2.9800000000E-11       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="2.8000000000E-05" and mass="2.9800000000E-11" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:18  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:18  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:18  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.8000000000000000E-005   2.9800000000000003E-011
+ WANRING changed density from    2592.6479432243887      kg/m3 to 917 kg/m3 for d=   2.8000000000000000E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        1.4000000000000000E-005   2.8000000000000000E-005   2.9800000000000003E-011   1.0000000000000000     
+ 2013/04/28  16:41:18  info   End of tmatrix_refInd
+ 2013/04/28  16:41:18  info   Start of sql_tools_write_entry
+ found entries          15
+ writing index no          16 0000016   
+ 2013/04/28  16:41:18  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:18  info   End of sql_tools_create_writeCols
+ JJ          16
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          16
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:18  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:18  info   End of tmatrix_sql
+ 2013/04/28  16:41:18  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        3.0000035700000001E-005   3.4200081396048433E-011 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.9999999999999997E-005   3.4200000000000002E-011 snow
+ 2013/04/28  16:41:18  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       3.0000000000E-05       3.4200000000E-11       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="3.0000000000E-05" and mass="3.4200000000E-11" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:18  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:18  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:18  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        2.9999999999999997E-005   3.4200000000000002E-011
+ WANRING changed density from    2419.1551349968099      kg/m3 to 917 kg/m3 for d=   2.9999999999999997E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        1.4999999999999999E-005   2.9999999999999997E-005   3.4200000000000002E-011   1.0000000000000000     
+ 2013/04/28  16:41:19  info   End of tmatrix_refInd
+ 2013/04/28  16:41:19  info   Start of sql_tools_write_entry
+ found entries          16
+ writing index no          17 0000017   
+ 2013/04/28  16:41:19  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:19  info   End of sql_tools_create_writeCols
+ JJ          17
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          17
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:19  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:19  info   End of tmatrix_sql
+ 2013/04/28  16:41:19  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        3.2000034680000000E-005   3.8912084341805704E-011 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        3.1999999999999999E-005   3.8900000000000003E-011 snow
+ 2013/04/28  16:41:19  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       3.2000000000E-05       3.8900000000E-11       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="3.2000000000E-05" and mass="3.8900000000E-11" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:19  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:19  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:19  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        3.1999999999999999E-005   3.8900000000000003E-011
+ WANRING changed density from    2267.2585276885002      kg/m3 to 917 kg/m3 for d=   3.1999999999999999E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        1.5999999999999999E-005   3.1999999999999999E-005   3.8900000000000003E-011   1.0000000000000000     
+ 2013/04/28  16:41:19  info   End of tmatrix_refInd
+ 2013/04/28  16:41:19  info   Start of sql_tools_write_entry
+ found entries          17
+ writing index no          18 0000018   
+ 2013/04/28  16:41:19  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:19  info   End of sql_tools_create_writeCols
+ JJ          18
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          18
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:19  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:19  info   End of tmatrix_sql
+ 2013/04/28  16:41:19  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        3.4000033659999999E-005   4.3928086977483050E-011 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        3.4000000000000000E-005   4.3899999999999998E-011 snow
+ 2013/04/28  16:41:19  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       3.4000000000E-05       4.3900000000E-11       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="3.4000000000E-05" and mass="4.3900000000E-11" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:19  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:19  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:19  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        3.4000000000000000E-005   4.3899999999999998E-011
+ WANRING changed density from    2133.1880729902928      kg/m3 to 917 kg/m3 for d=   3.4000000000000000E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        1.7000000000000000E-005   3.4000000000000000E-005   4.3899999999999998E-011   1.0000000000000000     
+ 2013/04/28  16:41:19  info   End of tmatrix_refInd
+ 2013/04/28  16:41:19  info   Start of sql_tools_write_entry
+ found entries          18
+ writing index no          19 0000019   
+ 2013/04/28  16:41:19  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:19  info   End of sql_tools_create_writeCols
+ JJ          19
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          19
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:19  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:19  info   End of tmatrix_sql
+ 2013/04/28  16:41:19  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        3.6000032639999997E-005   4.9248089303080476E-011 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        3.6000000000000001E-005   4.9200000000000002E-011 snow
+ 2013/04/28  16:41:19  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       3.6000000000E-05       4.9200000000E-11       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="3.6000000000E-05" and mass="4.9200000000E-11" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:19  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:19  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:19  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        3.6000000000000001E-005   4.9200000000000002E-011
+ WANRING changed density from    2013.9977366567002      kg/m3 to 917 kg/m3 for d=   3.6000000000000001E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        1.8000000000000000E-005   3.6000000000000001E-005   4.9200000000000002E-011   1.0000000000000000     
+ 2013/04/28  16:41:19  info   End of tmatrix_refInd
+ 2013/04/28  16:41:19  info   Start of sql_tools_write_entry
+ found entries          19
+ writing index no          20 0000020   
+ 2013/04/28  16:41:19  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:19  info   End of sql_tools_create_writeCols
+ JJ          20
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          20
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:19  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:19  info   End of tmatrix_sql
+ 2013/04/28  16:41:19  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        3.8000031620000003E-005   5.4872091318598002E-011 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        3.7999999999999995E-005   5.4899999999999999E-011 snow
+ 2013/04/28  16:41:19  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       3.8000000000E-05       5.4900000000E-11       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="3.8000000000E-05" and mass="5.4900000000E-11" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:19  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:19  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:19  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        3.7999999999999995E-005   5.4899999999999999E-011
+ WANRING changed density from    1910.8338771858271      kg/m3 to 917 kg/m3 for d=   3.7999999999999995E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        1.8999999999999998E-005   3.7999999999999995E-005   5.4899999999999999E-011   1.0000000000000000     
+ 2013/04/28  16:41:19  info   End of tmatrix_refInd
+ 2013/04/28  16:41:19  info   Start of sql_tools_write_entry
+ found entries          20
+ writing index no          21 0000021   
+ 2013/04/28  16:41:19  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:19  info   End of sql_tools_create_writeCols
+ JJ          21
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          21
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:20  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:20  info   End of tmatrix_sql
+ 2013/04/28  16:41:20  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        4.0000030600000002E-005   6.0800093024035589E-011 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        3.9999999999999996E-005   6.0799999999999999E-011 snow
+ 2013/04/28  16:41:20  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       4.0000000000E-05       6.0800000000E-11       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="4.0000000000E-05" and mass="6.0800000000E-11" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:20  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:20  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:20  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        3.9999999999999996E-005   6.0799999999999999E-011
+ WANRING changed density from    1814.3663512476076      kg/m3 to 917 kg/m3 for d=   3.9999999999999996E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        1.9999999999999998E-005   3.9999999999999996E-005   6.0799999999999999E-011   1.0000000000000000     
+ 2013/04/28  16:41:20  info   End of tmatrix_refInd
+ 2013/04/28  16:41:20  info   Start of sql_tools_write_entry
+ found entries          21
+ writing index no          22 0000022   
+ 2013/04/28  16:41:20  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:20  info   End of sql_tools_create_writeCols
+ JJ          22
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          22
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:20  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:20  info   End of tmatrix_sql
+ 2013/04/28  16:41:20  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        4.2000029580000000E-005   6.7032094419393257E-011 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        4.1999999999999998E-005   6.7000000000000001E-011 snow
+ 2013/04/28  16:41:20  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       4.2000000000E-05       6.7000000000E-11       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="4.2000000000E-05" and mass="6.7000000000E-11" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:20  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:20  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:20  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        4.1999999999999998E-005   6.7000000000000001E-011
+ WANRING changed density from    1727.1430494261399      kg/m3 to 917 kg/m3 for d=   4.1999999999999998E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        2.0999999999999999E-005   4.1999999999999998E-005   6.7000000000000001E-011   1.0000000000000000     
+ 2013/04/28  16:41:20  info   End of tmatrix_refInd
+ 2013/04/28  16:41:20  info   Start of sql_tools_write_entry
+ found entries          22
+ writing index no          23 0000023   
+ 2013/04/28  16:41:20  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:20  info   End of sql_tools_create_writeCols
+ JJ          23
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          23
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:20  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:20  info   End of tmatrix_sql
+ 2013/04/28  16:41:20  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        4.4000028559999999E-005   7.3568095504670986E-011 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        4.3999999999999999E-005   7.3599999999999997E-011 snow
+ 2013/04/28  16:41:20  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       4.4000000000E-05       7.3600000000E-11       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="4.4000000000E-05" and mass="7.3600000000E-11" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:20  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:20  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:20  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        4.3999999999999999E-005   7.3599999999999997E-011
+ WANRING changed density from    1650.1414084659323      kg/m3 to 917 kg/m3 for d=   4.3999999999999999E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        2.1999999999999999E-005   4.3999999999999999E-005   7.3599999999999997E-011   1.0000000000000000     
+ 2013/04/28  16:41:20  info   End of tmatrix_refInd
+ 2013/04/28  16:41:20  info   Start of sql_tools_write_entry
+ found entries          23
+ writing index no          24 0000024   
+ 2013/04/28  16:41:20  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:20  info   End of sql_tools_create_writeCols
+ JJ          24
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          24
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:20  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:20  info   End of tmatrix_sql
+ 2013/04/28  16:41:20  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        4.6000027539999998E-005   8.0408096279868802E-011 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        4.6000000000000000E-005   8.0400000000000002E-011 snow
+ 2013/04/28  16:41:20  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       4.6000000000E-05       8.0400000000E-11       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="4.6000000000E-05" and mass="8.0400000000E-11" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:20  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:20  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:20  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        4.6000000000000000E-005   8.0400000000000002E-011
+ WANRING changed density from    1577.5529002122610      kg/m3 to 917 kg/m3 for d=   4.6000000000000000E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        2.3000000000000000E-005   4.6000000000000000E-005   8.0400000000000002E-011   1.0000000000000000     
+ 2013/04/28  16:41:20  info   End of tmatrix_refInd
+ 2013/04/28  16:41:20  info   Start of sql_tools_write_entry
+ found entries          24
+ writing index no          25 0000025   
+ 2013/04/28  16:41:20  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:20  info   End of sql_tools_create_writeCols
+ JJ          25
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          25
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:20  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:20  info   End of tmatrix_sql
+ 2013/04/28  16:41:20  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        4.8000026519999997E-005   8.7552096744986705E-011 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        4.8000000000000001E-005   8.7600000000000000E-011 snow
+ 2013/04/28  16:41:20  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       4.8000000000E-05       8.7600000000E-11       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="4.8000000000E-05" and mass="8.7600000000E-11" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:20  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:20  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:20  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        4.8000000000000001E-005   8.7600000000000000E-011
+ WANRING changed density from    1512.8008913682759      kg/m3 to 917 kg/m3 for d=   4.8000000000000001E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        2.4000000000000001E-005   4.8000000000000001E-005   8.7600000000000000E-011   1.0000000000000000     
+ 2013/04/28  16:41:21  info   End of tmatrix_refInd
+ 2013/04/28  16:41:21  info   Start of sql_tools_write_entry
+ found entries          25
+ writing index no          26 0000026   
+ 2013/04/28  16:41:21  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:21  info   End of sql_tools_create_writeCols
+ JJ          26
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          26
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:21  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:21  info   End of tmatrix_sql
+ 2013/04/28  16:41:21  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.0000025500000002E-005   9.5000096900024721E-011 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        4.9999999999999996E-005   9.5000000000000008E-011 snow
+ 2013/04/28  16:41:21  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       5.0000000000E-05       9.5000000000E-11       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="5.0000000000E-05" and mass="9.5000000000E-11" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:21  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:21  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:21  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        4.9999999999999996E-005   9.5000000000000008E-011
+ WANRING changed density from    1451.4930809980863      kg/m3 to 917 kg/m3 for d=   4.9999999999999996E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        2.4999999999999998E-005   4.9999999999999996E-005   9.5000000000000008E-011   1.0000000000000000     
+ 2013/04/28  16:41:21  info   End of tmatrix_refInd
+ 2013/04/28  16:41:21  info   Start of sql_tools_write_entry
+ found entries          26
+ writing index no          27 0000027   
+ 2013/04/28  16:41:21  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:21  info   End of sql_tools_create_writeCols
+ JJ          27
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          27
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:21  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:21  info   End of tmatrix_sql
+ 2013/04/28  16:41:21  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.2000024480000001E-005   1.0275209674498277E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.1999999999999997E-005   1.0299999999999999E-010 snow
+ 2013/04/28  16:41:21  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       5.2000000000E-05       1.0300000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="5.2000000000E-05" and mass="1.0300000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:21  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:21  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:21  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.1999999999999997E-005   1.0299999999999999E-010
+ WANRING changed density from    1399.0349742659214      kg/m3 to 917 kg/m3 for d=   5.1999999999999997E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        2.5999999999999998E-005   5.1999999999999997E-005   1.0299999999999999E-010   1.0000000000000000     
+ 2013/04/28  16:41:21  info   End of tmatrix_refInd
+ 2013/04/28  16:41:21  info   Start of sql_tools_write_entry
+ found entries          27
+ writing index no          28 0000028   
+ 2013/04/28  16:41:21  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:21  info   End of sql_tools_create_writeCols
+ JJ          28
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          28
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:21  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:21  info   End of tmatrix_sql
+ 2013/04/28  16:41:21  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.4000023460000000E-005   1.1080809627986091E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.3999999999999998E-005   1.1099999999999999E-010 snow
+ 2013/04/28  16:41:21  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       5.4000000000E-05       1.1100000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="5.4000000000E-05" and mass="1.1100000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:21  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:21  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:21  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.3999999999999998E-005   1.1099999999999999E-010
+ WANRING changed density from    1346.3038167352829      kg/m3 to 917 kg/m3 for d=   5.3999999999999998E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        2.6999999999999999E-005   5.3999999999999998E-005   1.1099999999999999E-010   1.0000000000000000     
+ 2013/04/28  16:41:21  info   End of tmatrix_refInd
+ 2013/04/28  16:41:21  info   Start of sql_tools_write_entry
+ found entries          28
+ writing index no          29 0000029   
+ 2013/04/28  16:41:21  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:21  info   End of sql_tools_create_writeCols
+ JJ          29
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          29
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:21  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:21  info   End of tmatrix_sql
+ 2013/04/28  16:41:21  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.6000022439999998E-005   1.1916809550465912E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.5999999999999999E-005   1.1900000000000000E-010 snow
+ 2013/04/28  16:41:21  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       5.6000000000E-05       1.1900000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="5.6000000000E-05" and mass="1.1900000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:21  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:21  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:21  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.5999999999999999E-005   1.1900000000000000E-010
+ WANRING changed density from    1294.1489313913683      kg/m3 to 917 kg/m3 for d=   5.5999999999999999E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        2.8000000000000000E-005   5.5999999999999999E-005   1.1900000000000000E-010   1.0000000000000000     
+ 2013/04/28  16:41:21  info   End of tmatrix_refInd
+ 2013/04/28  16:41:21  info   Start of sql_tools_write_entry
+ found entries          29
+ writing index no          30 0000030   
+ 2013/04/28  16:41:21  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:21  info   End of sql_tools_create_writeCols
+ JJ          30
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          30
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:22  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:22  info   End of tmatrix_sql
+ 2013/04/28  16:41:22  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.8000021419999997E-005   1.2783209441937744E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.8000000000000000E-005   1.2800000000000000E-010 snow
+ 2013/04/28  16:41:22  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       5.8000000000E-05       1.2800000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="5.8000000000E-05" and mass="1.2800000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:22  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:22  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:22  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.8000000000000000E-005   1.2800000000000000E-010
+ WANRING changed density from    1252.9316115315883      kg/m3 to 917 kg/m3 for d=   5.8000000000000000E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        2.9000000000000000E-005   5.8000000000000000E-005   1.2800000000000000E-010   1.0000000000000000     
+ 2013/04/28  16:41:22  info   End of tmatrix_refInd
+ 2013/04/28  16:41:22  info   Start of sql_tools_write_entry
+ found entries          30
+ writing index no          31 0000031   
+ 2013/04/28  16:41:22  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:22  info   End of sql_tools_create_writeCols
+ JJ          31
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          31
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:22  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:22  info   End of tmatrix_sql
+ 2013/04/28  16:41:22  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.0000020400000003E-005   1.3680009302401582E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.9999999999999995E-005   1.3699999999999999E-010 snow
+ 2013/04/28  16:41:22  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       6.0000000000E-05       1.3700000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="6.0000000000E-05" and mass="1.3700000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:22  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:22  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:22  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        5.9999999999999995E-005   1.3699999999999999E-010
+ WANRING changed density from    1211.3459557549813      kg/m3 to 917 kg/m3 for d=   5.9999999999999995E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        2.9999999999999997E-005   5.9999999999999995E-005   1.3699999999999999E-010   1.0000000000000000     
+ 2013/04/28  16:41:22  info   End of tmatrix_refInd
+ 2013/04/28  16:41:22  info   Start of sql_tools_write_entry
+ found entries          31
+ writing index no          32 0000032   
+ 2013/04/28  16:41:22  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:22  info   End of sql_tools_create_writeCols
+ JJ          32
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          32
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:22  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:22  info   End of tmatrix_sql
+ 2013/04/28  16:41:22  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.2000019379999995E-005   1.4607209131857423E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.2000000000000003E-005   1.4599999999999999E-010 snow
+ 2013/04/28  16:41:22  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       6.2000000000E-05       1.4600000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="6.2000000000E-05" and mass="1.4600000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:22  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:22  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:22  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.2000000000000003E-005   1.4599999999999999E-010
+ WANRING changed density from    1169.9819588843970      kg/m3 to 917 kg/m3 for d=   6.2000000000000003E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        3.1000000000000001E-005   6.2000000000000003E-005   1.4599999999999999E-010   1.0000000000000000     
+ 2013/04/28  16:41:22  info   End of tmatrix_refInd
+ 2013/04/28  16:41:22  info   Start of sql_tools_write_entry
+ found entries          32
+ writing index no          33 0000033   
+ 2013/04/28  16:41:22  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:22  info   End of sql_tools_create_writeCols
+ JJ          33
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          33
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:22  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:22  info   End of tmatrix_sql
+ 2013/04/28  16:41:22  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.4000018360000000E-005   1.5564808930305282E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.3999999999999997E-005   1.5600000000000000E-010 snow
+ 2013/04/28  16:41:22  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       6.4000000000E-05       1.5600000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="6.4000000000E-05" and mass="1.5600000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:22  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:22  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:22  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.3999999999999997E-005   1.5600000000000000E-010
+ WANRING changed density from    1136.5434778901219      kg/m3 to 917 kg/m3 for d=   6.3999999999999997E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        3.1999999999999999E-005   6.3999999999999997E-005   1.5600000000000000E-010   1.0000000000000000     
+ 2013/04/28  16:41:22  info   End of tmatrix_refInd
+ 2013/04/28  16:41:22  info   Start of sql_tools_write_entry
+ found entries          33
+ writing index no          34 0000034   
+ 2013/04/28  16:41:22  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:22  info   End of sql_tools_create_writeCols
+ JJ          34
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          34
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:22  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:22  info   End of tmatrix_sql
+ 2013/04/28  16:41:22  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.6000017340000006E-005   1.6552808697745145E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.5999999999999992E-005   1.6600000000000000E-010 snow
+ 2013/04/28  16:41:22  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       6.6000000000E-05       1.6600000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="6.6000000000E-05" and mass="1.6600000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:22  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:22  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:22  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.5999999999999992E-005   1.6600000000000000E-010
+ WANRING changed density from    1102.7515048524351      kg/m3 to 917 kg/m3 for d=   6.5999999999999992E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        3.2999999999999996E-005   6.5999999999999992E-005   1.6600000000000000E-010   1.0000000000000000     
+ 2013/04/28  16:41:23  info   End of tmatrix_refInd
+ 2013/04/28  16:41:23  info   Start of sql_tools_write_entry
+ found entries          34
+ writing index no          35 0000035   
+ 2013/04/28  16:41:23  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:23  info   End of sql_tools_create_writeCols
+ JJ          35
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          35
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:23  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:23  info   End of tmatrix_sql
+ 2013/04/28  16:41:23  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.8000016319999998E-005   1.7571208434177011E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.7999999999999999E-005   1.7599999999999999E-010 snow
+ 2013/04/28  16:41:23  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       6.8000000000E-05       1.7600000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="6.8000000000E-05" and mass="1.7600000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:23  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:23  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:23  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.7999999999999999E-005   1.7599999999999999E-010
+ WANRING changed density from    1069.0236356671169      kg/m3 to 917 kg/m3 for d=   6.7999999999999999E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        3.4000000000000000E-005   6.7999999999999999E-005   1.7599999999999999E-010   1.0000000000000000     
+ 2013/04/28  16:41:23  info   End of tmatrix_refInd
+ 2013/04/28  16:41:23  info   Start of sql_tools_write_entry
+ found entries          35
+ writing index no          36 0000036   
+ 2013/04/28  16:41:23  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:23  info   End of sql_tools_create_writeCols
+ JJ          36
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          36
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:23  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:23  info   End of tmatrix_sql
+ 2013/04/28  16:41:23  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        7.0000015300000003E-005   1.8620008139600889E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.9999999999999994E-005   1.8600000000000000E-010 snow
+ 2013/04/28  16:41:23  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       7.0000000000E-05       1.8600000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="7.0000000000E-05" and mass="1.8600000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:23  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:23  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:23  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        6.9999999999999994E-005   1.8600000000000000E-010
+ WANRING changed density from    1035.6671515484272      kg/m3 to 917 kg/m3 for d=   6.9999999999999994E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        3.4999999999999997E-005   6.9999999999999994E-005   1.8600000000000000E-010   1.0000000000000000     
+ 2013/04/28  16:41:23  info   End of tmatrix_refInd
+ 2013/04/28  16:41:23  info   Start of sql_tools_write_entry
+ found entries          36
+ writing index no          37 0000037   
+ 2013/04/28  16:41:23  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:23  info   End of sql_tools_create_writeCols
+ JJ          37
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          37
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:23  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:23  info   End of tmatrix_sql
+ 2013/04/28  16:41:23  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        7.2000014279999995E-005   1.9699207814016773E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        7.2000000000000002E-005   1.9699999999999999E-010 snow
+ 2013/04/28  16:41:23  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       7.2000000000E-05       1.9700000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="7.2000000000E-05" and mass="1.9700000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:23  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:23  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:23  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        7.2000000000000002E-005   1.9699999999999999E-010
+ WANRING changed density from    1008.0222411620169      kg/m3 to 917 kg/m3 for d=   7.2000000000000002E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        3.6000000000000001E-005   7.2000000000000002E-005   1.9699999999999999E-010   1.0000000000000000     
+ 2013/04/28  16:41:23  info   End of tmatrix_refInd
+ 2013/04/28  16:41:23  info   Start of sql_tools_write_entry
+ found entries          37
+ writing index no          38 0000038   
+ 2013/04/28  16:41:23  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:23  info   End of sql_tools_create_writeCols
+ JJ          38
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          38
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:23  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:23  info   End of tmatrix_sql
+ 2013/04/28  16:41:23  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        7.4000013260000001E-005   2.0808807457424668E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        7.3999999999999996E-005   2.0800000000000001E-010 snow
+ 2013/04/28  16:41:23  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       7.4000000000E-05       2.0800000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="7.4000000000E-05" and mass="2.0800000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:23  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:23  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:23  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        7.3999999999999996E-005   2.0800000000000001E-010
+ WANRING changed density from    980.32381585831740      kg/m3 to 917 kg/m3 for d=   7.3999999999999996E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        3.6999999999999998E-005   7.3999999999999996E-005   2.0800000000000001E-010   1.0000000000000000     
+ 2013/04/28  16:41:23  info   End of tmatrix_refInd
+ 2013/04/28  16:41:23  info   Start of sql_tools_write_entry
+ found entries          38
+ writing index no          39 0000039   
+ 2013/04/28  16:41:23  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:23  info   End of sql_tools_create_writeCols
+ JJ          39
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          39
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:24  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:24  info   End of tmatrix_sql
+ 2013/04/28  16:41:24  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        7.6000012240000006E-005   2.1948807069824572E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        7.5999999999999991E-005   2.1899999999999999E-010 snow
+ 2013/04/28  16:41:24  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       7.6000000000E-05       2.1900000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="7.6000000000E-05" and mass="2.1900000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:24  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:24  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:24  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        7.5999999999999991E-005   2.1899999999999999E-010
+ WANRING changed density from    952.80650979894381      kg/m3 to 917 kg/m3 for d=   7.5999999999999991E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        3.7999999999999995E-005   7.5999999999999991E-005   2.1899999999999999E-010   1.0000000000000000     
+ 2013/04/28  16:41:24  info   End of tmatrix_refInd
+ 2013/04/28  16:41:24  info   Start of sql_tools_write_entry
+ found entries          39
+ writing index no          40 0000040   
+ 2013/04/28  16:41:24  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:24  info   End of sql_tools_create_writeCols
+ JJ          40
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          40
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:24  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:24  info   End of tmatrix_sql
+ 2013/04/28  16:41:24  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        7.8000011219999998E-005   2.3119206651216477E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        7.7999999999999999E-005   2.3100000000000000E-010 snow
+ 2013/04/28  16:41:24  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       7.8000000000E-05       2.3100000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="7.8000000000E-05" and mass="2.3100000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:24  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:24  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:24  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        7.7999999999999999E-005   2.3100000000000000E-010
+ WANRING changed density from    929.67156865998652      kg/m3 to 917 kg/m3 for d=   7.7999999999999999E-005
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   917.00000000000000        3.8999999999999999E-005   7.7999999999999999E-005   2.3100000000000000E-010   1.0000000000000000     
+ 2013/04/28  16:41:24  info   End of tmatrix_refInd
+ 2013/04/28  16:41:24  info   Start of sql_tools_write_entry
+ found entries          40
+ writing index no          41 0000041   
+ 2013/04/28  16:41:24  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:24  info   End of sql_tools_create_writeCols
+ JJ          41
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          41
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:24  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:24  info   End of tmatrix_sql
+ 2013/04/28  16:41:24  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        8.0000010200000004E-005   2.4320006201600398E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        7.9999999999999993E-005   2.4299999999999999E-010 snow
+ 2013/04/28  16:41:24  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       8.0000000000E-05       2.4300000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="8.0000000000E-05" and mass="2.4300000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:24  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:24  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:24  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        7.9999999999999993E-005   2.4299999999999999E-010
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   906.43713682806037        3.9999999999999996E-005   7.9999999999999993E-005   2.4299999999999999E-010   1.0000000000000000     
+ 2013/04/28  16:41:24  info   End of tmatrix_refInd
+ 2013/04/28  16:41:24  info   Start of sql_tools_write_entry
+ found entries          41
+ writing index no          42 0000042   
+ 2013/04/28  16:41:24  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:24  info   End of sql_tools_create_writeCols
+ JJ          42
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          42
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:24  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:24  info   End of tmatrix_sql
+ 2013/04/28  16:41:24  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        8.2000009179999996E-005   2.5551205720976320E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        8.2000000000000001E-005   2.5599999999999999E-010 snow
+ 2013/04/28  16:41:24  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       8.2000000000E-05       2.5600000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="8.2000000000E-05" and mass="2.5600000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:24  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:24  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:24  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        8.2000000000000001E-005   2.5599999999999999E-010
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   886.74711840060081        4.1000000000000000E-005   8.2000000000000001E-005   2.5599999999999999E-010   1.0000000000000000     
+ 2013/04/28  16:41:24  info   End of tmatrix_refInd
+ 2013/04/28  16:41:24  info   Start of sql_tools_write_entry
+ found entries          42
+ writing index no          43 0000043   
+ 2013/04/28  16:41:24  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:24  info   End of sql_tools_create_writeCols
+ JJ          43
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          43
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:24  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:24  info   End of tmatrix_sql
+ 2013/04/28  16:41:24  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        8.4000008160000001E-005   2.6812805209344253E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        8.3999999999999995E-005   2.6800000000000001E-010 snow
+ 2013/04/28  16:41:24  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       8.4000000000E-05       2.6800000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="8.4000000000E-05" and mass="2.6800000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:24  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:24  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:24  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        8.3999999999999995E-005   2.6800000000000001E-010
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   863.57152471306995        4.1999999999999998E-005   8.3999999999999995E-005   2.6800000000000001E-010   1.0000000000000000     
+ 2013/04/28  16:41:25  info   End of tmatrix_refInd
+ 2013/04/28  16:41:25  info   Start of sql_tools_write_entry
+ found entries          43
+ writing index no          44 0000044   
+ 2013/04/28  16:41:25  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:25  info   End of sql_tools_create_writeCols
+ JJ          44
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          44
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:25  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:25  info   End of tmatrix_sql
+ 2013/04/28  16:41:25  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        8.6000007140000007E-005   2.8104804666704196E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        8.5999999999999990E-005   2.8100000000000001E-010 snow
+ 2013/04/28  16:41:25  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       8.6000000000E-05       2.8100000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="8.6000000000E-05" and mass="2.8100000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:25  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:25  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:25  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        8.5999999999999990E-005   2.8100000000000001E-010
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   843.74719852634257        4.2999999999999995E-005   8.5999999999999990E-005   2.8100000000000001E-010   1.0000000000000000     
+ 2013/04/28  16:41:25  info   End of tmatrix_refInd
+ 2013/04/28  16:41:25  info   Start of sql_tools_write_entry
+ found entries          44
+ writing index no          45 0000045   
+ 2013/04/28  16:41:25  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:25  info   End of sql_tools_create_writeCols
+ JJ          45
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          45
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:25  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:25  info   End of tmatrix_sql
+ 2013/04/28  16:41:25  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        8.8000006119999999E-005   2.9427204093056138E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        8.7999999999999998E-005   2.9400000000000002E-010 snow
+ 2013/04/28  16:41:25  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       8.8000000000E-05       2.9400000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="8.8000000000E-05" and mass="2.9400000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:25  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:25  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:25  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        8.7999999999999998E-005   2.9400000000000002E-010
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   823.94968425438879        4.3999999999999999E-005   8.7999999999999998E-005   2.9400000000000002E-010   1.0000000000000000     
+ 2013/04/28  16:41:25  info   End of tmatrix_refInd
+ 2013/04/28  16:41:25  info   Start of sql_tools_write_entry
+ found entries          45
+ writing index no          46 0000046   
+ 2013/04/28  16:41:25  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:25  info   End of sql_tools_create_writeCols
+ JJ          46
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          46
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:25  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:25  info   End of tmatrix_sql
+ 2013/04/28  16:41:25  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        9.0000005100000004E-005   3.0780003488400106E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        8.9999999999999992E-005   3.0799999999999997E-010 snow
+ 2013/04/28  16:41:25  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       9.0000000000E-05       3.0800000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="9.0000000000E-05" and mass="3.0800000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:25  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:25  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:25  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        8.9999999999999992E-005   3.0799999999999997E-010
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   806.90901188977409        4.4999999999999996E-005   8.9999999999999992E-005   3.0799999999999997E-010   1.0000000000000000     
+ 2013/04/28  16:41:25  info   End of tmatrix_refInd
+ 2013/04/28  16:41:25  info   Start of sql_tools_write_entry
+ found entries          46
+ writing index no          47 0000047   
+ 2013/04/28  16:41:25  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:25  info   End of sql_tools_create_writeCols
+ JJ          47
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          47
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:25  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:25  info   End of tmatrix_sql
+ 2013/04/28  16:41:25  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        9.2000004079999996E-005   3.2163202852736059E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        9.2000000000000000E-005   3.2199999999999997E-010 snow
+ 2013/04/28  16:41:25  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       9.2000000000E-05       3.2200000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="9.2000000000E-05" and mass="3.2200000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:25  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:25  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:25  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        9.2000000000000000E-005   3.2199999999999997E-010
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   789.75751534258086        4.6000000000000000E-005   9.2000000000000000E-005   3.2199999999999997E-010   1.0000000000000000     
+ 2013/04/28  16:41:25  info   End of tmatrix_refInd
+ 2013/04/28  16:41:25  info   Start of sql_tools_write_entry
+ found entries          47
+ writing index no          48 0000048   
+ 2013/04/28  16:41:25  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:25  info   End of sql_tools_create_writeCols
+ JJ          48
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          48
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:25  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:25  info   End of tmatrix_sql
+ 2013/04/28  16:41:25  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        9.4000003060000002E-005   3.3576802186064036E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        9.3999999999999994E-005   3.3599999999999998E-010 snow
+ 2013/04/28  16:41:25  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       9.4000000000E-05       3.3600000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="9.4000000000E-05" and mass="3.3600000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:26  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:26  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:26  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        9.3999999999999994E-005   3.3599999999999998E-010
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   772.60425260602415        4.6999999999999997E-005   9.3999999999999994E-005   3.3599999999999998E-010   1.0000000000000000     
+ 2013/04/28  16:41:26  info   End of tmatrix_refInd
+ 2013/04/28  16:41:26  info   Start of sql_tools_write_entry
+ found entries          48
+ writing index no          49 0000049   
+ 2013/04/28  16:41:26  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:26  info   End of sql_tools_create_writeCols
+ JJ          49
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          49
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:26  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:26  info   End of tmatrix_sql
+ 2013/04/28  16:41:26  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        9.6000002039999994E-005   3.5020801488384013E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        9.6000000000000002E-005   3.4999999999999998E-010 snow
+ 2013/04/28  16:41:26  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       9.6000000000E-05       3.5000000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="9.6000000000E-05" and mass="3.5000000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:26  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:26  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:26  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        9.6000000000000002E-005   3.4999999999999998E-010
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   755.53697485573127        4.8000000000000001E-005   9.6000000000000002E-005   3.4999999999999998E-010   1.0000000000000000     
+ 2013/04/28  16:41:26  info   End of tmatrix_refInd
+ 2013/04/28  16:41:26  info   Start of sql_tools_write_entry
+ found entries          49
+ writing index no          50 0000050   
+ 2013/04/28  16:41:26  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:26  info   End of sql_tools_create_writeCols
+ JJ          50
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          50
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:26  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:26  info   End of tmatrix_sql
+ 2013/04/28  16:41:26  info   Start of tmatrix_sql
+ freq,t,as_ratio,diameter, particle_mass, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        9.8000001019999999E-005   3.6495200759696006E-010 snow
+ freq_round,t_round,as_ratio_round,diameter_round, particle_mass_round, ptype
+   20100000000.000000        265.00000000000000        1.0000000000000000        9.7999999999999997E-005   3.6499999999999998E-010 snow
+ 2013/04/28  16:41:26  info   Start of sql_tools_get_entry
+ 2.0100000000E+10       2.6500000000E+02       1.0000000000E+00       9.8000000000E-05       3.6500000000E-10       
+ SELECT * FROM snowice_H  WHERE (frequency="2.0100000000E+10" and temperature="2.6500000000E+02" and diameter="9.8000000000E-05" and mass="3.6500000000E-10" and as_ratio="1.0000000000E+00" and type="snow" )
+ NOTHING FOUND!
+ SELECT * FROM snowice_V  WHERE id=0032767
+ NOTHING FOUND!
+ 2013/04/28  16:41:26  info   End of sql_tools_get_entry
+ 2013/04/28  16:41:26  info   Did not find particle in databse tmatrix_sql
+ 2013/04/28  16:41:26  info   Start of tmatrix_refInd
+ freq,t,as_ratio_in,diameter,particle_mass
+   20100000000.000000        265.00000000000000        1.0000000000000000        9.7999999999999997E-005   3.6499999999999998E-010
+ density_eff, equiv_radius, diameter, particle_mass,as_ratio, 
+   740.65509560483054        4.8999999999999998E-005   9.7999999999999997E-005   3.6499999999999998E-010   1.0000000000000000     
+ 2013/04/28  16:41:26  info   End of tmatrix_refInd
+ 2013/04/28  16:41:26  info   Start of sql_tools_write_entry
+ found entries          50
+ writing index no          51 0000051   
+ 2013/04/28  16:41:26  info   Start of sql_tools_create_writeCols
+ created write_cols, len=*        1079        1079
+ 2013/04/28  16:41:26  info   End of sql_tools_create_writeCols
+ JJ          51
+ UPDATING snowice_H                        1         513           8         519
+ UPDATING snowice_H                        1         513         520        1031
+ UPDATING snowice_H                        1          49        1032        1079
+ JJ          51
+ UPDATING snowice_V                        2         513           8         519
+ UPDATING snowice_V                        2         513         520        1031
+ UPDATING snowice_V                        2          49        1032        1079
+ 2013/04/28  16:41:26  info   End of sql_tools_write_entry
+ 2013/04/28  16:41:26  info   End of tmatrix_sql
+ 2013/04/28  16:41:26  info   Start of sql_tools_close_table
+ 2013/04/28  16:41:26  info   End of sql_tools_close_table
+ 2013/04/28  16:41:26  info   End of tmatrix_ice_sql
+ Exiting snow_ssp
+ End of scattering calc for layer:            3
+ Entering radar_simulator.f90
+ Exiting radar_simulator.f90
+ Exiting hydrometeor_extinction_rt4
+           1           1 collect_boundary_output done
+           1           1 Entering rt4 ....
+ 2013/04/28  16:41:26  info   Start of rt4
+ Calculating surface emissivity ....
+ .... done!
+ 2013/04/28  16:41:26  info   End of rt4
+           1           1 ....rt4 finished
+ 2013/04/28  16:41:26  info   End of run_rt
+ 2013/04/28  16:41:26  info   Start of write_nc_results
+           1       32747    90167384       32747
+           1       32747    90167192       32747
+ 2013/04/28  16:41:26  info   End of write_nc_results
+ 2013/04/28  16:41:26  info   Progam finished successfully pamtra

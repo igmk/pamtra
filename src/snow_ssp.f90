@@ -8,7 +8,7 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
   use kinds
   use settings, only: lphase_flag, n_0snowDsnow, EM_snow, &
 	n_moments, isnow_n0, SD_snow, snow_density,liu_type,nstokes,&
-        radar_nfft_aliased, radar_mode, active
+        radar_nfft_aliased, radar_mode, active, as_ratio
   use constants, only: pi, im
   use double_moments_module
   use conversions
@@ -220,7 +220,7 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
   elseif (EM_snow .eq. 'tmSQL') then
 
     call tmatrix_snow_sql(f, swc, t, nc, &
-          ad, bd, alpha, gamma, a_msnow, b_snow, SD_snow, dia1,dia2,nbins, scatter_matrix,extinct_matrix, emis_vector,&
+          ad, bd, alpha, gamma, a_msnow, b_snow, as_ratio,SD_snow, dia1,dia2,nbins, scatter_matrix,extinct_matrix, emis_vector,&
           diameter_spec, back_spec)
     back = scatter_matrix(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
     back = 4*pi*back!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squard entries!

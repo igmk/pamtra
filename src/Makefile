@@ -5,7 +5,7 @@ gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 FC=gfortran
 CC=gcc
-FCFLAGS=-c -fPIC -Wunused -O3 #-I../include/ uninitialized
+FCFLAGS=-c -fPIC -Wunused -O2 #-I../include/ uninitialized
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran
 	NCFLAGS=-I/opt/local/include/ 
@@ -14,8 +14,8 @@ ifeq ($(ARCH),Darwin)
 	LDFLAGS=-lnetcdf -lnetcdff 
 	SQLFLAGS := -lfsqlite -lsqlite3 -L../tools/sqlite -L/usr/lib -I../tools/sqlite
 else
-	NCFLAGS :=  $(shell nc-config --fflags)  -O3
-	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O3
+	NCFLAGS :=  $(shell nc-config --fflags)  -O2
+	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
 	LFLAGS := -llapack -ldfftpack
 	LDFLAGS := $(shell nc-config --flibs)
 	SQLFLAGS := -lfsqlite -lsqlite3 -L../tools/sqlite -L/usr/lib -I../tools/sqlite

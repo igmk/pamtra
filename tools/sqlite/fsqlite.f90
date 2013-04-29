@@ -754,6 +754,7 @@ subroutine sqlite3_insert( db, tablename, columns )
    !
    call sqlite3_step( stmt, rc )
    call sqlite3_finalize( stmt )
+! deallocate(prepared_columns)   
 
 end subroutine sqlite3_insert
 
@@ -859,6 +860,7 @@ subroutine sqlite3_update( db, tablename, columns, whereString )
    call sqlite3_step( stmt, rc )
    call sqlite3_finalize( stmt )
 
+! deallocate(prepared_columns)   
 end subroutine sqlite3_update
 
 

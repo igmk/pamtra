@@ -85,7 +85,7 @@ subroutine tmatrix_sql(freq,t,as_ratio,diameter,particle_mass,ptype,par_name,sca
     scatter_matrix,extinct_matrix,emis_vector,found)
 
   if (.not. found) then
-    if (verbose >= 3) call report(info,'Did not find particle in databse ', nameOfRoutine)
+    if (verbose >= 1) call report(info,'Did not find particle in databse ', nameOfRoutine)
     call tmatrix_refIndex(freq_round,t_round,as_ratio_round,diameter_round,&
       particle_mass_round,ptype,&
       scatter_matrix,extinct_matrix,emis_vector)
@@ -94,7 +94,9 @@ subroutine tmatrix_sql(freq,t,as_ratio,diameter,particle_mass,ptype,par_name,sca
     call sql_tools_write_entry(par_name,freq_round,t_round,as_ratio_round,diameter_round,&
       particle_mass_round,ptype,&
       scatter_matrix,extinct_matrix,emis_vector)
-
+  else
+    if (verbose >= 1) call report(info,'Found particle in databse ', nameOfRoutine)
+   
   end if
 
 

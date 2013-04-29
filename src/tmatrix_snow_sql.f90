@@ -1,5 +1,5 @@
 subroutine tmatrix_snow_sql(f, wc, t, nc, &
-     ad, bd, alpha, gamma, a_m,b,aerodist,dia1,dia2,nbins,scatter_matrix,extinct_matrix, emis_vector,&
+     ad, bd, alpha, gamma, a_m,b,as_ratio,aerodist,dia1,dia2,nbins,scatter_matrix,extinct_matrix, emis_vector,&
      diameter, back_spec)
 
   ! note that mindex has the convention with negative imaginary part
@@ -20,7 +20,8 @@ subroutine tmatrix_snow_sql(f, wc, t, nc, &
 
   use kinds
   use constants, only: pi, c, im
-  use settings, only: use_snow_db, as_ratio, softsphere_adjust, nummu, nstokes, sql_fname
+  use settings, only: use_snow_db, softsphere_adjust, nummu, nstokes, &
+    sql_fname, use_sql_db
 !   use rt_utilities, only: lobatto_quadrature
   use report_module
   use sql_tools
@@ -29,7 +30,7 @@ subroutine tmatrix_snow_sql(f, wc, t, nc, &
   implicit none
 
   integer, intent(in) :: nbins
-
+  real(kind=dbl), intent(in) ::  as_ratio
   real(kind=dbl), intent(in) :: f, &  ! frequency [ghz]
                                 t, dia1, dia2
   real(kind=dbl) :: wavelength, wave_num, freq
@@ -119,9 +120,15 @@ call sql_tools_open_table(sql_fname,par_name)
 !     call sql_tools_create_readCols()
 
   do ir = 1, nbins
+  
+    if (use_sql_db) then
     call tmatrix_sql(freq,t,as_ratio,diameter(ir),particle_mass(ir),"snow",par_name,&
       scat_mat_sgl,ext_mat_sgl,emis_vec_sgl)
-
+    else
+    call tmatrix_refIndex(freq,t,as_ratio,diameter(ir),particle_mass(ir),"snow",&
+      scat_mat_sgl,ext_mat_sgl,emis_vec_sgl)
+    end if  
+      
      bin_wgt = ndens(ir)*del_d
 
      scatter_matrix(:,:,:,:,1:2) = scatter_matrix(:,:,:,:,1:2) + scat_mat_sgl*bin_wgt

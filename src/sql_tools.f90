@@ -284,7 +284,18 @@ module sql_tools
     extinct_matrix(:,:,:) = 0.d0
     emis_vector(:,:) = 0.d0
 
-    fmt="(ES16.10)"
+!     fmt="(ES16.10)"
+! 
+!     write(freq_s,fmt), freq
+!     write(t_s,fmt), t
+!     write(as_ratio_s,fmt), as_ratio
+!     write(diameter_s,fmt), diameter
+!     write(particle_mass_s,fmt), particle_mass
+! 
+!     if (verbose >= -4) print*, freq_s,t_s,as_ratio_s ,diameter_s , particle_mass_s
+
+    
+    fmt="(ES12.6)"
 
     write(freq_s,fmt), freq
     write(t_s,fmt), t
@@ -293,8 +304,8 @@ module sql_tools
     write(particle_mass_s,fmt), particle_mass
 
     if (verbose >= 4) print*, freq_s,t_s,as_ratio_s ,diameter_s , particle_mass_s
-
-
+    
+    
       fmt = '(I2.2)'
       lls = (/8,8/)
 
@@ -468,7 +479,7 @@ module sql_tools
     call sql_tools_create_writeCols()
     
 
-    fmt="(ES16.10)"
+    fmt="(ES12.6)"
 
     write(freq_s,fmt), freq
     write(t_s,fmt), t

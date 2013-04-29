@@ -7,7 +7,8 @@ subroutine ice_ssp(f,iwc,t,press,maxleg,nc, kext, salb, back,  &
   use settings, only: lphase_flag, n_moments, EM_ice, SD_ice,&
       nstokes, radar_nfft_aliased, radar_mode, active, ad_ice, bd_ice,&
       alphad_ice, gammad_ice, liu_type_ice, diamin_ice, diamax_ice, &
-      mass_size_ice_b, mass_size_ice_a, area_size_ice_b, area_size_ice_a
+      mass_size_ice_b, mass_size_ice_a, area_size_ice_b, area_size_ice_a,&
+      as_ratio_ice
 
   use constants, only: pi, im
   use double_moments_module
@@ -236,7 +237,7 @@ nbins=20
     elseif (EM_ice .eq. 'tmSQL') then
 
     call tmatrix_snow_sql(f, iwc, t, nc, &
-          ad, bd, alpha, gamma, a_mice, b_mice, SD_ice, dia1, dia2, nbins, &
+          ad, bd, alpha, gamma, a_mice, b_mice, as_ratio_ice, SD_ice, dia1, dia2, nbins, &
           scatter_matrix,extinct_matrix, emis_vector,&
           diameter_spec, back_spec)
     back = scatter_matrix(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
