@@ -80,9 +80,6 @@ subroutine radar_spectrum(&
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'radar_spectrum'
 
-
-  
-
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
     ! get |K|**2 and lambda

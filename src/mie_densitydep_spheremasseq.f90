@@ -154,8 +154,8 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
 
 	 msphere = eps_mix((1.d0,0.d0),m_ice,density_eff)
 
-    if (verbose >= 4) print*, "density_eff, diameter(ir), msphere"
-    if (verbose >= 4) print*, density_eff, diameter(ir), msphere
+    if (verbose >= 4) print*, "density_eff, diameter(ir), ndens, msphere"
+    if (verbose >= 4) print*, density_eff, diameter(ir), ndens, msphere
 
      call miecalc (nmie, x, msphere, a, b) 
      call miecross (nmie, x, a, b, qext, qscat, qback)

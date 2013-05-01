@@ -88,8 +88,8 @@ subroutine pyDia2vel(model,nbins,diameter_spec,velSpec)
     area_size_b = 1.88d0
     area_size_a = 0.2285d0
     !CGS to SI
-    mass_size_a =mass_size_a * 10.d0**(3.d0- mass_size_b * 2.d0)
-    area_size_a = area_size_a  * 10.d0**(4.d0- area_size_b * 2.d0)
+    mass_size_a =mass_size_a * 10.d0**( mass_size_b * 2.d0 - 3)
+    area_size_a = area_size_a  * 10.d0**(area_size_b * 2.d0 - 4)
 
 print*, "khvorostyanov01_particles_aggregates: area_size_a", area_size_a
 print*, "khvorostyanov01_particles_aggregates: mass_size_a", mass_size_a
@@ -105,11 +105,42 @@ print*, "khvorostyanov01_particles_aggregates: mass_size_a", mass_size_a
     area_size_b = 1.97d0
     area_size_a = 0.55d0
     !CGS to SI
-    mass_size_a =mass_size_a * 10.d0**(3.d0- mass_size_b * 2.d0)
-    area_size_a = area_size_a  * 10.d0**(4.d0- area_size_b * 2.d0)
+    mass_size_a =mass_size_a * 10.d0**(2.d0 * mass_size_b -3.d0)
+    area_size_a = area_size_a  * 10.d0**(2.d0 * area_size_b -4.d0)
 
     call dia2vel_khvorostyanov01_particles(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
          area_size_a,area_size_b,vel_spec) 
+
+
+  else if (model .eq. "khvorostyanov01_particles_hexPlates") then
+
+    mass_size_b = 2.45d0
+    mass_size_a = 0.00739d0
+    area_size_b = 2.0d0
+    area_size_a = 0.65d0
+    !CGS to SI
+    mass_size_a =mass_size_a * 10.d0**(2.d0 * mass_size_b -3.d0)
+    area_size_a = area_size_a  * 10.d0**(2.d0 * area_size_b -4.d0)
+
+print*, "khvorostyanov01_particles_hexPlates: area_size_a", area_size_a
+print*, "khvorostyanov01_particles_hexPlates: mass_size_a", mass_size_a
+
+    call dia2vel_khvorostyanov01_particles(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
+         area_size_a,area_size_b,vel_spec)
+
+  else if (model .eq. "heymsfield10_particles_hexPlates") then
+
+    mass_size_b = 2.45d0
+    mass_size_a = 0.00739d0
+    area_size_b = 1.85d0
+    area_size_a = 0.65d0
+    !CGS to SI
+    mass_size_a =mass_size_a * 10.d0**(2.d0 * mass_size_b -3.d0)
+    area_size_a = area_size_a  * 10.d0**(2.d0 * area_size_b -4.d0)
+
+    call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
+         area_size_a,area_size_b,vel_spec) 
+
 
   else if (model .eq. "heymsfield10_particles_rosettes") then
 
@@ -131,8 +162,8 @@ print*, "khvorostyanov01_particles_aggregates: mass_size_a", mass_size_a
     area_size_b = 1.88d0
     area_size_a = 0.2285d0
     !CGS to SI
-    mass_size_a =mass_size_a * 10.d0**(3.d0- mass_size_b * 2.d0)
-    area_size_a = area_size_a  * 10.d0**(4.d0- area_size_b * 2.d0)
+    mass_size_a =mass_size_a * 10.d0**(2.d0 * mass_size_b -3.d0)
+    area_size_a = area_size_a  * 10.d0**(2.d0 * area_size_b -4.d0)
 
 print*, "dia2vel_heymsfield10_particles_aggregates: area_size_a", area_size_a
 print*, "dia2vel_heymsfield10_particles_aggregates: mass_size_a", mass_size_a
@@ -141,6 +172,23 @@ print*, "dia2vel_heymsfield10_particles_aggregates: mass_size_a", mass_size_a
     call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
          area_size_a,area_size_b,vel_spec)       
 
+  else if (model .eq. "heymsfield10_particles_MPACE") then
+
+    mass_size_b = 1.7d0
+    mass_size_a = 1.07d-10
+    area_size_b = 1.88d0
+    area_size_a = 0.2285d0
+    
+    !CGS to SI
+    mass_size_a =mass_size_a *   10.d0**(6.d0 * mass_size_b - 3.d0)
+    area_size_a = area_size_a  * 10.d0**(2.d0 * area_size_b - 4.d0)
+
+print*, "heymsfield10_particles_MPACE: area_size_a", area_size_a
+print*, "heymsfield10_particles_MPACE: mass_size_a", mass_size_a
+
+    call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
+         area_size_a,area_size_b,vel_spec)    
+
   else if (model .eq. "heymsfield10_particles_sector") then
 
     mass_size_b = 2.02d0
@@ -148,8 +196,8 @@ print*, "dia2vel_heymsfield10_particles_aggregates: mass_size_a", mass_size_a
     area_size_b = 1.97d0
     area_size_a = 0.55d0
     !CGS to SI
-    mass_size_a =mass_size_a * 10.d0**(3.d0- mass_size_b * 2.d0)
-    area_size_a = area_size_a  * 10.d0**(4.d0- area_size_b * 2.d0)
+    mass_size_a =mass_size_a * 10.d0**(2.d0 * mass_size_b -3.d0)
+    area_size_a = area_size_a  * 10.d0**(2.d0 * area_size_b -4.d0)
 
     call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
          area_size_a,area_size_b,vel_spec) 
@@ -163,7 +211,7 @@ print*, "dia2vel_heymsfield10_particles_aggregates: mass_size_a", mass_size_a
      area_size_b = 2.d0 !from mitchell 1996 similar to a_msnow&b_snow
 
     !CGS to SI
-area_size_a = area_size_a  * 10.d0**(4.d0- area_size_b * 2.d0)
+area_size_a = area_size_a  * 10.d0**(2.d0 * area_size_b -4.d0)
 print*, "heymsfield10_particles_cosmoIce: area_size_a", area_size_a
 !      mass_size_a = 0.82d0
 !      mass_size_b = 2.5d0
@@ -185,7 +233,7 @@ print*, "heymsfield10_particles_cosmoIce: area_size_a", area_size_a
      area_size_b = 2.d0 !from mitchell 1996 similar to a_msnow&b_snow
 
     !CGS to SI
-area_size_a = area_size_a  * 10.d0**(4.d0- area_size_b * 2.d0)
+area_size_a = area_size_a  * 10.d0**(2.d0 * area_size_b -4.d0)
 print*, "khvorostyanov01_particles_cosmoIce: area_size_a", area_size_a
 !      mass_size_a = 0.82d0
 !      mass_size_b = 2.5d0
@@ -206,7 +254,7 @@ print*, "khvorostyanov01_particles_cosmoIce: area_size_a", area_size_a
         area_size_a = 0.2285 
         area_size_b = 1.88d0 !from mitchell 1996 similar to a_msnow&b_snow
 
-area_size_a = area_size_a  * 10.d0**(4.d0- area_size_b * 2.d0)
+area_size_a = area_size_a  * 10.d0**(2.d0 * area_size_b -4.d0)
 print*, "khvorostyanov01_particles_cosmoSnow: area_size_a", area_size_a
 
     call dia2vel_khvorostyanov01_particles(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&

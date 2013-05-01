@@ -70,11 +70,10 @@ module dia2vel
       integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0
       character(len=80) :: msg
-      character(len=33) :: nameOfRoutine = 'dia2vel_khvorostyanov01_particles'
-
+      character(len=33) :: nameOfRoutine = 'dia2vel_heymsfield10_particles'
 
       if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
-  
+
       ! no check for baundaries due to different possible particle types
       err = success
 
@@ -154,7 +153,7 @@ module dia2vel
 
 
       if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
-  
+
       ! no check for baundaries due to different possible particle types
       err = success
 
