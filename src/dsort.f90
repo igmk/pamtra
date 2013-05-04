@@ -1,6 +1,6 @@
 
 !DECK DSORT
-SUBROUTINE DSORT (DX, DY, N, KFLAG)
+SUBROUTINE DSORT (errorstatus,DX, DY, N, KFLAG)
     !***BEGIN PROLOGUE  DSORT
     !***PURPOSE  Sort an array and optionally make the same interchanges in
     !            an auxiliary array.  The array may be sorted in increasing
@@ -49,6 +49,8 @@ SUBROUTINE DSORT (DX, DY, N, KFLAG)
     !   920801  Declarations section rebuilt and code restructured to use
     !           IF-THEN-ELSE-ENDIF.  (RWC, WRB)
     !***END PROLOGUE  DSORT
+    
+    use report_module
     !     .. Scalar Arguments ..
     INTEGER KFLAG, N
     !     .. Array Arguments ..
@@ -62,12 +64,24 @@ SUBROUTINE DSORT (DX, DY, N, KFLAG)
     EXTERNAL XERMSG
     !     .. Intrinsic Functions ..
     INTRINSIC ABS, INT
+    
+    integer(kind=long), intent(out) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
+    character(len=14) :: nameOfRoutine = 'dsort'
+
+    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+    
+    
     !***FIRST EXECUTABLE STATEMENT  DSORT
     NN = N
     IF (NN .LT. 1) THEN
         CALL XERMSG ('SLATEC', 'DSORT',&
         'The number of values to be sorted is not positive.', 1, 1)
-        RETURN
+	errorstatus = fatal
+	msg = "Error in SLATEC"
+	call report(errorstatus, msg, nameOfRoutine)
+	return
     ENDIF
     !
     KK = ABS(KFLAG)
@@ -75,7 +89,10 @@ SUBROUTINE DSORT (DX, DY, N, KFLAG)
         CALL XERMSG ('SLATEC', 'DSORT',&
         'The sort control parameter, K, is not 2, 1, -1, or -2.', 2,&
         1)
-        RETURN
+	errorstatus = fatal
+	msg = "Error in SLATEC"
+	call report(errorstatus, msg, nameOfRoutine)
+	return
     ENDIF
     !
     !     Alter array DX to get decreasing order if needed
@@ -321,6 +338,10 @@ SUBROUTINE DSORT (DX, DY, N, KFLAG)
             DX(I) = -DX(I)
 200     CONTINUE
     ENDIF
+    
+    errorstatus = err
+    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+
     RETURN
 END
 !DECK FDUMP

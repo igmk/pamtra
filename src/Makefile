@@ -52,8 +52,10 @@ OBJECTS=kinds.o \
 	mpm93.o \
 	get_atmosG0.o \
 	get_surface.o \
+	mie_scat_utilities.o \
 	mie.o \
 	mie_densitydep_spheremasseq.o\
+	mie_spheres.o \
 	dia2vel.o \
 	rescale_spectra.o \
 	radar_spectrum.o \

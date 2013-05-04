@@ -17,6 +17,7 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
   use constants, only: pi,c
   use settings, only: softsphere_adjust
   use report_module
+  use mie_scat_utlities
   implicit none
 
   real(kind=dbl), intent(in) :: f,  &! frequency [GHz]
@@ -55,7 +56,7 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
 
-  wavelength = c/(f*1.e9) !
+  wavelength = c/(f*1.d9) !
 
   !           find the maximum number of terms required in the mie series,
   !       call density_ice(a_mtox, bcoeff, rad2, dens_graup) 
@@ -80,7 +81,13 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
 
   x = pi * diameter_eff / wavelength
   nterms = 0 
-  call miecalc (nterms, x, msphere, a, b) 
+  call miecalc (err, nterms, x, msphere, a, b) 
+  if (err /= 0) then
+	msg = 'error in miecacl!'
+	call report(err, msg, nameOfRoutine)
+	errorstatus = err
+	stop !return
+    end if 
   nlegen = 2 * nterms 
   nlegen = min(maxleg, nlegen) 
   nquad = (nlegen + 2 * nterms + 2) / 2 
@@ -144,7 +151,7 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
     end if 
 
       if (density_eff > 917.d0) then
-	print*, "WANRING changed density from ", density_eff, "kg/m3 to 917 kg/m3 for d=", diameter(ir)
+	if (verbose >= 0) print*, "WARNING changed density from ", density_eff, "kg/m3 to 917 kg/m3 for d=", diameter(ir)
 	density_eff = 917.d0
       end if
 
@@ -157,7 +164,13 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
     if (verbose >= 4) print*, "density_eff, diameter(ir), ndens, msphere"
     if (verbose >= 4) print*, density_eff, diameter(ir), ndens, msphere
 
-     call miecalc (nmie, x, msphere, a, b) 
+     call miecalc (err,nmie, x, msphere, a, b) 
+    if (err /= 0) then
+	msg = 'error in mieclac!'
+	call report(err, msg, nameOfRoutine)
+	errorstatus = err
+	stop !return
+    end if        
      call miecross (nmie, x, a, b, qext, qscat, qback)
 
      ! sum up extinction, scattering, and backscattering as cross-sections/pi .pi is added in a later step

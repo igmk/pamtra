@@ -9,6 +9,7 @@ subroutine rain_ssp(f,rwc,cwc,t,press,maxleg,nc,kext, salb, back,  &
   use constants, only: pi, im
   use double_moments_module
   use conversions
+  use mie_spheres
         use report_module
 
   implicit none
@@ -41,6 +42,7 @@ subroutine rain_ssp(f,rwc,cwc,t,press,maxleg,nc,kext, salb, back,  &
 
   complex(kind=dbl) :: mindex
   character(5) ::  particle_type
+  character(len=10) :: phase
   real(kind=dbl) :: gammln
   real(kind=dbl), allocatable, dimension(:):: diameter_spec, back_spec
   real(kind=dbl), intent(out), dimension(radar_nfft_aliased) :: rain_spec
@@ -109,6 +111,23 @@ print*, dia1, dia2
       scatter_matrix= 0.d0
       extinct_matrix= 0.d0
       emis_vector= 0.d0
+   elseif (EM_rain .eq. 'mier2') then !testing the new wrapper
+      a_mrain = 1/6.d0 * pi * den_liq
+      b_rain = 3.d0
+      phase = "liquid"
+      call mie_spheres_wrapper(f, t,phase,    &
+          a_mrain, b_rain, dia1, dia2, nbins, maxleg,   &
+          ad, bd, alpha, gamma, kext, salb,      &
+          back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
+          LEGEN4, SD_rain,den_liq,rwc,&
+          diameter_spec, back_spec)
+
+      scatter_matrix= 0.d0
+      extinct_matrix= 0.d0
+      emis_vector= 0.d0
+      
+      
+      
   else if (EM_rain .eq. "tmatr") then
 !     if (use_rain_db) the
 
