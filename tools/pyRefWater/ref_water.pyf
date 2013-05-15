@@ -1,0 +1,17 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+subroutine ref_water(s,t,f,refre,refim,absind,abscoef) ! in ref_water.f90
+    use kinds
+    use constants, only: c,pi
+    real(kind=dbl) intent(in) :: s
+    real(kind=dbl) intent(in) :: t
+    real(kind=dbl) intent(in) :: f
+    real(kind=dbl) intent(out) :: refre
+    real(kind=dbl) intent(out) :: refim
+    real(kind=dbl) intent(out) :: absind
+    real(kind=dbl) intent(out) :: abscoef
+end subroutine ref_water
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/

@@ -1643,10 +1643,7 @@ class pyPamtra(object):
 	  nc_spec.units="dBz"
 	  nc_spec[:] = np.array(self.r["radar_spectra"],dtype='f')
 	  if not pyNc: nc_spec._FillValue =missingNumber
-	  
-      else: 
-	raise("Do not know radar_mode")
-    
+	     
     if (self.r["nmlSettings"]["run_mode"]["passive"]):
       nc_tb = cdfFile.createVariable('tb', 'f',dim6d,**fillVDict)
       nc_tb.units = "K"
