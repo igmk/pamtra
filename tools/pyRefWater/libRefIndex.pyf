@@ -1,0 +1,25 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module libRefIndex ! in 
+    interface  ! in :libRefIndex
+        module librefindex ! in :libRefIndex:libRefIndex.f90
+            subroutine get_refindex_water(s,t,f,refre,refim) ! in :libRefIndex:libRefIndex.f90:librefindex
+                double precision intent(in) :: s
+                double precision intent(in) :: t
+                double precision intent(in) :: f
+                double precision intent(out) :: refre
+                double precision intent(out) :: refim
+            end subroutine get_refindex_water
+            subroutine get_dielecconst_water(s,t,f,k2) ! in :libRefIndex:libRefIndex.f90:librefindex
+                double precision intent(in) :: s
+                double precision intent(in) :: t
+                double precision intent(in) :: f
+                double precision intent(out) :: k2
+            end subroutine get_dielecconst_water
+        end module librefindex
+    end interface 
+end python module libRefIndex
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/
