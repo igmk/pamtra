@@ -12,6 +12,7 @@ fort*
 output/
 profiles/
 data/
+playground/
 *~
 .nfs*
 run_LMRT*

@@ -63,6 +63,7 @@ def PamtraFortranWrapper(nmlSettings,nmlDefaultSettings,nmlFile,*pamtraArgs):
     nmlFileName = nmlFile
     
   logging.debug('Starting pyPamtraLib... '+host)
+  logging.debug(nmlFileName)
   try: 
     result = pyPamtraLib.pypamtralib(nmlFileName,*pamtraArgs)
   except:

@@ -64,7 +64,7 @@ class pyPamtra(object):
   
     self.nmlSet = OrderedDict() #settings which are required for the nml file. keeping the order is important for fortran
 
-    self.nmlSet["verbose_mode"] = dict()
+#    self.nmlSet["verbose_mode"] = dict()
     self.nmlSet["inoutput_mode"] = dict()
     self.nmlSet["output"] = dict()
     self.nmlSet["run_mode"] = dict()
@@ -80,7 +80,7 @@ class pyPamtra(object):
     self.nmlSet["moments"] = dict()
     self.nmlSet["radar_simulator"] = dict()
     
-    self.nmlSet["verbose_mode"]["verbose"] = 0
+#    self.nmlSet["verbose_mode"]["verbose"] = 0
     
     self.nmlSet["inoutput_mode"]["dump_to_file"]=False
     self.nmlSet["inoutput_mode"]["tmp_path"]='/tmp/'
@@ -98,7 +98,6 @@ class pyPamtra(object):
 
     self.nmlSet["run_mode"]["active"]=True
     self.nmlSet["run_mode"]["passive"]=True
-    self.nmlSet["run_mode"]["rt_mode"]="rt4"
     self.nmlSet["run_mode"]["radar_mode"]="simple"    
     
     self.nmlSet["surface_params"]["ground_type"]='S'
@@ -179,7 +178,7 @@ class pyPamtra(object):
     self.set["freqs"] = []
     self.set["nfreqs"] = 0
     self.set["namelist_file"] = "TMPFILE"
-    
+
     self._nmlDefaultKeys = list()
     for keyGr in self.nmlSet.keys()  :  
       for key in self.nmlSet[keyGr].keys():
@@ -326,7 +325,7 @@ class pyPamtra(object):
     nmlFile = namelist.Namelist(inputFile)
     if nmlFile == {}:
       raise IOError("file not found: "+inputFile)
-    
+
     for key in nmlFile.keys():
       for subkey in nmlFile[key]["par"][0].keys():
         if subkey.lower() in self._nmlDefaultKeys:
@@ -1248,6 +1247,7 @@ class pyPamtra(object):
     run Pamtra from python
     '''
     tttt = time.time()
+
     
     if type(freqs) == int in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
     
@@ -1270,7 +1270,6 @@ class pyPamtra(object):
         #raise ValueError("Namelitsfile "+ self.set["namelist_file"] +" ends with .tmp, but is existing already")
       #elif self.set["pyVerbose"] > 0:
         #print("NOT writing temporary nml file to run pamtra using exisiting nml file instead: "+self.set["namelist_file"])
-
     try:
       #output
       (

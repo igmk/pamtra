@@ -12,7 +12,6 @@ if testNo in ["1","2"]: inputFile="../test/referenceProfile/usStandard.dat"
 else: inputFile="../test/referenceProfile/hydrometeors.dat"
 
 
-
 t = pyPamtra.pyPamtra()
 t.readPamtraProfile(inputFile)
 
@@ -32,7 +31,7 @@ t.set["pyVerbose"]=1
 
 if testNo == "1":
 	#pp_servers=()
-	t.runPamtra([35,90,150])
+    t.runPamtra([35,90,150])
 	#t.runParallelPamtra([24,90,150],pp_local_workers=2,pp_servers=pp_servers,pp_deltaF=1,pp_deltaX=1)
 	
 elif testNo == "2":
