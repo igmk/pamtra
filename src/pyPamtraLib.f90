@@ -1,5 +1,6 @@
 subroutine pyPamtraLib(&!in
 set_namelist_file,&
+set_verbose,&
 in_ngridx,&
 in_ngridy,&
 max_in_nlyrs,&
@@ -124,7 +125,7 @@ out_angles&
     !Input
 
 
-    integer, intent(in) :: in_nfreq, max_in_nlyrs, in_ngridx, in_ngridy, in_nfft
+    integer, intent(in) :: in_nfreq, max_in_nlyrs, in_ngridx, in_ngridy, in_nfft, set_verbose
     real, dimension(in_nfreq), intent(in) :: in_freqs
 
 
@@ -160,7 +161,7 @@ out_angles&
     real, dimension(in_nfft),intent(out):: out_radar_vel
 
     !settings
-    !f2py intent(in) :: set_namelist_file
+    !f2py intent(in) :: set_namelist_file, set_verbose
     !input
     !f2py intent(in) :: max_in_nlyrs, in_nlyrs, in_ngridx, in_ngridy,in_nfreq, in_freqs
     !f2py intent(in) :: in_timestamp, in_nfft
@@ -208,6 +209,8 @@ out_angles&
             integer, intent(out) :: err
         end subroutine run_rt
     end interface
+
+    verbose = set_verbose
 
     !get git data
     call versionNumber(out_gitVersion,out_gitHash)
