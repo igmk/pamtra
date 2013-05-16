@@ -9,7 +9,7 @@ subroutine get_atmosg(freq)!, kextatmo_o2,kextatmo_h2o,kextatmo_n2)
 
   use kinds
   use vars_atmosphere
-  use nml_params
+  use settings
 
   implicit none
 

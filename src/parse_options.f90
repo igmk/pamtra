@@ -1,24 +1,22 @@
-subroutine parse_options(gitVersion,gitHash,frqs_str,nfrq)
+subroutine parse_options(gitVersion,gitHash)
 
-    use kinds
+    use kinds, only: long
     use getopt_m
-    use nml_params, only: maxfreq
-    use file_mod, only: namelist_file, input_file
+    use settings, only: maxfreq, nfrq, freqs,frqs_str,namelist_file, input_file,verbose
     use vars_profile, only: coords
+    use mod_io_strings, only: formatted_frqstr
 
     implicit none
 
-    integer :: nfrq
-    !    real(kind=dbl), allocatable,dimension(:) :: freqs
-    character:: ch
+    integer(kind=long) :: ff
     character(40) :: gitHash, gitVersion
-    character(8), dimension(maxfreq) :: frqs_str
-    type(option_s):: opts(5)
+    type(option_s):: opts(6)
     opts(1) = option_s( "namelist", .true.,  'n' )
     opts(2) = option_s( "profile", .true.,  'p' )
     opts(3) = option_s( "grid", .true.,  'g' )
     opts(4) = option_s( "freqs", .true., 'f' )
-    opts(5) = option_s( "help", .false., 'h' )
+    opts(5) = option_s( "verbose", .true., 'v' )
+    opts(6) = option_s( "help", .false., 'h' )
 
     namelist_file = 'run_params.nml'
     input_file = 'standard.dat'
@@ -28,13 +26,13 @@ subroutine parse_options(gitVersion,gitHash,frqs_str,nfrq)
     nfrq = 1
 
     do
-        select case( getopt( "n:cp:cg:cf:ch", opts ))
+        select case( getopt( "n:cp:cg:cf:cv:ch", opts ))
             case( char(0))
                 exit
             case( 'n' )
-                namelist_file = optarg
+                namelist_file = trim(optarg)
             case( 'p' )
-                input_file = optarg
+                input_file = trim(optarg)
             case( 'g' )
                 if (optarg(len_trim(optarg):) .ne. ',') &
                 optarg = trim(optarg)//','
@@ -44,7 +42,9 @@ subroutine parse_options(gitVersion,gitHash,frqs_str,nfrq)
                 optarg = trim(optarg)//','
                 !                nf = countsubstring(optarg,',')
                 !                allocate(freqs(nf))
-                call process_freq(optarg,frqs_str,nfrq)
+                call process_freq(optarg)
+            case( 'v' )
+                read(optarg,'(i2)') verbose
             case( '?' )
                 print *, 'unknown option ', optopt
                 stop
@@ -56,9 +56,11 @@ subroutine parse_options(gitVersion,gitHash,frqs_str,nfrq)
                 print*,'   -p|--profile      profile file  (default standard.dat)'
                 print*,'   -g|--grid         start_lon,end_lon,start_lat,end_lat (number of grid point)'
                 print*,'   -f|--freqs        comma seperated list of frequencies (no blanks) (default 89.0)'
+                print*,'   -v|--verbose      integer specifying verbose level between -1 (required by parallel python)'
+                print*,'                     and 4 (default 0)'
                 print*,'   -h|--help         print this help'
                 print*,''
-                print*,'Example: ./pamtra -p rt_comp_single.dat -n run_params.nml -f 35,94,'
+                print*,'Example: ./pamtra -v 1 -p rt_comp_single.dat -n run_params.nml -f 35,94,'
                 print*,'See namelist file for further pamtra options'
                 print*,''
                 print*,'Version:  '//gitVersion
@@ -67,19 +69,25 @@ subroutine parse_options(gitVersion,gitHash,frqs_str,nfrq)
             case default
                 print *, 'unhandled option ', optopt, ' (this is a bug)'
         end select
+
+    end do
+    ! the frequency string needs to be converted to a real array
+
+    do ff = 1, nfrq
+        read(frqs_str(ff),*) freqs(ff)
+        frqs_str(ff) = formatted_frqstr(frqs_str(ff))
     end do
 contains
 
-    subroutine process_freq(arg,frqs_str,nfrq)
+    subroutine process_freq(arg)
 
-        use nml_params, only: maxfreq
+        use kinds, only: long
 
         implicit none
 
-        integer :: nfrq, ind
+        integer(kind=long) :: ind
         character(len=*), intent(in) :: arg
         character(150) :: arg_loc
-        character(8), dimension(maxfreq) :: frqs_str
 
         nfrq = 0
         arg_loc = arg
@@ -101,11 +109,15 @@ contains
 
     subroutine process_grid(arg,coords)
 
-        integer :: cc, ind
+        use kinds, only: long
+
+        implicit none
+
+        integer(kind=long) :: cc, ind
         character(len=*), intent(in) :: arg
         character(150) :: arg_loc
 
-        integer, dimension(4), intent(out) :: coords
+        integer(kind=long), dimension(4), intent(out) :: coords
 
         cc = 1
         arg_loc = arg

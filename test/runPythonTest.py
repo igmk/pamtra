@@ -47,6 +47,7 @@ elif testNo == "4":
 elif testNo == "5":
 	
 	t.runPamtra([35,90,150])
+
 elif testNo == "6":
 	
 	t.runPamtra([35,90,150])
@@ -58,7 +59,7 @@ else:
 if testNo != "6":
 
 	#uncomment if test should be defined again
-	#t.writeResultsToNumpy("../test/referenceOutput/"+testNo+"/python"+testNo+".pickle");print "warning, rewrting tests!!"
+	#t.writeResultsToNumpy("../test/referenceOutput/"+testNo+"/python"+testNo+".pickle");print "warning, rewriting tests!!"
 
 
 	reference = pyPamtra.pyPamtra()
