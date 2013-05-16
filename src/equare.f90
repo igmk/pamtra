@@ -7,7 +7,7 @@ subroutine equare
 
   real(kind=sgl), parameter :: dlat=0.25
 
-  integer, parameter :: maxlat=int(180./dlat),maxlon=int(360./dlat)
+  integer, parameter :: maxlat=180./dlat,maxlon=360./dlat
 
   integer :: totcel,maxlt2,lat,icellr,lat1,lat2
 
@@ -34,7 +34,7 @@ subroutine equare
      htzone = hte-htb                                                    
      azone = 2*pi*rearth*htzone                                         
      rcells = azone/aecell                                               
-     icellr = int(rcells+.5d0)
+     icellr = (rcells+.5d0)                                                
      totcel = totcel+2*icellr                                            
      rcellr = icellr                                                     
      dlongr = 360.d0/rcellr                                                

@@ -34,8 +34,7 @@ subroutine radar_hildebrand_sekhon(spectrum,n_ave,n_ffts,noise_mean)
 
 
   use kinds
-!  use settings, only: verbose
-        use report_module
+  use nml_params, only: verbose
   implicit none
 
 

@@ -4,9 +4,8 @@ real(kind=dbl) function rho_air(T, P)
 ! The input parameters T and P are the temperature (K) and 
 ! pressure (pa)                           
 
-!  use settings, only: verbose
+  use nml_params, only: verbose
   use kinds
-        use report_module
   implicit none
 
   real(kind=dbl), intent (in) :: T, P

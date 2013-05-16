@@ -261,27 +261,6 @@ def createUsStandardProfile(**kwargs):
 	
 	'''    
 	
-	pamData = _createUsStandardProfile(**kwargs)
-	
-	pam = pyPamtra.pyPamtra()
-
-	pam.createProfile(**pamData)
-	del kwargs
-	
-	return pam
-	
-def _createUsStandardProfile(**kwargs):
-	'''
-	HELPER
-	Function to create clear sky US Standard Atmosphere.
-	
-	hgt_lev is teh only mandatory variables
-	humidity will be set to zero if not provided, all other variables are guessed by "createProfile"
-	
-	values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwritte us staandard if provided 
-	
-	'''    
-	
 	import usStandard #see in tools
 	
 	assert "hgt_lev" in kwargs.keys() #hgt_lev is mandatory
@@ -309,7 +288,13 @@ def _createUsStandardProfile(**kwargs):
 	if ("relhum_lev" not in kwargs.keys()) and ("q" not in kwargs.keys()):
 		pamData["relhum_lev"] = np.zeros_like(kwargs["hgt_lev"])
 	
-	return pamData
+	pam = pyPamtra.pyPamtra()
+
+	pam.createProfile(**pamData)
+	del kwargs
 	
+	return pam
+	
+
 	
 	    

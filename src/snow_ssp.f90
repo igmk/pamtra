@@ -1,18 +1,17 @@
 ! Subroutine for the setup of the parameters of the snow particle size distribution.
 !
 !
-subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
+subroutine snow_ssp(f,swc,t,press,hgt,maxleg,nc,kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
      scatter_matrix,extinct_matrix, emis_vector,snow_spec)
 
   use kinds
-  use settings, only: lphase_flag, n_0snowDsnow, EM_snow, &
+  use nml_params, only: verbose, lphase_flag, n_0snowDsnow, EM_snow, &
 	n_moments, isnow_n0, SD_snow, snow_density,liu_type,nstokes,&
         radar_nfft_aliased, radar_mode, active
   use constants, only: pi, im
   use double_moments_module
   use conversions
-        use report_module
 
   implicit none
 
@@ -23,7 +22,7 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
   real(kind=dbl), intent(in) :: &
        swc,&
        t,&
-       f,press
+       f,press,hgt
 
   real(kind=dbl), intent(in) :: nc
 
@@ -51,7 +50,7 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
   character(5) ::  particle_type
 
   if (verbose .gt. 1) print*, 'Entering snow_ssp'
-!   if ((n_moments .eq. 1) .and. (EM_snow .eq. "tmatr")) stop "1moment tmatr not tested yet for snow"
+  if ((n_moments .eq. 1) .and. (EM_snow .eq. "tmatr")) stop "1moment tmatr not tested yet for snow"
 
   call ref_ice(t, f, refre, refim)
 
@@ -72,10 +71,6 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
 
      dia1 = 0.51d-10 ! minimum maximum diameter [m] after kneifel
      dia2 = 1.d-2 ! maximum maximum diameter [m] after kneifel
-
-!      dia1 = 1.d-9 ! minimum maximum diameter [m] after kneifel
-     dia2 =1.d-4 ! maximum maximum diameter [m] after kneifel
-
 
      !option isnow_n0 as in COSMO-de 1 moment scheme
      !isnow_n0temp = 2 intercept parameter of snow depend on T and qs (snow mixing ratio) Field 2005
@@ -159,19 +154,16 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
 
 
   if ((EM_snow .eq. 'densi') .or. (EM_snow .eq. 'surus')) then
-    nbins = 50!100
+    nbins = 100
     nbins_spec = nbins+1 !Mie routine uses nbins+1 bins!
   elseif (EM_snow .eq. 'liudb') then
-    nbins = 50!!100
+    nbins = 100
     nbins_spec = nbins
   elseif (EM_snow .eq. 'tmatr') then
     nbins = 50
     nbins_spec = nbins
-  elseif (EM_snow .eq. 'tmSQL') then
-    nbins = 50
-    nbins_spec = nbins
   else
-     write (*, *) 'no em mod: ', EM_snow
+     write (*, *) 'no em mod', EM_snow
      stop
   end if
 
@@ -202,11 +194,8 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
       extinct_matrix= 0.d0
       emis_vector= 0.d0
   elseif (EM_snow .eq. 'tmatr') then
-
-print*, "mindex", mindex
-
     call tmatrix_snow(f, swc, t, nc, &
-          ad, bd, alpha, gamma, a_msnow, b_snow, SD_snow, dia1,dia2,nbins, scatter_matrix,extinct_matrix, emis_vector,&
+          ad, bd, alpha, gamma, a_msnow, b_snow, SD_snow, nbins, scatter_matrix,extinct_matrix, emis_vector,&
           diameter_spec, back_spec)
     back = scatter_matrix(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
     back = 4*pi*back!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squard entries!
@@ -219,34 +208,15 @@ print*, "mindex", mindex
     legen2 = 0.0d0
     legen3 = 0.0d0
     legen4 = 0.0d0
-  elseif (EM_snow .eq. 'tmSQL') then
-
-print*, "mindex", mindex
-
-    call tmatrix_snow_sql(f, swc, t, nc, &
-          ad, bd, alpha, gamma, a_msnow, b_snow, SD_snow, dia1,dia2,nbins, scatter_matrix,extinct_matrix, emis_vector,&
-          diameter_spec, back_spec)
-    back = scatter_matrix(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
-    back = 4*pi*back!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squard entries!
-    kext = extinct_matrix(1,1,16,1) !11 of extinction matrix (=not polarized), at 0°, first quadrature. equal to extinct_matrix(1,1,16,2)
-
-    !not needed by rt4
-    salb = 0.d0
-    nlegen = 0
-    legen = 0.0d0
-    legen2 = 0.0d0
-    legen3 = 0.0d0
-    legen4 = 0.0d0
-
   else 
-     write (*, *) 'no em mod: ', EM_snow
+     write (*, *) 'no em mod', EM_snow
      stop
   endif
 
   particle_type="snow" 
 
   if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
-    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,f,&
+    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,hgt,f,&
       particle_type,a_msnow,b_snow,a_as_snow,b_as_snow,snow_spec)
   else
     snow_spec(:)=0.d0

@@ -1,6 +1,6 @@
 module equcom 
 
-  use kinds, only: sgl
+  use kinds
 
   implicit none
   save

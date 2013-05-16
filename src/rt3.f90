@@ -219,8 +219,7 @@ SUBROUTINE RT3 (NSTOKES, NUMMU, AZIORDER, MU_VALUES, SRC_CODE,    &
 
   use kinds
   use vars_atmosphere
-  use settings, only: write_nc, in_python, numazimuths
-  use report_module
+  use nml_params, only: verbose, write_nc, in_python, numazimuths
 
   implicit none
 
@@ -321,8 +320,7 @@ SUBROUTINE OUTPUT_FILE (NSTOKES, NUMMU, AZIORDER, SRC_CODE,       &
 
   use kinds
   use mod_io_strings
-
-        use report_module
+  use nml_params, only: verbose
 
   INTEGER NSTOKES, NUMMU, NUMAZI, AZIORDER, SRC_CODE, NUM_LAYERS 
   INTEGER NOUTLEVELS, OUTLEVELS ( * ), NUMAZIMUTHS 

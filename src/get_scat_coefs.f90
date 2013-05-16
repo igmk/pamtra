@@ -17,7 +17,7 @@ subroutine get_scat_coefs(nz,DELTAM, NUMMU, NLEG, COEF, EXTINCTION, SCATTER)
   INTEGER NLEG, NUMMU
   REAL(kind=dbl) COEF (6, rt3nlegen(nz)+1 ), EXTINCTION, SCATTER
   CHARACTER(1) DELTAM
-  INTEGER L
+  INTEGER L, K
   REAL(kind=dbl) ALBEDO, F
 
   extinction = rt3kexttot(nz)

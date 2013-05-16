@@ -53,14 +53,14 @@ module cosmo_netcdf
 contains
     subroutine read_cosmo_netcdf_acp(coords, nlvl)
 
-        use settings, only: crm_data, crm_constants, n_moments
-        use report_module
+        use nml_params, only: crm_data, crm_constants, n_moments, verbose
 
         implicit none
 
         ! This will be the netCDF ID for the file and data variable.
         integer :: nx,ny,nlvl,nlvl1
-        integer :: ncid,ncidc
+        integer :: ncid,ncidc, ncidn, timeID, time
+        integer, dimension(9) :: gmtvalues
 
         integer, dimension(2) :: start_2d, count_2d
         integer, dimension(3) :: start_3d, count_fl, count_hl
@@ -174,14 +174,14 @@ contains
 
     subroutine read_cosmo_netcdf_narval(coords, nlvl)
 
-        use settings, only: crm_data, crm_data2, crm_constants, n_moments
-        use report_module
+        use nml_params, only: crm_data, crm_data2, crm_constants, n_moments, verbose
 
         implicit none
 
         ! This will be the netCDF ID for the file and data variable.
         integer :: nx,ny,nlvl,nlvl1
-        integer :: ncid,ncidc, ncidn
+        integer :: ncid,ncidc, ncidn, timeID, time
+        integer, dimension(9) :: gmtvalues
 
         integer, dimension(2) :: start_2d, count_2d
         integer, dimension(3) :: start_3d, count_fl, count_hl
@@ -267,7 +267,7 @@ contains
             call get_3d_vars(ncidn, 'QNS', snow_n, nx,ny, nlvl, start_3d, count_fl)
             call get_3d_vars(ncidn, 'QNH', hail_n, nx,ny, nlvl, start_3d, count_fl)
 
-            call check(nf90_close(ncidn))
+         	call check(nf90_close(ncidn))
         else
             allocate(hail(nx,ny,nlvl))
             hail = 0.
@@ -390,11 +390,11 @@ contains
 
         implicit none
 
-        integer :: i,j,k
+        integer :: i,j,idimz,k
         integer :: nx,ny,nlvl, nlvl1
 
         real :: meant,dz_for_pb,dz,xp
-        real :: r_d,r_v
+        real :: r_d,r_v,wet_rho
 
         r_d=287.05        ! [J/(kg*K)] = [m^2/(s^2*K)]
         r_v=461.5
@@ -443,7 +443,7 @@ contains
 
     subroutine integrate_profiles(hhl,p,t,qc,qr,qi,qs,qg,qh,qv,cwp,iwp,rwp,swp,gwp,hwp,iwv,nlvl)
 
-        use settings, only: n_moments
+        use nml_params, only: n_moments
 
         implicit none
 

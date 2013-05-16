@@ -5,20 +5,18 @@ gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 FC=gfortran
 CC=gcc
-FCFLAGS=-c -fPIC -Wunused -O2 #-I../include/ uninitialized
+FCFLAGS=-c -fPIC -Wuninitialized -O2
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran
 	NCFLAGS=-I/opt/local/include/ 
 	NCFLAGS_F2PY=-I/opt/local/include/ 
 	LFLAGS=-L/opt/local/lib/ -llapack -ldfftpack
 	LDFLAGS=-lnetcdf -lnetcdff 
-	SQLFLAGS := -lfsqlite -lsqlite3 -L../tools/sqlite -L/usr/lib -I../tools/sqlite
 else
 	NCFLAGS :=  $(shell nc-config --fflags)  -O2
 	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
 	LFLAGS := -llapack -ldfftpack
 	LDFLAGS := $(shell nc-config --flibs)
-	SQLFLAGS := -lfsqlite -lsqlite3 -L../tools/sqlite -L/usr/lib -I../tools/sqlite
 endif
 
 
@@ -26,12 +24,12 @@ endif
 #-	LFLAGS=-L$(HOME)/lib -L/usr/local/lib
 #-	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm -lsz
 
+
 OBJECTS=kinds.o \
-	settings.o \
-	report_module.o \
 	constants.o \
+	file_mod.o \
+	nml_params.o \
 	mod_fastem4_coef.o \
-	gasabs_module.o \
 	conversions.o \
 	double_moments_module.o \
 	cosmo_netcdf.o \
@@ -40,22 +38,23 @@ OBJECTS=kinds.o \
 	mod_io_strings.o \
 	getopt.o \
 	parse_options.o \
-	rt_utilities.o \
 	radmat.o \
-	convolution.o \
-	get_gasabs.o\
+	convolution.o\
 	get_atmosphere.o \
 	vars_output.o \
 	run_rt.o \
+	rt3.o \
+	radtran3.o \
+	radutil3.o \
+	radscat3.o \
+	radintg3.o \
 	scat_utilities.o \
 	dsd_utilities.o \
 	mpm93.o \
 	get_atmosG0.o \
-	get_surface.o \
+	get_atmosG.o \
 	mie.o \
 	mie_densitydep_spheremasseq.o\
-	dia2vel.o \
-	rescale_spectra.o \
 	radar_spectrum.o \
 	radar_simulator.o \
 	deallocate_jacobian_vars.o \
@@ -71,7 +70,6 @@ OBJECTS=kinds.o \
 	equcom.o \
 	land_emis.o \
 	equare.o \
-	sql_tools.o \
 	scatdb.o \
 	dda_db_liu.o \
 	dielec_water.o \
@@ -80,8 +78,10 @@ OBJECTS=kinds.o \
 	e_sat_gg_water.o \
 	spec2abs.o \
 	interpolation.o \
+	rescale_spectra.o \
 	deallocate_profile_vars.o \
 	deallocate_output_vars.o \
+	hydrometeor_extinction_rt3.o \
 	cloud_ssp.o \
 	ice_ssp.o \
 	rain_ssp.o \
@@ -93,6 +93,8 @@ OBJECTS=kinds.o \
 	save_active.o \
 	fastem4.o \
 	specular_surface.o \
+	error_msg.o\
+	get_scat_coefs.o \
 	dump_profile.o \
 	collect_boundary_output.o \
 	random.o \
@@ -106,9 +108,9 @@ OBJECTS=kinds.o \
 	scatcnv.o \
 	tmatrix_rain.o \
 	tmatrix_snow.o \
-	tmatrix_snow_sql.o \
-	tmatrix_ice.o \
-	lpq.o \
+	matrix_cal.o \
+	tmatrix_cal.o \
+	lpd.o \
 	get_scat_mat.o \
 	mass_size_rel.o \
 	refractive_index.o \
@@ -117,21 +119,12 @@ OBJECTS=kinds.o \
 	rho_air.o \
 	viscosity_air.o\
 	versionNumber.auto.o \
+	dia2vel.o \
 	smooth_savitzky_golay.o \
 	radar_calc_moments.o \
 	radar_hildebrand_sekhon.o \
-	write_nc_results.o \
-	tmatrix_calc.o \
-	amplq.lp.o 
-# 	amplq.par.o
-#	rt3.o \
-	radtran3.o \
-	radutil3.o \
-	radscat3.o \
-	radintg3.o \
-	hydrometeor_extinction_rt3.o \
-#	tmatrix_cal.o \
-#	matrix_cal.o \
+	formatted_frqstr.o \
+	write_nc_results.o 
 
 BIN=pamtra
 
@@ -139,7 +132,7 @@ all: precompile pamtra py
 
 
 pamtra: pamtra.f90 $(OBJECTS)
-	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS) $(SQLFLAGS)
+	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS) 
 	mv $(BIN) ../
 
 
@@ -193,12 +186,6 @@ cosmo_netcdf.o: cosmo_netcdf.f90
 	$(FC) $(FCFLAGS) $(NCFLAGS) cosmo_netcdf.f90
 
 
-sql_tools.o: sql_tools.f90
-	$(FC) $(FCFLAGS) $(SQLFLAGS) sql_tools.f90
-
-tmatrix_calc.o: tmatrix_calc.f90
-	$(FC) $(FCFLAGS) $(SQLFLAGS) tmatrix_calc.f90
-
 
 pyprecompile: 
 	@echo "Make backup before deleting old signature file, auto creating will most likely fail."
@@ -207,11 +194,11 @@ pyprecompile:
 	f2py -m pyPamtraLib -h pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90
 
 py: pyPamtraLib.f90 precompile $(OBJECTS)
-	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) $(SQLFLAGS) -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
+	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS)  -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ../py/
 
 pyNode: pyPamtraLib.f90 $(OBJECTS) 
-	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) $(SQLFLAGS) -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
+	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS)  -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ../py/
 
 pyinstall:

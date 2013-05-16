@@ -59,15 +59,12 @@ class pyPamtra(object):
     self.p = dict()
     self._helperP = dict()
     self.r = dict()
-    
-
   
   def prepareNmlUnitsDimensions(self):
   
-    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","iwv","cwp","iwp","rwp","swp","gwp","hwp","hgt_lev","press_lev","temp_lev","relhum_lev","q","cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n","deltax","deltay","wind10u","wind10v","ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime"]
-  
     self.nmlSet = OrderedDict() #settings which are required for the nml file. keeping the order is important for fortran
 
+    self.nmlSet["verbose_mode"] = dict()
     self.nmlSet["inoutput_mode"] = dict()
     self.nmlSet["output"] = dict()
     self.nmlSet["run_mode"] = dict()
@@ -82,6 +79,8 @@ class pyPamtra(object):
     self.nmlSet["hail_params"] = dict()
     self.nmlSet["moments"] = dict()
     self.nmlSet["radar_simulator"] = dict()
+    
+    self.nmlSet["verbose_mode"]["verbose"] = 0
     
     self.nmlSet["inoutput_mode"]["dump_to_file"]=False
     self.nmlSet["inoutput_mode"]["tmp_path"]='/tmp/'
@@ -99,6 +98,7 @@ class pyPamtra(object):
 
     self.nmlSet["run_mode"]["active"]=True
     self.nmlSet["run_mode"]["passive"]=True
+    self.nmlSet["run_mode"]["rt_mode"]="rt4"
     self.nmlSet["run_mode"]["radar_mode"]="simple"    
     
     self.nmlSet["surface_params"]["ground_type"]='S'
@@ -110,31 +110,13 @@ class pyPamtra(object):
 
     self.nmlSet["hyd_opts"]["lhyd_extinction"]=True
     self.nmlSet["hyd_opts"]["lphase_flag"]= True
-    self.nmlSet["hyd_opts"]["softsphere_adjust"] ="density"
 
     self.nmlSet["cloud_params"]["sd_cloud"]='C'
     self.nmlSet["cloud_params"]["em_cloud"]='miecl'
-    self.nmlSet["cloud_params"]["ad_cloud"]=1000.
-    self.nmlSet["cloud_params"]["bd_cloud"]=2.0
-    self.nmlSet["cloud_params"]["alphad_cloud"]=0.
-    self.nmlSet["cloud_params"]["gammad_cloud"]=1.
-    self.nmlSet["cloud_params"]["diamin_cloud"] = 4.e-6# [m] 
-    self.nmlSet["cloud_params"]["diamax_cloud"] = 5.e-5# [m] 
-
+    
     self.nmlSet["ice_params"]["sd_ice"]='C'
     self.nmlSet["ice_params"]["em_ice"]='mieic'
-    self.nmlSet["ice_params"]["ad_ice"]=1000.
-    self.nmlSet["ice_params"]["bd_ice"]=2.0
-    self.nmlSet["ice_params"]["alphad_ice"]=0.
-    self.nmlSet["ice_params"]["gammad_ice"]=1.
-    self.nmlSet["ice_params"]["liu_type_ice"]=9
-    self.nmlSet["ice_params"]["diamin_ice"] = 7e-5 # [m] 
-    self.nmlSet["ice_params"]["diamax_ice"] = 1e-2 # [m] 
-    self.nmlSet["ice_params"]["mass_size_ice_a"] = 0.0016958357159333887 #aus MPACE
-    self.nmlSet["ice_params"]["mass_size_ice_b"] = 1.7e0 #aus MPACE
-    self.nmlSet["ice_params"]["area_size_ice_b"] = 1.63 #aus mitchell 96 fuer MPACE
-    self.nmlSet["ice_params"]["area_size_ice_a"] = 0.020016709444709808 #aus mitchell 96 fuer MPACE
-    self.nmlSet["ice_params"]["as_ratio_ice"] = 0.99999 #numerically more stable than 1
+    
     self.nmlSet["rain_params"]["sd_rain"]='C' 
     self.nmlSet["rain_params"]["em_rain"]='miera' 
     self.nmlSet["rain_params"]["n_0raind"]=8.0
@@ -183,8 +165,8 @@ class pyPamtra(object):
     
     self.nmlSet["radar_simulator"]["radar_fallVel_cloud"] ="khvorostyanov01_drops"
     self.nmlSet["radar_simulator"]["radar_fallVel_rain"] = "khvorostyanov01_drops"
-    self.nmlSet["radar_simulator"]["radar_fallVel_ice"] ="heymsfield10_particles"
-    self.nmlSet["radar_simulator"]["radar_fallVel_snow"] ="heymsfield10_particles"
+    self.nmlSet["radar_simulator"]["radar_fallVel_ice"] ="khvorostyanov01_particles"
+    self.nmlSet["radar_simulator"]["radar_fallVel_snow"] ="khvorostyanov01_particles"
     self.nmlSet["radar_simulator"]["radar_fallVel_graupel"] ="khvorostyanov01_spheres"
     self.nmlSet["radar_simulator"]["radar_fallVel_hail"] ="khvorostyanov01_spheres"
     self.nmlSet["radar_simulator"]["radar_aliasing_nyquist_interv"] = 0
@@ -194,7 +176,6 @@ class pyPamtra(object):
     #all settings which do not go into the nml file go here:
     self.set = dict()
     self.set["pyVerbose"] = 0
-    self.set["verbose"] = 0
     self.set["freqs"] = []
     self.set["nfreqs"] = 0
     self.set["namelist_file"] = "TMPFILE"
@@ -514,8 +495,7 @@ class pyPamtra(object):
     The following variables are only needed together with the 2 moments scheme!
     "hwc_q","hwp", "cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"
     '''
-      
-    allVars = self.default_p_vars  
+    allVars=["timestamp","lat","lon","lfrac","wind10u","wind10v","iwv","cwp","iwp","rwp","swp","gwp","hwp","hgt_lev","press_lev","temp_lev","relhum_lev","q","cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"]
       
     for key in kwargs.keys():
       if key not in allVars:
@@ -970,7 +950,7 @@ class pyPamtra(object):
 
     
     
-  def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto",checkData=True):
+  def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto"):
     '''
     run Pamtra analouge to runPamtra, but with with parallel python
     
@@ -988,7 +968,7 @@ class pyPamtra(object):
     '''
     tttt = time.time()
     
-    if checkData: self._checkData()
+    self._checkData()
         
     #if the namelist file is empty, write it. Otherwise existing one is used.
     #if not os.path.isfile(self.set["namelist_file"]):
@@ -1004,8 +984,8 @@ class pyPamtra(object):
     else:
       self.job_server = pp.Server(pp_local_workers,ppservers=pp_servers,secret="pyPamtra") 
       
-    if int(self.set["verbose"]) > 0:  
-      raise IOError('There is a weired bug if the fortran part prints anything (i.e. verbosity is larger than 0). Use the non-parallel pyPamtra version for debugging! verbose=', self.set["verbose"])
+    if int(self.nmlSet["verbose_mode"]["verbose"]) > 0:  
+      raise IOError('There is a weired bug if the fortran part prints anything (i.e. verbosity is larger than 0). Use the non-parallel pyPamtra version for debugging! verbose=', self.nmlSet["verbose_mode"]["verbose"])
     if self.set["pyVerbose"] > 0: 
       print "Starting pp with: "
       pp_nodes = self.job_server.get_active_nodes()
@@ -1102,7 +1082,6 @@ class pyPamtra(object):
           ii_nmlSet,
           self._nmlDefaultValues,
           self.set["namelist_file"],
-          self.set["verbose"],
           #input
           pp_ngridx,
           pp_ngridy,
@@ -1264,7 +1243,7 @@ class pyPamtra(object):
     return
     
     
-  def runPamtra(self,freqs,checkData=True):
+  def runPamtra(self,freqs):
     '''
     run Pamtra from python
     '''
@@ -1282,7 +1261,7 @@ class pyPamtra(object):
     else:
       radar_spectrum_length = 1
 
-    if checkData: self._checkData()
+    self._checkData()
 
     #if not os.path.isfile(self.set["namelist_file"]):
       #self.writeNmlFile(self.set["namelist_file"])
@@ -1327,7 +1306,6 @@ class pyPamtra(object):
       self.nmlSet,
       self._nmlDefaultValues,
       self.set["namelist_file"],
-      self.set["verbose"],
       #input
       self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.p["nlyrs"],self.set["nfreqs"],self.set["freqs"],
       radar_spectrum_length, self.p["unixtime"],

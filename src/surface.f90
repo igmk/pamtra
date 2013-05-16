@@ -52,12 +52,11 @@ SUBROUTINE LAMBERT_RADIANCE (NSTOKES, NUMMU, MODE, &
   !        LAMBERT_RADIANCE calculates the ground radiance of a Lambertian
   !      surface.  The radiance is due to thermal radiation.
   use kinds
-  use rt_utilities, only: planck_function
   INTEGER NSTOKES, NUMMU, MODE
   REAL(kind=dbl) GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH 
   REAL(kind=dbl) RADIANCE (NSTOKES, NUMMU) 
   INTEGER J, N 
-  REAL(kind=dbl) :: THERMAL, PLANCK, PI
+  REAL(kind=dbl) TMP, THERMAL, PLANCK, PI 
   PARAMETER (PI = 3.1415926535897932384D0) 
 
   N = NSTOKES * NUMMU 
@@ -134,7 +133,6 @@ SUBROUTINE FRESNEL_RADIANCE (NSTOKES, NUMMU, MODE, MU_VALUES,     &
   !      surface using the Fresnel formulae.  The radiance is due only to 
   !      thermal radiation (this subroutine cannot do specular reflection)
   use kinds
-  use rt_utilities, only: planck_function
   INTEGER NSTOKES, NUMMU, MODE 
   REAL(kind=dbl) GROUND_TEMP, WAVELENGTH, MU_VALUES (NUMMU) 
   REAL(kind=dbl) RADIANCE (NSTOKES, NUMMU) 
@@ -175,7 +173,6 @@ SUBROUTINE THERMAL_RADIANCE(NSTOKES, NUMMU, MODE, TEMPERATURE,   &
   !      isotropic and unpolarized: only the first term in azimuth Fourier
   !      series is nonzero, and all MU terms are the same.                
   use kinds
-  use rt_utilities, only: planck_function
   INTEGER NSTOKES, NUMMU, MODE 
   REAL(kind=dbl) TEMPERATURE, WAVELENGTH, ALBEDO 
   REAL(kind=dbl) RADIANCE (NSTOKES, NUMMU, 2) 

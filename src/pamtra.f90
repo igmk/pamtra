@@ -1,13 +1,14 @@
 program pamtra
 
-    use kinds, only: long
-    !    use constants !physical constants live here
-    use settings !all settings go here
+    use kinds
+    use constants !physical constants live here
+    use nml_params !all settings go here
+    use file_mod
     use vars_atmosphere !input variables and reading routine
     use vars_output !output variables
     use vars_profile
     use double_moments_module !double moments variables are stored here
-    use report_module
+
 
     !     The code reads a full (e.g. COSMO) grid and computes for each
     !     profile the radiative transfer for the given frequencies
@@ -19,44 +20,75 @@ program pamtra
 
     implicit none
 
+
     !!! internal "handle command line parameters" !!!
 
-    integer(kind=long) :: inarg
+    integer :: inarg, ff
     character(40) :: gitHash, gitVersion
+    character(8) :: formatted_frqstr !function call
 
     !!! set by "handle command line parameters" !!!
 
+    character(8), dimension(maxfreq) :: frqs_str !from commandline
+    character(9) :: frq_str_s,frq_str_e
 
     !!!loop variables
-    integer(kind=long) ::  fi,nx, ny,i
-
-    ! Error handling
-
-    integer(kind=long) :: errorstatus
-    integer(kind=long) :: err = 0
-    character(len=200) :: msg
-    character(len=14) :: nameOfRoutine = 'pamtra'
+    integer ::  fi,nx, ny,i
 
     !get git data
     call versionNumber(gitVersion,gitHash)
 
     !get and process command line parameters
-    call parse_options(gitVersion,gitHash)
+    call parse_options(gitVersion,gitHash,frqs_str,nfrq)
+
+    !  inarg = iargc()
+    !
+    !  if (inarg .lt. 3) then
+    !     print *,'Usage: pamtra profile_file namelist_file (list of frequencies)'
+    !     print *,'Example: ./pamtra rt_comp_single.dat run_params.nml 35 94'
+    !     print *,'See namelist file for further pamtra options'
+    !     print *,''
+    !     print *,'Version:  '//gitVersion
+    !     print *,'Git Hash: '//gitHash
+    !     stop
+    !  else if (inarg .gt. maxfreq + 2) then
+    !     print *,'Too many frequencies! Increase maxfreq!'
+    !     stop
+    !  end if
+    !  call getarg(1,input_file)
+    !  call getarg(2,namelist_file)
+    !
+    !  nfrq = inarg - 2
+    !
+    do ff = 1, nfrq
+        !     call getarg(ff+2,frqs_str(ff))
+        read(frqs_str(ff),*) freqs(ff)
+        frqs_str(ff) = formatted_frqstr(frqs_str(ff))
+    end do
 
     !!! read variables from namelist file
-    call settings_read !from settings.f90
+    call nml_params_read !from nml_params.f90
 
     in_python = .false.! we are _not_ in python
-
-    if (verbose >= 1) then
-        msg = "input_file: "//input_file(:len_trim(input_file))//&
-        " namelist file: "//trim(namelist_file)//&
-        " freqs: "//trim(frqs_str(1))//" to "//trim(frqs_str(nfrq))
-        call report(info, msg, nameOfRoutine)
+    
+    ! create frequency string if not set in pamtra
+    if (freq_str .eq. "") then
+         ! get integer and character frequencies
+        frq_str_s = "_"//frqs_str(1)
+        if (nfrq .eq. 1) then
+            frq_str_e = ""
+        else
+            frq_str_e = "-"//frqs_str(nfrq)
+        end if
+        freq_str = frq_str_s//frq_str_e
     end if
+    !      frq_str_list = frq_str_list(:len_trim(frq_str_list)) // "_" //  frqs_str(ff)
+
+    if (verbose .gt. 1) print *,"input_file: ",input_file(:len_trim(input_file)),&
+    " namelist file: ",namelist_file," freq: ",freq_str
 
     !!! read n-moments file
-    if (n_moments == 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
+    if (n_moments .eq. 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
 
     !!! read the data
     call get_atmosphere
@@ -75,18 +107,17 @@ program pamtra
     ! now allocate variables
     call allocate_output_vars(nlyr)
 
-    msg = 'Start loop over frequencies & profiles!'
-    if (verbose >= 2)  call report(info, msg, nameOfRoutine)
+    if (verbose .gt. 1) print*, 'Start loop over frequencies & profiles!'
 
     grid_f: do fi =1, nfrq
-        if (jacobian_mode) then
-            !for jacobian mode. non disturbed profile is expected in grid 1,1!
-            call allocate_jacobian_vars
-        end if
+	if (jacobian_mode) then
+	!for jacobian mode. non disturbed profile is expected in grid 1,1!
+	  call allocate_jacobian_vars
+	end if
         grid_y: do ny = 1, ngridy !nx_in, nx_fin
-            grid_x: do nx = 1, ngridx !ny_in, ny_fin
+	      grid_x: do nx = 1, ngridx !ny_in, ny_fin
          
-                call allocate_profile_vars(err)
+                call allocate_profile_vars
          
                 !   ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
                 lat = profiles(nx,ny)%latitude                  ! °
@@ -110,6 +141,7 @@ program pamtra
                 gwp = profiles(nx,ny)%gwp
                 hwp = profiles(nx,ny)%hwp
 
+
                 cwc_q = profiles(nx,ny)%cloud_water_q           ! kg/kg
                 iwc_q = profiles(nx,ny)%cloud_ice_q             ! kg/kg
                 rwc_q = profiles(nx,ny)%rain_q                  ! kg/kg
@@ -126,27 +158,17 @@ program pamtra
                 end if
 
                 !run the model
-                call run_rt(errorstatus,nx,ny,fi)
-                if (errorstatus /= 0) then
-                    msg = 'Error in run_rt!'
-                    call report(fatal, msg, nameOfRoutine)
-                    call deallocate_profile_vars()
-                    if (jacobian_mode) then
-                              !for jacobian mode
-                        call deallocate_jacobian_vars
-                    end if
-                    call deallocate_output_vars()
-                    stop
-                end if
+                call run_rt(nx,ny,fi,freqs(fi),frqs_str(fi))
 
                 call deallocate_profile_vars()
 
-            end do grid_x
+
+             end do grid_x
         end do grid_y
-        if (jacobian_mode) then
-                  !for jacobian mode
-            call deallocate_jacobian_vars
-        end if
+      if (jacobian_mode) then
+      !for jacobian mode
+	  call deallocate_jacobian_vars
+      end if
     end do grid_f
 
     if (write_nc) then
@@ -155,12 +177,4 @@ program pamtra
 
     call deallocate_output_vars()
 
-    if (verbose >= 1 .and. errorstatus == 0) then
-        msg = 'Progam finished successfully'
-        call report(info, msg, nameOfRoutine)
-    end if
-    if (errorstatus /= 0) then
-        msg = 'Something went wrong!'
-        call report(fatal, msg, nameOfRoutine)
-    end if
 end program pamtra

@@ -1,14 +1,13 @@
-subroutine grau_ssp(f,gwc,t,press,maxleg,nc, kext, salb, back,  &
+subroutine grau_ssp(f,gwc,t,press,hgt,maxleg,nc, kext, salb, back,  &
      nlegen, legen, legen2, legen3, legen4,&
      scatter_matrix,extinct_matrix, emis_vector,grau_spec)
 
   use kinds
-  use settings, only: lphase_flag, n_0grauDgrau, EM_grau, n_moments, SD_grau, &
+  use nml_params, only: verbose, lphase_flag, n_0grauDgrau, EM_grau, n_moments, SD_grau, &
   graupel_density, nstokes, radar_nfft_aliased, radar_mode, active
   use constants, only: pi, im
   use double_moments_module
   use conversions
-        use report_module
 
 
   implicit none
@@ -19,7 +18,7 @@ subroutine grau_ssp(f,gwc,t,press,maxleg,nc, kext, salb, back,  &
   real(kind=dbl), intent(in) :: &
        gwc,&
        t,&
-       f,press
+       f,press,hgt
 
   real(kind=dbl), intent(in) :: nc
 
@@ -115,7 +114,7 @@ subroutine grau_ssp(f,gwc,t,press,maxleg,nc, kext, salb, back,  &
 
   if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
     particle_type="graup" 
-    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,f,&
+    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,hgt,f,&
       particle_type,a_mgrau, b_grau,-1.d0,-1.d0,grau_spec)
   else
     grau_spec(:)=0.d0

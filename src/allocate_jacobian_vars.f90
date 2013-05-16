@@ -1,7 +1,7 @@
 subroutine allocate_jacobian_vars
   use kinds
   use vars_atmosphere
-  use settings
+  use nml_params
 
   implicit none
 

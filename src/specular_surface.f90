@@ -34,7 +34,6 @@ SUBROUTINE specular_radiance (NSTOKES, NUMMU, MODE,    &
      GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH, RADIANCE)                         
 
   use kinds
-  use rt_utilities, only: planck_function
   INTEGER NSTOKES, NUMMU, MODE 
   REAL(kind=dbl) GROUND_TEMP, GROUND_ALBEDO, WAVELENGTH
   REAL(kind=dbl) RADIANCE (NSTOKES, NUMMU) 

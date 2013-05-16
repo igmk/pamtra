@@ -2,7 +2,7 @@ subroutine hydrometeor_extinction(f,frq_str)
 
   use kinds
   use vars_atmosphere
-  use settings, only: verbose, tmp_path, active, passive, dump_to_file, n_moments
+  use nml_params, only: verbose, tmp_path, active, passive, dump_to_file, n_moments
   use constants
   use mod_io_strings
   use conversions

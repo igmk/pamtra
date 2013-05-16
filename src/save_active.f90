@@ -5,8 +5,7 @@ subroutine save_active(OUT_FILE_ACT,nx,ny,fi)
   use vars_atmosphere, only: nlyr 
   use vars_output
 !   use constants
-  use settings
-        use report_module
+  use nml_params
 
   implicit none
 

@@ -13,14 +13,14 @@
 !       The guts of the code are taken from RADSCAT3.FOR.
 !
 
-      use settings, only: dump_to_file, nstokes,nummu, aziorder, quad_type
-use rt_utilities, only: lobatto_quadrature
+      use nml_params, only: dump_to_file, nstokes,nummu, aziorder, quad_type
+
       implicit none
 
       INTEGER  NLEGEN
       REAL*8   MU_VALUES(32), QUAD_WEIGHTS(32)
       REAL*8   COEF(6,100),  EXTINCT, ALBEDO, CONST
-      CHARACTER*64  OUT_FILE
+      CHARACTER*64  SCAT_FILE, OUT_FILE
       CHARACTER*8   QUADTYPE
       real*8 scatter_matrix(nstokes,nummu,nstokes,nummu,4)
       real*8 ext_matrix(nstokes,nstokes,nummu,2)
@@ -58,13 +58,13 @@ use rt_utilities, only: lobatto_quadrature
       subroutine transform_ext_emis(mu_values,extinct,albedo,ext_matrix,emis_vec)
 
       use kinds
-      use settings, only: nstokes, nummu
+      use nml_params, only: nstokes, nummu
       implicit none
 
       integer :: j, l
       real(kind=dbl), dimension(nummu) :: mu_values
       real(kind=dbl) :: extinct, albedo
-      real(kind=dbl) :: absorb
+      real(kind=dbl) :: mu, absorb
       real(kind=dbl), dimension(nstokes,nstokes,nummu,2) :: ext_matrix
       real(kind=dbl), dimension(nstokes,nummu,2) :: emis_vec
 
@@ -91,21 +91,17 @@ use rt_utilities, only: lobatto_quadrature
       SUBROUTINE transform_scatter(CONST,MU_VALUES, NLEGEN, COEF,scatter_matrix)
 
       use kinds
-      use settings, only: nummu, aziorder, nstokes
-      use rt_utilities, only: number_sums,&
-sum_legendre,&
-rotate_phase_matrix,&
-matrix_symmetry,&
-fourier_matrix
+      use nml_params, only: nummu, aziorder, nstokes
+
       implicit none
 
       INTEGER  NLEGEN, l
       REAL(kind=dbl) :: MU_VALUES(NUMMU), CONST, COEF(6,1)
       INTEGER  MAXLEG
       PARAMETER (MAXLEG=64)
-      INTEGER  I1, I2, I, J1, J2, K, L1, L2
+      INTEGER  I1, I2, I, J1, J2, K, L1, L2, M
       INTEGER  NUMPTS, DOSUM(6)
-      REAL(kind=dbl) :: MU1, MU2,  DELPHI, COS_SCAT
+      REAL(kind=dbl) :: C, MU1, MU2,  DELPHI, COS_SCAT
       REAL(kind=dbl) :: PHASE_MATRIX(4,4)
       REAL(kind=dbl) :: SCAT_MATRIX(4,4,4*MAXLEG), BASIS_MATRIX(4,4,4*MAXLEG)
       REAL(kind=dbl) :: ZERO, TWOPI
@@ -201,21 +197,17 @@ fourier_matrix
 
       SUBROUTINE SCATTERING_CNV(CONST, MU_VALUES, NLEGEN, COEF)
 
-      use settings, only: nstokes, nummu, aziorder
-use rt_utilities, only: number_sums,&
-sum_legendre,&
-rotate_phase_matrix,&
-matrix_symmetry,&
-fourier_matrix
+      use nml_params, only: nstokes, nummu, aziorder
+
       implicit none
 
       INTEGER  NLEGEN, l
       REAL*8   MU_VALUES(NUMMU), CONST, COEF(6,1)
       INTEGER  MAXLEG
       PARAMETER (MAXLEG=64)
-      INTEGER  I1, I2, I, J1, J2, K, L1, L2
+      INTEGER  I1, I2, I, J1, J2, K, L1, L2, M
       INTEGER  NUMPTS, DOSUM(6)
-      REAL*8   MU1, MU2,  DELPHI, COS_SCAT
+      REAL*8   C, MU1, MU2,  DELPHI, COS_SCAT
       REAL*8   PHASE_MATRIX(4,4)
       REAL*8   SCAT_MATRIX(4,4,4*MAXLEG), BASIS_MATRIX(4,4,4*MAXLEG)
       REAL*8   ZERO, TWOPI

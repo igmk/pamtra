@@ -15,8 +15,7 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
 
   use kinds
   use constants, only: pi,c
-  use settings, only: softsphere_adjust
-  use report_module
+
   implicit none
 
   real(kind=dbl), intent(in) :: f,  &! frequency [GHz]
@@ -33,7 +32,7 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
   integer, parameter :: maxn  = 5000
   integer :: nterms, nquad, nmie, nleg 
   integer :: i, l, m, ir
-  real(kind=dbl) :: x, del_d, ndens, tmp, density,diameter_eff, density_eff
+  real(kind=dbl) :: x, del_d, ndens, tmp, density,diameter_ice
   real(kind=dbl) :: qext, qscat, qback, scatter 
   real(kind=dbl) :: distribution 
   real(kind=dbl) :: mu(maxn), wts(maxn)
@@ -47,38 +46,17 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
   complex(kind=dbl) :: msphere, eps_mix
   character :: aerodist * 1
 
-    integer(kind=long) :: errorstatus
-    integer(kind=long) :: err = 0
-    character(len=80) :: msg
-    character(len=14) :: nameOfRoutine = 'mie_densityspheremass'
-
-    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
-
-
   wavelength = c/(f*1.e9) !
 
   !           find the maximum number of terms required in the mie series,
   !       call density_ice(a_mtox, bcoeff, rad2, dens_graup) 
   !       rad2_ice = (dens_graup / 917.) **0.33333333 * rad2 
+  !diameter of sphere with same mass
+  diameter_ice = (6.*a_mtox*dia2**bcoeff/(pi*density))**(1./3.)
 
-  if (softsphere_adjust .eq. "radius") then
-      !diameter of sphere with same mass
-      diameter_eff = (6.d0*a_mtox*dia2**bcoeff/(pi*density))**(1./3.)
-      density_eff = density
-    else if (softsphere_adjust .eq. "density") then
-      !adjust density of the particle
-      diameter_eff =dia2
-      density_eff = (6.d0 * a_mtox*dia2**bcoeff) / (pi * dia2**3)
-    else
-      print*, "did not understand softsphere_adjust:",softsphere_adjust
-      stop
-    end if 
+  msphere = eps_mix((1.d0,0.d0),m_ice,density)
 
-
-
-  msphere = eps_mix((1.d0,0.d0),m_ice,density_eff)
-
-  x = pi * diameter_eff / wavelength
+  x = pi * diameter_ice / wavelength
   nterms = 0 
   call miecalc (nterms, x, msphere, a, b) 
   nlegen = 2 * nterms 
@@ -115,11 +93,9 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
         ndens = 0.5 * ndens 
      end if
      tot_mass = tot_mass + ndens*del_d*a_mtox*diameter(ir)**bcoeff
-     if ((aerodist == "C") .or. (aerodist == "M")) then
-       if ((ir .eq. nbins+1) .and. (tot_mass/wc*100. .lt. 99.9d0)) then
-         ndens = ndens + (wc-tot_mass)/(del_d*a_mtox*(diameter(ir))**bcoeff)
-         tot_mass = wc
-       end if
+     if ((ir .eq. nbins+1) .and. (tot_mass/wc*100. .lt. 99.9d0)) then
+      ndens = ndens + (wc-tot_mass)/(del_d*a_mtox*(diameter(ir))**bcoeff)
+      tot_mass = wc
      end if
 
      nmie = 0 
@@ -127,43 +103,19 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
      !       call density_ice(a_mtox, bcoeff, radius, dens_graup) 
      ! !         write(18,*)'dens',dens_graup                                  
      !       radius_ice = (dens_graup / 917.) **0.33333333 * radius 
+     !diameter of sphere with same mass
+     diameter_ice = (6.*a_mtox*diameter(ir)**bcoeff/(pi*density))**(1./3.)
+     x = pi * diameter_ice / wavelength
 
-
-    
-    if (softsphere_adjust .eq. "radius") then
-      !diameter of sphere with same mass
-      diameter_eff = (6.d0*a_mtox*diameter(ir)**bcoeff/(pi*density))**(1./3.)
-      density_eff = density
-    else if (softsphere_adjust .eq. "density") then
-      !adjust density of the particle
-      diameter_eff = diameter(ir)
-      density_eff = (6.d0 * a_mtox*diameter(ir)**bcoeff) / (pi * diameter(ir)**3)
-    else
-      print*, "did not understand softsphere_adjust:",softsphere_adjust
-      stop
-    end if 
-
-      if (density_eff > 917.d0) then
-	print*, "WANRING changed density from ", density_eff, "kg/m3 to 917 kg/m3 for d=", diameter(ir)
-	density_eff = 917.d0
-      end if
-
-
-
-     x = pi * diameter_eff / wavelength
-
-	 msphere = eps_mix((1.d0,0.d0),m_ice,density_eff)
-
-    if (verbose >= 4) print*, "density_eff, diameter(ir), msphere"
-    if (verbose >= 4) print*, density_eff, diameter(ir), msphere
+	 msphere = eps_mix((1.d0,0.d0),m_ice,density)
 
      call miecalc (nmie, x, msphere, a, b) 
      call miecross (nmie, x, a, b, qext, qscat, qback)
 
      ! sum up extinction, scattering, and backscattering as cross-sections/pi .pi is added in a later step
-     qext =   qext  * ndens * (diameter_eff/2.d0)**2         ! [m²/m⁴]!
-     qscat =  qscat * ndens * (diameter_eff/2.d0)**2        ! [m²/m⁴]!
-     qback =  qback * ndens * (diameter_eff/2.d0)**2        !  [m²/m⁴]! cross section per volume per del_d
+     qext =   qext  * ndens * (diameter_ice/2.d0)**2         ! [m²/m⁴]!
+     qscat =  qscat * ndens * (diameter_ice/2.d0)**2        ! [m²/m⁴]!
+     qback =  qback * ndens * (diameter_ice/2.d0)**2        !  [m²/m⁴]! cross section per volume per del_d
  
      !integrate=sum up . del_d is added at a later step!
      sumqe = sumqe + qext 
@@ -235,8 +187,6 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
      legen4 (m) = (2 * l + 1) / 2.0 * coef4 (m) 
      if (legen (m) .gt. 1.0e-7) nlegen = l 
   end do
-
-    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
 
 
   return 

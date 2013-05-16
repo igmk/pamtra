@@ -25,7 +25,7 @@ endif
 
 
 
-OBJECTS=kinds.o constants.o settings.o report_module.o file_mod.o dia2vel.o viscosity_air.o rho_air.o
+OBJECTS=kinds.o constants.o file_mod.o nml_params.o dia2vel.o viscosity_air.o rho_air.o
 
 
 all:  py
