@@ -1,4 +1,4 @@
-subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope,quality)
+subroutine radar_calc_moments(errorstatus,radar_spectrum_in,radar_spectrum_out,moments,slope,quality)
 
     ! written by P. Kollias, tranlated to Fortran by M. Maahn (12.2012)
     ! calculate the 0th -4th moment and the slopes of the peak of a radar spectrum!
@@ -29,26 +29,33 @@ subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope
     real(kind=dbl), dimension(radar_nfft) :: spectra_velo, specLog,&
     radar_spectrum_cp, radar_spectrum_smooth
 
+    integer(kind=long), intent(out) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
+    character(len=14) :: nameOfRoutine = 'convolution'     
+    
     interface
-        SUBROUTINE SMOOTH_SAVITZKY_GOLAY(dataIn,length,dataOut)
+        SUBROUTINE SMOOTH_SAVITZKY_GOLAY(errorstatus,dataIn,length,dataOut)
             use kinds
             implicit none
+	    integer(kind=long), intent(out) :: errorstatus
             integer, intent(in) :: length
             real(kind=dbl), intent(in), dimension(length) :: dataIn
             real(kind=dbl), intent(out), dimension(length) :: dataOut
         END SUBROUTINE SMOOTH_SAVITZKY_GOLAY
 
-        subroutine radar_hildebrand_sekhon(spectrum,n_ave,n_ffts,noise_mean)
+        subroutine radar_hildebrand_sekhon(errorstatus,spectrum,n_ave,n_ffts,noise_mean)
             use kinds
             implicit none
+	    integer(kind=long), intent(out) :: errorstatus
             integer, intent(in) :: n_ave, n_ffts
             real(kind=dbl), dimension(n_ffts), intent(in) :: spectrum
             real(kind=dbl), intent(out) :: noise_mean
         end subroutine radar_hildebrand_sekhon
     end interface
 
-    if (verbose .gt. 1) print*, 'Entering radar_moments.f90'
-
+    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+    
     del_v = (radar_max_V-radar_min_V) / radar_nfft
 
     spectra_velo = (/(((ii*del_v)+radar_min_V),ii=0,radar_nfft-1)/) ! [m/s]
@@ -62,7 +69,13 @@ subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope
 
     !calculate noise level (actually we know already the result which is radar_pnoise)
     if (radar_use_hildebrand) then
-        call radar_hildebrand_sekhon(radar_spectrum_in,radar_no_Ave,radar_nfft,noise)
+        call radar_hildebrand_sekhon(err,radar_spectrum_in,radar_no_Ave,radar_nfft,noise)
+	if (err /= 0) then
+	    msg = 'error in radar_hildebrand_sekhon!'
+	    call report(err, msg, nameOfRoutine)
+	    errorstatus = err
+	    return
+	end if   
         if (verbose .gt. 2) print*, 'calculated noise:', noise
     else
         noise = radar_pnoise/radar_nfft !no devison by del_v neccessary!
@@ -127,8 +140,13 @@ subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope
         end if
 
         !make the spectrum smooth
-        call smooth_savitzky_golay(radar_spectrum_in, radar_nfft, radar_spectrum_smooth)
-
+        call smooth_savitzky_golay(err,radar_spectrum_in, radar_nfft, radar_spectrum_smooth)
+	if (err /= 0) then
+	    msg = 'error in smooth_savitzky_golay!'
+	    call report(err, msg, nameOfRoutine)
+	    errorstatus = err
+	    return
+	end if  
         !set remaining sectrum to zero
 
         radar_spectrum_out(1:left_edge) = 0.d0
@@ -153,8 +171,8 @@ subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope
 
     end if
 
-    if (verbose .gt. 1) print*, 'Exiting radar_moments.f90'
-
+    errorstatus = err
+    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
     return
 
 end subroutine radar_calc_moments

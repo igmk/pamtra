@@ -20,7 +20,7 @@
 ! 
 ! 
 
-subroutine radar_hildebrand_sekhon(spectrum,n_ave,n_ffts,noise_mean)
+subroutine radar_hildebrand_sekhon(errorstatus,spectrum,n_ave,n_ffts,noise_mean)
 
 ! written by P. Kollias, tranlated to Fortran by M. Maahn (12.2012)
 ! 
@@ -47,20 +47,32 @@ subroutine radar_hildebrand_sekhon(spectrum,n_ave,n_ffts,noise_mean)
   real(kind=dbl) :: sumLi, sumSq, sumNs, maxNs
   integer :: n, i, numNs
 
-
+  integer(kind=long), intent(out) :: errorstatus
+  integer(kind=long) :: err = 0
+  character(len=80) :: msg
+  character(len=14) :: nameOfRoutine = 'radar_hildebrand_sekhon' 
+      
   interface
-    SUBROUTINE DSORT (DX, DY, N, KFLAG)
+    SUBROUTINE DSORT (errorstatus,DX, DY, N, KFLAG)
       use kinds
       implicit none
+      integer(kind=long), intent(out) :: errorstatus
       real(kind=dbl), dimension(N), intent(inout) :: DX, DY
       integer, intent(in) :: N, KFLAG
     END SUBROUTINE DSORT
   end interface
 
+  if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+  
   spectrum_sorted = spectrum
   dummy=0.d0
-  call dsort(spectrum_sorted, dummy, n_ffts, 1)
-
+  call dsort(err,spectrum_sorted, dummy, n_ffts, 1)
+  if (err /= 0) then
+      msg = 'error in dsort!'
+      call report(err, msg, nameOfRoutine)
+      errorstatus = err
+      stop !return
+  end if 
   sumLi = 0.d0
   sumSq = 0.d0
   n     = 0  
@@ -90,5 +102,8 @@ subroutine radar_hildebrand_sekhon(spectrum,n_ave,n_ffts,noise_mean)
 !   N_max    = maxNs
 !   N_points = numNs
 
+  errorstatus = err
+  if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+  return
 
 end subroutine radar_hildebrand_sekhon

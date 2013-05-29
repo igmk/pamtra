@@ -72,9 +72,10 @@ contains
     character(len=15) :: nameOfRoutine = 'rescale_spectra'
 
     interface
-      subroutine dsort (dx, dy, n, kflag)
+      subroutine dsort (errorstatus, dx, dy, n, kflag)
 	use kinds
 	implicit none
+	integer(kind=long), intent(out) :: errorstatus	
 	real(kind=dbl), dimension(n), intent(inout) :: dx, dy
 	integer, intent(in) :: n, kflag
       end subroutine dsort
@@ -86,7 +87,13 @@ contains
     y1_sorted = y1
 
     if (sort) then
-      call dsort(x1_sorted, y1_sorted, nx1, 2)
+      call dsort(err,x1_sorted, y1_sorted, nx1, 2)
+      if (err /= 0) then
+	  msg = 'error in dsort!'
+	  call report(err, msg, nameOfRoutine)
+	  errorstatus = err
+	  stop !return
+      end if       
     end if
 
 
@@ -112,7 +119,13 @@ contains
     !make order right
     x12_sorted = x12
     y12_sorted=y12
-    call dsort(x12_sorted, y12_sorted, nx1+nx2+1, 2)
+    call dsort(err,x12_sorted, y12_sorted, nx1+nx2+1, 2)
+    if (err /= 0) then
+	msg = 'error in dsort!'
+	call report(err, msg, nameOfRoutine)
+	errorstatus = err
+	stop !return
+    end if     
 
     call average_spectra(err,nx1+nx2+1,nx2+1,x12_sorted,y12_sorted,x2_shift,y2)
     if (err /= 0) then

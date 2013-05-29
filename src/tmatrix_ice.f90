@@ -157,7 +157,7 @@ subroutine tmatrix_ice(f, wc, t, nc, &
 	  m_ice = refre-Im*refim  ! mimicking a
 
 	if (density_eff > 917.d0) then
-	  print*, "WANRING changed density from ", density_eff, "kg/m3 to 917 kg/m3 for d=", diameter(ir)
+	  if (verbose >= 0) print*, "WARNING changed density from ", density_eff, "kg/m3 to 917 kg/m3 for d=", diameter(ir)
 	  density_eff = 917.d0
 	end if
 

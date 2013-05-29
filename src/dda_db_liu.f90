@@ -16,6 +16,7 @@ subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
   use kinds
   use constants, only: pi,c
   use settings, only: data_path
+  use mie_scat_utlities
         use report_module
 
   implicit none
@@ -76,6 +77,12 @@ subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
 
   real(kind=dbl), allocatable, dimension(:) :: ang_quad, mu, wts, P1_quad
 
+    integer(kind=long) :: errorstatus
+      integer(kind=long) :: err = 0
+      character(len=80) :: msg
+      character(len=14) :: nameOfRoutine = 'dda_db_liu'
+  
+  
   if (verbose .gt. 1) print*, 'Entering dda_db_liu'
 
 
@@ -121,7 +128,13 @@ subroutine dda_db_liu(f, t, liu_type, mindex, dia1, dia2, nbins, maxleg,   &
   !  x = pi * dia2 / wavelength
   x = pi * mass_eq_dia / wavelength
   nterms = 0 
-  call miecalc(nterms, x, msphere, a, b) ! miecalc returns nterms
+  call miecalc(err, nterms, x, msphere, a, b) ! miecalc returns nterms
+    if (err /= 0) then
+	msg = 'error in mieclac!'
+	call report(err, msg, nameOfRoutine)
+	errorstatus = err
+	stop !return
+    end if       
   nlegen = 2 * nterms 
   nlegen = min(maxleg, nlegen) 
   nquad = (nlegen + 2 * nterms + 2) / 2 

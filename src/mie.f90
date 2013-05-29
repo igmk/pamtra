@@ -23,6 +23,7 @@ diameter, back_spec)
     !  use settings, only: verbose
     use constants, only: pi,c
     use report_module
+    use mie_scat_utlities
 
     implicit none
 
@@ -56,6 +57,10 @@ diameter, back_spec)
 
     character :: aerodist*1
     character :: aerodist2*1
+      integer(kind=long) :: errorstatus
+      integer(kind=long) :: err = 0
+      character(len=80) :: msg
+      character(len=14) :: nameOfRoutine = 'mie.f90'
 
 
     if (verbose .gt. 1) print*, 'Entering mie'
@@ -67,7 +72,13 @@ diameter, back_spec)
     msphere = mindex
     x = pi * dia2 / wavelength
     nterms = 0
-    call miecalc(nterms, x, msphere, a, b) ! miecalc returns nterms
+    call miecalc(err,nterms, x, msphere, a, b) ! miecalc returns nterms
+    if (err /= 0) then
+	msg = 'error in mieclac!'
+	call report(err, msg, nameOfRoutine)
+	errorstatus = err
+	stop !return
+    end if       
     nlegen = 2 * nterms
     nlegen = min(maxleg, nlegen)
     nquad = (nlegen + 2 * nterms + 2) / 2
@@ -120,7 +131,13 @@ end if
 
      x = pi * diameter(ir) / wavelength ! size parameter
      nmie = 0 
-     call miecalc(nmie, x, msphere, a, b) ! calculate a and b
+     call miecalc(err,nmie, x, msphere, a, b) ! calculate a and b
+    if (err /= 0) then
+	msg = 'error in mieclac!'
+	call report(err, msg, nameOfRoutine)
+	errorstatus = err
+	stop !return
+    end if   
      !calculate the efficencies
      call miecross(nmie, x, a, b, qext, qscat, qback)
      ! sum up extinction, scattering, and backscattering as cross-sections/pi .pi is added in a later step
@@ -154,8 +171,7 @@ end if
     scatter = pi * sumqs * del_d         ! scattering [m*m²/m⁴]!
     back_scatt = pi * sumqback * del_d   ! back scattering [m*m²/m⁴]!
     albedo = scatter / extinction        ! single scattering albedo
-
-
+    
     ! if the phase function is not desired then leave now
     if ( .not. lphase_flag) return
 

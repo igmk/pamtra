@@ -1,4 +1,4 @@
-SUBROUTINE SMOOTH_SAVITZKY_GOLAY(dataIn,length,dataOut)
+SUBROUTINE SMOOTH_SAVITZKY_GOLAY(errorstatus,dataIn,length,dataOut)
 
 !     Smooth data with a Savitzky-Golay filter.
 !     The Savitzky-Golay filter removes high frequency noise from data.
@@ -36,6 +36,8 @@ SUBROUTINE SMOOTH_SAVITZKY_GOLAY(dataIn,length,dataOut)
 ! 
 
   use kinds
+  use report_module
+  
   implicit none
 
   integer, parameter :: window = 7
@@ -49,10 +51,16 @@ SUBROUTINE SMOOTH_SAVITZKY_GOLAY(dataIn,length,dataOut)
   real(kind=dbl), dimension(window+length-1) :: dataExt
   integer :: half_window
 
+  integer(kind=long), intent(out) :: errorstatus
+  integer(kind=long) :: err = 0
+  character(len=80) :: msg
+  character(len=14) :: nameOfRoutine = 'SMOOTH_SAVITZKY_GOLAY' 
+  
   interface
-    subroutine convolution(X,M,A,N,Y)
+    subroutine convolution(errorstatus,X,M,A,N,Y)
       use kinds
       implicit none
+      integer(kind=long), intent(out) :: errorstatus
       INTEGER, intent(in) :: M  ! Size of input vector X
       INTEGER, intent(in) :: N   ! Size of convolution filter A
       REAL(kind=dbl), intent(in), DIMENSION(M) :: X
@@ -61,6 +69,8 @@ SUBROUTINE SMOOTH_SAVITZKY_GOLAY(dataIn,length,dataOut)
     end subroutine convolution
   end interface
 
+  if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+  
 ! coefficients, gained from http://www.scipy.org/Cookbook/SavitzkyGolay
   m = (/ -0.0952381d0 ,  0.14285714d0,  0.28571429d0,  0.33333333d0, &
         0.28571429d0, 0.14285714d0, -0.0952381d0 /)
@@ -73,9 +83,19 @@ SUBROUTINE SMOOTH_SAVITZKY_GOLAY(dataIn,length,dataOut)
       +ABS(dataIn(length-1:length - half_window:-1) - dataIn(length))
 
 ! convolve data with precalculated coefficients
-  call convolution(dataExt,window+length-1,m,window,dataTmp)
-
+  call convolution(err,dataExt,window+length-1,m,window,dataTmp)
+  if (err /= 0) then
+      msg = 'error in convolution!'
+      call report(err, msg, nameOfRoutine)
+      errorstatus = err
+      return
+  end if   
+  
 ! trim result to original length
   dataOut(:) = dataTmp(window:window+length-1)
 
+  errorstatus = err
+  if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+  return
+  
 END SUBROUTINE SMOOTH_SAVITZKY_GOLAY

@@ -1,4 +1,4 @@
-subroutine convolution(X,M,A,N,Y)
+subroutine convolution(errorstatus,X,M,A,N,Y)
     ! in
     ! X input vector
     ! M size of X
@@ -20,6 +20,13 @@ subroutine convolution(X,M,A,N,Y)
     REAL(kind=dbl), intent(in), DIMENSION(N) :: A
     REAL(kind=dbl), intent(out), DIMENSION(M+N-1) :: Y
 
+    integer(kind=long), intent(out) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
+    character(len=14) :: nameOfRoutine = 'convolution' 
+    
+    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+    
     if (radar_convolution_fft) then
         if (verbose > 2) print*, "Entering FFT-Comvolution"
         call convolutionFFT(X,M,A,N,Y)
@@ -29,6 +36,10 @@ subroutine convolution(X,M,A,N,Y)
         call convolution_slow(X,M,A,N,Y)
         if (verbose > 2) print*, "Done Non-FFT-Comvolution"
     end if
+    
+    errorstatus = err
+    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+    return
 end subroutine convolution
 
 subroutine convolution_slow(X,M,A,N,Y)

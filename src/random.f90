@@ -1,4 +1,4 @@
-subroutine random(n, pseudo, x_noise)
+subroutine random(errorstatus, n, pseudo, x_noise)
   ! Description:
   ! returns n random numbers
   ! if pseudo is true, always the same numbers are returned
@@ -23,7 +23,12 @@ subroutine random(n, pseudo, x_noise)
   integer :: i, m, clock
   integer, dimension(:), allocatable :: seed
 
-  if (verbose > 1) print*, "entering random.f90 "
+  integer(kind=long), intent(out) :: errorstatus
+  integer(kind=long) :: err = 0
+  character(len=80) :: msg
+  character(len=14) :: nameOfRoutine = 'random'      
+  
+    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
     !get the required size of the seed
     call random_seed(size = m)
 
@@ -43,7 +48,8 @@ subroutine random(n, pseudo, x_noise)
     !get the random numbers
     call RANDOM_NUMBER(x_noise)
 
-  if (verbose > 1) print*, "exiting random.f90 "
-
+  errorstatus = err
+  if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+  return
 end subroutine random
 

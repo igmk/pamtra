@@ -63,6 +63,11 @@ subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
 
   logical :: didNotChange 
 
+    integer(kind=long) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
+    character(len=14) :: nameOfRoutine = 'hydrometeor_extinction_rt4'  
+  
   if (verbose .gt. 1) print*, nx, ny, 'Entering hydrometeor_extinction_rt4'
 
   ! INITIALIZATION OF LEGENDRE COEFFICIENTS
@@ -466,10 +471,14 @@ subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
 
 
   if (active) then
-     call radar_simulator(full_spec, back(nz), kexttot(nz), f,&
+     call radar_simulator(err,full_spec, back(nz), kexttot(nz), f,&
       temp(nz),delta_hgt_lev(nz),nz,nx,ny,fi)
-!   else
-!     cloud_spec(:)=0.d0
+    if (err /= 0) then
+	msg = 'error in radar_simulator!'
+	call report(err, msg, nameOfRoutine)
+	errorstatus = err
+	stop !return
+    end if   
   end if
 
  end if !end if hydrometeors present

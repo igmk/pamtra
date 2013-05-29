@@ -12,8 +12,9 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
   use constants, only: pi, im
   use double_moments_module
   use conversions
-        use report_module
-
+  use report_module
+  use mie_spheres
+  
   implicit none
 
   integer :: nbins, nbins_spec, nlegen, nn,alloc_status
@@ -158,7 +159,9 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
   end if
 
 
-  if ((EM_snow .eq. 'densi') .or. (EM_snow .eq. 'surus')) then
+  if ((EM_snow .eq. 'densi') .or. &
+      (EM_snow .eq. 'surus') .or. &
+      (EM_snow .eq. 'softs')) then
     nbins = 50!100
     nbins_spec = nbins+1 !Mie routine uses nbins+1 bins!
   elseif (EM_snow .eq. 'liudb') then
@@ -186,6 +189,17 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
           back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
           LEGEN4, SD_snow,snow_density,swc,&
           diameter_spec, back_spec)
+      scatter_matrix= 0.d0
+      extinct_matrix= 0.d0
+      emis_vector= 0.d0
+   elseif (EM_snow .eq. 'softs') then
+      call mie_spheres_wrapper(f, t,"softsphere",    &
+          a_msnow, b_snow, dia1, dia2, nbins, maxleg,   &
+          ad, bd, alpha, gamma, kext, salb,      &
+          back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
+          LEGEN4, SD_snow,snow_density,swc,&
+          diameter_spec, back_spec)
+
       scatter_matrix= 0.d0
       extinct_matrix= 0.d0
       emis_vector= 0.d0
@@ -235,7 +249,7 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
     legen4 = 0.0d0
 
   else 
-     write (*, *) 'no em mod: ', EM_snow
+     write (*, *) 'no em mod:', EM_snow
      stop
   endif
 

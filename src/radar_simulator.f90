@@ -1,4 +1,4 @@
-subroutine radar_simulator(particle_spectrum,back,kexthydro,&
+subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,&
 frequency,temp,delta_h,nz,nx,ny,fi)
     ! This routine takes the backscattering spectrum depending on Doppler velocity,
     ! adds noise and turbulence and simulates temporal averaging
@@ -44,11 +44,16 @@ frequency,temp,delta_h,nz,nx,ny,fi)
     min_V_aliased, max_V_aliased
     integer :: ii, tt, turbLen,alloc_status,ts_imin, ts_imax, startI, stopI
 
-
+    integer(kind=long), intent(out) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
+    character(len=14) :: nameOfRoutine = 'radar_simulator'    
+    
     interface
-        subroutine convolution(X,M,A,N,Y)
+        subroutine convolution(errorstatus,X,M,A,N,Y)
             use kinds
             implicit none
+	    integer(kind=long), intent(out) :: errorstatus
             INTEGER, intent(in) :: M  ! Size of input vector X
             INTEGER, intent(in) :: N   ! Size of convolution filter A
             REAL(kind=dbl), intent(in), DIMENSION(M) :: X
@@ -56,10 +61,11 @@ frequency,temp,delta_h,nz,nx,ny,fi)
             REAL(kind=dbl), intent(out), DIMENSION(M+N-1) :: Y
         end subroutine convolution
 
-        subroutine radar_calc_moments(radar_spectrum_in,radar_spectrum_out,moments,slope,quality)
+        subroutine radar_calc_moments(errorstatus,radar_spectrum_in,radar_spectrum_out,moments,slope,quality)
             use kinds
             use settings, only: radar_nfft
             implicit none
+	    integer(kind=long), intent(out) :: errorstatus
             real(kind=dbl), dimension(radar_nfft), intent(in):: radar_spectrum_in
             real(kind=dbl), dimension(radar_nfft), intent(out):: radar_spectrum_out
             real(kind=dbl), dimension(0:4), intent(out):: moments
@@ -67,9 +73,10 @@ frequency,temp,delta_h,nz,nx,ny,fi)
             integer, intent(out) :: quality
         end subroutine radar_calc_moments
 
-        subroutine random(n, pseudo, x_noise)
+        subroutine random(errorstatus,n, pseudo, x_noise)
             use kinds
             implicit none
+	    integer(kind=long), intent(out) :: errorstatus
             integer, intent(in) :: n
             logical, intent(in) :: pseudo
             real(kind=dbl), intent(out), dimension(n) :: x_noise
@@ -77,8 +84,7 @@ frequency,temp,delta_h,nz,nx,ny,fi)
   
     end interface
 
-
-    if (verbose .gt. 1) print*, 'Entering radar_simulator.f90'
+    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
     ! get |K|**2 and lambda
     K2 = dielec_water(0.D0,temp-t_abs,frequency)
@@ -113,9 +119,11 @@ frequency,temp,delta_h,nz,nx,ny,fi)
             tt = 1
             do while (tt .le. 24.d0/del_v+1)
                 if (tt .gt. radar_maxTurbTerms) then
-                    print*,radar_maxTurbTerms, INT(12.d0/del_v+1.d0),&
-                    ": maximum of turbulence terms reached. increase radar_maxTurbTerms (settings.f90)"
-                    stop
+                    print*,radar_maxTurbTerms, INT(12.d0/del_v+1.d0)
+		    errorstatus = fatal
+		    msg = "maximum of turbulence terms reached. increase radar_maxTurbTerms (settings.f90)"
+		    call report(errorstatus, msg, nameOfRoutine)
+		    return
                 end if
                 turb(tt) = 1.d0/(sqrt(2.d0*pi)*ss) * exp(-(tt-(12.d0/del_v+1))**2.d0/(2.d0*ss**2.d0))
                 tt = tt+1
@@ -124,16 +132,23 @@ frequency,temp,delta_h,nz,nx,ny,fi)
             turbLen=tt-1
 
             if (SIZE(particle_spectrum)+turbLen-1 .lt. floor(12.d0/del_v+1)+radar_nfft-1) then
-                print*, SIZE(particle_spectrum)+turbLen-1,floor(12.d0/del_v+1)+radar_nfft-1,&
-                "vector resulting from convolution to short!  (radar_simulator.f90)"
-                stop
+	      print*, SIZE(particle_spectrum)+turbLen-1,floor(12.d0/del_v+1)+radar_nfft-1
+	      errorstatus = fatal
+	      msg =  "vector resulting from convolution to short!"
+	      call report(errorstatus, msg, nameOfRoutine)
+	      return
             end if
 
             allocate(turb_spectra(SIZE(particle_spectrum)+turbLen-1),stat=alloc_status)
 
             !convolute spectrum and noise
-            call convolution(particle_spectrum,SIZE(particle_spectrum),turb(1:turbLen),turbLen,turb_spectra)
-
+            call convolution(err,particle_spectrum,SIZE(particle_spectrum),turb(1:turbLen),turbLen,turb_spectra)
+	    if (err /= 0) then
+		msg = 'error in convolution!'
+		call report(err, msg, nameOfRoutine)
+		errorstatus = err
+		return
+	    end if   
             !I don't like Nans here'
             where(ISNAN(turb_spectra)) turb_spectra = 0.d0
             ts_imin = floor(12.d0/del_v+1)
@@ -196,8 +211,13 @@ frequency,temp,delta_h,nz,nx,ny,fi)
 
             !get noise. if jacobian_mode, random number generator is always initiated with the same number
             if (verbose > 2) print*, "get noise"
-            call random(radar_no_Ave*radar_nfft,jacobian_mode,x_noise)
-      
+            call random(err,radar_no_Ave*radar_nfft,jacobian_mode,x_noise)
+	    if (err /= 0) then
+		msg = 'error in random!'
+		call report(err, msg, nameOfRoutine)
+		errorstatus = err
+		return
+	    end if   
             do tt = 1, radar_no_Ave
                 noise_turb_spectra_tmp(tt,:) = -log(x_noise((tt-1)*radar_nfft+1:tt*radar_nfft))*snr_turb_spectra
             end do
@@ -225,7 +245,13 @@ frequency,temp,delta_h,nz,nx,ny,fi)
         end if
 
 
-        call radar_calc_moments(noise_turb_spectra,noise_removed_turb_spectra,moments,slope,quality_2ndPeak)
+        call radar_calc_moments(err,noise_turb_spectra,noise_removed_turb_spectra,moments,slope,quality_2ndPeak)
+	if (err /= 0) then
+	  msg = 'error in radar_calc_moments!'
+	  call report(err, msg, nameOfRoutine)
+	  errorstatus = err
+	  return
+      end if   
         if (verbose .gt. 3) then
             print*,"TOTAL"," Ze moments",10*log10(moments(0))
             print*,"#####################"
@@ -251,14 +277,13 @@ frequency,temp,delta_h,nz,nx,ny,fi)
 
         deallocate(turb_spectra)
     else
-        print*, "did not understand radar_mode", radar_mode
-        stop
-
+      errorstatus = fatal
+      msg =   "did not understand radar_mode"// radar_mode
+      call report(errorstatus, msg, nameOfRoutine)
+      return
     end if
 
-
-
-    if (verbose .gt. 1) print*, 'Exiting radar_simulator.f90'
-
+    errorstatus = err
+    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
     return
 end subroutine radar_simulator
