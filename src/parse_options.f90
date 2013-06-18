@@ -78,7 +78,7 @@ contains
 
         integer :: nfrq, ind
         character(len=*), intent(in) :: arg
-        character(150) :: arg_loc
+        character(900) :: arg_loc
         character(8), dimension(maxfreq) :: frqs_str
 
         nfrq = 0

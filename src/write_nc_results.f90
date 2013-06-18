@@ -5,7 +5,7 @@ subroutine write_nc_results
   use vars_atmosphere, only: ngridx, ngridy,nlyr,freqs,nfrq, year, month, day, time
   use netcdf
   use nml_params, only: active, passive, creator, verbose, radar_mode, &
-			n_moments, radar_nfft, radar_mode
+			n_moments, radar_nfft, radar_mode, obs_height
   use file_mod, only: nc_out_file
 
   implicit none
@@ -35,6 +35,9 @@ subroutine write_nc_results
   character(300) :: timestring
   character(40) ::gitVersion,gitHash
   character(10) ::attUnit,zeUnit
+  character(10) :: out_level
+
+  write(out_level,'(f10.0)') obs_height
 
   if (verbose .gt. 0) print*,"writing: ", nc_out_file
   !get git data
@@ -53,6 +56,7 @@ subroutine write_nc_results
   call check(nf90_put_att(ncid,nf90_global, "history", "Created with Pamtra (Version: "//trim(gitVersion)// &
        ", Git Hash: "//trim(gitHash)//")  by "//trim(creator)//" (University of Cologne, IGMK) at "//timestring))
   call check(nf90_put_att(ncid,nf90_global, "data_time",year//"/"//month//"/"//day//"-"//time(1:2)//":"//time(3:4)))
+  call check(nf90_put_att(ncid,nf90_global, "out_level",out_level//' m'))
 
   !make dimensions
   call check(nf90_def_dim(ncid, 'nlon', ngridx, dlonID))
