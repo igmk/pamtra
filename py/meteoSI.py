@@ -195,7 +195,7 @@ def rh2a(rh,T):
 	
 def q2rh(q,T,p):
 	'''
-	Calculate relative humidity from sepcific humidity
+	Calculate relative humidity from specific humidity
 	
 	Input:
 	T is in K

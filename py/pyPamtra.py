@@ -200,7 +200,7 @@ class pyPamtra(object):
     self.set["freqs"] = []
     self.set["nfreqs"] = 0
     self.set["namelist_file"] = "TMPFILE"
-    
+
     self._nmlDefaultKeys = list()
     for keyGr in self.nmlSet.keys()  :  
       for key in self.nmlSet[keyGr].keys():
@@ -347,7 +347,7 @@ class pyPamtra(object):
     nmlFile = namelist.Namelist(inputFile)
     if nmlFile == {}:
       raise IOError("file not found: "+inputFile)
-    
+
     for key in nmlFile.keys():
       for subkey in nmlFile[key]["par"][0].keys():
         if subkey.lower() in self._nmlDefaultKeys:
@@ -1271,6 +1271,7 @@ class pyPamtra(object):
     run Pamtra from python
     '''
     tttt = time.time()
+
     
     if type(freqs) == int in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
     
@@ -1293,7 +1294,6 @@ class pyPamtra(object):
         #raise ValueError("Namelitsfile "+ self.set["namelist_file"] +" ends with .tmp, but is existing already")
       #elif self.set["pyVerbose"] > 0:
         #print("NOT writing temporary nml file to run pamtra using exisiting nml file instead: "+self.set["namelist_file"])
-
     try:
       #output
       (
