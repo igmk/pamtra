@@ -32,6 +32,9 @@ subroutine allocate_profile_vars(errorstatus)
     allocate(rho_vap(nlyr),stat=alloc_status)
     allocate(q_hum(nlyr),stat=alloc_status)
 
+    allocate(q_hydro(5,nlyr))
+
+
     allocate(cwc_q(nlyr))
     allocate(iwc_q(nlyr))
     allocate(rwc_q(nlyr))

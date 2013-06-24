@@ -83,7 +83,6 @@ subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
 
   hydros_present = .false.
 
-  threshold = 1.d-10   ! [kg/kg]
 
   if (use_rain_db) then
       rdb_file = data_path(:len_trim(data_path))//'/tmatrix/tmatrix_rain.dat'

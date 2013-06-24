@@ -30,6 +30,7 @@ OBJECTS=kinds.o \
 	settings.o \
 	report_module.o \
 	constants.o \
+	nan.o \
 	mod_fastem4_coef.o \
 	gasabs_module.o \
 	conversions.o \
@@ -104,6 +105,14 @@ OBJECTS=kinds.o \
 	radscat4.o \
 	tmat_rain_db.o \
 	tmat_snow_db.o \
+	descriptor_file.o \
+	drop_size_dist.o \
+	make_dist.o \
+	make_dist_param.o \
+	make_mass_size.o \
+	calc_moment.o \
+	make_soft_spheroid.o \
+	check_print.o \
 	hydrometeor_extinction_rt4.o \
 	hydrometeor_extinction.o \
 	scatcnv.o \

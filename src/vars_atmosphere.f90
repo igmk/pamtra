@@ -37,6 +37,9 @@ module vars_atmosphere
        gwc_q, &
        hwc_q
 
+  real(kind=dbl), allocatable, dimension(:,:) :: q_hydro
+
+
   real(kind=dbl), allocatable, dimension(:) :: cwc_n, &
        iwc_n, &
        rwc_n, &

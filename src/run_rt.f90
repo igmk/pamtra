@@ -98,12 +98,20 @@ subroutine run_rt(errorstatus, nx,ny,fi)
     if (verbose >= 2) print*, nx,ny, 'Gas absorption calculated'
 
 
+
+
+
     ! hydrometeor extinction desired
     if (lhyd_extinction) then
-        call hydrometeor_extinction_rt4(freq,nx,ny,fi)!hier nx, ny
+        call hydrometeor_extinction(err,freq,nx,ny,fi)!hier nx, ny
     end if
 
-
+      if (err == 2) then
+	msg = 'Error in run_drop_size_dist'
+	call report(err, msg, nameOfRoutine)
+	errorstatus = err
+	return
+      end if
 
     !
     if (dump_to_file) call dump_profile()

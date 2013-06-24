@@ -55,7 +55,7 @@ module settings
   real(kind=dbl) :: ad_cloud, bd_cloud, alphad_cloud, gammad_cloud, ad_ice, bd_ice, alphad_ice, gammad_ice
   real(kind=dbl) :: diamin_cloud, diamax_cloud, diamin_ice, diamax_ice, mass_size_ice_a, mass_size_ice_b, &
 		    area_size_ice_a, area_size_ice_b
-
+  real(kind=dbl) :: hydro_threshold
     logical :: in_python !are we in python
 
     logical :: dump_to_file, &   ! flag for profile and ssp dump
@@ -94,7 +94,7 @@ module settings
     character(200) :: sql_fname
     character(9) :: frq_str_s,frq_str_e
     character(8), dimension(maxfreq) :: frqs_str
-
+    character(300) :: descriptor_file_name
     character(7) :: softsphere_adjust
 
     integer :: radar_nfft_aliased, radar_maxTurbTerms !are gained from radar_aliasing_nyquist_interv and radar_nfft
@@ -128,6 +128,11 @@ contains
 		  radar_airmotion_step_vmin, radar_fallVel_cloud, radar_fallVel_rain, radar_fallVel_ice,&
 		  radar_fallVel_snow, radar_fallVel_graupel, radar_fallVel_hail, radar_aliasing_nyquist_interv, &
 		  radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr, radar_convolution_fft
+
+
+	descriptor_file_name = "descriptor_file_exp.txt"
+	hydro_threshold = 1.d-10   ! [kg/kg] 
+
 
         !set namelist defaults!
         ! sec inoutput_mode

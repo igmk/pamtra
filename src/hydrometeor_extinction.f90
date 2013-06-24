@@ -1,369 +1,101 @@
-subroutine hydrometeor_extinction(f,nx,ny,fi)
+subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 
   use kinds
-  use vars_atmosphere
-  use settings, only: tmp_path, active, passive, dump_to_file, &
-                       n_moments, quad_type, nummu, EM_snow, EM_grau, &
-		       EM_hail, EM_ice, EM_rain, EM_cloud, as_ratio, &
-                       use_rain_db, use_snow_db, data_path, &
-		       jacobian_mode, radar_nfft_aliased, radar_mode
+  use vars_atmosphere, only: nlyr, temp, q_hydro,&
+      cwc_q, iwc_q, rwc_q, swc_q, gwc_q
+  use settings, only: verbose, hydro_threshold
   use constants
-  use mod_io_strings
-  use conversions
-  use tmat_snow_db
-  use tmat_rain_db
-  use vars_output, only: radar_spectra, radar_snr, radar_moments,&
-	radar_quality, radar_slope, Ze, Att_hydro !output of the radar simulator for jacobian mode
-        use report_module
-
+  use descriptor_file
+  use drop_size_dist
+  use report_module
   implicit none
 
-  integer, intent(in) :: nx,ny,fi
-  integer, parameter :: maxleg = 200
-  integer, parameter :: nstokes = 2
+!   use mod_io_strings
+!   use conversions
+!   use tmat_snow_db
+!   use tmat_rain_db
+!   use vars_output, only: radar_spectra, radar_snr, radar_moments,&
+! 	radar_quality, radar_slope, Ze, Att_hydro !output of the radar simulator for jacobian mode
+!         use report_module
+! 
 
-  integer :: jj, nz
-
-  integer :: nlegencw, nlegenci, nlegenrr, nlegensn, nlegengr, nlegenha
-
-  real(kind=dbl) :: f, qwc, nc, cwc
-
-  real(kind=dbl) :: salbcw, salbrr, salbci, salbsn, salbgr, salbha
-
-
-  real(kind=dbl), dimension(200) ::  LEGENcw, LEGENrr, LEGENci, LEGENgr, LEGENsn, LEGENha,      &
-       LEGEN2cw, LEGEN2rr, LEGEN2ci, LEGEN2gr, LEGEN2sn, LEGEN2ha,  &
-       LEGEN3cw, LEGEN3rr, LEGEN3ci, LEGEN3gr, LEGEN3sn, LEGEN3ha,  &
-       LEGEN4cw, LEGEN4rr, LEGEN4ci, LEGEN4gr, LEGEN4sn, LEGEN4ha
-
-
-!   real(kind=dbl), dimension(2) :: P11, ang
-
-  real(kind=dbl) :: threshold ! threshold value for hydrometeor extinction as mass mixing ratio
-
-  real(kind=dbl), dimension(6,100) :: coef
+  real(kind=dbl), intent(in) :: f
+  integer, intent(in) ::  nx
+  integer, intent(in) ::  ny
+  integer, intent(in) ::  fi
 
 
 
-  real(kind=dbl), dimension(nstokes,nummu,nstokes,nummu,4) :: rain_scat,snow_scat,&
-      ice_scat,graupel_scat,hail_scat,cloud_scat
-  real(kind=dbl), dimension(nstokes,nstokes,nummu,2) :: rain_ext,snow_ext,&
-      ice_ext,graupel_ext,hail_ext,cloud_ext
-  real(kind=dbl), dimension(nstokes,nummu,2) :: rain_emis,snow_emis,&
-      ice_emis,graupel_emis,hail_emis,cloud_emis
+  integer ::  nz
+  integer :: ih
+  
+  integer(kind=long), intent(out) :: errorstatus
+  integer(kind=long) :: err = 0
+  character(len=80) :: msg
+  character(len=40) :: nameOfRoutine = 'hydrometeor_extinction'
+  
+  if (verbose .gt. 1) print*, nx, ny, 'Entering hydrometeor_extinction'
 
 
-  real(kind=dbl), dimension(radar_nfft_aliased) :: cloud_spec, rain_spec, snow_spec,&
-      ice_spec, graupel_spec, hail_spec, full_spec
 
-  CHARACTER*64 SCATFILES(nlyr)
+!TMP
+    q_hydro(1,:) = cwc_q(:)
+    q_hydro(2,:) = iwc_q(:)
+    q_hydro(3,:) = rwc_q(:)
+    q_hydro(4,:) = swc_q(:)
+    q_hydro(5,:) = gwc_q(:)
+  
 
-
-  integer, parameter :: nquad = 16
-
-  logical :: didNotChange 
-
-  if (verbose .gt. 1) print*, nx, ny, 'Entering hydrometeor_extinction_rt4'
-
-  ! INITIALIZATION OF LEGENDRE COEFFICIENTS
-
- 
-
-  nlegen = 0
-  legen   = 0.d0
-  legen2  = 0.d0
-  legen3  = 0.d0
-  legen4  = 0.d0
-  coef = 0.d0
-
-  hydros_present = .false.
-
-  threshold = 1.d-10   ! [kg/kg]
-
-!   if (use_rain_db) then
-!       rdb_file = data_path(:len_trim(data_path))//'/tmatrix/tmatrix_rain.dat'
-!       call initialize_rain_db
-!   end if
-!   if (use_snow_db) then
-!       write(as_str,'(f3.1)') as_ratio
-!       sdb_file = data_path(:len_trim(data_path))//'/tmatrix/tmatrix_s_'//as_str//'.dat'
-!       call initialize_snow_db
-!   end if
-
-  if (verbose .gt. 1) print*, 'start loop over layer'
 
   grid_z: do nz = 1, nlyr  ! loop over all layers
-! print *,temp(nz)
+
      if (verbose .gt. 1) print*, 'Layer: ', nz
 
-!   !jacobian mode take profile 1,1 as a reference, all other are compared to this one
-! 
-!   if (jacobian_mode .and. ((nx .ne. 1) .or. (ny .ne. 1))) then
-!     !check whether profil is the same as in the one of ny=1, nx=1
-!     !make boolean
-!     didNotChange= ( &
-!       (jac_temp_lev(nz) .eq. temp_lev(nz)) .and. &
-!       (jac_relhum_lev(nz) .eq. relhum_lev(nz)) .and. &
-!       (jac_temp_lev(nz-1) .eq. temp_lev(nz-1)) .and. &
-!       (jac_relhum_lev(nz-1) .eq. relhum_lev(nz-1)) .and. &
-!       (jac_cwc_q(nz) .eq. cwc_q(nz)) .and. &
-!       (jac_iwc_q(nz) .eq. iwc_q(nz)) .and. &
-!       (jac_rwc_q(nz) .eq. rwc_q(nz)) .and. &
-!       (jac_swc_q(nz) .eq. swc_q(nz)) .and. &
-!       (jac_gwc_q(nz) .eq. gwc_q(nz)))
-! 
-!     if (n_moments .eq. 2) then
-!       didNotChange = (didNotChange .and. &
-! 	(jac_hwc_q(nz) .eq. hwc_q(nz)) .and. &
-! 	(jac_cwc_n(nz) .eq. cwc_n(nz)) .and. &
-! 	(jac_iwc_n(nz) .eq. iwc_n(nz)) .and. &
-! 	(jac_rwc_n(nz) .eq. rwc_n(nz)) .and. &
-! 	(jac_swc_n(nz) .eq. swc_n(nz)) .and. &
-! 	(jac_gwc_n(nz) .eq. gwc_n(nz)) .and. &
-! 	(jac_hwc_n(nz) .eq. hwc_n(nz)))
-!       end if
-! 
-!     if (verbose .gt. 1) print*,"jacobian_mode:",nx,ny,nz,didNotChange
-!     !if layer is identical, then reference jac_xx is used
-!     if (didNotChange) then
-!       scattermatrix(nz,:,:,:,:,:)=jac_scattermatrix(nz,:,:,:,:,:)
-!       extmatrix(nz,:,:,:,:)=jac_extmatrix(nz,:,:,:,:)
-!       emisvec(nz,:,:,:)=jac_emisvec(nz,:,:,:)
-!       hydros_present(nz)=jac_hydros_present(nz)
-!             
-!       kextsn(nz) = jac_kextsn(nz)
-!       backsn(nz) = jac_backsn(nz)
-!       kextcw(nz) = jac_kextcw(nz)
-!       backcw(nz) = jac_backcw(nz)
-!       kextrr(nz) = jac_kextrr(nz)
-!       backrr(nz) = jac_backrr(nz)
-!       kextgr(nz) = jac_kextgr(nz)
-!       backgr(nz) = jac_backgr(nz)
-!       kextci(nz) = jac_kextci(nz)
-!       backci(nz) = jac_backci(nz)
-!       kextha(nz) = jac_kextha(nz)
-!       backha(nz) = jac_backha(nz)
-! 
-!       kexttot(nz) = kextsn(nz) + kextcw(nz) + kextrr(nz) + kextgr(nz) + kextci(nz) + kextha(nz)
-!       back(nz) = backcw(nz) + backrr(nz) + backci(nz) + backsn(nz) + backgr(nz) + backha(nz)
-! 
-!   !short cut for the radar simulator: the ouput is taken directly from the final arrays at position 1,1.
-!   if (active) then
-!     Ze(nx,ny,nz,fi) = Ze(1,1,nz,fi)
-!     Att_hydro(nx,ny,nz,fi) = Att_hydro(1,1,nz,fi)
-! 
-!     if ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments")) then
-!       radar_spectra(nx,ny,nz,fi,:) = radar_spectra(1,1,nz,fi,:)
-!       radar_snr(nx,ny,nz,fi) =   radar_snr(1,1,nz,fi)
-!       radar_moments(nx,ny,nz,fi,:) = radar_moments(1,1,nz,fi,:)
-!       radar_slope(nx,ny,nz,fi,:) =   radar_slope(1,1,nz,fi,:)
-!       radar_quality(nx,ny,nz,fi) =   radar_quality(1,1,nz,fi)
-!     end if
-!   end if
-! 
-!       CYCLE
-! 
-!       end if
-!     end if
+      hydros: do ih = 1,n_hydro
+
+	if (q_hydro(ih,nz) >= hydro_threshold) then
+
+      ! fill 0-D variable for the run_drop_size routine
+	  hydro_name = hydro_name_arr(ih)
+	  as_ratio   = as_ratio_arr(ih)
+	  liq_ice    = liq_ice_arr(ih)
+	  rho_ms     = rho_ms_arr(ih)
+	  a_ms       = a_ms_arr(ih)
+	  b_ms       = b_ms_arr(ih)
+	  moment_in  = moment_in_arr(ih)
+	  nbin       = nbin_arr(ih)
+	  dist_name  = dist_name_arr(ih)
+	  p_1        = p_1_arr(ih)
+	  p_2        = p_2_arr(ih)
+	  p_3        = p_3_arr(ih)
+	  p_4        = p_4_arr(ih)
+	  d_1        = d_1_arr(ih)
+	  d_2        = d_2_arr(ih)
+
+	  q_h        = q_hydro(ih,nz)
+	  n_tot      = 0.
+	  r_eff      = 0.
+	  t          = temp(nz)
+	  if (verbose >= 2) print*, ih, hydro_name
+	  call run_drop_size_dist(err)
 
 
+	if (err == 2) then
+	  msg = 'Error in run_drop_size_dist'
+	  call report(err, msg, nameOfRoutine)
+	  errorstatus = err
+	  return
+	end if
 
-     !---------------------------salinity------------------------------
-     ! calculation of the single scattering properties
-     ! of hydrometeors. cloud water and cloud ice are 
-     ! with respect to radius. whereas the distribution 
-     ! of precipitating particles is with respect to diameter.
-     !---------------------------------------------------------
-
-     !---------------------------------------------------------
-     !        single scattering properties of cloud water
-     !---------------------------------------------------------
-! 
-!      nlegencw = 0 
-!      legencw  = 0.d0
-!      legen2cw = 0.d0
-!      legen3cw = 0.d0
-!      legen4cw = 0.d0
-!      cloud_scat = 0.d0
-!      cloud_emis= 0.d0
-!      cloud_ext = 0.d0
-!      kextcw(nz) = 0.d0 
-!      salbcw = 0.d0 
-!      backcw(nz) = 0.d0 
-!      cloud_spec(:) = 0.d0
-!      if ((cwc_q(nz) .ge. threshold) .and. (EM_cloud .ne. 'disab')) then
-!         hydros_present(nz) = .true.
-!      	if (n_moments .eq. 1) then
-! 	     	qwc = q2abs(cwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
-! 		nc = 0.d0
-!      	else if (n_moments .eq. 2) then
-! 	     	qwc = q2abs(cwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
-! 	        nc =  q2abs(cwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
-!        	end if
-! 
-!     	call cloud_ssp(f,qwc,temp(nz),press(nz),&
-!              	maxleg, nc, kextcw(nz), salbcw, backcw(nz),  &
-!              	nlegencw, legencw, legen2cw, legen3cw, legen4cw, &
-! 		cloud_scat, cloud_ext, cloud_emis,cloud_spec)
-!      end if
-! 
-! 
-    do ih = 1,n_hydro
-! fill 0-D variable for the run_drop_size routine
-    hydro_name = hydro_name_arr(ih)
-    as_ratio   = as_ratio_arr(ih)
-    liq_ice    = liq_ice_arr(ih)
-    rho_ms     = rho_ms_arr(ih)
-    a_ms       = a_ms_arr(ih)
-    b_ms       = b_ms_arr(ih)
-    moment_in  = moment_in_arr(ih)
-    nbin       = nbin_arr(ih)
-    dist_name  = dist_name_arr(ih)
-    p_1        = p_1_arr(ih)
-    p_2        = p_2_arr(ih)
-    p_3        = p_3_arr(ih)
-    p_4        = p_4_arr(ih)
-    d_1        = d_1_arr(ih)
-    d_2        = d_2_arr(ih)
-
-    q_h        = q_h_arr(ih)
-    n_tot      = n_tot_arr(ih)
-    r_eff      = r_eff_arr(ih)
-    t          = t_arr(ih)
-
-    call run_drop_size_dist(errorstatus)
-
-  end do
-
-!!!!!!!!!!!!!!!!! check whether hgt_lev needs to be km or m !!!!!!!!!!!!!!!!!
-
-     !   summing up the Legendre coefficient                                 
-
-!     if (kexttot(nz) .gt. 0.0 .or. salbtot(nz) .gt. 0.0) then ! there are hydrometeors present
-     if (hydros_present(nz)) then ! there are hydrometeors present
-      if (nlegen(nz) .gt. 0) then
-
-        do jj = 1, Nlegen(nz)
-           legen(nz,jj) = (legencw (jj) * salbcw * kextcw(nz) + legenrr ( &
-                jj) * salbrr * kextrr(nz) + legenci (jj) * salbci * kextci(nz) + &
-                legensn (jj) * salbsn * kextsn(nz) + legengr (jj) * salbgr * &
-                kextgr(nz) + legenha (jj) * salbha * kextha(nz)) / (salbtot (nz) &
-                * kexttot (nz) )
-
-           legen2(nz,jj) = (legen2cw (jj) * salbcw * kextcw(nz) +         &
-                legen2rr (jj) * salbrr * kextrr(nz) + legen2ci (jj) * salbci &
-                * kextci(nz) + legen2sn (jj) * salbsn * kextsn(nz) + legen2gr (  &
-                jj) * salbgr * kextgr(nz) + legen2ha (jj) * salbha * kextha(nz) ) &
-                / (salbtot (nz) * kexttot (nz) )
-
-           legen3(nz,jj) = (legen3cw (jj) * salbcw * kextcw(nz) +         &
-                legen3rr (jj) * salbrr * kextrr(nz) + legen3ci (jj) * salbci &
-                * kextci(nz) + legen3sn (jj) * salbsn * kextsn(nz) + legen3gr (  &
-                jj) * salbgr * kextgr(nz) + legen3ha (jj) * salbha * kextha(nz)) &
-                / (salbtot (nz) * kexttot (nz) )
-
-           legen4(nz,jj) = (legen4cw(jj) * salbcw * kextcw(nz) +         &
-                legen4rr(jj) * salbrr * kextrr(nz) + legen4ci(jj) * salbci &
-                * kextci(nz) + legen4sn(jj) * salbsn * kextsn(nz) + legen4gr (  &
-                jj) * salbgr * kextgr(nz) + legen4ha(jj) * salbha * kextha(nz)) &
-                / (salbtot(nz) * kexttot(nz))
-           g_coeff(nz) = legen (nz,2) / 3.0d0
-           coef(1,jj) = legen(nz,jj)
-           coef(2,jj) = legen2(nz,jj)
-           coef(3,jj) = legen3(nz,jj)
-           coef(4,jj) = legen4(nz,jj)
-           coef(5,jj) = legen(nz,jj)
-           coef(6,jj) = legen3(nz,jj)
-           if (dump_to_file) then
-              write (22, 1005) jj - 1, legen (nz,jj), legen2 (nz,jj),        &
-                   legen3(nz,jj), legen4(nz,jj), legen(nz,jj), legen3(nz,jj)
-           end if
-	    end do ! end of cycle over Legendre coefficient
-
-
-
-     call scatcnv(scatfiles(nz),nlegen(nz),coef,kexttot(nz),salbtot(nz),&
-     scattermatrix(nz,:,:,:,:,:),extmatrix(nz,:,:,:,:),emisvec(nz,:,:,:))
-
-    else
-     scattermatrix(nz,:,:,:,:,:)=0.d0
-     extmatrix(nz,:,:,:,:)=0.d0
-     emisvec(nz,:,:,:)=0.d0
-
-
-    end if
-
-     scattermatrix(nz,:,:,:,:,:)=scattermatrix(nz,:,:,:,:,:)+&
-	rain_scat+snow_scat+ice_scat+graupel_scat+hail_scat+cloud_scat
-     extmatrix(nz,:,:,:,:)=extmatrix(nz,:,:,:,:)+&
-	rain_ext+snow_ext+ice_ext+graupel_ext+hail_ext+cloud_ext
-     emisvec(nz,:,:,:)=emisvec(nz,:,:,:)+&
-	rain_emis+snow_emis+ice_emis+graupel_emis+hail_emis+cloud_emis
-
-     full_spec = cloud_spec+rain_spec+snow_spec+ &
-      ice_spec+graupel_spec+hail_spec
-
-
-
-  if (active) then
-     call radar_simulator(full_spec, back(nz), kexttot(nz), f,&
-      temp(nz),delta_hgt_lev(nz),nz,nx,ny,fi)
-!   else
-!     cloud_spec(:)=0.d0
-  end if
-
- end if !end if hydrometeors present
+	end if
+    end do hydros
 
   end do grid_z !end of cycle over the vertical layers
 
 
-! 
-!   if ((nx .eq. 1 ) .and. (ny .eq. 1 ) .and. jacobian_mode) then
-!     !for jacobian mode safe results of 1,1 grid
-!     jac_scattermatrix=scattermatrix
-!     jac_extmatrix=extmatrix
-!     jac_emisvec=emisvec
-!     jac_hydros_present = hydros_present
-!     
-!     jac_kextsn = kextsn
-!     jac_backsn = backsn
-!     jac_kextcw = kextcw
-!     jac_backcw = backcw
-!     jac_kextrr = kextrr
-!     jac_backrr = backrr
-!     jac_kextgr = kextgr
-!     jac_backgr = backgr
-!     jac_kextci = kextci
-!     jac_backci = backci
-!     jac_kextha = kextha
-!     jac_backha = backha
-! 
-!     !to see what was changed we need also the profile
-!     jac_temp_lev=temp_lev
-!     jac_relhum_lev=relhum_lev
-!     jac_cwc_q=cwc_q
-!     jac_iwc_q=iwc_q
-!     jac_rwc_q=rwc_q
-!     jac_swc_q=swc_q
-!     jac_gwc_q=gwc_q
-!     if (n_moments .eq. 2) then
-!       jac_hwc_q=hwc_q
-!       jac_cwc_n=cwc_n
-!       jac_iwc_n=iwc_n
-!       jac_rwc_n=rwc_n
-!       jac_swc_n=swc_n
-!       jac_gwc_n=gwc_n
-!       jac_hwc_n=hwc_n
-!     end if
-!   end if
-! 
 
-
-!   if (use_snow_db) call close_snow_db()
-!   if (use_rain_db) call close_rain_db()
-
-  if (verbose .gt. 1) print*, 'Exiting hydrometeor_extinction_rt4'
-1005 format  (i3,6(1x,f10.7))
+  if (verbose .gt. 1) print*, 'Exiting hydrometeor_extinction'
   return
 
 end subroutine hydrometeor_extinction
+

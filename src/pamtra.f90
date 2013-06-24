@@ -8,6 +8,7 @@ program pamtra
     use vars_profile
     use double_moments_module !double moments variables are stored here
     use report_module
+    use descriptor_file
 
     !     The code reads a full (e.g. COSMO) grid and computes for each
     !     profile the radiative transfer for the given frequencies
@@ -72,11 +73,16 @@ program pamtra
     deltay = profiles_deltay
     date_str = year//month//day//time
 
+
+    call read_descriptor_file(errorstatus)
+
     ! now allocate variables
     call allocate_output_vars(nlyr)
 
     msg = 'Start loop over frequencies & profiles!'
     if (verbose >= 2)  call report(info, msg, nameOfRoutine)
+
+
 
     grid_f: do fi =1, nfrq
         if (jacobian_mode) then
