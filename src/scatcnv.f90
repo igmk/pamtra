@@ -1,4 +1,4 @@
-      subroutine scatcnv(out_file,nlegen,&
+      subroutine scatcnv(errorstatus,out_file,nlegen,&
       coef,extinct,albedo,scatter_matrix,ext_matrix,emis_vec)
 !       Converts a scattering file (e.g. from MIESCAT) to DDA radiative
 !       transfer format file.  Scattering files have the six unique elements
@@ -13,8 +13,11 @@
 !       The guts of the code are taken from RADSCAT3.FOR.
 !
 
-      use settings, only: dump_to_file, nstokes,nummu, aziorder, quad_type
+      use settings, only: dump_to_file, nstokes,nummu, aziorder, &
+    quad_type, verbose
 use rt_utilities, only: lobatto_quadrature
+  use report_module
+
       implicit none
 
       INTEGER  NLEGEN
@@ -25,6 +28,14 @@ use rt_utilities, only: lobatto_quadrature
       real*8 scatter_matrix(nstokes,nummu,nstokes,nummu,4)
       real*8 ext_matrix(nstokes,nstokes,nummu,2)
       real*8 emis_vec(nstokes,nummu,2)
+
+    integer*8 :: errorstatus
+    integer*8 :: err = 0
+    character(len=80) :: msg
+    character(len=40) :: nameOfRoutine = 'scatcnv'
+
+    if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
+
 
       IF (QUAD_TYPE(1:1) .EQ. 'L') THEN
         QUADTYPE = 'LOBATTO'
@@ -50,6 +61,8 @@ use rt_utilities, only: lobatto_quadrature
       call transform_scatter(const,mu_values, nlegen, coef, scatter_matrix)
 
       call transform_ext_emis(MU_VALUES, EXTINCT, ALBEDO,ext_matrix,emis_vec)
+
+      if (verbose >= 1) call report(info,'END of ', nameOfRoutine)
 
       return
 

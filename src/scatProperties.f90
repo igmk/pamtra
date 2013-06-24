@@ -5,7 +5,8 @@ module scatProperties
       nummu,&
       radar_nfft_aliased, &
       active, &
-      radar_mode
+      radar_mode, &
+      maxnleg
   use mie_spheres, only: calc_mie_spheres
   use vars_atmosphere, only: kexttot,&
       back,&
@@ -224,6 +225,14 @@ module scatProperties
       call report(errorstatus, msg, nameOfRoutine)
       return
     end if      
+
+    if (nlegen_coef .gt. maxnleg) then
+      print*, "nlegen_coef",nlegen_coef
+      msg = 'nlegen_coef greater maxnleg'
+      errorstatus = fatal
+      call report(errorstatus, msg, nameOfRoutine)
+      return
+    end if   
 
 
     if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then

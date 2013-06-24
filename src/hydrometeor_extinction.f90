@@ -120,10 +120,23 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 
     end do hydros
 
+    call finalize_rt3_scatProperties(nz)
+
     !convert rt3 to rt4 input
     if (nlegen_coef>0) then
-      call scatcnv(scatfiles(nz),nlegen_coef,legen_coef,kexttot(nz),salbedo,&
+
+print*, nlegen_coef
+print*, legen_coef
+print*, kexttot(nz)
+print*, salbedo
+      call scatcnv(err,scatfiles(nz),nlegen_coef,legen_coef,kexttot(nz),salbedo,&
 	scatter_matrix_scatcnv,extinct_matrix_scatcnv,emis_vector_scatcnv)
+      if (err /= 0) then
+	  msg = 'error in scatcnv!'
+	  call report(err, msg, nameOfRoutine)
+	  errorstatus = err
+	  return
+      end if   
       scattermatrix(nz,:,:,:,:,:) = scattermatrix(nz,:,:,:,:,:) + scatter_matrix_scatcnv
       extmatrix(nz,:,:,:,:) = extmatrix(nz,:,:,:,:) + extinct_matrix_scatcnv
       emisvec(nz,:,:,:) = emisvec(nz,:,:,:) + emis_vector_scatcnv
