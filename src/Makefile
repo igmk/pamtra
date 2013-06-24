@@ -105,6 +105,7 @@ OBJECTS=kinds.o \
 	tmat_rain_db.o \
 	tmat_snow_db.o \
 	hydrometeor_extinction_rt4.o \
+	hydrometeor_extinction.o \
 	scatcnv.o \
 	tmatrix_rain.o \
 	tmatrix_snow.o \
