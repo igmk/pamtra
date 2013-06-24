@@ -56,6 +56,9 @@ module settings
   real(kind=dbl) :: diamin_cloud, diamax_cloud, diamin_ice, diamax_ice, mass_size_ice_a, mass_size_ice_b, &
 		    area_size_ice_a, area_size_ice_b
   real(kind=dbl) :: hydro_threshold
+
+  integer, parameter :: maxnleg = 200 !max legnth of legendre series
+
     logical :: in_python !are we in python
 
     logical :: dump_to_file, &   ! flag for profile and ssp dump

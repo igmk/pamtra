@@ -14,6 +14,7 @@ module descriptor_file
   integer(kind=long), dimension(:),allocatable  :: moment_in_arr            ! Moments input via "PAMTRA input file" (1=q; 2=Ntot; 3=reff; 12=q&ntot; 13=q&reff; 23=ntot&reff)
   integer(kind=long), dimension(:),allocatable  :: nbin_arr                 ! Number of bins for the drop-size distribution
   character(len=15), dimension(:),allocatable   :: dist_name_arr            ! name of the distribution
+  character(len=15), dimension(:),allocatable   :: scat_name_arr            ! name of the distribution
   real(kind=dbl), dimension(:),allocatable      :: p_1_arr, p_2_arr         ! Drop-size parameters from hydrometeor descriptor file
   real(kind=dbl), dimension(:),allocatable      :: p_3_arr, p_4_arr         ! Drop-size parameters from hydrometeor descriptor file
   real(kind=dbl), dimension(:),allocatable      :: d_1_arr, d_2_arr         ! Minimum and maximum particle diameters
@@ -82,6 +83,7 @@ print*,n_hydro,work2,work1
   allocate(p_4_arr(n_hydro))
   allocate(d_1_arr(n_hydro))
   allocate(d_2_arr(n_hydro))
+  allocate(scat_name_arr(n_hydro))
 
 
 ! Read the hydrometeor descriptors
@@ -93,10 +95,12 @@ print*,n_hydro,work2,work1
       backspace(111)
       read(111,*) hydro_name_arr(i), as_ratio_arr(i), liq_ice_arr(i),rho_ms_arr(i), a_ms_arr(i), &
                 b_ms_arr(i), moment_in_arr(i), nbin_arr(i),dist_name_arr(i), p_1_arr(i),         &
-                p_2_arr(i), p_3_arr(i), p_4_arr(i), d_1_arr(i), d_2_arr(i)
+                p_2_arr(i), p_3_arr(i), p_4_arr(i), d_1_arr(i), d_2_arr(i), scat_name_arr(i)
       i = i+1
     endif
   end do
+
+
 
 !   write(6,*)'hydro_name',hydro_name_arr
 !   write(6,*)'as_ratio ',as_ratio_arr
@@ -120,5 +124,28 @@ print*,n_hydro,work2,work1
 
   return
 end subroutine read_descriptor_file
+
+subroutine deallocate_descriptor_file()
+
+  implicit none
+
+  if (allocated(hydro_name_arr)) deallocate(hydro_name_arr)
+  if (allocated(as_ratio_arr)) deallocate(as_ratio_arr)
+  if (allocated(liq_ice_arr)) deallocate(liq_ice_arr)
+  if (allocated(rho_ms_arr)) deallocate(rho_ms_arr)
+  if (allocated(a_ms_arr)) deallocate(a_ms_arr)
+  if (allocated(b_ms_arr)) deallocate(b_ms_arr)
+  if (allocated(moment_in_arr)) deallocate(moment_in_arr)
+  if (allocated(nbin_arr)) deallocate(nbin_arr)
+  if (allocated(dist_name_arr)) deallocate(dist_name_arr)
+  if (allocated(p_1_arr)) deallocate(p_1_arr)
+  if (allocated(p_2_arr)) deallocate(p_2_arr)
+  if (allocated(p_3_arr)) deallocate(p_3_arr)
+  if (allocated(p_4_arr)) deallocate(p_4_arr)
+  if (allocated(d_1_arr)) deallocate(d_1_arr)
+  if (allocated(d_2_arr)) deallocate(d_2_arr)
+  if (allocated(scat_name_arr)) deallocate(scat_name_arr)
+
+end subroutine deallocate_descriptor_file
 
 end module descriptor_file

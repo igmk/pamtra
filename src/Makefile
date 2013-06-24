@@ -113,6 +113,7 @@ OBJECTS=kinds.o \
 	calc_moment.o \
 	make_soft_spheroid.o \
 	check_print.o \
+	scatProperties.o \
 	hydrometeor_extinction_rt4.o \
 	hydrometeor_extinction.o \
 	scatcnv.o \

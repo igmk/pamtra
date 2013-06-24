@@ -104,6 +104,8 @@ subroutine run_rt(errorstatus, nx,ny,fi)
     ! hydrometeor extinction desired
     if (lhyd_extinction) then
         call hydrometeor_extinction(err,freq,nx,ny,fi)!hier nx, ny
+!         call hydrometeor_extinction_rt4(err,freq,nx,ny,fi)!hier nx, ny
+
     end if
 
       if (err == 2) then

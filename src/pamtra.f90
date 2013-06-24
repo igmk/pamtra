@@ -155,11 +155,14 @@ program pamtra
         end if
     end do grid_f
 
+    
+
     if (write_nc) then
         call write_nc_results
     end if
-
+    call deallocate_descriptor_file()
     call deallocate_output_vars()
+
 
     if (verbose >= 1 .and. errorstatus == 0) then
         msg = 'Progam finished successfully'

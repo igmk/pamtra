@@ -2,7 +2,7 @@ module mie_spheres
 
   use kinds
   use constants, only: pi,c, Im
-  use settings, only: softsphere_adjust, lphase_flag
+  use settings, only: softsphere_adjust, lphase_flag, maxnleg
   use report_module
   use mie_scat_utlities  
   implicit none
@@ -30,7 +30,7 @@ module mie_spheres
 
     real(kind=dbl), intent(in) :: f,  &! frequency [GHz]
 	t    ! temperature [K]
-    character(len=10), intent(in) :: phase
+    integer, intent(in) :: phase
 
     integer :: maxleg, nlegen, nbins
     real(kind=dbl) :: dia1, dia2
@@ -41,12 +41,13 @@ module mie_spheres
     integer, parameter :: maxn  = 5000
     integer :: ir
     real(kind=dbl) :: del_d, density
+
     real(kind=dbl) :: distribution 
     real(kind=dbl), intent(out) :: back_spec(nbins+1)
     character :: aerodist * 1
     
     real(kind=dbl), intent(out) :: diameter(nbins+1)
-    real(kind=dbl), dimension(nbins+1) :: particle_mass
+    real(kind=dbl), dimension(nbins+1) :: particle_mass, density_vec
     real(kind=dbl), dimension(nbins+1) ::  ndens
     
       integer(kind=long) :: errorstatus
@@ -77,18 +78,18 @@ module mie_spheres
 	  ndens(ir) = ndens(ir) + (wc-tot_mass)/(del_d*particle_mass(ir))
 	  tot_mass = wc
 	end if
+    density_vec(ir) = density
       end if	
 	
 	
     end do
-    
-    call mie_spheres_calc(err, f, t, phase, nbins, diameter, particle_mass, ndens, density, &
-      maxleg, ad, bd, alpha, gamma, &
+
+    call calc_mie_spheres(err, f, t, phase, nbins, diameter, ndens, density_vec, &
       extinction, albedo, back_scatt, nlegen, legen,  &
       legen2, legen3, legen4, back_spec)    
         
     if (err /= 0) then
-	msg = 'error in mie_spheres_calc!'
+	msg = 'error in calc_mie_spheres!'
 	call report(err, msg, nameOfRoutine)
 	errorstatus = err
 	stop !return
@@ -101,21 +102,15 @@ module mie_spheres
   end subroutine mie_spheres_wrapper
   
 
-  subroutine mie_spheres_calc(&
+  subroutine calc_mie_spheres(&
       errorstatus, &
       f, & ! frequency [GHz]
       t, &
       phase, &
       nbins, &
       diameter, &
-      particle_mass, &
       ndens, &
       density, &
-      maxleg, &
-      ad, &
-      bd, &
-      alpha, &
-      gamma, &
       extinction, &
       albedo, &
       back_scatt, &
@@ -139,14 +134,11 @@ module mie_spheres
 
     real(kind=dbl), intent(in) :: f  ! frequency [GHz]
     real(kind=dbl), intent(in) :: t    ! temperature [K]
-    character(len=10), intent(in) :: phase
+    integer, intent(in) :: phase
     integer, intent(in) :: nbins
     real(kind=dbl), intent(in), dimension(nbins+1) :: diameter
-    real(kind=dbl), intent(in), dimension(nbins+1) :: particle_mass
     real(kind=dbl), intent(in), dimension(nbins+1) ::  ndens
-    real(kind=dbl), intent(in) :: density
-    integer, intent(in) :: maxleg
-    real(kind=dbl), intent(in) :: ad, bd, alpha, gamma
+    real(kind=dbl), intent(in), dimension(nbins+1) :: density
     
     real(kind=dbl), intent(out) :: extinction
     real(kind=dbl), intent(out) :: albedo
@@ -159,12 +151,11 @@ module mie_spheres
     real(kind=dbl) :: del_d
     real(kind=dbl) :: wavelength
     complex(kind=dbl) :: m_ice
-    real(kind=dbl) :: tot_mass
                                        
     integer, parameter :: maxn  = 5000
     integer :: nterms, nquad, nmie, nleg 
     integer :: i, l, m, ir
-    real(kind=dbl) :: x, tmp,diameter_eff, density_eff
+    real(kind=dbl) :: x, tmp,diameter_eff, density_eff(nbins+1)
     real(kind=dbl) :: qext, qscat, qback, scatter 
     real(kind=dbl) :: mu(maxn), wts(maxn)
     real(kind=dbl) :: p1, pl, pl1, pl2, p2, p3, p4 
@@ -178,53 +169,28 @@ module mie_spheres
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
     character(len=80) :: msg
-    character(len=14) :: nameOfRoutine = 'mie_densityspheremass_calc'
+    character(len=14) :: nameOfRoutine = 'calc_mie_spheres'
 
       if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
+    if (verbose >= 4) print*, "calc_mie_spheres(",&
+      errorstatus, &
+      f, & ! frequency [GHz]
+      t, &
+      phase, &
+      nbins, &
+       "diameter", diameter, &
+      "ndens", ndens, &
+      "density", density
+   
 
       wavelength = c/(f*1.d9) !
 
-      if (phase == "softsphere") then
-	if (softsphere_adjust .eq. "radius") then
-	  !diameter of sphere with same mass
-	  diameter_eff = (6.d0*particle_mass(nbins+1)/(pi*density))**(1./3.)
-	  density_eff = density
-	else if (softsphere_adjust .eq. "density") then
-	  !adjust density of the particle
-	  diameter_eff =diameter(nbins+1)
-	  density_eff = (6.d0 * particle_mass(nbins+1)) / (pi * diameter(nbins+1)**3)
-	else
-	  errorstatus = fatal
-	  msg = "did not understand softsphere_adjust (1):"//softsphere_adjust
-	  call report(errorstatus, msg, nameOfRoutine)
-	  return
-	end if 
-	if (density_eff > 917.d0) then
-	  if (verbose >= 0) print*, "WARNING changed density from ", density_eff, "kg/m3 to 917 kg/m3 for d=", diameter(nbins+1)
-	  density_eff = 917.d0
-	end if		
-      else
-	diameter_eff= diameter(nbins+1)
-	density_eff = density
-      end if
 
-      if (phase == "liquid") then
-	call ref_water(0.d0, t-273.15, f, refre, refim, absind, abscof)
-	msphere = refre-im*refim
-      else if (phase == "solid") then
-	call ref_ice(t, f, refre, refim)
-	msphere = refre-Im*refim 
-      else if (phase == "softsphere") then
-	call ref_ice(t, f, refre, refim)
-	m_ice = refre-Im*refim  ! mimicking a
-	msphere = eps_mix((1.d0,0.d0),m_ice,density_eff)
-      else
-	errorstatus = fatal
-	msg = 'Did not understand variable phase:'//phase
-	call report(errorstatus, msg, nameOfRoutine)
-	return
-      end if
+	diameter_eff= diameter(nbins+1)
+	density_eff(:) = density(:)
+
+
       
       x = pi * diameter_eff / wavelength
       nterms = 0 
@@ -236,7 +202,7 @@ module mie_spheres
 	  return
       end if         
       nlegen = 2 * nterms 
-      nlegen = min(maxleg, nlegen) 
+      nlegen = min(maxnleg, nlegen) 
       nquad = (nlegen + 2 * nterms + 2) / 2 
       if (nquad.gt.maxn) then
 	  errorstatus = fatal
@@ -257,9 +223,32 @@ module mie_spheres
 	sump4 (i) = 0.0d0 
       end do
 
-
-    tot_mass = 0.
+print*, "TODO: take real del_d del_d, remove diameter_eff and density_eff(ir) part"
     do ir = 1, nbins+1
+
+      if (phase == 1) then
+	call ref_water(0.d0, t-273.15, f, refre, refim, absind, abscof)
+	msphere = refre-im*refim
+      else if (phase == -1) then
+	call ref_ice(t, f, refre, refim)
+	if (density_eff(ir) == 917.d0) then
+	  !ice sphere
+	  msphere = refre-Im*refim 
+	else
+	  !softsphere
+	  m_ice = refre-Im*refim  ! mimicking a
+	  msphere = eps_mix((1.d0,0.d0),m_ice,density_eff(ir))
+	end if
+      else
+	errorstatus = fatal
+	print*,"phase=", phase
+	msg = 'Did not understand variable phase'
+	call report(errorstatus, msg, nameOfRoutine)
+	return
+      end if
+
+
+
       !diameter is here the maximum extebd of the particle
  
       if (ir <= nbins) then
@@ -269,42 +258,13 @@ module mie_spheres
       end if
   
       nmie = 0 
-      
-      if (phase == "softsphere") then 
-	if (softsphere_adjust .eq. "radius") then
-	  !diameter of sphere with same mass
-	  diameter_eff = (6.d0*particle_mass(ir)/(pi*density))**(1./3.)
-	  density_eff = density
-	else if (softsphere_adjust .eq. "density") then
-	  !adjust density of the particle
-	  diameter_eff = diameter(ir)
-	  density_eff = (6.d0 * particle_mass(ir)) / (pi * diameter(ir)**3)
-	else
-	    errorstatus = fatal
-	    msg = "did not understand softsphere_adjust (2):"//softsphere_adjust
-	    call report(errorstatus, msg, nameOfRoutine)
-	    return
-	end if 
-	if (density_eff > 917.d0) then
-	  if (verbose >= 0) print*, "WARNING changed density from ", density_eff, "kg/m3 to 917 kg/m3 for d=", diameter(ir)
-	  density_eff = 917.d0
-	end if	
-      else
-	diameter_eff= diameter(ir)
-	density_eff = density
-      end if
-
-
-
-
 
       x = pi * diameter_eff / wavelength
 
-     if (phase == "softsphere") msphere = eps_mix((1.d0,0.d0),m_ice,density_eff)
 	  
 
-      if (verbose >= 4) print*, "density_eff, diameter(ir), ndens(ir), msphere"
-      if (verbose >= 4) print*, density_eff, diameter(ir), ndens(ir), msphere
+      if (verbose >= 4) print*, "density_eff(ir), diameter(ir), ndens(ir), msphere"
+      if (verbose >= 4) print*, density_eff(ir), diameter(ir), ndens(ir), msphere
 
       call miecalc (err,nmie, x, msphere, a, b) 
       if (err /= 0) then
@@ -395,6 +355,6 @@ module mie_spheres
     if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
     return 
 
-  end subroutine mie_spheres_calc  
+  end subroutine calc_mie_spheres  
   
 end module mie_spheres

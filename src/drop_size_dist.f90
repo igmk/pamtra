@@ -24,6 +24,7 @@ module drop_size_dist
   real(kind=dbl)      :: r_eff                ! Effective radius [m]
 
   real(kind=dbl)      :: t                    ! Layer temperature [K]
+  real(kind=dbl)      :: pressure             ! Layer Pressure [Pa]
 
 ! make_mass_size IN/OUT
   real(kind=dbl)      :: rho_ms               ! density of the particle [kg/m^3]
@@ -51,7 +52,7 @@ module drop_size_dist
 
  contains
 
-subroutine allocate_vars
+subroutine allocateVars_drop_size_dist
 
   implicit none
 
@@ -60,18 +61,20 @@ subroutine allocate_vars
   allocate(d_bound_ds(nbin+1))
   allocate(f_ds(nbin+1))
 
-end subroutine allocate_vars
+end subroutine allocateVars_drop_size_dist
 
-subroutine deallocate_vars
+subroutine deallocateVars_drop_size_dist
 
   implicit none
 
-  deallocate(d_ds)
-  deallocate(n_ds)
-  deallocate(d_bound_ds)
-  deallocate(f_ds)
+  if (allocated(d_ds)) deallocate(d_ds)
+  if (allocated(n_ds)) deallocate(n_ds)
+  if (allocated(d_bound_ds)) deallocate(d_bound_ds)
+  if (allocated(f_ds)) deallocate(f_ds)
+  if (allocated(soft_d_eff)) deallocate(soft_d_eff)
+  if (allocated(soft_rho_eff)) deallocate(soft_rho_eff)
 
-end subroutine deallocate_vars
+end subroutine deallocateVars_drop_size_dist
 
 subroutine run_drop_size_dist(errorstatus)
 
@@ -82,7 +85,6 @@ subroutine run_drop_size_dist(errorstatus)
   character(len=80)   :: msg
   character(len=14)   :: nameOfRoutine = 'make_hydro'
 
-  call allocate_vars
 
   call make_mass_size(errorstatus)
 
@@ -139,9 +141,8 @@ print*,   'd_mono',d_mono
 
   call check_print(dist_name)
 
-  call deallocate_vars
-  if (allocated(soft_d_eff)) deallocate(soft_d_eff)
-  if (allocated(soft_rho_eff)) deallocate(soft_rho_eff)
+
+
 
 end subroutine run_drop_size_dist
 

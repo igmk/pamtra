@@ -42,7 +42,7 @@ subroutine rain_ssp(f,rwc,cwc,t,press,maxleg,nc,kext, salb, back,  &
 
   complex(kind=dbl) :: mindex
   character(5) ::  particle_type
-  character(len=10) :: phase
+  integer:: phase
   real(kind=dbl) :: gammln
   real(kind=dbl), allocatable, dimension(:):: diameter_spec, back_spec
   real(kind=dbl), intent(out), dimension(radar_nfft_aliased) :: rain_spec
@@ -114,7 +114,7 @@ print*, dia1, dia2
    elseif (EM_rain .eq. 'mier2') then !testing the new wrapper
       a_mrain = 1/6.d0 * pi * den_liq
       b_rain = 3.d0
-      phase = "liquid"
+      phase = 1 !liquid
       call mie_spheres_wrapper(f, t,phase,    &
           a_mrain, b_rain, dia1, dia2, nbins, maxleg,   &
           ad, bd, alpha, gamma, kext, salb,      &

@@ -193,7 +193,7 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
       extinct_matrix= 0.d0
       emis_vector= 0.d0
    elseif (EM_snow .eq. 'softs') then
-      call mie_spheres_wrapper(f, t,"softsphere",    &
+      call mie_spheres_wrapper(f, t,-1,    &
           a_msnow, b_snow, dia1, dia2, nbins, maxleg,   &
           ad, bd, alpha, gamma, kext, salb,      &
           back, NLEGEN, LEGEN, LEGEN2, LEGEN3,        &
