@@ -86,6 +86,23 @@ frequency,temp,delta_h,nz,nx,ny,fi)
 
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
+    if (ANY(ISNAN(particle_spectrum))) then
+	print*,particle_spectrum
+	errorstatus = fatal
+	msg = "got nan in values in backscattering spectrum"
+	call report(errorstatus, msg, nameOfRoutine)
+	return
+    end if
+
+    if (ISNAN(back) .or. back < 0.d0) then
+	print*,back
+	errorstatus = fatal
+	msg = "got nan or negative vaue in linear Ze"
+	call report(errorstatus, msg, nameOfRoutine)
+	return
+    end if
+      
+    
     ! get |K|**2 and lambda
     K2 = dielec_water(0.D0,temp-t_abs,frequency)
     wavelength = c / (frequency*1.d9)   ! [m]
@@ -97,9 +114,12 @@ frequency,temp,delta_h,nz,nx,ny,fi)
     Ze_back = 1.d18* (1.d0/ (K2*pi**5) ) * back * (wavelength)**4 ![mm⁶/m³]
 
     if (radar_mode == "simple") then
-
-        Ze(nx,ny,nz,fi) = 10*log10(Ze_back)
-
+	if (Ze_back .eq. 0.d0) then
+	  Ze(nx,ny,nz,fi) = -9999.d0
+        else 
+	  Ze(nx,ny,nz,fi) = 10*log10(Ze_back)
+	end if
+      if (verbose >= -3) print*, "nx,ny,nz,fi,ze", nx,ny,nz,fi,Ze(nx,ny,nz,fi)
     else if ((radar_mode == "moments") .or. (radar_mode == "spectrum")) then
         !get delta velocity
         del_v = (radar_max_V-radar_min_V) / radar_nfft ![m/s]

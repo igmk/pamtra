@@ -42,6 +42,8 @@ subroutine run_rt(errorstatus, nx,ny,fi)
     wavelength = c / (freq*1.d3)   ! microns
     GROUND_TEMP = temp_lev(0)
 
+  
+    
     !  if (verbose .gt. 0) print*, "calculating: ", frq_str, " Y:",ny, " of ", ngridy, "X:", nx, " of ", ngridx
 
     write(xstr, '(i3.3)') model_i
@@ -103,11 +105,12 @@ subroutine run_rt(errorstatus, nx,ny,fi)
 
     ! hydrometeor extinction desired
     if (lhyd_extinction) then
-        call hydrometeor_extinction(err,freq,nx,ny,fi)!hier nx, ny
-!         call hydrometeor_extinction_rt4(err,freq,nx,ny,fi)!hier nx, ny
+    
+!       call hydrometeor_extinction_rt4(err,freq,nx,ny,fi)!hier nx, ny
+            call hydrometeor_extinction(err,freq,nx,ny,fi)!hier nx, ny
 
-    end if
-
+    end if    
+    
       if (err == 2) then
 	msg = 'Error in run_drop_size_dist'
 	call report(err, msg, nameOfRoutine)

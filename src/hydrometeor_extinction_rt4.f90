@@ -1,4 +1,4 @@
-subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
+subroutine hydrometeor_extinction_rt4(errorstatus,f,nx,ny,fi)
 
   use kinds
   use vars_atmosphere
@@ -72,7 +72,7 @@ subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
 
   ! INITIALIZATION OF LEGENDRE COEFFICIENTS
 
- 
+  threshold = 1e-10
 
   nlegen = 0
   legen   = 0.d0
@@ -229,6 +229,7 @@ subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
      backci(nz) = 0.0d0 
      ice_spec(:) = 0.d0
      if ((iwc_q(nz) .ge. threshold) .and. (EM_ice .ne. 'disab')) then
+print*, "IWC_q", iwc_q(nz)     
         hydros_present(nz) = .true.
 	     if (n_moments .eq. 1) then
 	     	qwc = q2abs(iwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
@@ -446,9 +447,15 @@ subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
 
 
 
-     call scatcnv(scatfiles(nz),nlegen(nz),coef,kexttot(nz),salbtot(nz),&
+     call scatcnv(err,scatfiles(nz),nlegen(nz),coef,kexttot(nz),salbtot(nz),&
      scattermatrix(nz,:,:,:,:,:),extmatrix(nz,:,:,:,:),emisvec(nz,:,:,:))
-
+      if (err /= 0) then
+	msg = 'Error in scatcnv'
+	call report(err, msg, nameOfRoutine)
+	errorstatus = err
+	return
+      end if
+      
     else
      scattermatrix(nz,:,:,:,:,:)=0.d0
      extmatrix(nz,:,:,:,:)=0.d0
@@ -468,7 +475,7 @@ subroutine hydrometeor_extinction_rt4(f,nx,ny,fi)
       ice_spec+graupel_spec+hail_spec
 
 
-
+print*, "back(nz)", back(nz)
   if (active) then
      call radar_simulator(err,full_spec, back(nz), kexttot(nz), f,&
       temp(nz),delta_hgt_lev(nz),nz,nx,ny,fi)

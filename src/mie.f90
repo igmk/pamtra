@@ -65,6 +65,15 @@ diameter, back_spec)
 
     if (verbose .gt. 1) print*, 'Entering mie'
 
+    if (isnan(f) .or. f <= 0.d0) then
+	print*,f
+	errorstatus = fatal
+	msg = "frequency nan or zero!"
+	call report(errorstatus, msg, nameOfRoutine)
+	stop !return
+    end if        
+    
+    
     legen4 = 0._dbl
     wavelength = c/(f*1.e9) !
 
@@ -105,9 +114,20 @@ diameter, back_spec)
     end if
   
 
+  
+
   tot_mass = 0.
   do ir = 1, nbins+1
      diameter(ir) = dia1 + (ir - 1) * del_d
+    if (isnan(diameter(ir)) .or. diameter(ir) < 0.d0) then
+	print*,diameter(ir)
+	errorstatus = fatal
+	msg = "nan or neative diameter"
+	call report(errorstatus, msg, nameOfRoutine)
+	stop !return
+    end if     
+     
+     
      if (aerodist == "D") then
 aerodist2 = "C"
      else if (aerodist == "N") then
@@ -117,6 +137,15 @@ aerodist2 = aerodist
 end if
      ndens(ir) = distribution(ad, bd, alpha, gamma, diameter(ir), aerodist2)  ! number density [1/m⁴]
      !first and last bin get only have of the particles (Why actually?)
+     
+    if (isnan(ndens(ir)) .or. ndens(ir) < 0.d0) then
+	print*,ndens(ir)
+	errorstatus = fatal
+	msg = "nan or neative number concentration"
+	call report(errorstatus, msg, nameOfRoutine)
+	stop !return
+    end if
+     
      if ((ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
         ndens(ir) = 0.5 * ndens(ir)
      end if
@@ -124,13 +153,23 @@ end if
      !if mass is missing put into last bin
      if ((aerodist == "C") .or. (aerodist == "M")) then
      if ((ir .eq. nbins+1) .and. (tot_mass/wc*100. .lt. 99.9d0)) then
+ print*, "increase bdens!"    ,  (wc-tot_mass)/(del_d*pi/6.d0*density*diameter(ir)**3.d0)
       ndens(ir) = ndens(ir) + (wc-tot_mass)/(del_d*pi/6.d0*density*diameter(ir)**3.d0)
       tot_mass = wc
      end if
      end if
-
+      
+!       print*, "REMOVE THESE LINES AGAIN! THESE LINES HARDCODE THE RESULTS OF THE NEW DISTRIBUTION MODULE"
+!       ndens(1) =  238732414.63788113/del_d
+!       ndens(2) = 0.d0
+!       ndens(3) = 0.d0
+     
      x = pi * diameter(ir) / wavelength ! size parameter
      nmie = 0 
+     
+       if (verbose >= 0) print*, "ir,density, diameter(ir), ndens(ir)*del_d, msphere, x"
+      if (verbose >= 0) print*,ir, density, diameter(ir), ndens(ir)*del_d, msphere, x    
+     
      call miecalc(err,nmie, x, msphere, a, b) ! calculate a and b
     if (err /= 0) then
 	msg = 'error in mieclac!'
@@ -140,10 +179,18 @@ end if
     end if   
      !calculate the efficencies
      call miecross(nmie, x, a, b, qext, qscat, qback)
+     
+      if (verbose >= 0) print*, "qext, qscat, qback"
+      if (verbose >= 0) print*, qext, qscat, qback
+     
      ! sum up extinction, scattering, and backscattering as cross-sections/pi .pi is added in a later step
      qext =   qext  * ndens(ir) * (diameter(ir)/2.d0)**2         ! [m²/m⁴]!
      qscat =  qscat * ndens(ir) * (diameter(ir)/2.d0)**2        ! [m²/m⁴]!
      qback =  qback * ndens(ir) * (diameter(ir)/2.d0)**2        !  [m²/m⁴]! cross section per volume per del_d
+ 
+      if (verbose >= 0) print*, "qback*del_d ,ndens(ir)*del_d * (diameter(ir)/2.d0), pi, del_d"
+      if (verbose >= 0) print*, qback*del_d , ndens(ir)*del_d ,(diameter(ir)/2.d0), pi , del_d
+    
  
         !integrate=sum up . del_d is added at a later step!
         sumqe = sumqe + qext
@@ -171,6 +218,10 @@ end if
     scatter = pi * sumqs * del_d         ! scattering [m*m²/m⁴]!
     back_scatt = pi * sumqback * del_d   ! back scattering [m*m²/m⁴]!
     albedo = scatter / extinction        ! single scattering albedo
+    
+      if (verbose >= 0) print*,"ir, extinction, scatter, back_scatt, albedo"
+      if (verbose >= 0) print*,ir, extinction, scatter, back_scatt, albedo
+    
     
     ! if the phase function is not desired then leave now
     if ( .not. lphase_flag) return
@@ -223,6 +274,8 @@ end if
     if (verbose .gt. 2) then
         K2=dielec_water(0.D0,10.d0,f)
         print*,"RAYLEIGH BACKSCATTERING with K2 at 10deg"
+         
+        
         print*,"Z=",10.d0*log10(K2*SUM((1d3*diameter)**6*(ndens*1d-3)*&
         1d3*(diameter(2)-diameter(1)))),"dBz"
     end if

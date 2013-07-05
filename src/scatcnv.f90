@@ -36,6 +36,16 @@ use rt_utilities, only: lobatto_quadrature
 
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
 
+    if (ANY(ISNAN(coef))) then
+	msg = 'Error, got nan in legendre coef'
+	call report(2, msg, nameOfRoutine)
+	errorstatus = err
+	return
+    end if  
+    
+    if (verbose >= 8) print*, "nlegen", nlegen
+    if (verbose >= 8) print*, "coef", coef
+
 
       IF (QUAD_TYPE(1:1) .EQ. 'L') THEN
         QUADTYPE = 'LOBATTO'

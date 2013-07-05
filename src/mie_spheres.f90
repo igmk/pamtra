@@ -35,7 +35,7 @@ module mie_spheres
     integer :: maxleg, nlegen, nbins
     real(kind=dbl) :: dia1, dia2
     real(kind=dbl), intent(in) :: ad, bd, alpha, gamma
-    real(kind=dbl) :: a_mtox, bcoeff,tot_mass,wc
+    real(kind=dbl) :: a_mtox, bcoeff,wc
     real(kind=dbl) :: extinction, albedo, back_scatt, legen (200), legen2 (200),&
 	legen3 (200), legen4 (200)                                        
     integer, parameter :: maxn  = 5000
@@ -43,12 +43,12 @@ module mie_spheres
     real(kind=dbl) :: del_d, density
 
     real(kind=dbl) :: distribution 
-    real(kind=dbl), intent(out) :: back_spec(nbins+1)
+    real(kind=dbl), intent(out) :: back_spec(nbins)
     character :: aerodist * 1
     
-    real(kind=dbl), intent(out) :: diameter(nbins+1)
-    real(kind=dbl), dimension(nbins+1) :: particle_mass, density_vec
-    real(kind=dbl), dimension(nbins+1) ::  ndens
+    real(kind=dbl), intent(out) :: diameter(nbins)
+    real(kind=dbl), dimension(nbins) :: particle_mass, density_vec
+    real(kind=dbl), dimension(nbins) ::  ndens
     
       integer(kind=long) :: errorstatus
       integer(kind=long) :: err = 0
@@ -63,31 +63,19 @@ module mie_spheres
       del_d = 1.d0
     end if
 
-    tot_mass = 0.
-    do ir = 1, nbins+1
+    do ir = 1, nbins
       !diameter(ir) is here the maximum extebd of the particle
       diameter(ir) = dia1 + (ir - 1) * del_d
       ndens(ir) = distribution(ad, bd, alpha, gamma, diameter(ir), aerodist)
-      if ( (ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
-	  ndens(ir) = 0.5 * ndens(ir) 
-      end if
       particle_mass(ir) = a_mtox*diameter(ir)**bcoeff ! particle mass [kg]
-      tot_mass = tot_mass + ndens(ir)*del_d*particle_mass(ir)
-      if ((aerodist == "C") .or. (aerodist == "M")) then !MPACE!!
-	if ((ir .eq. nbins+1) .and. (tot_mass/wc*100. .lt. 99.9d0)) then
-	  ndens(ir) = ndens(ir) + (wc-tot_mass)/(del_d*particle_mass(ir))
-	  tot_mass = wc
-	end if
     density_vec(ir) = density
-      end if	
-	
 	
     end do
 
-    call calc_mie_spheres(err, f, t, phase, nbins, diameter, ndens, density_vec, &
-      extinction, albedo, back_scatt, nlegen, legen,  &
-      legen2, legen3, legen4, back_spec)    
-        
+!     call calc_mie_spheres(err, f, t, phase, nbins, diameter, ndens, density_vec, &
+!       extinction, albedo, back_scatt, nlegen, legen,  &
+!       legen2, legen3, legen4, back_spec)    
+   stop "TODO: add del_d to wrapper"     
     if (err /= 0) then
 	msg = 'error in calc_mie_spheres!'
 	call report(err, msg, nameOfRoutine)
@@ -109,8 +97,11 @@ module mie_spheres
       phase, &
       nbins, &
       diameter, &
-      ndens, &
+      del_d, &
+      ndens, & !ndens NOT NORMED PER del_d!
       density, &
+      refre, &
+      refim, &
       extinction, &
       albedo, &
       back_scatt, &
@@ -136,26 +127,27 @@ module mie_spheres
     real(kind=dbl), intent(in) :: t    ! temperature [K]
     integer, intent(in) :: phase
     integer, intent(in) :: nbins
-    real(kind=dbl), intent(in), dimension(nbins+1) :: diameter
-    real(kind=dbl), intent(in), dimension(nbins+1) ::  ndens
-    real(kind=dbl), intent(in), dimension(nbins+1) :: density
-    
+    real(kind=dbl), intent(in), dimension(nbins) :: diameter
+    real(kind=dbl), intent(in), dimension(nbins) :: del_d    
+    real(kind=dbl), intent(in), dimension(nbins) ::  ndens
+    real(kind=dbl), intent(in), dimension(nbins) :: density
+    real(kind=dbl), intent(in) :: refre
+    real(kind=dbl), intent(in) :: refim !positive(?)
+
     real(kind=dbl), intent(out) :: extinction
     real(kind=dbl), intent(out) :: albedo
     real(kind=dbl), intent(out) :: back_scatt
     real(kind=dbl), intent(out), dimension(200) :: legen, legen2, legen3, legen4 
-    real(kind=dbl), intent(out), dimension(nbins+1) :: back_spec
+    real(kind=dbl), intent(out), dimension(nbins) :: back_spec
     integer, intent(out) :: nlegen
 
-    real(kind=dbl) :: refre, refim
-    real(kind=dbl) :: del_d
     real(kind=dbl) :: wavelength
     complex(kind=dbl) :: m_ice
                                        
     integer, parameter :: maxn  = 5000
     integer :: nterms, nquad, nmie, nleg 
     integer :: i, l, m, ir
-    real(kind=dbl) :: x, tmp,diameter_eff, density_eff(nbins+1)
+    real(kind=dbl) :: x, tmp,diameter_eff
     real(kind=dbl) :: qext, qscat, qback, scatter 
     real(kind=dbl) :: mu(maxn), wts(maxn)
     real(kind=dbl) :: p1, pl, pl1, pl2, p2, p3, p4 
@@ -183,16 +175,19 @@ module mie_spheres
       "ndens", ndens, &
       "density", density
    
-
+    if (nbins<=0) then
+	print*,nbins
+	errorstatus = fatal
+	msg = "zero or neative nbins"
+	call report(errorstatus, msg, nameOfRoutine)
+	return
+    end if
+  
+     
       wavelength = c/(f*1.d9) !
 
-
-	diameter_eff= diameter(nbins+1)
-	density_eff(:) = density(:)
-
-
-      
-      x = pi * diameter_eff / wavelength
+     
+      x = pi * diameter(1) / wavelength
       nterms = 0 
       call miecalc (err,nterms, x, msphere, a, b) 
       if (err /= 0) then
@@ -223,48 +218,27 @@ module mie_spheres
 	sump4 (i) = 0.0d0 
       end do
 
-print*, "TODO: take real del_d del_d, remove diameter_eff and density_eff(ir) part"
-    do ir = 1, nbins+1
+    do ir = 1, nbins
 
-      if (phase == 1) then
-	call ref_water(0.d0, t-273.15, f, refre, refim, absind, abscof)
-	msphere = refre-im*refim
-      else if (phase == -1) then
-	call ref_ice(t, f, refre, refim)
-	if (density_eff(ir) == 917.d0) then
-	  !ice sphere
-	  msphere = refre-Im*refim 
-	else
-	  !softsphere
+
+      if (phase == -1 .and. density(ir) /= 917.d0) then
 	  m_ice = refre-Im*refim  ! mimicking a
-	  msphere = eps_mix((1.d0,0.d0),m_ice,density_eff(ir))
-	end if
+	  msphere = eps_mix((1.d0,0.d0),m_ice,density(ir))
       else
-	errorstatus = fatal
-	print*,"phase=", phase
-	msg = 'Did not understand variable phase'
-	call report(errorstatus, msg, nameOfRoutine)
-	return
+		msphere = refre-im*refim
       end if
 
 
 
-      !diameter is here the maximum extebd of the particle
- 
-      if (ir <= nbins) then
-	del_d = diameter(ir+1) - diameter(ir)
-      else
-	del_d = diameter(ir) - diameter(ir-1)
-      end if
+
   
       nmie = 0 
 
-      x = pi * diameter_eff / wavelength
+      x = pi * diameter(ir) / wavelength
 
 	  
 
-      if (verbose >= 4) print*, "density_eff(ir), diameter(ir), ndens(ir), msphere"
-      if (verbose >= 4) print*, density_eff(ir), diameter(ir), ndens(ir), msphere
+
 
       call miecalc (err,nmie, x, msphere, a, b) 
       if (err /= 0) then
@@ -273,19 +247,30 @@ print*, "TODO: take real del_d del_d, remove diameter_eff and density_eff(ir) pa
 	  errorstatus = err
 	  return
       end if         
+      
+      if (verbose >= 0) print*, "density(ir), diameter(ir), diameter(ir), ndens(ir)/del_d, msphere, x"
+      if (verbose >= 0) print*, density(ir), diameter(ir), diameter(ir), ndens(ir)/del_d, msphere, x 
+      
       call miecross (nmie, x, a, b, qext, qscat, qback)
+      
+      if (verbose >= 0) print*, "qext, qscat, qback"
+      if (verbose >= 0) print*, qext, qscat, qback
+
 
       ! sum up extinction, scattering, and backscattering as cross-sections/pi .pi is added in a later step
-      qext =   qext  * ndens(ir) * (diameter_eff/2.d0)**2         ! [m²/m⁴]!
-      qscat =  qscat * ndens(ir) * (diameter_eff/2.d0)**2        ! [m²/m⁴]!
-      qback =  qback * ndens(ir) * (diameter_eff/2.d0)**2        !  [m²/m⁴]! cross section per volume per del_d
+      qext =   qext  * ndens(ir) * (diameter(ir)/2.d0)**2         ! [m²/m⁴]!
+      qscat =  qscat * ndens(ir) * (diameter(ir)/2.d0)**2        ! [m²/m⁴]!
+      qback =  qback * ndens(ir) * (diameter(ir)/2.d0)**2        !  [m²/m⁴]! cross section per volume per del_d
   
-      !integrate=sum up . del_d is added at a later step!
+      if (verbose >= 0) print*, "qback * ndens(ir) * (diameter(ir)/2.d0), pi, del_d"
+      if (verbose >= 0) print*, qback , ndens(ir) ,(diameter(ir)/2.d0), pi, del_d
+  
+      !integrate=sum up . del_d is already included in ndens, since ndens is not normed!
       sumqe = sumqe + qext 
       sumqs = sumqs + qscat
       sumqback = sumqback + qback 
 
-      back_spec(ir) =  qback * pi  ! volumetric backscattering corss section for radar simulator in [m²/m⁴]
+      back_spec(ir) =  qback * pi / del_d(ir) ! volumetric backscattering corss section for radar simulator in [m²/m⁴]
 
       if (lphase_flag) then 
 	  nmie = min0(nmie, nterms) 
@@ -302,15 +287,19 @@ print*, "TODO: take real del_d del_d, remove diameter_eff and density_eff(ir) pa
     !           multiply the sums by the integration delta and other constan
     !             put quadrature weights in angular array for later         
 
-    extinction = pi * sumqe * del_d
-    scatter = pi * sumqs * del_d
-    back_scatt = pi * sumqback * del_d
+    extinction = pi * sumqe 
+    scatter = pi * sumqs 
+    back_scatt = pi * sumqback 
     albedo = scatter / extinction 
 
+      if (verbose >= 0) print*,"ir, extinction, scatter, back_scatt, albedo"
+      if (verbose >= 0) print*,ir, extinction, scatter, back_scatt, albedo
+       
+    
     !         if the phase function is not desired then leave now           
     if ( .not. lphase_flag) return 
 
-    tmp = (wavelength**2 / (pi * scatter) ) * del_d
+    tmp = (wavelength**2 / (pi * scatter) ) 
     do i = 1, nquad 
       sump1 (i) = tmp * sump1 (i) * wts (i) 
       sump2 (i) = tmp * sump2 (i) * wts (i) 

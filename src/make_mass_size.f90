@@ -56,8 +56,8 @@ subroutine make_mass_size(errorstatus)
 
 ! check for "reasonable" input values
 
-  if (b_ms > 3.0) then
-     msg = 'b parameter of the mass-size relation cannot be greater than 3!'
+  if (b_ms > 4.0) then
+     msg = 'b parameter of the mass-size relation cannot be greater than 4!'
      errorstatus = fatal
      call report(errorstatus, msg, nameOfRoutine)
      return

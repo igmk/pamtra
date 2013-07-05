@@ -38,6 +38,7 @@ module drop_size_dist
 ! make_dist OUT
   real(kind=dbl), dimension(:), allocatable  :: d_ds         ! particle diameter                        [m]
   real(kind=dbl), dimension(:), allocatable  :: d_bound_ds   ! boundaries of the particle dimeter bins  [m]
+  real(kind=dbl), dimension(:), allocatable  :: delta_d_ds   ! width of the particle dimeter bins       [m]
   real(kind=dbl), dimension(:), allocatable  :: n_ds         ! particle number concentration            [#/m3]
   real(kind=dbl), dimension(:), allocatable  :: f_ds         ! drop-size distribution                   [#/m4]
 
@@ -58,6 +59,7 @@ subroutine allocateVars_drop_size_dist
 
   allocate(d_ds(nbin))
   allocate(n_ds(nbin))
+  allocate(delta_d_ds(nbin))
   allocate(d_bound_ds(nbin+1))
   allocate(f_ds(nbin+1))
 
@@ -70,6 +72,7 @@ subroutine deallocateVars_drop_size_dist
   if (allocated(d_ds)) deallocate(d_ds)
   if (allocated(n_ds)) deallocate(n_ds)
   if (allocated(d_bound_ds)) deallocate(d_bound_ds)
+  if (allocated(delta_d_ds)) deallocate(delta_d_ds)  
   if (allocated(f_ds)) deallocate(f_ds)
   if (allocated(soft_d_eff)) deallocate(soft_d_eff)
   if (allocated(soft_rho_eff)) deallocate(soft_rho_eff)
@@ -128,9 +131,9 @@ print*,   'd_mono',d_mono
     return
   end if
 
-  if (liq_ice == -1) then ! ADD a filter on the scattering model!!
+!   if (liq_ice == -1) then ! ADD a filter on the scattering model!!
     call make_soft_spheroid(errorstatus)
-  endif
+!   endif
 
   if (errorstatus == 2) then
     msg = 'Error in calc_moment'

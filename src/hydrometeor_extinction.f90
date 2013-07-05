@@ -125,10 +125,6 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
     !convert rt3 to rt4 input
     if (nlegen_coef>0) then
 
-print*, nlegen_coef
-print*, legen_coef
-print*, kexttot(nz)
-print*, salbedo
       call scatcnv(err,scatfiles(nz),nlegen_coef,legen_coef,kexttot(nz),salbedo,&
 	scatter_matrix_scatcnv,extinct_matrix_scatcnv,emis_vector_scatcnv)
       if (err /= 0) then
@@ -142,7 +138,7 @@ print*, salbedo
       emisvec(nz,:,:,:) = emisvec(nz,:,:,:) + emis_vector_scatcnv
     end if
 
-
+print*, "back(nz)", back(nz)
     if (active) then
       call radar_simulator(err,radar_spec, back(nz), kexttot(nz), f,&
 	temp(nz),delta_hgt_lev(nz),nz,nx,ny,fi)

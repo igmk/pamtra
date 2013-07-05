@@ -2,7 +2,8 @@ subroutine parse_options(gitVersion,gitHash)
 
     use kinds, only: long
     use getopt_m
-    use settings, only: maxfreq, nfrq, freqs,frqs_str,namelist_file, input_file,verbose
+    use settings, only: maxfreq, nfrq, freqs,frqs_str,namelist_file,&
+      input_file,verbose, descriptor_file_name
     use vars_profile, only: coords
     use mod_io_strings, only: formatted_frqstr
 
@@ -10,13 +11,14 @@ subroutine parse_options(gitVersion,gitHash)
 
     integer(kind=long) :: ff
     character(40) :: gitHash, gitVersion
-    type(option_s):: opts(6)
+    type(option_s):: opts(7)
     opts(1) = option_s( "namelist", .true.,  'n' )
     opts(2) = option_s( "profile", .true.,  'p' )
-    opts(3) = option_s( "grid", .true.,  'g' )
-    opts(4) = option_s( "freqs", .true., 'f' )
-    opts(5) = option_s( "verbose", .true., 'v' )
-    opts(6) = option_s( "help", .false., 'h' )
+    opts(3) = option_s( "descriptor", .true.,  'd' )    
+    opts(4) = option_s( "grid", .true.,  'g' )
+    opts(5) = option_s( "freqs", .true., 'f' )
+    opts(6) = option_s( "verbose", .true., 'v' )
+    opts(7) = option_s( "help", .false., 'h' )
 
     namelist_file = 'run_params.nml'
     input_file = 'standard.dat'
@@ -24,15 +26,18 @@ subroutine parse_options(gitVersion,gitHash)
     frqs_str = ''
     frqs_str(1) = '89.0'
     nfrq = 1
-
+    descriptor_file_name = "descriptor_file_exp.txt"
+    
     do
-        select case( getopt( "n:cp:cg:cf:cv:ch", opts ))
+        select case( getopt( "n:cp:cd:cg:cf:cv:ch", opts ))
             case( char(0))
                 exit
             case( 'n' )
                 namelist_file = trim(optarg)
             case( 'p' )
                 input_file = trim(optarg)
+            case( 'd' )
+                descriptor_file_name = trim(optarg)                
             case( 'g' )
                 if (optarg(len_trim(optarg):) .ne. ',') &
                 optarg = trim(optarg)//','
@@ -54,6 +59,7 @@ subroutine parse_options(gitVersion,gitHash)
                 print*,'Available options:'
                 print*,'   -n|--namelist     namelist file (default run_params.nml)'
                 print*,'   -p|--profile      profile file  (default standard.dat)'
+		print*,'   -d|--descriptor   descriptor file  (default descriptor_file_COSMO.txt)'
                 print*,'   -g|--grid         start_lon,end_lon,start_lat,end_lat (number of grid point)'
                 print*,'   -f|--freqs        comma seperated list of frequencies (no blanks) (default 89.0)'
                 print*,'   -v|--verbose      integer specifying verbose level between -1 (required by parallel python)'

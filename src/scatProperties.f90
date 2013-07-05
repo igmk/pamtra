@@ -83,11 +83,15 @@ module scatProperties
     real(kind=dbl), dimension(nstokes,nstokes,nummu,2) :: extinct_matrix_hydro
     real(kind=dbl), dimension(nstokes,nummu,2) :: emis_vector_hydro
     real(kind=dbl), dimension(radar_nfft_aliased) :: radar_spec_hydro
-    real(kind=dbl), dimension(nbin+1) :: back_spec_dia
+    real(kind=dbl), dimension(nbin) :: back_spec_dia
     real(kind=dbl) :: kext_hydro
     real(kind=dbl) :: salb_hydro
     real(kind=dbl) :: back_hydro
-
+    real(kind=dbl) :: refre
+    real(kind=dbl) :: refim
+    real(kind=dbl) :: absind
+    real(kind=dbl) :: abscof
+      
     !tmp:
     real(kind=dbl) :: a_mice 
     real(kind=dbl) :: b_mice 
@@ -119,7 +123,18 @@ module scatProperties
 
 
     !get the refractive index
-    !TODO
+     if (liq_ice == 1) then
+	call ref_water(0.d0, t-273.15, freq, refre, refim, absind, abscof)
+      else if (liq_ice == -1) then
+	call ref_ice(t, freq, refre, refim)
+      else
+	errorstatus = fatal
+	print*,"liq_ice=", liq_ice
+	msg = 'Did not understand variable liq_ice'
+	call report(errorstatus, msg, nameOfRoutine)
+	return
+      end if
+
 
 !!!!modern RT4 routines !!!
 
@@ -141,15 +156,17 @@ module scatProperties
 !!!!old style RT3 routines !!!
 
     else if (scat_name == "mie-sphere") then
-      print*, "TODO: get rid of nbins-1 in nbins for mie, move refIndex to scatProperties routine"
       call calc_mie_spheres(err,&
 	    freq,&
 	    t,&
 	    liq_ice,&
-	    nbin-1,&
+	    nbin,&
 	    soft_d_eff,&
-	    (f_ds(1:nbin)+f_ds(2:nbin+1))/2.d0,&
+	    delta_d_ds, &
+	    n_ds,&
 	    soft_rho_eff, &
+	    refre, &
+            refim, & !positive(?)
 !OUT
 	    kext_hydro,&
 	    salb_hydro,&
@@ -244,7 +261,7 @@ module scatProperties
      b_as_ice = 1.85d0 !from mitchell 1996 similar to a_msnow&b_snow
 
 
-      call radar_spectrum(nbin+1,d_bound_ds, back(iz),  back_spec_dia,t,pressure,freq,&
+      call radar_spectrum(nbin,d_bound_ds, back(iz),  back_spec_dia,t,pressure,freq,&
 	"ice",a_mice,b_mice,a_as_ice,b_as_ice,radar_spec_hydro)
       
       radar_spec(:) = radar_spec(:)+ radar_spec_hydro(:)

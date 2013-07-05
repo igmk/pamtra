@@ -41,7 +41,7 @@ subroutine make_dist(errorstatus)
   use constants, only: pi, delta_d_mono
 
   use drop_size_dist, only: dist_name, d_1, d_2, nbin, n_0, lambda, mu, gam, n_t, d_ln, sig, d_mono, & ! IN
-                            d_ds, d_bound_ds, f_ds, n_ds                                               ! OUT
+                            d_ds, d_bound_ds, f_ds, n_ds, delta_d_ds                                               ! OUT
 
   implicit none
 
@@ -96,6 +96,7 @@ subroutine make_dist(errorstatus)
   endif
   do i=1,nbin
     n_ds(i) = (f_ds(i) + f_ds(i+1)) / 2._dbl * (d_bound_ds(i+1)-d_bound_ds(i))  ! trapezoid approximation of the integral
+    delta_d_ds(i) =  d_bound_ds(i+1) - d_bound_ds(i)
   enddo
 
 ! print*,'d_ds',d_ds
