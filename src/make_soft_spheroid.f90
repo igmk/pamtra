@@ -77,7 +77,8 @@ subroutine make_soft_spheroid(errorstatus)
 ! oblate spheroid or sphere
     if (as_ratio < 0. .or. as_ratio >= 1.) then
       do i=1,nbin
-        soft_d_eff(i) = ((6._dbl * mass(i) * as_ratio) / (pi *  rho_ms))**(1._dbl/3._dbl)
+        if (as_ratio < 0.)  soft_d_eff(i) = ((6._dbl * mass(i))            / (pi *  rho_ms))**(1._dbl/3._dbl)
+        if (as_ratio >= 1.) soft_d_eff(i) = ((6._dbl * mass(i) * as_ratio) / (pi *  rho_ms))**(1._dbl/3._dbl)
       enddo
     endif
 ! prolate spheroid or sphere
@@ -94,7 +95,8 @@ subroutine make_soft_spheroid(errorstatus)
     ! oblate spheroid or sphere
     if (as_ratio < 0. .or. as_ratio >= 1.) then
       do i=1,nbin
-        soft_rho_eff(i) = (6._dbl * mass(i) * as_ratio) / (pi *  d_ds(i)**3._dbl)
+        if (as_ratio < 0.)  soft_rho_eff(i) = (6._dbl * mass(i))            / (pi *  d_ds(i)**3._dbl)
+        if (as_ratio >= 1.) soft_rho_eff(i) = (6._dbl * mass(i) * as_ratio) / (pi *  d_ds(i)**3._dbl)
         if (soft_rho_eff(i) < 5._dbl) soft_rho_eff(i) = 5._dbl
         if (soft_rho_eff(i) > rho_ice) soft_rho_eff(i) = rho_ice
       enddo
