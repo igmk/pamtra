@@ -147,9 +147,9 @@ module scatProperties
 	    t,&
 	    liq_ice,&
 	    nbin-1,&
-	    soft_d_eff,&
+	    diameter2scat,&
 	    (f_ds(1:nbin)+f_ds(2:nbin+1))/2.d0,&
-	    soft_rho_eff, &
+	    density2scat, &
 !OUT
 	    kext_hydro,&
 	    salb_hydro,&

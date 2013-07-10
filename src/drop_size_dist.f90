@@ -8,6 +8,8 @@ module drop_size_dist
 
   use report_module
 
+  use constants, only: rho_water
+
   implicit none
   character(len=10)   :: hydro_name           ! hydrometeor name
   real(kind=dbl)      :: as_ratio             ! aspect ratio
@@ -50,6 +52,10 @@ module drop_size_dist
   real(kind=dbl), dimension(:), allocatable  :: soft_d_eff   ! particle diameter of soft spheroids      [m]
   real(kind=dbl), dimension(:), allocatable  :: soft_rho_eff ! particle density of soft spheroids       [kg/m^3]
 
+! Particles density
+  real(kind=dbl), dimension(:), allocatable  :: density2scat ! particle density for scattering routines[kg/m^3]
+  real(kind=dbl), dimension(:), allocatable  :: diameter2scat! particle diameter for scattering routines [m]
+
  contains
 
 subroutine allocateVars_drop_size_dist
@@ -58,6 +64,8 @@ subroutine allocateVars_drop_size_dist
 
   allocate(d_ds(nbin))
   allocate(n_ds(nbin))
+  allocate(density2scat(nbin))
+  allocate(diameter2scat(nbin))
   allocate(d_bound_ds(nbin+1))
   allocate(f_ds(nbin+1))
 
@@ -69,6 +77,8 @@ subroutine deallocateVars_drop_size_dist
 
   if (allocated(d_ds)) deallocate(d_ds)
   if (allocated(n_ds)) deallocate(n_ds)
+  if (allocated(density2scat)) deallocate(density2scat)
+  if (allocated(diameter2scat)) deallocate(diameter2scat)
   if (allocated(d_bound_ds)) deallocate(d_bound_ds)
   if (allocated(f_ds)) deallocate(f_ds)
   if (allocated(soft_d_eff)) deallocate(soft_d_eff)
@@ -131,6 +141,17 @@ print*,   'd_mono',d_mono
   if (liq_ice == -1) then ! ADD a filter on the scattering model!!
     call make_soft_spheroid(errorstatus)
   endif
+
+! fill in the density and diamter array for the scattering routines
+  if (liq_ice == -1) then
+    density2scat = soft_rho_eff
+    diameter2scat = soft_d_eff
+  endif
+  if (liq_ice == 1) then
+    density2scat(:) = rho_water
+    diameter2scat = d_ds
+  endif
+
 
   if (errorstatus == 2) then
     msg = 'Error in calc_moment'
