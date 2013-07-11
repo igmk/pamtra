@@ -97,4 +97,56 @@ contains
         Endif
 
     End Subroutine report
+    
+    Subroutine assert_true(error,logic,message)
+       ! Description:
+        ! Subroutine to simplify unit checks  
+        !        
+        ! Current Code Owner: IGMK
+        !
+        ! History:
+        !
+        ! Version  Date       Comment
+        ! -------  ----       -------
+        ! 0.1      11/07/2013 Initial Implemetation M.Maahn
+        !
+        ! Code Description:
+        !  Language: Fortran 90.
+        !  Software Standards: "European Standards for Writing and
+        !   Documenting Exchangeable Fortran 90 Code".
+        !
+        ! Declarations
+        !
+        ! Global variables:
+        ! Modules used:
+        !
+        !
+        ! Subroutine arguments
+        !   Scalar arguments with intent(inout):
+        integer, intent(inout) :: error
+        !   Logic arguments with intent(in):
+	logical, intent(in) :: logic
+        !   String arguments with intent(in):
+        Character (len=*) , Intent (in) :: message    ! ..to output
+  
+	if (.not. logic) then
+	  call report(fatal, message, "report_module: assert_true")
+	  if (error /= fatal) error = fatal
+	end if
+	return
+    End Subroutine assert_true
+    
+    Subroutine assert_false(error,logic,message)
+        integer, intent(inout) :: error
+        !   Logic arguments with intent(in):
+	logical, intent(in) :: logic
+        !   String arguments with intent(in):
+        Character (len=*) , Intent (in) :: message    ! ..to output
+	if (logic) then
+	  call report(fatal, message, "report_module: assert_false")
+	  if (error /= fatal) error = fatal
+	end if
+	return
+    End Subroutine assert_false
+
 end module report_module
