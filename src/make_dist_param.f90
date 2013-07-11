@@ -240,6 +240,7 @@ subroutine make_dist_params(errorstatus)
       n_0 = MIN(n_0,1e2*hlp)
       n_0 = MIN(n_0,1e9)
       n_0 = MAX(n_0,1e6)
+      lambda = (a_ms * n_0 * dgamma(b_ms+1._dbl) / q_h)**(1._dbl /(b_ms+1._dbl))
     endif
 ! ! Check that the variables have been filled in
     if (gam /= 1._dbl .or. mu /= 0._dbl .or. n_0 <= 0._dbl .or. lambda <= 0._dbl) then
