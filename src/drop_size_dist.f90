@@ -10,6 +10,8 @@ module drop_size_dist
 
   use constants, only: rho_water
 
+  use conversions, only: q2abs
+
   implicit none
   character(len=10)   :: hydro_name           ! hydrometeor name
   real(kind=dbl)      :: as_ratio             ! aspect ratio
@@ -21,8 +23,8 @@ module drop_size_dist
   real(kind=dbl)      :: p_1, p_2, p_3, p_4   ! Drop-size parameters from hydrometeor descriptor file
   real(kind=dbl)      :: d_1, d_2             ! Minimum and maximum particle diameters
 
-  real(kind=dbl)      :: q_h                  ! Specific hydrometeor concentration [kg/kg]
-  real(kind=dbl)      :: n_tot                ! Total hydrometeor number concentration [#/kg]
+  real(kind=dbl)      :: q_h                  ! hydrometeor absolute concentration [kg/m3]
+  real(kind=dbl)      :: n_tot                ! Total hydrometeor number concentration [#/m3]
   real(kind=dbl)      :: r_eff                ! Effective radius [m]
 
   real(kind=dbl)      :: t                    ! Layer temperature [K]
@@ -90,7 +92,7 @@ subroutine run_drop_size_dist(errorstatus)
 
 ! Error handling
 
-  integer(kind=long)  :: errorstatus
+  integer(kind=long)  :: errorstatus, ibin
   integer(kind=long)  :: err = 0
   character(len=80)   :: msg
   character(len=14)   :: nameOfRoutine = 'make_hydro'
@@ -106,15 +108,10 @@ subroutine run_drop_size_dist(errorstatus)
 
   call make_dist_params(errorstatus)
 
-print*,   'n_0',n_0
-print*,   'lambda',lambda
-print*,   'mu',mu
-print*,   'gam',gam
-print*,   'n_t',n_t
-print*,   'sig',sig
-print*,   'd_ln',d_ln
-print*,   'd_mono',d_mono
-
+  if (verbose >= 4) then
+    write(6,'(2(a15),8(a20))') 'hydro_name','dist_name','n_0','lambda','mu','gam','n_t','sig','d_ln','d_mono'
+    write(6,'(2(a15),8(e20.10))') trim(hydro_name),trim(dist_name),n_0, lambda, mu, gam, n_t, sig, d_ln, d_mono
+  endif
 
   if (errorstatus == 2) then
     msg = 'Error in make_dist_params'
@@ -129,6 +126,13 @@ print*,   'd_mono',d_mono
     call report(err, msg, nameOfRoutine)
     return
   end if
+
+! Print out the distribution
+  if (verbose >= 4) then
+    do ibin=1,nbin+1
+      print*,'   distribution: bin boundaries[m], drop_size_dist[1/m4]',d_bound_ds(ibin),f_ds(ibin)
+    enddo
+  endif
 
   call calc_moment(errorstatus)
 
