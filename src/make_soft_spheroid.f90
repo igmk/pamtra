@@ -121,10 +121,12 @@ subroutine make_soft_spheroid(errorstatus)
   errorstatus = success
   if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
 
-  print*,'soft spheroids diameter'
-  print*,soft_d_eff
-  print*,'soft spheroids density'
-  print*,soft_rho_eff
+  if (verbose >= 4) then
+    print*,'soft spheroids diameter [m]'
+    print*,soft_d_eff
+    print*,'soft spheroids density [kg/m3]'
+    print*,soft_rho_eff
+  endif
 
   return
 
