@@ -1,7 +1,7 @@
 subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 
   use kinds
-  use vars_atmosphere, only: nlyr, temp, q_hydro,&
+  use vars_atmosphere, only: nlyr, temp, q_hydro, q_hum,&
       cwc_q, iwc_q, rwc_q, swc_q, gwc_q, press,&
       delta_hgt_lev, hydros_present
   use settings, only: verbose, hydro_threshold
@@ -81,7 +81,9 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
       d_1        = d_1_arr(ih)
       d_2        = d_2_arr(ih)
 
-      q_h        = q_hydro(ih,nz)
+! Convert specific quantities [kg/kg] in absolute ones [kg/m3]
+      q_h        = q2abs(q_hydro(ih,nz),temp(nz),press(nz),q_hum(nz),&
+                   q_hydro(ih,1),q_hydro(ih,2),q_hydro(ih,3),q_hydro(ih,4),q_hydro(ih,5))
       n_tot      = 0.
       r_eff      = 0.
       t          = temp(nz)
@@ -125,10 +127,10 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
     !convert rt3 to rt4 input
     if (nlegen_coef>0) then
 
-print*, nlegen_coef
-print*, legen_coef
-print*, kexttot(nz)
-print*, salbedo
+print*, 'nlegen_coef',nlegen_coef
+print*, 'legen_coef',legen_coef
+print*, 'kexttot(nz)',kexttot(nz)
+print*, 'salbedo',salbedo
       call scatcnv(err,scatfiles(nz),nlegen_coef,legen_coef,kexttot(nz),salbedo,&
 	scatter_matrix_scatcnv,extinct_matrix_scatcnv,emis_vector_scatcnv)
       if (err /= 0) then
