@@ -113,6 +113,7 @@ OBJECTS=kinds.o \
 	calc_moment.o \
 	make_soft_spheroid.o \
 	check_print.o \
+	tmatrix.o \
 	scatProperties.o \
 	hydrometeor_extinction_rt4.o \
 	hydrometeor_extinction.o \
@@ -134,7 +135,6 @@ OBJECTS=kinds.o \
 	radar_calc_moments.o \
 	radar_hildebrand_sekhon.o \
 	write_nc_results.o \
-	tmatrix_calc.o \
 	tmatrix_sql.o \
 	tmatrix_refIndex.o \
 	tmatrix_amplq.lp.o 

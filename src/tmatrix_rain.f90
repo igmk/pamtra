@@ -14,6 +14,7 @@ subroutine tmatrix_rain(f, wc, t, nc, &
   use kinds
   use constants, only: pi, c
   use settings, only: use_rain_db
+  use tmatrix, only: calc_tmatrix
 
   use tmat_rain_db
 
@@ -92,9 +93,10 @@ subroutine tmatrix_rain(f, wc, t, nc, &
         CALL CAL_REFRACTIVE_INDEX('L',t,freq, diameter(ir), as_ratio, particle_mass*1.d3, equiv_radius, mindex)
         print*, ir,diameter(ir),ndens*del_d, tot_mass/wc*100.,ntot/nc*100., mindex
     !     write(25,*) ir,equiv_radius,diameter,density,ntot,ntot/nc*100.0_dbl,tot_mass,tot_mass/wc*100.0_dbl
-        call tmatrix_calc('L',nquad,freq,wave_num,mindex,equiv_radius,nstokes,&
-            as_ratio, eu_alpha, eu_beta, azimuth_num, azimuth0_num, &
-            scat_mat_sgl,ext_mat_sgl,emis_vec_sgl)
+!         call calc_tmatrix('L',nquad,freq,mindex,equiv_radius,nstokes,&
+!             as_ratio, eu_alpha, eu_beta, azimuth_num, azimuth0_num, &
+!             scat_mat_sgl,ext_mat_sgl,emis_vec_sgl)
+            stop "STOP, no tmatrix any more"
      end if
      scatter_matrix = scatter_matrix + scat_mat_sgl*bin_wgt
      extinct_matrix = extinct_matrix + ext_mat_sgl*bin_wgt

@@ -1,4 +1,5 @@
 subroutine tmatrix_refIndex(freq,t,as_ratio_in,diameter,particle_mass,ptype,scatter_matrix,extinct_matrix,emis_vector)
+  use tmatrix, only: calc_tmatrix
 
   use kinds
   use report_module
@@ -36,31 +37,30 @@ subroutine tmatrix_refIndex(freq,t,as_ratio_in,diameter,particle_mass,ptype,scat
   integer(kind=long) :: err = 0
   character(len=80) :: msg
   character(len=14) :: nameOfRoutine = 'tmatrix_refIndex'
-
-  interface
-
-    subroutine tmatrix_calc(quad,qua_num,frequency,wave_num,ref_index,axi, nstokes,&
-    as_ratio, alpha, beta, azimuth_num, azimuth0_num,&
-    scatter_matrix,extinct_matrix,emis_vector)
-      use kinds
-      implicit none
-      character(1), intent(in) :: quad
-      integer, intent(in) :: qua_num
-      real(kind=dbl), intent(in) :: frequency
-      real(kind=dbl), intent(in) :: wave_num
-      complex(kind=ext) :: ref_index
-      real(kind=dbl), intent(in) :: axi
-      integer, intent(in) :: nstokes
-      real(kind=dbl), intent(in) :: as_ratio
-      real(kind=dbl), intent(in) :: alpha
-      real(kind=dbl), intent(in) :: beta
-      integer, intent(in) :: azimuth_num
-      integer, intent(in) :: azimuth0_num
-      real(kind=dbl), intent(out), dimension(nstokes,qua_num,nstokes,qua_num,2) :: scatter_matrix
-      real(kind=dbl), intent(out), dimension(nstokes,nstokes,qua_num) :: extinct_matrix
-      real(kind=dbl), intent(out), dimension(nstokes,qua_num) :: emis_vector
-    end subroutine tmatrix_calc
-  end interface
+! 
+!   interface
+! 
+!     subroutine calc_tmatrix(quad,qua_num,frequency,ref_index,axi, nstokes,&
+!     as_ratio, alpha, beta, azimuth_num, azimuth0_num,&
+!     scatter_matrix,extinct_matrix,emis_vector)
+!       use kinds
+!       implicit none
+!       character(1), intent(in) :: quad
+!       integer, intent(in) :: qua_num
+!       real(kind=dbl), intent(in) :: frequency
+!       complex(kind=ext) :: ref_index
+!       real(kind=dbl), intent(in) :: axi
+!       integer, intent(in) :: nstokes
+!       real(kind=dbl), intent(in) :: as_ratio
+!       real(kind=dbl), intent(in) :: alpha
+!       real(kind=dbl), intent(in) :: beta
+!       integer, intent(in) :: azimuth_num
+!       integer, intent(in) :: azimuth0_num
+!       real(kind=dbl), intent(out), dimension(nstokes,qua_num,nstokes,qua_num,2) :: scatter_matrix
+!       real(kind=dbl), intent(out), dimension(nstokes,nstokes,qua_num) :: extinct_matrix
+!       real(kind=dbl), intent(out), dimension(nstokes,qua_num) :: emis_vector
+!     end subroutine calc_tmatrix
+!   end interface
 
 
   if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
@@ -108,10 +108,11 @@ subroutine tmatrix_refIndex(freq,t,as_ratio_in,diameter,particle_mass,ptype,scat
     else
       as_ratio = as_ratio_in
     end if
-
-    call tmatrix_calc('L',nummu,freq,wave_num,mindex,equiv_radius,nstokes,&
-            as_ratio, eu_alpha, eu_beta, azimuth_num, azimuth0_num, &
-            scatter_matrix,extinct_matrix,emis_vector)
+! 
+!     call calc_tmatrix('L',nummu,freq,mindex,equiv_radius,nstokes,&
+!             as_ratio, eu_alpha, eu_beta, azimuth_num, azimuth0_num, &
+!             scatter_matrix,extinct_matrix,emis_vector)
+            stop "STOP, no tmatrix any more"
 
 
 

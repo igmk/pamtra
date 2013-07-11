@@ -72,7 +72,7 @@ module mie_spheres
 	
     end do
 
-!     call calc_mie_spheres(err, f, t, phase, nbins, diameter, ndens, density_vec, &
+!     call calc_mie_spheres(err, f*1d9, t, phase, nbins, diameter, ndens, density_vec, &
 !       extinction, albedo, back_scatt, nlegen, legen,  &
 !       legen2, legen3, legen4, back_spec)    
    stop "TODO: add del_d to wrapper"     
@@ -92,7 +92,7 @@ module mie_spheres
 
   subroutine calc_mie_spheres(&
       errorstatus, &
-      f, & ! frequency [GHz]
+      freq, & ! frequency [Hz]
       t, &
       phase, &
       nbins, &
@@ -123,7 +123,7 @@ module mie_spheres
 
     implicit none
 
-    real(kind=dbl), intent(in) :: f  ! frequency [GHz]
+    real(kind=dbl), intent(in) :: freq  ! frequency [Hz]
     real(kind=dbl), intent(in) :: t    ! temperature [K]
     integer, intent(in) :: phase
     integer, intent(in) :: nbins
@@ -167,7 +167,7 @@ module mie_spheres
 
     if (verbose >= 4) print*, "calc_mie_spheres(",&
       errorstatus, &
-      f, & ! frequency [GHz]
+      freq, & ! frequency [Hz]
       t, &
       phase, &
       nbins, &
@@ -184,7 +184,7 @@ module mie_spheres
     end if
   
      
-      wavelength = c/(f*1.d9) !
+      wavelength = c/(freq) !
 
      
       x = pi * diameter(1) / wavelength
@@ -227,18 +227,10 @@ module mie_spheres
       else
 		msphere = refre-im*refim
       end if
-
-
-
-
   
       nmie = 0 
 
       x = pi * diameter(ir) / wavelength
-
-	  
-
-
 
       call miecalc (err,nmie, x, msphere, a, b) 
       if (err /= 0) then
@@ -255,12 +247,15 @@ module mie_spheres
       
       if (verbose >= 0) print*, "qext, qscat, qback"
       if (verbose >= 0) print*, qext, qscat, qback
-
-
-      ! sum up extinction, scattering, and backscattering as cross-sections/pi .pi is added in a later step
-      qext =   qext  * ndens(ir) * (diameter(ir)/2.d0)**2         ! [m²/m⁴]!
-      qscat =  qscat * ndens(ir) * (diameter(ir)/2.d0)**2        ! [m²/m⁴]!
-      qback =  qback * ndens(ir) * (diameter(ir)/2.d0)**2        !  [m²/m⁴]! cross section per volume per del_d
+      !from efficiencies cross sections
+      qext =   qext   * (diameter(ir)/2.d0)**2 *pi        ! [m²]!
+      qscat =  qscat  * (diameter(ir)/2.d0)**2 *pi       ! [m²]!
+      qback =  qback  * (diameter(ir)/2.d0)**2 *pi       !  [m²]! cross section
+   
+      ! apply bin weights
+      qext =   qext  * ndens(ir)      ! [m²/m³]!
+      qscat =  qscat * ndens(ir)      ! [m²/m³]!
+      qback =  qback * ndens(ir)      !  [m²/m³]! cross section per volume
   
       if (verbose >= 0) print*, "qback * ndens(ir) * (diameter(ir)/2.d0), pi, del_d"
       if (verbose >= 0) print*, qback , ndens(ir) ,(diameter(ir)/2.d0), pi, del_d
@@ -270,7 +265,7 @@ module mie_spheres
       sumqs = sumqs + qscat
       sumqback = sumqback + qback 
 
-      back_spec(ir) =  qback * pi / del_d(ir) ! volumetric backscattering corss section for radar simulator in [m²/m⁴]
+      back_spec(ir) =  qback / del_d(ir) ! volumetric backscattering corss section for radar simulator in backscat per volume per del_d[m²/m⁴]
 
       if (lphase_flag) then 
 	  nmie = min0(nmie, nterms) 
@@ -287,9 +282,9 @@ module mie_spheres
     !           multiply the sums by the integration delta and other constan
     !             put quadrature weights in angular array for later         
 
-    extinction = pi * sumqe 
-    scatter = pi * sumqs 
-    back_scatt = pi * sumqback 
+    extinction = sumqe 
+    scatter = sumqs 
+    back_scatt = sumqback 
     albedo = scatter / extinction 
 
       if (verbose >= 0) print*,"ir, extinction, scatter, back_scatt, albedo"

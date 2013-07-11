@@ -17,6 +17,7 @@ subroutine tmatrix_ice(f, wc, t, nc, &
   !back_spec: backscattering cross section per volume per del_d [m²/m⁴]
 
 
+  use tmatrix, only: calc_tmatrix
 
   use kinds
   use constants, only: pi, c, im
@@ -66,31 +67,30 @@ subroutine tmatrix_ice(f, wc, t, nc, &
 
   
 
-
-  interface
-
-    subroutine tmatrix_calc(quad,qua_num,frequency,wave_num,ref_index,axi, nstokes,&
-    as_ratio_ice, alpha, beta, azimuth_num, azimuth0_num,&
-    scatter_matrix,extinct_matrix,emis_vector)
-      use kinds
-      implicit none
-      character(1), intent(in) :: quad
-      integer, intent(in) :: qua_num
-      real(kind=dbl), intent(in) :: frequency
-      real(kind=dbl), intent(in) :: wave_num
-      complex(kind=ext) :: ref_index
-      real(kind=dbl), intent(in) :: axi
-      integer, intent(in) :: nstokes
-      real(kind=dbl), intent(in) :: as_ratio_ice
-      real(kind=dbl), intent(in) :: alpha
-      real(kind=dbl), intent(in) :: beta
-      integer, intent(in) :: azimuth_num
-      integer, intent(in) :: azimuth0_num
-      real(kind=dbl), intent(out), dimension(nstokes,qua_num,nstokes,qua_num,2) :: scatter_matrix
-      real(kind=dbl), intent(out), dimension(nstokes,nstokes,qua_num) :: extinct_matrix
-      real(kind=dbl), intent(out), dimension(nstokes,qua_num) :: emis_vector
-    end subroutine tmatrix_calc
-  end interface
+! 
+!   interface
+! 
+!     subroutine calc_tmatrix(quad,qua_num,frequency,ref_index,axi, nstokes,&
+!     as_ratio_ice, alpha, beta, azimuth_num, azimuth0_num,&
+!     scatter_matrix,extinct_matrix,emis_vector)
+!       use kinds
+!       implicit none
+!       character(1), intent(in) :: quad
+!       integer, intent(in) :: qua_num
+!       real(kind=dbl), intent(in) :: frequency
+!       complex(kind=ext) :: ref_index
+!       real(kind=dbl), intent(in) :: axi
+!       integer, intent(in) :: nstokes
+!       real(kind=dbl), intent(in) :: as_ratio_ice
+!       real(kind=dbl), intent(in) :: alpha
+!       real(kind=dbl), intent(in) :: beta
+!       integer, intent(in) :: azimuth_num
+!       integer, intent(in) :: azimuth0_num
+!       real(kind=dbl), intent(out), dimension(nstokes,qua_num,nstokes,qua_num,2) :: scatter_matrix
+!       real(kind=dbl), intent(out), dimension(nstokes,nstokes,qua_num) :: extinct_matrix
+!       real(kind=dbl), intent(out), dimension(nstokes,qua_num) :: emis_vector
+!     end subroutine calc_tmatrix
+!   end interface
 
 
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
@@ -166,10 +166,12 @@ subroutine tmatrix_ice(f, wc, t, nc, &
 
     if (verbose >= 4) print*, "density_eff, equiv_radius, diameter(ir),mindex"
     if (verbose >= 4) print*, density_eff, equiv_radius, diameter(ir),mindex
+! 
+! call calc_tmatrix('l',nquad,freq,mindex,equiv_radius,nstokes,&
+!             as_ratio_ice, eu_alpha, eu_beta, azimuth_num, azimuth0_num, &
+!             scat_mat_sgl,ext_mat_sgl,emis_vec_sgl)
+            stop "STOP, no tmatrix any more"
 
-call tmatrix_calc('l',nquad,freq,wave_num,mindex,equiv_radius,nstokes,&
-            as_ratio_ice, eu_alpha, eu_beta, azimuth_num, azimuth0_num, &
-            scat_mat_sgl,ext_mat_sgl,emis_vec_sgl)
 !      end if
      scatter_matrix(:,:,:,:,1:2) = scatter_matrix(:,:,:,:,1:2) + scat_mat_sgl*bin_wgt
      extinct_matrix(:,:,:,1) = extinct_matrix(:,:,:,1) + ext_mat_sgl*bin_wgt

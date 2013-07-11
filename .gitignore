@@ -24,6 +24,7 @@ test/tmp/*
 !test/tmp/.gitignore
 *.kate-swp
 *.auto.f90
+check_moments
 *.pyc
 *.so
 *.tmp

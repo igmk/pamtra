@@ -40,7 +40,7 @@ module drop_size_dist
   real(kind=dbl), dimension(:), allocatable  :: d_bound_ds   ! boundaries of the particle dimeter bins  [m]
   real(kind=dbl), dimension(:), allocatable  :: delta_d_ds   ! width of the particle dimeter bins       [m]
   real(kind=dbl), dimension(:), allocatable  :: n_ds         ! particle number concentration            [#/m3]
-  real(kind=dbl), dimension(:), allocatable  :: f_ds         ! drop-size distribution                   [#/m4]
+  real(kind=dbl), dimension(:), allocatable  :: f_ds         ! drop-size distribution at the borders    [#/m4]
 
 ! calc_moment OUT
   real(kind=dbl)                 :: m_0                      ! 0th moment, total number                 [#/m3]

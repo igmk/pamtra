@@ -17,6 +17,7 @@ subroutine tmatrix_snow_sql(f, wc, t, nc, &
   !back_spec: backscattering cross section per volume per del_d [m²/m⁴]
 
 
+  use tmatrix, only: calc_tmatrix
 
   use kinds
   use constants, only: pi, c, im
@@ -64,24 +65,24 @@ subroutine tmatrix_snow_sql(f, wc, t, nc, &
   character(len=80) :: msg
   character(len=30) :: nameOfRoutine = 'tmatrix_ice_sql'
 
-  interface
-    subroutine tmatrix_sql(freq,t,as_ratio,diameter,particle_mass,ptype,par_name,scatter_matrix,extinct_matrix,emis_vector)
-
-      use kinds
-      use settings, only : nummu, nstokes
-      implicit none
-
-      real(kind=dbl), intent(in) :: freq, t
-      real(kind=dbl), intent(in) :: as_ratio
-      real(kind=dbl), intent(in) :: particle_mass
-      real(kind=dbl), intent(in) :: diameter
-      character(len=4), intent(in) :: ptype
-      character(len=20), intent(in) :: par_name
-      real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
-      real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
-      real(kind=dbl), intent(out), dimension(nstokes,nummu) :: emis_vector
-    end subroutine tmatrix_sql
-  end interface
+!   interface
+!     subroutine tmatrix_sql(freq,t,as_ratio,diameter,particle_mass,ptype,par_name,scatter_matrix,extinct_matrix,emis_vector)
+! 
+!       use kinds
+!       use settings, only : nummu, nstokes
+!       implicit none
+! 
+!       real(kind=dbl), intent(in) :: freq, t
+!       real(kind=dbl), intent(in) :: as_ratio
+!       real(kind=dbl), intent(in) :: particle_mass
+!       real(kind=dbl), intent(in) :: diameter
+!       character(len=4), intent(in) :: ptype
+!       character(len=20), intent(in) :: par_name
+!       real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
+!       real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
+!       real(kind=dbl), intent(out), dimension(nstokes,nummu) :: emis_vector
+!     end subroutine tmatrix_sql
+!   end interface
 
   if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 

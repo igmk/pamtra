@@ -8,6 +8,7 @@ module scatProperties
       radar_mode, &
       maxnleg
   use mie_spheres, only: calc_mie_spheres
+  use tmatrix, only: calc_tmatrix
   use vars_atmosphere, only: kexttot,&
       back,&
       scattermatrix, &
@@ -15,7 +16,7 @@ module scatProperties
       emisvec
   use report_module
   use drop_size_dist
-  use constants, only: pi
+  use constants, only: pi, Im
 
   implicit none
 
@@ -92,6 +93,8 @@ module scatProperties
     real(kind=dbl) :: absind
     real(kind=dbl) :: abscof
       
+    complex(kind=dbl) :: refIndex  
+      
     !tmp:
     real(kind=dbl) :: a_mice 
     real(kind=dbl) :: b_mice 
@@ -134,15 +137,39 @@ module scatProperties
 	call report(errorstatus, msg, nameOfRoutine)
 	return
       end if
+      refIndex = refre-Im*refim  ! mimicking a
 
 
 !!!!modern RT4 routines !!!
 
-    if (scat_name == "tMAtrix-to-be-implemented") then
+    if (scat_name == "TMatrix") then
+    
+      !some fixed settings for Tmatrix
 
-      stop "ENTER HERE TMATRIX ROUTINE"
+  
+      call calc_tmatrix(err,&
+        freq*1.d9,&
+	refIndex,&
+	liq_ice,&
+	nbin,&
+	soft_d_eff, &
+	delta_d_ds, &
+	n_ds,&
+        soft_rho_eff,&
+	as_ratio,& 
+	scatter_matrix_hydro(:,:,:,:,1:2),&
+	extinct_matrix_hydro(:,:,:,1),&
+	emis_vector_hydro(:,:,1),&
+	back_spec_dia)
 
-
+	
+      if (err /= 0) then
+	  msg = 'error in calc_tmatrix!'
+	  call report(err, msg, nameOfRoutine)
+	  errorstatus = err
+	  return
+      end if       	
+	
       !fill up the matrices
       scatter_matrix_hydro(:,:,:,:,4) = scatter_matrix_hydro(:,:,:,:,1) 
       scatter_matrix_hydro(:,:,:,:,3) = scatter_matrix_hydro(:,:,:,:,2)
@@ -157,7 +184,7 @@ module scatProperties
 
     else if (scat_name == "mie-sphere") then
       call calc_mie_spheres(err,&
-	    freq,&
+	    freq*1d9,&
 	    t,&
 	    liq_ice,&
 	    nbin,&
