@@ -24,7 +24,9 @@ module scatProperties
         as_ratio, &
         d_bound_ds, &
         pressure, &
-        t
+        t, &
+        mass_ds, &
+        area_ds
   use constants, only: pi, Im
 
   implicit none
@@ -54,9 +56,7 @@ module scatProperties
       integer, intent(in) :: iz
 
 
-      kexttot(iz) = 0.d0
       salbedo     = 0.d0
-      back(iz) = 0.d0
       legen_coef(:,:)   = 0.d0
       nlegen_coef     = 0
       return
@@ -66,12 +66,14 @@ module scatProperties
       implicit none
       integer, intent(in) :: iz
 
-      
+      kexttot(iz) = 0.d0  
+      back(iz) = 0.d0
 
       scattermatrix(iz,:,:,:,:,:)=0.d0
       extmatrix(iz,:,:,:,:)=0.d0
       emisvec(iz,:,:,:)=0.d0
 
+      radar_spec(:) = 0.d0
       return
 
     end subroutine prepare_rt4_scatProperties
@@ -289,17 +291,16 @@ module scatProperties
 
 
     if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
-     print*, "TODO transfer correct mass size and area size relation ro radar simulator"
-     a_mice = 0.82d0
-     b_mice = 2.5d0
-     !area-size relation in SI
-     a_as_ice = 0.12028493607054538 !0.24 in CGS
-     b_as_ice = 1.85d0 !from mitchell 1996 similar to a_msnow&b_snow
 
+      call radar_spectrum(err,nbin,d_bound_ds, back(iz),  back_spec_dia,t,pressure,freq,&
+        liq_ice,mass_ds,area_ds,radar_spec_hydro)
+      if (err /= 0) then
+          msg = 'error in radar_spectrum!'
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+      end if        
 
-      call radar_spectrum(nbin,d_bound_ds, back(iz),  back_spec_dia,t,pressure,freq,&
-        "ice",a_mice,b_mice,a_as_ice,b_as_ice,radar_spec_hydro)
-      
       radar_spec(:) = radar_spec(:)+ radar_spec_hydro(:)
     end if
     

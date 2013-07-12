@@ -55,10 +55,15 @@ module drop_size_dist
   real(kind=dbl), dimension(:), allocatable  :: soft_d_eff   ! particle diameter of soft spheroids      [m]
   real(kind=dbl), dimension(:), allocatable  :: soft_rho_eff ! particle density of soft spheroids       [kg/m^3]
 
-! Particles density
+! Particles density & diameter
   real(kind=dbl), dimension(:), allocatable  :: density2scat ! particle density for scattering routines[kg/m^3]
   real(kind=dbl), dimension(:), allocatable  :: diameter2scat! particle diameter for scattering routines [m]
+! Particle Mass & area
+  real(kind=dbl), dimension(:), allocatable  :: mass_ds ! particle mass for radar simulator [kg]
+  real(kind=dbl), dimension(:), allocatable  :: area_ds ! particle cross section area for radar simulator [m^2]
 
+  
+  
  contains
 
 subroutine allocateVars_drop_size_dist
@@ -72,6 +77,8 @@ subroutine allocateVars_drop_size_dist
   allocate(diameter2scat(nbin))
   allocate(d_bound_ds(nbin+1))
   allocate(f_ds(nbin+1))
+  allocate(mass_ds(nbin))
+  allocate(area_ds(nbin))
 
 end subroutine allocateVars_drop_size_dist
 
@@ -88,6 +95,8 @@ subroutine deallocateVars_drop_size_dist
   if (allocated(f_ds)) deallocate(f_ds)
   if (allocated(soft_d_eff)) deallocate(soft_d_eff)
   if (allocated(soft_rho_eff)) deallocate(soft_rho_eff)
+  if (allocated(area_ds)) deallocate(area_ds)
+  if (allocated(mass_ds)) deallocate(mass_ds)
 
 end subroutine deallocateVars_drop_size_dist
 
@@ -159,6 +168,14 @@ subroutine run_drop_size_dist(errorstatus)
     diameter2scat = d_ds
   endif
 
+  
+  print*, "Emiliano, I need mass and area for the radar simulator. I think it is best to calculate it here? "
+  print*, "Area comes from an area mass relation, usually A = aD**b, which we have to add to the descriptor file"
+  print*, "in addition, I need a field in the descriptor file with the name of the fall speed relation to be used"
+  print*, "see radar_spectrum.f90, line 147ff"
+  mass_ds(:) = 1.d-4 !dummy value
+  area_ds(:) = 1.d-4 !dummy value
+  
 
   if (errorstatus == 2) then
     msg = 'Error in calc_moment'

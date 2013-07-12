@@ -99,10 +99,6 @@ subroutine run_rt(errorstatus, nx,ny,fi)
 
     if (verbose >= 2) print*, nx,ny, 'Gas absorption calculated'
 
-
-
-
-
     ! hydrometeor extinction desired
     if (lhyd_extinction) then
     

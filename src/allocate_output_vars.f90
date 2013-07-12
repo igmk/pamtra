@@ -63,7 +63,7 @@ subroutine allocate_output_vars(no_allocated_lyrs)
         radar_slope(ngridx,ngridy,no_allocated_lyrs,nfrq,2),&
         radar_quality(ngridx,ngridy,no_allocated_lyrs,nfrq),&
         radar_vel(radar_nfft))
-        !set to -9999, because height of profiles can vary!
+        !set to -9999, because radar simulator might not run on all levels!
         radar_spectra = -9999.d0
         radar_snr = -9999.d0
         radar_vel = -9999.d0

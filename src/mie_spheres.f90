@@ -11,7 +11,7 @@ module mie_spheres
   contains
   
 
-  subroutine mie_spheres_wrapper(f, t,phase,&
+  subroutine mie_spheres_wrapper(f, t,liq_ice,&
       a_mtox, bcoeff, dia1, dia2, nbins, maxleg, ad, bd, alpha, &
       gamma, extinction, albedo, back_scatt, nlegen, legen,  &
       legen2, legen3, legen4, aerodist,density,wc,&
@@ -30,7 +30,7 @@ module mie_spheres
 
     real(kind=dbl), intent(in) :: f,  &! frequency [GHz]
 	t    ! temperature [K]
-    integer, intent(in) :: phase
+    integer, intent(in) :: liq_ice
 
     integer :: maxleg, nlegen, nbins
     real(kind=dbl) :: dia1, dia2
@@ -72,7 +72,7 @@ module mie_spheres
 	
     end do
 
-!     call calc_mie_spheres(err, f*1d9, t, phase, nbins, diameter, ndens, density_vec, &
+!     call calc_mie_spheres(err, f*1d9, t, liq_ice, nbins, diameter, ndens, density_vec, &
 !       extinction, albedo, back_scatt, nlegen, legen,  &
 !       legen2, legen3, legen4, back_spec)    
    stop "TODO: add del_d to wrapper"     
@@ -94,7 +94,7 @@ module mie_spheres
       errorstatus, &
       freq, & ! frequency [Hz]
       t, &
-      phase, &
+      liq_ice, &
       nbins, &
       diameter, &
       del_d, &
@@ -125,7 +125,7 @@ module mie_spheres
 
     real(kind=dbl), intent(in) :: freq  ! frequency [Hz]
     real(kind=dbl), intent(in) :: t    ! temperature [K]
-    integer, intent(in) :: phase
+    integer, intent(in) :: liq_ice
     integer, intent(in) :: nbins
     real(kind=dbl), intent(in), dimension(nbins) :: diameter
     real(kind=dbl), intent(in), dimension(nbins) :: del_d    
@@ -169,7 +169,7 @@ module mie_spheres
       errorstatus, &
       freq, & ! frequency [Hz]
       t, &
-      phase, &
+      liq_ice, &
       nbins, &
        "diameter", diameter, &
       "ndens", ndens, &
@@ -220,8 +220,7 @@ module mie_spheres
 
     do ir = 1, nbins
 
-
-      if (phase == -1 .and. density(ir) /= 917.d0) then
+      if (liq_ice == -1 .and. density(ir) /= 917.d0) then
 	  m_ice = refre-Im*refim  ! mimicking a
 	  msphere = eps_mix((1.d0,0.d0),m_ice,density(ir))
       else
@@ -240,13 +239,13 @@ module mie_spheres
 	  return
       end if         
       
-      if (verbose >= 0) print*, "density(ir), diameter(ir), diameter(ir), ndens(ir)/del_d, msphere, x"
-      if (verbose >= 0) print*, density(ir), diameter(ir), diameter(ir), ndens(ir)/del_d, msphere, x 
+      if (verbose >= 0) print*, "density(ir), diameter(ir), ndens(ir), msphere, x"
+      if (verbose >= 0) print*, density(ir), diameter(ir), ndens(ir), msphere, x 
       
       call miecross (nmie, x, a, b, qext, qscat, qback)
       
-      if (verbose >= 0) print*, "qext, qscat, qback"
-      if (verbose >= 0) print*, qext, qscat, qback
+      if (verbose >= 4) print*, "qext, qscat, qback"
+      if (verbose >= 4) print*, qext, qscat, qback
       !from efficiencies cross sections
       qext =   qext   * (diameter(ir)/2.d0)**2 *pi        ! [m²]!
       qscat =  qscat  * (diameter(ir)/2.d0)**2 *pi       ! [m²]!
@@ -257,8 +256,8 @@ module mie_spheres
       qscat =  qscat * ndens(ir)      ! [m²/m³]!
       qback =  qback * ndens(ir)      !  [m²/m³]! cross section per volume
   
-      if (verbose >= 0) print*, "qback * ndens(ir) * (diameter(ir)/2.d0), pi, del_d"
-      if (verbose >= 0) print*, qback , ndens(ir) ,(diameter(ir)/2.d0), pi, del_d
+      if (verbose >= 4) print*, "qback * ndens(ir) * (diameter(ir)/2.d0), pi, del_d"
+      if (verbose >= 4) print*, qback , ndens(ir) ,(diameter(ir)/2.d0), pi, del_d
   
       !integrate=sum up . del_d is already included in ndens, since ndens is not normed!
       sumqe = sumqe + qext 
@@ -287,11 +286,11 @@ module mie_spheres
     back_scatt = sumqback 
     albedo = scatter / extinction 
 
-      if (verbose >= 0) print*,"ir, extinction, scatter, back_scatt, albedo"
-      if (verbose >= 0) print*,ir, extinction, scatter, back_scatt, albedo
+      if (verbose >= 4) print*,"ir, extinction, scatter, back_scatt, albedo"
+      if (verbose >= 4) print*,ir, extinction, scatter, back_scatt, albedo
        
     
-    !         if the phase function is not desired then leave now           
+    ! if the liq_ice function is not desired then leave now           
     if ( .not. lphase_flag) return 
 
     tmp = (wavelength**2 / (pi * scatter) ) 

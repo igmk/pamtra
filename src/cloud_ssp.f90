@@ -155,7 +155,7 @@ real(kind=dbl) :: re, Nt
   particle_type="cloud" 
 
   if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
-    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,f,&
+    call radar_spectrum_tbd(nbins_spec,diameter_spec, back, back_spec,t,press,f,&
       particle_type,-1.d0,-1.d0,-1.d0,-1.d0,cloud_spec)
   else
     cloud_spec(:)=0.d0

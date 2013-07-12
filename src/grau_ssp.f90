@@ -115,7 +115,7 @@ subroutine grau_ssp(f,gwc,t,press,maxleg,nc, kext, salb, back,  &
 
   if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
     particle_type="graup" 
-    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,f,&
+    call radar_spectrum_tbd(nbins_spec,diameter_spec, back, back_spec,t,press,f,&
       particle_type,a_mgrau, b_grau,-1.d0,-1.d0,grau_spec)
   else
     grau_spec(:)=0.d0

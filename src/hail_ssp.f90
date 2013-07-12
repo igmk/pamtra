@@ -82,7 +82,7 @@ print*, "a_mhail, b_hail", a_mhail, b_hail
 
   if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
     particle_type="hail" 
-    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,f,&
+    call radar_spectrum_tbd(nbins_spec,diameter_spec, back, back_spec,t,press,f,&
       particle_type,a_mhail,b_hail,-1.d0,-1.d0,hail_spec)
   else
     hail_spec(:)=0.d0

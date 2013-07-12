@@ -56,7 +56,8 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 
     call prepare_rt3_scatProperties(nz)
     call prepare_rt4_scatProperties(nz)
-
+    hydros_present(nz) = .false.
+    
     if (verbose .gt. 1) print*, 'Layer: ', nz
 
     hydros: do ih = 1,n_hydro
@@ -140,8 +141,7 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
       emisvec(nz,:,:,:) = emisvec(nz,:,:,:) + emis_vector_scatcnv
     end if
 
-print*, "back(nz)", back(nz)
-    if (active) then
+    if (active .and. hydros_present(nz)) then
       call radar_simulator(err,radar_spec, back(nz), kexttot(nz), f,&
 	temp(nz),delta_hgt_lev(nz),nz,nx,ny,fi)
       if (err /= 0) then

@@ -262,7 +262,7 @@ nbins=20
   if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
     particle_type ="ice"
 
-    call radar_spectrum(nbins_spec,diameter_spec, back,  back_spec,t,press,f,&
+    call radar_spectrum_tbd(nbins_spec,diameter_spec, back,  back_spec,t,press,f,&
       particle_type,a_mice,b_mice,a_as_ice,b_as_ice,ice_spec)
 
   else

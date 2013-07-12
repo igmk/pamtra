@@ -256,7 +256,7 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
   particle_type="snow" 
 
   if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
-    call radar_spectrum(nbins_spec,diameter_spec, back, back_spec,t,press,f,&
+    call radar_spectrum_tbd(nbins_spec,diameter_spec, back, back_spec,t,press,f,&
       particle_type,a_msnow,b_snow,a_as_snow,b_as_snow,snow_spec)
   else
     snow_spec(:)=0.d0

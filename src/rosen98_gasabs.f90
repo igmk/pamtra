@@ -111,6 +111,7 @@ subroutine rosen98_gasabs &
      call report(errorstatus, msg, nameOfRoutine)
      return
   elseif (pres < 10.0_dbl .or. pres > 1.2d5) then
+     print*, pres
      errorstatus = fatal
      msg = 'Pressure not between 10 and 1.2d5 Pa in rosen98_gasabs!'
      call report(errorstatus, msg, nameOfRoutine)

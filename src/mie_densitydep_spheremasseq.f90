@@ -129,6 +129,7 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
        end if
      end if
 
+
      nmie = 0 
 
      !       call density_ice(a_mtox, bcoeff, radius, dens_graup) 
@@ -155,14 +156,13 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
 	density_eff = 917.d0
       end if
 
-
-
      x = pi * diameter_eff / wavelength
 
 	 msphere = eps_mix((1.d0,0.d0),m_ice,density_eff)
 
-    if (verbose >= 4) print*, "density_eff, diameter(ir), ndens, msphere"
-    if (verbose >= 4) print*, density_eff, diameter(ir), ndens, msphere
+if (verbose >= 0) print*, "ir,density_eff, diameter(ir), ndens*del_d, msphere, x"
+if (verbose >= 0) print*,ir, density_eff, diameter(ir), ndens*del_d, msphere, x    
+     
 
      call miecalc (err,nmie, x, msphere, a, b) 
     if (err /= 0) then

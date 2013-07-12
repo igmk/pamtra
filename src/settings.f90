@@ -132,7 +132,6 @@ contains
 		  radar_fallVel_snow, radar_fallVel_graupel, radar_fallVel_hail, radar_aliasing_nyquist_interv, &
 		  radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr, radar_convolution_fft
 
-
 	descriptor_file_name = "descriptor_file_COSMO.txt"
 
 	hydro_threshold = 1.d-10   ! [kg/kg] 
@@ -260,7 +259,7 @@ contains
         radar_use_hildebrand = .false.
         radar_min_spectral_snr = 1.2!threshold for peak detection. if radar_no_Ave >> 150, it can be set to 1.1
         radar_convolution_fft = .true. !use fft for convolution of spectrum. is alomst 10 times faster, but can introduce aretfacts for radars with *extremely* low noise levels or if noise is turned off at all.
-
+        
         ! read name list parameter file
         open(7, file=namelist_file,delim='APOSTROPHE')
         read(7,nml=inoutput_mode)

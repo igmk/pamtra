@@ -23,16 +23,61 @@ module dia2vel
 
   contains
 
+  subroutine dia2vel_heymsfield10_particles_ms_as &
+    (errorstatus,&      ! out
+    nDia,&              !in
+    diaSpec_SI,&        !in
+    rho_air_SI,&        !in
+    my_SI,&             !in
+    mass_size_a_SI,&    !in
+    mass_size_b,&       !in
+    area_size_a_SI,&    !in
+    area_size_b,&       !in
+    velSpec)            !out
+  !to be deleted after transition to pamtra v1.0
+      use settings, only: verbose
+      use kinds
+      use constants
+      use report_module
+      implicit none 
+      
+      integer, intent(in) :: nDia
+      real(kind=dbl), intent(in), dimension(ndia)::diaSpec_SI
+      real(kind=dbl), intent(in) :: rho_air_SI, my_SI,mass_size_a_SI,mass_size_b,&
+      area_size_a_SI,area_size_b
+      real(kind=dbl), dimension(ndia), intent(out) :: velSpec
+      real(kind=dbl), dimension(ndia)::mass,area
+  
+      integer(kind=long), intent(out) :: errorstatus
+      integer(kind=long) :: err = 0
+      character(len=80) :: msg
+      character(len=63) :: nameOfRoutine = 'dia2vel_heymsfield10_particles_ms_as'  
+      
+      mass = mass_size_a_SI * diaSpec_SI**mass_size_b
+      area = area_size_a_SI * diaSpec_SI**area_size_b
+  
+      call dia2vel_heymsfield10_particles &
+        (err,&      ! out
+        nDia,&              !in
+        diaSpec_SI,&        !in
+        rho_air_SI,&        !in
+        my_SI,&             !in
+        mass,&              !in
+        area,&              !in
+        velSpec)            !out
+  
+  errorstatus = err
+  
+  end subroutine  dia2vel_heymsfield10_particles_ms_as
+  
   subroutine dia2vel_heymsfield10_particles &
     (errorstatus,&     	! out
     nDia,& 		!in
     diaSpec_SI,&	!in
     rho_air_SI,&	!in
     my_SI,&		!in
-    mass_size_a_SI,&	!in
-    mass_size_b,&	!in
-    area_size_a_SI,&	!in
-    area_size_b,&	!in
+    mass,&              !in
+    area,&              !in
     velSpec)		!out
 
       !in
@@ -40,8 +85,8 @@ module dia2vel
       !diaSpec_SI = diameter spectrum [m]
       !rho_air_SI = density of air [kg/m³]
       !my_SI = kinematic viscosity of air [m²/s]
-      !mass_size_a_SI,mass_size_b parameters of mass size relation m = a*D_max^b [SI]
-      !area_size_a_SI,area_size_b parameters of mass area relation A = a*D_max^b [SI]
+      !mass = mass of the particle [SI]
+      !area = cross section area [SI]
       !out
       !velSpec: velocity spectrum [m/s]
 
@@ -59,11 +104,10 @@ module dia2vel
       implicit none
 
       integer, intent(in) :: nDia
-      real(kind=dbl), intent(in), dimension(ndia)::diaSpec_SI
-      real(kind=dbl), intent(in) :: rho_air_SI, my_SI,mass_size_a_SI,mass_size_b,&
-      area_size_a_SI,area_size_b
+      real(kind=dbl), intent(in), dimension(ndia)::diaSpec_SI, mass,area
+      real(kind=dbl), intent(in) :: rho_air_SI, my_SI
       real(kind=dbl), dimension(ndia), intent(out) :: velSpec
-      real(kind=dbl), dimension(ndia)::mass,area, area_proj, Xstar, Re
+      real(kind=dbl), dimension(ndia)::area_proj, Xstar, Re
       real(kind=dbl) ::k, delta_0, C_0, eta
 
 
@@ -81,8 +125,6 @@ module dia2vel
       delta_0 = 8.0d0
       C_0 = 0.35d0
 
-      mass = mass_size_a_SI * diaSpec_SI**mass_size_b
-      area = area_size_a_SI * diaSpec_SI**area_size_b
       area_proj = area/((pi/4.d0)*diaSpec_SI**2)
       eta = my_SI * rho_air_SI !now dynamic viscosity
 

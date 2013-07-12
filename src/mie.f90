@@ -169,7 +169,8 @@ end if
      
        if (verbose >= 0) print*, "ir,density, diameter(ir), ndens(ir)*del_d, msphere, x"
       if (verbose >= 0) print*,ir, density, diameter(ir), ndens(ir)*del_d, msphere, x    
-     
+       
+    
      call miecalc(err,nmie, x, msphere, a, b) ! calculate a and b
     if (err /= 0) then
 	msg = 'error in mieclac!'
@@ -180,16 +181,16 @@ end if
      !calculate the efficencies
      call miecross(nmie, x, a, b, qext, qscat, qback)
      
-      if (verbose >= 0) print*, "qext, qscat, qback"
-      if (verbose >= 0) print*, qext, qscat, qback
+      if (verbose >= 4) print*, "qext, qscat, qback"
+      if (verbose >= 4) print*, qext, qscat, qback
      
      ! sum up extinction, scattering, and backscattering as cross-sections/pi .pi is added in a later step
      qext =   qext  * ndens(ir) * (diameter(ir)/2.d0)**2         ! [m²/m⁴]!
      qscat =  qscat * ndens(ir) * (diameter(ir)/2.d0)**2        ! [m²/m⁴]!
      qback =  qback * ndens(ir) * (diameter(ir)/2.d0)**2        !  [m²/m⁴]! cross section per volume per del_d
  
-      if (verbose >= 0) print*, "qback*del_d ,ndens(ir)*del_d * (diameter(ir)/2.d0), pi, del_d"
-      if (verbose >= 0) print*, qback*del_d , ndens(ir)*del_d ,(diameter(ir)/2.d0), pi , del_d
+      if (verbose >= 4) print*, "qback*del_d ,ndens(ir)*del_d * (diameter(ir)/2.d0), pi, del_d"
+      if (verbose >= 4) print*, qback*del_d , ndens(ir)*del_d ,(diameter(ir)/2.d0), pi , del_d
     
  
         !integrate=sum up . del_d is added at a later step!
@@ -219,8 +220,8 @@ end if
     back_scatt = pi * sumqback * del_d   ! back scattering [m*m²/m⁴]!
     albedo = scatter / extinction        ! single scattering albedo
     
-      if (verbose >= 0) print*,"ir, extinction, scatter, back_scatt, albedo"
-      if (verbose >= 0) print*,ir, extinction, scatter, back_scatt, albedo
+      if (verbose >= 4) print*,"ir, extinction, scatter, back_scatt, albedo"
+      if (verbose >= 4) print*,ir, extinction, scatter, back_scatt, albedo
     
     
     ! if the phase function is not desired then leave now

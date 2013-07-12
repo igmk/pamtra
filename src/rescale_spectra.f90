@@ -83,6 +83,17 @@ contains
 
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
+    call assert_true(err,nx1>1,&
+        "nx1 must be greater 1") 
+    call assert_true(err,nx2>1,&
+        "nx2 must be greater 1")         
+    if (err /= 0) then
+      msg = 'error in tranforming the spectrum to velocity space...'
+      call report(err, msg, nameOfRoutine)
+      errorstatus = err
+      return
+    end if
+    
     x1_sorted = x1
     y1_sorted = y1
 

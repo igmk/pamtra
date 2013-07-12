@@ -131,8 +131,8 @@ frequency,temp,delta_h,nz,nx,ny,fi)
         max_V_aliased = radar_max_V + radar_aliasing_nyquist_interv*(radar_max_V-radar_min_V)
         spectra_velo_aliased = (/(((ii*del_v)+min_V_aliased),ii=0,radar_nfft_aliased)/) ! [m/s]
 
-        !get turbulence
-        if (radar_turbulence_st > 0.d0) then
+        !get turbulence (no turbulence in clear sky...)
+        if (radar_turbulence_st > 0.d0 .and. back > 0) then
             ss = radar_turbulence_st/del_v;            !in array indices!
 
             turb(:) = 0.d0
@@ -252,7 +252,7 @@ frequency,temp,delta_h,nz,nx,ny,fi)
         !apply spectral resolution
         noise_turb_spectra = noise_turb_spectra * del_v !now [mm⁶/m³]
 
-        if (verbose .gt. 3) then
+        if (verbose >= 4) then
             print*,"second K",K
             print*,"TOTAL"," Ze back",10*log10(Ze_back)
             print*,"TOTAL"," Ze SUM(particle_spectrum)*del_v",10*log10(SUM(particle_spectrum)*del_v)
@@ -272,7 +272,7 @@ frequency,temp,delta_h,nz,nx,ny,fi)
 	  errorstatus = err
 	  return
       end if   
-        if (verbose .gt. 3) then
+        if (verbose >= 4) then
             print*,"TOTAL"," Ze moments",10*log10(moments(0))
             print*,"#####################"
         end if
