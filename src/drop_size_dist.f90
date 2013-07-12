@@ -8,6 +8,10 @@ module drop_size_dist
 
   use report_module
 
+  use constants, only: rho_water
+
+  use conversions, only: q2abs
+
   implicit none
   character(len=10)   :: hydro_name           ! hydrometeor name
   real(kind=dbl)      :: as_ratio             ! aspect ratio
@@ -19,8 +23,8 @@ module drop_size_dist
   real(kind=dbl)      :: p_1, p_2, p_3, p_4   ! Drop-size parameters from hydrometeor descriptor file
   real(kind=dbl)      :: d_1, d_2             ! Minimum and maximum particle diameters
 
-  real(kind=dbl)      :: q_h                  ! Specific hydrometeor concentration [kg/kg]
-  real(kind=dbl)      :: n_tot                ! Total hydrometeor number concentration [#/kg]
+  real(kind=dbl)      :: q_h                  ! hydrometeor absolute concentration [kg/m3]
+  real(kind=dbl)      :: n_tot                ! Total hydrometeor number concentration [#/m3]
   real(kind=dbl)      :: r_eff                ! Effective radius [m]
 
   real(kind=dbl)      :: t                    ! Layer temperature [K]
@@ -51,6 +55,10 @@ module drop_size_dist
   real(kind=dbl), dimension(:), allocatable  :: soft_d_eff   ! particle diameter of soft spheroids      [m]
   real(kind=dbl), dimension(:), allocatable  :: soft_rho_eff ! particle density of soft spheroids       [kg/m^3]
 
+! Particles density
+  real(kind=dbl), dimension(:), allocatable  :: density2scat ! particle density for scattering routines[kg/m^3]
+  real(kind=dbl), dimension(:), allocatable  :: diameter2scat! particle diameter for scattering routines [m]
+
  contains
 
 subroutine allocateVars_drop_size_dist
@@ -60,6 +68,8 @@ subroutine allocateVars_drop_size_dist
   allocate(d_ds(nbin))
   allocate(n_ds(nbin))
   allocate(delta_d_ds(nbin))
+  allocate(density2scat(nbin))
+  allocate(diameter2scat(nbin))
   allocate(d_bound_ds(nbin+1))
   allocate(f_ds(nbin+1))
 
@@ -71,6 +81,8 @@ subroutine deallocateVars_drop_size_dist
 
   if (allocated(d_ds)) deallocate(d_ds)
   if (allocated(n_ds)) deallocate(n_ds)
+  if (allocated(density2scat)) deallocate(density2scat)
+  if (allocated(diameter2scat)) deallocate(diameter2scat)
   if (allocated(d_bound_ds)) deallocate(d_bound_ds)
   if (allocated(delta_d_ds)) deallocate(delta_d_ds)  
   if (allocated(f_ds)) deallocate(f_ds)
@@ -83,7 +95,7 @@ subroutine run_drop_size_dist(errorstatus)
 
 ! Error handling
 
-  integer(kind=long)  :: errorstatus
+  integer(kind=long)  :: errorstatus, ibin
   integer(kind=long)  :: err = 0
   character(len=80)   :: msg
   character(len=14)   :: nameOfRoutine = 'make_hydro'
@@ -99,15 +111,10 @@ subroutine run_drop_size_dist(errorstatus)
 
   call make_dist_params(errorstatus)
 
-print*,   'n_0',n_0
-print*,   'lambda',lambda
-print*,   'mu',mu
-print*,   'gam',gam
-print*,   'n_t',n_t
-print*,   'sig',sig
-print*,   'd_ln',d_ln
-print*,   'd_mono',d_mono
-
+  if (verbose >= 4) then
+    write(6,'(2(a15),8(a20))') 'hydro_name','dist_name','n_0','lambda','mu','gam','n_t','sig','d_ln','d_mono'
+    write(6,'(2(a15),8(e20.10))') trim(hydro_name),trim(dist_name),n_0, lambda, mu, gam, n_t, sig, d_ln, d_mono
+  endif
 
   if (errorstatus == 2) then
     msg = 'Error in make_dist_params'
@@ -123,6 +130,13 @@ print*,   'd_mono',d_mono
     return
   end if
 
+! Print out the distribution
+  if (verbose >= 4) then
+    do ibin=1,nbin+1
+      print*,'   distribution: bin boundaries[m], drop_size_dist[1/m4]',d_bound_ds(ibin),f_ds(ibin)
+    enddo
+  endif
+
   call calc_moment(errorstatus)
 
   if (errorstatus == 2) then
@@ -134,6 +148,17 @@ print*,   'd_mono',d_mono
 !   if (liq_ice == -1) then ! ADD a filter on the scattering model!!
     call make_soft_spheroid(errorstatus)
 !   endif
+
+! fill in the density and diamter array for the scattering routines
+  if (liq_ice == -1) then
+    density2scat = soft_rho_eff
+    diameter2scat = soft_d_eff
+  endif
+  if (liq_ice == 1) then
+    density2scat(:) = rho_water
+    diameter2scat = d_ds
+  endif
+
 
   if (errorstatus == 2) then
     msg = 'Error in calc_moment'

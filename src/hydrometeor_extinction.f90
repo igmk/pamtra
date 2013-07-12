@@ -1,7 +1,7 @@
 subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 
   use kinds
-  use vars_atmosphere, only: nlyr, temp, q_hydro,&
+  use vars_atmosphere, only: nlyr, temp, q_hydro, q_hum,&
       cwc_q, iwc_q, rwc_q, swc_q, gwc_q, press,&
       delta_hgt_lev, hydros_present
   use settings, only: verbose, hydro_threshold
@@ -81,7 +81,9 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
       d_1        = d_1_arr(ih)
       d_2        = d_2_arr(ih)
 
-      q_h        = q_hydro(ih,nz)
+! Convert specific quantities [kg/kg] in absolute ones [kg/m3]
+      q_h        = q2abs(q_hydro(ih,nz),temp(nz),press(nz),q_hum(nz),&
+                   q_hydro(ih,1),q_hydro(ih,2),q_hydro(ih,3),q_hydro(ih,4),q_hydro(ih,5))
       n_tot      = 0.
       r_eff      = 0.
       t          = temp(nz)

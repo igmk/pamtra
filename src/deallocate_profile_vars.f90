@@ -16,6 +16,8 @@ subroutine deallocate_profile_vars
      deallocate(hwc_q,cwc_n,iwc_n,rwc_n,swc_n,gwc_n,hwc_n)
   end if
 
+  deallocate(q_hydro)
+
   deallocate(nlegen,kextatmo,kexttot,salbtot,g_coeff,&
     back,legen,legen2,legen3,legen4,&
     rt4hydros_present,hydros_present)

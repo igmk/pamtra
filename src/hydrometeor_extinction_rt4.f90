@@ -6,7 +6,8 @@ subroutine hydrometeor_extinction_rt4(errorstatus,f,nx,ny,fi)
                        n_moments, quad_type, nummu, EM_snow, EM_grau, &
 		       EM_hail, EM_ice, EM_rain, EM_cloud, as_ratio, &
                        use_rain_db, use_snow_db, data_path, &
-		       jacobian_mode, radar_nfft_aliased, radar_mode
+		       jacobian_mode, radar_nfft_aliased, radar_mode,&
+		       hydro_threshold
   use constants
   use mod_io_strings
   use conversions
@@ -39,7 +40,7 @@ subroutine hydrometeor_extinction_rt4(errorstatus,f,nx,ny,fi)
 
 !   real(kind=dbl), dimension(2) :: P11, ang
 
-  real(kind=dbl) :: threshold ! threshold value for hydrometeor extinction as mass mixing ratio
+!   real(kind=dbl) :: threshold ! threshold value for hydrometeor extinction as mass mixing ratio
 
   real(kind=dbl), dimension(6,100) :: coef
 
@@ -72,7 +73,6 @@ subroutine hydrometeor_extinction_rt4(errorstatus,f,nx,ny,fi)
 
   ! INITIALIZATION OF LEGENDRE COEFFICIENTS
 
-  threshold = 1e-10
 
   nlegen = 0
   legen   = 0.d0
@@ -195,7 +195,7 @@ subroutine hydrometeor_extinction_rt4(errorstatus,f,nx,ny,fi)
      salbcw = 0.d0 
      backcw(nz) = 0.d0 
      cloud_spec(:) = 0.d0
-     if ((cwc_q(nz) .ge. threshold) .and. (EM_cloud .ne. 'disab')) then
+     if ((cwc_q(nz) .ge. hydro_threshold) .and. (EM_cloud .ne. 'disab')) then
         hydros_present(nz) = .true.
      	if (n_moments .eq. 1) then
 	     	qwc = q2abs(cwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
@@ -228,8 +228,7 @@ subroutine hydrometeor_extinction_rt4(errorstatus,f,nx,ny,fi)
      salbci = 0.0d0 
      backci(nz) = 0.0d0 
      ice_spec(:) = 0.d0
-     if ((iwc_q(nz) .ge. threshold) .and. (EM_ice .ne. 'disab')) then
-print*, "IWC_q", iwc_q(nz)     
+     if ((iwc_q(nz) .ge. hydro_threshold) .and. (EM_ice .ne. 'disab')) then
         hydros_present(nz) = .true.
 	     if (n_moments .eq. 1) then
 	     	qwc = q2abs(iwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
@@ -263,7 +262,7 @@ print*, "IWC_q", iwc_q(nz)
      backrr(nz) = 0.d0
      rain_spec(:) = 0.d0
 
-     if ((rwc_q(nz) .ge. threshold) .and. EM_rain .ne. "disab") then
+     if ((rwc_q(nz) .ge. hydro_threshold) .and. EM_rain .ne. "disab") then
         hydros_present(nz) = .true.
      	if (n_moments .eq. 1) then
 	       qwc = q2abs(rwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
@@ -297,7 +296,7 @@ print*, "IWC_q", iwc_q(nz)
     salbsn = 0.0d0
     backsn(nz) = 0.0d0
      snow_spec(:) = 0.d0
-     if ((swc_q(nz) .ge. threshold) .and. (EM_snow .ne. 'disab')) then
+     if ((swc_q(nz) .ge. hydro_threshold) .and. (EM_snow .ne. 'disab')) then
         hydros_present(nz) = .true.
      	 if (n_moments .eq. 1) then
 	     	qwc = q2abs(swc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
@@ -329,7 +328,7 @@ print*, "IWC_q", iwc_q(nz)
         salbgr = 0.0d0
         backgr(nz) = 0.0d0
      graupel_spec(:) = 0.d0
-     if ((gwc_q(nz) .ge. threshold) .and. (EM_grau .ne. 'disab'))then
+     if ((gwc_q(nz) .ge. hydro_threshold) .and. (EM_grau .ne. 'disab'))then
         hydros_present(nz) = .true.
 	     if (n_moments .eq. 1) then
 	     	qwc = q2abs(gwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz))
@@ -363,7 +362,7 @@ print*, "IWC_q", iwc_q(nz)
       backha(nz) = 0.0d0
      hail_spec(:) = 0.d0
      if (n_moments .eq. 2) then
-        if ((hwc_q(nz) .ge. threshold) .and. (EM_hail .ne. 'disab')) then
+        if ((hwc_q(nz) .ge. hydro_threshold) .and. (EM_hail .ne. 'disab')) then
            hydros_present(nz) = .true.
 	       qwc = q2abs(hwc_q(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))
 	       nc = q2abs(hwc_n(nz),temp(nz),press(nz),q_hum(nz),cwc_q(nz),iwc_q(nz),rwc_q(nz),swc_q(nz),gwc_q(nz),hwc_q(nz))

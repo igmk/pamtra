@@ -70,50 +70,36 @@ subroutine make_soft_spheroid(errorstatus)
     mass(i) = a_ms * d_ds(i)**b_ms
   enddo
 
-  if (liq_ice == -1) then ! ADD a filter on the scattering model!!#
-  print*, "TODO @emiliano: is that relay right? the mie routine expects avector, so we have to insert something"
-    soft_rho_eff = (6._dbl * mass * as_ratio) / (pi *  d_ds**3._dbl)
-    soft_d_eff = d_ds
-  else
-  
-
-  ! density set to a fixed value by the user
-  ! Calculate the diameter of the soft spheroids
-    if (rho_ms > 0.) then
-      soft_rho_eff(:) = rho_ms
-  ! oblate spheroid or sphere
-      if (as_ratio < 0. .or. as_ratio >= 1.) then
-	do i=1,nbin
-	  soft_d_eff(i) = ((6._dbl * mass(i) * as_ratio) / (pi *  rho_ms))**(1._dbl/3._dbl)
-	enddo
-      endif
-  ! prolate spheroid or sphere
-      if (as_ratio > 0. .and. as_ratio < 1.) then
-	do i=1,nbin
-	  soft_d_eff(i) = ((6._dbl * mass(i)) / (pi * rho_ms * as_ratio**2._dbl))**(1._dbl/3._dbl)
-	enddo
-      endif
+! density set to a fixed value by the user
+! Calculate the diameter of the soft spheroids
+  if (rho_ms > 0.) then
+    soft_rho_eff(:) = rho_ms
+! oblate spheroid or sphere
+    if (as_ratio < 0. .or. as_ratio >= 1.) then
+      do i=1,nbin
+        if (as_ratio < 0.)  soft_d_eff(i) = ((6._dbl * mass(i))            / (pi *  rho_ms))**(1._dbl/3._dbl)
+        if (as_ratio >= 1.) soft_d_eff(i) = ((6._dbl * mass(i) * as_ratio) / (pi *  rho_ms))**(1._dbl/3._dbl)
+      enddo
     endif
+! prolate spheroid or sphere
+    if (as_ratio > 0. .and. as_ratio < 1.) then
+      do i=1,nbin
+        soft_d_eff(i) = ((6._dbl * mass(i)) / (pi * rho_ms * as_ratio**2._dbl))**(1._dbl/3._dbl)
+      enddo
+    endif
+endif
 
-  ! Calculate the density of the soft spheroids
-    if (rho_ms < 0.) then
-      soft_d_eff = d_ds
-      ! oblate spheroid or sphere
-      if (as_ratio < 0. .or. as_ratio >= 1.) then
-	do i=1,nbin
-	  soft_rho_eff(i) = (6._dbl * mass(i) * as_ratio) / (pi *  d_ds(i)**3._dbl)
-	  if (soft_rho_eff(i) < 5._dbl) soft_rho_eff(i) = 5._dbl
-	  if (soft_rho_eff(i) > rho_ice) soft_rho_eff(i) = rho_ice
-	enddo
-      endif
-  ! prolate spheroid or sphere
-      if (as_ratio > 0. .and. as_ratio < 1.) then
-	do i=1,nbin
-	  soft_rho_eff(i) = (6._dbl * mass(i)) / (pi *  d_ds(i)**3._dbl * as_ratio**2._dbl) 
-	  if (soft_rho_eff(i) < 5._dbl) soft_rho_eff(i) = 5._dbl
-	  if (soft_rho_eff(i) > rho_ice) soft_rho_eff(i) = rho_ice
-	enddo
-      endif
+! Calculate the density of the soft spheroids
+  if (rho_ms < 0.) then
+    soft_d_eff = d_ds
+    ! oblate spheroid or sphere
+    if (as_ratio < 0. .or. as_ratio >= 1.) then
+      do i=1,nbin
+        if (as_ratio < 0.)  soft_rho_eff(i) = (6._dbl * mass(i))            / (pi *  d_ds(i)**3._dbl)
+        if (as_ratio >= 1.) soft_rho_eff(i) = (6._dbl * mass(i) * as_ratio) / (pi *  d_ds(i)**3._dbl)
+        if (soft_rho_eff(i) < 5._dbl) soft_rho_eff(i) = 5._dbl
+        if (soft_rho_eff(i) > rho_ice) soft_rho_eff(i) = rho_ice
+      enddo
     endif
 
     if (minval(soft_rho_eff) <= 0. .or. minval(soft_d_eff) <= 0.) then
@@ -129,10 +115,12 @@ subroutine make_soft_spheroid(errorstatus)
   errorstatus = success
   if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
 
-  print*,'soft spheroids diameter'
-  print*,soft_d_eff
-  print*,'soft spheroids density'
-  print*,soft_rho_eff
+  if (verbose >= 4) then
+    print*,'soft spheroids diameter [m]'
+    print*,soft_d_eff
+    print*,'soft spheroids density [kg/m3]'
+    print*,soft_rho_eff
+  endif
 
   return
 

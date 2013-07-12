@@ -15,14 +15,16 @@ module scatProperties
       extmatrix, &
       emisvec
   use report_module
-  use drop_size_dist, only:
-        liq_ice,&
+  use drop_size_dist, only: liq_ice,&
         nbin,&
-        soft_d_eff, &
+        diameter2scat, &
         delta_d_ds, &
         n_ds,&
-        soft_rho_eff,&
-        as_ratio
+        density2scat,&
+        as_ratio, &
+        d_bound_ds, &
+        pressure, &
+        t
   use constants, only: pi, Im
 
   implicit none
@@ -37,7 +39,7 @@ module scatProperties
     !needed by rt3 and rt4
     character(len=15) :: scat_name
     real(kind=dbl), allocatable, dimension(:) :: radar_spec
-
+    
   contains
   
   subroutine allocate_scatProperties()
@@ -149,7 +151,7 @@ module scatProperties
 
 !!!!modern RT4 routines !!!
 
-    if (scat_name == "TMatrix") then
+    if (scat_name == "tmatrix") then
     
       !some fixed settings for Tmatrix
 
@@ -159,10 +161,10 @@ module scatProperties
         refIndex,&
         liq_ice,&
         nbin,&
-        soft_d_eff, &
+        diameter2scat, &
         delta_d_ds, &
         n_ds,&
-        soft_rho_eff,&
+        density2scat,&
         as_ratio,& 
         scatter_matrix_hydro(:,:,:,:,1:2),&
         extinct_matrix_hydro(:,:,:,1),&
@@ -195,10 +197,10 @@ module scatProperties
             t,&
             liq_ice,&
             nbin,&
-            soft_d_eff,&
+            diameter2scat,&
             delta_d_ds, &
             n_ds,&
-            soft_rho_eff, &
+            density2scat, &
             refre, &
             refim, & !positive(?)
 !OUT
@@ -232,8 +234,7 @@ module scatProperties
     back(iz) = back(iz) + back_hydro
 
     !sum up rt4 style
-    scattermatrix(iz,:,:,:,:,:) = scattermatrix(iz,:,:,:,:,:) + 
-scatter_matrix_hydro
+    scattermatrix(iz,:,:,:,:,:) = scattermatrix(iz,:,:,:,:,:) + scatter_matrix_hydro
     extmatrix(iz,:,:,:,:) = extmatrix(iz,:,:,:,:) + extinct_matrix_hydro
     emisvec(iz,:,:,:) = emisvec(iz,:,:,:) + emis_vector_hydro
 
@@ -247,14 +248,10 @@ scatter_matrix_hydro
 
     if (nlegen_coef > 0) then
       nlegen_loop: do jj = 1, nlegen_coef
-        legen_coef(1,jj) = legen_coef(1,jj) + (legen_coef1_hydro(jj) * 
-salb_hydro * kext_hydro)
-        legen_coef(2,jj) = legen_coef(2,jj) + (legen_coef2_hydro(jj) * 
-salb_hydro * kext_hydro)
-        legen_coef(3,jj) = legen_coef(3,jj) + (legen_coef3_hydro(jj) * 
-salb_hydro * kext_hydro)
-        legen_coef(4,jj) = legen_coef(4,jj) + (legen_coef4_hydro(jj) * 
-salb_hydro * kext_hydro)
+        legen_coef(1,jj) = legen_coef(1,jj) + (legen_coef1_hydro(jj) * salb_hydro * kext_hydro)
+        legen_coef(2,jj) = legen_coef(2,jj) + (legen_coef2_hydro(jj) * salb_hydro * kext_hydro)
+        legen_coef(3,jj) = legen_coef(3,jj) + (legen_coef3_hydro(jj) * salb_hydro * kext_hydro)
+        legen_coef(4,jj) = legen_coef(4,jj) + (legen_coef4_hydro(jj) * salb_hydro * kext_hydro)
 
       end do nlegen_loop
       legen_coef(5,:) = legen_coef(1,:)
@@ -291,10 +288,8 @@ salb_hydro * kext_hydro)
     end if   
 
 
-    if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. 
-"moments"))) then
-     print*, "TODO transfer correct mass size and area size relation ro radar 
-simulator"
+    if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
+     print*, "TODO transfer correct mass size and area size relation ro radar simulator"
      a_mice = 0.82d0
      b_mice = 2.5d0
      !area-size relation in SI
@@ -302,8 +297,7 @@ simulator"
      b_as_ice = 1.85d0 !from mitchell 1996 similar to a_msnow&b_snow
 
 
-      call radar_spectrum(nbin,d_bound_ds, back(iz),  
-back_spec_dia,t,pressure,freq,&
+      call radar_spectrum(nbin,d_bound_ds, back(iz),  back_spec_dia,t,pressure,freq,&
         "ice",a_mice,b_mice,a_as_ice,b_as_ice,radar_spec_hydro)
       
       radar_spec(:) = radar_spec(:)+ radar_spec_hydro(:)

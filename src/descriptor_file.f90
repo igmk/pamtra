@@ -63,7 +63,6 @@ subroutine read_descriptor_file(errorstatus)
     read(111,*,IOSTAT=work1)  work2
     if (work1 /= 0) exit
     if (work2 /= '!')  n_hydro = n_hydro + 1
-print*,n_hydro,work2,work1
   end do
   rewind(111)
 
@@ -96,6 +95,13 @@ print*,n_hydro,work2,work1
       read(111,*) hydro_name_arr(i), as_ratio_arr(i), liq_ice_arr(i),rho_ms_arr(i), a_ms_arr(i), &
                 b_ms_arr(i), moment_in_arr(i), nbin_arr(i),dist_name_arr(i), p_1_arr(i),         &
                 p_2_arr(i), p_3_arr(i), p_4_arr(i), d_1_arr(i), d_2_arr(i), scat_name_arr(i)
+      if (verbose >= 4 .and. i == 1) write(6,'(a15,7(a12),a15,6(a12),a15)'),'hydro_name','as_ratio','liq_ice','rho_ms','a_ms',&
+                                     'b_ms','moment_in','nbin','dist_name','p_1',&
+                                      'p_2','p_3','p_4','d_1','d_2','scat_name'
+      if (verbose >= 4) write(6,'(a15,e12.3,i12,3(e12.3),2(i12),a15,6(e12.3),a15)') &
+                trim(hydro_name_arr(i)), as_ratio_arr(i), liq_ice_arr(i),rho_ms_arr(i), a_ms_arr(i), &
+                b_ms_arr(i), moment_in_arr(i), nbin_arr(i),trim(dist_name_arr(i)), p_1_arr(i),         &
+                p_2_arr(i), p_3_arr(i), p_4_arr(i), d_1_arr(i), d_2_arr(i), trim(scat_name_arr(i))
       i = i+1
     endif
   end do

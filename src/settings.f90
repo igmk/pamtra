@@ -134,6 +134,7 @@ contains
 
 
 	descriptor_file_name = "descriptor_file_COSMO.txt"
+
 	hydro_threshold = 1.d-10   ! [kg/kg] 
 
 
@@ -205,7 +206,7 @@ contains
         EM_rain="miera"
         ! sec snow_params
         SD_snow='C'
-        N_0snowDsnow=7.628
+        N_0snowDsnow=0.565
         EM_snow='densi'
         use_snow_db=.true.
         as_ratio=0.5d0
