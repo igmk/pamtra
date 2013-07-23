@@ -244,7 +244,7 @@ module tmatrix
 	  emis_vector_tmp1_11(2*qua_num), emis_vector_tmp1_12(2*qua_num),&
 	  emis_vector_tmp2_11,emis_vector_tmp2_12
       real(kind=dbl) :: thet0_weights, thet_weights
-
+      real(kind=dbl) :: EPS
 
       integer :: nmax, np
 
@@ -284,9 +284,9 @@ module tmatrix
   !     axi = axi!*1.e6
       mrr = REAL(ref_index)
       mri = abs(IMAG(ref_index))
-
+EPS = 1d0/AS_RATIO
   ! call the tmatrix routine amplq -> fills common block /TMAT/
-      call tmatrix_amplq(lam, mrr,mri, AXI, AS_RATIO, RAT, NP,nmax)
+      call tmatrix_amplq(lam, mrr,mri, AXI, EPS, RAT, NP,nmax)
 
       extinct_matrix = 0.d0
       scatter_matrix = 0.d0
@@ -344,9 +344,9 @@ module tmatrix
 			  phi_weights = 1.d0/360.d0*(360.d0/azimuth_num)
 
 
-
 		  CALL tmatrix_AMPL(NMAX,dble(LAM),THET0,THET,PHI0,PHI,ALPHA,BETA,&
 		    S11,S12,S21,S22)
+print*, thet0, thet, PHI0,PHI, s11
 
 			  s11 = s11*wave_num
 			  s12 = s12*wave_num
@@ -380,6 +380,7 @@ module tmatrix
 		      scatter_matrix(2,ll,2,jj,kkk1) = scatter_matrix(2,ll,2,jj,kkk1) + scatt_matrix_tmp1_22*phi0_weights
 
   1244                continue  ! phi0
+ if (jj == 3) stop
 		  ! calculate the summation of the scattering matrix in the whole sphere
 		  emis_vector_tmp1_11(ll+(kk-1)*qua_num) = scatter_matrix(1,ll,1,jj,kkk1)*thet_weights*2.*pi
 		  emis_vector_tmp1_12(ll+(kk-1)*qua_num) = scatter_matrix(1,ll,2,jj,kkk1)*thet_weights*2.*pi
