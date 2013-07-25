@@ -7,8 +7,9 @@ subroutine make_mass_size(errorstatus)
 !  m = a * D^b
 !  When rho_ms is provided the as_ratio is used to calculate a_ms
 !  and b_ms according to this formulas:
-!  if as_ratio > 1  (oblate)  b=3 a=pi/6 * rho_ms * 1/as_ratio
-!  if as_ratio <= 1 (prolate) b=3 a=pi/6 * rho_ms * (as_ratio)^2
+!  if as_ratio > 1  (prolate)  b=3 a=pi/6 * rho_ms * as_ratio
+!  if as_ratio <= 1 (oblate)   b=3 a=pi/6 * rho_ms * (1 / as_ratio)^2
+!  as_ratio = dimension_along_axis_of_rotation / dimension_perpendicular_to_axis_of_rotation
 ! 
 ! Owner: IGMK
 !
@@ -129,17 +130,17 @@ subroutine make_mass_size(errorstatus)
      errorstatus = err
      if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
      return
-! ! as_ratio < 1.0 --> prolate spheroid
+! ! as_ratio < 1.0 --> oblate spheroid
   elseif (liq_ice == -1 .and. as_ratio > 0.0 .and. as_ratio < 1.0) then
      b_ms = 3._dbl
-     a_ms = pi / 6._dbl * rho_ms * (as_ratio) ** 2._dbl
+     a_ms = pi / 6._dbl * rho_ms * (1._dbl / as_ratio) ** 2._dbl
      errorstatus = err
      if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
      return
-! ! as_ratio > 1.0 --> oblate spheroid
+! ! as_ratio > 1.0 --> prolate spheroid
   elseif (liq_ice == -1 .and. as_ratio > 1.0) then
      b_ms = 3._dbl
-     a_ms = pi / 6._dbl * rho_ms / (as_ratio)
+     a_ms = pi / 6._dbl * rho_ms * as_ratio
      errorstatus = err
      if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
      return
