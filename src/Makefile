@@ -137,7 +137,8 @@ OBJECTS=kinds.o \
 	write_nc_results.o \
 	tmatrix_sql.o \
 	tmatrix_refIndex.o \
-	tmatrix_amplq.lp.o 
+	tmatrix_amplq.lp.o \
+	trapez_int.o 
 # 	amplq.par.o
 #	rt3.o \
 	radtran3.o \

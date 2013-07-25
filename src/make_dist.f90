@@ -95,8 +95,8 @@ subroutine make_dist(errorstatus)
     enddo
   endif
   do i=1,nbin
-    n_ds(i) = (f_ds(i) + f_ds(i+1)) / 2._dbl * (d_bound_ds(i+1)-d_bound_ds(i))  ! trapezoid approximation of the integral
     delta_d_ds(i) =  d_bound_ds(i+1) - d_bound_ds(i)
+    n_ds(i) = (f_ds(i) + f_ds(i+1)) / 2._dbl * delta_d_ds(i)  ! trapezoid approximation of the integral
   enddo
 
 ! print*,'d_ds',d_ds

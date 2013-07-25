@@ -95,10 +95,15 @@ subroutine get_surface &
     integer(kind=long) :: err = 0
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'get_surface'
+    LOGICAL :: file_exists
 
     inquire(iolength=iolsgl) 1._sgl
 
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
+
+
+
+
 
     if (lfrac >= 0.5_dbl .and. lfrac <= 1.0_dbl) then
         ground_type = 'S' ! changed to specular after advice of cathrine prigent
@@ -114,8 +119,18 @@ subroutine get_surface &
             call report(errorstatus,msg,nameOfRoutine)
             return
         end if
+
+        if (verbose >= 4) call report(info,'Opening: '//trim(femis), nameOfRoutine)
+        INQUIRE(FILE=trim(femis), EXIST=file_exists) 
+        if (.not.(file_exists)) then
+          errorstatus = fatal
+          msg = "File not found:"//trim(femis)
+          call report(errorstatus, msg, nameOfRoutine)
+          return
+        end if   
+
         open(ise,file=trim(femis),status='old',form='unformatted',&
-        access='direct',recl=iolsgl*7)
+        access='direct',recl=iolsgl*7,ACTION="READ")
         ! land_emis could give polarized reflectivities
 
         call land_emis(ise,lon,lat,freq,land_emissivity)
