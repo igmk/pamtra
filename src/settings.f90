@@ -132,7 +132,7 @@ contains
 		  radar_fallVel_snow, radar_fallVel_graupel, radar_fallVel_hail, radar_aliasing_nyquist_interv, &
 		  radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr, radar_convolution_fft
 
-	descriptor_file_name = "descriptor_file_COSMO.txt"
+	descriptor_file_name = "descriptor_file.txt"
 
 	hydro_threshold = 1.d-10   ! [kg/kg] 
 
