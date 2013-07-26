@@ -19,7 +19,7 @@ module scatProperties
         nbin,&
         diameter2scat, &
         delta_d_ds, &
-        n_ds,&
+        f_ds,&
         density2scat,&
         as_ratio, &
         d_bound_ds, &
@@ -95,7 +95,7 @@ module scatProperties
     real(kind=dbl), dimension(nstokes,nstokes,nummu,2) :: extinct_matrix_hydro
     real(kind=dbl), dimension(nstokes,nummu,2) :: emis_vector_hydro
     real(kind=dbl), dimension(radar_nfft_aliased) :: radar_spec_hydro
-    real(kind=dbl), dimension(nbin) :: back_spec_dia
+    real(kind=dbl), dimension(nbin+1) :: back_spec_dia
     real(kind=dbl) :: kext_hydro
     real(kind=dbl) :: salb_hydro
     real(kind=dbl) :: back_hydro
@@ -165,7 +165,7 @@ module scatProperties
         nbin,&
         diameter2scat, &
         delta_d_ds, &
-        n_ds,&
+        f_ds,&
         density2scat,&
         as_ratio,& 
         scatter_matrix_hydro(:,:,:,:,1:2),&
@@ -201,7 +201,7 @@ module scatProperties
             nbin,&
             diameter2scat,&
             delta_d_ds, &
-            n_ds,&
+            f_ds,&
             density2scat, &
             refre, &
             refim, & !positive(?)

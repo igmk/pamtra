@@ -57,9 +57,9 @@ subroutine radar_spectrum(&
     implicit none
 
     integer,intent(in) ::  nbins 
-    real(kind=dbl), dimension(nbins),intent(in):: diameter_spec, back_spec
+    real(kind=dbl), dimension(nbins+1),intent(in):: diameter_spec, back_spec
     integer,intent(in) ::  liq_ice
-    real(kind=dbl), dimension(nbins),intent(in):: mass, area
+    real(kind=dbl), dimension(nbins+1),intent(in):: mass, area
     real(kind=dbl), intent(in):: temp, frequency, press,back
 
     real(kind=dbl), dimension(nbins):: vel_spec,dD_dU,back_vel_spec, back_spec_ref,&
