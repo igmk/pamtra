@@ -143,7 +143,7 @@ module mie_spheres
 
     real(kind=dbl) :: wavelength
     complex(kind=dbl) :: m_ice
-    real(kind=dbl) :: del_d_eff, ndens_eff    
+    real(kind=dbl) :: del_d_eff, ndens_eff, n_tot
     integer, parameter :: maxn  = 5000
     integer :: nterms, nquad, nmie, nleg 
     integer :: i, l, m, ir
@@ -203,6 +203,7 @@ module mie_spheres
      
       x = pi * diameter(1) / wavelength
       nterms = 0 
+      n_tot = 0.d0
       call miecalc (err,nterms, x, msphere, a, b) 
       if (err /= 0) then
 	  msg = 'error in mieclac!'
@@ -245,6 +246,8 @@ module mie_spheres
         del_d_eff = del_d(ir)
       end if
 
+      n_tot = n_tot + (ndens_eff * del_d_eff)
+
       if (liq_ice == -1 .and. density(ir) /= 917.d0) then
 	  m_ice = refre-Im*refim  ! mimicking a
 	  msphere = eps_mix((1.d0,0.d0),m_ice,density(ir))
@@ -281,8 +284,8 @@ module mie_spheres
       qscat =  qscat * ndens_eff      ! [m²/m⁴]!
       qback =  qback * ndens_eff      !  [m²/m⁴]! cross section per volume
   
-      if (verbose >= 4) print*, "qback * ndens_eff * (diameter(ir)/2.d0), pi, del_d_eff"
-      if (verbose >= 4) print*, qback , ndens_eff ,(diameter(ir)/2.d0), pi, del_d_eff
+      if (verbose >= 4) print*, "qback* del_d_eff, ndens_eff , (diameter(ir)/2.d0), pi, del_d_eff"
+      if (verbose >= 4) print*, qback * del_d_eff, ndens_eff ,(diameter(ir)/2.d0), pi, del_d_eff
   
       !integrate=sum up . del_d is already included in ndens, since ndens is not normed!
       sumqe = sumqe + ( qext * del_d_eff)
@@ -305,6 +308,9 @@ module mie_spheres
 
     !           multiply the sums by the integration delta and other constan
     !             put quadrature weights in angular array for later         
+
+    if (verbose >= 4) print*, "ntot", n_tot
+
 
     extinction = sumqe 
     scatter = sumqs 

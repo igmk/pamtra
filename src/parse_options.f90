@@ -26,7 +26,7 @@ subroutine parse_options(gitVersion,gitHash)
     frqs_str = ''
     frqs_str(1) = '89.0'
     nfrq = 1
-    descriptor_file_name = "descriptor_file_exp.txt"
+    descriptor_file_name = "descriptor_file.txt"
     
     do
         select case( getopt( "n:cp:cd:cg:cf:cv:ch", opts ))
