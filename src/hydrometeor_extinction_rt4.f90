@@ -477,7 +477,7 @@ subroutine hydrometeor_extinction_rt4(errorstatus,f,nx,ny,fi)
 print*, "back(nz)", back(nz)
   if (active) then
      call radar_simulator(err,full_spec, back(nz), kexttot(nz), f,&
-      temp(nz),delta_hgt_lev(nz),nz,nx,ny,fi)
+      delta_hgt_lev(nz),nz,nx,ny,fi)
     if (err /= 0) then
 	msg = 'error in radar_simulator!'
 	call report(err, msg, nameOfRoutine)

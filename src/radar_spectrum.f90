@@ -108,7 +108,7 @@ subroutine radar_spectrum(&
     
     
     ! get |K|**2 and lambda
-    K2 = dielec_water(0.D0,temp-t_abs,frequency)
+    K2 = dielec_water(0.D0,radar_K2_temp-t_abs,frequency)
     wavelength = c / (frequency*1.d9)   ! m
 
     diameter_spec_cp(:) = diameter_spec(:)

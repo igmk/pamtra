@@ -1,5 +1,5 @@
 subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,&
-frequency,temp,delta_h,nz,nx,ny,fi)
+frequency,delta_h,nz,nx,ny,fi)
     ! This routine takes the backscattering spectrum depending on Doppler velocity,
     ! adds noise and turbulence and simulates temporal averaging
     !
@@ -11,7 +11,6 @@ frequency,temp,delta_h,nz,nx,ny,fi)
     ! back: volumetric backscattering crossection in m²/m³
     ! kexthydro: hydrometeor absorption coefficient [Np/m]
     ! frequency: Frequency in GHz
-    ! temp: temperature in K
     ! delta_h: heigth of layer in m
     ! nz,nx,ny,fi: level, grid x, y, frequency index
     !
@@ -27,7 +26,7 @@ frequency,temp,delta_h,nz,nx,ny,fi)
     implicit none
   
 
-    real(kind=dbl),intent(in) ::  frequency, temp, back, delta_h,kexthydro
+    real(kind=dbl),intent(in) ::  frequency, back, delta_h,kexthydro
     integer,intent(in) ::  nz,nx,ny,fi
     real(kind=dbl), dimension(radar_nfft_aliased),intent(in):: particle_spectrum
     real(kind=dbl), dimension(radar_nfft_aliased) :: spectra_velo_aliased
@@ -104,7 +103,7 @@ frequency,temp,delta_h,nz,nx,ny,fi)
       
     
     ! get |K|**2 and lambda
-    K2 = dielec_water(0.D0,temp-t_abs,frequency)
+    K2 = dielec_water(0.D0,radar_K2_temp-t_abs,frequency)
     wavelength = c / (frequency*1.d9)   ! [m]
 
     !first, calculate the attenuation for hydrometeors
