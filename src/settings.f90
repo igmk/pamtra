@@ -52,6 +52,7 @@ module settings
     real(kind=dbl) :: radar_airmotion_vmax
     real(kind=dbl) :: radar_airmotion_step_vmin
     real(kind=dbl) :: radar_min_spectral_snr !threshold for peak detection
+    real(kind=dbl) :: radar_K2_temp
   real(kind=dbl) :: ad_cloud, bd_cloud, alphad_cloud, gammad_cloud, ad_ice, bd_ice, alphad_ice, gammad_ice
   real(kind=dbl) :: diamin_cloud, diamax_cloud, diamin_ice, diamax_ice, mass_size_ice_a, mass_size_ice_b, &
 		    area_size_ice_a, area_size_ice_b
@@ -130,7 +131,8 @@ contains
 		  radar_airmotion_vmin, radar_airmotion_vmax, radar_airmotion_linear_steps, &
 		  radar_airmotion_step_vmin, radar_fallVel_cloud, radar_fallVel_rain, radar_fallVel_ice,&
 		  radar_fallVel_snow, radar_fallVel_graupel, radar_fallVel_hail, radar_aliasing_nyquist_interv, &
-		  radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr, radar_convolution_fft
+		  radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr, radar_convolution_fft, &
+                  radar_K2_temp
 
 
 	hydro_threshold = 1.d-10   ! [kg/kg] 
@@ -259,6 +261,8 @@ contains
         radar_min_spectral_snr = 1.2!threshold for peak detection. if radar_no_Ave >> 150, it can be set to 1.1
         radar_convolution_fft = .true. !use fft for convolution of spectrum. is alomst 10 times faster, but can introduce aretfacts for radars with *extremely* low noise levels or if noise is turned off at all.
         
+        radar_K2_temp = 273.15 + 10 ! temperture used to calculate the dielectric constant (always for liquid water by convention) for the radar equation
+
         ! read name list parameter file
         open(7, file=namelist_file,delim='APOSTROPHE')
         read(7,nml=inoutput_mode)

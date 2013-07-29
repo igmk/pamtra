@@ -143,7 +143,7 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 
     if (active .and. hydros_present(nz)) then
       call radar_simulator(err,radar_spec, back(nz), kexttot(nz), f,&
-	temp(nz),delta_hgt_lev(nz),nz,nx,ny,fi)
+	delta_hgt_lev(nz),nz,nx,ny,fi)
       if (err /= 0) then
 	  msg = 'error in radar_simulator!'
 	  call report(err, msg, nameOfRoutine)
