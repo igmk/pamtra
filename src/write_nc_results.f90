@@ -46,6 +46,7 @@ subroutine write_nc_results
     !get git data
     call versionNumber(gitVersion,gitHash)
 
+    if (verbose >= 2) call report(info,'Writing ', nc_out_file)
 
     call check(nf90_create(path=nc_out_file,cmode=nf90_clobber,ncid=ncid))
 

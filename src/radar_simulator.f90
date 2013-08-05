@@ -103,7 +103,7 @@ frequency,delta_h,nz,nx,ny,fi)
       
     
     ! get |K|**2 and lambda
-    K2 = dielec_water(0.D0,radar_K2_temp-t_abs,frequency)
+    K2 = radar_K2!dielec_water(0.D0,radar_K2_temp-t_abs,frequency)
     wavelength = c / (frequency*1.d9)   ! [m]
 
     !first, calculate the attenuation for hydrometeors
@@ -283,7 +283,6 @@ frequency,delta_h,nz,nx,ny,fi)
         if (radar_save_noise_corrected_spectra) noise_turb_spectra = noise_removed_turb_spectra
 
         WHERE (ISNAN(noise_turb_spectra)) noise_turb_spectra = -9999.d0
-        IF (ISNAN(moments(0))) moments(0) = -9999.d0
 
         radar_spectra(nx,ny,nz,fi,:) = 10*log10(noise_turb_spectra)
         radar_snr(nx,ny,nz,fi) = SNR
@@ -291,7 +290,11 @@ frequency,delta_h,nz,nx,ny,fi)
         radar_moments(nx,ny,nz,fi,:) = moments(1:4)
         radar_slope(nx,ny,nz,fi,:) = slope(:)
         radar_quality(nx,ny,nz,fi) = quailty_aliasing + quality_2ndPeak
-        Ze(nx,ny,nz,fi) = 10*log10(moments(0))
+
+        moments(0) = 10*log10(moments(0))
+        IF (ISNAN(moments(0))) moments(0) = -9999.d0
+        Ze(nx,ny,nz,fi) = moments(0)
+
 
 
         deallocate(turb_spectra)

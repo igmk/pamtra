@@ -380,7 +380,6 @@ out_angles&
         out_radar_quality(:,:,:,:) = radar_quality(:,:,:,:)
     end if
 
-
     if (passive) then
         out_angles = REAL(angles_deg(:))
         out_tb = RESHAPE( REAL(tb), (/ngridx, ngridy, noutlevels, 2*nummu, nfrq,nstokes /),&
