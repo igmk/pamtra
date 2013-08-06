@@ -1,7 +1,7 @@
 module tmatrix
   use kinds
   use constants, only: pi, c
-  use settings, only: nummu, nstokes, verbose
+  use settings, only: nummu, nstokes, verbose, active, passive
   use rt_utilities, only: lobatto_quadrature
   use report_module
 
@@ -151,8 +151,6 @@ module tmatrix
           return
         end if
 
-  print*, "TODO: shortcut for active only!"      
-
 	call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
 	    as_ratio, alpha, beta, azimuth_num, azimuth0_num,&
 	    scatter_matrix_part,extinct_matrix_part,emis_vector_part)
@@ -263,7 +261,7 @@ module tmatrix
 	  emis_vector_tmp2_11,emis_vector_tmp2_12
       real(kind=dbl) :: thet0_weights, thet_weights
 
-      integer :: nmax, np
+      integer :: nmax, np, qua_start
 
       real(kind=ext) :: mrr, mri, lam
       ! some factors that stay constant during calculations
@@ -306,11 +304,12 @@ module tmatrix
       mri = abs(IMAG(ref_index))
 
 
-     if (active .eqv. .true. .and. passive .eqv. .false.) then
-       qua_start = 16
-     else
-       qua_start = 1
-     end if
+      if (active .eqv. .true. .and. passive .eqv. .false.) then
+        qua_start = 16
+      else
+        qua_start = 1
+      end if
+
       if (verbose >= 5) print*,"lam, mrr,mri, AXI, AS_RATIO, RAT, NP"
       if (verbose >= 5) print*,lam, mrr,mri, AXI, AS_RATIO, RAT, NP
   ! call the tmatrix routine amplq -> fills common block /TMAT/
@@ -341,7 +340,7 @@ module tmatrix
 
       ! for each quadrature angle
       ii = 1
-      do 1241 jj = 1, qua_num
+      do 1241 jj = qua_start, qua_num
 	  thet0=acos(qua_angle(jj)*(-1.)**(real(ii)-1))*180.d0/pi
 	  thet0_weights = qua_weights(jj)
 	  if(thet0.gt.179.9999)thet0=180.0d0
@@ -351,7 +350,7 @@ module tmatrix
 
 	  do 1242 kk = 1, 2
 	      kkk1 = kk
-	      do 1243 ll = 1, qua_num
+	      do 1243 ll = qua_start, qua_num
 		  thet=acos(qua_angle(ll)*(-1.)**(real(kk)-1))*180.d0/pi
 		  thet_weights=qua_weights(ll)
 		  if(thet.gt.179.9999)thet=180.d0
