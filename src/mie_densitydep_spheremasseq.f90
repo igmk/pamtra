@@ -124,7 +124,9 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
      tot_mass = tot_mass + ndens*del_d*a_mtox*diameter(ir)**bcoeff
      if ((aerodist == "C") .or. (aerodist == "M")) then
        if ((ir .eq. nbins+1) .and. (tot_mass/wc*100. .lt. 99.9d0)) then
-         ndens = ndens + (wc-tot_mass)/(del_d*a_mtox*(diameter(ir))**bcoeff)
+print*, "MASS NOT CONSISTENT!"
+print*, ndens, (wc-tot_mass)/(del_d*a_mtox*(diameter(ir))**bcoeff)
+!          ndens = ndens + (wc-tot_mass)/(del_d*a_mtox*(diameter(ir))**bcoeff)
          tot_mass = wc
        end if
      end if
@@ -160,8 +162,8 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
 
 	 msphere = eps_mix((1.d0,0.d0),m_ice,density_eff)
 
-if (verbose >= 0) print*, "ir,density_eff, diameter(ir), ndens*del_d, msphere, x"
-if (verbose >= 0) print*,ir, density_eff, diameter(ir), ndens*del_d, msphere, x    
+if (verbose >= 0) print*, "ir,density_eff, diameter_eff, ndens,del_d, msphere, x"
+if (verbose >= 0) print*,ir, density_eff, diameter_eff, ndens,del_d, msphere, x    
      
 
      call miecalc (err,nmie, x, msphere, a, b) 

@@ -75,7 +75,7 @@ subroutine snow_ssp(f,swc,t,press,maxleg,nc,kext, salb, back,  &
      dia2 = 1.d-2 ! maximum maximum diameter [m] after kneifel
 
 !      dia1 = 1.d-9 ! minimum maximum diameter [m] after kneifel
-     dia2 =1.d-4 ! maximum maximum diameter [m] after kneifel
+     dia2 =1.d-2 ! maximum maximum diameter [m] after kneifel
 
 
      !option isnow_n0 as in COSMO-de 1 moment scheme

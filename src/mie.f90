@@ -169,8 +169,8 @@ end if
      x = pi * diameter(ir) / wavelength ! size parameter
      nmie = 0 
      
-       if (verbose >= 0) print*, "ir,density, diameter(ir), ndens(ir)*del_d, msphere, x"
-      if (verbose >= 0) print*,ir, density, diameter(ir), ndens(ir)*del_d, msphere, x    
+       if (verbose >= 0) print*, "ir,density, diameter(ir), ndens(ir),del_d, msphere, x"
+      if (verbose >= 0) print*,ir, density, diameter(ir), ndens(ir),del_d, msphere, x    
        
     
      call miecalc(err,nmie, x, msphere, a, b) ! calculate a and b

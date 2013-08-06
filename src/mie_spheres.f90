@@ -267,8 +267,8 @@ module mie_spheres
 	  return
       end if         
       
-      if (verbose >= 0) print*, "density(ir), diameter(ir), ndens_eff, msphere, x"
-      if (verbose >= 0) print*, density(ir), diameter(ir), ndens_eff, msphere, x 
+      if (verbose >= 0) print*, "density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x"
+      if (verbose >= 0) print*, density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x 
       
       call miecross (nmie, x, a, b, qext, qscat, qback)
       
