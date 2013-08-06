@@ -119,7 +119,7 @@
 
 
 
-      SUBROUTINE RADTRAN4(NSTOKES, NUMMU, MAX_DELTA_TAU,&
+      SUBROUTINE RADTRAN4(errorstatus, NSTOKES, NUMMU, MAX_DELTA_TAU,&
                     QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&
                     GROUND_ALBEDO, GROUND_INDEX,&
                     SKY_TEMP, WAVELENGTH,&
@@ -131,7 +131,7 @@
 
       use kinds
       use vars_atmosphere
-!      use settings, only: verbose
+     use settings, only: verbose
         use report_module
 use rt_utilities, only: planck_function,&
 gauss_legendre_quadrature,&
@@ -188,28 +188,46 @@ lobatto_quadrature
   real(kind=dbl) :: rel_azimuth, salinity
   real(kind=dbl), dimension(nummu) :: transmittance
 
+    integer(kind=long), intent(out) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
+    character(len=14) :: nameOfRoutine = 'radtran4'
+
+    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 !  if (verbose .gt. 1) print*, "Entered radtran ...."
       SYMMETRIC = .TRUE.
       N = NSTOKES*NUMMU
       IF (N .GT. MAXV) THEN
           WRITE (*,'(1X,A,I3)')&
           'Vector size exceeded.  Maximum size :', MAXV
-          STOP
+            msg = 'radtran check'
+            call report(err,msg, nameOfRoutine)
+            errorstatus = fatal
+            return
       ENDIF
       IF (N*N .GT. MAXM) THEN
           WRITE (*,'(1X,A,I3)')&
           'Matrix size exceeded.  Maximum size :', MAXM
-          STOP
+            msg = 'radtran check'
+            call report(err,msg, nameOfRoutine)
+            errorstatus = fatal
+            return
       ENDIF
       IF (NUM_LAYERS .GT. MAXLAY) THEN
           WRITE (*,'(1X,A,A,I3)') 'Number of layers exceeded.',&
           '  Maximum number :', MAXLAY
-          STOP
+            msg = 'radtran check'
+            call report(err,msg, nameOfRoutine)
+            errorstatus = fatal
+            return
       ENDIF
       IF ((NUM_LAYERS+1)*N*N .GT. MAXLM) THEN
           WRITE (*,'(1X,A,A,I3)') 'Matrix layer size exceeded.',&
           '  Maximum number :', MAXLM
-          STOP
+            msg = 'radtran check'
+            call report(err,msg, nameOfRoutine)
+            errorstatus = fatal
+            return
       ENDIF
 
 !           Make the desired quadrature abscissas and weights
@@ -248,11 +266,16 @@ lobatto_quadrature
         if (rt4hydros_present(layer)) then
             call get_scat_mat(layer,NSTOKES, NUMMU,SCATTER_MATRIX,EXTINCT_MATRIX, EMIS_VECTOR)
 
-            call cHECK_NORM4(NSTOKES, NUMMU, QUAD_WEIGHTS,&
+            call CHECK_NORM4(err,NSTOKES, NUMMU, QUAD_WEIGHTS,&
                                       SCATTER_MATRIX,&
                                       EXTINCT_MATRIX, EMIS_VECTOR)
         end if
-
+        if (err /= 0) then
+            msg = 'error in CHECK_NORM4'
+            call report(err,msg, nameOfRoutine)
+            errorstatus = err
+            return
+        end if
 !          IF (SCAT_FILES(LAYER) .NE. SCAT_FILE .AND. SCAT_FILES(LAYER) .NE. ' ')  THEN
 !              SCAT_FILE = SCAT_FILES(LAYER)
 !       Read the scattering matrix from the file
@@ -471,6 +494,10 @@ lobatto_quadrature
           ENDDO
         ENDDO
       ENDDO
+
+    errorstatus = err
+    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+
 
       RETURN
       END

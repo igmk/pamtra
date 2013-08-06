@@ -131,8 +131,9 @@ contains
   
 	if (.not. logic) then
 	  call report(fatal, message, "report_module: assert_true")
-	  if (error /= fatal) error = fatal
+	  error = fatal
 	end if
+        if (verbose >= 5) call report(info, "PASSED: "//message, "report_module: assert_true")
 	return
     End Subroutine assert_true
     
@@ -144,8 +145,12 @@ contains
         Character (len=*) , Intent (in) :: message    ! ..to output
 	if (logic) then
 	  call report(fatal, message, "report_module: assert_false")
-	  if (error /= fatal) error = fatal
+	  error = fatal
+        else
+          if (verbose >= 5) call report(info, "PASSED: "//message, "report_module: assert_false")
 	end if
+       
+
 	return
     End Subroutine assert_false
 

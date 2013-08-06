@@ -187,7 +187,7 @@ wavelength,units,outpol,noutlevels,outlevels,nx,ny,fi)
 
     use kinds
     use vars_atmosphere
-    use settings, only: write_nc, in_python, numazimuths
+    use settings, only: write_nc, in_python, numazimuths, verbose
     use report_module
 
     implicit none
@@ -243,7 +243,7 @@ wavelength,units,outpol,noutlevels,outlevels,nx,ny,fi)
 
     !  if (verbose .gt. 0) print*, ".... read_layers done!"
 
-    CALL RADTRAN4(NSTOKES, NUMMU, MAX_DELTA_TAU,&
+    CALL RADTRAN4(err,NSTOKES, NUMMU, MAX_DELTA_TAU,&
     QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&
     GROUND_ALBEDO, GROUND_INDEX,&
     SKY_TEMP, WAVELENGTH,&
@@ -252,6 +252,12 @@ wavelength,units,outpol,noutlevels,outlevels,nx,ny,fi)
     NOUTLEVELS, OUTLEVELS,&
     MU_VALUES, UP_FLUX, DOWN_FLUX,&
     UP_RAD, DOWN_RAD)
+    if (err /= 0) then
+        msg = 'error in RADTRAN4'
+        call report(err,msg, nameOfRoutine)
+        errorstatus = err
+        return
+    end if
 
     !  if (verbose .gt. 0) print*, ".... radtran done!"
 

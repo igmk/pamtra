@@ -84,9 +84,11 @@
 
 
 
-      SUBROUTINE CHECK_NORM4(NSTOKES, NUMMU, QUAD_WEIGHTS,&
+      SUBROUTINE CHECK_NORM4(errorstatus,NSTOKES, NUMMU, QUAD_WEIGHTS,&
                             SCATTER_MATRIX,&
                             EXTINCT_MATRIX, EMIS_VECTOR)
+      use settings, only: verbose
+      use report_module
       implicit none
 
       INTEGER  NSTOKES, NUMMU
@@ -97,6 +99,16 @@
       INTEGER  J1, J2, L
       REAL*8   SUM, MAXSUM, PI
       PARAMETER (PI = 3.1415926535897932384D0)
+
+      ! Error handling
+
+      integer(kind=long), intent(out) :: errorstatus
+      integer(kind=long) :: err = 0
+      character(len=80) :: msg
+      character(len=14) :: nameOfRoutine = 'CHECK_NORM4'
+      
+    if (verbose >= 4) call report(info, 'Start of ', nameOfRoutine)
+
 
       MAXSUM = 0.0D0
       DO J1 = 1, NUMMU
@@ -112,6 +124,11 @@
       ENDDO
       IF (MAXSUM .GT. 1.0D-6) THEN
           WRITE (*,*) 'Scattering function not normalized:', MAXSUM
+          if (verbose >= 4) call report(fatal, 'Scattering function not normalized', nameOfRoutine)
+          err = fatal
       ENDIF
+    errorstatus = err
+    if (verbose >= 4) call report(info, 'End of ', nameOfRoutine)
+    
       RETURN
       END
