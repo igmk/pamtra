@@ -294,6 +294,7 @@ C   ANY DAMAGES THAT MAY RESULT FROM THE USE OF THE PROGRAM.
       COMMON /TMAT/ RT11,RT12,RT21,RT22,IT11,IT12,IT21,IT22
       COMMON /CHOICE/ ICHOICE
  
+
 C  OPEN FILES *******************************************************
  
 C      OPEN (6,FILE='test')

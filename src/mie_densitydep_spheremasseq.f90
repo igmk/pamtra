@@ -96,16 +96,14 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
   !           get the gauss-legendre quadrature abscissas and weights     
   call gausquad(nquad, mu, wts) 
 
+
   sumqe = 0.0d0 
   sumqs = 0.0d0 
   sumqback = 0.0d0 
-  do i = 1, nquad 
-     sump1 (i) = 0.0d0 
-     sump2 (i) = 0.0d0 
-     sump3 (i) = 0.0d0 
-     sump4 (i) = 0.0d0 
-  end do
-
+      sump1 (:) = 0.0d0 
+      sump2 (:) = 0.0d0 
+      sump3 (:) = 0.0d0 
+      sump4 (:) = 0.0d0 
   !               integration loop over diameter of spheres
   if (nbins .gt. 0) then
     del_d = (dia2 - dia1) / nbins
@@ -125,7 +123,7 @@ subroutine mie_densitydep_spheremasseq(f, t, m_ice,    &
      if ((aerodist == "C") .or. (aerodist == "M")) then
        if ((ir .eq. nbins+1) .and. (tot_mass/wc*100. .lt. 99.9d0)) then
 print*, "MASS NOT CONSISTENT!"
-print*, ndens, (wc-tot_mass)/(del_d*a_mtox*(diameter(ir))**bcoeff)
+! print*, ndens, (wc-tot_mass)/(del_d*a_mtox*(diameter(ir))**bcoeff)
 !          ndens = ndens + (wc-tot_mass)/(del_d*a_mtox*(diameter(ir))**bcoeff)
          tot_mass = wc
        end if
@@ -162,8 +160,8 @@ print*, ndens, (wc-tot_mass)/(del_d*a_mtox*(diameter(ir))**bcoeff)
 
 	 msphere = eps_mix((1.d0,0.d0),m_ice,density_eff)
 
-if (verbose >= 0) print*, "ir,density_eff, diameter_eff, ndens,del_d, msphere, x"
-if (verbose >= 0) print*,ir, density_eff, diameter_eff, ndens,del_d, msphere, x    
+if (verbose >= 4) print*, "ir,density_eff, diameter_eff, ndens,del_d, msphere, x"
+if (verbose >= 4) print*,ir, density_eff, diameter_eff, ndens,del_d, msphere, x    
      
 
      call miecalc (err,nmie, x, msphere, a, b) 
@@ -186,7 +184,8 @@ if (verbose >= 0) print*,ir, density_eff, diameter_eff, ndens,del_d, msphere, x
      sumqback = sumqback + qback 
 
      back_spec(ir) =  qback * pi  ! volumetric backscattering corss section for radar simulator in [m²/m⁴]
-
+if (verbose >= 4) print*, "OLD: sumqback, sumqs, sumqe"
+if (verbose >= 4) print*, pi * sumqback * del_d,  pi * sumqs * del_d,  pi * sumqe * del_d
      if (lphase_flag) then 
         nmie = min0(nmie, nterms) 
         do i = 1, nquad 
@@ -217,6 +216,7 @@ if (verbose >= 0) print*,ir, density_eff, diameter_eff, ndens,del_d, msphere, x
      sump3 (i) = tmp * sump3 (i) * wts (i) 
      sump4 (i) = tmp * sump4 (i) * wts (i) 
   end do
+
 
   !           integrate the angular scattering functions times legendre   
   !             polynomials to find the legendre coefficients             
@@ -252,7 +252,6 @@ if (verbose >= 0) print*,ir, density_eff, diameter_eff, ndens,del_d, msphere, x
   end do
 
     if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
-
 
   return 
 

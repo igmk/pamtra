@@ -200,8 +200,14 @@ module mie_spheres
      
       wavelength = c/(freq) !
 
+      if (liq_ice == -1 .and. density(1) /= 917.d0) then
+          m_ice = refre-Im*refim  ! mimicking a
+          msphere = eps_mix((1.d0,0.d0),m_ice,density(nbins+1))
+      else
+                msphere = refre-im*refim
+      end if
      
-      x = pi * diameter(1) / wavelength
+      x = pi * diameter(nbins+1) / wavelength
       nterms = 0 
       n_tot = 0.d0
       call miecalc (err,nterms, x, msphere, a, b) 
@@ -223,15 +229,15 @@ module mie_spheres
     !           get the gauss-legendre quadrature abscissas and weights     
       call gausquad(nquad, mu, wts) 
 
+
       sumqe = 0.0d0 
       sumqs = 0.0d0 
       sumqback = 0.0d0 
-      do i = 1, nquad 
-	sump1 (i) = 0.0d0 
-	sump2 (i) = 0.0d0 
-	sump3 (i) = 0.0d0 
-	sump4 (i) = 0.0d0 
-      end do
+      sump1 (:) = 0.0d0 
+      sump2 (:) = 0.0d0 
+      sump3 (:) = 0.0d0 
+      sump4 (:) = 0.0d0 
+
 
     do ir = 1, nbins+1
 
@@ -267,8 +273,8 @@ module mie_spheres
 	  return
       end if         
       
-      if (verbose >= 0) print*, "density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x"
-      if (verbose >= 0) print*, density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x 
+      if (verbose >= 4) print*, "density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x"
+      if (verbose >= 4) print*, density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x 
       
       call miecross (nmie, x, a, b, qext, qscat, qback)
       
@@ -291,6 +297,9 @@ module mie_spheres
       sumqe = sumqe + ( qext * del_d_eff)
       sumqs = sumqs + ( qscat * del_d_eff)
       sumqback = sumqback + ( qback * del_d_eff)
+
+      if (verbose >= 4) print*, "NEW: sumqback, sumqs, sumqe"
+      if (verbose >= 4) print*,  sumqback , sumqs, sumqe
 
       back_spec(ir) =  qback   ! volumetric backscattering corss section for radar simulator in backscat per volume per del_d[m²/m⁴]
 
@@ -331,6 +340,11 @@ module mie_spheres
       sump3 (i) = tmp * sump3 (i) * wts (i) 
       sump4 (i) = tmp * sump4 (i) * wts (i) 
     end do
+
+
+
+
+
 
     !           integrate the angular scattering functions times legendre   
     !             polynomials to find the legendre coefficients             

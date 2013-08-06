@@ -119,7 +119,7 @@ frequency,delta_h,nz,nx,ny,fi)
         else 
 	  Ze(nx,ny,nz,fi) = 10*log10(Ze_back)
 	end if
-      if (verbose >= -3) print*, "nx,ny,nz,fi,ze", nx,ny,nz,fi,Ze(nx,ny,nz,fi)
+      if (verbose >= 3) print*, "nx,ny,nz,fi,ze", nx,ny,nz,fi,Ze(nx,ny,nz,fi)
     else if ((radar_mode == "moments") .or. (radar_mode == "spectrum")) then
         !get delta velocity
         del_v = (radar_max_V-radar_min_V) / radar_nfft ![m/s]

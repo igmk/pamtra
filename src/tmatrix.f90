@@ -67,6 +67,8 @@ module tmatrix
       real(kind=dbl) :: alpha
       real(kind=dbl) :: beta
       real(kind=dbl) :: axi
+      real(kind=dbl) :: ndens_eff
+      real(kind=dbl) :: del_d_eff
       integer :: azimuth_num
       integer :: azimuth0_num   
       integer :: ir
@@ -121,6 +123,16 @@ module tmatrix
 	
     do ir = 1, nbins+1
 
+      if (ir == 1) then
+        ndens_eff = ndens(1)/2.d0
+        del_d_eff = del_d(1)
+      else if (ir == nbins+1) then
+        ndens_eff = ndens(nbins+1)/2.d0
+        del_d_eff = del_d(nbins)
+      else
+        ndens_eff = ndens(ir)
+        del_d_eff = del_d(ir)
+      end if
 
 	if (phase == -1 .and. density(ir) /= 917.d0) then
 	    mMix = eps_mix((1.d0,0.d0),ref_index,density(ir))
@@ -130,8 +142,15 @@ module tmatrix
 	mindex =conjg(mMix) !different convention
 
 	!we want the volume equivalent radius
-	axi = 0.5_dbl*dmax(ir)*as_ratio**(1.0_dbl/3.0_dbl)
-  print*, "TODO: exponent 1/3 or 2/3??"      
+        if (as_ratio <= 1) then
+          axi = 0.5_dbl*dmax(ir)*as_ratio**(1.0_dbl/3.0_dbl)
+        else 
+          errorstatus = fatal
+          msg = "please review formular for as_ratio>1"
+          call report(errorstatus, msg, nameOfRoutine)
+          return
+        end if
+
   print*, "TODO: shortcut for active only!"      
 
 	call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
@@ -144,12 +163,12 @@ module tmatrix
 	    return
 	end if          
       
-	back_spec(ir) = 4*pi*ndens(ir)/del_d(ir)*scatter_matrix_part(1,16,1,16,2)
+	back_spec(ir) = 4*pi*ndens_eff*scatter_matrix_part(1,16,1,16,2)
       
 	
-	scatter_matrix = scatter_matrix + scatter_matrix_part * ndens(ir)
-	extinct_matrix = extinct_matrix + extinct_matrix_part * ndens(ir)
-	emis_vector = emis_vector + emis_vector_part * ndens(ir)
+	scatter_matrix = scatter_matrix + scatter_matrix_part * ndens_eff * del_d_eff
+	extinct_matrix = extinct_matrix + extinct_matrix_part * ndens_eff * del_d_eff
+	emis_vector = emis_vector + emis_vector_part * ndens_eff * del_d_eff
       
       end do !nbins
 	
@@ -180,7 +199,6 @@ module tmatrix
       as_ratio, alpha, beta, azimuth_num, azimuth0_num,&
       scatter_matrix,extinct_matrix,emis_vector)
 
-  !DB VERSION
 
       !  calculate the matrix and vectors, for a single particle with a single orientation
       !
@@ -188,7 +206,7 @@ module tmatrix
       !       quad            char    name of quadrature
       !       quad_num        int     number of quadrature angles
       !       frequency       double  frequency [Hz]
-      !       ref_index       complex refractive index
+      !       ref_index       complex refractive index (positve im part)
       !       axi             double  equivalent sphere radius [m]
       !       nstokes         int     number of stokes components
       !       as_ratio        double  aspect ratio
@@ -244,7 +262,6 @@ module tmatrix
 	  emis_vector_tmp1_11(2*qua_num), emis_vector_tmp1_12(2*qua_num),&
 	  emis_vector_tmp2_11,emis_vector_tmp2_12
       real(kind=dbl) :: thet0_weights, thet_weights
-      real(kind=dbl) :: EPS
 
       integer :: nmax, np
 
@@ -267,13 +284,16 @@ module tmatrix
       rat = 1.e0
 
       
-      LAM = c/(frequency)!*1e6
+      LAM = c/(frequency)
+
       wave_num = 2.0_dbl*pi/LAM
       
       call assert_true(err,axi> 0.d0,"nan or negative in axi")	  
       call assert_true(err,frequency> 0.d0,"nan or negative in frequency")   
       call assert_true(err,(wave_num > 0.d0),"nan or <= 0 in wave-num")
-      call assert_true(err,(LAM > 0.d0),"nan or <= 0 in LAM-num")
+      call assert_true(err,(LAM > 0.d0),"nan or <= 0 in LAM")
+      call assert_true(err,(AS_RATIO > 0.d0),"nan or <= 0 in AS_RATIO")
+
       if (err > 0) then
 	  errorstatus = fatal
 	  msg = "assertation error"
@@ -285,8 +305,16 @@ module tmatrix
       mrr = REAL(ref_index)
       mri = abs(IMAG(ref_index))
 
+
+     if (active .eqv. .true. .and. passive .eqv. .false.) then
+       qua_start = 16
+     else
+       qua_start = 1
+     end if
+      if (verbose >= 5) print*,"lam, mrr,mri, AXI, AS_RATIO, RAT, NP"
+      if (verbose >= 5) print*,lam, mrr,mri, AXI, AS_RATIO, RAT, NP
   ! call the tmatrix routine amplq -> fills common block /TMAT/
-      call tmatrix_amplq(lam, mrr,mri, AXI, EPS, RAT, NP,nmax)
+      call tmatrix_amplq(lam, mrr,mri, AXI, AS_RATIO, RAT, NP,nmax)
 
       extinct_matrix = 0.d0
       scatter_matrix = 0.d0
@@ -342,7 +370,6 @@ module tmatrix
 		      do 1245 n = 1, azimuth_num ! 30
 			  phi = 360.d0/real(azimuth_num)*(real(n)-1.d0)
 			  phi_weights = 1.d0/360.d0*(360.d0/azimuth_num)
-
 
 		  CALL tmatrix_AMPL(NMAX,dble(LAM),THET0,THET,PHI0,PHI,ALPHA,BETA,&
 		    S11,S12,S21,S22)
