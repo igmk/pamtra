@@ -73,12 +73,12 @@ subroutine allocateVars_drop_size_dist
   allocate(d_ds(nbin))
   allocate(n_ds(nbin))
   allocate(delta_d_ds(nbin))
-  allocate(density2scat(nbin))
-  allocate(diameter2scat(nbin))
+  allocate(density2scat(nbin+1))
+  allocate(diameter2scat(nbin+1))
   allocate(d_bound_ds(nbin+1))
   allocate(f_ds(nbin+1))
-  allocate(mass_ds(nbin))
-  allocate(area_ds(nbin))
+  allocate(mass_ds(nbin+1))
+  allocate(area_ds(nbin+1))
 
 end subroutine allocateVars_drop_size_dist
 
@@ -165,7 +165,7 @@ subroutine run_drop_size_dist(errorstatus)
   endif
   if (liq_ice == 1) then
     density2scat(:) = rho_water
-    diameter2scat = d_ds
+    diameter2scat = d_bound_ds
   endif
 
   

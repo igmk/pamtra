@@ -42,7 +42,7 @@ diameter, back_spec)
     integer :: i, l, m, ir
     real(kind=dbl) :: x, del_d, tmp, tot_mass, wc, density
     real(kind=dbl) :: qext, qscat, qback, scatter
-    real(kind=dbl) :: distribution
+    real(kind=dbl) :: distribution, n_tot
     real(kind=dbl) :: mu(maxn), wts(maxn)
     real(kind=dbl) :: p1, pl, pl1, pl2, p2, p3, p4
     real(kind=dbl) :: sumqe, sumqs, sumqback
@@ -115,6 +115,7 @@ diameter, back_spec)
   
 
   
+      n_tot = 0.d0
 
   tot_mass = 0.
   do ir = 1, nbins+1
@@ -164,11 +165,12 @@ end if
 !       ndens(2) = 0.d0
 !       ndens(3) = 0.d0
      
+    n_tot = (ndens(ir) *  diameter(ir))
      x = pi * diameter(ir) / wavelength ! size parameter
      nmie = 0 
      
-       if (verbose >= 0) print*, "ir,density, diameter(ir), ndens(ir)*del_d, msphere, x"
-      if (verbose >= 0) print*,ir, density, diameter(ir), ndens(ir)*del_d, msphere, x    
+       if (verbose >= 0) print*, "ir,density, diameter(ir), ndens(ir),del_d, msphere, x"
+      if (verbose >= 0) print*,ir, density, diameter(ir), ndens(ir),del_d, msphere, x    
        
     
      call miecalc(err,nmie, x, msphere, a, b) ! calculate a and b
@@ -189,8 +191,8 @@ end if
      qscat =  qscat * ndens(ir) * (diameter(ir)/2.d0)**2        ! [m²/m⁴]!
      qback =  qback * ndens(ir) * (diameter(ir)/2.d0)**2        !  [m²/m⁴]! cross section per volume per del_d
  
-      if (verbose >= 4) print*, "qback*del_d ,ndens(ir)*del_d * (diameter(ir)/2.d0), pi, del_d"
-      if (verbose >= 4) print*, qback*del_d , ndens(ir)*del_d ,(diameter(ir)/2.d0), pi , del_d
+      if (verbose >= 4) print*, "qback*del_d* pi,ndens(ir)*del_d * (diameter(ir)/2.d0), pi, del_d"
+      if (verbose >= 4) print*, qback*del_d*pi , ndens(ir)*del_d ,(diameter(ir)/2.d0), pi , del_d
     
  
         !integrate=sum up . del_d is added at a later step!
@@ -211,6 +213,9 @@ end if
             end do
         end if
     end do
+
+    if (verbose >= 4) print*, "ntot", n_tot
+
 
     !   multiply the sums by the integration delta and other constants
     !   put quadrature weights in angular array for later usage

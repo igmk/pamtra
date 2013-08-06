@@ -86,22 +86,27 @@ subroutine radar_calc_moments(errorstatus,radar_spectrum_in,radar_spectrum_out,m
 
     !!get the borders of the most significant peak
     do ii = spec_max+1, radar_nfft
-        if (radar_spectrum_out(ii) <= 0.25*noise ) EXIT
+        if (radar_spectrum_out(ii) <= radar_noise_distance_factor*noise ) EXIT
     end do
     right_edge = ii
     do jj = spec_max-1, 1, -1
-        if (radar_spectrum_out(jj) <= 0.25*noise ) EXIT
+        if (radar_spectrum_out(jj) <= radar_noise_distance_factor*noise ) EXIT
     end do
     left_edge = jj
 
     !check whether peak is present:
-    if (SUM(radar_spectrum_in(left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise <radar_min_spectral_snr) then
-        !no peak
+    if (SUM(radar_spectrum_in(left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise <radar_min_spectral_snr &
+      .or. ((spec_max - left_edge) <= 1) &
+      .or. ((right_edge - spec_max) <= 1)) then
+        !no or too thin peak
         radar_spectrum_out = -9999
         moments = -9999
         slope = -9999
         quality = 64
-  
+      if (verbose >= 3) print*, "Skipped peak because of:", &
+        SUM(radar_spectrum_in(left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise <radar_min_spectral_snr, &
+        ((spec_max - left_edge) <= 1), &
+        ((right_edge - spec_max) <= 1)
     else
         !!look for a second peak for quality array
         radar_spectrum_cp = radar_spectrum_out
@@ -162,12 +167,22 @@ subroutine radar_calc_moments(errorstatus,radar_spectrum_in,radar_spectrum_out,m
 
         WHERE (ISNAN(slope)) slope = -9999.d0
 
+    if (verbose >= 5) print*, "left_edge", left_edge
+    if (verbose >= 5) print*, "right_edge", right_edge
+    if (verbose >= 5) print*, "spec_max", spec_max
+    if (verbose >= 5) print*, "radar_spectrum_smooth", radar_spectrum_smooth
+    if (verbose >= 5) print*, "spectra_velo", spectra_velo
+! 
+
+
         !calculate the moments
         moments(0) = SUM(radar_spectrum_smooth) ! mm⁶/m³
         moments(1) = SUM(radar_spectrum_smooth*spectra_velo)/moments(0) ! m/s
         moments(2) = SQRT(SUM(radar_spectrum_smooth * (spectra_velo-moments(1))**2)/moments(0)) ! m/s
         moments(3) = SUM(radar_spectrum_smooth * (spectra_velo-moments(1))**3)/(moments(0)*moments(2)**3) ![-]
         moments(4) = SUM(radar_spectrum_smooth * (spectra_velo-moments(1))**4)/(moments(0)*moments(2)**4) ![-]
+
+
 
     end if
 

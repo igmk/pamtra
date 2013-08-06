@@ -7,10 +7,11 @@ subroutine make_soft_spheroid(errorstatus)
 !  The relations used are:
 !  m_i = a * D^b 
 !  m_i = rho_i * volume_i
-!  volume_i = pi/6 * rho_i * soft_d_eff^3 * (As_ratio)^2  for prolate (as_ratio < 1.)
-!  volume_i = pi/6 * rho_i * soft_d_eff^3 / As_ratio      for oblate  (as_ratio > 1.)
+!  volume_i = pi/6 * rho_i * soft_d_eff^3 * (1/As_ratio)^2  for prolate (as_ratio > 1.)
+!  volume_i = pi/6 * rho_i * soft_d_eff^3 * As_ratio        for oblate  (as_ratio < 1.)
 !  From these relation we get soft_rho_eff, if rho_ms is set to -99, or 
 !  soft_d_eff otherwise.
+!  as_ratio = dimension_along_axis_of_rotation / dimension_perpendicular_to_axis_of_rotation
 ! 
 ! Owner: IGMK
 !
@@ -38,7 +39,7 @@ subroutine make_soft_spheroid(errorstatus)
 
   use constants, only: pi, rho_ice
 
-  use drop_size_dist, only: rho_ms, as_ratio, a_ms, b_ms, d_ds,nbin, &    ! IN
+  use drop_size_dist, only: rho_ms, as_ratio, a_ms, b_ms, d_bound_ds,nbin, &    ! IN
 		     soft_rho_eff, soft_d_eff,liq_ice                     ! OUT
 
   implicit none
@@ -47,7 +48,7 @@ subroutine make_soft_spheroid(errorstatus)
 
 ! Local array:
 
-  real(kind=dbl), dimension(nbin) :: mass         ! particle mass  [kg]
+  real(kind=dbl), dimension(nbin+1) :: mass         ! particle mass  [kg]
 
 ! Local scalar:
 
@@ -62,12 +63,12 @@ subroutine make_soft_spheroid(errorstatus)
 
   if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
-  allocate(soft_rho_eff(nbin))
-  allocate(soft_d_eff(nbin))
+  allocate(soft_rho_eff(nbin+1))
+  allocate(soft_d_eff(nbin+1))
 
 ! Calculate particle mass
-  do i=1,nbin
-    mass(i) = a_ms * d_ds(i)**b_ms
+  do i=1,nbin+1
+    mass(i) = a_ms * d_bound_ds(i)**b_ms
   enddo
 
 ! density set to a fixed value by the user
@@ -75,43 +76,49 @@ subroutine make_soft_spheroid(errorstatus)
   if (rho_ms > 0.) then
     soft_rho_eff(:) = rho_ms
 ! oblate spheroid or sphere
-    if (as_ratio < 0. .or. as_ratio >= 1.) then
-      do i=1,nbin
-        if (as_ratio < 0.)  soft_d_eff(i) = ((6._dbl * mass(i))            / (pi *  rho_ms))**(1._dbl/3._dbl)
-        if (as_ratio >= 1.) soft_d_eff(i) = ((6._dbl * mass(i) * as_ratio) / (pi *  rho_ms))**(1._dbl/3._dbl)
+    if (as_ratio <= 1.) then
+      do i=1,nbin+1
+        if (as_ratio < 0.) soft_d_eff(i) = ((6._dbl * mass(i)) / (pi *  rho_ms           ))**(1._dbl/3._dbl) ! spheres
+        if (as_ratio > 0.) soft_d_eff(i) = ((6._dbl * mass(i)) / (pi *  rho_ms * as_ratio))**(1._dbl/3._dbl)
       enddo
     endif
-! prolate spheroid or sphere
-    if (as_ratio > 0. .and. as_ratio < 1.) then
-      do i=1,nbin
-        soft_d_eff(i) = ((6._dbl * mass(i)) / (pi * rho_ms * as_ratio**2._dbl))**(1._dbl/3._dbl)
+! prolate spheroid
+    if (as_ratio > 1.) then
+      do i=1,nbin+1
+        soft_d_eff(i) = ((6._dbl * mass(i) * as_ratio**2._dbl) / (pi * rho_ms))**(1._dbl/3._dbl)
       enddo
     endif
 endif
 
 ! Calculate the density of the soft spheroids
   if (rho_ms < 0.) then
-    soft_d_eff = d_ds
+    soft_d_eff = d_bound_ds
     ! oblate spheroid or sphere
-    if (as_ratio < 0. .or. as_ratio >= 1.) then
-      do i=1,nbin
-        if (as_ratio < 0.)  soft_rho_eff(i) = (6._dbl * mass(i))            / (pi *  d_ds(i)**3._dbl)
-        if (as_ratio >= 1.) soft_rho_eff(i) = (6._dbl * mass(i) * as_ratio) / (pi *  d_ds(i)**3._dbl)
+    if (as_ratio <= 1.) then
+      do i=1,nbin+1
+        if (as_ratio < 0.) soft_rho_eff(i) = (6._dbl * mass(i)) / (pi *  d_bound_ds(i)**3._dbl)
+        if (as_ratio > 0.) soft_rho_eff(i) = (6._dbl * mass(i)) / (pi *  d_bound_ds(i)**3._dbl * as_ratio)
         if (soft_rho_eff(i) < 5._dbl) soft_rho_eff(i) = 5._dbl
         if (soft_rho_eff(i) > rho_ice) soft_rho_eff(i) = rho_ice
       enddo
     endif
-
-    if (minval(soft_rho_eff) <= 0. .or. minval(soft_d_eff) <= 0.) then
-      msg = 'something wrong in make_soft_spheroid!'
-      errorstatus = fatal
-      call report(errorstatus, msg, nameOfRoutine)
-      return
+    ! prolate spheroid
+    if (as_ratio > 1.) then
+      do i=1,nbin+1
+        soft_rho_eff(i) = (6._dbl * mass(i) * as_ratio**2._dbl) / (pi *  d_bound_ds(i)**3._dbl)
+        if (soft_rho_eff(i) < 5._dbl) soft_rho_eff(i) = 5._dbl
+        if (soft_rho_eff(i) > rho_ice) soft_rho_eff(i) = rho_ice
+      enddo
     endif
-
   endif
-     
-    
+
+  if (minval(soft_rho_eff) <= 0. .or. minval(soft_d_eff) <= 0.) then
+    msg = 'something wrong in make_soft_spheroid!'
+    errorstatus = fatal
+    call report(errorstatus, msg, nameOfRoutine)
+    return
+  endif
+
   errorstatus = success
   if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
 

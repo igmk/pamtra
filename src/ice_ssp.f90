@@ -65,7 +65,7 @@ subroutine ice_ssp(f,iwc,t,press,maxleg,nc, kext, salb, back,  &
      number_concentration = 1.0d2*DEXP(0.2d0*(273.15d0-t)) 	! [1/m^3]
      drop_mass = iwc/number_concentration 					! [kg]
      del_d = 1.d-8	
-del_d =1.d-9
+! del_d =1.d-9
      dia1 = (drop_mass/130.0d0)**(1.0d0/3.0d0)				! [m]
 !    CHECK if dia1 > maxdiam=2.d-4 (maximum diameter for COSMO)
 ! 	 then recalculate the drop mass using 2.d-4 as particle diameter
@@ -77,7 +77,7 @@ del_d =1.d-9
      ad = iwc/(drop_mass*del_d) 	!intercept parameter [1/m^4]
      bd = 0.0d0
      nbins = 2
-nbins=20
+! nbins=20
      alpha = 0.0d0     ! exponential SD
      gamma = 1.0d0
      den_ice=917.d0

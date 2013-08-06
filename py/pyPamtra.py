@@ -193,6 +193,9 @@ class pyPamtra(object):
     self.nmlSet["radar_simulator"]["radar_save_noise_corrected_spectra"] = False
     self.nmlSet["radar_simulator"]["radar_use_hildebrand"] = False
     self.nmlSet["radar_simulator"]["radar_min_spectral_snr"] = 1.2
+    
+    self.nmlSet["radar_simulator"]["radar_noise_distance_factor"] = 0.25
+
     #all settings which do not go into the nml file go here:
     self.set = dict()
     self.set["pyVerbose"] = 0

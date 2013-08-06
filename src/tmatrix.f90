@@ -50,16 +50,16 @@ module tmatrix
       complex(kind=dbl) :: ref_index
       integer, intent(in) :: phase
       integer, intent(in) :: nbins
-      real(kind=dbl), dimension(nbins), intent(in) :: dmax
+      real(kind=dbl), dimension(nbins+1), intent(in) :: dmax
       real(kind=dbl), dimension(nbins), intent(in) :: del_d
-      real(kind=dbl), dimension(nbins), intent(in) :: ndens    
-      real(kind=dbl), dimension(nbins), intent(in) :: density
+      real(kind=dbl), dimension(nbins+1), intent(in) :: ndens    
+      real(kind=dbl), dimension(nbins+1), intent(in) :: density
       real(kind=dbl), intent(in) :: as_ratio
 
       real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
       real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
       real(kind=dbl), intent(out), dimension(nstokes,nummu) :: emis_vector
-      real(kind=dbl), intent(out), dimension(nbins) :: back_spec
+      real(kind=dbl), intent(out), dimension(nbins+1) :: back_spec
 
       complex(kind=dbl) :: mMix
       complex(kind=dbl) :: eps_mix 
@@ -119,7 +119,7 @@ module tmatrix
       azimuth0_num = 1   
       quad ="L" !quadratur
 	
-    do ir = 1, nbins
+    do ir = 1, nbins+1
 
 
 	if (phase == -1 .and. density(ir) /= 917.d0) then
@@ -284,7 +284,7 @@ module tmatrix
   !     axi = axi!*1.e6
       mrr = REAL(ref_index)
       mri = abs(IMAG(ref_index))
-EPS = 1d0/AS_RATIO
+
   ! call the tmatrix routine amplq -> fills common block /TMAT/
       call tmatrix_amplq(lam, mrr,mri, AXI, EPS, RAT, NP,nmax)
 

@@ -84,7 +84,7 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 
 ! Convert specific quantities [kg/kg] in absolute ones [kg/m3]
       q_h        = q2abs(q_hydro(ih,nz),temp(nz),press(nz),q_hum(nz),&
-                   q_hydro(ih,1),q_hydro(ih,2),q_hydro(ih,3),q_hydro(ih,4),q_hydro(ih,5))
+                   q_hydro(1,nz),q_hydro(2,nz),q_hydro(3,nz),q_hydro(4,nz),q_hydro(5,nz))
       n_tot      = 0.
       r_eff      = 0.
       t          = temp(nz)

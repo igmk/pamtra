@@ -41,7 +41,7 @@ module mie_spheres
     integer, parameter :: maxn  = 5000
     integer :: ir
     real(kind=dbl) :: del_d, density
-
+    
     real(kind=dbl) :: distribution 
     real(kind=dbl), intent(out) :: back_spec(nbins)
     character :: aerodist * 1
@@ -127,10 +127,10 @@ module mie_spheres
     real(kind=dbl), intent(in) :: t    ! temperature [K]
     integer, intent(in) :: liq_ice
     integer, intent(in) :: nbins
-    real(kind=dbl), intent(in), dimension(nbins) :: diameter
+    real(kind=dbl), intent(in), dimension(nbins+1) :: diameter
     real(kind=dbl), intent(in), dimension(nbins) :: del_d    
-    real(kind=dbl), intent(in), dimension(nbins) ::  ndens
-    real(kind=dbl), intent(in), dimension(nbins) :: density
+    real(kind=dbl), intent(in), dimension(nbins+1) ::  ndens
+    real(kind=dbl), intent(in), dimension(nbins+1) :: density
     real(kind=dbl), intent(in) :: refre
     real(kind=dbl), intent(in) :: refim !positive(?)
 
@@ -138,12 +138,12 @@ module mie_spheres
     real(kind=dbl), intent(out) :: albedo
     real(kind=dbl), intent(out) :: back_scatt
     real(kind=dbl), intent(out), dimension(200) :: legen, legen2, legen3, legen4 
-    real(kind=dbl), intent(out), dimension(nbins) :: back_spec
+    real(kind=dbl), intent(out), dimension(nbins+1) :: back_spec
     integer, intent(out) :: nlegen
 
     real(kind=dbl) :: wavelength
     complex(kind=dbl) :: m_ice
-                                       
+    real(kind=dbl) :: del_d_eff, ndens_eff, n_tot
     integer, parameter :: maxn  = 5000
     integer :: nterms, nquad, nmie, nleg 
     integer :: i, l, m, ir
@@ -163,7 +163,7 @@ module mie_spheres
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'calc_mie_spheres'
 
-      if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
     if (verbose >= 4) print*, "calc_mie_spheres(",&
       errorstatus, &
@@ -175,20 +175,35 @@ module mie_spheres
       "ndens", ndens, &
       "density", density
    
-    if (nbins<=0) then
-	print*,nbins
-	errorstatus = fatal
-	msg = "zero or neative nbins"
-	call report(errorstatus, msg, nameOfRoutine)
-	return
-    end if
-  
+
+      call assert_true(err,all(density>=0),&
+          "density must be positive")  
+      call assert_true(err,all(ndens>=0),&
+          "ndens must be positive")   
+      call assert_true(err,all(diameter>0),&
+          "diameter must be positive")   
+      call assert_true(err,all(del_d>0),&
+          "del_d must be positive")   
+      call assert_true(err,(nbins>0),&
+          "nbins must be positive")   
+      call assert_true(err,(freq>0),&
+          "freq must be positive")   
+      call assert_true(err,(t>0),&
+          "t must be positive")   
+      if (err > 0) then
+          errorstatus = fatal
+          msg = "assertation error"
+          call report(errorstatus, msg, nameOfRoutine)
+          return
+      end if    
+
      
       wavelength = c/(freq) !
 
      
       x = pi * diameter(1) / wavelength
       nterms = 0 
+      n_tot = 0.d0
       call miecalc (err,nterms, x, msphere, a, b) 
       if (err /= 0) then
 	  msg = 'error in mieclac!'
@@ -218,7 +233,20 @@ module mie_spheres
 	sump4 (i) = 0.0d0 
       end do
 
-    do ir = 1, nbins
+    do ir = 1, nbins+1
+
+      if (ir == 1) then
+        ndens_eff = ndens(1)/2.d0
+        del_d_eff = del_d(1)
+      else if (ir == nbins+1) then
+        ndens_eff = ndens(nbins+1)/2.d0
+        del_d_eff = del_d(nbins)
+      else
+        ndens_eff = ndens(ir)
+        del_d_eff = del_d(ir)
+      end if
+
+      n_tot = n_tot + (ndens_eff * del_d_eff)
 
       if (liq_ice == -1 .and. density(ir) /= 917.d0) then
 	  m_ice = refre-Im*refim  ! mimicking a
@@ -239,8 +267,8 @@ module mie_spheres
 	  return
       end if         
       
-      if (verbose >= 0) print*, "density(ir), diameter(ir), ndens(ir), msphere, x"
-      if (verbose >= 0) print*, density(ir), diameter(ir), ndens(ir), msphere, x 
+      if (verbose >= 0) print*, "density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x"
+      if (verbose >= 0) print*, density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x 
       
       call miecross (nmie, x, a, b, qext, qscat, qback)
       
@@ -252,34 +280,37 @@ module mie_spheres
       qback =  qback  * (diameter(ir)/2.d0)**2 *pi       !  [m²]! cross section
    
       ! apply bin weights
-      qext =   qext  * ndens(ir)      ! [m²/m³]!
-      qscat =  qscat * ndens(ir)      ! [m²/m³]!
-      qback =  qback * ndens(ir)      !  [m²/m³]! cross section per volume
+      qext =   qext  * ndens_eff      ! [m²/m⁴]!
+      qscat =  qscat * ndens_eff      ! [m²/m⁴]!
+      qback =  qback * ndens_eff      !  [m²/m⁴]! cross section per volume
   
-      if (verbose >= 4) print*, "qback * ndens(ir) * (diameter(ir)/2.d0), pi, del_d"
-      if (verbose >= 4) print*, qback , ndens(ir) ,(diameter(ir)/2.d0), pi, del_d
+      if (verbose >= 4) print*, "qback* del_d_eff, ndens_eff , (diameter(ir)/2.d0), pi, del_d_eff"
+      if (verbose >= 4) print*, qback * del_d_eff, ndens_eff ,(diameter(ir)/2.d0), pi, del_d_eff
   
       !integrate=sum up . del_d is already included in ndens, since ndens is not normed!
-      sumqe = sumqe + qext 
-      sumqs = sumqs + qscat
-      sumqback = sumqback + qback 
+      sumqe = sumqe + ( qext * del_d_eff)
+      sumqs = sumqs + ( qscat * del_d_eff)
+      sumqback = sumqback + ( qback * del_d_eff)
 
-      back_spec(ir) =  qback / del_d(ir) ! volumetric backscattering corss section for radar simulator in backscat per volume per del_d[m²/m⁴]
+      back_spec(ir) =  qback   ! volumetric backscattering corss section for radar simulator in backscat per volume per del_d[m²/m⁴]
 
       if (lphase_flag) then 
 	  nmie = min0(nmie, nterms) 
 	  do i = 1, nquad 
 	    call mieangle (nmie, a, b, mu (i), p1, p2, p3, p4) 
-	    sump1 (i) = sump1 (i) + p1 * ndens(ir) 
-	    sump2 (i) = sump2 (i) + p2 * ndens(ir) 
-	    sump3 (i) = sump3 (i) + p3 * ndens(ir) 
-	    sump4 (i) = sump4 (i) + p4 * ndens(ir) 
+	    sump1 (i) = sump1 (i) + p1 * ndens_eff * del_d_eff
+	    sump2 (i) = sump2 (i) + p2 * ndens_eff * del_d_eff
+	    sump3 (i) = sump3 (i) + p3 * ndens_eff * del_d_eff
+	    sump4 (i) = sump4 (i) + p4 * ndens_eff * del_d_eff
 	  end do
       end if
     end do
 
     !           multiply the sums by the integration delta and other constan
     !             put quadrature weights in angular array for later         
+
+    if (verbose >= 4) print*, "ntot", n_tot
+
 
     extinction = sumqe 
     scatter = sumqs 
@@ -333,6 +364,29 @@ module mie_spheres
       legen4 (m) = (2 * l + 1) / 2.0 * coef4 (m) 
       if (legen (m) .gt. 1.0e-7) nlegen = l 
     end do
+
+      call assert_false(err,any(isnan(legen)),&
+          "nan in legen")
+      call assert_false(err,any(isnan(legen2)),&
+          "nan in legen2")
+      call assert_false(err,any(isnan(legen3)),&
+          "nan in legen3")
+      call assert_false(err,any(isnan(legen4)),&
+          "nan in legen4")
+      call assert_false(err,any(isnan(back_spec)),&
+          "nan in back_spec")   
+      call assert_true(err,(extinction>0),&
+          "extinction must be positive")   
+      call assert_true(err,(scatter>0),&
+          "scatter must be positive") 
+      call assert_true(err,(back_scatt>0),&
+          "back_scatt must be positive") 
+      if (err > 0) then
+          errorstatus = fatal
+          msg = "assertation error"
+          call report(errorstatus, msg, nameOfRoutine)
+          return
+      end if    
 
     errorstatus = err    
     if (verbose >= 2) call report(info,'End of ', nameOfRoutine)

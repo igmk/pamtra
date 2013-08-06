@@ -57,9 +57,9 @@ subroutine radar_spectrum(&
     implicit none
 
     integer,intent(in) ::  nbins 
-    real(kind=dbl), dimension(nbins),intent(in):: diameter_spec, back_spec
+    real(kind=dbl), dimension(nbins+1),intent(in):: diameter_spec, back_spec
     integer,intent(in) ::  liq_ice
-    real(kind=dbl), dimension(nbins),intent(in):: mass, area
+    real(kind=dbl), dimension(nbins+1),intent(in):: mass, area
     real(kind=dbl), intent(in):: temp, frequency, press,back
 
     real(kind=dbl), dimension(nbins):: vel_spec,dD_dU,back_vel_spec, back_spec_ref,&
@@ -108,7 +108,9 @@ subroutine radar_spectrum(&
     
     
     ! get |K|**2 and lambda
-    K2 = dielec_water(0.D0,radar_K2_temp-t_abs,frequency)
+
+!     K2 = dielec_water(0.D0,radar_K2_temp-t_abs,frequency)
+    K2 = radar_K2
     wavelength = c / (frequency*1.d9)   ! m
 
     diameter_spec_cp(:) = diameter_spec(:)
