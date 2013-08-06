@@ -12,13 +12,11 @@ ifeq ($(ARCH),Darwin)
 	NCFLAGS_F2PY=-I/opt/local/include/ 
 	LFLAGS=-L/opt/local/lib/ -llapack -ldfftpack
 	LDFLAGS=-lnetcdf -lnetcdff 
-	SQLFLAGS := -lfsqlite -lsqlite3 -L../tools/sqlite -L/usr/lib -I../tools/sqlite
 else
 	NCFLAGS :=  $(shell nc-config --fflags)  -O2
 	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
 	LFLAGS := -llapack -ldfftpack
 	LDFLAGS := $(shell nc-config --flibs)
-	SQLFLAGS := -lfsqlite -lsqlite3 -L../tools/sqlite -L/usr/lib -I../tools/sqlite
 endif
 
 
@@ -54,8 +52,6 @@ OBJECTS=kinds.o \
 	get_atmosG0.o \
 	get_surface.o \
 	mie_scat_utilities.o \
-	mie.o \
-	mie_densitydep_spheremasseq.o\
 	mie_spheres.o \
 	dia2vel.o \
 	rescale_spectra.o \
@@ -63,7 +59,6 @@ OBJECTS=kinds.o \
 	radar_simulator.o \
 	deallocate_jacobian_vars.o \
 	allocate_jacobian_vars.o\
-	slant_profile.o \
 	allocate_profile_vars.o \
 	allocate_output_vars.o \
 	rosen98_gasabs.o \
@@ -74,7 +69,6 @@ OBJECTS=kinds.o \
 	equcom.o \
 	land_emis.o \
 	equare.o \
-	sql_tools.o \
 	scatdb.o \
 	dda_db_liu.o \
 	dielec_water.o \
@@ -85,12 +79,6 @@ OBJECTS=kinds.o \
 	interpolation.o \
 	deallocate_profile_vars.o \
 	deallocate_output_vars.o \
-	cloud_ssp.o \
-	ice_ssp.o \
-	rain_ssp.o \
-	snow_ssp.o \
-	grau_ssp.o \
-	hail_ssp.o \
 	legendre2phasefunction.o \
 	collect_output.o \
 	save_active.o \
@@ -103,8 +91,6 @@ OBJECTS=kinds.o \
 	radtran4.o \
 	radintg4.o \
 	radscat4.o \
-	tmat_rain_db.o \
-	tmat_snow_db.o \
 	descriptor_file.o \
 	drop_size_dist.o \
 	make_dist.o \
@@ -115,13 +101,8 @@ OBJECTS=kinds.o \
 	check_print.o \
 	tmatrix.o \
 	scatProperties.o \
-	hydrometeor_extinction_rt4.o \
 	hydrometeor_extinction.o \
 	scatcnv.o \
-	tmatrix_rain.o \
-	tmatrix_snow.o \
-	tmatrix_snow_sql.o \
-	tmatrix_ice.o \
 	tmatrix_lpq.o \
 	get_scat_mat.o \
 	mass_size_rel.o \
@@ -135,19 +116,7 @@ OBJECTS=kinds.o \
 	radar_calc_moments.o \
 	radar_hildebrand_sekhon.o \
 	write_nc_results.o \
-	tmatrix_sql.o \
-	tmatrix_refIndex.o \
 	tmatrix_amplq.lp.o \
-	trapez_int.o 
-# 	amplq.par.o
-#	rt3.o \
-	radtran3.o \
-	radutil3.o \
-	radscat3.o \
-	radintg3.o \
-	hydrometeor_extinction_rt3.o \
-#	tmatrix_cal.o \
-#	matrix_cal.o \
 
 BIN=pamtra
 
@@ -155,7 +124,7 @@ all: precompile pamtra py
 
 
 pamtra: pamtra.f90 $(OBJECTS)
-	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS) $(SQLFLAGS)
+	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS) 
 	mv $(BIN) ../
 
 
@@ -209,13 +178,6 @@ cosmo_netcdf.o: cosmo_netcdf.f90
 	$(FC) $(FCFLAGS) $(NCFLAGS) cosmo_netcdf.f90
 
 
-sql_tools.o: sql_tools.f90
-	$(FC) $(FCFLAGS) $(SQLFLAGS) sql_tools.f90
-
-tmatrix_calc.o: tmatrix_calc.f90
-	$(FC) $(FCFLAGS) $(SQLFLAGS) tmatrix_calc.f90
-
-
 pyprecompile: 
 	@echo "Make backup before deleting old signature file, auto creating will most likely fail."
 	@echo "####################################################################################"
@@ -223,11 +185,11 @@ pyprecompile:
 	f2py -m pyPamtraLib -h pypamtralib.pyf $(pyOBJECTS) pyPamtraLib.f90
 
 py: pyPamtraLib.f90 precompile $(OBJECTS)
-	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) $(SQLFLAGS) -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
+	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ../py/
 
 pyNode: pyPamtraLib.f90 $(OBJECTS) 
-	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) $(SQLFLAGS) -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
+	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS)  -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ../py/
 
 pyinstall:

@@ -2,93 +2,13 @@ module mie_spheres
 
   use kinds
   use constants, only: pi,c, Im
-  use settings, only: softsphere_adjust, lphase_flag, maxnleg
+  use settings, only: lphase_flag, maxnleg
   use report_module
   use mie_scat_utlities  
   implicit none
 
 
   contains
-  
-
-  subroutine mie_spheres_wrapper(f, t,liq_ice,&
-      a_mtox, bcoeff, dia1, dia2, nbins, maxleg, ad, bd, alpha, &
-      gamma, extinction, albedo, back_scatt, nlegen, legen,  &
-      legen2, legen3, legen4, aerodist,density,wc,&
-      diameter, back_spec)
-    !    computing the scattering properties according to                  
-    !    ice sphere model, i.e. the electromagnetic properties of the      
-    !     particle are computed by assuming that they are the same          
-    !     as the equivalent mass sphere
-    !                                     
-    ! note that mindex has the convention with negative imaginary part      
-    !out
-    !diameter: diameter spectrum [m]
-    !back_spec: backscattering cross section per volume per del_d [m²/m⁴]
-
-    implicit none
-
-    real(kind=dbl), intent(in) :: f,  &! frequency [GHz]
-	t    ! temperature [K]
-    integer, intent(in) :: liq_ice
-
-    integer :: maxleg, nlegen, nbins
-    real(kind=dbl) :: dia1, dia2
-    real(kind=dbl), intent(in) :: ad, bd, alpha, gamma
-    real(kind=dbl) :: a_mtox, bcoeff,wc
-    real(kind=dbl) :: extinction, albedo, back_scatt, legen (200), legen2 (200),&
-	legen3 (200), legen4 (200)                                        
-    integer, parameter :: maxn  = 5000
-    integer :: ir
-    real(kind=dbl) :: del_d, density
-    
-    real(kind=dbl) :: distribution 
-    real(kind=dbl), intent(out) :: back_spec(nbins)
-    character :: aerodist * 1
-    
-    real(kind=dbl), intent(out) :: diameter(nbins)
-    real(kind=dbl), dimension(nbins) :: particle_mass, density_vec
-    real(kind=dbl), dimension(nbins) ::  ndens
-    
-      integer(kind=long) :: errorstatus
-      integer(kind=long) :: err = 0
-      character(len=80) :: msg
-      character(len=40) :: nameOfRoutine = 'mie_spheres_wrapper'
-
-      if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
-
-    if (nbins .gt. 0) then
-      del_d = (dia2 - dia1) / nbins
-    else
-      del_d = 1.d0
-    end if
-
-    do ir = 1, nbins
-      !diameter(ir) is here the maximum extebd of the particle
-      diameter(ir) = dia1 + (ir - 1) * del_d
-      ndens(ir) = distribution(ad, bd, alpha, gamma, diameter(ir), aerodist)
-      particle_mass(ir) = a_mtox*diameter(ir)**bcoeff ! particle mass [kg]
-    density_vec(ir) = density
-	
-    end do
-
-!     call calc_mie_spheres(err, f*1d9, t, liq_ice, nbins, diameter, ndens, density_vec, &
-!       extinction, albedo, back_scatt, nlegen, legen,  &
-!       legen2, legen3, legen4, back_spec)    
-   stop "TODO: add del_d to wrapper"     
-    if (err /= 0) then
-	msg = 'error in calc_mie_spheres!'
-	call report(err, msg, nameOfRoutine)
-	errorstatus = err
-	stop !return
-    end if        
-        
-    errorstatus = err
-    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
-    return 
-
-  end subroutine mie_spheres_wrapper
-  
 
   subroutine calc_mie_spheres(&
       errorstatus, &

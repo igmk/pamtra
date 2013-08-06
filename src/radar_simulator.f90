@@ -39,7 +39,7 @@ frequency,delta_h,nz,nx,ny,fi)
     real(kind=dbl), dimension(:),allocatable:: turb_spectra
     real(kind=dbl), dimension(0:4):: moments
     real(kind=dbl), dimension(2):: slope
-    real(kind=dbl):: SNR, del_v, ss, K2, wavelength, Ze_back, dielec_water, K, &
+    real(kind=dbl):: SNR, del_v, ss, K2, wavelength, Ze_back, K, &
     min_V_aliased, max_V_aliased
     integer :: ii, tt, turbLen,alloc_status,ts_imin, ts_imax, startI, stopI
 

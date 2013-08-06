@@ -67,8 +67,8 @@ subroutine radar_spectrum(&
     real(kind=dbl), dimension(nbins) :: vel_spec_ext, back_vel_spec_ext
     real(kind=dbl), dimension(:,:), allocatable :: particle_spec_ext
     real(kind=dbl), intent(out), dimension(radar_nfft_aliased):: particle_spec
-    real(kind=dbl), dimension(radar_nfft_aliased):: radar_velo_aliased, rho_particle
-    real(kind=dbl):: del_v_radar, K2, dielec_water, wavelength, &
+    real(kind=dbl), dimension(radar_nfft_aliased):: radar_velo_aliased
+    real(kind=dbl):: del_v_radar, K2, wavelength, &
     delta_air, rho_air, rho, viscosity_air, my, del_d, Ze, K, &
     min_V_aliased, max_V_aliased
     integer :: ii, jj
@@ -141,105 +141,6 @@ subroutine radar_spectrum(&
       return
     end if
       
-!     
-!     !get the particle velocities depending on particle type!
-!     if (particle_type .eq. "cloud") then
-!         if (verbose >= 3) call report(info,'using: '//radar_fallVel_cloud//'to calculate fall velocity for cloud', nameOfRoutine)
-!         if (radar_fallVel_cloud .eq. "khvorostyanov01_spheres") then
-!             rho_particle(:) = rho_water
-!             call dia2vel_khvorostyanov01_spheres(err,nbins,diameter_spec_cp,rho,my,rho_particle,vel_spec)
-!         else if (radar_fallVel_cloud .eq. "khvorostyanov01_drops") then
-!             call dia2vel_khvorostyanov01_drops(err,nbins,diameter_spec_cp,rho,my,vel_spec)
-!         else if (radar_fallVel_cloud .eq. "rogers_drops") then
-!             call dia2vel_rogers_drops(err,nbins,diameter_spec_cp,rho,vel_spec)
-!         else if (radar_fallVel_cloud .eq. "pavlos_cloud") then
-!             call dia2vel_pavlos_cloud(err,nbins,diameter_spec_cp,vel_spec)
-!         else
-!             print*, "did not understand radar_fallVel_cloud ", radar_fallVel_cloud
-!             stop
-!         end if
-! 
-!     else if (particle_type .eq. "rain") then
-!         if (verbose >= 3) call report(info,'using: '//radar_fallVel_rain//'to calculate fall velocity for rain', nameOfRoutine)
-!         if (radar_fallVel_rain .eq. "khvorostyanov01_drops") then
-!             call dia2vel_khvorostyanov01_drops(err,nbins,diameter_spec_cp,rho,my,vel_spec)
-!         else if (radar_fallVel_rain .eq. "foote69_rain") then
-!             call dia2vel_foote69_rain(err,nbins,diameter_spec_cp,rho,temp,vel_spec)
-!         else if (radar_fallVel_rain .eq. "metek_rain") then
-!             call dia2vel_metek_rain(err,nbins,diameter_spec_cp,rho,temp,vel_spec)
-!         else if (radar_fallVel_rain .eq. "rogers_drops") then
-!             call dia2vel_rogers_drops(err,nbins,diameter_spec_cp,rho,vel_spec)
-!         else
-!             print*, "did not understand radar_fallVel_rain ", radar_fallVel_rain
-!             stop
-!         end if
-! 
-!     else if (particle_type .eq. "ice") then
-!         if (verbose >= 3) call report(info,'using: '//radar_fallVel_ice//'to calculate fall velocity for ice', nameOfRoutine)
-!         if (verbose >= 3) print*, "providing:", rho,my,mass_size_a,mass_size_b,area_size_a,area_size_b
-! 
-!         if (radar_fallVel_ice .eq. "heymsfield10_particles") then
-!             call dia2vel_heymsfield10_particles_ms_as(err,nbins,diameter_spec_cp,rho,my,&
-!             mass_size_a,mass_size_b,area_size_a,area_size_b,vel_spec)
-!         else if (radar_fallVel_ice .eq. "khvorostyanov01_particles") then
-!             call dia2vel_khvorostyanov01_particles(err,nbins,diameter_spec_cp,rho,my,&
-!             mass_size_a,mass_size_b,area_size_a,area_size_b,vel_spec)
-!         else
-!             print*, "did not understand radar_fallVel_ice ", radar_fallVel_ice
-!             stop
-!         end if
-! 
-!     else if (particle_type .eq. "snow") then
-!         if (verbose >= 3) call report(info,'using: '//radar_fallVel_snow//'to calculate fall velocity for snow', nameOfRoutine)
-!         if (radar_fallVel_ice .eq. "heymsfield10_particles") then
-!             call dia2vel_heymsfield10_particles_ms_as(err,nbins,diameter_spec_cp,rho,my,&
-!             mass_size_a,mass_size_b,area_size_a,area_size_b,vel_spec)
-!         else if (radar_fallVel_snow .eq. "khvorostyanov01_particles") then
-!             call dia2vel_khvorostyanov01_particles(err,nbins,diameter_spec_cp,rho,my,&
-!             mass_size_a,mass_size_b,area_size_a,area_size_b,vel_spec)
-!         else
-!             print*, "did not understand radar_fallVel_snow ", radar_fallVel_snow
-!             stop
-!         end if
-! 
-!     else if (particle_type .eq. "graup") then
-!         if (verbose >= 3) call report(info,'using: '//radar_fallVel_graupel//'to calculate fall velocity for graupel', nameOfRoutine)
-!         if (radar_fallVel_graupel .eq. "khvorostyanov01_spheres") then
-!             !reverse the mass-size relation to get the density assuming spheric shape, nonsense for rain and clouds
-!             rho_particle = mass_size_a * diameter_spec_cp**( mass_size_b-3.d0) * 6/pi
-!             call dia2vel_khvorostyanov01_spheres(err,nbins,diameter_spec_cp,rho,my,rho_particle,vel_spec)
-!         else if (radar_fallVel_graupel .eq. "rogers_graupel") then
-!             call dia2vel_rogers_graupel(err,nbins,diameter_spec_cp,vel_spec)
-!         else
-!             print*, "did not understand radar_fallVel_graupel ", radar_fallVel_graupel
-!             stop
-!         end if
-! 
-!     else if (particle_type .eq. "hail") then
-!         if (verbose >= 3) call report(info,'using: '//radar_fallVel_hail//'to calculate fall velocity for hail', nameOfRoutine)
-!         if (radar_fallVel_hail .eq. "khvorostyanov01_spheres") then
-!             !reverse the mass-size relation to get the density assuming spheric shape, nonsense for rain and clouds
-!             rho_particle = mass_size_a * diameter_spec_cp**( mass_size_b-3.d0) * 6/pi
-!             call dia2vel_khvorostyanov01_spheres(err,nbins,diameter_spec_cp,rho,my,rho_particle,vel_spec)
-!         else
-!             print*, "did not understand radar_fallVel_hail ", radar_fallVel_hail
-!             stop
-!         end if
-!     else
-!         errorstatus = fatal
-!         msg = particle_type//': Wrong particle type'
-!         call report(errorstatus, msg, nameOfRoutine)
-!         stop !return
-!     end if
-! 
-!     if (err /= 0) then
-!         msg = 'error in dia2vel_XX!'
-!         call report(err, msg, nameOfRoutine)
-!         errorstatus = err
-!         stop !return
-!     end if
-
-
 
     back_spec_ref = (1d0/ (K2*pi**5) ) * back_spec * (wavelength)**4 ![m⁶/m⁴]
     back_spec_ref =  back_spec_ref * 1d18 !now non-SI: [mm⁶/m³/m]

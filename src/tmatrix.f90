@@ -239,14 +239,10 @@ module tmatrix
       real(kind=dbl), intent(out), dimension(nstokes,qua_num) :: emis_vector
 
       real(kind=dbl) :: wave_num
-      real(kind=dbl) :: maximum_size, minimum_size, &
-	  num_0, lambda_0, temperature, &
-	  particle_size, particle_mass
       real(kind=dbl) ::thet0, thet, phi, phi0,&
-	  rat, sum_tmp, phi_weights, phi0_weights
-      integer :: i, j, k, l, m, n, &
-	particle_num,&
-	ii,jj,kk,ll,kkk,kkk1,kkk2
+	  rat, phi_weights, phi0_weights
+      integer ::  m, n, &
+	ii,jj,kk,ll, kkk1
 
       !       parameter(qua_num=8, nstokes = 4)
 

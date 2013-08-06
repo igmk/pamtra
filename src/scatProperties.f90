@@ -105,13 +105,6 @@ module scatProperties
     real(kind=dbl) :: abscof
       
     complex(kind=dbl) :: refIndex  
-      
-    !tmp:
-    real(kind=dbl) :: a_mice 
-    real(kind=dbl) :: b_mice 
-    real(kind=dbl) :: a_as_ice 
-    real(kind=dbl) :: b_as_ice
-
 
     integer :: nlegen_coef_hydro
     integer :: jj

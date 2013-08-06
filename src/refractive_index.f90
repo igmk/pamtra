@@ -61,7 +61,7 @@ as_ratio, particle_mass, axi, ref)
 
     implicit none
 
-    real(kind=dbl) :: tempr, frq, freq, particle_size, as_ratio, axi, mass
+    real(kind=dbl) :: tempr, frq, particle_size, as_ratio, axi
     real(kind=dbl) :: particle_mass, sal
     complex(kind=ext) :: ref
     character(1) :: phase
@@ -116,7 +116,6 @@ subroutine refsnow(tempr, frq, particle_size, as_ratio, particle_mass, axi, snow
     real(kind=dbl) :: air_dens, ice_dens
     real(kind=dbl) :: realp, alpha1, b1, b, b2, betam, delta_beta, beta1, imagp
     complex(kind=ext) :: ice_ref, snow_ref
-    character(1) :: phase
 
     ! min_dim: minimum dimension, in m
     ! max_dim: maximum dimension, in m
@@ -183,7 +182,7 @@ subroutine refwater(sal1,freq,tempr,ref)
 
     implicit none
 
-    real(kind=dbl) :: sal1, freq, temp, mrr, mri, fr, sal,tempr
+    real(kind=dbl) :: sal1, freq, temp, mrr, mri, sal,tempr
     complex(kind=ext) :: first_term,second_term,third_term,eps,nn,term1,term2
     real(kind=dbl) :: a_1,a_2,a_3,a_4,a_5,a_6,a_7,a_8
     real(kind=dbl) :: a_9,a_10,a_11,a_12,a_13,a_14,a_15,a_16,a_17,a_18
