@@ -46,7 +46,7 @@ subroutine radar_spectrum(&
     !area: cross section area [m²]
     !area_size_b: b of mass size relation, needed for graupel, hail, snow, ice
     !out
-    !particle_spec particle spectrum in dependence of radar Dopple velocity in m6m-3/ms-1
+    !particle_spec particle spectrum in dependence of radar Doppler velocity in m6m-3/ms-1
 
     use kinds
     use settings
@@ -62,14 +62,14 @@ subroutine radar_spectrum(&
     real(kind=dbl), dimension(nbins+1),intent(in):: mass, area
     real(kind=dbl), intent(in):: temp, frequency, press,back
 
-    real(kind=dbl), dimension(nbins):: vel_spec,dD_dU,back_vel_spec, back_spec_ref,&
+    real(kind=dbl), dimension(nbins+1):: vel_spec,dD_dU,back_vel_spec, back_spec_ref,&
     del_v_model, diameter_spec_cp
-    real(kind=dbl), dimension(nbins) :: vel_spec_ext, back_vel_spec_ext
+    real(kind=dbl), dimension(nbins+1) :: vel_spec_ext, back_vel_spec_ext
     real(kind=dbl), dimension(:,:), allocatable :: particle_spec_ext
     real(kind=dbl), intent(out), dimension(radar_nfft_aliased):: particle_spec
     real(kind=dbl), dimension(radar_nfft_aliased):: radar_velo_aliased
     real(kind=dbl):: del_v_radar, K2, wavelength, &
-    delta_air, rho_air, rho, viscosity_air, my, del_d, Ze, K, &
+    delta_air, rho_air, rho, viscosity_air, my, Ze, K, &
     min_V_aliased, max_V_aliased
     integer :: ii, jj
 
@@ -82,7 +82,7 @@ subroutine radar_spectrum(&
 
     call assert_true(err,all(diameter_spec > 0),&
         "nan or negative diameter_spec")
-    call assert_true(err,all(back_spec >= 0),&
+    call assert_true(err,all(back_spec > 0),&
         "nan or negative back_spec")   
     call assert_true(err,nbins>0,&
         "nbins must be greater than 1 for the radar simulator!")
@@ -105,8 +105,6 @@ subroutine radar_spectrum(&
       return
     end if   
     
-    
-    
     ! get |K|**2 and lambda
 
 !     K2 = dielec_water(0.D0,radar_K2_temp-t_abs,frequency)
@@ -121,9 +119,9 @@ subroutine radar_spectrum(&
     
     
     if (liq_ice == 1) then !water
-      call dia2vel_khvorostyanov01_drops(err,nbins,diameter_spec_cp,rho,my,vel_spec)
+      call dia2vel_khvorostyanov01_drops(err,nbins+1,diameter_spec_cp,rho,my,vel_spec)
     else if (liq_ice == -1) then
-      call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,my,&
+      call dia2vel_heymsfield10_particles(err,nbins+1,diameter_spec_cp,rho,my,&
             mass,area,vel_spec)
     else
       errorstatus = fatal
@@ -145,15 +143,11 @@ subroutine radar_spectrum(&
     back_spec_ref = (1d0/ (K2*pi**5) ) * back_spec * (wavelength)**4 ![m⁶/m⁴]
     back_spec_ref =  back_spec_ref * 1d18 !now non-SI: [mm⁶/m³/m]
 
-
-    del_d = (diameter_spec_cp(2)-diameter_spec_cp(1)) * 1.d3 ![mm]
-
-
     Ze = 1d18* (1d0/ (K2*pi**5) ) * back * (wavelength)**4
 
 
     !move from dimension to velocity!
-    do jj=1,nbins-1
+    do jj=1,nbins
         dD_dU(jj) = (diameter_spec_cp(jj+1)-diameter_spec_cp(jj))/(vel_spec(jj+1)-vel_spec(jj)) ![m/(m/s)]
         !is all particles fall with the same velocity, dD_dU gets infinitive!
         if (abs(dD_dU(jj)) .ge. huge(dD_dU(jj))) then
@@ -165,12 +159,23 @@ subroutine radar_spectrum(&
         end if
         if (verbose >= 4) print*,"jj,dD_dU(jj)",jj,dD_dU(jj)
         del_v_model(jj) = ABS(vel_spec(jj+1)-vel_spec(jj))
-
-
-
     end do
-    dD_dU(nbins) = dD_dU(nbins-1)
-    del_v_model(nbins) = del_v_model(nbins-1)
+    dD_dU(nbins+1) = dD_dU(nbins)
+
+
+    call assert_false(err,any(isnan(dD_dU)),&
+        "nan or negative dD_dU")   
+    call assert_false(err,any(vel_spec<0) .or. any(isnan(vel_spec)),&
+        "nan or negative vel_spec")   
+    if (err /= 0) then
+      msg = 'error in radar_spectrum!'
+      call report(err, msg, nameOfRoutine)
+      errorstatus = err
+      return
+    end if
+
+
+    del_v_model(nbins+1) = del_v_model(nbins)
     back_vel_spec = back_spec_ref * ABS(dD_dU)  !non-SI: [mm⁶/m³/m * m/(m/s)]
 
     !get delta velocity
@@ -178,6 +183,17 @@ subroutine radar_spectrum(&
 
     min_V_aliased = radar_min_V - radar_aliasing_nyquist_interv*(radar_max_V-radar_min_V)
     max_V_aliased = radar_max_V + radar_aliasing_nyquist_interv*(radar_max_V-radar_min_V)
+
+    call assert_true(err,min_V_aliased<=MINVAL(vel_spec),&
+        "increase radar_aliasing_nyquist_interv to the left!")   
+    call assert_true(err,max_V_aliased>=MAXVAL(vel_spec),&
+        "increase radar_aliasing_nyquist_interv to the right!")  
+    if (err /= 0) then
+      msg = 'error in radar_spectrum!'
+      call report(err, msg, nameOfRoutine)
+      errorstatus = err
+      return
+    end if
 
     !create array from min_v to max_v iwth del_v_radar spacing -> velocity spectrum of radar
     radar_velo_aliased = (/(((ii*del_v_radar)+min_V_aliased),ii=0,radar_nfft_aliased)/) ! [m/s]
@@ -191,7 +207,7 @@ subroutine radar_spectrum(&
         if (radar_airmotion_model .eq. "constant") then
             vel_spec = vel_spec + radar_airmotion_vmin
             !interpolate OR average (depending who's bins size is greater) from N(D) bins to radar bins.
-            call rescale_spectra(err,nbins,radar_nfft_aliased,.false.,vel_spec,back_vel_spec,radar_velo_aliased,particle_spec) ! particle_spec in [mm⁶/m³/m * m/(m/s)]
+            call rescale_spectra(err,nbins+1,radar_nfft_aliased,.false.,vel_spec,back_vel_spec,radar_velo_aliased,particle_spec) ! particle_spec in [mm⁶/m³/m * m/(m/s)]
         !step function
         else if (radar_airmotion_model .eq. "step") then
 
@@ -200,13 +216,13 @@ subroutine radar_spectrum(&
             vel_spec_ext = vel_spec + radar_airmotion_vmin
             back_vel_spec_ext = back_vel_spec * radar_airmotion_step_vmin
             !interpolate OR average (depending who's bins size is greater) from N(D) bins to radar bins.
-            call rescale_spectra(err,nbins,radar_nfft_aliased,.false.,vel_spec_ext,back_vel_spec_ext,radar_velo_aliased,&
+            call rescale_spectra(err,nbins+1,radar_nfft_aliased,.false.,vel_spec_ext,back_vel_spec_ext,radar_velo_aliased,&
             particle_spec_ext(1,:))! particle_spec in [mm⁶/m³/m * m/(m/s)]
             !for vmax
             vel_spec_ext = vel_spec + radar_airmotion_vmax
             back_vel_spec_ext = back_vel_spec *(1.d0-radar_airmotion_step_vmin)
             !interpolate OR average (depending who's bins size is greater) from N(D) bins to radar bins.
-            call rescale_spectra(err,nbins,radar_nfft_aliased,.false.,vel_spec_ext,back_vel_spec_ext,radar_velo_aliased,&
+            call rescale_spectra(err,nbins+1,radar_nfft_aliased,.false.,vel_spec_ext,back_vel_spec_ext,radar_velo_aliased,&
             particle_spec_ext(2,:))
             !join results
             particle_spec = SUM(particle_spec_ext,1)
@@ -220,7 +236,7 @@ subroutine radar_spectrum(&
                 vel_spec_ext = vel_spec + radar_airmotion_vmin + (jj-1)*delta_air
                 back_vel_spec_ext = back_vel_spec / REAL(radar_airmotion_linear_steps)
                 !interpolate OR average (depending whos bins size is greater) from N(D) bins to radar bins.
-                call rescale_spectra(err,nbins,radar_nfft_aliased,.false.,vel_spec_ext,back_vel_spec_ext,radar_velo_aliased,&
+                call rescale_spectra(err,nbins+1,radar_nfft_aliased,.false.,vel_spec_ext,back_vel_spec_ext,radar_velo_aliased,&
                 particle_spec_ext(jj,:))
             end do
             !join results
@@ -235,7 +251,7 @@ subroutine radar_spectrum(&
     else
         !no air motion, just rescale
         if (verbose >= 3) call report(info, "Averaging spectrum and Adding without vertical air motion", nameOfRoutine)
-        call rescale_spectra(err,nbins,radar_nfft_aliased,.false.,vel_spec,back_vel_spec,radar_velo_aliased,particle_spec) ! particle_spec in [mm⁶/m³/m * m/(m/s)]
+        call rescale_spectra(err,nbins+1,radar_nfft_aliased,.false.,vel_spec,back_vel_spec,radar_velo_aliased,particle_spec) ! particle_spec in [mm⁶/m³/m * m/(m/s)]
     end if
 
     if (err /= 0) then
@@ -245,9 +261,11 @@ subroutine radar_spectrum(&
         return
     end if
 
-
     K = (Ze/SUM(particle_spec*del_v_radar))
     particle_spec = K* particle_spec
+
+
+
     call assert_true(err,all(particle_spec >= 0),&
         "nan or negative particle_spec") 
     if (err /= 0) then

@@ -86,14 +86,24 @@ contains
     call assert_true(err,nx1>1,&
         "nx1 must be greater 1") 
     call assert_true(err,nx2>1,&
-        "nx2 must be greater 1")         
+        "nx2 must be greater 1")   
+    call assert_true(err,maxval(x1)<=maxval(x2),&
+        "max x1 must be smaller than x2")      
+    call assert_true(err,minval(x1)>=minval(x2),&
+        "min x1 must be larger than x2")    
     if (err /= 0) then
       msg = 'error in tranforming the spectrum to velocity space...'
       call report(err, msg, nameOfRoutine)
       errorstatus = err
       return
     end if
-    
+
+
+    if (all(y1==0)) then
+      msg = "all values zero"
+      call report(warning, msg, nameOfRoutine)
+    end if
+
     x1_sorted = x1
     y1_sorted = y1
 
@@ -146,8 +156,12 @@ contains
 	return
     end if
 
+    if (all(y2==0)) then
+      msg = "all calculated values zero"
+      call report(warning, msg, nameOfRoutine)
+    end if
 
-    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
     errorstatus = err
     return
 
@@ -195,6 +209,11 @@ contains
 
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
+    if (all(y12_sorted==0)) then
+      msg = "all input values zero"
+      call report(warning, msg, nameOfRoutine)
+    end if
+
     !step zero
     call locate (x12_sorted, nx12, x2(1), jj1)
     do ii=1,nx2-1
@@ -214,7 +233,6 @@ contains
 	  err = success
       end if
 
-  !     end if 
       !make the averaging, first width half of the weights on the left side
       y_result(ii) = SUM(y12_sorted(jj1:jj2-1) * 0.5d0*(x12_sorted(jj1+1:jj2)-x12_sorted(jj1:jj2-1)  ) ) 
       !now right-side weights
@@ -223,7 +241,13 @@ contains
       y_result(ii) = y_result(ii) / SUM((x12_sorted(jj1+1:jj2)-x12_sorted(jj1:jj2-1)))
       !save idnex for next iteration
       jj1=jj2
+
     end do
+
+    if (all(y_result==0)) then
+      msg = "all calculated values zero"
+      call report(warning, msg, nameOfRoutine)
+    end if
 
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
 
