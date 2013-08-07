@@ -120,7 +120,7 @@ contains
         ! Global variables:
         ! Modules used:
         !
-        !
+        implicit none
         ! Subroutine arguments
         !   Scalar arguments with intent(inout):
         integer, intent(inout) :: error
@@ -138,6 +138,8 @@ contains
     End Subroutine assert_true
     
     Subroutine assert_false(error,logic,message)
+       ! Description see assert_true
+        implicit none
         integer, intent(inout) :: error
         !   Logic arguments with intent(in):
 	logical, intent(in) :: logic

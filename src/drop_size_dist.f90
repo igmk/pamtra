@@ -172,7 +172,7 @@ subroutine run_drop_size_dist(errorstatus)
   print*, "Emiliano, I need mass and area for the radar simulator. I think it is best to calculate it here? "
   print*, "Area comes from an area mass relation, usually A = aD**b, which we have to add to the descriptor file"
   print*, "in addition, I need a field in the descriptor file with the name of the fall speed relation to be used"
-  print*, "see radar_spectrum.f90, line 147ff"
+  print*, "see radar_spectrum.f90, line 121ff"
   mass_ds(:) = 1.d-4 !dummy value
   area_ds(:) = 1.d-4 !dummy value
   
