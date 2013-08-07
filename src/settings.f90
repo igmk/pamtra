@@ -30,13 +30,12 @@ module settings
     integer(kind=long) :: nfrq
     integer(kind=long) :: verbose = 0
 
+
     !!Set by namelist file
-    integer :: n_moments, isnow_n0, liu_type, liu_type_ice
+    integer :: n_moments
 
     real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
     real(kind=dbl) :: emissivity
-    real(kind=dbl) :: N_0rainD, N_0snowDsnow, N_0grauDgrau, N_0hailDhail,  SP
-    real(kind=dbl) :: as_ratio, snow_density, graupel_density, hail_density, as_ratio_ice
     real(kind=dbl) :: salinity         ! sea surface salinity
     real(kind=dbl), dimension(maxfreq) :: freqs
 
@@ -54,9 +53,6 @@ module settings
     real(kind=dbl) :: radar_min_spectral_snr !threshold for peak detection
     real(kind=dbl) :: radar_K2
 
-  real(kind=dbl) :: ad_cloud, bd_cloud, alphad_cloud, gammad_cloud, ad_ice, bd_ice, alphad_ice, gammad_ice
-  real(kind=dbl) :: diamin_cloud, diamax_cloud, diamin_ice, diamax_ice, mass_size_ice_a, mass_size_ice_b, &
-  area_size_ice_a, area_size_ice_b
 
   real(kind=dbl) :: hydro_threshold, radar_noise_distance_factor
 
@@ -68,8 +64,6 @@ module settings
     lphase_flag, &        ! flag for phase function calculation
     lgas_extinction, &    ! gas extinction desired
     lhyd_extinction, &    ! hydrometeor extinction desired
-    use_rain_db, &    ! use the tmatrix database for rain
-    use_snow_db, &    ! use the tmatrix database for snow
     write_nc, &  ! write netcdf or ascii output
     active, &  	   ! calculate active stuff
     passive, &     ! calculate passive stuff (with RT4)
@@ -77,11 +71,9 @@ module settings
     radar_airmotion, &   ! apply vertical air motion
     radar_save_noise_corrected_spectra, & !remove the noise from the calculated spectrum again (for testing)
     radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise) we can skip that.
-    radar_convolution_fft,& !use fft for convolution of spectrum
-    use_sql_db
+    radar_convolution_fft!use fft for convolution of spectrum
 
-    character(5) :: EM_ice, EM_snow, EM_grau, EM_hail, EM_cloud, EM_rain
-    character(1) :: SD_cloud, SD_ice, SD_rain, SD_snow, SD_grau, SD_hail
+
     character(3) :: gas_mod
     character(20) :: moments_file,file_desc
     character(100) :: input_path, output_path, tmp_path,creator, data_path
@@ -97,16 +89,23 @@ module settings
     character(99)  :: input_file        ! name of profile
     character(300) :: namelist_file     ! name of nml_file
     character(300) :: nc_out_file       ! name of netcdf output file
-    character(200) :: sql_fname
     character(9) :: frq_str_s,frq_str_e
     character(8), dimension(maxfreq) :: frqs_str
     character(300) :: descriptor_file_name
-    character(7) :: softsphere_adjust
 
     integer :: radar_nfft_aliased, radar_maxTurbTerms !are gained from radar_aliasing_nyquist_interv and radar_nfft
 contains
 
-    subroutine settings_read
+    subroutine settings_read(errorstatus)
+
+    use kinds
+    use report_module
+    implicit none
+
+    integer(kind=long), intent(out) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
+    character(len=14) :: nameOfRoutine = 'settings_read'
 
         ! name list declarations
         namelist / inoutput_mode / input_path, output_path,&
@@ -117,16 +116,7 @@ contains
         namelist / run_mode / active, passive,radar_mode
         namelist / surface_params / ground_type,salinity, emissivity
         namelist / gas_abs_mod / lgas_extinction, gas_mod
-        namelist / hyd_opts / lhyd_extinction, lphase_flag, softsphere_adjust, sql_fname,use_sql_db
-	namelist / cloud_params / SD_cloud, EM_cloud,  ad_cloud, bd_cloud, alphad_cloud, gammad_cloud, &
-				  diamin_cloud, diamax_cloud
-	namelist / ice_params / SD_ice, EM_ice, ad_ice, bd_ice, alphad_ice, gammad_ice, &
-				  liu_type_ice, diamin_ice, diamax_ice, mass_size_ice_a, mass_size_ice_b, &
-				  area_size_ice_a, area_size_ice_b, as_ratio_ice
-	namelist / rain_params / SD_rain, N_0rainD, use_rain_db, EM_rain
-	namelist / snow_params / SD_snow, N_0snowDsnow, EM_snow, use_snow_db, as_ratio,snow_density, SP, isnow_n0, liu_type
-	namelist / graupel_params / SD_grau, N_0grauDgrau, EM_grau, graupel_density
-	namelist / hail_params / SD_hail, N_0hailDhail, EM_hail, hail_density
+        namelist / hyd_opts / lhyd_extinction, lphase_flag
 	namelist / moments / n_moments, moments_file
 	namelist / radar_simulator / radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
 		  radar_turbulence_st, radar_pnoise, radar_airmotion, radar_airmotion_model, &
@@ -136,6 +126,7 @@ contains
 		  radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr, radar_convolution_fft, &
                   radar_K2, radar_noise_distance_factor
 
+    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
 
 	hydro_threshold = 1.d-10   ! [kg/kg] 
@@ -176,58 +167,7 @@ contains
         ! sec hyd_opts
         lhyd_extinction=.true.
         lphase_flag = .true.
-	softsphere_adjust = "density"
-	sql_fname="test.sqlite"
-        ! sec cloud_params
-      SD_cloud='C'
-      EM_cloud="miecl"
-      ad_cloud = 1000.
-      bd_cloud = 2.0
-      alphad_cloud = 0.
-      gammad_cloud = 1.
-      diamin_cloud = 4.d-6! [m] 
-      diamax_cloud = 5.d-5! [m] 
-        ! sec ice_params
-        SD_ice='C'
-        EM_ice='mieic'
-        ad_ice = 1000.
-        bd_ice = 2.0
-        alphad_ice = 0.
-        gammad_ice = 1.
-        liu_type_ice = 9
-        diamin_ice = 7e-5 ! [m] 
-        diamax_ice = 1e-2 ! [m] 
-        mass_size_ice_a = 0.0016958357159333887 !aus MPACE
-        mass_size_ice_b = 1.7d0 !aus MPACE
-        area_size_ice_b = 1.63 !aus mitchell 96 fuer MPACE
-        area_size_ice_a = 0.020016709444709808!aus mitchell 96 fuer MPACE
-	as_ratio_ice = 0.999999d0 !numerically more stable than 1
-        ! sec rain_params
-        SD_rain='C'
-        N_0rainD=8.0
-        use_rain_db=.true.
-        EM_rain="miera"
-        ! sec snow_params
-        SD_snow='C'
-        N_0snowDsnow=0.565
-        EM_snow='densi'
-        use_snow_db=.true.
-        as_ratio=0.5d0
-        snow_density=200.d0
-        SP=0.2
-        isnow_n0=1
-        liu_type=8
-        ! sec graupel_params
-        SD_grau='C'
-        N_0grauDgrau=4.0
-        EM_grau='densi'
-        graupel_density=400.d0
-        ! sec hail_params
-        SD_hail='C'
-        N_0hailDhail=4.0
-        EM_hail='densi'
-        hail_density=917.d0
-        ! sec moments
+!        ! sec moments
         n_moments=1
         moments_file='snowCRYSTAL'
         ! radar_simulator
@@ -270,31 +210,12 @@ contains
         ! read name list parameter file
         open(7, file=namelist_file,delim='APOSTROPHE')
         read(7,nml=inoutput_mode)
-        !    if (verbose .gt. 1) print*, input_path, output_path,tmp_path, dump_to_file, write_nc, data_path
         read(7,nml=output)
-        !    if (verbose .gt. 1) print*, obs_height,units,outpol,freq_str,file_desc,creator,zeSplitUp
         read(7,nml=run_mode)
-        !    if (verbose .gt. 1) print*, active, passive
         read(7,nml=surface_params)
-        !    if (verbose .gt. 1) print*, ground_type,salinity, emissivity
         read(7,nml=gas_abs_mod)
-        !    if (verbose .gt. 1) print*, lgas_extinction, gas_mod
         read(7,nml=hyd_opts)
-        !    if (verbose .gt. 1) print*, lhyd_extinction, lphase_flag
-        read(7,nml=cloud_params)
-        !    if (verbose .gt. 1) print*, SD_cloud
-        read(7,nml=ice_params)
-        !    if (verbose .gt. 1) print*, SD_ice, EM_ice
-        read(7,nml=rain_params)
-        !    if (verbose .gt. 1) print*, SD_rain, N_0rainD, use_rain_db
-        read(7,nml=snow_params)
-        !    if (verbose .gt. 1) print*, SD_snow, N_0snowDsnow, EM_snow, use_snow_db, as_ratio,snow_density, SP, isnow_n0, liu_type
-        read(7,nml=graupel_params)
-        !    if (verbose .gt. 1) print*, SD_grau, N_0grauDgrau, EM_grau, graupel_density
-        read(7,nml=hail_params)
-        !    if (verbose .gt. 1) print*, SD_hail, N_0hailDhail, EM_hail, hail_density
         read(7,nml=moments)
-        !    if (verbose .gt. 1) print*, n_moments, moments_file
         read(7,nml=radar_simulator)
 
         close(7)
@@ -313,7 +234,6 @@ contains
             end if
             freq_str = frq_str_s//frq_str_e
         end if
-        !      frq_str_list = frq_str_list(:len_trim(frq_str_list)) // "_" //  frqs_str(ff)
 
         !mix some variables to make new ones:
         radar_nfft_aliased = radar_nfft *(1+2*radar_aliasing_nyquist_interv)
@@ -328,16 +248,7 @@ contains
             print*, "run_mode ",  active, passive,radar_mode
             print*, "surface_params ",  ground_type,salinity, emissivity
             print*, "gas_abs_mod ",  lgas_extinction, gas_mod
-            print*, "hyd_opts ",  lhyd_extinction, lphase_flag, softsphere_adjust
-            print*, "cloud_params ",  SD_cloud, EM_cloud,ad_cloud, bd_cloud, alphad_cloud, &
-	      gammad_cloud, diamin_cloud, diamax_cloud
-            print*, "ice_params ",  SD_ice,EM_ice,ad_ice,bd_ice,alphad_ice,gammad_ice,liu_type_ice,&
-	      diamin_ice,diamax_ice,mass_size_ice_a,mass_size_ice_b,area_size_ice_b,area_size_ice_a,&
-	      as_ratio_ice
-            print*, "rain_params ",  SD_rain, N_0rainD, use_rain_db, EM_rain
-            print*, "snow_params ",  SD_snow, N_0snowDsnow, EM_snow, use_snow_db, as_ratio,snow_density, SP, isnow_n0, liu_type
-            print*, "graupel_params ",  SD_grau, N_0grauDgrau, EM_grau, graupel_density
-            print*, "hail_params ",  SD_hail, N_0hailDhail, EM_hail, hail_density
+            print*, "hyd_opts ",  lhyd_extinction, lphase_flag!, softsphere_adjust
             print*, "moments ",  n_moments, moments_file
             print*, "radar_simulator ",  radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
             radar_turbulence_st, radar_pnoise, radar_airmotion, radar_airmotion_model, &

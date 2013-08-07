@@ -4,26 +4,29 @@ verbose=1
 &inoutput_mode
 write_nc=.true.
 dump_to_file=.false.
-input_path='/path/to/profiles/'
-output_path='/path/to/output/'
-data_path='data'
-tmp_path='/dev/shm/'
-use_crm=.false.
+input_path='profile/'
+output_path='output/'
+input_type='profile'
+tmp_path='/tmp/'
+data_path='data/'
+crm_case=''
 crm_data=''
+crm_data2=''
 crm_constants=''
+jacobian_mode=.false.
 /
 &output
-obs_height=833000. 
+obs_height=833000.
 units='T'
 outpol='VH'
 freq_str=''
 file_desc=''
-creator='Name (mail@domain.com)'
-zeSplitUp=.true.
+creator='Pamtrauser'
 /
 &run_mode
 active=.true.
 passive=.true.
+radar_mode="simple" 
 /
 &surface_params
 ground_type='S'
@@ -38,40 +41,34 @@ gas_mod='R98'
 lhyd_extinction=.true.
 lphase_flag = .true.
 /
-&cloud_params
-SD_cloud='M'
-/
-&ice_params
-SD_ice='M'
-EM_ice='icesf'
-/
-&rain_params
-SD_rain='M' 
-N_0rainD=8.0
-/
-&snow_params
-SD_snow='M' 
-N_0snowDsnow=7.628 
-EM_snow='surus' 
-SP=0.2 
-isnow_n0=1
-liu_type=8
-/
-&graupel_params
-SD_grau='M' 
-N_0grauDgrau=4.0 
-EM_grau='surus'
-/
-&hail_params
-SD_hail='M' 
-N_0hailDhail=4.0 
-EM_hail='surus'
-/
-# if moments eq 2, set SD_rain, SD_snow, SD_grau, and SD_hail to G
 &moments
 n_moments=1
 moments_file='snowCRYSTAL'
 /
 &radar_simulator
-radar_spectrum=.false.
+radar_nfft=256
+radar_no_Ave=150
+radar_max_V=7.885
+radar_min_V=-7.885
+radar_turbulence_st=0.15
+radar_pnoise=1.d-3
+radar_airmotion = .false.
+radar_airmotion_model = "step" 
+radar_airmotion_vmin = -4.d0
+radar_airmotion_vmax = +4.d0
+radar_airmotion_linear_steps = 30
+radar_airmotion_step_vmin = 0.5d0
+radar_fallVel_cloud ="khvorostyanov01_drops"
+radar_fallVel_rain = "khvorostyanov01_drops"
+radar_fallVel_ice ="heymsfield10_particles"
+radar_fallVel_snow ="heymsfield10_particles"
+radar_fallVel_graupel ="khvorostyanov01_spheres"
+radar_fallVel_hail ="khvorostyanov01_spheres"
+radar_aliasing_nyquist_interv = 1
+radar_save_noise_corrected_spectra = .false.
+radar_use_hildebrand = .false.
+radar_min_spectral_snr = 1.2
+radar_convolution_fft = .true. 
+radar_K2 = 0.93 
+radar_noise_distance_factor = 0.25
 /
