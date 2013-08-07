@@ -226,7 +226,7 @@ subroutine radar_spectrum(&
             particle_spec_ext(2,:))
             !join results
             particle_spec = SUM(particle_spec_ext,1)
-            deallocate(particle_spec_ext)
+            if (allocated(particle_spec_ext)) deallocate(particle_spec_ext)
         !
         else if (radar_airmotion_model .eq. "linear") then
             allocate(particle_spec_ext(radar_airmotion_linear_steps,radar_nfft_aliased))
@@ -241,7 +241,7 @@ subroutine radar_spectrum(&
             end do
             !join results
             particle_spec = SUM(particle_spec_ext,1)
-            deallocate(particle_spec_ext)
+            if (allocated(particle_spec_ext)) deallocate(particle_spec_ext)
         else
             errorstatus = fatal
             msg = "unknown radar_airmotion_model: "// radar_airmotion_model
@@ -551,7 +551,7 @@ subroutine radar_spectrum_tbd(&
             particle_spec_ext(2,:))
             !join results
             particle_spec = SUM(particle_spec_ext,1)
-            deallocate(particle_spec_ext)
+            if (allocated(particle_spec_ext)) deallocate(particle_spec_ext)
         !
         else if (radar_airmotion_model .eq. "linear") then
             allocate(particle_spec_ext(radar_airmotion_linear_steps,radar_nfft_aliased))
@@ -566,13 +566,12 @@ subroutine radar_spectrum_tbd(&
             end do
             !join results
             particle_spec = SUM(particle_spec_ext,1)
-            deallocate(particle_spec_ext)
+            if (allocated(particle_spec_ext)) deallocate(particle_spec_ext)
         else
 	    errorstatus = fatal
 	    msg = "unknown radar_airmotion_model: "// radar_airmotion_model
 	    call report(errorstatus, msg, nameOfRoutine)
-! 	    return
-            stop
+	    return
         end if
     else
         !no air motion, just rescale
@@ -584,7 +583,7 @@ subroutine radar_spectrum_tbd(&
 	msg = 'error in rescale_spectra!'
 	call report(err, msg, nameOfRoutine)
 	errorstatus = err
-	stop !return
+	return
     end if
 
 

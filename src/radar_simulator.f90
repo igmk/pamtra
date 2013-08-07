@@ -167,6 +167,7 @@ frequency,delta_h,nz,nx,ny,fi)
 		msg = 'error in convolution!'
 		call report(err, msg, nameOfRoutine)
 		errorstatus = err
+                if (allocated(turb_spectra)) deallocate(turb_spectra)
 		return
 	    end if   
             !I don't like Nans here'
@@ -236,6 +237,7 @@ frequency,delta_h,nz,nx,ny,fi)
 		msg = 'error in random!'
 		call report(err, msg, nameOfRoutine)
 		errorstatus = err
+                if (allocated(turb_spectra)) deallocate(turb_spectra)
 		return
 	    end if   
             do tt = 1, radar_no_Ave
@@ -270,6 +272,7 @@ frequency,delta_h,nz,nx,ny,fi)
 	  msg = 'error in radar_calc_moments!'
 	  call report(err, msg, nameOfRoutine)
 	  errorstatus = err
+          if (allocated(turb_spectra)) deallocate(turb_spectra)
 	  return
       end if   
         if (verbose >= 4) then
@@ -296,9 +299,8 @@ frequency,delta_h,nz,nx,ny,fi)
         IF (ISNAN(moments(0))) moments(0) = -9999.d0
         Ze(nx,ny,nz,fi) = moments(0)
 
+        if (allocated(turb_spectra)) deallocate(turb_spectra)
 
-
-        deallocate(turb_spectra)
     else
       errorstatus = fatal
       msg =   "did not understand radar_mode"// radar_mode

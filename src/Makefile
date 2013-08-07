@@ -117,6 +117,7 @@ OBJECTS=kinds.o \
 	radar_hildebrand_sekhon.o \
 	write_nc_results.o \
 	tmatrix_amplq.lp.o \
+	deallocate_everything.o
 
 BIN=pamtra
 

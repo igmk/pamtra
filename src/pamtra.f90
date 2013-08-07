@@ -45,7 +45,7 @@ program pamtra
     call parse_options(gitVersion,gitHash)
 
     !!! read variables from namelist file
-    call settings_read !from settings.f90
+    call settings_read(err) !from settings.f90
 
     in_python = .false.! we are _not_ in python
 
@@ -74,8 +74,13 @@ program pamtra
     date_str = year//month//day//time
 
 
-    call read_descriptor_file(errorstatus)
-
+    call read_descriptor_file(err)
+    if (err /= 0) then
+        msg = 'Error in read_descriptor_file!'
+        call report(fatal, msg, nameOfRoutine)
+        errorstatus = err
+        go to 666
+    end if
     ! now allocate variables
     call allocate_output_vars(nlyr)
 
@@ -93,7 +98,12 @@ program pamtra
             grid_x: do nx = 1, ngridx !ny_in, ny_fin
          
                 call allocate_profile_vars(err)
-         
+                if (err /= 0) then
+                    msg = 'Error in allocate_profile_vars!'
+                    call report(fatal, msg, nameOfRoutine)
+                  errorstatus = err
+                  go to 666
+                end if
                 !   ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
                 lat = profiles(nx,ny)%latitude                  ! °
                 lon = profiles(nx,ny)%longitude                 ! °
@@ -132,21 +142,13 @@ program pamtra
                 end if
 
                 !run the model
-                call run_rt(errorstatus,nx,ny,fi)
-                if (errorstatus /= 0) then
+                call run_rt(err,nx,ny,fi)
+                if (err /= 0) then
                     msg = 'Error in run_rt!'
                     call report(fatal, msg, nameOfRoutine)
-                    call deallocate_profile_vars()
-                    if (jacobian_mode) then
-                              !for jacobian mode
-                        call deallocate_jacobian_vars
-                    end if
-                    call deallocate_output_vars()
-                    stop
+                    errorstatus = err
+                    go to 666
                 end if
-
-                call deallocate_profile_vars()
-
             end do grid_x
         end do grid_y
         if (jacobian_mode) then
@@ -156,12 +158,18 @@ program pamtra
     end do grid_f
 
     
-
     if (write_nc) then
-        call write_nc_results
+      call write_nc_results
     end if
-    call deallocate_descriptor_file()
-    call deallocate_output_vars()
+
+    !now clean up and deallocate ALL variables
+
+666 call deallocate_everything(err)
+    if (err /= 0) then
+        msg = 'Error in deallocate_everything!'
+        call report(fatal, msg, nameOfRoutine)
+        errorstatus = err
+    end if
 
 
     if (verbose >= 1 .and. errorstatus == 0) then
@@ -172,4 +180,5 @@ program pamtra
         msg = 'Something went wrong!'
         call report(fatal, msg, nameOfRoutine)
     end if
+
 end program pamtra

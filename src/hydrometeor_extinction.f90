@@ -106,7 +106,6 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 	msg = 'Error in run_drop_size_dist'
 	call report(err, msg, nameOfRoutine)
 	errorstatus = err
-	call deallocateVars_drop_size_dist()
 	return
       end if
 
@@ -115,7 +114,6 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 	msg = 'Error in calc_scatProperties'
 	call report(err, msg, nameOfRoutine)
 	errorstatus = err
-	call deallocateVars_drop_size_dist()
 	return
       end if
 
