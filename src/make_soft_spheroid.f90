@@ -39,8 +39,8 @@ subroutine make_soft_spheroid(errorstatus)
 
   use constants, only: pi, rho_ice
 
-  use drop_size_dist, only: rho_ms, as_ratio, a_ms, b_ms, d_bound_ds,nbin, &    ! IN
-		     soft_rho_eff, soft_d_eff,liq_ice , mass_ds                 ! OUT
+  use drop_size_dist, only: rho_ms, as_ratio, a_ms, b_ms, d_bound_ds,nbin, mass_ds,  &    ! IN
+		     soft_rho_eff, soft_d_eff,liq_ice                                     ! OUT
 
   implicit none
 

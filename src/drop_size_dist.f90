@@ -119,19 +119,6 @@ subroutine run_drop_size_dist(errorstatus)
     return
   end if
 
-! Calculate particle MASS at bin boundaries
-  do ibin=1,nbin+1
-    mass_ds(ibin) = a_ms * d_bound_ds(ibin)**b_ms
-  enddo
-
-! Calculate particle AREA at bin boundaries
-! Only for ICE particles
-  if (liq_ice == -1) then
-    do ibin=1,nbin+1
-      area_ds(ibin) = alpha_as * d_bound_ds(ibin)**beta_as
-    enddo
-  endif
-
   call make_dist_params(errorstatus)
 
   if (verbose >= 4) then
@@ -160,6 +147,19 @@ subroutine run_drop_size_dist(errorstatus)
     enddo
   endif
 
+! Calculate particle MASS at bin boundaries
+  do ibin=1,nbin+1
+    mass_ds(ibin) = a_ms * d_bound_ds(ibin)**b_ms
+  enddo
+
+! Calculate particle AREA at bin boundaries
+  area_ds(:) = -99.
+  if (alpha_as > 0. .and. beta_as > 0.) then
+    do ibin=1,nbin+1
+      area_ds(ibin) = alpha_as * d_bound_ds(ibin)**beta_as
+    enddo
+  endif
+
   call calc_moment(errorstatus)
 
   if (errorstatus == 2) then
@@ -181,8 +181,6 @@ subroutine run_drop_size_dist(errorstatus)
     density2scat(:) = rho_water
     diameter2scat = d_bound_ds
   endif
-
- 
 
   if (errorstatus == 2) then
     msg = 'Error in calc_moment'
