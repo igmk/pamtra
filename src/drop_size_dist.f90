@@ -119,19 +119,6 @@ subroutine run_drop_size_dist(errorstatus)
     return
   end if
 
-! Calculate particle MASS at bin boundaries
-  do ibin=1,nbin+1
-    mass_ds(ibin) = a_ms * d_bound_ds(ibin)**b_ms
-  enddo
-
-! Calculate particle AREA at bin boundaries
-! Only for ICE particles
-  if (liq_ice == -1) then
-    do ibin=1,nbin+1
-      area_ds(ibin) = alpha_as * d_bound_ds(ibin)**beta_as
-    enddo
-  endif
-
   call make_dist_params(errorstatus)
 
   if (verbose >= 4) then
@@ -160,6 +147,19 @@ subroutine run_drop_size_dist(errorstatus)
     enddo
   endif
 
+! Calculate particle MASS at bin boundaries
+  do ibin=1,nbin+1
+    mass_ds(ibin) = a_ms * d_bound_ds(ibin)**b_ms
+  enddo
+
+! Calculate particle AREA at bin boundaries
+  area_ds(:) = -99.
+  if (alpha_as > 0. .and. beta_as > 0.) then
+    do ibin=1,nbin+1
+      area_ds(ibin) = alpha_as * d_bound_ds(ibin)**beta_as
+    enddo
+  endif
+
   call calc_moment(errorstatus)
 
   if (errorstatus == 2) then
@@ -181,15 +181,6 @@ subroutine run_drop_size_dist(errorstatus)
     density2scat(:) = rho_water
     diameter2scat = d_bound_ds
   endif
-
-!   
-!   print*, "Emiliano, I need mass and area for the radar simulator. I think it is best to calculate it here? "
-!   print*, "Area comes from an area mass relation, usually A = aD**b, which we have to add to the descriptor file"
-!   print*, "in addition, I need a field in the descriptor file with the name of the fall speed relation to be used"
-!   print*, "see radar_spectrum.f90, line 147ff"
-!   mass_ds(:) = 1.d-4 !dummy value
-!   area_ds(:) = 1.d-4 !dummy value
-  
 
   if (errorstatus == 2) then
     msg = 'Error in calc_moment'
