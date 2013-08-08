@@ -97,7 +97,7 @@ subroutine radar_spectrum(&
     call assert_true(err,all(mass>0),&
         "nan or negative mass")  
     call assert_true(err,all(area>0),&
-        "nan or negative mass")         
+        "nan or negative area")         
     if (err > 0) then
       errorstatus = fatal
       msg = "assertation error"
