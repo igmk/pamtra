@@ -2,7 +2,7 @@
 subroutine make_soft_spheroid(errorstatus)
 
 ! Description:
-!  The routine also calculate diameter and density (soft_d_eff, 
+!  The routine calculate diameter and density (soft_d_eff, 
 !  soft_rho_eff) of soft spheres for each of the size bins.
 !  The relations used are:
 !  m_i = a * D^b 
@@ -40,7 +40,7 @@ subroutine make_soft_spheroid(errorstatus)
   use constants, only: pi, rho_ice
 
   use drop_size_dist, only: rho_ms, as_ratio, a_ms, b_ms, d_bound_ds,nbin, &    ! IN
-		     soft_rho_eff, soft_d_eff,liq_ice                     ! OUT
+		     soft_rho_eff, soft_d_eff,liq_ice , mass_ds                 ! OUT
 
   implicit none
 
@@ -66,10 +66,8 @@ subroutine make_soft_spheroid(errorstatus)
   allocate(soft_rho_eff(nbin+1))
   allocate(soft_d_eff(nbin+1))
 
-! Calculate particle mass
-  do i=1,nbin+1
-    mass(i) = a_ms * d_bound_ds(i)**b_ms
-  enddo
+! Particle mass
+  mass = mass_ds
 
 ! density set to a fixed value by the user
 ! Calculate the diameter of the soft spheroids
