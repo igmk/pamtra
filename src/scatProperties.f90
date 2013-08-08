@@ -40,6 +40,7 @@ module scatProperties
 
     !needed by rt3 and rt4
     character(len=15) :: scat_name
+    character(len=15) :: vel_size_mod
     real(kind=dbl), allocatable, dimension(:) :: radar_spec
     
   contains

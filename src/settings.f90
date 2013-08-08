@@ -96,15 +96,11 @@ module settings
     integer :: radar_nfft_aliased, radar_maxTurbTerms !are gained from radar_aliasing_nyquist_interv and radar_nfft
 contains
 
-    subroutine settings_read(errorstatus)
+    subroutine settings_read
 
     use kinds
-    use report_module
     implicit none
 
-    integer(kind=long), intent(out) :: errorstatus
-    integer(kind=long) :: err = 0
-    character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'settings_read'
 
         ! name list declarations
@@ -126,7 +122,7 @@ contains
 		  radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr, radar_convolution_fft, &
                   radar_K2, radar_noise_distance_factor
 
-    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+    if (verbose >= 2) print*,'Start of ', nameOfRoutine
 
 
 	hydro_threshold = 1.d-10   ! [kg/kg] 
