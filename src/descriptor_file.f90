@@ -10,15 +10,17 @@ module descriptor_file
   integer(kind=long), dimension(:),allocatable  :: liq_ice_arr              ! liquid = 1; ice = -1
   real(kind=dbl), dimension(:),allocatable      :: rho_ms_arr               ! density of the particle [kg/m^3]
   real(kind=dbl), dimension(:),allocatable      :: a_ms_arr, b_ms_arr       ! Mass-size parameter a [kg/m^(1/b)] and b [#] 
+  real(kind=dbl), dimension(:),allocatable      :: alpha_as_arr, beta_as_arr! Area-size parameter alpha [m^(2-b)] and beta [#] 
 
   integer(kind=long), dimension(:),allocatable  :: moment_in_arr            ! Moments input via "PAMTRA input file" (1=q; 2=Ntot; 3=reff; 12=q&ntot; 13=q&reff; 23=ntot&reff)
   integer(kind=long), dimension(:),allocatable  :: nbin_arr                 ! Number of bins for the drop-size distribution
   character(len=15), dimension(:),allocatable   :: dist_name_arr            ! name of the distribution
   character(len=15), dimension(:),allocatable   :: scat_name_arr            ! name of the distribution
+  character(len=15), dimension(:),allocatable   :: vel_size_mod_arr         ! name of the velocity-size model to be used
   real(kind=dbl), dimension(:),allocatable      :: p_1_arr, p_2_arr         ! Drop-size parameters from hydrometeor descriptor file
   real(kind=dbl), dimension(:),allocatable      :: p_3_arr, p_4_arr         ! Drop-size parameters from hydrometeor descriptor file
   real(kind=dbl), dimension(:),allocatable      :: d_1_arr, d_2_arr         ! Minimum and maximum particle diameters
-  integer(kind=long)  :: n_hydro                  ! Number of hydrometeors
+  integer(kind=long)  :: n_hydro                                            ! Number of hydrometeors
 
   real(kind=dbl), dimension(:),allocatable      :: q_h_arr                  ! Specific hydrometeor concentration [kg/kg]
   real(kind=dbl), dimension(:),allocatable      :: n_tot_arr                ! Total hydrometeor number concentration [#/kg]
@@ -73,6 +75,8 @@ subroutine read_descriptor_file(errorstatus)
   allocate(rho_ms_arr(n_hydro))
   allocate(a_ms_arr(n_hydro))
   allocate(b_ms_arr(n_hydro))
+  allocate(alpha_as_arr(n_hydro))
+  allocate(beta_as_arr(n_hydro))
   allocate(moment_in_arr(n_hydro))
   allocate(nbin_arr(n_hydro))
   allocate(dist_name_arr(n_hydro))
@@ -83,6 +87,7 @@ subroutine read_descriptor_file(errorstatus)
   allocate(d_1_arr(n_hydro))
   allocate(d_2_arr(n_hydro))
   allocate(scat_name_arr(n_hydro))
+  allocate(vel_size_mod_arr(n_hydro))
 
 
 ! Read the hydrometeor descriptors
@@ -93,36 +98,18 @@ subroutine read_descriptor_file(errorstatus)
     if (work2 /= '!') then
       backspace(111)
       read(111,*) hydro_name_arr(i), as_ratio_arr(i), liq_ice_arr(i),rho_ms_arr(i), a_ms_arr(i), &
-                b_ms_arr(i), moment_in_arr(i), nbin_arr(i),dist_name_arr(i), p_1_arr(i),         &
-                p_2_arr(i), p_3_arr(i), p_4_arr(i), d_1_arr(i), d_2_arr(i), scat_name_arr(i)
-      if (verbose >= 4 .and. i == 1) write(6,'(a15,7(a12),a15,6(a12),a15)'),'hydro_name','as_ratio','liq_ice','rho_ms','a_ms',&
-                                     'b_ms','moment_in','nbin','dist_name','p_1',&
-                                      'p_2','p_3','p_4','d_1','d_2','scat_name'
-      if (verbose >= 4) write(6,'(a15,e12.3,i12,3(e12.3),2(i12),a15,6(e12.3),a15)') &
+                b_ms_arr(i), alpha_as_arr(i), beta_as_arr(i), moment_in_arr(i), nbin_arr(i),dist_name_arr(i), p_1_arr(i),        &
+                p_2_arr(i), p_3_arr(i), p_4_arr(i), d_1_arr(i), d_2_arr(i), scat_name_arr(i), vel_size_mod_arr(i)
+      if (verbose >= 4 .and. i == 1) write(6,'(a15,7(a12),a15,6(a12),2(a15))'),'hydro_name','as_ratio','liq_ice','rho_ms','a_ms',&
+                                     'b_ms','alpha_as','beta_as','moment_in','nbin','dist_name','p_1',&
+                                      'p_2','p_3','p_4','d_1','d_2','scat_name', 'vel_size_mod'
+      if (verbose >= 4) write(6,'(a15,e12.3,i12,5(e12.3),2(i12),a15,6(e12.3),2(a15))') &
                 trim(hydro_name_arr(i)), as_ratio_arr(i), liq_ice_arr(i),rho_ms_arr(i), a_ms_arr(i), &
-                b_ms_arr(i), moment_in_arr(i), nbin_arr(i),trim(dist_name_arr(i)), p_1_arr(i),         &
-                p_2_arr(i), p_3_arr(i), p_4_arr(i), d_1_arr(i), d_2_arr(i), trim(scat_name_arr(i))
+                b_ms_arr(i), alpha_as_arr(i), beta_as_arr(i), moment_in_arr(i), nbin_arr(i),trim(dist_name_arr(i)), p_1_arr(i),   &
+                p_2_arr(i), p_3_arr(i), p_4_arr(i), d_1_arr(i), d_2_arr(i), trim(scat_name_arr(i)), trim(vel_size_mod_arr(i))
       i = i+1
     endif
   end do
-
-
-
-!   write(6,*)'hydro_name',hydro_name_arr
-!   write(6,*)'as_ratio ',as_ratio_arr
-!   write(6,*)'liq_ice ',liq_ice_arr
-!   write(6,*)'rho_ms ',rho_ms_arr
-!   write(6,*)'a_ms ',a_ms_arr
-!   write(6,*)'b_ms ',b_ms_arr
-!   write(6,*)'moment_in ',moment_in_arr
-!   write(6,*)'nbin ',nbin_arr
-!   write(6,*)'dist_name ',dist_name_arr
-!   write(6,*)'p_1 ',p_1_arr
-!   write(6,*)'p_2 ',p_2_arr
-!   write(6,*)'p_3 ',p_3_arr
-!   write(6,*)'p_4 ',p_4_arr
-!   write(6,*)'d_1 ',d_1_arr
-!   write(6,*)'d_2 ',d_2_arr
 
 
   if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
