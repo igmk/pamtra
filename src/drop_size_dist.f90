@@ -34,6 +34,8 @@ module drop_size_dist
   real(kind=dbl)      :: rho_ms               ! density of the particle [kg/m^3]
   real(kind=dbl)      :: a_ms, b_ms           ! Mass-size parameter a [kg/m^(1/b)] and b [#] 
 
+  real(kind=dbl)      :: alpha_as, beta_as    ! Area-size parameter alpha [m^(2-b)] and beta [#] 
+
 ! make_dist_params OUT
   real(kind=dbl)                 ::  n_0, lambda, gam, mu    ! parameter of the modified Gamma distribution
   real(kind=dbl)                 ::  n_t, sig, d_ln          ! parameter of the log-normal distribution
@@ -109,7 +111,6 @@ subroutine run_drop_size_dist(errorstatus)
   character(len=80)   :: msg
   character(len=14)   :: nameOfRoutine = 'make_hydro'
 
-
   call make_mass_size(errorstatus)
 
   if (errorstatus == 2) then
@@ -117,6 +118,19 @@ subroutine run_drop_size_dist(errorstatus)
     call report(errorstatus, msg, nameOfRoutine)
     return
   end if
+
+! Calculate particle MASS at bin boundaries
+  do ibin=1,nbin+1
+    mass_ds(ibin) = a_ms * d_bound_ds(ibin)**b_ms
+  enddo
+
+! Calculate particle AREA at bin boundaries
+! Only for ICE particles
+  if (liq_ice == -1) then
+    do ibin=1,nbin+1
+      area_ds(ibin) = alpha_as * d_bound_ds(ibin)**beta_as
+    enddo
+  endif
 
   call make_dist_params(errorstatus)
 
@@ -154,9 +168,9 @@ subroutine run_drop_size_dist(errorstatus)
     return
   end if
 
-!   if (liq_ice == -1) then ! ADD a filter on the scattering model!!
+  if (liq_ice == -1) then                         ! ADD a filter if a SCATTERING DATABASE is used
     call make_soft_spheroid(errorstatus)
-!   endif
+  endif
 
 ! fill in the density and diamter array for the scattering routines
   if (liq_ice == -1) then
@@ -168,13 +182,13 @@ subroutine run_drop_size_dist(errorstatus)
     diameter2scat = d_bound_ds
   endif
 
-  
-  print*, "Emiliano, I need mass and area for the radar simulator. I think it is best to calculate it here? "
-  print*, "Area comes from an area mass relation, usually A = aD**b, which we have to add to the descriptor file"
-  print*, "in addition, I need a field in the descriptor file with the name of the fall speed relation to be used"
-  print*, "see radar_spectrum.f90, line 147ff"
-  mass_ds(:) = 1.d-4 !dummy value
-  area_ds(:) = 1.d-4 !dummy value
+!   
+!   print*, "Emiliano, I need mass and area for the radar simulator. I think it is best to calculate it here? "
+!   print*, "Area comes from an area mass relation, usually A = aD**b, which we have to add to the descriptor file"
+!   print*, "in addition, I need a field in the descriptor file with the name of the fall speed relation to be used"
+!   print*, "see radar_spectrum.f90, line 147ff"
+!   mass_ds(:) = 1.d-4 !dummy value
+!   area_ds(:) = 1.d-4 !dummy value
   
 
   if (errorstatus == 2) then
