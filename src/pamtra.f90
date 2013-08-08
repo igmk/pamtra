@@ -45,7 +45,7 @@ program pamtra
     call parse_options(gitVersion,gitHash)
 
     !!! read variables from namelist file
-    call settings_read(err) !from settings.f90
+    call settings_read  !from settings.f90
 
     in_python = .false.! we are _not_ in python
 
