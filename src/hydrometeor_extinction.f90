@@ -90,7 +90,7 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
                    q_hydro(1,nz),q_hydro(2,nz),q_hydro(3,nz),q_hydro(4,nz),q_hydro(5,nz))
       n_tot      = 0.
       r_eff      = 0.
-      t          = temp(nz)
+      layer_t    = temp(nz)
       pressure   = press(nz)
 
       if (verbose >= 2) print*, ih, hydro_name

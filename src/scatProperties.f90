@@ -24,7 +24,7 @@ module scatProperties
         as_ratio, &
         d_bound_ds, &
         pressure, &
-        t, &
+        layer_t, &
         mass_ds, &
         area_ds
   use constants, only: pi, Im
@@ -132,9 +132,9 @@ module scatProperties
 
     !get the refractive index
      if (liq_ice == 1) then
-        call ref_water(0.d0, t-273.15, freq, refre, refim, absind, abscof)
+        call ref_water(0.d0, layer_t-273.15, freq, refre, refim, absind, abscof)
       else if (liq_ice == -1) then
-        call ref_ice(t, freq, refre, refim)
+        call ref_ice(layer_t, freq, refre, refim)
       else
         errorstatus = fatal
         print*,"liq_ice=", liq_ice
@@ -190,7 +190,7 @@ module scatProperties
     else if (scat_name == "mie-sphere") then
       call calc_mie_spheres(err,&
             freq*1d9,&
-            t,&
+            layer_t,&
             liq_ice,&
             nbin,&
             diameter2scat,&
@@ -286,7 +286,7 @@ module scatProperties
 
     if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
 
-      call radar_spectrum(err,nbin,d_bound_ds, back(iz),  back_spec_dia,t,pressure,freq,&
+      call radar_spectrum(err,nbin,d_bound_ds, back(iz),  back_spec_dia,layer_t,pressure,freq,&
         liq_ice,mass_ds,area_ds,radar_spec_hydro)
       if (err /= 0) then
           msg = 'error in radar_spectrum!'
