@@ -12,10 +12,10 @@ module descriptor_file
   real(kind=dbl), dimension(:),allocatable      :: a_ms_arr, b_ms_arr       ! Mass-size parameter a [kg/m^(1/b)] and b [#] 
   real(kind=dbl), dimension(:),allocatable      :: alpha_as_arr, beta_as_arr! Area-size parameter alpha [m^(2-b)] and beta [#] 
 
-  integer(kind=long), dimension(:),allocatable  :: moment_in_arr            ! Moments input via "PAMTRA input file" (1=q; 2=Ntot; 3=reff; 12=q&ntot; 13=q&reff; 23=ntot&reff)
+  integer(kind=long), dimension(:),allocatable  :: moment_in_arr            ! Moments input via "PAMTRA input file" (1=Ntot; 2reff; 3=q; 12=ntot&reff; 13=ntot&q; 23=reff&q)
   integer(kind=long), dimension(:),allocatable  :: nbin_arr                 ! Number of bins for the drop-size distribution
   character(len=15), dimension(:),allocatable   :: dist_name_arr            ! name of the distribution
-  character(len=15), dimension(:),allocatable   :: scat_name_arr            ! name of the distribution
+  character(len=15), dimension(:),allocatable   :: scat_name_arr            ! name of the scattering model
   character(len=15), dimension(:),allocatable   :: vel_size_mod_arr         ! name of the velocity-size model to be used
   real(kind=dbl), dimension(:),allocatable      :: p_1_arr, p_2_arr         ! Drop-size parameters from hydrometeor descriptor file
   real(kind=dbl), dimension(:),allocatable      :: p_3_arr, p_4_arr         ! Drop-size parameters from hydrometeor descriptor file
@@ -25,8 +25,6 @@ module descriptor_file
   real(kind=dbl), dimension(:),allocatable      :: q_h_arr                  ! Specific hydrometeor concentration [kg/kg]
   real(kind=dbl), dimension(:),allocatable      :: n_tot_arr                ! Total hydrometeor number concentration [#/kg]
   real(kind=dbl), dimension(:),allocatable      :: r_eff_arr                ! Effective radius [m]
-
-  real(kind=dbl), dimension(:),allocatable      :: t_arr                    ! Layer temperature [K]
 
  contains
 
