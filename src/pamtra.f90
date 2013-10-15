@@ -149,6 +149,8 @@ program pamtra
                     errorstatus = err
                     go to 666
                 end if
+                !DEALLOCATE profile variables
+                call deallocate_profile_vars()
             end do grid_x
         end do grid_y
         if (jacobian_mode) then
