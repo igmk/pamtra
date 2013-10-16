@@ -208,9 +208,9 @@ subroutine make_dist_params(errorstatus)
       if (moment_in == 3) n_0 = (q_h * lambda**(b_ms+1)) / (a_ms * dgamma(b_ms+1._dbl))
       if (moment_in == 1) n_0 = n_tot * lambda
     endif
-! ! Field et al. (2005 QJRM, end of page 2008) n_0 = n_0(T)
+! ! Field et al. (2005 QJRM, end of page 2008 + end of page 2009 for the relation between N_0 and N_0,23) n_0 = n_0(T)
     if (trim(dist_name) == 'exp_field_t') then
-      n_0 = 5.65d5 * exp(0.107_dbl * (273.15_dbl - layer_t))
+      n_0 = 7.628d6 * exp(0.107_dbl * (273.15_dbl - layer_t))
       if (moment_in == 3) lambda = (a_ms * n_0 * dgamma(b_ms+1._dbl) / q_h)**(1._dbl /(b_ms+1._dbl))
       if (moment_in == 2) lambda = 3._dbl / r_eff
     endif
@@ -234,7 +234,7 @@ subroutine make_dist_params(errorstatus)
           + mmb(6)*nn**2+mmb(7)*ztc**2*nn+mmb(8)*ztc*nn**2+mmb(9)*ztc**3+mmb(10)*nn**3
       m2s = q_h / 0.038d0 ! 0.038 = Formfactor in the mass-size relation of snow particles [kg/m^2]
       m3s = alf*EXP(bet*LOG(m2s))
-      hlp  =  5.65d5 * EXP(-0.107d0*ztc) ! N0snow as a function of solely T
+      hlp  =  7.628d6 * EXP(-0.107d0*ztc) ! N0snow as a function of solely T
       n_0 = 13.5 * m2s**4 / m3s**3       ! N0snow as a function of T and snow mixing ratio
       n_0 = MAX(n_0,0.5*hlp)
       n_0 = MIN(n_0,1e2*hlp)
