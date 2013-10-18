@@ -89,6 +89,7 @@ subroutine make_dist(errorstatus)
       f_ds(i) = n_t / (d_bound_ds(i) * sig * sqrt(2._dbl * pi)) * &
                 EXP(-( (log(d_bound_ds(i)) - d_ln)**2 )/(2. * sig**2) )
     enddo
+! modified gamma, gamma or exponetial distribution
   else
     do i=1,nbin+1
       f_ds(i) = n_0 * d_bound_ds(i)**mu * EXP(-lambda * d_bound_ds(i)**gam)

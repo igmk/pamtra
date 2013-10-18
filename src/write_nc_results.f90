@@ -18,7 +18,7 @@ subroutine write_nc_results
     tbVarID, heightVarID, &
     ZeVarID,rQualVarID, &
     AttAtmoVarID, AttHydroVarID,&
-    lSloVarID,rSloVarID, kurtVarID, skewVarID, swVarID, velVarID,&
+    lSloVarID,rSloVarID, lEdgVarID, rEdgVarID, kurtVarID, skewVarID, swVarID, velVarID,&
     frequencyVarID, anglesVarID, RadarVelID, RadarSpecID, RadarSNRID
           
           
@@ -190,6 +190,14 @@ subroutine write_nc_results
             call check(nf90_put_att(ncid, rSloVarID, "units", "dB/(m/s)"))
             call check(nf90_put_att(ncid, rSloVarID, "missing_value", -9999))
 
+            call check(nf90_def_var(ncid,'Radar_LeftEdge', nf90_double,dim4d, lEdgVarID))
+            call check(nf90_put_att(ncid, lEdgVarID, "units", "m/s"))
+            call check(nf90_put_att(ncid, lEdgVarID, "missing_value", -9999))
+
+            call check(nf90_def_var(ncid,'Radar_RightEdgee', nf90_double,dim4d, rEdgVarID))
+            call check(nf90_put_att(ncid, rEdgVarID, "units", "m/s"))
+            call check(nf90_put_att(ncid, rEdgVarID, "missing_value", -9999))
+
             call check(nf90_def_var(ncid,'Radar_Quality', nf90_int,dim4d, rQualVarID))
             call check(nf90_put_att(ncid, rQualVarID, "units", "bytes"))
             call check(nf90_put_att(ncid, rQualVarID, "description", "1st byte: aliasing; "// &
@@ -261,6 +269,12 @@ subroutine write_nc_results
             RESHAPE( radar_slope(:,:,:,:,1), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
             call check(nf90_put_var(ncid, rSloVarID, &
             RESHAPE( radar_slope(:,:,:,:,2), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+
+            call check(nf90_put_var(ncid, lEdgVarID, &
+            RESHAPE( radar_edge(:,:,:,:,1), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+            call check(nf90_put_var(ncid, rEdgVarID, &
+            RESHAPE( radar_edge(:,:,:,:,2), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+
             call check(nf90_put_var(ncid, RadarSNRID, &
             RESHAPE( radar_snr, (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
             call check(nf90_put_var(ncid, rQualVarID, &
