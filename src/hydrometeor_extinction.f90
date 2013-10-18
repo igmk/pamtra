@@ -65,25 +65,93 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 
 
       ! fill 0-D variable for the run_drop_size routine
+      ! start with the ones which might come from a 4D python field.
+      if (PRODUCT(SHAPE(as_ratio_arr)) == n_hydro) then
+        as_ratio   = as_ratio_arr(1,1,1,ih)
+      else
+        as_ratio   = as_ratio_arr(nx,ny,nz,ih)
+      end if 
+
+      if (PRODUCT(SHAPE(rho_ms_arr)) == n_hydro) then
+        rho_ms   = rho_ms_arr(1,1,1,ih)
+      else
+        rho_ms   = rho_ms_arr(nx,ny,nz,ih)
+      end if 
+
+      if (PRODUCT(SHAPE(a_ms_arr)) == n_hydro) then
+        a_ms   = a_ms_arr(1,1,1,ih)
+      else
+        a_ms   = a_ms_arr(nx,ny,nz,ih)
+      end if 
+
+      if (PRODUCT(SHAPE(b_ms_arr)) == n_hydro) then
+        b_ms   = b_ms_arr(1,1,1,ih)
+      else
+        b_ms   = b_ms_arr(nx,ny,nz,ih)
+      end if 
+
+      if (PRODUCT(SHAPE(alpha_as_arr)) == n_hydro) then
+        alpha_as   = alpha_as_arr(1,1,1,ih)
+      else
+        alpha_as   = alpha_as_arr(nx,ny,nz,ih)
+      end if 
+
+      if (PRODUCT(SHAPE(beta_as_arr)) == n_hydro) then
+        beta_as   = beta_as_arr(1,1,1,ih)
+      else
+        beta_as   = beta_as_arr(nx,ny,nz,ih)
+      end if 
+
+      if (PRODUCT(SHAPE(nbin_arr)) == n_hydro) then
+        nbin   = nbin_arr(1,1,1,ih)
+      else
+        nbin   = nbin_arr(nx,ny,nz,ih)
+      end if 
+
+      if (PRODUCT(SHAPE(p_1_arr)) == n_hydro) then
+        p_1   = p_1_arr(1,1,1,ih)
+      else
+        p_1   = p_1_arr(nx,ny,nz,ih)
+      end if 
+
+      if (PRODUCT(SHAPE(p_2_arr)) == n_hydro) then
+        p_2   = p_2_arr(1,1,1,ih)
+      else
+        p_2   = p_2_arr(nx,ny,nz,ih)
+      end if 
+
+      if (PRODUCT(SHAPE(p_3_arr)) == n_hydro) then
+        p_3   = p_3_arr(1,1,1,ih)
+      else
+        p_3   = p_3_arr(nx,ny,nz,ih)
+      end if 
+
+      if (PRODUCT(SHAPE(p_4_arr)) == n_hydro) then
+        p_4   = p_4_arr(1,1,1,ih)
+      else
+        p_4   = p_4_arr(nx,ny,nz,ih)
+      end if 
+
+      if (PRODUCT(SHAPE(d_1_arr)) == n_hydro) then
+        d_1   = d_1_arr(1,1,1,ih)
+      else
+        d_1   = d_1_arr(nx,ny,nz,ih)
+      end if 
+
+      if (PRODUCT(SHAPE(d_2_arr)) == n_hydro) then
+        d_2   = d_2_arr(1,1,1,ih)
+      else
+        d_2   = d_2_arr(nx,ny,nz,ih)
+      end if 
+
+      !these ones are fore sure 1D
       hydro_name = hydro_name_arr(ih)
-      as_ratio   = as_ratio_arr(ih)
       liq_ice    = liq_ice_arr(ih)
-      rho_ms     = rho_ms_arr(ih)
-      a_ms       = a_ms_arr(ih)
-      b_ms       = b_ms_arr(ih)
-      alpha_as   = alpha_as_arr(ih)
-      beta_as    = beta_as_arr(ih)
       moment_in  = moment_in_arr(ih)
-      nbin       = nbin_arr(ih)
       dist_name  = dist_name_arr(ih)
       scat_name  = scat_name_arr(ih)
       vel_size_mod  = vel_size_mod_arr(ih)
-      p_1        = p_1_arr(ih)
-      p_2        = p_2_arr(ih)
-      p_3        = p_3_arr(ih)
-      p_4        = p_4_arr(ih)
-      d_1        = d_1_arr(ih)
-      d_2        = d_2_arr(ih)
+
 
 ! Convert specific quantities [kg/kg] in absolute ones [kg/m3]
       q_h        = q2abs(q_hydro(ih,nz),temp(nz),press(nz),q_hum(nz),&

@@ -5,6 +5,7 @@ import numpy as np
 import datetime
 import csv
 import pickle
+
 import time,calendar,datetime
 import warnings
 import sys
@@ -15,6 +16,7 @@ import string
 import itertools
 from copy import deepcopy
 from collections import OrderedDict
+from matplotlib import mlab
 
 import namelist #parser for fortran namelist files
 
@@ -38,6 +40,74 @@ except:
 
 missingNumber=-9999.
 #logging.basicConfig(filename='example.log',level=logging.DEBUG)
+
+
+class pamDescriptorFile(object):
+  #class with the descriptor file content in data. In case you want to use 4D data, use data4D instead, the coreesponding column in data is automatically removed.
+  
+  
+  class data4D(dict):
+    def __init__(self, parent):
+        self.parent = parent
+        
+    def __setitem__(self, key, val):
+        assert len(self.parent.data) == val.shape[-1]
+        assert key not in ["name", "liq_ice", "moment_in", "dist_name", "scat_name", "vel_size_mod"]
+        print "changing", key, "to 4D"
+        self.parent.data = mlab.rec_drop_fields(self.parent.data,[key])
+        dict.__setitem__(self, key, val)
+        
+  def __init__(self):
+    self.names =np.array(["name", "as_ratio", "liq_ice", "rho_ms", "a_ms", "b_ms", "alpha", "beta", "moment_in", "nbin", "dist_name", "p_1", "p_2", "p_3", "p_4", "d_1", "d_2", "scat_name", "vel_size_mod"])
+    self.types = ["S15",float,int,float,float,float,float,float,int,int,"S15",float,float,float,float,float,float, "S15", "S15"]  
+    self.data = np.recarray((0,),dtype=zip(self.names, self.types))
+    self.data4D = pamDescriptorFile.data4D(self)
+    return
+    
+   
+  def readFile(self,fname):
+    f = open(fname,"r")
+    for row in csv.reader(f,delimiter=" ",skipinitialspace=True):
+      #skipp comments
+      if row[0][0] == "!":
+        continue
+      #make sure line is complete
+      assert len(row) == 19  
+      
+      #python does not liek double type
+      for ii, item in enumerate(row):
+        if self.types[ii] == float:
+          row[ii] = item.replace("d", "e")
+  
+      self.addHydrometeor(row)
+      print ', '.join(row), len(row)
+      
+    f.close()  
+    #make rec array
+
+  def writeFile(self,fname):
+    assert len(data[0]) == len(self.names)
+    return mlab.rec2csv(data, fname, delimiter=' ',withheader=False)
+      
+  def addHydrometeor(self,hydroTuple):
+    self.data = np.append(self.data,np.array(tuple(hydroTuple),dtype=zip(self.names,self.types)))
+    return
+    
+  def removeHydrometeor(self,hydroName):
+    removed = False
+    self.dataNew = np.recarray((0,),dtype=zip(self.names, self.types))
+    for ii in range(self.data.shape[0]):
+      if self.data[ii][0] == hydroName:
+        removed = True
+        continue
+      else:
+        self.dataNew = np.append(self.dataNew,self.data[ii])
+    self.data = self.dataNew
+    
+    if not removed:
+      raise ValueError("Did not find "+hydroName)
+    return
+
 
 class pyPamtra(object):
 
