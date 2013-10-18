@@ -27,7 +27,7 @@ module drop_size_dist
   real(kind=dbl)      :: n_tot                ! Total hydrometeor number concentration [#/m3]
   real(kind=dbl)      :: r_eff                ! Effective radius [m]
 
-  real(kind=dbl)      :: t                    ! Layer temperature [K]
+  real(kind=dbl)      :: layer_t              ! Layer temperature [K]
   real(kind=dbl)      :: pressure             ! Layer Pressure [Pa]
 
 ! make_mass_size IN/OUT

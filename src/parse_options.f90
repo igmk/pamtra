@@ -59,7 +59,7 @@ subroutine parse_options(gitVersion,gitHash)
                 print*,'Available options:'
                 print*,'   -n|--namelist     namelist file (default run_params.nml)'
                 print*,'   -p|--profile      profile file  (default standard.dat)'
-		print*,'   -d|--descriptor   descriptor file  (default descriptor_file_COSMO.txt)'
+                print*,'   -d|--descriptor   descriptor file  (default descriptor_file.txt)'
                 print*,'   -g|--grid         start_lon,end_lon,start_lat,end_lat (number of grid point)'
                 print*,'   -f|--freqs        comma seperated list of frequencies (no blanks) (default 89.0)'
                 print*,'   -v|--verbose      integer specifying verbose level between -1 (required by parallel python)'
@@ -93,7 +93,7 @@ contains
 
         integer(kind=long) :: ind
         character(len=*), intent(in) :: arg
-        character(150) :: arg_loc
+        character(500) :: arg_loc
 
         nfrq = 0
         arg_loc = arg

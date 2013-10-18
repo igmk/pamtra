@@ -30,7 +30,7 @@ subroutine make_dist_params(errorstatus)
   use constants, only: pi, rho_water, delta_d_mono
 
   use drop_size_dist, only: dist_name, p_1, p_2, p_3, p_4, a_ms, b_ms, d_1, moment_in, & ! IN
-                            q_h, n_tot, r_eff, t,                                      & ! IN
+                            q_h, n_tot, r_eff, layer_t,                                & ! IN
                             n_0, lambda, mu, gam, n_t, sig, d_ln, d_mono                 ! OUT
 
 ! Imported Scalar Variables with intent (in):
@@ -135,7 +135,7 @@ subroutine make_dist_params(errorstatus)
 ! from COSMO-de code src_gscp.f90 routine: hydci_pp_gr
 ! Radius is derived from mass-size relation m=aD^3
 ! a=130 kg/m^3 (hexagonal plates with aspect ratio of 0.2 -> thickness=0.2*Diameter)
-      work1 = 1.d2 * exp(0.2_dbl * (273.15_dbl - t)) ! N_tot
+      work1 = 1.d2 * exp(0.2_dbl * (273.15_dbl - layer_t)) ! N_tot
       n_0 = work1 / delta_d_mono
       d_mono = (q_h / (work1 * a_ms))**(1._dbl / b_ms)
 !  CHECK if dia1 > maxdiam=2.d-4 (maximum diameter for COSMO)
@@ -202,15 +202,15 @@ subroutine make_dist_params(errorstatus)
         endif
       endif
     endif
-! ! Ryan (2000 JAS) Lambda = Lambda(t)
+! ! Ryan (2000 JAS) Lambda = Lambda(layer_t)
     if (trim(dist_name) == 'exp_ryan') then
-      lambda = 1220._dbl * 10._dbl**(-0.0245_dbl * (273.15_dbl-t))
+      lambda = 1220._dbl * 10._dbl**(-0.0245_dbl * (273.15_dbl-layer_t))
       if (moment_in == 3) n_0 = (q_h * lambda**(b_ms+1)) / (a_ms * dgamma(b_ms+1._dbl))
       if (moment_in == 1) n_0 = n_tot * lambda
     endif
-! ! Field et al. (2005 QJRM, end of page 2008) n_0 = n_0(T)
+! ! Field et al. (2005 QJRM, end of page 2008 + end of page 2009 for the relation between N_0 and N_0,23) n_0 = n_0(T)
     if (trim(dist_name) == 'exp_field_t') then
-      n_0 = 5.65d5 * exp(0.107_dbl * (273.15_dbl - t))
+      n_0 = 7.628d6 * exp(0.107_dbl * (273.15_dbl - layer_t))
       if (moment_in == 3) lambda = (a_ms * n_0 * dgamma(b_ms+1._dbl) / q_h)**(1._dbl /(b_ms+1._dbl))
       if (moment_in == 2) lambda = 3._dbl / r_eff
     endif
@@ -223,7 +223,7 @@ subroutine make_dist_params(errorstatus)
       mmb = (/   0.476221, -0.015896,  0.165977, 0.007468, -0.000141, &
              0.060366,  0.000079,  0.000594, 0.000000, -0.003577 /)
 ! Calculate n0s using the temperature-dependent moment
-      ztc = t - 273.15                           ! temperature in C
+      ztc = layer_t - 273.15                     ! temperature in C
       ztc = MAX(MIN(ztc,0.0),-40.0)              !limited to -40
 ! the moments of every order of the particle size distribution f(D) depend from the second one (proportional to mass) and temperature
       nn  = 3
@@ -234,7 +234,7 @@ subroutine make_dist_params(errorstatus)
           + mmb(6)*nn**2+mmb(7)*ztc**2*nn+mmb(8)*ztc*nn**2+mmb(9)*ztc**3+mmb(10)*nn**3
       m2s = q_h / 0.038d0 ! 0.038 = Formfactor in the mass-size relation of snow particles [kg/m^2]
       m3s = alf*EXP(bet*LOG(m2s))
-      hlp  =  5.65d5 * EXP(-0.107d0*ztc) ! N0snow as a function of solely T
+      hlp  =  7.628d6 * EXP(-0.107d0*ztc) ! N0snow as a function of solely T
       n_0 = 13.5 * m2s**4 / m3s**3       ! N0snow as a function of T and snow mixing ratio
       n_0 = MAX(n_0,0.5*hlp)
       n_0 = MIN(n_0,1e2*hlp)
