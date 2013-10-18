@@ -37,6 +37,7 @@ module settings
     real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
     real(kind=dbl) :: emissivity
     real(kind=dbl) :: salinity         ! sea surface salinity
+!     double precision, dimension(maxfreq) :: freqs
     real(kind=dbl), dimension(maxfreq) :: freqs
 
     integer :: radar_nfft !number of FFT points in the Doppler spectrum [typically 256 or 512]
@@ -124,8 +125,69 @@ contains
 
     if (verbose >= 2) print*,'Start of ', nameOfRoutine
 
+        ! first put default values
+        call settings_fill_default()
+    
+     
+        ! read name list parameter file
+        open(7, file=namelist_file,delim='APOSTROPHE')
+        read(7,nml=inoutput_mode)
+        read(7,nml=output)
+        read(7,nml=run_mode)
+        read(7,nml=surface_params)
+        read(7,nml=gas_abs_mod)
+        read(7,nml=hyd_opts)
+        read(7,nml=moments)
+        read(7,nml=radar_simulator)
 
-	hydro_threshold = 1.d-10   ! [kg/kg] 
+        close(7)
+
+        !test some variables
+        if (MOD(radar_nfft, 2) == 1) STOP "radar_nfft has to be even!"
+
+
+
+        !mix some variables to make new ones:
+        radar_nfft_aliased = radar_nfft *(1+2*radar_aliasing_nyquist_interv)
+        radar_maxTurbTerms = radar_nfft_aliased * 12
+
+        if (verbose > 3) then
+            print*, "inoutput_mode ",  input_path, output_path,&
+            tmp_path, dump_to_file, write_nc, data_path,&
+            input_type, crm_case, crm_data, crm_data2, crm_constants, &
+            jacobian_mode
+            print*, "output ",  obs_height,units,outpol,freq_str,file_desc,creator
+            print*, "run_mode ",  active, passive,radar_mode
+            print*, "surface_params ",  ground_type,salinity, emissivity
+            print*, "gas_abs_mod ",  lgas_extinction, gas_mod
+            print*, "hyd_opts ",  lhyd_extinction, lphase_flag!, softsphere_adjust
+            print*, "moments ",  n_moments, moments_file
+            print*, "radar_simulator ",  radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
+            radar_turbulence_st, radar_pnoise0, radar_airmotion, radar_airmotion_model, &
+            radar_airmotion_vmin, radar_airmotion_vmax, radar_airmotion_linear_steps, &
+            radar_airmotion_step_vmin, radar_save_noise_corrected_spectra, radar_use_hildebrand,&
+            radar_convolution_fft
+
+        end if
+
+        if (n_moments .ne. 1 .and. n_moments .ne. 2) stop "n_moments is not 1 or 2"
+
+        if (verbose > 1) print *,"PASSIVE: ", passive, "ACTIVE: ", active
+
+
+        return
+  end subroutine settings_read
+    
+  subroutine settings_fill_default
+    use kinds
+    implicit none
+
+    character(len=14) :: nameOfRoutine = 'settings_fill_default'
+    
+    if (verbose >= 2) print*,'Start of ', nameOfRoutine
+
+    
+        hydro_threshold = 1.d-10   ! [kg/kg] 
 
 
         !set namelist defaults!
@@ -203,22 +265,6 @@ contains
         radar_noise_distance_factor = 0.25
         radar_receiver_uncertainty_std = 0.d0 !dB
 
-        ! read name list parameter file
-        open(7, file=namelist_file,delim='APOSTROPHE')
-        read(7,nml=inoutput_mode)
-        read(7,nml=output)
-        read(7,nml=run_mode)
-        read(7,nml=surface_params)
-        read(7,nml=gas_abs_mod)
-        read(7,nml=hyd_opts)
-        read(7,nml=moments)
-        read(7,nml=radar_simulator)
-
-        close(7)
-
-        !test some variables
-        if (MOD(radar_nfft, 2) == 1) STOP "radar_nfft has to be even!"
-
         ! create frequency string if not set in pamtra
         if (freq_str == "") then
              ! get integer and character frequencies
@@ -229,36 +275,12 @@ contains
                 frq_str_e = "-"//frqs_str(nfrq)
             end if
             freq_str = frq_str_s//frq_str_e
-        end if
-
-        !mix some variables to make new ones:
-        radar_nfft_aliased = radar_nfft *(1+2*radar_aliasing_nyquist_interv)
-        radar_maxTurbTerms = radar_nfft_aliased * 12
-
-        if (verbose > 3) then
-            print*, "inoutput_mode ",  input_path, output_path,&
-            tmp_path, dump_to_file, write_nc, data_path,&
-            input_type, crm_case, crm_data, crm_data2, crm_constants, &
-            jacobian_mode
-            print*, "output ",  obs_height,units,outpol,freq_str,file_desc,creator
-            print*, "run_mode ",  active, passive,radar_mode
-            print*, "surface_params ",  ground_type,salinity, emissivity
-            print*, "gas_abs_mod ",  lgas_extinction, gas_mod
-            print*, "hyd_opts ",  lhyd_extinction, lphase_flag!, softsphere_adjust
-            print*, "moments ",  n_moments, moments_file
-            print*, "radar_simulator ",  radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
-            radar_turbulence_st, radar_pnoise0, radar_airmotion, radar_airmotion_model, &
-            radar_airmotion_vmin, radar_airmotion_vmax, radar_airmotion_linear_steps, &
-            radar_airmotion_step_vmin, radar_save_noise_corrected_spectra, radar_use_hildebrand,&
-            radar_convolution_fft
-
-        end if
-
-        if (n_moments .ne. 1 .and. n_moments .ne. 2) stop "n_moments is not 1 or 2"
-
-        if (verbose > 1) print *,"PASSIVE: ", passive, "ACTIVE: ", active
-
-
-        return
-    end subroutine settings_read
+            
+        end if 
+    
+    
+    
+    end subroutine settings_fill_default
+    
+    
 end module settings

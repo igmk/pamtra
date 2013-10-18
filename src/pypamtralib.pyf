@@ -1,85 +1,117 @@
 !    -*- f90 -*-
 ! Note: the context of this file is case sensitive.
 
-! this could look much more elegant, you can avoid using in_ngridx,in_ngridy,max_in_nlyrs,in_nlyrs,in_nfreq. See:
-! http://projects.scipy.org/scipy/browser/trunk/Lib/linalg/generic_flapack.pyf?rev=3054
-
 python module pyPamtraLib ! in 
     interface  ! in :pyPamtraLib
-        subroutine pypamtralib(set_namelist_file,set_verbose,in_ngridx,in_ngridy,max_in_nlyrs,in_nlyrs,in_nfreq,in_freqs,in_nfft,in_timestamp,in_deltax,in_deltay,in_lat,in_lon,in_model_i,in_model_j,in_wind10u,in_wind10v,in_lfrac,in_relhum_lev,in_press_lev,in_temp_lev,in_hgt_lev,in_cwc_q,in_iwc_q,in_rwc_q,in_swc_q,in_gwc_q,in_hwc_q,in_cwc_n,in_iwc_n,in_rwc_n,in_swc_n,in_gwc_n,in_hwc_n,out_gitversion,out_githash,out_ze,out_ze_cw,out_ze_rr,out_ze_ci,out_ze_sn,out_ze_gr,out_ze_ha,out_att_hydro,out_att_cw,out_att_rr,out_att_ci,out_att_sn,out_att_gr,out_att_ha,out_att_atmo,out_radar_hgt,out_tb,out_radar_spectra,out_radar_snr,out_radar_moments,out_radar_slope,out_radar_quality,out_radar_vel,out_angles) ! in :pypamtralib:pypamtralib.f90
-
+        module settings ! in :pyPamtraLib:settings.f90
             use kinds
+            logical :: jacobian_mode
+            integer :: radar_nfft
+            character(len=100) :: input_path
+            integer(kind=long_bn), optional :: verbose=0
+            character(len=8) :: radar_mode
+            integer :: radar_no_ave
+            real(kind=dbl) :: radar_min_spectral_snr
+            character(len=300) :: nc_out_file
+            character(len=9) :: frq_str_s
+            integer, parameter,optional :: maxnleg=200
+            logical :: radar_airmotion
+            character(len=9) :: frq_str_e
+            real(kind=dbl) :: obs_height
+            character(len=1), parameter,optional :: deltam='n'
+            logical :: passive
+            character(len=2) :: outpol
+            integer :: radar_aliasing_nyquist_interv
+            logical :: dump_to_file
+            integer, parameter,optional :: src_code=2
+            logical :: lgas_extinction
+            character(len=100) :: crm_data
+            real(kind=dbl) :: hydro_threshold
+            logical :: lphase_flag
+            character(len=1), parameter,optional :: quad_type='l'
+            real(kind=dbl) :: radar_k2
+            real(kind=dbl) :: radar_airmotion_step_vmin
+            character(len=100) :: crm_data2
+            character(len=100) :: crm_constants
+            integer :: radar_nfft_aliased
+            character(len=3) :: gas_mod
+            real(kind=dbl) :: radar_noise_distance_factor
+            character(len=30) :: radar_fallvel_snow
+            logical :: radar_save_noise_corrected_spectra
+            integer :: n_moments
+            real(kind=dbl) dimension(100) :: freqs
+            integer :: radar_maxturbterms
+            character(len=30) :: radar_fallvel_hail
+            real(kind=dbl) :: radar_airmotion_vmax
+            character(len=100) :: output_path
+            integer, parameter,optional :: noutlevels=2
+            integer, parameter,optional :: numazimuths=1
+            character(len=18) :: freq_str
+            character(len=20) :: file_desc
+            integer(kind=long_bn) :: nfrq
+            character(len=30) :: radar_fallvel_rain
+            character(len=100) :: creator
+            character(len=8) :: radar_airmotion_model
+            real(kind=dbl) :: radar_pnoise0
+            character(len=100) :: data_path
+            integer :: radar_airmotion_linear_steps
+            integer, parameter,optional :: aziorder=0
+            character(len=300) :: namelist_file
+            character(len=1) :: ground_type
+            character(len=30) :: radar_fallvel_graupel
+            character(len=10) :: crm_case
+            logical :: write_nc
+            integer, parameter,optional :: nummu=16
+            character(len=10) :: input_type
+            integer, parameter,optional :: maxv=64
+            character(len=100) :: tmp_path
+            character(len=1) :: units
+            real(kind=dbl), parameter,optional :: direct_mu=0._dbl
+            character(len=20) :: moments_file
+            real(kind=dbl) :: radar_receiver_uncertainty_std
+            character(len=30) :: radar_fallvel_cloud
+            integer, parameter,optional :: nstokes=2
+            character(len=30) :: radar_fallvel_ice
+            character(len=99) :: input_file
+            integer, parameter,optional :: maxfreq=100
+            real(kind=dbl) :: radar_turbulence_st
+            logical :: radar_use_hildebrand
+            logical :: radar_convolution_fft
+            character(len=300) :: descriptor_file_name
+            logical :: active
+            integer, parameter,optional :: maxlay=600
+            real(kind=dbl) :: radar_max_v
+            character(len=8) dimension(100) :: frqs_str
+            real(kind=dbl), parameter,optional :: direct_flux=0._dbl
+            logical :: in_python
+            logical :: lhyd_extinction
+            real(kind=dbl) :: radar_airmotion_vmin
+            real(kind=dbl) :: salinity
+            real(kind=dbl) :: radar_min_v
+            integer, parameter,optional :: maxleg=200
+            real(kind=dbl) :: emissivity
+            subroutine settings_read ! in :pyPamtraLib:settings.f90:settings
+                use kinds
+            end subroutine settings_read
+            subroutine settings_fill_default ! in :pyPamtraLib:settings.f90:settings
+                use kinds
+            end subroutine settings_fill_default
+        end module settings
+        module pypamtralib ! in :pyPamtraLib:pyPamtraLib.f90
+            use kinds, only: long
+            use settings
             use vars_output
             use vars_atmosphere
+            use descriptor_file
             use vars_profile
-            use settings
+            use report_module
             use double_moments_module
-            use constants
-            character*300 intent(in) :: set_namelist_file
-            integer intent(in) :: set_verbose
-            integer intent(in) :: in_ngridx
-            integer intent(in) :: in_ngridy
-            integer intent(in) :: max_in_nlyrs
-            integer dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_nlyrs
-            integer intent(in) :: in_nfreq
-            real dimension(in_nfreq),intent(in),depend(in_nfreq) :: in_freqs
-            integer intent(in) :: in_nfft
-            integer dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_timestamp
-            real intent(in) :: in_deltax
-            real intent(in) :: in_deltay
-            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_lat
-            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_lon
-            integer dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_model_i
-            integer dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_model_j
-            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_wind10u
-            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_wind10v
-            real dimension(in_ngridx,in_ngridy),intent(in),depend(in_ngridx,in_ngridy) :: in_lfrac
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs + 1),intent(in),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: in_relhum_lev
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs + 1),intent(in),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: in_press_lev
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs + 1),intent(in),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: in_temp_lev
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs + 1),intent(in),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: in_hgt_lev
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(in),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: in_cwc_q
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(in),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: in_iwc_q
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(in),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: in_rwc_q
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(in),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: in_swc_q
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(in),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: in_gwc_q
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(in),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: in_hwc_q
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(in),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: in_cwc_n
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(in),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: in_iwc_n
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(in),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: in_rwc_n
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(in),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: in_swc_n
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(in),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: in_gwc_n
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(in),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: in_hwc_n
-            character*40 intent(out) :: out_gitversion
-            character*40 intent(out) :: out_githash
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_ze
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_ze_cw
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_ze_rr 
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_ze_ci
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_ze_sn
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_ze_gr 
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_ze_ha
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_hydro
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_cw
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_rr
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_ci
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_sn
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_gr
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_ha
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_att_atmo
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs) :: out_radar_hgt
-            real dimension(in_ngridx,in_ngridy,2,32,in_nfreq,2),intent(out),depend(in_ngridx,in_ngridy,in_nfreq) :: out_tb
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq,in_nfft),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq,in_nfft) :: out_radar_spectra
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_radar_snr
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq,4),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_radar_moments
-            real dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq,2),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_radar_slope
-            integer dimension(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq),intent(out),depend(in_ngridx,in_ngridy,max_in_nlyrs,in_nfreq) :: out_radar_quality
-            real dimension(in_nfft),intent(out),depend(in_nfft) :: out_radar_vel
-            real dimension(32),intent(out) :: out_angles
-        end subroutine pypamtralib
+            subroutine run_pamtra ! in :pyPamtraLib:pyPamtraLib.f90:pypamtralib
+                use mod_io_strings, only: formatted_frqstr
+            end subroutine run_pamtra
+        end module pypamtralib
     end interface 
 end python module pyPamtraLib
 
-! This file was auto-generated with f2py (version:1).
+! This file was auto-generated with f2py (version:2).
 ! See http://cens.ioc.ee/projects/f2py2e/
-! AND MANUALLY EDITED!!
