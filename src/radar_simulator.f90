@@ -20,8 +20,8 @@ frequency,delta_h,nz,nx,ny,fi)
     use kinds
     use settings
     use constants
-    use vars_output, only: radar_spectra, radar_snr, radar_vel,&
-    radar_moments, radar_slope, radar_quality, Ze, Att_hydro !output of the radar simulator
+    use vars_output, only: radar_spectra, radar_snr, radar_vel,radar_hgt, &
+    radar_moments, radar_slope, radar_edge, radar_quality, Ze, Att_hydro !output of the radar simulator
     use report_module
     implicit none
   
@@ -36,11 +36,13 @@ frequency,delta_h,nz,nx,ny,fi)
     real(kind=dbl), dimension(radar_nfft):: noise_turb_spectra,&
     snr_turb_spectra,spectra_velo, turb_spectra_aliased, noise_removed_turb_spectra
     integer::quality_2ndPeak, quailty_aliasing
+    real(kind=dbl), dimension(2) :: rand_number
     real(kind=dbl), dimension(:),allocatable:: turb_spectra
     real(kind=dbl), dimension(0:4):: moments
     real(kind=dbl), dimension(2):: slope
-    real(kind=dbl):: SNR, del_v, ss, K2, wavelength, Ze_back, K, &
-    min_V_aliased, max_V_aliased
+    real(kind=dbl), dimension(2):: edge
+    real(kind=dbl):: SNR, del_v, ss, K2, wavelength, Ze_back, dielec_water, K, &
+    min_V_aliased, max_V_aliased, receiver_uncertainty, radar_Pnoise
     integer :: ii, tt, turbLen,alloc_status,ts_imin, ts_imax, startI, stopI
 
     integer(kind=long), intent(out) :: errorstatus
@@ -60,15 +62,17 @@ frequency,delta_h,nz,nx,ny,fi)
             REAL(kind=dbl), intent(out), DIMENSION(M+N-1) :: Y
         end subroutine convolution
 
-        subroutine radar_calc_moments(errorstatus,radar_spectrum_in,radar_spectrum_out,moments,slope,quality)
+        subroutine radar_calc_moments(errorstatus,radar_spectrum_in,noise_model, radar_spectrum_out,moments,slope,edge,quality)
             use kinds
             use settings, only: radar_nfft
             implicit none
 	    integer(kind=long), intent(out) :: errorstatus
             real(kind=dbl), dimension(radar_nfft), intent(in):: radar_spectrum_in
+            real(kind=dbl), intent(in):: noise_model
             real(kind=dbl), dimension(radar_nfft), intent(out):: radar_spectrum_out
             real(kind=dbl), dimension(0:4), intent(out):: moments
             real(kind=dbl), dimension(2), intent(out):: slope
+            real(kind=dbl), dimension(2), intent(out):: edge
             integer, intent(out) :: quality
         end subroutine radar_calc_moments
 
@@ -121,6 +125,13 @@ frequency,delta_h,nz,nx,ny,fi)
 	end if
       if (verbose >= 3) print*, "nx,ny,nz,fi,ze", nx,ny,nz,fi,Ze(nx,ny,nz,fi)
     else if ((radar_mode == "moments") .or. (radar_mode == "spectrum")) then
+
+
+        !calculate the noise level depending on range:
+         radar_Pnoise = radar_Pnoise0 + (20 * log10(radar_hgt(nx,ny,nz)))
+         radar_Pnoise = 10**(0.1*radar_Pnoise)
+print*, radar_Pnoise
+
         !get delta velocity
         del_v = (radar_max_V-radar_min_V) / radar_nfft ![m/s]
         !create array from min_v to max_v iwth del_v spacing -> velocity spectrum of radar
@@ -266,8 +277,27 @@ frequency,delta_h,nz,nx,ny,fi)
             print*,"TOTAL"," Ze SUM(noise_turb_spectra)*del_v-radar_Pnoise",10*log10(SUM(noise_turb_spectra)-radar_Pnoise)
         end if
 
+        !apply a receiver uncertainty:
+      if (radar_receiver_uncertainty_std /= 0) then
+        !get random
+        call random(err,2,jacobian_mode,rand_number)
+        if (err /= 0) then
+            msg = 'error in random!'
+            call report(err, msg, nameOfRoutine)
+            errorstatus = err
+            return
+        end if
+        !apply a gaussian distribution to random numbers
+        receiver_uncertainty =  radar_receiver_uncertainty_std * sqrt( -2.0d0 * log ( rand_number(1))) &
+                       * cos(2.0d0 * pi * rand_number(2))
+        !make linear
+        receiver_uncertainty = 10**(0.1*receiver_uncertainty)
+        !apply to spectrum
+        noise_turb_spectra = noise_turb_spectra * receiver_uncertainty
+      end if
 
-        call radar_calc_moments(err,noise_turb_spectra,noise_removed_turb_spectra,moments,slope,quality_2ndPeak)
+
+        call radar_calc_moments(err,noise_turb_spectra,radar_Pnoise,noise_removed_turb_spectra,moments,slope,edge,quality_2ndPeak)
 	if (err /= 0) then
 	  msg = 'error in radar_calc_moments!'
 	  call report(err, msg, nameOfRoutine)
@@ -293,6 +323,7 @@ frequency,delta_h,nz,nx,ny,fi)
         radar_vel(:) = spectra_velo(:)
         radar_moments(nx,ny,nz,fi,:) = moments(1:4)
         radar_slope(nx,ny,nz,fi,:) = slope(:)
+        radar_edge(nx,ny,nz,fi,:) = edge(:)
         radar_quality(nx,ny,nz,fi) = quailty_aliasing + quality_2ndPeak
 
         moments(0) = 10*log10(moments(0))

@@ -45,6 +45,7 @@ subroutine deallocate_output_vars
   if (allocated(radar_vel)) deallocate(radar_vel)
   if (allocated(radar_moments)) deallocate(radar_moments)
   if (allocated(radar_slope)) deallocate(radar_slope)
+  if (allocated(radar_slope)) deallocate(radar_edge)
   if (allocated(radar_quality)) deallocate(radar_quality)
 
   if (verbose >= 3) call report(info,'End of ', nameOfRoutine)

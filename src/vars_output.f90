@@ -25,6 +25,7 @@ module vars_output
   real(kind=dbl), allocatable, dimension(:,:,:,:) ::    radar_snr
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) ::    radar_moments
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) ::    radar_slope
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) ::    radar_edge
   integer, allocatable, dimension(:,:,:,:) ::    radar_quality
   real(kind=dbl), allocatable, dimension(:) :: radar_vel
   

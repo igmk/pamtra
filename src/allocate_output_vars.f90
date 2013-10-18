@@ -61,14 +61,16 @@ subroutine allocate_output_vars(no_allocated_lyrs)
         radar_snr(ngridx,ngridy,no_allocated_lyrs,nfrq),&
         radar_moments(ngridx,ngridy,no_allocated_lyrs,nfrq,4),&
         radar_slope(ngridx,ngridy,no_allocated_lyrs,nfrq,2),&
+        radar_edge(ngridx,ngridy,no_allocated_lyrs,nfrq,2),&
         radar_quality(ngridx,ngridy,no_allocated_lyrs,nfrq),&
         radar_vel(radar_nfft))
-        !set to -9999, because radar simulator might not run on all levels!
+        !set to -9999, because height of profiles can vary!
         radar_spectra = -9999.d0
         radar_snr = -9999.d0
         radar_vel = -9999.d0
         radar_moments = -9999.d0
         radar_slope = -9999.d0
+        radar_edge = -9999.d0
         radar_quality = -9999
     end if
     if (verbose .gt. 1) print*, 'Done allocate_output_vars'

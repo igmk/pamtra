@@ -46,13 +46,13 @@ module settings
     real(kind=dbl) :: radar_max_V !MinimumNyquistVelocity in m/sec
     real(kind=dbl) :: radar_min_V !MaximumNyquistVelocity in m/sec
     real(kind=dbl) :: radar_turbulence_st !turbulence broadening standard deviation st, typical range [0.1 - 0.4] m/sec
-    real(kind=dbl) :: radar_pnoise !radar noise
+    real(kind=dbl) :: radar_pnoise0 !radar noise
     real(kind=dbl) :: radar_airmotion_vmin
     real(kind=dbl) :: radar_airmotion_vmax
     real(kind=dbl) :: radar_airmotion_step_vmin
     real(kind=dbl) :: radar_min_spectral_snr !threshold for peak detection
     real(kind=dbl) :: radar_K2
-
+    real(kind=dbl) :: radar_receiver_uncertainty_std
 
   real(kind=dbl) :: hydro_threshold, radar_noise_distance_factor
 
@@ -70,7 +70,7 @@ module settings
     jacobian_mode, &  ! special jacobian mode which does not calculate the whole scattering properties each time. only rt4!
     radar_airmotion, &   ! apply vertical air motion
     radar_save_noise_corrected_spectra, & !remove the noise from the calculated spectrum again (for testing)
-    radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise) we can skip that.
+    radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise0) we can skip that.
     radar_convolution_fft!use fft for convolution of spectrum
 
 
@@ -115,12 +115,12 @@ contains
         namelist / hyd_opts / lhyd_extinction, lphase_flag
 	namelist / moments / n_moments, moments_file
 	namelist / radar_simulator / radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
-		  radar_turbulence_st, radar_pnoise, radar_airmotion, radar_airmotion_model, &
+		  radar_turbulence_st, radar_pnoise0, radar_airmotion, radar_airmotion_model, &
 		  radar_airmotion_vmin, radar_airmotion_vmax, radar_airmotion_linear_steps, &
 		  radar_airmotion_step_vmin, radar_fallVel_cloud, radar_fallVel_rain, radar_fallVel_ice,&
 		  radar_fallVel_snow, radar_fallVel_graupel, radar_fallVel_hail, radar_aliasing_nyquist_interv, &
 		  radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr, radar_convolution_fft, &
-                  radar_K2, radar_noise_distance_factor
+                  radar_K2, radar_noise_distance_factor, radar_receiver_uncertainty_std
 
     if (verbose >= 2) print*,'Start of ', nameOfRoutine
 
@@ -177,8 +177,8 @@ contains
         radar_min_V=-7.885
         !turbulence broadening standard deviation st, typical range [0.1 - 0.4] m/sec
         radar_turbulence_st=0.15
-          !radar noise in same unit as Ze mm⁶/m³
-        radar_pnoise=1.d-3
+          !radar noise offset in same unit as Ze 10*log10(mm⁶/m³). noise is calculated with noise = radar_pnoise0 + 20*log10(range)
+        radar_pnoise0=-84.031043312334901 ! value for BArrow MMCR for 2008, 4, 15,
 
         radar_airmotion = .false.
         radar_airmotion_model = "step" !"constant","linear","step"
@@ -201,7 +201,7 @@ contains
         radar_convolution_fft = .true. !use fft for convolution of spectrum. is alomst 10 times faster, but can introduce aretfacts for radars with *extremely* low noise levels or if noise is turned off at all.
         radar_K2 = 0.93 ! dielectric constant |K|² (always for liquid water by convention) for the radar equation
         radar_noise_distance_factor = 0.25
-
+        radar_receiver_uncertainty_std = 0.d0 !dB
 
         ! read name list parameter file
         open(7, file=namelist_file,delim='APOSTROPHE')
@@ -247,7 +247,7 @@ contains
             print*, "hyd_opts ",  lhyd_extinction, lphase_flag!, softsphere_adjust
             print*, "moments ",  n_moments, moments_file
             print*, "radar_simulator ",  radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
-            radar_turbulence_st, radar_pnoise, radar_airmotion, radar_airmotion_model, &
+            radar_turbulence_st, radar_pnoise0, radar_airmotion, radar_airmotion_model, &
             radar_airmotion_vmin, radar_airmotion_vmax, radar_airmotion_linear_steps, &
             radar_airmotion_step_vmin, radar_save_noise_corrected_spectra, radar_use_hildebrand,&
             radar_convolution_fft
