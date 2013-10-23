@@ -50,55 +50,12 @@ subroutine allocate_profile_vars(errorstatus)
         allocate(hwc_n(nlyr))
     end if
 
-    allocate(nlegen(nlyr),stat=alloc_status)
-  
-    allocate(kextatmo(nlyr), stat=alloc_status)
-    allocate(kexttot(nlyr), stat=alloc_status)
-    allocate(kextsn(nlyr), stat=alloc_status)
-    allocate(kextcw(nlyr), stat=alloc_status)
-    allocate(kextrr(nlyr), stat=alloc_status)
-    allocate(kextgr(nlyr), stat=alloc_status)
-    allocate(kextci(nlyr), stat=alloc_status)
-    allocate(kextha(nlyr), stat=alloc_status)
-  
-    allocate(salbtot(nlyr), stat=alloc_status)
-    allocate(g_coeff(nlyr), stat=alloc_status)
-  
-    allocate(back(nlyr), stat=alloc_status)
-    allocate(backcw(nlyr), stat=alloc_status)
-    allocate(backrr(nlyr), stat=alloc_status)
-    allocate(backci(nlyr), stat=alloc_status)
-    allocate(backsn(nlyr), stat=alloc_status)
-    allocate(backgr(nlyr), stat=alloc_status)
-    allocate(backha(nlyr), stat=alloc_status)
-
-    allocate(legen(nlyr,200), stat=alloc_status)
-    allocate(legen2(nlyr,200), stat=alloc_status)
-    allocate(legen3(nlyr,200), stat=alloc_status)
-    allocate(legen4(nlyr,200), stat=alloc_status)
-
-    allocate(rt4salbtot(nlyr),stat=alloc_status)
-    allocate(rt4scatter_matrix(nlyr,nstokes,nummu,nstokes,nummu,4),stat=alloc_status)
-    allocate(scattermatrix(nlyr,nstokes,nummu,nstokes,nummu,4),stat=alloc_status)
-    allocate(rt4ext_matrix(nlyr,nstokes,nstokes,nummu,4),stat=alloc_status)
-    allocate(extmatrix(nlyr,nstokes,nstokes,nummu,4),stat=alloc_status)
-    allocate(rt4emis_vec(nlyr,nstokes,nummu,4),stat=alloc_status)
-    allocate(emisvec(nlyr,nstokes,nummu,4),stat=alloc_status)
-
-
-
-
-    allocate(hydros_present(nlyr),stat=alloc_status)
-    allocate(rt4hydros_present(nlyr),stat=alloc_status)
 
     if (dump_to_file) then
         allocate(file_ph(nlyr))
     end if
 
-    ! set them to zero, just in case they are not calculated but used for Ze/PIA calculation
-    kexttot(:) = 0d0
-    kextatmo(:) = 0d0
-    back(:) = 0d0
+
 
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
 

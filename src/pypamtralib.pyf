@@ -5,15 +5,19 @@ python module pyPamtraLib ! in
     interface  ! in :pyPamtraLib
         module deallocate_everything ! in :pyPamtraLib:deallocate_everything.f90
             subroutine do_deallocate_everything(errorstatus) ! in :pyPamtraLib:deallocate_everything.f90:deallocate_everything
-                use scatproperties, only: deallocate_scatproperties
-                use report_module
-                use descriptor_file, only: deallocate_descriptor_file
                 use kinds
+                use vars_jacobian, only: deallocate_jacobian_vars
+                use vars_output, only: deallocate_output_vars
+                use descriptor_file, only: deallocate_descriptor_file
+                use vars_rt, only: deallocate_rt_vars
+                use report_module
                 use drop_size_dist, only: deallocatevars_drop_size_dist
+                use scatproperties, only: deallocate_scatproperties
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine do_deallocate_everything
         end module deallocate_everything
         module vars_output ! in :pyPamtraLib:vars_output.f90
+            use report_module
             use kinds
             real(kind=sgl), allocatable,dimension(:,:) :: iwvs
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: psd_f
@@ -44,6 +48,16 @@ python module pyPamtraLib ! in
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: ze
             real(kind=sgl), allocatable,dimension(:,:) :: lons
             real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: tb
+            subroutine allocate_output_vars(no_allocated_lyrs) ! in :pyPamtraLib:vars_output.f90:vars_output
+                use vars_atmosphere
+                use descriptor_file, only: nbin_arr,n_hydro
+                use mod_io_strings
+                use settings, only: write_nc,nstokes,radar_nfft,in_python,radar_mode,nummu,passive,noutlevels,nfrq,active,save_psd
+                integer intent(in) :: no_allocated_lyrs
+            end subroutine allocate_output_vars
+            subroutine deallocate_output_vars ! in :pyPamtraLib:vars_output.f90:vars_output
+                use vars_atmosphere
+            end subroutine deallocate_output_vars
         end module vars_output
         module settings ! in :pyPamtraLib:settings.f90
             use kinds
@@ -181,14 +195,16 @@ python module pyPamtraLib ! in
             end subroutine printdescriptorvars
         end module descriptor_file
         module pypamtralib ! in :pyPamtraLib:pyPamtraLib.f90
+            use descriptor_file
             use kinds, only: long
             use settings
             use vars_output
             use vars_atmosphere
-            use descriptor_file
+            use vars_jacobian, only: deallocate_jacobian_vars,allocate_jacobian_vars
             use vars_profile
             use report_module
             use double_moments_module
+            use vars_rt, only: allocate_rt_vars,deallocate_rt_vars
             character(len=40) :: gitversion
             character(len=40) :: githash
             subroutine run_pamtra(errorstatus) ! in :pyPamtraLib:pyPamtraLib.f90:pypamtralib

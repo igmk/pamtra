@@ -4,8 +4,10 @@ program pamtra
     !    use constants !physical constants live here
     use settings !all settings go here
     use vars_atmosphere !input variables and reading routine
+    use vars_rt, only: allocate_rt_vars, deallocate_rt_vars
     use vars_output !output variables
     use vars_profile
+    use vars_jacobian, only: allocate_jacobian_vars, deallocate_jacobian_vars
     use double_moments_module !double moments variables are stored here
     use report_module
     use descriptor_file
@@ -93,17 +95,24 @@ program pamtra
     grid_f: do fi =1, nfrq
         if (jacobian_mode) then
             !for jacobian mode. non disturbed profile is expected in grid 1,1!
-            call allocate_jacobian_vars
+            call allocate_jacobian_vars(nlyr)
         end if
         grid_y: do ny = 1, ngridy !nx_in, nx_fin
             grid_x: do nx = 1, ngridx !ny_in, ny_fin
          
                 call allocate_profile_vars(err)
+                  if (err /= 0) then
+                      msg = 'Error in allocate_profile_vars!'
+                      call report(fatal, msg, nameOfRoutine)
+                    errorstatus = err
+                    return
+                  end if
+                call allocate_rt_vars(err)
                 if (err /= 0) then
-                    msg = 'Error in allocate_profile_vars!'
+                    msg = 'Error in allocate_rt_vars!'
                     call report(fatal, msg, nameOfRoutine)
                   errorstatus = err
-                  go to 666
+                  return
                 end if
                 !   ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
                 lat = profiles(nx,ny)%latitude                  ! °
@@ -152,6 +161,7 @@ program pamtra
                 end if
                 !DEALLOCATE profile variables
                 call deallocate_profile_vars()
+                call deallocate_rt_vars()
             end do grid_x
         end do grid_y
         if (jacobian_mode) then

@@ -8,6 +8,7 @@ subroutine run_rt(errorstatus, nx,ny,fi)
     use settings !all settings go here
     use vars_atmosphere !input variables and reading routine
     use vars_output !output variables
+    use vars_rt, only: rt_kextatmo
     use double_moments_module
     use mod_io_strings, only: xstr, nxstr, ystr, nystr, frq_str
     use report_module
@@ -76,10 +77,10 @@ subroutine run_rt(errorstatus, nx,ny,fi)
 
     ! gaseous absorption
     !
-    ! kextatmo   extinction by moist air [Np/m]
+    ! rt_kextatmo   extinction by moist air [Np/m]
     !
     if (lgas_extinction) then
-        !returns kextatmo!
+        !returns rt_kextatmo!
         call get_gasabs(err,freq)
         if (err /= 0) then
             msg = 'error in get_gasabs'
@@ -88,11 +89,11 @@ subroutine run_rt(errorstatus, nx,ny,fi)
             return
         end if
     else
-        kextatmo = 0._dbl ! for the whole column
+        rt_kextatmo = 0._dbl ! for the whole column
     end if
     !save atmospheric attenuation and height for radar
     if (active) then
-        Att_atmo(nx,ny,:,fi)  = 10._dbl*log10(exp(kextatmo*delta_hgt_lev))
+        Att_atmo(nx,ny,:,fi)  = 10._dbl*log10(exp(rt_kextatmo*delta_hgt_lev))
         radar_hgt(nx,ny,:) = hgt(:)
     end if
 

@@ -1,6 +1,7 @@
 subroutine dump_profile()
 
   use vars_atmosphere
+  use vars_rt, only: rt_kextatmo
   use mod_io_strings
   use settings, only: tmp_path
 
@@ -14,9 +15,9 @@ subroutine dump_profile()
   file_profile = trim(tmp_path)//'/Profilex'//xstr//'y'//ystr//'f'//frq_str
   open(21, file = file_profile, form = 'FORMATTED', status =  'unknown')
   do nz = nlyr, 1, - 1 !nlyr,1,-1
-     write(21,1013) hgt_lev(nz), temp_lev(nz), kextatmo(nz), str1//trim(file_ph(nz))//str1
+     write(21,1013) hgt_lev(nz), temp_lev(nz), rt_kextatmo(nz), str1//trim(file_ph(nz))//str1
   end do !end of cycle over the vertical layers
-  write(21,1012) hgt_lev(0), temp_lev(0), KEXTATMO (1) , ''' '''
+  write(21,1012) hgt_lev(0), temp_lev(0), rt_kextATMO (1) , ''' '''
   close(21)
 
 1012 format(f7.1,1x,f6.2,1x,E9.4,1x,a3)

@@ -130,7 +130,9 @@
                     UP_RAD, DOWN_RAD)
 
       use kinds
-      use vars_atmosphere
+      use vars_atmosphere, only: wind10u, wind10v
+    use vars_rt, only : &
+        rt_hydros_present_reverse
      use settings, only: verbose
         use report_module
 use rt_utilities, only: planck_function,&
@@ -263,7 +265,7 @@ lobatto_quadrature
           ZDIFF = ABS(HEIGHT(LAYER) - HEIGHT(LAYER+1))
           GAS_EXTINCT(LAYER) = MAX(GAS_EXTINCT(LAYER),0.0D0)
 !        if (rt4kexttot(layer) .gt. 0.0) then
-        if (rt4hydros_present(layer)) then
+        if (rt_hydros_present_reverse(layer)) then
             call get_scat_mat(layer,NSTOKES, NUMMU,SCATTER_MATRIX,EXTINCT_MATRIX, EMIS_VECTOR)
 
             call CHECK_NORM4(err,NSTOKES, NUMMU, QUAD_WEIGHTS,&
@@ -297,7 +299,7 @@ lobatto_quadrature
 
 !          IF (SCAT_FILES(LAYER) .EQ. ' ') THEN
 !          IF (rt4kexttot(layer) .EQ. 0.d0) THEN
-          IF (.not. rt4hydros_present(layer)) THEN
+          IF (.not. rt_hydros_present_reverse(layer)) THEN
 !                   If the layer is purely absorbing then quickly
 !                     make the reflection and transmission matrices
 !                     and source vector instead of doubling.

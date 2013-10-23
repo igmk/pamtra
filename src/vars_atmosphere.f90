@@ -13,7 +13,7 @@ module vars_atmosphere
   character(12) :: date_str
   real(kind=sgl) :: deltax, deltay
 
-  integer(kind=long), allocatable, dimension(:) :: nlegen
+  integer(kind=long), allocatable, dimension(:) :: rt_nlegen
 
   !is allocated in pamtra.f90!
 
@@ -49,60 +49,6 @@ module vars_atmosphere
 
   real(kind=dbl), allocatable, dimension(:) :: delta_hgt_lev
 
-
-  real(kind=dbl), allocatable, dimension(:) :: kextatmo, &
-       kexttot, kextsn, kextcw, kextrr, kextgr, kextci, kextha, &
-       salbtot, &
-       back, backcw, backrr, backci, backsn, backgr, backha, &
-       g_coeff,&
-       rt4salbtot
-
-  real(kind=dbl), allocatable, dimension(:,:) :: legen, &
-       legen2, &
-       legen3, &
-       legen4
-
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: rt4scatter_matrix,scattermatrix
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: rt4ext_matrix,extmatrix
-  real(kind=dbl), allocatable, dimension(:,:,:,:) :: rt4emis_vec,emisvec
-
-  !for jacobain mode
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: jac_scattermatrix
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: jac_extmatrix
-  real(kind=dbl), allocatable, dimension(:,:,:,:) :: jac_emisvec
-  real(kind=dbl), allocatable, dimension(:) :: jac_kextsn
-  real(kind=dbl), allocatable, dimension(:) :: jac_backsn
-  real(kind=dbl), allocatable, dimension(:) :: jac_kextcw
-  real(kind=dbl), allocatable, dimension(:) :: jac_backcw
-  real(kind=dbl), allocatable, dimension(:) :: jac_kextrr
-  real(kind=dbl), allocatable, dimension(:) :: jac_backrr
-  real(kind=dbl), allocatable, dimension(:) :: jac_kextgr
-  real(kind=dbl), allocatable, dimension(:) :: jac_backgr
-  real(kind=dbl), allocatable, dimension(:) :: jac_kextci
-  real(kind=dbl), allocatable, dimension(:) :: jac_backci
-  real(kind=dbl), allocatable, dimension(:) :: jac_kextha
-  real(kind=dbl), allocatable, dimension(:) :: jac_backha
-  logical, allocatable, dimension(:) :: jac_hydros_present
-
-  !jacobian mode
-  real(kind=dbl), allocatable, dimension(:) :: jac_cwc_q, &
-       jac_iwc_q, &
-       jac_rwc_q, &
-       jac_swc_q, &
-       jac_gwc_q, &
-       jac_hwc_q
-
-  real(kind=dbl), allocatable, dimension(:) :: jac_cwc_n, &
-       jac_iwc_n, &
-       jac_rwc_n, &
-       jac_swc_n, &
-       jac_gwc_n, &
-       jac_hwc_n
-
-  real(kind=dbl), allocatable, dimension(:) :: jac_relhum_lev,&
-       jac_temp_lev
-
-  logical, allocatable, dimension(:) :: hydros_present, rt4hydros_present
 
   integer(kind=long) :: alloc_status
 

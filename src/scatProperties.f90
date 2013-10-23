@@ -9,11 +9,11 @@ module scatProperties
       maxnleg
   use mie_spheres, only: calc_mie_spheres
   use tmatrix, only: calc_tmatrix
-  use vars_atmosphere, only: kexttot,&
-      back,&
-      scattermatrix, &
-      extmatrix, &
-      emisvec
+  use vars_rt, only: rt_kexttot,&
+      rt_back,&
+      rt_scattermatrix, &
+      rt_extmatrix, &
+      rt_emisvec
   use report_module
   use drop_size_dist, only: liq_ice,&
         nbin,&
@@ -67,12 +67,12 @@ module scatProperties
       implicit none
       integer, intent(in) :: iz
 
-      kexttot(iz) = 0.d0  
-      back(iz) = 0.d0
+      rt_kexttot(iz) = 0.d0  
+      rt_back(iz) = 0.d0
 
-      scattermatrix(iz,:,:,:,:,:)=0.d0
-      extmatrix(iz,:,:,:,:)=0.d0
-      emisvec(iz,:,:,:)=0.d0
+      rt_scattermatrix(iz,:,:,:,:,:)=0.d0
+      rt_extmatrix(iz,:,:,:,:)=0.d0
+      rt_emisvec(iz,:,:,:)=0.d0
 
       radar_spec(:) = 0.d0
       return
@@ -226,17 +226,17 @@ module scatProperties
 
 
     !sum up
-    kexttot(iz) = kexttot(iz) + kext_hydro
-    back(iz) = back(iz) + back_hydro
+    rt_kexttot(iz) = rt_kexttot(iz) + kext_hydro
+    rt_back(iz) = rt_back(iz) + back_hydro
 
     !sum up rt4 style
-    scattermatrix(iz,:,:,:,:,:) = scattermatrix(iz,:,:,:,:,:) + scatter_matrix_hydro
-    extmatrix(iz,:,:,:,:) = extmatrix(iz,:,:,:,:) + extinct_matrix_hydro
-    emisvec(iz,:,:,:) = emisvec(iz,:,:,:) + emis_vector_hydro
+    rt_scattermatrix(iz,:,:,:,:,:) = rt_scattermatrix(iz,:,:,:,:,:) + scatter_matrix_hydro
+    rt_extmatrix(iz,:,:,:,:) = rt_extmatrix(iz,:,:,:,:) + extinct_matrix_hydro
+    rt_emisvec(iz,:,:,:) = rt_emisvec(iz,:,:,:) + emis_vector_hydro
 
 
     !sum up rt3 style
-    if (kexttot(iz) == 0.d0) then 
+    if (rt_kexttot(iz) == 0.d0) then 
       salbedo = 0.d0
     else 
       salbedo = salbedo + (salb_hydro*kext_hydro)
@@ -259,17 +259,17 @@ module scatProperties
 
 
     !do checks
-    if (kexttot(iz) .lt. 0. .or. isnan(kexttot(iz))) then
-      print*, "kexttot(iz)",kexttot(iz)
-      msg = 'kexttot(iz) smaller than zero or nan!'
+    if (rt_kexttot(iz) .lt. 0. .or. isnan(rt_kexttot(iz))) then
+      print*, "rt_kexttot(iz)",rt_kexttot(iz)
+      msg = 'rt_kexttot(iz) smaller than zero or nan!'
       errorstatus = fatal
       call report(errorstatus, msg, nameOfRoutine)
       return
     end if        
 
-    if (back(iz) .lt. 0. .or. isnan(back(iz))) then
-      print*, "back(iz)",back(iz)
-      msg = 'back(iz) smaller than zero or nan!'
+    if (rt_back(iz) .lt. 0. .or. isnan(rt_back(iz))) then
+      print*, "rt_back(iz)",rt_back(iz)
+      msg = 'rt_back(iz) smaller than zero or nan!'
       errorstatus = fatal
       call report(errorstatus, msg, nameOfRoutine)
       return
@@ -286,7 +286,7 @@ module scatProperties
 
     if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
 
-      call radar_spectrum(err,nbin,d_bound_ds, back(iz),  back_spec_dia,layer_t,pressure,freq,&
+      call radar_spectrum(err,nbin,d_bound_ds, rt_back(iz),  back_spec_dia,layer_t,pressure,freq,&
         liq_ice,mass_ds,area_ds,radar_spec_hydro)
       if (err /= 0) then
           msg = 'error in radar_spectrum!'
@@ -314,8 +314,8 @@ module scatProperties
     integer, intent(in) :: iz
 
 
-    salbedo = salbedo / kexttot(iz)
-    legen_coef(:,:) = legen_coef(:,:) / (salbedo * kexttot(iz))
+    salbedo = salbedo / rt_kexttot(iz)
+    legen_coef(:,:) = legen_coef(:,:) / (salbedo * rt_kexttot(iz))
 
     return
   end subroutine finalize_rt3_scatProperties

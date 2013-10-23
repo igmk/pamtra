@@ -34,8 +34,8 @@ subroutine get_atmosg(freq)!, kextatmo_o2,kextatmo_h2o,kextatmo_n2)
 
      tc = temp(nz) - 273.15 
      if (gas_mod .eq. 'L93') then
-        call mpm93(freq, press(nz)/1.d3, vapor_pressure(nz)/1.d3,tc, 0.0d0, kextatmo(nz))
-        kextatmo(nz) = kextatmo(nz)/1000.
+        call mpm93(freq, press(nz)/1.d3, vapor_pressure(nz)/1.d3,tc, 0.0d0, rt_kextatmo(nz))
+        rt_kextatmo(nz) = rt_kextatmo(nz)/1000.
      else if (gas_mod .eq. 'R98') then
         ! Rosenkranz 1998 gas absorption model
         ! Input parameters:
@@ -49,10 +49,10 @@ subroutine get_atmosg(freq)!, kextatmo_o2,kextatmo_h2o,kextatmo_n2)
         !    extinction by water vapor   Np/km      
         call gasabsr98(freq,temp(nz),rho_vap(nz),press(nz),absair,abswv)!,abs_n2,abs_o2)
 
-        kextatmo(nz) = (absair + abswv)/1000.    ! [Np/m]
+        rt_kextatmo(nz) = (absair + abswv)/1000.    ! [Np/m]
 
      else
-        kextatmo(nz) = 0
+        rt_kextatmo(nz) = 0
         print*, "No gas absorption model specified!"
         stop
      end if

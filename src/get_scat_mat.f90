@@ -2,7 +2,7 @@ subroutine get_scat_mat(layer,nstokes, nummu,&
 scatter_matrix,&
 extinct_matrix, emis_vector)
     use kinds
-    use vars_atmosphere, only: rt4scatter_matrix, rt4ext_matrix, rt4emis_vec
+    use vars_rt, only: rt_scattermatrix_reverse, rt_extmatrix_reverse, rt_emisvec_reverse
 
     implicit none
 
@@ -18,7 +18,7 @@ extinct_matrix, emis_vector)
                 do j2 = 1, nummu
                     do i2 = 1, nstokes
                         do i1=1,nstokes
-                            scatter_matrix(i2,j2,i1,j1,l) = rt4scatter_matrix(layer,i2,j2,i1,j1,l)
+                            scatter_matrix(i2,j2,i1,j1,l) = rt_scattermatrix_reverse(layer,i2,j2,i1,j1,l)
                         end do
                     enddo
 
@@ -31,7 +31,7 @@ extinct_matrix, emis_vector)
         do j = 1, nummu
             do i2 = 1, nstokes
                 do i1 = 1, nstokes
-                    extinct_matrix(i2,i1,j,l) = rt4ext_matrix(layer,i2,i1,j,l)
+                    extinct_matrix(i2,i1,j,l) = rt_extmatrix_reverse(layer,i2,i1,j,l)
                 end do
             enddo
         enddo
@@ -40,7 +40,7 @@ extinct_matrix, emis_vector)
     do l = 1, 2
         do j = 1, nummu
             do i = 1,nstokes
-                emis_vector(i,j,l) = rt4emis_vec(layer,i,j,l)
+                emis_vector(i,j,l) = rt_emisvec_reverse(layer,i,j,l)
             end do
         enddo
     enddo

@@ -187,6 +187,18 @@ wavelength,units,outpol,noutlevels,outlevels,nx,ny,fi)
 
     use kinds
     use vars_atmosphere
+    use vars_rt, only : &
+        rt_kextatmo,&
+        rt_hydros_present, &
+        rt_scattermatrix, &
+        rt_extmatrix, &
+        rt_emisvec, &
+        rt_hydros_present_reverse, &
+        rt_scattermatrix_reverse, &
+        rt_extmatrix_reverse, &
+        rt_emisvec_reverse
+
+        
     use settings, only: write_nc, in_python, numazimuths, verbose
     use report_module
 
@@ -233,13 +245,13 @@ wavelength,units,outpol,noutlevels,outlevels,nx,ny,fi)
     num_layers = nlyr
     height(1:nlyr+1) = hgt_lev(nlyr:0:-1)             ! [m]
     temperatures(1:nlyr+1) = temp_lev(nlyr:0:-1)      ! [K]
-    gas_extinct(1:nlyr) = kextatmo(nlyr:1:-1)         ! [Np/m]
+    gas_extinct(1:nlyr) = rt_kextatmo(nlyr:1:-1)         ! [Np/m]
 
-    rt4hydros_present(1:nlyr) = hydros_present(nlyr:1:-1)
+    rt_hydros_present_reverse(1:nlyr) = rt_hydros_present(nlyr:1:-1)
 
-    rt4scatter_matrix(1:nlyr,:,:,:,:,:) = scattermatrix(nlyr:1:-1,:,:,:,:,:)
-    rt4ext_matrix(1:nlyr,:,:,:,:) = extmatrix(nlyr:1:-1,:,:,:,:)
-    rt4emis_vec(1:nlyr,:,:,:) = emisvec(nlyr:1:-1,:,:,:)
+    rt_scattermatrix_reverse(1:nlyr,:,:,:,:,:) = rt_scattermatrix(nlyr:1:-1,:,:,:,:,:)
+    rt_extmatrix_reverse(1:nlyr,:,:,:,:) = rt_extmatrix(nlyr:1:-1,:,:,:,:)
+    rt_emisvec_reverse(1:nlyr,:,:,:) = rt_emisvec(nlyr:1:-1,:,:,:)
 
     !  if (verbose .gt. 0) print*, ".... read_layers done!"
 

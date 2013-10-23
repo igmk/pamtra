@@ -3,7 +3,8 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
   use kinds
   use vars_atmosphere, only: nlyr, temp, q_hydro, q_hum,&
       cwc_q, iwc_q, rwc_q, swc_q, gwc_q, press,&
-      delta_hgt_lev, hydros_present
+      delta_hgt_lev
+  use vars_rt, only:rt_hydros_present
   use settings, only: verbose, hydro_threshold, save_psd
   use constants
   use descriptor_file
@@ -58,7 +59,7 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 
     call prepare_rt3_scatProperties(nz)
     call prepare_rt4_scatProperties(nz)
-    hydros_present(nz) = .false.
+    rt_hydros_present(nz) = .false.
     
     if (verbose .gt. 1) print*, 'Layer: ', nz
 
@@ -170,7 +171,7 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 	CYCLE
       end if
 
-      hydros_present(nz) = .true.
+      rt_hydros_present(nz) = .true.
 
       call allocateVars_drop_size_dist()
 
@@ -206,7 +207,7 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
     !convert rt3 to rt4 input
     if (nlegen_coef>0) then
 
-      call scatcnv(err,scatfiles(nz),nlegen_coef,legen_coef,kexttot(nz),salbedo,&
+      call scatcnv(err,scatfiles(nz),nlegen_coef,legen_coef,rt_kexttot(nz),salbedo,&
 	scatter_matrix_scatcnv,extinct_matrix_scatcnv,emis_vector_scatcnv)
       if (err /= 0) then
 	  msg = 'error in scatcnv!'
@@ -214,13 +215,13 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 	  errorstatus = err
 	  return
       end if   
-      scattermatrix(nz,:,:,:,:,:) = scattermatrix(nz,:,:,:,:,:) + scatter_matrix_scatcnv
-      extmatrix(nz,:,:,:,:) = extmatrix(nz,:,:,:,:) + extinct_matrix_scatcnv
-      emisvec(nz,:,:,:) = emisvec(nz,:,:,:) + emis_vector_scatcnv
+      rt_scattermatrix(nz,:,:,:,:,:) = rt_scattermatrix(nz,:,:,:,:,:) + scatter_matrix_scatcnv
+      rt_extmatrix(nz,:,:,:,:) = rt_extmatrix(nz,:,:,:,:) + extinct_matrix_scatcnv
+      rt_emisvec(nz,:,:,:) = rt_emisvec(nz,:,:,:) + emis_vector_scatcnv
     end if
 
-    if (active .and. hydros_present(nz)) then
-      call radar_simulator(err,radar_spec, back(nz), kexttot(nz), f,&
+    if (active .and. rt_hydros_present(nz)) then
+      call radar_simulator(err,radar_spec, rt_back(nz), rt_kexttot(nz), f,&
 	delta_hgt_lev(nz),nz,nx,ny,fi)
       if (err /= 0) then
 	  msg = 'error in radar_simulator!'

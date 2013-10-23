@@ -8,7 +8,7 @@ freq)              ! in
     !
     !  The absorption coefficient is converted from Np/km to Np/m in the end.
     !
-    !  The result is stored in kextatmo from vars_atmosphere module.
+    !  The result is stored in rt_kextatmo from vars_atmosphere module.
     !
     ! Input parameters:
     !    frequency                    GHz
@@ -42,7 +42,8 @@ freq)              ! in
     ! Modules used:
     use kinds, only: dbl, & ! integer parameter specifying double precision
     long   ! integer parameter specifying long integer
-    use vars_atmosphere, only: nlyr, press, temp, vapor_pressure, rho_vap, kextatmo
+    use vars_atmosphere, only: nlyr, press, temp, vapor_pressure, rho_vap
+    use vars_rt, only: rt_kextatmo
     use constants, only: t_abs
     use settings, only: gas_mod
 
@@ -75,14 +76,14 @@ freq)              ! in
     do nz = 1, nlyr
         tc = temp(nz) - t_abs
         if (gas_mod .eq. 'L93') then
-            call mpm93(err,freq, press(nz)/1.d3, vapor_pressure(nz)/1.d3,tc, 0.d0, kextatmo(nz))
+            call mpm93(err,freq, press(nz)/1.d3, vapor_pressure(nz)/1.d3,tc, 0.d0, rt_kextatmo(nz))
             if (err /= 0) then
                 msg = 'error in mpm93!'
                 call report(err, msg, nameOfRoutine)
                 errorstatus = err
                 return
             end if
-            kextatmo(nz) = kextatmo(nz)/1.d3
+            rt_kextatmo(nz) = rt_kextatmo(nz)/1.d3
         else if (gas_mod .eq. 'R98') then
             call rosen98_gasabs(err,freq,temp(nz),rho_vap(nz),press(nz),absair,abswv)
             if (err /= 0) then
@@ -91,9 +92,9 @@ freq)              ! in
                 errorstatus = err
                 return
             end if
-            kextatmo(nz) = (absair + abswv)/1.d3    ! conversion to Np/m
+            rt_kextatmo(nz) = (absair + abswv)/1.d3    ! conversion to Np/m
         else
-            kextatmo(nz) = 0
+            rt_kextatmo(nz) = 0
             msg = 'No gas absorption model specified!'
             err = fatal
             call report(err, msg, nameOfRoutine)

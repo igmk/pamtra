@@ -36,6 +36,7 @@ OBJECTS=kinds.o \
 	cosmo_netcdf.o \
 	vars_profile.o \
 	vars_atmosphere.o \
+	vars_rt.o \
 	mod_io_strings.o \
 	getopt.o \
 	parse_options.o \
@@ -44,6 +45,7 @@ OBJECTS=kinds.o \
 	convolution.o \
 	get_gasabs.o\
 	get_atmosphere.o \
+	descriptor_file.o \
 	vars_output.o \
 	run_rt.o \
 	scat_utilities.o \
@@ -57,10 +59,8 @@ OBJECTS=kinds.o \
 	rescale_spectra.o \
 	radar_spectrum.o \
 	radar_simulator.o \
-	deallocate_jacobian_vars.o \
-	allocate_jacobian_vars.o\
+	vars_jacobian.o \
 	allocate_profile_vars.o \
-	allocate_output_vars.o \
 	rosen98_gasabs.o \
 	surface.o \
 	eps_water.o \
@@ -78,7 +78,6 @@ OBJECTS=kinds.o \
 	spec2abs.o \
 	interpolation.o \
 	deallocate_profile_vars.o \
-	deallocate_output_vars.o \
 	legendre2phasefunction.o \
 	collect_output.o \
 	save_active.o \
@@ -91,7 +90,6 @@ OBJECTS=kinds.o \
 	radtran4.o \
 	radintg4.o \
 	radscat4.o \
-	descriptor_file.o \
 	drop_size_dist.o \
 	make_dist.o \
 	make_dist_param.o \
