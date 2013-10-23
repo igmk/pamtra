@@ -1291,84 +1291,90 @@ class pyPamtra(object):
     tttt = time.time()
 
     
-    if type(freqs) == int in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
+    if type(freqs) in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
     
     self.set["freqs"] = freqs
     self.set["nfreqs"] = len(freqs)
     assert self.set["nfreqs"] > 0
 
-    #save memory if no spectrum is needed!
-    if self.nmlSet["radar_mode"] == "spectrum":
-      radar_spectrum_length = int(self.nmlSet["radar_nfft"])
-    else:
-      radar_spectrum_length = 1
+    if checkData: self._checkData()
+
+    fortResults, fortObject = pyPamtraLibWrapper.PamtraFortranWrapper(self.set,self.nmlSet,self.df,self.p)
+    self.r = fortResults
+    self.fortObject = fortObject
+    
+     
+    self.r["nmlSettings"] = self.nmlSet
+
+    if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
+    return
+
+    
+  def runParallelPamtra(self,freqs,pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto",checkData=True):
+    '''
+    run Pamtra from python
+    '''
+    tttt = time.time()
+
+    
+    if type(freqs) in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
+    
+    self.set["freqs"] = freqs
+    self.set["nfreqs"] = len(freqs)
+    assert self.set["nfreqs"] > 0
 
     if checkData: self._checkData()
 
-    #if not os.path.isfile(self.set["namelist_file"]):
-      #self.writeNmlFile(self.set["namelist_file"])
-    #else: 
-      #if self.set["namelist_file"].split(".")[-1] == "tmp": 
-        #raise ValueError("Namelitsfile "+ self.set["namelist_file"] +" ends with .tmp, but is existing already")
-      #elif self.set["pyVerbose"] > 0:
-        #print("NOT writing temporary nml file to run pamtra using exisiting nml file instead: "+self.set["namelist_file"])
-    try:
-      #output
-      (
-      self.r["pamtraVersion"],
-      self.r["pamtraHash"],
-      self.r["Ze"], 
-      self.r["Ze_cw"], 
-      self.r["Ze_rr"], 
-      self.r["Ze_ci"], 
-      self.r["Ze_sn"], 
-      self.r["Ze_gr"], 
-      self.r["Ze_ha"], 
-      self.r["Att_hydro"], 
-      self.r["Att_cw"], 
-      self.r["Att_rr"], 
-      self.r["Att_ci"], 
-      self.r["Att_sn"], 
-      self.r["Att_gr"], 
-      self.r["Att_ha"], 
-      self.r["Att_atmo"], 
-      self.r["radar_hgt"],
-      self.r["tb"],
-      self.r["radar_spectra"],
-      self.r["radar_snr"],
-      self.r["radar_moments"],
-      self.r["radar_slopes"],
-      self.r["radar_quality"],
-      self.r["radar_vel"],
-      self.r["angles"],
-      ), host = \
-      pyPamtraLibWrapper.PamtraFortranWrapper(
-      #self.set
-      self.nmlSet,
-      #self._nmlDefaultValues,
-      self.set["namelist_file"],
-      self.set["verbose"],
-      #input
-      self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.p["nlyrs"],self.set["nfreqs"],self.set["freqs"],
-      radar_spectrum_length, self.p["unixtime"],
-      self.p["deltax"],self.p["deltay"], self.p["lat"],self.p["lon"],self.p["model_i"],self.p["model_j"],
-      self.p["wind10u"],self.p["wind10v"],self.p["lfrac"],
-      self.p["relhum_lev"],self.p["press_lev"],self.p["temp_lev"],self.p["hgt_lev"],
-      self.p["cwc_q"],self.p["iwc_q"],self.p["rwc_q"],self.p["swc_q"],self.p["gwc_q"],
-      self.p["hwc_q"],self.p["cwc_n"],self.p["iwc_n"],self.p["rwc_n"],self.p["swc_n"],self.p["gwc_n"],self.p["hwc_n"])
-    finally:
-      #remove temporary nml file
-      #does not work, since fortran exceptions cannot be caught...
-      #if self.set["namelist_file"].split(".")[-1] == "tmp": os.remove(self.set["namelist_file"])
-      pass
-      
+    fortResults = list()
+    
+    for pp_startF in np.arange(0,self.set["nfreqs"],pp_deltaF):
+      pp_endF = pp_startF + pp_deltaF
+      if pp_endF > self.set["nfreqs"]: pp_endF = self.set["nfreqs"]
+      pp_nfreqs = pp_endF - pp_startF
+      for pp_startX in np.arange(0,self.p["ngridx"],pp_deltaX):
+        pp_endX = pp_startX + pp_deltaX
+        if pp_endX > self.p["ngridx"]: pp_endX = self.p["ngridx"]
+        pp_ngridx = pp_endX - pp_startX
+        for pp_startY in np.arange(0,self.p["ngridy"],pp_deltaY):
+          pp_endY = pp_startY + pp_deltaY
+          if pp_endY > self.p["ngridy"]: pp_endY = self.p["ngridy"]
+          pp_ngridy = pp_endY - pp_startY
+    
+          
+          profilePart = self._sliceProfile(pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY)
+          fortResult, fortObject = pyPamtraLibWrapper.PamtraFortranWrapper(self.set,self.nmlSet,self.df,profilePart)
+          fortResults.append(fortResult)
+    
+    self.r =  fortResult._unscliceResults(fortResult)
     self.r["nmlSettings"] = self.nmlSet
-    self.r["pamtraVersion"] = self.r["pamtraVersion"].strip()
-    self.r["pamtraHash"] = self.r["pamtraHash"].strip()
+
     
     if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
+    return    
+    
+  def _sliceProfile(self,pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY):
+    profilePart = dict()
+    for key in self.p.keys():
+      profilePart[key] = self.p[key][pp_startX:pp_endX,pp_startY:pp_endY]
+    return profilePart
+    
+  def _unscliceResults(fortResults):
+    
+    self.r = dict()
+    self.r["Ze"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+    self.r["Att_hydro"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+    self.r["Att_atmo"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+    self.r["radar_hgt"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],))*missingNumber
+    self.r["radar_spectra"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],radar_spectrum_length,))*missingNumber
+    self.r["radar_snr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+    self.r["radar_moments"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],4,))*missingNumber
+    self.r["radar_slopes"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],2,))*missingNumber
+    self.r["radar_quality"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],),dtype=int)*missingNumber
+    self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles,self.set["nfreqs"],self._nstokes))*missingNumber
 
-
+    raise NotImplementedError("Feature Incomplete")
+    return self.r
+    
   def writeResultsToNumpy(self,fname,seperateFiles=False):
     
     if not seperateFiles:

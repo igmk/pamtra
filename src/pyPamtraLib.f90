@@ -11,6 +11,7 @@
     use descriptor_file
     
     implicit none
+    character(40) :: gitHash, gitVersion
 
     contains
 
@@ -33,7 +34,7 @@
       !!! internal "handle command line parameters" !!!
 
       integer(kind=long) :: inarg
-      character(40) :: gitHash, gitVersion
+
 
       !!! set by "handle command line parameters" !!!
 

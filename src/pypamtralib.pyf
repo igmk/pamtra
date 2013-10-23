@@ -189,6 +189,8 @@ python module pyPamtraLib ! in
             use vars_profile
             use report_module
             use double_moments_module
+            character(len=40) :: gitversion
+            character(len=40) :: githash
             subroutine run_pamtra(errorstatus) ! in :pyPamtraLib:pyPamtraLib.f90:pypamtralib
                 use mod_io_strings, only: formatted_frqstr
                 integer(kind=long_bn) intent(out) :: errorstatus
