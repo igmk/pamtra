@@ -1,4 +1,4 @@
-subroutine run_rt(errorstatus, nx,ny,fi)
+subroutine run_rt(errorstatus)
 
     use kinds, only: long, dbl
     use constants, only: c,&
@@ -12,10 +12,10 @@ subroutine run_rt(errorstatus, nx,ny,fi)
     use double_moments_module
     use mod_io_strings, only: xstr, nxstr, ystr, nystr, frq_str
     use report_module
+    use vars_index, only: i_x, i_y, i_f
 
     implicit none
 
-    integer(kind=long), intent(in) :: nx,ny,fi
     real(kind=dbl) :: freq ! frequency [GHz]
 
     integer(kind=long), dimension(maxlay) :: OUTLEVELS
@@ -38,14 +38,12 @@ subroutine run_rt(errorstatus, nx,ny,fi)
 
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
 
-    freq = freqs(fi)
-    frq_str = frqs_str(fi)
+    freq = freqs(i_f)
+    frq_str = frqs_str(i_f)
     wavelength = c / (freq*1.d3)   ! microns
     GROUND_TEMP = temp_lev(0)
 
-  
-    
-    !  if (verbose .gt. 0) print*, "calculating: ", frq_str, " Y:",ny, " of ", ngridy, "X:", nx, " of ", ngridx
+    !  if (verbose .gt. 0) print*, "calculating: ", frq_str, " Y:",i_y, " of ", ngridy, "X:", i_x, " of ", ngridx
 
     write(xstr, '(i3.3)') model_i
     write(ystr, '(i3.3)') model_j
@@ -93,18 +91,18 @@ subroutine run_rt(errorstatus, nx,ny,fi)
     end if
     !save atmospheric attenuation and height for radar
     if (active) then
-        Att_atmo(nx,ny,:,fi)  = 10._dbl*log10(exp(rt_kextatmo*delta_hgt_lev))
-        radar_hgt(nx,ny,:) = hgt(:)
+        Att_atmo(i_x,i_y,:,i_f)  = 10._dbl*log10(exp(rt_kextatmo*delta_hgt_lev))
+        radar_hgt(i_x,i_y,:) = hgt(:)
     end if
 
 
-    if (verbose >= 2) print*, nx,ny, 'Gas absorption calculated'
+    if (verbose >= 2) print*, i_x,i_y, 'Gas absorption calculated'
 
     ! hydrometeor extinction desired
     if (lhyd_extinction) then
     
-!       call hydrometeor_extinction_rt4(err,freq,nx,ny,fi)!hier nx, ny
-            call hydrometeor_extinction(err,freq,nx,ny,fi)!hier nx, ny
+!       call hydrometeor_extinction_rt4(err,freq,i_x,i_y,i_f)!hier i_x, i_y
+            call hydrometeor_extinction(err)!hier i_x, i_y
 
     end if    
     
@@ -128,7 +126,7 @@ subroutine run_rt(errorstatus, nx,ny,fi)
 
     !save active to ASCII
     if (active .and. (write_nc .eqv. .false.) .and. (in_python .eqv. .false.)) then
-        call save_active(OUT_FILE_ACT,nx,ny,fi)
+        call save_active(OUT_FILE_ACT,i_x,i_y,i_f)
     end if
 
 
@@ -136,8 +134,8 @@ subroutine run_rt(errorstatus, nx,ny,fi)
         !      Output integrated quantities
         call collect_boundary_output(lon,lat,lfrac,&
         iwv, cwp,iwp,rwp,swp, &
-        gwp,hwp,model_i,model_j,nx,ny)
-        if (verbose >= 2) print*, nx,ny, 'collect_boundary_output done'
+        gwp,hwp,model_i,model_j,i_x,i_y)
+        if (verbose >= 2) print*, i_x,i_y, 'collect_boundary_output done'
     end if
 
     ! find the output level
@@ -163,13 +161,13 @@ subroutine run_rt(errorstatus, nx,ny,fi)
 
     if (passive .eqv. .true.) then
 
-        if (verbose >= 2) print*, nx,ny, "Entering rt4 ...."
+        if (verbose >= 2) print*, i_x,i_y, "Entering rt4 ...."
 
         call rt4(err, nstokes,nummu,mu_values,out_file_pas,quad_type,ground_temp,&
         ground_type,ground_albedo,ground_index,sky_temp,&
-        wavelength,units,outpol,noutlevels,outlevels,nx,ny,fi)
+        wavelength,units,outpol,noutlevels,outlevels)
 
-        if (verbose >= 2) print*, nx,ny, "....rt4 finished"
+        if (verbose >= 2) print*, i_x,i_y, "....rt4 finished"
         !calculate human readable angles!
         angles_deg(1:NUMMU) = 180-(180.*acos(MU_VALUES(NUMMU:1:-1))/pi)
         angles_deg(1+NUMMU:2*NUMMU) = (180.*acos(MU_VALUES(1:NUMMU))/pi)

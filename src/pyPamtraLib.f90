@@ -11,7 +11,8 @@
     use double_moments_module !double moments variables are stored here
     use report_module
     use descriptor_file
-    
+    use vars_index, only: i_x, i_y, i_f
+
     implicit none
     character(40) :: gitHash, gitVersion
 
@@ -42,7 +43,7 @@
 
 
       !!!loop variables
-      integer(kind=long) ::  fi,nx, ny,i
+      integer(kind=long) ::  fi,i
 
       ! Error handling
 
@@ -102,13 +103,13 @@
 
 
 
-      grid_f: do fi =1, nfrq
+      grid_f: do i_f =1, nfrq
           if (jacobian_mode) then
               !for jacobian mode. non disturbed profile is expected in grid 1,1!
             call allocate_jacobian_vars(nlyr)
           end if
-          grid_y: do ny = 1, ngridy !nx_in, nx_fin
-              grid_x: do nx = 1, ngridx !ny_in, ny_fin
+          grid_y: do i_y = 1, ngridy !i_x_in, i_x_fin
+              grid_x: do i_x = 1, ngridx !i_y_in, i_y_fin
           
                   call allocate_profile_vars(err)
                   if (err /= 0) then
@@ -124,45 +125,45 @@
                     errorstatus = err
                     return
                   end if
-                  !   ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
-                  lat = profiles(nx,ny)%latitude                  ! °
-                  lon = profiles(nx,ny)%longitude                 ! °
-                  lfrac = profiles(nx,ny)%land_fraction
-                  relhum_lev = profiles(nx,ny)%relhum_lev         ! %
-                  press_lev = profiles(nx,ny)%press_lev           ! Pa
-                  temp_lev = profiles(nx,ny)%temp_lev             ! K
-                  hgt_lev = profiles(nx,ny)%hgt_lev               ! m
+                  !   ground_temp = profiles(i_x,i_y)%temp_lev(0)       ! K
+                  lat = profiles(i_x,i_y)%latitude                  ! °
+                  lon = profiles(i_x,i_y)%longitude                 ! °
+                  lfrac = profiles(i_x,i_y)%land_fraction
+                  relhum_lev = profiles(i_x,i_y)%relhum_lev         ! %
+                  press_lev = profiles(i_x,i_y)%press_lev           ! Pa
+                  temp_lev = profiles(i_x,i_y)%temp_lev             ! K
+                  hgt_lev = profiles(i_x,i_y)%hgt_lev               ! m
 
-                  model_i = profiles(nx,ny)%isamp
-                  model_j = profiles(nx,ny)%jsamp
-                  wind10u = profiles(nx,ny)%wind_10u
-                  wind10v = profiles(nx,ny)%wind_10v
+                  model_i = profiles(i_x,i_y)%isamp
+                  model_j = profiles(i_x,i_y)%jsamp
+                  wind10u = profiles(i_x,i_y)%wind_10u
+                  wind10v = profiles(i_x,i_y)%wind_10v
 
-                  iwv = profiles(nx,ny)%iwv
-                  cwp = profiles(nx,ny)%cwp
-                  iwp = profiles(nx,ny)%iwp
-                  rwp = profiles(nx,ny)%rwp
-                  swp = profiles(nx,ny)%swp
-                  gwp = profiles(nx,ny)%gwp
-                  hwp = profiles(nx,ny)%hwp
+                  iwv = profiles(i_x,i_y)%iwv
+                  cwp = profiles(i_x,i_y)%cwp
+                  iwp = profiles(i_x,i_y)%iwp
+                  rwp = profiles(i_x,i_y)%rwp
+                  swp = profiles(i_x,i_y)%swp
+                  gwp = profiles(i_x,i_y)%gwp
+                  hwp = profiles(i_x,i_y)%hwp
 
-                  cwc_q = profiles(nx,ny)%cloud_water_q           ! kg/kg
-                  iwc_q = profiles(nx,ny)%cloud_ice_q             ! kg/kg
-                  rwc_q = profiles(nx,ny)%rain_q                  ! kg/kg
-                  swc_q = profiles(nx,ny)%snow_q                  ! kg/kg
-                  gwc_q = profiles(nx,ny)%graupel_q               ! kg/kg
+                  cwc_q = profiles(i_x,i_y)%cloud_water_q           ! kg/kg
+                  iwc_q = profiles(i_x,i_y)%cloud_ice_q             ! kg/kg
+                  rwc_q = profiles(i_x,i_y)%rain_q                  ! kg/kg
+                  swc_q = profiles(i_x,i_y)%snow_q                  ! kg/kg
+                  gwc_q = profiles(i_x,i_y)%graupel_q               ! kg/kg
                   if (n_moments .eq. 2) then
-                      hwc_q = profiles(nx,ny)%hail_q              ! kg/kg
-                      cwc_n = profiles(nx,ny)%cloud_water_n       ! #/kg
-                      iwc_n = profiles(nx,ny)%cloud_ice_n         ! #/kg
-                      rwc_n = profiles(nx,ny)%rain_n              ! #/kg
-                      swc_n = profiles(nx,ny)%snow_n              ! #/kg
-                      gwc_n = profiles(nx,ny)%graupel_n           ! #/kg
-                      hwc_n = profiles(nx,ny)%hail_n              ! #/kg
+                      hwc_q = profiles(i_x,i_y)%hail_q              ! kg/kg
+                      cwc_n = profiles(i_x,i_y)%cloud_water_n       ! #/kg
+                      iwc_n = profiles(i_x,i_y)%cloud_ice_n         ! #/kg
+                      rwc_n = profiles(i_x,i_y)%rain_n              ! #/kg
+                      swc_n = profiles(i_x,i_y)%snow_n              ! #/kg
+                      gwc_n = profiles(i_x,i_y)%graupel_n           ! #/kg
+                      hwc_n = profiles(i_x,i_y)%hail_n              ! #/kg
                   end if
 
                   !run the model
-                  call run_rt(err,nx,ny,fi)
+                  call run_rt(err)
                   if (err /= 0) then
                       msg = 'Error in run_rt!'
                       call report(fatal, msg, nameOfRoutine)

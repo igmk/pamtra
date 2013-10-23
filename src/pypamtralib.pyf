@@ -195,6 +195,7 @@ python module pyPamtraLib ! in
             end subroutine printdescriptorvars
         end module descriptor_file
         module pypamtralib ! in :pyPamtraLib:pyPamtraLib.f90
+            use vars_index, only: i_f,i_y,i_x
             use descriptor_file
             use kinds, only: long
             use settings

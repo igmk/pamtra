@@ -183,7 +183,7 @@
 !
 subroutine RT4(errorstatus, nstokes,nummu,mu_values,out_file,quad_type,ground_temp,&
 ground_type,ground_albedo,ground_index,sky_temp,&
-wavelength,units,outpol,noutlevels,outlevels,nx,ny,fi)
+wavelength,units,outpol,noutlevels,outlevels)
 
     use kinds
     use vars_atmosphere
@@ -197,14 +197,12 @@ wavelength,units,outpol,noutlevels,outlevels,nx,ny,fi)
         rt_scattermatrix_reverse, &
         rt_extmatrix_reverse, &
         rt_emisvec_reverse
-
+    use vars_index, only: i_x,i_y,i_f
         
     use settings, only: write_nc, in_python, numazimuths, verbose
     use report_module
 
     implicit none
-
-    integer :: nx,ny,fi
 
     INTEGER   MAXV, MAXLAY
     PARAMETER (MAXV=64)
@@ -278,7 +276,7 @@ wavelength,units,outpol,noutlevels,outlevels,nx,ny,fi)
         WAVELENGTH,   &
         UNITS, OUTPOL,NOUTLEVELS, OUTLEVELS,         &
         NUMAZIMUTHS,UP_RAD, DOWN_RAD,     &
-        nx,ny,fi)
+        i_x,i_y,i_f)
     else
         CALL OUTPUT_FILE4(NSTOKES, NUMMU,&
         LAYER_FILE, OUT_FILE,&

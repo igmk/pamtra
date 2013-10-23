@@ -1,4 +1,4 @@
-subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
+subroutine hydrometeor_extinction(errorstatus)
 
   use kinds
   use vars_atmosphere, only: nlyr, temp, q_hydro, q_hum,&
@@ -12,6 +12,7 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
   use report_module
   use scatProperties
   use vars_output, only: psd_area, psd_d_bound, psd_f, psd_mass
+  use vars_index, only: i_x,i_y, i_z
 
   implicit none
 
@@ -24,17 +25,11 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 !         use report_module
 ! 
 
-  real(kind=dbl), intent(in) :: f
   real(kind=dbl) ::    scatter_matrix_scatcnv(nstokes,nummu,nstokes,nummu,4)
   real(kind=dbl) ::    extinct_matrix_scatcnv(nstokes,nstokes,nummu,2)
   real(kind=dbl) ::    emis_vector_scatcnv(nstokes,nummu,2)
 
-  integer, intent(in) ::  nx
-  integer, intent(in) ::  ny
-  integer, intent(in) ::  fi
-
-  integer ::  nz
-  integer :: ih
+  integer :: ih !index hydrometeor
   CHARACTER(len=64) :: scatfiles(nlyr)
   
   integer(kind=long), intent(out) :: errorstatus
@@ -42,7 +37,7 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
   character(len=80) :: msg
   character(len=40) :: nameOfRoutine = 'hydrometeor_extinction'
   
-  if (verbose .gt. 1) print*, nx, ny, 'Entering hydrometeor_extinction'
+  if (verbose .gt. 1) print*, i_x, i_y, 'Entering hydrometeor_extinction'
 
 
 
@@ -55,13 +50,13 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
   
   call allocate_scatProperties()
 
-  grid_z: do nz = 1, nlyr  ! loop over all layers
+  grid_z: do i_z = 1, nlyr  ! loop over all layers
 
-    call prepare_rt3_scatProperties(nz)
-    call prepare_rt4_scatProperties(nz)
-    rt_hydros_present(nz) = .false.
+    call prepare_rt3_scatProperties()
+    call prepare_rt4_scatProperties()
+    rt_hydros_present(i_z) = .false.
     
-    if (verbose .gt. 1) print*, 'Layer: ', nz
+    if (verbose .gt. 1) print*, 'Layer: ', i_z
 
     hydros: do ih = 1,n_hydro
 
@@ -72,79 +67,79 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
       if (PRODUCT(SHAPE(as_ratio_arr)) == n_hydro) then
         as_ratio   = as_ratio_arr(1,1,1,ih)
       else
-        as_ratio   = as_ratio_arr(nx,ny,nz,ih)
+        as_ratio   = as_ratio_arr(i_x,i_y,i_z,ih)
       end if 
 
       if (PRODUCT(SHAPE(rho_ms_arr)) == n_hydro) then
         rho_ms   = rho_ms_arr(1,1,1,ih)
       else
-        rho_ms   = rho_ms_arr(nx,ny,nz,ih)
+        rho_ms   = rho_ms_arr(i_x,i_y,i_z,ih)
       end if 
 
       if (PRODUCT(SHAPE(a_ms_arr)) == n_hydro) then
         a_ms   = a_ms_arr(1,1,1,ih)
       else
-        a_ms   = a_ms_arr(nx,ny,nz,ih)
+        a_ms   = a_ms_arr(i_x,i_y,i_z,ih)
       end if 
 
       if (PRODUCT(SHAPE(b_ms_arr)) == n_hydro) then
         b_ms   = b_ms_arr(1,1,1,ih)
       else
-        b_ms   = b_ms_arr(nx,ny,nz,ih)
+        b_ms   = b_ms_arr(i_x,i_y,i_z,ih)
       end if 
 
       if (PRODUCT(SHAPE(alpha_as_arr)) == n_hydro) then
         alpha_as   = alpha_as_arr(1,1,1,ih)
       else
-        alpha_as   = alpha_as_arr(nx,ny,nz,ih)
+        alpha_as   = alpha_as_arr(i_x,i_y,i_z,ih)
       end if 
 
       if (PRODUCT(SHAPE(beta_as_arr)) == n_hydro) then
         beta_as   = beta_as_arr(1,1,1,ih)
       else
-        beta_as   = beta_as_arr(nx,ny,nz,ih)
+        beta_as   = beta_as_arr(i_x,i_y,i_z,ih)
       end if 
 
       if (PRODUCT(SHAPE(nbin_arr)) == n_hydro) then
         nbin   = nbin_arr(1,1,1,ih)
       else
-        nbin   = nbin_arr(nx,ny,nz,ih)
+        nbin   = nbin_arr(i_x,i_y,i_z,ih)
       end if 
 
       if (PRODUCT(SHAPE(p_1_arr)) == n_hydro) then
         p_1   = p_1_arr(1,1,1,ih)
       else
-        p_1   = p_1_arr(nx,ny,nz,ih)
+        p_1   = p_1_arr(i_x,i_y,i_z,ih)
       end if 
 
       if (PRODUCT(SHAPE(p_2_arr)) == n_hydro) then
         p_2   = p_2_arr(1,1,1,ih)
       else
-        p_2   = p_2_arr(nx,ny,nz,ih)
+        p_2   = p_2_arr(i_x,i_y,i_z,ih)
       end if 
 
       if (PRODUCT(SHAPE(p_3_arr)) == n_hydro) then
         p_3   = p_3_arr(1,1,1,ih)
       else
-        p_3   = p_3_arr(nx,ny,nz,ih)
+        p_3   = p_3_arr(i_x,i_y,i_z,ih)
       end if 
 
       if (PRODUCT(SHAPE(p_4_arr)) == n_hydro) then
         p_4   = p_4_arr(1,1,1,ih)
       else
-        p_4   = p_4_arr(nx,ny,nz,ih)
+        p_4   = p_4_arr(i_x,i_y,i_z,ih)
       end if 
 
       if (PRODUCT(SHAPE(d_1_arr)) == n_hydro) then
         d_1   = d_1_arr(1,1,1,ih)
       else
-        d_1   = d_1_arr(nx,ny,nz,ih)
+        d_1   = d_1_arr(i_x,i_y,i_z,ih)
       end if 
 
       if (PRODUCT(SHAPE(d_2_arr)) == n_hydro) then
         d_2   = d_2_arr(1,1,1,ih)
       else
-        d_2   = d_2_arr(nx,ny,nz,ih)
+        d_2   = d_2_arr(i_x,i_y,i_z,ih)
       end if 
 
       !these ones are fore sure 1D
@@ -157,21 +152,21 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 
 
 ! Convert specific quantities [kg/kg] in absolute ones [kg/m3]
-      q_h        = q2abs(q_hydro(ih,nz),temp(nz),press(nz),q_hum(nz),&
-                   q_hydro(1,nz),q_hydro(2,nz),q_hydro(3,nz),q_hydro(4,nz),q_hydro(5,nz))
+      q_h        = q2abs(q_hydro(ih,i_z),temp(i_z),press(i_z),q_hum(i_z),&
+                   q_hydro(1,i_z),q_hydro(2,i_z),q_hydro(3,i_z),q_hydro(4,i_z),q_hydro(5,i_z))
       n_tot      = 0.
       r_eff      = 0.
-      layer_t    = temp(nz)
-      pressure   = press(nz)
+      layer_t    = temp(i_z)
+      pressure   = press(i_z)
 
       if (verbose >= 2) print*, ih, hydro_name
 
       if (q_h < hydro_threshold) then
-	if (verbose >=3) print*, nx,ny,nz,ih,hydro_name, "q_h below threshold", q_h
+	if (verbose >=3) print*, i_x,i_y,i_z,ih,hydro_name, "q_h below threshold", q_h
 	CYCLE
       end if
 
-      rt_hydros_present(nz) = .true.
+      rt_hydros_present(i_z) = .true.
 
       call allocateVars_drop_size_dist()
 
@@ -184,13 +179,13 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
       end if
 
       if (save_psd) then
-        psd_d_bound(nx,ny,nz,ih,1:nbin+1) =  d_bound_ds
-        psd_f(nx,ny,nz,ih,1:nbin+1) = f_ds
-        psd_mass(nx,ny,nz,ih,1:nbin+1) = mass_ds
-        psd_area(nx,ny,nz,ih,1:nbin+1) = area_ds
+        psd_d_bound(i_x,i_y,i_z,ih,1:nbin+1) =  d_bound_ds
+        psd_f(i_x,i_y,i_z,ih,1:nbin+1) = f_ds
+        psd_mass(i_x,i_y,i_z,ih,1:nbin+1) = mass_ds
+        psd_area(i_x,i_y,i_z,ih,1:nbin+1) = area_ds
       end if
 
-      call calc_scatProperties(err,f,nz)
+      call calc_scatProperties(err)
       if (err == 2) then
 	msg = 'Error in calc_scatProperties'
 	call report(err, msg, nameOfRoutine)
@@ -202,12 +197,12 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 
     end do hydros
 
-    call finalize_rt3_scatProperties(nz)
+    call finalize_rt3_scatProperties()
 
     !convert rt3 to rt4 input
     if (nlegen_coef>0) then
 
-      call scatcnv(err,scatfiles(nz),nlegen_coef,legen_coef,rt_kexttot(nz),salbedo,&
+      call scatcnv(err,scatfiles(i_z),nlegen_coef,legen_coef,rt_kexttot(i_z),salbedo,&
 	scatter_matrix_scatcnv,extinct_matrix_scatcnv,emis_vector_scatcnv)
       if (err /= 0) then
 	  msg = 'error in scatcnv!'
@@ -215,14 +210,14 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 	  errorstatus = err
 	  return
       end if   
-      rt_scattermatrix(nz,:,:,:,:,:) = rt_scattermatrix(nz,:,:,:,:,:) + scatter_matrix_scatcnv
-      rt_extmatrix(nz,:,:,:,:) = rt_extmatrix(nz,:,:,:,:) + extinct_matrix_scatcnv
-      rt_emisvec(nz,:,:,:) = rt_emisvec(nz,:,:,:) + emis_vector_scatcnv
+      rt_scattermatrix(i_z,:,:,:,:,:) = rt_scattermatrix(i_z,:,:,:,:,:) + scatter_matrix_scatcnv
+      rt_extmatrix(i_z,:,:,:,:) = rt_extmatrix(i_z,:,:,:,:) + extinct_matrix_scatcnv
+      rt_emisvec(i_z,:,:,:) = rt_emisvec(i_z,:,:,:) + emis_vector_scatcnv
     end if
 
-    if (active .and. rt_hydros_present(nz)) then
-      call radar_simulator(err,radar_spec, rt_back(nz), rt_kexttot(nz), f,&
-	delta_hgt_lev(nz),nz,nx,ny,fi)
+    if (active .and. rt_hydros_present(i_z)) then
+      call radar_simulator(err,radar_spec, rt_back(i_z), rt_kexttot(i_z),&
+	delta_hgt_lev(i_z))
       if (err /= 0) then
 	  msg = 'error in radar_simulator!'
 	  call report(err, msg, nameOfRoutine)

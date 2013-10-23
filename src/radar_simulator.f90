@@ -1,5 +1,5 @@
 subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,&
-frequency,delta_h,nz,nx,ny,fi)
+delta_h)
     ! This routine takes the backscattering spectrum depending on Doppler velocity,
     ! adds noise and turbulence and simulates temporal averaging
     !
@@ -10,9 +10,7 @@ frequency,delta_h,nz,nx,ny,fi)
     ! particle_spectrum: backscattering particle spectrum per Doppler velocity [mm⁶/m³/(m/s)] NON-SI
     ! back: volumetric backscattering crossection in m²/m³
     ! kexthydro: hydrometeor absorption coefficient [Np/m]
-    ! frequency: Frequency in GHz
     ! delta_h: heigth of layer in m
-    ! nz,nx,ny,fi: level, grid x, y, frequency index
     !
     ! out is saved directly to vars_output module
 
@@ -23,11 +21,12 @@ frequency,delta_h,nz,nx,ny,fi)
     use vars_output, only: radar_spectra, radar_snr, radar_vel,radar_hgt, &
     radar_moments, radar_slopes, radar_edge, radar_quality, Ze, Att_hydro !output of the radar simulator
     use report_module
+    use vars_index, only: i_x,i_y, i_z, i_f
+
     implicit none
   
 
-    real(kind=dbl),intent(in) ::  frequency, back, delta_h,kexthydro
-    integer,intent(in) ::  nz,nx,ny,fi
+    real(kind=dbl),intent(in) ::  back, delta_h,kexthydro
     real(kind=dbl), dimension(radar_nfft_aliased),intent(in):: particle_spectrum
     real(kind=dbl), dimension(radar_nfft_aliased) :: spectra_velo_aliased
     real(kind=dbl), dimension(radar_maxTurbTerms):: turb
@@ -42,7 +41,7 @@ frequency,delta_h,nz,nx,ny,fi)
     real(kind=dbl), dimension(2):: slope
     real(kind=dbl), dimension(2):: edge
     real(kind=dbl):: SNR, del_v, ss, K2, wavelength, Ze_back, dielec_water, K, &
-    min_V_aliased, max_V_aliased, receiver_uncertainty, radar_Pnoise
+    min_V_aliased, max_V_aliased, receiver_uncertainty, radar_Pnoise, frequency
     integer :: ii, tt, turbLen,alloc_status,ts_imin, ts_imax, startI, stopI
 
     integer(kind=long), intent(out) :: errorstatus
@@ -105,30 +104,30 @@ frequency,delta_h,nz,nx,ny,fi)
 	return
     end if
       
-    
+    frequency = freqs(i_f)
     ! get |K|**2 and lambda
 
     K2 = radar_K2!dielec_water(0.D0,radar_K2_temp-t_abs,frequency)
     wavelength = c / (frequency*1.d9)   ! [m]
 
     !first, calculate the attenuation for hydrometeors
-    Att_hydro(nx,ny,nz,fi) = 10*log10(exp(kexthydro*delta_h))
+    Att_hydro(i_x,i_y,i_z,i_f) = 10*log10(exp(kexthydro*delta_h))
 
     !transform backscattering in linear reflectivity units, 10*log10(back) would be in dBz
     Ze_back = 1.d18* (1.d0/ (K2*pi**5) ) * back * (wavelength)**4 ![mm⁶/m³]
 
     if (radar_mode == "simple") then
 	if (Ze_back .eq. 0.d0) then
-	  Ze(nx,ny,nz,fi) = -9999.d0
+	  Ze(i_x,i_y,i_z,i_f) = -9999.d0
         else 
-	  Ze(nx,ny,nz,fi) = 10*log10(Ze_back)
+	  Ze(i_x,i_y,i_z,i_f) = 10*log10(Ze_back)
 	end if
-      if (verbose >= 3) print*, "nx,ny,nz,fi,ze", nx,ny,nz,fi,Ze(nx,ny,nz,fi)
+      if (verbose >= 3) print*, "i_x,i_y,i_z,i_f,ze", i_x,i_y,i_z,i_f,Ze(i_x,i_y,i_z,i_f)
     else if ((radar_mode == "moments") .or. (radar_mode == "spectrum")) then
 
 
         !calculate the noise level depending on range:
-         radar_Pnoise = radar_Pnoise0 + (20 * log10(radar_hgt(nx,ny,nz)))
+         radar_Pnoise = radar_Pnoise0 + (20 * log10(radar_hgt(i_x,i_y,i_z)))
          radar_Pnoise = 10**(0.1*radar_Pnoise)
 print*, radar_Pnoise
 
@@ -311,24 +310,24 @@ print*, radar_Pnoise
         end if
 
           ! collect results for output
-        !   radar_spectra(nx,ny,nz,fi,:) = 10*log10(particle_spectrum(513:1024))
+        !   radar_spectra(i_x,i_y,i_z,fi,:) = 10*log10(particle_spectrum(513:1024))
 
         !if wanted, apply the noise correction to the spectrum to be saved.
         if (radar_save_noise_corrected_spectra) noise_turb_spectra = noise_removed_turb_spectra
 
         WHERE (ISNAN(noise_turb_spectra)) noise_turb_spectra = -9999.d0
 
-        radar_spectra(nx,ny,nz,fi,:) = 10*log10(noise_turb_spectra)
-        radar_snr(nx,ny,nz,fi) = SNR
+        radar_spectra(i_x,i_y,i_z,i_f,:) = 10*log10(noise_turb_spectra)
+        radar_snr(i_x,i_y,i_z,i_f) = SNR
         radar_vel(:) = spectra_velo(:)
-        radar_moments(nx,ny,nz,fi,:) = moments(1:4)
-        radar_slopes(nx,ny,nz,fi,:) = slope(:)
-        radar_edge(nx,ny,nz,fi,:) = edge(:)
-        radar_quality(nx,ny,nz,fi) = quailty_aliasing + quality_2ndPeak
+        radar_moments(i_x,i_y,i_z,i_f,:) = moments(1:4)
+        radar_slopes(i_x,i_y,i_z,i_f,:) = slope(:)
+        radar_edge(i_x,i_y,i_z,i_f,:) = edge(:)
+        radar_quality(i_x,i_y,i_z,i_f) = quailty_aliasing + quality_2ndPeak
 
         moments(0) = 10*log10(moments(0))
         IF (ISNAN(moments(0))) moments(0) = -9999.d0
-        Ze(nx,ny,nz,fi) = moments(0)
+        Ze(i_x,i_y,i_z,i_f) = moments(0)
 
         if (allocated(turb_spectra)) deallocate(turb_spectra)
 

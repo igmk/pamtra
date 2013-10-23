@@ -26,6 +26,7 @@ endif
 
 OBJECTS=kinds.o \
 	settings.o \
+        vars_index.o \
 	report_module.o \
 	constants.o \
 	nan.o \
