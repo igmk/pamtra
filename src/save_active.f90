@@ -35,7 +35,7 @@ subroutine save_active(OUT_FILE_ACT,nx,ny,fi)
         write (22,3333) radar_hgt(nx,ny,nz), Ze(nx,ny,nz,fi), &
               radar_moments(nx,ny,nz,fi,1), radar_moments(nx,ny,nz,fi,2), &
               radar_moments(nx,ny,nz,fi,3), radar_moments(nx,ny,nz,fi,4), &
-              radar_slope(nx,ny,nz,fi,1), radar_slope(nx,ny,nz,fi,2), &
+              radar_slopes(nx,ny,nz,fi,1), radar_slopes(nx,ny,nz,fi,2), &
               Att_hydro(nx,ny,nz,fi), Att_atmo(nx,ny,nz,fi)
 3333    format(1x, f16.4,1x, f16.4,1x, f16.4,1x, f16.4,&
               f16.4,1x, f16.4,1x, f16.4,1x, f16.4,&

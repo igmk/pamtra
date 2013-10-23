@@ -3,44 +3,86 @@
 
 python module pyPamtraLib ! in 
     interface  ! in :pyPamtraLib
+        module deallocate_everything ! in :pyPamtraLib:deallocate_everything.f90
+            subroutine do_deallocate_everything(errorstatus) ! in :pyPamtraLib:deallocate_everything.f90:deallocate_everything
+                use scatproperties, only: deallocate_scatproperties
+                use report_module
+                use descriptor_file, only: deallocate_descriptor_file
+                use kinds
+                use drop_size_dist, only: deallocatevars_drop_size_dist
+                integer(kind=long_bn) intent(out) :: errorstatus
+            end subroutine do_deallocate_everything
+        end module deallocate_everything
+        module vars_output ! in :pyPamtraLib:vars_output.f90
+            use kinds
+            real(kind=sgl), allocatable,dimension(:,:) :: iwvs
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: psd_f
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: psd_d_bound
+            real(kind=sgl), allocatable,dimension(:,:) :: cwps
+            integer, allocatable,dimension(:,:) :: is
+            real(kind=sgl), allocatable,dimension(:,:) :: iwps
+            real(kind=dbl), allocatable,dimension(:) :: radar_vel
+            real(kind=sgl), allocatable,dimension(:,:) :: rwps
+            integer, allocatable,dimension(:,:) :: js
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: psd_mass
+            real(kind=dbl), allocatable,dimension(:,:,:) :: radar_hgt
+            real(kind=dbl) dimension(32) :: angles_deg
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: radar_slopes
+            real(kind=sgl), allocatable,dimension(:,:) :: gwps
+            real(kind=sgl), allocatable,dimension(:,:) :: swps
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: radar_edge
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: radar_snr
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: radar_moments
+            real(kind=sgl), allocatable,dimension(:,:) :: hwps
+            integer, allocatable,dimension(:,:,:,:) :: radar_quality
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: radar_spectra
+            real(kind=sgl), allocatable,dimension(:,:) :: lats
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: att_hydro
+            real(kind=sgl), allocatable,dimension(:,:) :: lfracs
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: psd_area
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: att_atmo
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: ze
+            real(kind=sgl), allocatable,dimension(:,:) :: lons
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: tb
+        end module vars_output
         module settings ! in :pyPamtraLib:settings.f90
             use kinds
-            logical :: jacobian_mode
-            integer :: radar_nfft
+            character(len=300) :: nc_out_file
+            integer(kind=long_bn) :: radar_nfft
             character(len=100) :: input_path
             integer(kind=long_bn), optional :: verbose=0
             character(len=8) :: radar_mode
-            integer :: radar_no_ave
+            integer(kind=long_bn) :: radar_no_ave
             real(kind=dbl) :: radar_min_spectral_snr
-            character(len=300) :: nc_out_file
+            logical :: jacobian_mode
             character(len=9) :: frq_str_s
             integer, parameter,optional :: maxnleg=200
             logical :: radar_airmotion
             character(len=9) :: frq_str_e
             real(kind=dbl) :: obs_height
+            logical :: lphase_flag
             character(len=1), parameter,optional :: deltam='n'
-            logical :: passive
+            logical :: lgas_extinction
             character(len=2) :: outpol
-            integer :: radar_aliasing_nyquist_interv
             logical :: dump_to_file
             integer, parameter,optional :: src_code=2
-            logical :: lgas_extinction
+            logical :: passive
             character(len=100) :: crm_data
             real(kind=dbl) :: hydro_threshold
-            logical :: lphase_flag
+            integer(kind=long_bn) :: radar_aliasing_nyquist_interv
             character(len=1), parameter,optional :: quad_type='l'
             real(kind=dbl) :: radar_k2
             real(kind=dbl) :: radar_airmotion_step_vmin
             character(len=100) :: crm_data2
             character(len=100) :: crm_constants
-            integer :: radar_nfft_aliased
-            character(len=3) :: gas_mod
+            integer(kind=long_bn) :: radar_nfft_aliased
+            real(kind=dbl), parameter,optional :: direct_mu=0._dbl
             real(kind=dbl) :: radar_noise_distance_factor
             character(len=30) :: radar_fallvel_snow
             logical :: radar_save_noise_corrected_spectra
-            integer :: n_moments
+            integer(kind=long_bn) :: n_moments
             real(kind=dbl) dimension(100) :: freqs
-            integer :: radar_maxturbterms
+            integer(kind=long_bn) :: radar_maxturbterms
             character(len=30) :: radar_fallvel_hail
             real(kind=dbl) :: radar_airmotion_vmax
             character(len=100) :: output_path
@@ -48,13 +90,13 @@ python module pyPamtraLib ! in
             integer, parameter,optional :: numazimuths=1
             character(len=18) :: freq_str
             character(len=20) :: file_desc
-            integer(kind=long_bn) :: nfrq
+            real(kind=dbl) :: radar_airmotion_vmin
             character(len=30) :: radar_fallvel_rain
             character(len=100) :: creator
             character(len=8) :: radar_airmotion_model
             real(kind=dbl) :: radar_pnoise0
             character(len=100) :: data_path
-            integer :: radar_airmotion_linear_steps
+            integer(kind=long_bn) :: radar_airmotion_linear_steps
             integer, parameter,optional :: aziorder=0
             character(len=300) :: namelist_file
             character(len=1) :: ground_type
@@ -66,28 +108,29 @@ python module pyPamtraLib ! in
             integer, parameter,optional :: maxv=64
             character(len=100) :: tmp_path
             character(len=1) :: units
-            real(kind=dbl), parameter,optional :: direct_mu=0._dbl
+            character(len=3) :: gas_mod
             character(len=20) :: moments_file
             real(kind=dbl) :: radar_receiver_uncertainty_std
+            logical :: save_psd
             character(len=30) :: radar_fallvel_cloud
             integer, parameter,optional :: nstokes=2
             character(len=30) :: radar_fallvel_ice
             character(len=99) :: input_file
-            integer, parameter,optional :: maxfreq=100
             real(kind=dbl) :: radar_turbulence_st
             logical :: radar_use_hildebrand
             logical :: radar_convolution_fft
             character(len=300) :: descriptor_file_name
             logical :: active
+            real(kind=dbl) :: radar_min_v
             integer, parameter,optional :: maxlay=600
             real(kind=dbl) :: radar_max_v
             character(len=8) dimension(100) :: frqs_str
             real(kind=dbl), parameter,optional :: direct_flux=0._dbl
             logical :: in_python
             logical :: lhyd_extinction
-            real(kind=dbl) :: radar_airmotion_vmin
+            integer(kind=long_bn) :: nfrq
             real(kind=dbl) :: salinity
-            real(kind=dbl) :: radar_min_v
+            integer, parameter,optional :: maxfreq=100
             integer, parameter,optional :: maxleg=200
             real(kind=dbl) :: emissivity
             subroutine settings_read ! in :pyPamtraLib:settings.f90:settings
@@ -96,7 +139,47 @@ python module pyPamtraLib ! in
             subroutine settings_fill_default ! in :pyPamtraLib:settings.f90:settings
                 use kinds
             end subroutine settings_fill_default
+            subroutine print_settings ! in :pyPamtraLib:settings.f90:settings
+            end subroutine print_settings
         end module settings
+        module descriptor_file ! in :pyPamtraLib:descriptor_file.f90
+            use report_module
+            use kinds, only: dbl,long
+            use settings, only: descriptor_file_name
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: a_ms_arr
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: as_ratio_arr
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: rho_ms_arr
+            integer(kind=long_bn), allocatable,dimension(:) :: moment_in_arr
+            real(kind=dbl), allocatable,dimension(:) :: n_tot_arr
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: beta_as_arr
+            character(len=15), allocatable,dimension(:) :: hydro_name_arr
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_4_arr
+            real(kind=dbl), allocatable,dimension(:) :: r_eff_arr
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: b_ms_arr
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: d_1_arr
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_2_arr
+            integer(kind=long_bn), allocatable,dimension(:) :: liq_ice_arr
+            character(len=15), allocatable,dimension(:) :: vel_size_mod_arr
+            character(len=15), allocatable,dimension(:) :: dist_name_arr
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_1_arr
+            integer(kind=long_bn) :: n_hydro
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_3_arr
+            integer(kind=long_bn), allocatable,dimension(:,:,:,:) :: nbin_arr
+            real(kind=dbl), allocatable,dimension(:) :: q_h_arr
+            character(len=15), allocatable,dimension(:) :: scat_name_arr
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: d_2_arr
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: alpha_as_arr
+            subroutine read_descriptor_file(errorstatus) ! in :pyPamtraLib:descriptor_file.f90:descriptor_file
+                integer(kind=long_bn) intent(out) :: errorstatus
+            end subroutine read_descriptor_file
+            subroutine allocate_descriptor_file(errorstatus) ! in :pyPamtraLib:descriptor_file.f90:descriptor_file
+                integer(kind=long_bn) intent(out) :: errorstatus
+            end subroutine allocate_descriptor_file
+            subroutine deallocate_descriptor_file ! in :pyPamtraLib:descriptor_file.f90:descriptor_file
+            end subroutine deallocate_descriptor_file
+            subroutine printdescriptorvars ! in :pyPamtraLib:descriptor_file.f90:descriptor_file
+            end subroutine printdescriptorvars
+        end module descriptor_file
         module pypamtralib ! in :pyPamtraLib:pyPamtraLib.f90
             use kinds, only: long
             use settings
@@ -106,8 +189,9 @@ python module pyPamtraLib ! in
             use vars_profile
             use report_module
             use double_moments_module
-            subroutine run_pamtra ! in :pyPamtraLib:pyPamtraLib.f90:pypamtralib
+            subroutine run_pamtra(errorstatus) ! in :pyPamtraLib:pyPamtraLib.f90:pypamtralib
                 use mod_io_strings, only: formatted_frqstr
+                integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine run_pamtra
         end module pypamtralib
     end interface 

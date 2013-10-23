@@ -2,11 +2,24 @@ subroutine allocate_output_vars(no_allocated_lyrs)
 
     use vars_atmosphere
     use vars_output
-    use settings
+    use settings, only: write_nc,&
+      active,&
+      passive,&
+      radar_mode,&
+      save_psd,&
+      in_python,&
+      nstokes,&
+      nfrq,&
+      nummu,&
+      noutlevels, &
+      radar_nfft
+
     use mod_io_strings
+    use descriptor_file, only: n_hydro, nbin_arr
     use report_module
     implicit none
     integer, intent(in) :: no_allocated_lyrs
+    integer(kind=long)  :: max_nbin1                                           ! maximum number of nbins+1
 
     if (verbose .gt. 1) print*, 'Entering allocate_output_vars'
 
@@ -23,7 +36,8 @@ subroutine allocate_output_vars(no_allocated_lyrs)
     end if
 
 
-    if (write_nc .or. in_python) then
+!     if (write_nc .or. in_python) then
+    if (passive) then
         allocate(tb(nstokes,nfrq,2*nummu,noutlevels,ngridy,ngridx))
         tb = 0._dbl
     end if
@@ -40,27 +54,12 @@ subroutine allocate_output_vars(no_allocated_lyrs)
         radar_hgt= -9999._dbl
     end if
 
-
-    if ((active) .and. ((radar_mode .eq. "simple") .or. (radar_mode .eq. "splitted"))) then
-        allocate(Ze_cw(ngridx,ngridy,no_allocated_lyrs,nfrq),&
-        Ze_rr(ngridx,ngridy,no_allocated_lyrs,nfrq),&
-        Ze_ci(ngridx,ngridy,no_allocated_lyrs,nfrq),&
-        Ze_sn(ngridx,ngridy,no_allocated_lyrs,nfrq),&
-        Ze_gr(ngridx,ngridy,no_allocated_lyrs,nfrq),&
-        Ze_ha(ngridx,ngridy,no_allocated_lyrs,nfrq))
-        allocate(Att_cw(ngridx,ngridy,no_allocated_lyrs,nfrq),&
-        Att_rr(ngridx,ngridy,no_allocated_lyrs,nfrq),&
-        Att_ci(ngridx,ngridy,no_allocated_lyrs,nfrq),&
-        Att_sn(ngridx,ngridy,no_allocated_lyrs,nfrq),&
-        Att_gr(ngridx,ngridy,no_allocated_lyrs,nfrq),&
-        Att_ha(ngridx,ngridy,no_allocated_lyrs,nfrq))
-    end if
     if((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments")))  then
         allocate(&
         radar_spectra(ngridx,ngridy,no_allocated_lyrs,nfrq,radar_nfft),&
         radar_snr(ngridx,ngridy,no_allocated_lyrs,nfrq),&
         radar_moments(ngridx,ngridy,no_allocated_lyrs,nfrq,4),&
-        radar_slope(ngridx,ngridy,no_allocated_lyrs,nfrq,2),&
+        radar_slopes(ngridx,ngridy,no_allocated_lyrs,nfrq,2),&
         radar_edge(ngridx,ngridy,no_allocated_lyrs,nfrq,2),&
         radar_quality(ngridx,ngridy,no_allocated_lyrs,nfrq),&
         radar_vel(radar_nfft))
@@ -69,10 +68,29 @@ subroutine allocate_output_vars(no_allocated_lyrs)
         radar_snr = -9999.d0
         radar_vel = -9999.d0
         radar_moments = -9999.d0
-        radar_slope = -9999.d0
+        radar_slopes = -9999.d0
         radar_edge = -9999.d0
         radar_quality = -9999
     end if
+
+    if (save_psd) then
+        !how much space do we need?
+        max_nbin1 = MAXVAL(nbin_arr) +1
+    
+        allocate(&
+          psd_d_bound(ngridx,ngridy,no_allocated_lyrs,n_hydro,max_nbin1),&
+          psd_f(ngridx,ngridy,no_allocated_lyrs,n_hydro,max_nbin1),&
+          psd_mass(ngridx,ngridy,no_allocated_lyrs,n_hydro,max_nbin1),&
+          psd_area(ngridx,ngridy,no_allocated_lyrs,n_hydro,max_nbin1))
+
+          psd_d_bound = -9999.d0
+          psd_f = -9999.d0
+          psd_mass = -9999.d0
+          psd_area = -9999.d0
+
+    end if
+
+
     if (verbose .gt. 1) print*, 'Done allocate_output_vars'
 
 end subroutine allocate_output_vars

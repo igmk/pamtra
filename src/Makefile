@@ -183,7 +183,7 @@ pyprecompile:
 	@echo "Make backup before deleting old signature file, auto creating will most likely fail."
 	@echo "####################################################################################"
 	@echo ""
-	f2py -m pyPamtraLib -h pypamtralib.pyf settings.f90 pyPamtraLib.f90
+	f2py --overwrite-signature -m pyPamtraLib -h pypamtralib.pyf deallocate_everything.f90 vars_output.f90 settings.f90 descriptor_file.f90 pyPamtraLib.f90
 
 py: pyPamtraLib.f90 precompile $(OBJECTS)
 	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 

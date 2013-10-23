@@ -8,7 +8,53 @@ import string
 
 logging.basicConfig(filename='/tmp/pyPamtraLibWrapper.log',level=logging.WARNING) #change WARNING to INFO or DEBUG if needed
 
-def PamtraFortranWrapper(nmlSettings,nmlDefaultSettings,nmlFile,*pamtraArgs):
+def PamtraFortranWrapper(
+  settings,
+  nmlSettings,
+  descriptorFile,
+  *args
+  ):
+    
+    
+  pyPamtraLib.settings.settings_fill_default()    
+  
+  pyPamtraLib.settings.in_python = True
+  pyPamtraLib.settings.verbose = settings["verbose"]
+  pyPamtraLib.settings.nfrq = len(settings["freqs"])
+  pyPamtraLib.settings.freqs[:len(settings["freqs"])] = settings["freqs"]
+  
+  #temporary fixes:
+  pyPamtraLib.settings.namelist_file[:] = "run_params.nml"
+  pyPamtraLib.settings.input_file[:] = "test_mie.dat"
+  pyPamtraLib.settings.descriptor_file_name[:] = "descriptor_file_COSMO.txt"
+    
+    
+  
+  #for key in nmlSettings.keys():
+    #exec("foo = pyPamtraLib.settings."+key)
+    #if type(nmlSettings[key]) == str:
+      #exec("pyPamtraLib.settings."+key +"[:] = '" + str(nmlSettings[key])+"'")
+    #else:
+      #exec("pyPamtraLib.settings."+key +" = " + str(nmlSettings[key]))
+
+  #pyPamtraLib.settings.namelist_file[:] = "run_params.nml"
+  #pyPamtraLib.settings.input_file[:] = "test_mie.dat"
+  #pyPamtraLib.settings.descriptor_file_name[:] = "descriptor_file_COSMO.txt"
+
+
+  #for ff,freq in enumerate(freqs):
+    #pyPamtraLib.settings.frqs_str[ff] = str(freq).zfill(8)
+
+
+
+  pyPamtraLib.pypamtralib.run_pamtra() 
+
+
+  
+  return [1,"2"]
+
+
+def PamtraFortranWrapper_OLD(nmlSettings,nmlDefaultSettings,nmlFile,*pamtraArgs):
   """
   this wrapper is needed because pp cannot work with fortran modules directly. returns results from pamtra AND name of the host (for pp statistics)
   In addition, it takes care of the nml file generation

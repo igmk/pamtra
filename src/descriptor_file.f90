@@ -3,9 +3,11 @@ module descriptor_file
   use kinds, only: dbl, &      ! integer parameter specifying double precision
                    long        ! integer parameter specifying long integer
   use settings, only: descriptor_file_name
+  use report_module
 
   implicit none
-  character(len=10), dimension(:),allocatable   :: hydro_name_arr           ! hydrometeor name
+
+  character(len=15), dimension(:),allocatable   :: hydro_name_arr           ! hydrometeor name
   real(kind=dbl), dimension(:,:,:,:),allocatable      :: as_ratio_arr             ! aspect ratio
   integer(kind=long), dimension(:),allocatable  :: liq_ice_arr              ! liquid = 1; ice = -1
   real(kind=dbl), dimension(:,:,:,:),allocatable      :: rho_ms_arr               ! density of the particle [kg/m^3]
@@ -31,13 +33,13 @@ module descriptor_file
 
 subroutine read_descriptor_file(errorstatus)
 
-  use report_module
 
   implicit none
 
 ! Error handling
 
   integer(kind=long), intent(out) :: errorstatus
+  integer(kind=long) :: err = 0
   character(len=80) :: msg
   character(len=14) :: nameOfRoutine = 'read_descriptor_file'
 
@@ -57,8 +59,11 @@ subroutine read_descriptor_file(errorstatus)
     return
   endif
 
+
 ! Get number of hydrometeors
   n_hydro = 0
+
+
   open(unit=111,file=trim(descriptor_file_name))
   do
     read(111,*,IOSTAT=work1)  work2
@@ -67,29 +72,13 @@ subroutine read_descriptor_file(errorstatus)
   end do
   rewind(111)
 
-! Allocate variables
-  allocate(hydro_name_arr(n_hydro))
-  allocate(as_ratio_arr(1,1,1,n_hydro))
-  allocate(liq_ice_arr(n_hydro))
-  allocate(rho_ms_arr(1,1,1,n_hydro))
-  allocate(a_ms_arr(1,1,1,n_hydro))
-  allocate(b_ms_arr(1,1,1,n_hydro))
-  allocate(alpha_as_arr(1,1,1,n_hydro))
-  allocate(beta_as_arr(1,1,1,n_hydro))
-  allocate(moment_in_arr(n_hydro))
-  allocate(nbin_arr(1,1,1,n_hydro))
-  allocate(dist_name_arr(n_hydro))
-  allocate(p_1_arr(1,1,1,n_hydro))
-  allocate(p_2_arr(1,1,1,n_hydro))
-  allocate(p_3_arr(1,1,1,n_hydro))
-  allocate(p_4_arr(1,1,1,n_hydro))
-  allocate(d_1_arr(1,1,1,n_hydro))
-  allocate(d_2_arr(1,1,1,n_hydro))
-  allocate(scat_name_arr(n_hydro))
-  allocate(vel_size_mod_arr(n_hydro))
-
-
-
+  call allocate_descriptor_file(err)
+  if (err /= 0) then
+      msg = 'error in allocate_descriptor_file!'
+      call report(err, msg, nameOfRoutine)
+      errorstatus = err
+      return
+  end if  
 ! Read the hydrometeor descriptors
   i=1
   do 
@@ -113,16 +102,69 @@ subroutine read_descriptor_file(errorstatus)
     endif
   end do
 
+  close(unit=111)
 
+  errorstatus = err
   if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
 
 
   return
 end subroutine read_descriptor_file
 
+subroutine allocate_descriptor_file(errorstatus)
+  integer             :: ii
+  integer(kind=long), intent(out) :: errorstatus
+  integer(kind=long) :: err = 0
+  character(len=80) :: msg
+  character(len=30) :: nameOfRoutine = 'allocate_descriptor_file'
+
+      print*, "n_hydro1", n_hydro, err
+  if (verbose >= 5) call report(info,'Start of ', nameOfRoutine)
+      print*, "n_hydro2", n_hydro, err
+  call assert_true(err,n_hydro>0,&
+      "n_hydro must be greater zero")  
+  if (err > 0) then
+      errorstatus = fatal
+      msg = "assertation error"
+      print*, "n_hydro", n_hydro, err
+      call report(errorstatus, msg, nameOfRoutine)
+      return
+  end if    
+
+! Allocate variables
+  allocate(hydro_name_arr(n_hydro))
+  allocate(as_ratio_arr(1,1,1,n_hydro))
+  allocate(liq_ice_arr(n_hydro))
+  allocate(rho_ms_arr(1,1,1,n_hydro))
+  allocate(a_ms_arr(1,1,1,n_hydro))
+  allocate(b_ms_arr(1,1,1,n_hydro))
+  allocate(alpha_as_arr(1,1,1,n_hydro))
+  allocate(beta_as_arr(1,1,1,n_hydro))
+  allocate(moment_in_arr(n_hydro))
+  allocate(nbin_arr(1,1,1,n_hydro))
+  allocate(dist_name_arr(n_hydro))
+  allocate(p_1_arr(1,1,1,n_hydro))
+  allocate(p_2_arr(1,1,1,n_hydro))
+  allocate(p_3_arr(1,1,1,n_hydro))
+  allocate(p_4_arr(1,1,1,n_hydro))
+  allocate(d_1_arr(1,1,1,n_hydro))
+  allocate(d_2_arr(1,1,1,n_hydro))
+  allocate(scat_name_arr(n_hydro))
+  allocate(vel_size_mod_arr(n_hydro))
+
+  errorstatus = err
+  if (verbose >= 5) call report(info,'End of ', nameOfRoutine)
+  return
+end subroutine allocate_descriptor_file
+
+
+
 subroutine deallocate_descriptor_file()
 
-  implicit none
+  character(len=30) :: nameOfRoutine = 'deallocate_descriptor_file'
+  if (verbose >= 5) call report(info,'Start of ', nameOfRoutine)
+
+  call printDescriptorVars()
 
   if (allocated(hydro_name_arr)) deallocate(hydro_name_arr)
   if (allocated(as_ratio_arr)) deallocate(as_ratio_arr)
@@ -140,7 +182,37 @@ subroutine deallocate_descriptor_file()
   if (allocated(d_1_arr)) deallocate(d_1_arr)
   if (allocated(d_2_arr)) deallocate(d_2_arr)
   if (allocated(scat_name_arr)) deallocate(scat_name_arr)
+  if (allocated(alpha_as_arr)) deallocate(alpha_as_arr)
+  if (allocated(beta_as_arr)) deallocate(beta_as_arr)
+  if (allocated(vel_size_mod_arr)) deallocate(vel_size_mod_arr)
+
+  if (verbose >= 5) call report(info,'End of ', nameOfRoutine)
 
 end subroutine deallocate_descriptor_file
+
+!only for debugging purposes
+subroutine printDescriptorVars()
+  
+  print*, "hydro_name_arr: ", SHAPE(hydro_name_arr), ";  ", hydro_name_arr
+  print*, "as_ratio_arr: ", SHAPE(as_ratio_arr), ";  ", as_ratio_arr
+  print*, "liq_ice_arr: ", SHAPE(liq_ice_arr), ";  ", liq_ice_arr
+  print*, "rho_ms_arr: ", SHAPE(rho_ms_arr), ";  ", rho_ms_arr
+  print*, "a_ms_arr: ", SHAPE(a_ms_arr), ";  ", a_ms_arr
+  print*, "b_ms_arr: ", SHAPE(b_ms_arr), ";  ", b_ms_arr
+  print*, "moment_in_arr: ", SHAPE(moment_in_arr), ";  ", moment_in_arr
+  print*, "nbin_arr: ", SHAPE(nbin_arr), ";  ", nbin_arr
+  print*, "dist_name_arr: ", SHAPE(dist_name_arr), ";  ", dist_name_arr
+  print*, "p_1_arr: ", SHAPE(p_1_arr), ";  ", p_1_arr
+  print*, "p_2_arr: ", SHAPE(p_2_arr), ";  ", p_2_arr
+  print*, "p_3_arr: ", SHAPE(p_3_arr), ";  ", p_3_arr
+  print*, "p_4_arr: ", SHAPE(p_4_arr), ";  ", p_4_arr
+  print*, "d_1_arr: ", SHAPE(d_1_arr), ";  ", d_1_arr
+  print*, "d_2_arr: ", SHAPE(d_2_arr), ";  ", d_2_arr
+  print*, "scat_name_arr: ", SHAPE(scat_name_arr), ";  ", scat_name_arr
+  print*, "alpha_as_arr: ", SHAPE(alpha_as_arr), ";  ", alpha_as_arr
+  print*, "beta_as_arr: ", SHAPE(beta_as_arr), ";  ", beta_as_arr
+  print*, "vel_size_mod_arr: ", SHAPE(vel_size_mod_arr), ";  ", vel_size_mod_arr
+
+end subroutine printDescriptorVars
 
 end module descriptor_file

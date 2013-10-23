@@ -15,7 +15,7 @@
     contains
 
 
-  subroutine run_pamtra
+  subroutine run_pamtra(errorstatus)
 
     use mod_io_strings, only: formatted_frqstr
 
@@ -43,13 +43,14 @@
 
       ! Error handling
 
-      integer(kind=long) :: errorstatus
+      integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0
       character(len=200) :: msg
       character(len=14) :: nameOfRoutine = 'run_pamtra'
 
      if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
      
+      errorstatus = 0
       
       !get git data
       call versionNumber(gitVersion,gitHash)
@@ -76,9 +77,6 @@
           call report(info, msg, nameOfRoutine)
       end if
 
-      !!! read n-moments file
-      if (n_moments == 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
-
       !!! read the data
       call get_atmosphere
 
@@ -93,14 +91,6 @@
       deltay = profiles_deltay
       date_str = year//month//day//time
 
-
-      call read_descriptor_file(err)
-      if (err /= 0) then
-          msg = 'Error in read_descriptor_file!'
-          call report(fatal, msg, nameOfRoutine)
-          errorstatus = err
-          go to 666
-      end if
       ! now allocate variables
       call allocate_output_vars(nlyr)
 
@@ -122,7 +112,7 @@
                       msg = 'Error in allocate_profile_vars!'
                       call report(fatal, msg, nameOfRoutine)
                     errorstatus = err
-                    go to 666
+                    return
                   end if
                   !   ground_temp = profiles(nx,ny)%temp_lev(0)       ! K
                   lat = profiles(nx,ny)%latitude                  ! °
@@ -167,7 +157,7 @@
                       msg = 'Error in run_rt!'
                       call report(fatal, msg, nameOfRoutine)
                       errorstatus = err
-                      go to 666
+                      return
                   end if
                   !DEALLOCATE profile variables
                   call deallocate_profile_vars()
@@ -178,21 +168,6 @@
               call deallocate_jacobian_vars
           end if
       end do grid_f
-
-      
-      if (write_nc) then
-        call write_nc_results
-      end if
-
-      !now clean up and deallocate ALL variables
-
-  666 call deallocate_everything(err)
-      if (err /= 0) then
-          msg = 'Error in deallocate_everything!'
-          call report(fatal, msg, nameOfRoutine)
-          errorstatus = err
-      end if
-
 
       if (verbose >= 1 .and. errorstatus == 0) then
           msg = 'Progam finished successfully'

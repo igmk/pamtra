@@ -4,12 +4,14 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
   use vars_atmosphere, only: nlyr, temp, q_hydro, q_hum,&
       cwc_q, iwc_q, rwc_q, swc_q, gwc_q, press,&
       delta_hgt_lev, hydros_present
-  use settings, only: verbose, hydro_threshold
+  use settings, only: verbose, hydro_threshold, save_psd
   use constants
   use descriptor_file
   use drop_size_dist
   use report_module
   use scatProperties
+  use vars_output, only: psd_area, psd_d_bound, psd_f, psd_mass
+
   implicit none
 
 !   use mod_io_strings
@@ -17,7 +19,7 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 !   use tmat_snow_db
 !   use tmat_rain_db
 !   use vars_output, only: radar_spectra, radar_snr, radar_moments,&
-!        radar_quality, radar_slope, Ze, Att_hydro !output of the radar simulator for jacobian mode
+!        radar_quality, radar_slopes, Ze, Att_hydro !output of the radar simulator for jacobian mode
 !         use report_module
 ! 
 
@@ -178,6 +180,13 @@ subroutine hydrometeor_extinction(errorstatus,f,nx,ny,fi)
 	call report(err, msg, nameOfRoutine)
 	errorstatus = err
 	return
+      end if
+
+      if (save_psd) then
+        psd_d_bound(nx,ny,nz,ih,1:nbin+1) =  d_bound_ds
+        psd_f(nx,ny,nz,ih,1:nbin+1) = f_ds
+        psd_mass(nx,ny,nz,ih,1:nbin+1) = mass_ds
+        psd_area(nx,ny,nz,ih,1:nbin+1) = area_ds
       end if
 
       call calc_scatProperties(err,f,nz)

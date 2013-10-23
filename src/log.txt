@@ -1,0 +1,381 @@
+echo "!edit in makefile only!" > versionNumber.auto.f90
+echo "subroutine versionNumber(gitVersion,gitHash)" >> versionNumber.auto.f90
+echo "implicit none" >> versionNumber.auto.f90
+echo "character(40), intent(out) ::gitVersion,gitHash" >> versionNumber.auto.f90
+echo "gitVersion = 'v0.3-209-g2bedd88-pamtra-v1.0'" >> versionNumber.auto.f90
+echo "gitHash = '2bedd88f04f9a5b30eab4c3c784f984f0158e048'" >> versionNumber.auto.f90
+echo "return" >> versionNumber.auto.f90
+echo "end subroutine versionNumber" >> versionNumber.auto.f90
+gfortran -c -fPIC -Wunused -O2  versionNumber.auto.f90 #otherwise error on first make run!
+gfortran -c -fPIC -Wunused -O2  settings.f90
+f2py -I/usr/include  -L/usr/lib -lnetcdff -lnetcdf -llapack -ldfftpack -c --fcompiler=gnu95  pypamtralib.pyf kinds.o settings.o report_module.o constants.o nan.o mod_fastem4_coef.o gasabs_module.o conversions.o double_moments_module.o cosmo_netcdf.o vars_profile.o vars_atmosphere.o mod_io_strings.o getopt.o parse_options.o rt_utilities.o radmat.o convolution.o get_gasabs.o get_atmosphere.o vars_output.o run_rt.o scat_utilities.o dsd_utilities.o mpm93.o get_atmosG0.o get_surface.o mie_scat_utilities.o mie_spheres.o dia2vel.o rescale_spectra.o radar_spectrum.o radar_simulator.o deallocate_jacobian_vars.o allocate_jacobian_vars.o allocate_profile_vars.o allocate_output_vars.o rosen98_gasabs.o surface.o eps_water.o eps_ice.o eps_mix.o equcom.o land_emis.o equare.o scatdb.o dda_db_liu.o dielec_water.o ref_water.o ref_ice.o e_sat_gg_water.o spec2abs.o interpolation.o deallocate_profile_vars.o deallocate_output_vars.o legendre2phasefunction.o collect_output.o save_active.o fastem4.o specular_surface.o dump_profile.o collect_boundary_output.o random.o rt4.o radtran4.o radintg4.o radscat4.o descriptor_file.o drop_size_dist.o make_dist.o make_dist_param.o make_mass_size.o calc_moment.o make_soft_spheroid.o check_print.o tmatrix.o scatProperties.o hydrometeor_extinction.o scatcnv.o tmatrix_lpq.o get_scat_mat.o mass_size_rel.o refractive_index.o avint.o dsort.o rho_air.o viscosity_air.o versionNumber.auto.o smooth_savitzky_golay.o radar_calc_moments.o radar_hildebrand_sekhon.o write_nc_results.o tmatrix_amplq.lp.o deallocate_everything.o pyPamtraLib.f90 
+Reading .f2py_f2cmap ...
+	Mapping "real(kind=dbl)" to "double"
+	Mapping "real(kind=sql)" to "float"
+	Mapping "integer(kind=long_bn)" to "long"
+	Mapping "integer(kind=long)" to "long"
+Succesfully applied user defined changes from .f2py_f2cmap
+running build
+running config_cc
+unifing config_cc, config, build_clib, build_ext, build commands --compiler options
+running config_fc
+unifing config_fc, config, build_clib, build_ext, build commands --fcompiler options
+running build_src
+build_src
+building extension "pyPamtraLib" sources
+creating /tmp/tmpqnt49a
+creating /tmp/tmpqnt49a/src.linux-x86_64-2.7
+f2py options: []
+f2py: pypamtralib.pyf
+Reading fortran codes...
+	Reading file 'pypamtralib.pyf' (format:free)
+Post-processing...
+	Block: pyPamtraLib
+			Block: settings
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:settings
+get_useparameters: no module kinds info used by settings
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:settings
+get_parameters: got "unexpected EOF while parsing (<string>, line 1)" on '0._dbl'
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:settings
+get_parameters: got "unexpected EOF while parsing (<string>, line 1)" on '0._dbl'
+				Block: settings_read
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:settings:settings_read
+get_useparameters: no module kinds info used by settings_read
+				Block: settings_fill_default
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:settings:settings_fill_default
+get_useparameters: no module kinds info used by settings_fill_default
+			Block: descriptor_file
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:descriptor_file
+get_useparameters: no module kinds info used by descriptor_file
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:descriptor_file
+get_parameters: got "unexpected EOF while parsing (<string>, line 1)" on '0._dbl'
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:descriptor_file
+get_parameters: got "unexpected EOF while parsing (<string>, line 1)" on '0._dbl'
+				Block: read_descriptor_file
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:descriptor_file:read_descriptor_file
+get_useparameters: no module report_module info used by read_descriptor_file
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:descriptor_file:read_descriptor_file
+get_useparameters: no module kinds info used by read_descriptor_file
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:descriptor_file:read_descriptor_file
+get_parameters: got "unexpected EOF while parsing (<string>, line 1)" on '0._dbl'
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:descriptor_file:read_descriptor_file
+get_parameters: got "unexpected EOF while parsing (<string>, line 1)" on '0._dbl'
+				Block: deallocate_descriptor_file
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:descriptor_file:deallocate_descriptor_file
+get_useparameters: no module kinds info used by deallocate_descriptor_file
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:descriptor_file:deallocate_descriptor_file
+get_parameters: got "unexpected EOF while parsing (<string>, line 1)" on '0._dbl'
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:descriptor_file:deallocate_descriptor_file
+get_parameters: got "unexpected EOF while parsing (<string>, line 1)" on '0._dbl'
+			Block: pypamtralib
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:pypamtralib
+get_useparameters: no module kinds info used by pypamtralib
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:pypamtralib
+get_parameters: got "unexpected EOF while parsing (<string>, line 1)" on '0._dbl'
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:pypamtralib
+get_parameters: got "unexpected EOF while parsing (<string>, line 1)" on '0._dbl'
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:pypamtralib
+get_useparameters: no module vars_output info used by pypamtralib
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:pypamtralib
+get_useparameters: no module vars_atmosphere info used by pypamtralib
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:pypamtralib
+get_useparameters: no module vars_profile info used by pypamtralib
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:pypamtralib
+get_useparameters: no module report_module info used by pypamtralib
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:pypamtralib
+get_useparameters: no module double_moments_module info used by pypamtralib
+				Block: run_pamtra
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:pypamtralib:run_pamtra
+get_useparameters: no module mod_io_strings info used by run_pamtra
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:pypamtralib:run_pamtra
+get_useparameters: no module kinds info used by run_pamtra
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:pypamtralib:run_pamtra
+get_parameters: got "unexpected EOF while parsing (<string>, line 1)" on '0._dbl'
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:pypamtralib:run_pamtra
+get_parameters: got "unexpected EOF while parsing (<string>, line 1)" on '0._dbl'
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:pypamtralib:run_pamtra
+get_useparameters: no module vars_output info used by run_pamtra
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:pypamtralib:run_pamtra
+get_useparameters: no module vars_atmosphere info used by run_pamtra
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:pypamtralib:run_pamtra
+get_useparameters: no module vars_profile info used by run_pamtra
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:pypamtralib:run_pamtra
+get_useparameters: no module report_module info used by run_pamtra
+In: pypamtralib.pyf:pyPamtraLib:unknown_interface:pypamtralib:run_pamtra
+get_useparameters: no module double_moments_module info used by run_pamtra
+Post-processing (stage 2)...
+	Block: pyPamtraLib
+		Block: unknown_interface
+			Block: settings
+				Block: settings_read
+				Block: settings_fill_default
+			Block: descriptor_file
+				Block: read_descriptor_file
+				Block: deallocate_descriptor_file
+			Block: pypamtralib
+				Block: run_pamtra
+Building modules...
+	Building module "pyPamtraLib"...
+		Constructing F90 module support for "settings"...
+		  Variables: jacobian_mode radar_nfft input_path verbose radar_mode radar_no_ave radar_min_spectral_snr nc_out_file frq_str_s maxnleg radar_airmotion frq_str_e obs_height deltam lgas_extinction outpol radar_aliasing_nyquist_interv dump_to_file src_code passive crm_data hydro_threshold lphase_flag quad_type radar_k2 radar_airmotion_step_vmin crm_data2 crm_constants radar_nfft_aliased gas_mod radar_noise_distance_factor radar_fallvel_snow radar_save_noise_corrected_spectra n_moments freqs radar_maxturbterms radar_fallvel_hail radar_airmotion_vmax output_path noutlevels numazimuths freq_str file_desc radar_airmotion_vmin radar_fallvel_rain ground_type creator radar_airmotion_model radar_pnoise0 data_path radar_airmotion_linear_steps aziorder namelist_file nfrq radar_fallvel_graupel crm_case write_nc nummu radar_min_v maxv tmp_path units direct_mu moments_file radar_receiver_uncertainty_std radar_fallvel_cloud nstokes radar_fallvel_ice input_file maxfreq radar_turbulence_st radar_use_hildebrand radar_convolution_fft descriptor_file_name active maxlay radar_max_v frqs_str direct_flux in_python lhyd_extinction salinity input_type maxleg emissivity
+			Constructing wrapper function "settings.settings_read"...
+			  settings_read()
+			Constructing wrapper function "settings.settings_fill_default"...
+			  settings_fill_default()
+		Constructing F90 module support for "descriptor_file"...
+		  Variables: a_ms_arr as_ratio_arr rho_ms_arr moment_in_arr n_tot_arr beta_as_arr hydro_name_arr p_4_arr r_eff_arr b_ms_arr d_1_arr p_2_arr liq_ice_arr vel_size_mod_arr dist_name_arr p_1_arr n_hydro p_3_arr nbin_arr q_h_arr scat_name_arr d_2_arr alpha_as_arr
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+getarrdims:warning: assumed shape array, using 0 instead of ':'
+			Constructing wrapper function "descriptor_file.read_descriptor_file"...
+			  errorstatus = read_descriptor_file()
+			Constructing wrapper function "descriptor_file.deallocate_descriptor_file"...
+			  deallocate_descriptor_file()
+		Constructing F90 module support for "pypamtralib"...
+			Constructing wrapper function "pypamtralib.run_pamtra"...
+			  run_pamtra()
+	Wrote C/API module "pyPamtraLib" to file "/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c"
+	Fortran 90 wrappers are saved to "/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90"
+  adding '/tmp/tmpqnt49a/src.linux-x86_64-2.7/fortranobject.c' to sources.
+  adding '/tmp/tmpqnt49a/src.linux-x86_64-2.7' to include_dirs.
+copying /usr/lib/python2.7/dist-packages/numpy/f2py/src/fortranobject.c -> /tmp/tmpqnt49a/src.linux-x86_64-2.7
+copying /usr/lib/python2.7/dist-packages/numpy/f2py/src/fortranobject.h -> /tmp/tmpqnt49a/src.linux-x86_64-2.7
+  adding '/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90' to sources.
+build_src: building npy-pkg config files
+running build_ext
+customize UnixCCompiler
+customize UnixCCompiler using build_ext
+customize Gnu95FCompiler
+Found executable /usr/bin/gfortran
+customize Gnu95FCompiler using build_ext
+building 'pyPamtraLib' extension
+compiling C sources
+C compiler: gcc -pthread -fno-strict-aliasing -DNDEBUG -g -fwrapv -O2 -Wall -Wstrict-prototypes -fPIC
+
+creating /tmp/tmpqnt49a/tmp
+creating /tmp/tmpqnt49a/tmp/tmpqnt49a
+creating /tmp/tmpqnt49a/tmp/tmpqnt49a/src.linux-x86_64-2.7
+compile options: '-I/usr/include -I/tmp/tmpqnt49a/src.linux-x86_64-2.7 -I/usr/lib/python2.7/dist-packages/numpy/core/include -I/usr/include/python2.7 -c'
+gcc: /tmp/tmpqnt49a/src.linux-x86_64-2.7/fortranobject.c
+gcc: /tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c: In Funktion »f2py_setup_descriptor_file«:
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:640:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:641:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:642:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:643:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:644:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:645:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:646:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:647:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:648:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:649:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:650:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:651:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:652:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:653:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:654:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:655:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:657:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:658:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:659:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:660:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:661:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.c:662:43: Warnung: Zuweisung von inkompatiblem Zeigertyp [standardmäßig aktiviert]
+compiling Fortran 90 module sources
+Fortran f77 compiler: /usr/bin/gfortran -Wall -ffixed-form -fno-second-underscore -fPIC -O3 -funroll-loops
+Fortran f90 compiler: /usr/bin/gfortran -Wall -fno-second-underscore -fPIC -O3 -funroll-loops
+Fortran fix compiler: /usr/bin/gfortran -Wall -ffixed-form -fno-second-underscore -Wall -fno-second-underscore -fPIC -O3 -funroll-loops
+compile options: '-I/usr/include -I/tmp/tmpqnt49a/src.linux-x86_64-2.7 -I/usr/lib/python2.7/dist-packages/numpy/core/include -I/usr/include/python2.7 -c'
+extra options: '-J/tmp/tmpqnt49a/ -I/tmp/tmpqnt49a/'
+gfortran:f90: pyPamtraLib.f90
+pyPamtraLib.f90:42.40:
+
+      integer(kind=long) ::  fi,nx, ny,i
+                                        1
+Warnung: Ungenutzte Variable »i« bei (1) deklariert
+pyPamtraLib.f90:35.33:
+
+      integer(kind=long) :: inarg
+                                 1
+Warnung: Ungenutzte Variable »inarg« bei (1) deklariert
+pyPamtraLib.f90: In Funktion »run_pamtra«:
+pyPamtraLib.f90:197:0: Warnung: »errorstatus« könnte in dieser Funktion uninitialisiert verwendet werden [-Wuninitialized]
+compiling Fortran sources
+Fortran f77 compiler: /usr/bin/gfortran -Wall -ffixed-form -fno-second-underscore -fPIC -O3 -funroll-loops
+Fortran f90 compiler: /usr/bin/gfortran -Wall -fno-second-underscore -fPIC -O3 -funroll-loops
+Fortran fix compiler: /usr/bin/gfortran -Wall -ffixed-form -fno-second-underscore -Wall -fno-second-underscore -fPIC -O3 -funroll-loops
+compile options: '-I/usr/include -I/tmp/tmpqnt49a/src.linux-x86_64-2.7 -I/usr/lib/python2.7/dist-packages/numpy/core/include -I/usr/include/python2.7 -c'
+extra options: '-J/tmp/tmpqnt49a/ -I/tmp/tmpqnt49a/'
+gfortran:f90: /tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:123.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:154.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:185.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:216.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:247.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:278.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:309.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:341.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:372.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:403.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:434.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:465.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:496.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:527.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:559.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:591.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:622.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:653.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:684.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:715.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:747.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.f90:778.19:
+
+      integer r,i,j
+                   1
+Warnung: Ungenutzte Variable »j« bei (1) deklariert
+/usr/bin/gfortran -Wall -Wall -shared /tmp/tmpqnt49a/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLibmodule.o /tmp/tmpqnt49a/tmp/tmpqnt49a/src.linux-x86_64-2.7/fortranobject.o /tmp/tmpqnt49a/pyPamtraLib.o /tmp/tmpqnt49a/tmp/tmpqnt49a/src.linux-x86_64-2.7/pyPamtraLib-f2pywrappers2.o kinds.o settings.o report_module.o constants.o nan.o mod_fastem4_coef.o gasabs_module.o conversions.o double_moments_module.o cosmo_netcdf.o vars_profile.o vars_atmosphere.o mod_io_strings.o getopt.o parse_options.o rt_utilities.o radmat.o convolution.o get_gasabs.o get_atmosphere.o vars_output.o run_rt.o scat_utilities.o dsd_utilities.o mpm93.o get_atmosG0.o get_surface.o mie_scat_utilities.o mie_spheres.o dia2vel.o rescale_spectra.o radar_spectrum.o radar_simulator.o deallocate_jacobian_vars.o allocate_jacobian_vars.o allocate_profile_vars.o allocate_output_vars.o rosen98_gasabs.o surface.o eps_water.o eps_ice.o eps_mix.o equcom.o land_emis.o equare.o scatdb.o dda_db_liu.o dielec_water.o ref_water.o ref_ice.o e_sat_gg_water.o spec2abs.o interpolation.o deallocate_profile_vars.o deallocate_output_vars.o legendre2phasefunction.o collect_output.o save_active.o fastem4.o specular_surface.o dump_profile.o collect_boundary_output.o random.o rt4.o radtran4.o radintg4.o radscat4.o descriptor_file.o drop_size_dist.o make_dist.o make_dist_param.o make_mass_size.o calc_moment.o make_soft_spheroid.o check_print.o tmatrix.o scatProperties.o hydrometeor_extinction.o scatcnv.o tmatrix_lpq.o get_scat_mat.o mass_size_rel.o refractive_index.o avint.o dsort.o rho_air.o viscosity_air.o versionNumber.auto.o smooth_savitzky_golay.o radar_calc_moments.o radar_hildebrand_sekhon.o write_nc_results.o tmatrix_amplq.lp.o deallocate_everything.o -L/usr/lib -lnetcdff -lnetcdf -llapack -ldfftpack -lgfortran -o ./pyPamtraLib.so
+running scons
+Removing build directory /tmp/tmpqnt49a
+cp pyPamtraLib.so ../py/

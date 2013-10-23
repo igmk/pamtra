@@ -266,9 +266,9 @@ subroutine write_nc_results
             call check(nf90_put_var(ncid, kurtVarID, &
             RESHAPE( radar_moments(:,:,:,:,4), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
             call check(nf90_put_var(ncid, lSloVarID, &
-            RESHAPE( radar_slope(:,:,:,:,1), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( radar_slopes(:,:,:,:,1), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
             call check(nf90_put_var(ncid, rSloVarID, &
-            RESHAPE( radar_slope(:,:,:,:,2), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( radar_slopes(:,:,:,:,2), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))
 
             call check(nf90_put_var(ncid, lEdgVarID, &
             RESHAPE( radar_edge(:,:,:,:,1), (/ nfrq, nlyr, ngridy, ngridx/), ORDER = (/4,3,2,1/))))

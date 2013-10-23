@@ -132,8 +132,9 @@ contains
 	if (.not. logic) then
 	  call report(fatal, message, "report_module: assert_true")
 	  error = fatal
+        else if (verbose >= 5) then
+          call report(info, "PASSED: "//message, "report_module: assert_true")
 	end if
-        if (verbose >= 5) call report(info, "PASSED: "//message, "report_module: assert_true")
 	return
     End Subroutine assert_true
     

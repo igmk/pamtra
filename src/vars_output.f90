@@ -15,19 +15,22 @@ module vars_output
 
   !for active 
   real(kind=dbl), allocatable, dimension(:,:,:) :: radar_hgt
-  real(kind=dbl), allocatable, dimension(:,:,:,:) :: Ze,&
-                               Ze_cw,Ze_rr,Ze_ci,Ze_sn,Ze_gr,Ze_ha
+  real(kind=dbl), allocatable, dimension(:,:,:,:) :: Ze
   real(kind=dbl), allocatable, dimension(:,:,:,:) :: Att_atmo
-  real(kind=dbl), allocatable, dimension(:,:,:,:) :: Att_hydro, &
-                               Att_cw,Att_rr,Att_ci,Att_sn,Att_gr,Att_ha
-
+  real(kind=dbl), allocatable, dimension(:,:,:,:) :: Att_hydro
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: radar_spectra
   real(kind=dbl), allocatable, dimension(:,:,:,:) ::    radar_snr
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) ::    radar_moments
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:) ::    radar_slope
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) ::    radar_slopes
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) ::    radar_edge
   integer, allocatable, dimension(:,:,:,:) ::    radar_quality
   real(kind=dbl), allocatable, dimension(:) :: radar_vel
-  
+
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: psd_d_bound
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: psd_f
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: psd_mass
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: psd_area
+
+
 end module vars_output
 

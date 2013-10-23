@@ -21,7 +21,7 @@ frequency,delta_h,nz,nx,ny,fi)
     use settings
     use constants
     use vars_output, only: radar_spectra, radar_snr, radar_vel,radar_hgt, &
-    radar_moments, radar_slope, radar_edge, radar_quality, Ze, Att_hydro !output of the radar simulator
+    radar_moments, radar_slopes, radar_edge, radar_quality, Ze, Att_hydro !output of the radar simulator
     use report_module
     implicit none
   
@@ -322,7 +322,7 @@ print*, radar_Pnoise
         radar_snr(nx,ny,nz,fi) = SNR
         radar_vel(:) = spectra_velo(:)
         radar_moments(nx,ny,nz,fi,:) = moments(1:4)
-        radar_slope(nx,ny,nz,fi,:) = slope(:)
+        radar_slopes(nx,ny,nz,fi,:) = slope(:)
         radar_edge(nx,ny,nz,fi,:) = edge(:)
         radar_quality(nx,ny,nz,fi) = quailty_aliasing + quality_2ndPeak
 

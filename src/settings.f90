@@ -32,7 +32,7 @@ module settings
 
 
     !!Set by namelist file
-    integer :: n_moments
+    integer(kind=long):: n_moments
 
     real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
     real(kind=dbl) :: emissivity
@@ -40,10 +40,10 @@ module settings
 !     double precision, dimension(maxfreq) :: freqs
     real(kind=dbl), dimension(maxfreq) :: freqs
 
-    integer :: radar_nfft !number of FFT points in the Doppler spectrum [typically 256 or 512]
-    integer :: radar_no_Ave !number of average spectra for noise variance reduction, typical range [1 40]
-    integer :: radar_airmotion_linear_steps !for linear air velocity model, how many staps shall be calculated?
-    integer :: radar_aliasing_nyquist_interv !how many additional nyquists intervalls shall be added to the spectrum to deal with aliasing effects
+    integer(kind=long) :: radar_nfft !number of FFT points in the Doppler spectrum [typically 256 or 512]
+    integer(kind=long):: radar_no_Ave !number of average spectra for noise variance reduction, typical range [1 40]
+    integer(kind=long):: radar_airmotion_linear_steps !for linear air velocity model, how many staps shall be calculated?
+    integer(kind=long):: radar_aliasing_nyquist_interv !how many additional nyquists intervalls shall be added to the spectrum to deal with aliasing effects
     real(kind=dbl) :: radar_max_V !MinimumNyquistVelocity in m/sec
     real(kind=dbl) :: radar_min_V !MaximumNyquistVelocity in m/sec
     real(kind=dbl) :: radar_turbulence_st !turbulence broadening standard deviation st, typical range [0.1 - 0.4] m/sec
@@ -72,8 +72,8 @@ module settings
     radar_airmotion, &   ! apply vertical air motion
     radar_save_noise_corrected_spectra, & !remove the noise from the calculated spectrum again (for testing)
     radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise0) we can skip that.
-    radar_convolution_fft!use fft for convolution of spectrum
-
+    radar_convolution_fft,&!use fft for convolution of spectrum
+    save_psd
 
     character(3) :: gas_mod
     character(20) :: moments_file,file_desc
@@ -94,7 +94,7 @@ module settings
     character(8), dimension(maxfreq) :: frqs_str
     character(300) :: descriptor_file_name
 
-    integer :: radar_nfft_aliased, radar_maxTurbTerms !are gained from radar_aliasing_nyquist_interv and radar_nfft
+    integer(kind=long):: radar_nfft_aliased, radar_maxTurbTerms !are gained from radar_aliasing_nyquist_interv and radar_nfft
 contains
 
     subroutine settings_read
@@ -108,7 +108,7 @@ contains
         namelist / inoutput_mode / input_path, output_path,&
         tmp_path, dump_to_file, write_nc, data_path,&
         input_type, crm_case, crm_data, crm_data2, crm_constants, &
-        jacobian_mode
+        jacobian_mode, save_psd
         namelist / output / obs_height,units,outpol,freq_str,file_desc,creator
         namelist / run_mode / active, passive,radar_mode
         namelist / surface_params / ground_type,salinity, emissivity
@@ -155,7 +155,7 @@ contains
             print*, "inoutput_mode ",  input_path, output_path,&
             tmp_path, dump_to_file, write_nc, data_path,&
             input_type, crm_case, crm_data, crm_data2, crm_constants, &
-            jacobian_mode
+            jacobian_mode, save_psd
             print*, "output ",  obs_height,units,outpol,freq_str,file_desc,creator
             print*, "run_mode ",  active, passive,radar_mode
             print*, "surface_params ",  ground_type,salinity, emissivity
@@ -204,6 +204,7 @@ contains
         crm_data2=''
         crm_constants=''
         jacobian_mode=.false. !profile 1,1 is reference, for all other colums only layers with different values are calculated
+        save_psd=.false.
         ! sec output
         obs_height=833000.
         units='T'
@@ -282,5 +283,62 @@ contains
     
     end subroutine settings_fill_default
     
+    !for debuging
+    subroutine print_settings()
+
+      print*, 'jacobian_mode: ', jacobian_mode
+      print*, 'radar_nfft: ', radar_nfft
+      print*, 'input_path: ', input_path
+      print*, 'creator: ', creator
+      print*, 'radar_mode: ', radar_mode
+      print*, 'lphase_flag: ', lphase_flag
+      print*, 'radar_pnoise0: ', radar_pnoise0
+      print*, 'data_path: ', data_path
+      print*, 'radar_min_spectral_snr: ', radar_min_spectral_snr
+      print*, 'radar_aliasing_nyquist_interv: ', radar_aliasing_nyquist_interv
+      print*, 'radar_airmotion_linear_steps: ', radar_airmotion_linear_steps
+      print*, 'radar_airmotion: ', radar_airmotion
+      print*, 'ground_type: ', ground_type
+      print*, 'obs_height: ', obs_height
+      print*, 'crm_case: ', crm_case
+      print*, 'write_nc: ', write_nc
+      print*, 'outpol: ', outpol
+      print*, 'radar_no_ave: ', radar_no_ave
+      print*, 'input_type: ', input_type
+      print*, 'dump_to_file: ', dump_to_file
+      print*, 'passive: ', passive
+      print*, 'radar_airmotion_model: ', radar_airmotion_model
+      print*, 'crm_data: ', crm_data
+      print*, 'tmp_path: ', tmp_path
+      print*, 'lgas_extinction: ', lgas_extinction
+      print*, 'crm_constants: ', crm_constants
+      print*, 'units: ', units
+      print*, 'gas_mod: ', gas_mod
+      print*, 'moments_file: ', moments_file
+      print*, 'radar_receiver_uncertainty_std: ', radar_receiver_uncertainty_std
+      print*, 'hydro_threshold: ', hydro_threshold
+      print*, 'radar_noise_distance_factor: ', radar_noise_distance_factor
+      print*, 'radar_airmotion_step_vmin: ', radar_airmotion_step_vmin
+      print*, 'crm_data2: ', crm_data2
+      print*, 'radar_turbulence_st: ', radar_turbulence_st
+      print*, 'radar_use_hildebrand: ', radar_use_hildebrand
+      print*, 'radar_convolution_fft: ', radar_convolution_fft
+      print*, 'active: ', active
+      print*, 'radar_max_v: ', radar_max_v
+      print*, 'radar_save_noise_corrected_spectra: ', radar_save_noise_corrected_spectra
+      print*, 'n_moments: ', n_moments
+      print*, 'lhyd_extinction: ', lhyd_extinction
+      print*, 'radar_k2: ', radar_k2
+      print*, 'salinity: ', salinity
+      print*, 'radar_airmotion_vmax: ', radar_airmotion_vmax
+      print*, 'output_path: ', output_path
+      print*, 'radar_min_v: ', radar_min_v
+      print*, 'freq_str: ', freq_str
+      print*, 'file_desc: ', file_desc
+      print*, 'radar_airmotion_vmin: ', radar_airmotion_vmin
+      print*, 'emissivity: ', emissivity
+      print*, 'save_psd: ', save_psd
+
+    end subroutine print_settings
     
 end module settings

@@ -124,16 +124,6 @@ subroutine run_rt(errorstatus, nx,ny,fi)
 
     OUT_FILE_ACT = output_path(:len_trim(output_path))//"/"//&
     date_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_active"
-    !
-    !   if ((active) .and. ((radar_mode == "simple") .or. (radar_mode == "splitted")))  then
-    !      call calculate_active(OUT_FILE_ACT,freq,&
-    !           Ze(nx,ny,:,fi),Ze_cw(nx,ny,:,fi),Ze_rr(nx,ny,:,fi),Ze_ci(nx,ny,:,fi),&
-    !           Ze_sn(nx,ny,:,fi),Ze_gr(nx,ny,:,fi),Ze_ha(nx,ny,:,fi),&
-    !           Att_atmo(nx,ny,:,fi),Att_hydro(nx,ny,:,fi),Att_cw(nx,ny,:,fi),Att_rr(nx,ny,:,fi),&
-    !           Att_ci(nx,ny,:,fi),Att_sn(nx,ny,:,fi),Att_gr(nx,ny,:,fi),Att_ha(nx,ny,:,fi))
-    !      if (verbose .gt. 1) print*, nx,ny, 'calculate_active done'
-    !
-    !   end if
 
     !save active to ASCII
     if (active .and. (write_nc .eqv. .false.) .and. (in_python .eqv. .false.)) then

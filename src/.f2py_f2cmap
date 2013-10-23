@@ -1,1 +1,2 @@
-{'real':{'dbl':'double','sgl':'float'}}
+dict(real = dict(dbl="double",sql="float"),integer = dict(long="asda",long_bn="ada"))
+

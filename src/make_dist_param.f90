@@ -107,6 +107,14 @@ subroutine make_dist_params(errorstatus)
     err = success
   endif
 
+
+! print*, dist_name, "ZZZ", len(dist_name)
+! print*, trim(dist_name), trim(dist_name) == 'mono', dist_name == 'mono', dist_name(1:len(dist_name)) == 'mono',&
+!   dist_name(1:6) == 'mono', dist_name(1:len(dist_name))
+! 
+! print*, trim(dist_name) == "'mono'", dist_name(2:5),dist_name(2:5) == "mono"
+! STOP
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! MONODISPERSE distribution   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!

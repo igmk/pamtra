@@ -9,6 +9,7 @@ program pamtra
     use double_moments_module !double moments variables are stored here
     use report_module
     use descriptor_file
+    use deallocate_everything, only : do_deallocate_everything
 
     !     The code reads a full (e.g. COSMO) grid and computes for each
     !     profile the radiative transfer for the given frequencies
@@ -166,9 +167,9 @@ program pamtra
 
     !now clean up and deallocate ALL variables
 
-666 call deallocate_everything(err)
+666 call do_deallocate_everything(err)
     if (err /= 0) then
-        msg = 'Error in deallocate_everything!'
+        msg = 'Error in do_deallocate_everything!'
         call report(fatal, msg, nameOfRoutine)
         errorstatus = err
     end if
