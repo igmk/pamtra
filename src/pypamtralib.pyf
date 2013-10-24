@@ -8,6 +8,7 @@ python module pyPamtraLib ! in
                 use kinds
                 use vars_jacobian, only: deallocate_jacobian_vars
                 use vars_output, only: deallocate_output_vars
+                use vars_atmosphere, only: deallocate_atmosphere_vars
                 use descriptor_file, only: deallocate_descriptor_file
                 use vars_rt, only: deallocate_rt_vars
                 use report_module

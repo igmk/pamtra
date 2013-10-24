@@ -2,7 +2,7 @@ module conversions
 
 contains
 
-    real(kind=dbl) function q2abs(spec_var,t,p,qv,qc,qi,qr,qs,qg,qh)
+    real(kind=dbl) function q2abs(spec_var,t,p,qv,q_all_hydro)
 
         use kinds
         use constants, only: r_d, r_v
@@ -13,20 +13,12 @@ contains
         p
 
         real(kind=dbl), intent(in) :: spec_var,& ! specific variable to convert
-        qv,&
-        qc,&
-        qi,&
-        qr,&
-        qs,&
-        qg
+        qv,& 
+        q_all_hydro
 
-        real(kind=dbl), intent(in), optional :: qh
 
-        if (present(qh)) then
-            q2abs = spec_var*p/(r_d*(1._dbl+(r_v/r_d-1._dbl)*qv-qs-qc-qi-qr-qg-qh)*t)
-        else
-            q2abs = spec_var*p/(r_d*(1._dbl+(r_v/r_d-1._dbl)*qv-qs-qc-qi-qr-qg)*t)
-        end if
+        q2abs = spec_var*p/(r_d*(1._dbl+(r_v/r_d-1._dbl)*qv-q_all_hydro)*t)
+
 
     end function q2abs
 

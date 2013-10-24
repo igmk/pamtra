@@ -1,9 +1,9 @@
 subroutine hydrometeor_extinction(errorstatus)
 
   use kinds
-  use vars_atmosphere, only: nlyr, temp, q_hydro, q_hum,&
-      cwc_q, iwc_q, rwc_q, swc_q, gwc_q, press,&
-      delta_hgt_lev
+  use vars_atmosphere, only: atmo_nlyrs, atmo_temp, atmo_q_hum,&
+      atmo_press,&
+      atmo_delta_hgt_lev, atmo_hydro_q, atmo_hydro_reff, atmo_hydro_n
   use vars_rt, only:rt_hydros_present
   use settings, only: verbose, hydro_threshold, save_psd
   use constants
@@ -30,7 +30,7 @@ subroutine hydrometeor_extinction(errorstatus)
   real(kind=dbl) ::    emis_vector_scatcnv(nstokes,nummu,2)
 
   integer :: ih !index hydrometeor
-  CHARACTER(len=64) :: scatfiles(nlyr)
+  CHARACTER(len=64), dimension(atmo_nlyrs(i_x,i_y)) :: scatfiles
   
   integer(kind=long), intent(out) :: errorstatus
   integer(kind=long) :: err = 0
@@ -41,16 +41,9 @@ subroutine hydrometeor_extinction(errorstatus)
 
 
 
-!TMP
-    q_hydro(1,:) = cwc_q(:)
-    q_hydro(2,:) = iwc_q(:)
-    q_hydro(3,:) = rwc_q(:)
-    q_hydro(4,:) = swc_q(:)
-    q_hydro(5,:) = gwc_q(:)
-  
   call allocate_scatProperties()
 
-  grid_z: do i_z = 1, nlyr  ! loop over all layers
+  grid_z: do i_z = 1, atmo_nlyrs(i_x,i_y)  ! loop over all layers
 
     call prepare_rt3_scatProperties()
     call prepare_rt4_scatProperties()
@@ -152,12 +145,14 @@ subroutine hydrometeor_extinction(errorstatus)
 
 
 ! Convert specific quantities [kg/kg] in absolute ones [kg/m3]
-      q_h        = q2abs(q_hydro(ih,i_z),temp(i_z),press(i_z),q_hum(i_z),&
-                   q_hydro(1,i_z),q_hydro(2,i_z),q_hydro(3,i_z),q_hydro(4,i_z),q_hydro(5,i_z))
-      n_tot      = 0.
-      r_eff      = 0.
-      layer_t    = temp(i_z)
-      pressure   = press(i_z)
+!       q_h        = q2abs(q_hydro(ih,i_z),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),q_hum(i_z),&
+!                    q_hydro(1,i_z),q_hydro(2,i_z),q_hydro(3,i_z),q_hydro(4,i_z),q_hydro(5,i_z))
+      q_h        = q2abs(atmo_hydro_q(i_x,i_y,i_z, ih),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
+                  atmo_q_hum(i_x,i_y,i_z),sum(atmo_hydro_q(i_x,i_y,i_z, :)))
+      n_tot      = atmo_hydro_n(i_x,i_y,i_z, ih)
+      r_eff      = atmo_hydro_reff(i_x,i_y,i_z, ih)
+      layer_t    = atmo_temp(i_x,i_y,i_z)
+      pressure   = atmo_press(i_x,i_y,i_z)
 
       if (verbose >= 2) print*, ih, hydro_name
 
@@ -217,7 +212,7 @@ subroutine hydrometeor_extinction(errorstatus)
 
     if (active .and. rt_hydros_present(i_z)) then
       call radar_simulator(err,radar_spec, rt_back(i_z), rt_kexttot(i_z),&
-	delta_hgt_lev(i_z))
+	atmo_delta_hgt_lev(i_x,i_y,i_z))
       if (err /= 0) then
 	  msg = 'error in radar_simulator!'
 	  call report(err, msg, nameOfRoutine)

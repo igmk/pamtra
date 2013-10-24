@@ -11,8 +11,6 @@ module mod_io_strings
   character(10) :: surf_type
   character(78) :: file_profile
 
-  character(64), allocatable, dimension(:) :: file_PH
-
 contains
 
 function formatted_frqstr(input_string)

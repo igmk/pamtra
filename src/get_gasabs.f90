@@ -42,11 +42,11 @@ freq)              ! in
     ! Modules used:
     use kinds, only: dbl, & ! integer parameter specifying double precision
     long   ! integer parameter specifying long integer
-    use vars_atmosphere, only: nlyr, press, temp, vapor_pressure, rho_vap
+    use vars_atmosphere, only: atmo_nlyrs, atmo_press, atmo_temp, atmo_vapor_pressure, atmo_rho_vap
     use vars_rt, only: rt_kextatmo
     use constants, only: t_abs
     use settings, only: gas_mod
-
+    use vars_index, only: i_x, i_y
     use report_module
 
     implicit none
@@ -73,10 +73,10 @@ freq)              ! in
 
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
 
-    do nz = 1, nlyr
-        tc = temp(nz) - t_abs
+    do nz = 1, atmo_nlyrs(i_x,i_y)
+        tc = atmo_temp(i_x,i_y,nz) - t_abs
         if (gas_mod .eq. 'L93') then
-            call mpm93(err,freq, press(nz)/1.d3, vapor_pressure(nz)/1.d3,tc, 0.d0, rt_kextatmo(nz))
+            call mpm93(err,freq, atmo_press(i_x,i_y,nz)/1.d3, atmo_vapor_pressure(i_x,i_y,nz)/1.d3,tc, 0.d0, rt_kextatmo(nz))
             if (err /= 0) then
                 msg = 'error in mpm93!'
                 call report(err, msg, nameOfRoutine)
@@ -85,7 +85,7 @@ freq)              ! in
             end if
             rt_kextatmo(nz) = rt_kextatmo(nz)/1.d3
         else if (gas_mod .eq. 'R98') then
-            call rosen98_gasabs(err,freq,temp(nz),rho_vap(nz),press(nz),absair,abswv)
+            call rosen98_gasabs(err,freq,atmo_temp(i_x,i_y,nz),atmo_rho_vap(i_x,i_y,nz),atmo_press(i_x,i_y,nz),absair,abswv)
             if (err /= 0) then
                 msg = 'Error in rosen98_gasabs!'
                 call report(err, msg, nameOfRoutine)

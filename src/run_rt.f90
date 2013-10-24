@@ -41,8 +41,8 @@ subroutine run_rt(errorstatus)
     freq = freqs(i_f)
     frq_str = frqs_str(i_f)
     wavelength = c / (freq*1.d3)   ! microns
-    GROUND_TEMP = temp_lev(0)
-
+    GROUND_TEMP = atmo_temp_lev(i_x,i_y,1)
+print*, "replace by atmo_groundtemp?"
     !  if (verbose .gt. 0) print*, "calculating: ", frq_str, " Y:",i_y, " of ", ngridy, "X:", i_x, " of ", ngridx
 
     write(xstr, '(i3.3)') model_i
@@ -91,8 +91,8 @@ subroutine run_rt(errorstatus)
     end if
     !save atmospheric attenuation and height for radar
     if (active) then
-        Att_atmo(i_x,i_y,:,i_f)  = 10._dbl*log10(exp(rt_kextatmo*delta_hgt_lev))
-        radar_hgt(i_x,i_y,:) = hgt(:)
+        Att_atmo(i_x,i_y,:,i_f)  = 10._dbl*log10(exp(rt_kextatmo*atmo_delta_hgt_lev(i_x,i_y,:)))
+        radar_hgt(i_x,i_y,:) = atmo_hgt(i_x,i_y,:)
     end if
 
 
@@ -139,25 +139,25 @@ subroutine run_rt(errorstatus)
     end if
 
     ! find the output level
-
-    if (obs_height > 99999._dbl .or. obs_height > hgt_lev(nlyr)) then
+print*, "EMILIANO, double check here height index of atom_hgt_lev, please (run_rt.f90)"
+    if (obs_height > 99999._dbl .or. obs_height > atmo_hgt_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1)) then
         outlevels(1) = 1
-    else if (obs_height .lt. 0.1 .or. obs_height .lt. hgt_lev(1)) then
-        outlevels(1) = nlyr + 1
+    else if (obs_height .lt. 0.1 .or. obs_height .lt. atmo_hgt_lev(i_x,i_y,2)) then
+        outlevels(1) = atmo_nlyrs(i_x,i_y) + 1
     else
-        out_search: do nz = 1, nlyr
-            if (hgt_lev(nz) .ge. obs_height) then
-                if (abs(hgt_lev(nz) - obs_height) .lt. abs(hgt_lev(nz-1) - obs_height)) then
-                    outlevels(1) = nlyr-nz+1
+        out_search: do nz = 1, atmo_nlyrs(i_x,i_y)
+            if (atmo_hgt_lev(i_x,i_y,nz+1) .ge. obs_height) then
+                if (abs(atmo_hgt_lev(i_x,i_y,nz+1) - obs_height) .lt. abs(atmo_hgt_lev(i_x,i_y,nz) - obs_height)) then
+                    outlevels(1) = atmo_nlyrs(i_x,i_y)-nz+1
                 else
-                    outlevels(1) = nlyr-nz+2
+                    outlevels(1) = atmo_nlyrs(i_x,i_y)-nz+2
                 end if
                 exit out_search
             end if
         end do out_search
     end if
 
-    OUTLEVELS(2) = nlyr+1    ! this is the bottom
+    OUTLEVELS(2) = atmo_nlyrs(i_x,i_y)+1    ! this is the bottom
 
     if (passive .eqv. .true.) then
 

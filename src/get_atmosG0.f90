@@ -5,15 +5,31 @@ subroutine get_atmosG0
   !  layers, given the temperature, pressure, and specific humidity.    
   !
   !  Output:
-  !	temp        ! temperature [K]
-  !	relhum      ! rel. hum. [%]
-  !	press       ! pressure [Pa]
-  !	vapor_pressure    ! vapor pressure [Pa]
-  !	rho_vap     ! vapor density/absolute humidity [kg/m^3]
-  !	q_hum       ! specific humidity [kg/kg]
+  !	atmo_temp        ! temperature [K]
+  !	atmo_relhum      ! rel. hum. [%]
+  !	atmo_press       ! pressure [Pa]
+  !	atmo_vapor_pressure    ! vapor pressure [Pa]
+  !	atmo_rho_vap     ! vapor density/absolute humidity [kg/m^3]
+  !	atmo_q_hum       ! specific humidity [kg/kg]
 
   use kinds
-  use vars_atmosphere
+  use vars_atmosphere, only: &
+    atmo_relhum_lev, &
+    atmo_press_lev, &
+    atmo_hgt_lev, &
+    atmo_temp_lev, &
+    atmo_q_hum, &
+    atmo_temp, &
+    atmo_relhum, &
+    atmo_press, &
+    atmo_hgt, &
+    atmo_delta_hgt_lev, &
+    atmo_vapor_pressure, &
+    atmo_rho_vap, &
+    atmo_q_hum, &
+    atmo_nlyrs
+
+  use vars_index, only: i_x, i_y
 
   implicit none
 
@@ -21,15 +37,18 @@ subroutine get_atmosG0
 
   real(kind=dbl) :: e_sat_gg_water
 
-  do nz = 1, nlyr 
-     temp(nz) = 0.5 * (temp_lev(nz - 1) + temp_lev(nz)) 
-     relhum(nz) = 0.5 * (relhum_lev(nz - 1) + relhum_lev(nz))
-     press(nz) = (press_lev(nz) - press_lev(nz - 1))/log(press_lev(nz) / press_lev (nz - 1))  ! [Pa]
-     hgt(nz) = (hgt_lev(nz-1)+hgt_lev(nz))*0.5d0
-     delta_hgt_lev(nz) = hgt_lev(nz) - hgt_lev(nz-1)
-     vapor_pressure(nz) = relhum(nz) * e_sat_gg_water(temp(nz)) ! Pa
-     rho_vap(nz) = vapor_pressure(nz)/(temp(nz) * 461.5)  ! [kg/m3]
-     q_hum(nz) = 0.622*vapor_pressure(nz)/(press(nz) - (1.- 0.622) * vapor_pressure(nz))  ! [kg/kg]
+  do nz = 1, atmo_nlyrs(i_x,i_y) 
+     atmo_temp(i_x,i_y,nz) = 0.5 * (atmo_temp_lev(i_x,i_y,nz) + atmo_temp_lev(i_x,i_y,nz+1)) 
+     atmo_relhum(i_x,i_y,nz) = 0.5 * (atmo_relhum_lev(i_x,i_y,nz) + atmo_relhum_lev(i_x,i_y,nz+1))
+     atmo_press(i_x,i_y,nz) = (atmo_press_lev(i_x,i_y,nz+1) - atmo_press_lev(i_x,i_y,nz))/ &
+          log(atmo_press_lev(i_x,i_y,nz+1) / atmo_press_lev(i_x,i_y,nz))  ! [Pa]
+     atmo_hgt(i_x,i_y,nz) = (atmo_hgt_lev(i_x,i_y,nz)+atmo_hgt_lev(i_x,i_y,nz+1))*0.5d0
+     atmo_delta_hgt_lev(i_x,i_y,nz) = atmo_hgt_lev(i_x,i_y,nz+1) - atmo_hgt_lev(i_x,i_y,nz)
+     atmo_vapor_pressure(i_x,i_y,nz) = atmo_relhum(i_x,i_y,nz) * &
+          e_sat_gg_water(atmo_temp(i_x,i_y,nz)) ! Pa
+     atmo_rho_vap(i_x,i_y,nz) = atmo_vapor_pressure(i_x,i_y,nz)/(atmo_temp(i_x,i_y,nz) * 461.5)  ! [kg/m3]
+     atmo_q_hum(i_x,i_y,nz) = 0.622*atmo_vapor_pressure(i_x,i_y,nz)/&
+          (atmo_press(i_x,i_y,nz) - (1.- 0.622) * atmo_vapor_pressure(i_x,i_y,nz))  ! [kg/kg]
   end do
 
   return

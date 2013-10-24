@@ -7,5 +7,6 @@ module vars_index
   integer(kind=long) :: i_y
   integer(kind=long) :: i_z
   integer(kind=long) :: i_f
+  integer(kind=long) :: i_h
 
 end module vars_index

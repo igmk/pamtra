@@ -2,12 +2,12 @@ subroutine save_active(OUT_FILE_ACT,nx,ny,fi)
   ! This function writes Ze and PIA
  
   use kinds 
-  use vars_atmosphere, only: nlyr 
+  use vars_atmosphere, only: atmo_nlyrs
   use vars_output
 !   use constants
   use settings
         use report_module
-
+!   use vars_index, only: i_x, i_y
   implicit none
 
   integer :: nz
@@ -19,7 +19,7 @@ subroutine save_active(OUT_FILE_ACT,nx,ny,fi)
   if (radar_mode == "simple") then
      open (unit=22, file=OUT_FILE_ACT, status='unknown')
      write (22,*) "C           z[m]           Ze[dBz] Attenuation_hydro[dB] Attenuation_atmo[dB]"
-     do nz = 1, nlyr
+     do nz = 1, atmo_nlyrs(nx,ny)
         write (22,2222) radar_hgt(nx,ny,nz), Ze(nx,ny,nz,fi), &
               Att_hydro(nx,ny,nz,fi), Att_atmo(nx,ny,nz,fi)
 2222    format(1x, f16.4,1x, f16.4,1x, f16.4,1x, f16.4)
@@ -31,7 +31,7 @@ subroutine save_active(OUT_FILE_ACT,nx,ny,fi)
      write (22,*) "C           z[m]          Ze[dBz] DopplerVel [m/s]",&
       " Spec Width [m/s]    Skewness [-]     Kurtosis [-] LeftSlope[dBs/m]",&
       " RightSlop[dBs/m] Atten_hydro[dB]    Atten_atmo[dB]"
-     do nz = 1, nlyr
+     do nz = 1, atmo_nlyrs(nx,ny)
         write (22,3333) radar_hgt(nx,ny,nz), Ze(nx,ny,nz,fi), &
               radar_moments(nx,ny,nz,fi,1), radar_moments(nx,ny,nz,fi,2), &
               radar_moments(nx,ny,nz,fi,3), radar_moments(nx,ny,nz,fi,4), &

@@ -36,6 +36,7 @@ OBJECTS=kinds.o \
 	double_moments_module.o \
 	cosmo_netcdf.o \
 	vars_profile.o \
+	descriptor_file.o \
 	vars_atmosphere.o \
 	vars_rt.o \
 	mod_io_strings.o \
@@ -46,7 +47,6 @@ OBJECTS=kinds.o \
 	convolution.o \
 	get_gasabs.o\
 	get_atmosphere.o \
-	descriptor_file.o \
 	vars_output.o \
 	run_rt.o \
 	scat_utilities.o \
@@ -61,7 +61,6 @@ OBJECTS=kinds.o \
 	radar_spectrum.o \
 	radar_simulator.o \
 	vars_jacobian.o \
-	allocate_profile_vars.o \
 	rosen98_gasabs.o \
 	surface.o \
 	eps_water.o \
@@ -78,7 +77,6 @@ OBJECTS=kinds.o \
 	e_sat_gg_water.o \
 	spec2abs.o \
 	interpolation.o \
-	deallocate_profile_vars.o \
 	legendre2phasefunction.o \
 	collect_output.o \
 	save_active.o \

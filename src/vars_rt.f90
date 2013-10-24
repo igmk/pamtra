@@ -12,22 +12,29 @@ module vars_rt
 
   logical, allocatable, dimension(:) :: rt_hydros_present, rt_hydros_present_reverse
 
+  character(64), allocatable, dimension(:) :: rt_file_ph
+
+
   contains
 
   subroutine allocate_rt_vars(errorstatus)
     
 
-    use settings, only: nstokes,nummu, verbose
-    use vars_atmosphere, only: nlyr
+    use settings, only: nstokes,nummu, verbose, dump_to_file
+    use vars_atmosphere, only: atmo_nlyrs
+    use vars_index, only: i_x, i_y
+
+    integer(kind=long) :: nlyr
 
     integer(kind=long) :: alloc_status
     integer(kind=long) :: errorstatus
     integer(kind=long) :: err = 0
     character(len=200) :: msg
-    character(len=30) :: nameOfRoutine = 'allocate_profile_vars'
+    character(len=30) :: nameOfRoutine = 'allocate_rt_vars'
 
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
+    nlyr = atmo_nlyrs(i_x,i_y)
 
     allocate(rt_kextatmo(nlyr), stat=alloc_status)
     allocate(rt_kexttot(nlyr), stat=alloc_status)
@@ -40,6 +47,10 @@ module vars_rt
     allocate(rt_emisvec(nlyr,nstokes,nummu,4),stat=alloc_status)
     allocate(rt_hydros_present(nlyr),stat=alloc_status)
     allocate(rt_hydros_present_reverse(nlyr),stat=alloc_status)
+
+    if (dump_to_file) then
+        allocate(rt_file_ph(nlyr))
+    end if
 
     ! set them to zero, just in case they are not calculated but used for Ze/PIA calculation
     rt_kexttot(:) = 0d0
@@ -66,6 +77,10 @@ module vars_rt
 
     if (allocated(rt_hydros_present_reverse)) deallocate(rt_hydros_present_reverse)
     if (allocated(rt_hydros_present)) deallocate(rt_hydros_present)
+
+    if (allocated(rt_file_ph)) deallocate(rt_file_ph)
+
+
   end subroutine deallocate_rt_vars
 
 end module vars_rt

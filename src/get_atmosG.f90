@@ -10,6 +10,7 @@ subroutine get_atmosg(freq)!, kextatmo_o2,kextatmo_h2o,kextatmo_n2)
   use kinds
   use vars_atmosphere
   use settings
+  use vars_index, only: i_x, i_y
 
   implicit none
 
@@ -30,11 +31,11 @@ subroutine get_atmosg(freq)!, kextatmo_o2,kextatmo_h2o,kextatmo_n2)
   !   character(3) :: gas_mod
 
 
-  do nz = 1, nlyr          
+  do nz = 1, atmo_nlyrs(i_x,i_y)          
 
-     tc = temp(nz) - 273.15 
+     tc = atmo_temp(i_x,i_y,nz) - 273.15 
      if (gas_mod .eq. 'L93') then
-        call mpm93(freq, press(nz)/1.d3, vapor_pressure(nz)/1.d3,tc, 0.0d0, rt_kextatmo(nz))
+        call mpm93(freq, atmo_press(i_x,i_y,nz)/1.d3, atmo_vapor_pressure(i_x,i_y,nz)/1.d3,tc, 0.0d0, rt_kextatmo(nz))
         rt_kextatmo(nz) = rt_kextatmo(nz)/1000.
      else if (gas_mod .eq. 'R98') then
         ! Rosenkranz 1998 gas absorption model
@@ -47,7 +48,7 @@ subroutine get_atmosg(freq)!, kextatmo_o2,kextatmo_h2o,kextatmo_n2)
         ! Output parameters:
         !    extinction by dry air       Np/km
         !    extinction by water vapor   Np/km      
-        call gasabsr98(freq,temp(nz),rho_vap(nz),press(nz),absair,abswv)!,abs_n2,abs_o2)
+        call gasabsr98(freq,atmo_temp(i_x,i_y,nz),atmo_rho_vap(i_x,i_y,nz),atmo_press(i_x,i_y,nz),absair,abswv)!,abs_n2,abs_o2)
 
         rt_kextatmo(nz) = (absair + abswv)/1000.    ! [Np/m]
 

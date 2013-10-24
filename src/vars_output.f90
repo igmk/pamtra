@@ -127,7 +127,6 @@ module vars_output
 
     end if
 
-
     if (verbose .gt. 1) print*, 'Done allocate_output_vars'
 
   end subroutine allocate_output_vars

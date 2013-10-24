@@ -238,18 +238,18 @@ wavelength,units,outpol,noutlevels,outlevels)
 
     if (verbose >= 1) call report(info, 'Start of ', nameOfRoutine)
     !scat_files = ''
-    !scat_files(nlyr) = '1.txt'
+    !scat_files(atmo_nlyrs(i_x,i_y)) = '1.txt'
 
-    num_layers = nlyr
-    height(1:nlyr+1) = hgt_lev(nlyr:0:-1)             ! [m]
-    temperatures(1:nlyr+1) = temp_lev(nlyr:0:-1)      ! [K]
-    gas_extinct(1:nlyr) = rt_kextatmo(nlyr:1:-1)         ! [Np/m]
+    num_layers = atmo_nlyrs(i_x,i_y)
+    height(1:atmo_nlyrs(i_x,i_y)+1) = atmo_hgt_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1:1:-1)             ! [m]
+    temperatures(1:atmo_nlyrs(i_x,i_y)+1) = atmo_temp_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1:1:-1)      ! [K]
+    gas_extinct(1:atmo_nlyrs(i_x,i_y)) = rt_kextatmo(atmo_nlyrs(i_x,i_y):1:-1)         ! [Np/m]
 
-    rt_hydros_present_reverse(1:nlyr) = rt_hydros_present(nlyr:1:-1)
+    rt_hydros_present_reverse(1:atmo_nlyrs(i_x,i_y)) = rt_hydros_present(atmo_nlyrs(i_x,i_y):1:-1)
 
-    rt_scattermatrix_reverse(1:nlyr,:,:,:,:,:) = rt_scattermatrix(nlyr:1:-1,:,:,:,:,:)
-    rt_extmatrix_reverse(1:nlyr,:,:,:,:) = rt_extmatrix(nlyr:1:-1,:,:,:,:)
-    rt_emisvec_reverse(1:nlyr,:,:,:) = rt_emisvec(nlyr:1:-1,:,:,:)
+    rt_scattermatrix_reverse(1:atmo_nlyrs(i_x,i_y),:,:,:,:,:) = rt_scattermatrix(atmo_nlyrs(i_x,i_y):1:-1,:,:,:,:,:)
+    rt_extmatrix_reverse(1:atmo_nlyrs(i_x,i_y),:,:,:,:) = rt_extmatrix(atmo_nlyrs(i_x,i_y):1:-1,:,:,:,:)
+    rt_emisvec_reverse(1:atmo_nlyrs(i_x,i_y),:,:,:) = rt_emisvec(atmo_nlyrs(i_x,i_y):1:-1,:,:,:)
 
     !  if (verbose .gt. 0) print*, ".... read_layers done!"
 

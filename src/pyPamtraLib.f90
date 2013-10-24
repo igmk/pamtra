@@ -37,10 +37,8 @@
       !!! internal "handle command line parameters" !!!
 
       integer(kind=long) :: inarg
-
-
-      !!! set by "handle command line parameters" !!!
-
+      real(kind=dbl) :: nan
+  
 
       !!!loop variables
       integer(kind=long) ::  fi,i
@@ -81,22 +79,65 @@
           call report(info, msg, nameOfRoutine)
       end if
 
-      !!! read the data
-      call get_atmosphere
 
-      year = profiles_year
-      month = profiles_month
-      day = profiles_day
-      time = profiles_time
-      ngridx = profiles_ngridx
-      ngridy = profiles_ngridy
-      nlyr = profiles_nlyr
-      deltax = profiles_deltax
-      deltay = profiles_deltay
-      date_str = year//month//day//time
 
+
+
+!!! read the data
+call get_atmosphere
+! 1tmporary: this should go into the call get_atmosphere routine!
+
+year = profiles_year
+month = profiles_month
+day = profiles_day
+time = profiles_time
+ngridx = profiles_ngridx
+ngridy = profiles_ngridy
+deltax = profiles_deltax
+deltay = profiles_deltay
+date_str = year//month//day//time
+
+
+!python input can have different number of nlayer
+atmo_max_nlyr = profiles_nlyr
+
+call allocate_atmosphere_vars()
+
+atmo_nlyrs(:,:) = profiles_nlyr
+
+!temporary loop to fill atmosphere array:
+do i_y = 1, ngridy !i_x_in, i_x_fin
+  do i_x = 1, ngridx
+print*, i_y, i_x
+      atmo_relhum_lev(i_x,i_y,:) = profiles(i_x,i_y)%relhum_lev
+      atmo_press_lev(i_x,i_y,:) = profiles(i_x,i_y)%press_lev
+      atmo_temp_lev(i_x,i_y,:) = profiles(i_x,i_y)%temp_lev
+      atmo_hgt_lev(i_x,i_y,:) = profiles(i_x,i_y)%hgt_lev
+
+      atmo_hydro_reff(i_x,i_y,:,:) = nan()
+      atmo_hydro_n(i_x,i_y,:,:) = nan()
+
+
+      atmo_hydro_q(i_x,i_y,:,1) = profiles(i_x,i_y)%cloud_water_q
+!       atmo_hydro_n(i_x,i_y,:,1) = profiles(i_x,i_y)%cloud_water_n
+
+      atmo_hydro_q(i_x,i_y,:,2) = profiles(i_x,i_y)%cloud_ice_q
+!       atmo_hydro_n(i_x,i_y,:,2) = profiles(i_x,i_y)%cloud_ice_n
+
+      atmo_hydro_q(i_x,i_y,:,3) = profiles(i_x,i_y)%rain_q
+!       atmo_hydro_n(i_x,i_y,:,3) = profiles(i_x,i_y)%rain_n
+
+      atmo_hydro_q(i_x,i_y,:,4) = profiles(i_x,i_y)%snow_q
+!       atmo_hydro_n(i_x,i_y,:,4) = profiles(i_x,i_y)%snow_n
+
+      atmo_hydro_q(i_x,i_y,:,5) = profiles(i_x,i_y)%graupel_q
+!       atmo_hydro_n(i_x,i_y,:,5) = profiles(i_x,i_y)%graupel_n
+    end do
+end do
       ! now allocate variables
-      call allocate_output_vars(nlyr)
+      call allocate_output_vars(atmo_max_nlyr)
+
+
 
       msg = 'Start loop over frequencies & profiles!'
       if (verbose >= 2)  call report(info, msg, nameOfRoutine)
@@ -106,18 +147,11 @@
       grid_f: do i_f =1, nfrq
           if (jacobian_mode) then
               !for jacobian mode. non disturbed profile is expected in grid 1,1!
-            call allocate_jacobian_vars(nlyr)
+            call allocate_jacobian_vars(atmo_nlyrs(i_x,i_y))
           end if
           grid_y: do i_y = 1, ngridy !i_x_in, i_x_fin
               grid_x: do i_x = 1, ngridx !i_y_in, i_y_fin
-          
-                  call allocate_profile_vars(err)
-                  if (err /= 0) then
-                      msg = 'Error in allocate_profile_vars!'
-                      call report(fatal, msg, nameOfRoutine)
-                    errorstatus = err
-                    return
-                  end if
+
                   call allocate_rt_vars(err)
                   if (err /= 0) then
                       msg = 'Error in allocate_rt_vars!'
@@ -129,10 +163,10 @@
                   lat = profiles(i_x,i_y)%latitude                  ! °
                   lon = profiles(i_x,i_y)%longitude                 ! °
                   lfrac = profiles(i_x,i_y)%land_fraction
-                  relhum_lev = profiles(i_x,i_y)%relhum_lev         ! %
-                  press_lev = profiles(i_x,i_y)%press_lev           ! Pa
-                  temp_lev = profiles(i_x,i_y)%temp_lev             ! K
-                  hgt_lev = profiles(i_x,i_y)%hgt_lev               ! m
+!                   relhum_lev = profiles(i_x,i_y)%relhum_lev         ! %
+!                   press_lev = profiles(i_x,i_y)%press_lev           ! Pa
+!                   temp_lev = profiles(i_x,i_y)%temp_lev             ! K
+!                   hgt_lev = profiles(i_x,i_y)%hgt_lev               ! m
 
                   model_i = profiles(i_x,i_y)%isamp
                   model_j = profiles(i_x,i_y)%jsamp
@@ -147,20 +181,20 @@
                   gwp = profiles(i_x,i_y)%gwp
                   hwp = profiles(i_x,i_y)%hwp
 
-                  cwc_q = profiles(i_x,i_y)%cloud_water_q           ! kg/kg
-                  iwc_q = profiles(i_x,i_y)%cloud_ice_q             ! kg/kg
-                  rwc_q = profiles(i_x,i_y)%rain_q                  ! kg/kg
-                  swc_q = profiles(i_x,i_y)%snow_q                  ! kg/kg
-                  gwc_q = profiles(i_x,i_y)%graupel_q               ! kg/kg
-                  if (n_moments .eq. 2) then
-                      hwc_q = profiles(i_x,i_y)%hail_q              ! kg/kg
-                      cwc_n = profiles(i_x,i_y)%cloud_water_n       ! #/kg
-                      iwc_n = profiles(i_x,i_y)%cloud_ice_n         ! #/kg
-                      rwc_n = profiles(i_x,i_y)%rain_n              ! #/kg
-                      swc_n = profiles(i_x,i_y)%snow_n              ! #/kg
-                      gwc_n = profiles(i_x,i_y)%graupel_n           ! #/kg
-                      hwc_n = profiles(i_x,i_y)%hail_n              ! #/kg
-                  end if
+!                   cwc_q = profiles(i_x,i_y)%cloud_water_q           ! kg/kg
+!                   iwc_q = profiles(i_x,i_y)%cloud_ice_q             ! kg/kg
+!                   rwc_q = profiles(i_x,i_y)%rain_q                  ! kg/kg
+!                   swc_q = profiles(i_x,i_y)%snow_q                  ! kg/kg
+!                   gwc_q = profiles(i_x,i_y)%graupel_q               ! kg/kg
+!                   if (n_moments .eq. 2) then
+!                       hwc_q = profiles(i_x,i_y)%hail_q              ! kg/kg
+!                       cwc_n = profiles(i_x,i_y)%cloud_water_n       ! #/kg
+!                       iwc_n = profiles(i_x,i_y)%cloud_ice_n         ! #/kg
+!                       rwc_n = profiles(i_x,i_y)%rain_n              ! #/kg
+!                       swc_n = profiles(i_x,i_y)%snow_n              ! #/kg
+!                       gwc_n = profiles(i_x,i_y)%graupel_n           ! #/kg
+!                       hwc_n = profiles(i_x,i_y)%hail_n              ! #/kg
+!                   end if
 
                   !run the model
                   call run_rt(err)
@@ -170,8 +204,7 @@
                       errorstatus = err
                       return
                   end if
-                  !DEALLOCATE profile variables
-                  call deallocate_profile_vars()
+                  !DEALLOCATE rt variables
                   call deallocate_rt_vars()
               end do grid_x
           end do grid_y

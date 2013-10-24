@@ -1465,44 +1465,44 @@ FUNCTION gammln (xx)
             END SUBROUTINE snow_SS_param
 
 
-            SUBROUTINE get_atmosGlev(temp_lev, press_lev, relhum,     &
-            nlyr, vapor_pressure, freq, ABSCOEF)
-
-                !     Calculate average air pressure and vapor pressure in specified
-                !     layers, given the temperature, pressure, and relative humidity
-                !     from cloud-resolving model output.
-                !     vapor_pressure viene data in mb =hPa
-                !+-------+---------+---------+---------+---------+---------+---------+-+
-                !+----------------------------------------------------------------------
-                use kinds
-                IMPLICIT none
-                INTEGER nlyr, nz
-                REAL(kind=dbl) press_lev(0:nlyr)
-                REAL(kind=dbl) temp_lev(0:nlyr)
-                REAL(kind=dbl) relhum(0:nlyr), ABScoef(0:nlyr)
-                REAL(kind=dbl) vapor_pressure(0:nlyr)
-
-                REAL(kind=dbl) freq, tc, es, a0, a1, a2, a3, a4, a5, a6
-
-                DATA a0 / 6.107799961e0 /
-                DATA a1 / 4.436518521e-1 /
-                DATA a2 / 1.428945805e-2 /
-                DATA a3 / 2.650648471e-4 /
-                DATA a4 / 3.031240396e-6 /
-                DATA a5 / 2.034080948e-8 /
-                DATA a6 / 6.136820929e-11 /
-
-                DO nz = 0, nlyr
-                    tc = temp_lev(nz) - 273.15
-                    ES = a0 + tc * (a1 + tc * (a2 + tc * (a3 + tc * (a4 + tc *        &
-                    (a5 + a6 * tc) ) ) ) )
-                    IF (ES.lt.0.) ES = 0.
-                    vapor_pressure(nz) = relhum(nz) * ES / 100.
-                    CALL MPM93(FREQ, press_lev(nz), 0.1 * vapor_pressure(nz),      &
-                    Tc, 0.0d0, ABSCOEF(nz) )
-                   !             write(18,*) 'MPM93',FREQ,avg_pressure(nz),
-                   !     $0.1*vapor_pressure(nz),Tc,ABSCOEF(nz), relhum(nz)
-                enddo
-
-                RETURN
-            END SUBROUTINE get_atmosGlev
+!             SUBROUTINE get_atmosGlev(temp_lev, press_lev, relhum,     &
+!             nlyr, vapor_pressure, freq, ABSCOEF)
+! 
+!                 !     Calculate average air pressure and vapor pressure in specified
+!                 !     layers, given the temperature, pressure, and relative humidity
+!                 !     from cloud-resolving model output.
+!                 !     vapor_pressure viene data in mb =hPa
+!                 !+-------+---------+---------+---------+---------+---------+---------+-+
+!                 !+----------------------------------------------------------------------
+!                 use kinds
+!                 IMPLICIT none
+!                 INTEGER nlyr, nz
+!                 REAL(kind=dbl) press_lev(0:nlyr)
+!                 REAL(kind=dbl) temp_lev(0:nlyr)
+!                 REAL(kind=dbl) relhum(0:nlyr), ABScoef(0:nlyr)
+!                 REAL(kind=dbl) vapor_pressure(0:nlyr)
+! 
+!                 REAL(kind=dbl) freq, tc, es, a0, a1, a2, a3, a4, a5, a6
+! 
+!                 DATA a0 / 6.107799961e0 /
+!                 DATA a1 / 4.436518521e-1 /
+!                 DATA a2 / 1.428945805e-2 /
+!                 DATA a3 / 2.650648471e-4 /
+!                 DATA a4 / 3.031240396e-6 /
+!                 DATA a5 / 2.034080948e-8 /
+!                 DATA a6 / 6.136820929e-11 /
+! 
+!                 DO nz = 0, nlyr
+!                     tc = temp_lev(nz) - 273.15
+!                     ES = a0 + tc * (a1 + tc * (a2 + tc * (a3 + tc * (a4 + tc *        &
+!                     (a5 + a6 * tc) ) ) ) )
+!                     IF (ES.lt.0.) ES = 0.
+!                     vapor_pressure(nz) = relhum(nz) * ES / 100.
+!                     CALL MPM93(FREQ, press_lev(nz), 0.1 * vapor_pressure(nz),      &
+!                     Tc, 0.0d0, ABSCOEF(nz) )
+!                    !             write(18,*) 'MPM93',FREQ,avg_pressure(nz),
+!                    !     $0.1*vapor_pressure(nz),Tc,ABSCOEF(nz), relhum(nz)
+!                 enddo
+! 
+!                 RETURN
+!             END SUBROUTINE get_atmosGlev

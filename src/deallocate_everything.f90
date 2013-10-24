@@ -30,6 +30,7 @@ module deallocate_everything
         use vars_jacobian, only: deallocate_jacobian_vars
         use vars_output, only: deallocate_output_vars
         use vars_rt, only: deallocate_rt_vars
+        use vars_atmosphere, only: deallocate_atmosphere_vars
 
         integer(kind=long), intent(out) :: errorstatus
         integer(kind=long) :: err = 0
@@ -40,10 +41,10 @@ module deallocate_everything
         call deallocate_descriptor_file()
         call deallocate_output_vars()
         call deallocate_jacobian_vars()
-        call deallocate_profile_vars()
         call deallocateVars_drop_size_dist()
         call deallocate_scatProperties()
         call deallocate_rt_vars()
+        call deallocate_atmosphere_vars()
 
         if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
 
