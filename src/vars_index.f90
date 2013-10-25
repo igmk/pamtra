@@ -3,10 +3,10 @@ module vars_index
   use kinds
   implicit none
 
-  integer(kind=long) :: i_x
-  integer(kind=long) :: i_y
-  integer(kind=long) :: i_z
-  integer(kind=long) :: i_f
-  integer(kind=long) :: i_h
+  integer(kind=long) :: i_x= -99
+  integer(kind=long) :: i_y= -99
+  integer(kind=long) :: i_z= -99
+  integer(kind=long) :: i_f= -99
+  integer(kind=long) :: i_h= -99
 
 end module vars_index

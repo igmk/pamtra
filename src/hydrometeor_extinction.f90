@@ -37,7 +37,7 @@ subroutine hydrometeor_extinction(errorstatus)
   character(len=80) :: msg
   character(len=40) :: nameOfRoutine = 'hydrometeor_extinction'
   
-  if (verbose .gt. 1) print*, i_x, i_y, 'Entering hydrometeor_extinction'
+  if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
 
 
@@ -227,7 +227,7 @@ subroutine hydrometeor_extinction(errorstatus)
   call deallocate_scatProperties()
 
 
-  if (verbose .gt. 1) print*, 'Exiting hydrometeor_extinction'
+  if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
   return
 
 end subroutine hydrometeor_extinction

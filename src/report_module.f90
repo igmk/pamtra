@@ -3,7 +3,7 @@ Module report_module
 
     use kinds, only: long
     use settings, only: verbose
-
+    use vars_index, only: i_x, i_y, i_z, i_f, i_h
     implicit none
     save
     ! status values
@@ -59,6 +59,10 @@ contains
         !
         ! Subroutine arguments
         !   Scalar arguments with intent(in):
+
+
+!to do: add i_x etc to error messages
+
         Integer(Kind=long) , Intent (in) :: status     !
         Character (len=*) , Intent (in) :: message    ! ..to output
         Character (len=*) , Intent (in) :: nameOfRoutine ! ..calling this one

@@ -113,6 +113,13 @@ module scatProperties
     character(len=80) :: msg
     character(len=40) :: nameOfRoutine = 'calc_scatProperties'
 
+  if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
+
+    if (scat_name == "disabled") then
+      if (verbose >= 3) print*, "OK, we are done here"
+      return
+    end if
+
     freq = freqs(i_f)
 
     !initilaize empyt results
