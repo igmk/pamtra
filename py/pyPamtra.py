@@ -62,6 +62,7 @@ class pamDescriptorFile(object):
     self.types = ["S15",float,int,float,float,float,float,float,int,int,"S15",float,float,float,float,float,float, "S15", "S15"]  
     self.data = np.recarray((0,),dtype=zip(self.names, self.types))
     self.data4D = pamDescriptorFile.data4D(self)
+    self.nhydro = 0
     return
     
    
@@ -94,6 +95,7 @@ class pamDescriptorFile(object):
       
   def addHydrometeor(self,hydroTuple):
     self.data = np.append(self.data,np.array(tuple(hydroTuple),dtype=zip(self.names,self.types)))
+    self.nhydro += 1
     return
     
   def removeHydrometeor(self,hydroName):
@@ -109,6 +111,8 @@ class pamDescriptorFile(object):
     
     if not removed:
       raise ValueError("Did not find "+hydroName)
+    else:
+      self.nhydro -= 1
     return
 
 
@@ -139,7 +143,7 @@ class pyPamtra(object):
   
   def _prepareNmlUnitsDimensions(self):
   
-    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","iwv","cwp","iwp","rwp","swp","gwp","hwp","hgt_lev","press_lev","temp_lev","relhum_lev","q","cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n","deltax","deltay","wind10u","wind10v","ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime"]
+    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","iwv","cwp","iwp","rwp","swp","gwp","hwp","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime"]
   
     self.nmlSet = dict() #settings which are required for the nml file. keeping the order is important for fortran
     self.nmlSet["hydro_threshold"]=  1.e-10   # [kg/kg] 
@@ -249,19 +253,9 @@ class pyPamtra(object):
     self.dimensions["p_lev"] = ["ngridx","ngridy","max_nlyrs+1"]
     self.dimensions["relhum_lev"] = ["ngridx","ngridy","max_nlyrs+1"]
     
-    self.dimensions["cwc_q"] = ["ngridx","ngridy","max_nlyrs"]
-    self.dimensions["iwc_q"] = ["ngridx","ngridy","max_nlyrs"]
-    self.dimensions["rwc_q"] = ["ngridx","ngridy","max_nlyrs"]
-    self.dimensions["swc_q"] = ["ngridx","ngridy","max_nlyrs"]
-    self.dimensions["gwc_q"] = ["ngridx","ngridy","max_nlyrs"]
-    self.dimensions["hwc_q"] = ["ngridx","ngridy","max_nlyrs"]
-    
-    self.dimensions["cwc_n"] = ["ngridx","ngridy","max_nlyrs"]
-    self.dimensions["iwc_n"] = ["ngridx","ngridy","max_nlyrs"]
-    self.dimensions["rwc_n"] = ["ngridx","ngridy","max_nlyrs"]
-    self.dimensions["swc_n"] = ["ngridx","ngridy","max_nlyrs"]
-    self.dimensions["gwc_n"] = ["ngridx","ngridy","max_nlyrs"]
-    self.dimensions["hwc_n"] = ["ngridx","ngridy","max_nlyrs"]
+    self.dimensions["hydro_q"] = ["ngridx","ngridy","max_nlyrs","nhydro"]
+    self.dimensions["hydro_n"] = ["ngridx","ngridy","max_nlyrs","nhydro"]
+    self.dimensions["hydro_reff"] = ["ngridx","ngridy","max_nlyrs","nhydro"]
     
     self.dimensions["radar_hgt"] = ["ngridx","ngridy","max_nlyrs"]
     self.dimensions["Ze"] = ["gridx","gridy","lyr","frequency"]
@@ -299,19 +293,9 @@ class pyPamtra(object):
     self.units["p_lev"] = "Pa"
     self.units["relhum_lev"] = "1"
     
-    self.units["cwc_q"] = "kg/kg"
-    self.units["iwc_q"] = "kg/kg"
-    self.units["rwc_q"] = "kg/kg"
-    self.units["swc_q"] = "kg/kg"
-    self.units["gwc_q"] = "kg/kg"
-    self.units["hwc_q"] = "kg/kg"
-
-    self.units["cwc_n"] = "#/kg"
-    self.units["iwc_n"] = "#/kg"
-    self.units["rwc_n"] = "#/kg"
-    self.units["swc_n"] = "#/kg"
-    self.units["gwc_n"] = "#/kg"
-    self.units["hwc_n"] = "#/kg"
+    self.units["hydro_q"] = "kg/kg"
+    self.units["hydro_n"] = "-"
+    self.units["hydro_reff"] = "m"
     
     self.units["radar_hgt"] = "m"
     self.units["Ze"] = "dBz OR mm^6 m^-3"
@@ -376,14 +360,16 @@ class pyPamtra(object):
     #if self.set["pyVerbose"] > 1: print "reading nml file done: ", inputFile
     return
     
-  def readPamtraProfile(self,inputFile):
+  def readPamtraProfile(self,inputFile,n_moments=1):
     """
     read classical pamtra profile from file
     """
     
     f = open(inputFile,"r")
     g = csv.reader(f,delimiter=" ",skipinitialspace=True)
-    year,month,day,time, self.p["ngridx"], self.p["ngridy"], self.p["nlyrs"], self.p["deltax"], self.p["deltay"] = g.next()
+    year,month,day,time, self.p["ngridx"], self.p["ngridy"], self.p["nlyrs"], deltax,deltay = g.next()
+    
+    self.p["ngridx"], self.p["ngridy"], self.p["nlyrs"],  = int(self.p["ngridx"]), int(self.p["ngridy"]), int(self.p["nlyrs"]), 
     
     self.p["unixtime"] = calendar.timegm(datetime.datetime(year = int(year), month = int(month), day = int(day), hour = int(time[0:2]), minute = int(time[2:4]), second = 0).timetuple())
     
@@ -399,7 +385,8 @@ class pyPamtra(object):
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"]+1,)
-    
+    self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],4+n_moments)
+
     self.p["model_i"] = np.zeros(self._shape2D)
     self.p["model_j"] = np.zeros(self._shape2D)
     self.p["lat"] = np.zeros(self._shape2D)
@@ -427,7 +414,7 @@ class pyPamtra(object):
     self.p["swc_q"] = np.zeros(self._shape3D)
     self.p["gwc_q"] = np.zeros(self._shape3D)
     
-    if int(self.nmlSet["n_moments"]) == 1:
+    if n_moments == 1:
       self.p["hwc_q"] = np.ones(self._shape3D)*missingNumber
       self.p["cwc_n"] = np.ones(self._shape3D)*missingNumber
       self.p["iwc_n"] = np.ones(self._shape3D)*missingNumber
@@ -445,7 +432,7 @@ class pyPamtra(object):
           for z in np.arange(self.p["nlyrs"]):
             self.p["hgt_lev"][x,y,z+1],self.p["press_lev"][x,y,z+1],self.p["temp_lev"][x,y,z+1],self.p["relhum_lev"][x,y,z+1],self.p["cwc_q"][x,y,z],self.p["iwc_q"][x,y,z],self.p["rwc_q"][x,y,z],self.p["swc_q"][x,y,z],self.p["gwc_q"][x,y,z] = np.array(np.array(g.next()),dtype=float)
 
-    elif int(self.nmlSet["n_moments"]) == 2:
+    elif n_moments == 2:
       self.p["hwc_q"] = np.zeros(self._shape3D)
       self.p["cwc_n"] = np.zeros(self._shape3D)
       self.p["iwc_n"] = np.zeros(self._shape3D)
@@ -474,6 +461,28 @@ class pyPamtra(object):
     self.p["unixtime"] = np.ones(self._shape2D,dtype=int)*self.p["unixtime"]
 
     f.close()
+
+    self.p["hydro_q"] = np.zeros(self._shape4D) 
+    self.p["hydro_n"] = np.zeros(self._shape4D)
+    self.p["hydro_reff"] = np.zeros(self._shape4D)
+    
+    self.p["hydro_q"][:,:,:,0] = self.p["cwc_q"]
+    self.p["hydro_q"][:,:,:,1] = self.p["iwc_q"]
+    self.p["hydro_q"][:,:,:,2] = self.p["rwc_q"]
+    self.p["hydro_q"][:,:,:,3] = self.p["swc_q"]
+    self.p["hydro_q"][:,:,:,4] = self.p["gwc_q"]
+    if n_moments == 2:
+      self.p["hydro_q"][:,:,:,5] = self.p["hwc_q"]
+      self.p["hydro_n"][:,:,:,0] = self.p["cwc_n"]
+      self.p["hydro_n"][:,:,:,1] = self.p["iwc_n"]
+      self.p["hydro_n"][:,:,:,2] = self.p["rwc_n"]
+      self.p["hydro_n"][:,:,:,3] = self.p["swc_n"]
+      self.p["hydro_n"][:,:,:,4] = self.p["gwc_n"]
+      self.p["hydro_n"][:,:,:,5] = self.p["hwc_n"]
+
+    for key in ["cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"] :
+      del self.p[key]
+      
     return
     
   def writePamtraProfile(self,filename):
@@ -572,7 +581,8 @@ class pyPamtra(object):
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
-    
+    self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nydro)
+
     self.p["nlyrs"] = np.sum(kwargs["hgt_lev"]!=missingNumber,axis=-1) -1
     self.p["nlyrs"] = self.p["nlyrs"].reshape(self._shape2D)
     
@@ -580,8 +590,6 @@ class pyPamtra(object):
     self.p["temp_lev"] = kwargs["temp_lev"].reshape(self._shape3Dplus)
     self.p["press_lev"] = kwargs["press_lev"].reshape(self._shape3Dplus)
 
-    self.p["deltax"] = 0.
-    self.p["deltay"] = 0.
 
     self.p["model_i"] = np.array(np.where(self.p["press_lev"][:,:,0])[0]).reshape(self._shape2D) +1
     self.p["model_j"] = np.array(np.where(self.p["press_lev"][:,:,0])[1]).reshape(self._shape2D) +1
@@ -612,20 +620,12 @@ class pyPamtra(object):
         else:
           self.p[environment] = kwargs[environment].reshape(self._shape2D)
     
-    for qValue in ["cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q"]:
+    for qValue in ["hydro_q","hydro_reff","hydro_n"]:
       if qValue not in kwargs.keys():
-        self.p[qValue] = np.zeros(self._shape3D)
+        self.p[qValue] = np.zeros(self._shape4D)
         warnings.warn(qValue + " set to 0", Warning)
       else:
         self.p[qValue] = kwargs[qValue].reshape(self._shape3D)
-        
-    for hydroNo in ["cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"]:
-      if hydroNo not in kwargs.keys():
-        self.p[hydroNo] = np.ones(self._shape3D) * missingNumber
-        warnings.warn(hydroNo + " set to -9999", Warning)
-      else:
-        self.p[hydroNo] = kwargs[hydroNo].reshape(self._shape3D)
-
 
     if "q" in kwargs.keys():
       self._helperP["q"] = kwargs["q"].reshape(self._shape3D)
@@ -722,7 +722,7 @@ class pyPamtra(object):
       if self.set["pyVerbose"] > 0:
         print 'calculating "rho_moist"'
 
-      self._helperP["rho_moist"] = meteoSI.moist_rho_q(self._helperP["press"],self._helperP["temp"],self._helperP["q"],self.p["cwc_q"],self.p["iwc_q"],self.p["rwc_q"],self.p["gwc_q"],self.p["swc_q"])
+      self._helperP["rho_moist"] = meteoSI.moist_rho_q(self._helperP["press"],self._helperP["temp"],self._helperP["q"],np.sum(self.p["hydro_q"],axis=-1))
       return
 
   def _calcRelhum_lev(self):
@@ -738,8 +738,8 @@ class pyPamtra(object):
       return
 
   def _checkData(self):
-    maxLimits = {"relhum_lev":2,"swc_q":0.05,"rwc_q":0.05,"cwc_q":0.05,"iwc_q":0.05,"gwc_q":0.05,"hwc_q":0.05,"temp_lev":320,"press_lev":110000}
-    minLimits = {"relhum_lev":0,"swc_q":0,   "rwc_q":0,   "cwc_q":0,   "iwc_q":0   ,"gwc_q":0   ,"hwc_q":0   ,"temp_lev":170,"press_lev":1}
+    maxLimits = {"relhum_lev":2,"hydro_q":0.05,"temp_lev":320,"press_lev":110000}
+    minLimits = {"relhum_lev":0,"hydro_q": 0 ,"temp_lev":170,"press_lev":1}
     for key in maxLimits.keys():
       if np.max(self.p[key]) > maxLimits[key]:
         raise ValueError("unrealistic value for "+ key + ": " +str(np.max(self.p[key])) + ", maximum is " + str(maxLimits[key]))
@@ -769,6 +769,7 @@ class pyPamtra(object):
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
+    self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
 
     for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v"]:
       self.p[key] = self.p[key][condition].reshape(self._shape2D)
@@ -777,8 +778,8 @@ class pyPamtra(object):
       if key in self.p.keys():
         self.p[key] = self.p[key][condition].reshape(self._shape2D)
 
-    for key in ["cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"]:
-      self.p[key] = self.p[key][condition].reshape(self._shape3D)
+    for key in ["hydro_q","hydro_n","hydro_reff"]:
+      self.p[key] = self.p[key][condition].reshape(self._shape4D)
       
     for key in ["hgt_lev","temp_lev","press_lev","relhum_lev"]:
       self.p[key] = self.p[key][condition].reshape(self._shape3Dplus)
@@ -803,15 +804,17 @@ class pyPamtra(object):
     #new shape
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
-    
+    self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
 
-    for key in ["cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"]:
+
+    for key in ["hydro_q","hydro_n","hydro_reff"]:
       #make new array
       newP = np.ones(self._shape3D) * missingNumber
       for x in xrange(self._shape2D[0]):
         for y in xrange(self._shape2D[1]):
+          for h in xrange(self.df.nydro):
           #interpolate!
-          newP[x,y] = np.interp(new_hgt,old_hgt[x,y],self.p[key][x,y])
+            newP[x,y,:,h] = np.interp(new_hgt,old_hgt[x,y,:,h],self.p[key][x,y,:,h])
       #save new array
       self.p[key] = newP
       #and mark all entries below -1 as missing Number!
@@ -842,16 +845,16 @@ class pyPamtra(object):
     return
     
   def addIntegratedValues(self):
-    
-    for pDict,qValue,intValue in [[self._helperP,"q","iwv"],[self.p,"cwc_q","cwp"],[self.p,"iwc_q","iwp"],[self.p,"rwc_q","rwp"],[self.p,"swc_q","swp"],[self.p,"gwc_q","gwp"],[self.p,"hwc_q","hwp"]]:
-      #now we need q!
-      self._calcQ()
-      #nothing to do without hydrometeors:
-      if np.all(pDict[qValue]==0):
-        self.p[intValue] = np.zeros(self._shape2D)
-      else:
-        self._calcMoistRho() #provides also temp,press,dz and q!
-        self.p[intValue] =  np.sum(pDict[qValue]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
+    raise NotImplementedError("not yet avaiable in pamtra v 1.0")
+    #for pDict,qValue,intValue in [[self._helperP,"q","iwv"],[self.p,"cwc_q","cwp"],[self.p,"iwc_q","iwp"],[self.p,"rwc_q","rwp"],[self.p,"swc_q","swp"],[self.p,"gwc_q","gwp"],[self.p,"hwc_q","hwp"]]:
+      ##now we need q!
+      #self._calcQ()
+      ##nothing to do without hydrometeors:
+      #if np.all(pDict[qValue]==0):
+        #self.p[intValue] = np.zeros(self._shape2D)
+      #else:
+        #self._calcMoistRho() #provides also temp,press,dz and q!
+        #self.p[intValue] =  np.sum(pDict[qValue]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
     return
 
   def addCloudShape(self):
@@ -880,6 +883,9 @@ class pyPamtra(object):
     """
 
     #calculate CWC
+    
+    raise NotImplementedError("not yet avaiable in pamtra v 1.0")    
+    
     self.p["cwc_q"][:] = 0
 
     for x in xrange(self._shape2D[0]):
@@ -913,8 +919,7 @@ class pyPamtra(object):
   def createFullProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
       iwv,cwp,iwp,rwp,swp,gwp,hwp,
       hgt_lev,press_lev,temp_lev,relhum_lev,
-      cwc_q,iwc_q,rwc_q,swc_q,gwc_q,
-      hwc_q,cwc_n,iwc_n,rwc_n,swc_n,gwc_n,hwc_n):
+      hydro_q,hydro_n,hydro_reff):
     
     '''
     create comple PAmtra Profile
@@ -947,12 +952,10 @@ class pyPamtra(object):
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
-    
+    self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
 
     self.p["unixtime"] = timestamp.reshape(self._shape2D)
         
-    self.p["deltax"] = 0.
-    self.p["deltay"] = 0.
     self.p["lat"] = lat.reshape(self._shape2D)
     self.p["lon"] = lon.reshape(self._shape2D)
     self.p["lfrac"] = lfrac.reshape(self._shape2D)
@@ -961,34 +964,15 @@ class pyPamtra(object):
     self.p["wind10u"] = wind10u.reshape(self._shape2D)
     self.p["wind10v"] = wind10v.reshape(self._shape2D)
 
-    self.p["iwv"] = iwv.reshape(self._shape2D)
-    self.p["cwp"] = cwp.reshape(self._shape2D)
-    self.p["iwp"] = iwp.reshape(self._shape2D)
-    self.p["rwp"] = rwp.reshape(self._shape2D)
-    self.p["swp"] = swp.reshape(self._shape2D)
-    self.p["gwp"] = gwp.reshape(self._shape2D)
-    self.p["hwp"] = gwp.reshape(self._shape2D)
+    self.p["hydro_q"] = iwv.reshape(self._shape4D)
+    self.p["hydro_n"] = cwp.reshape(self._shape4D)
+    self.p["hydro_reff"] = iwp.reshape(self._shape4D)
+
     
     self.p["hgt_lev"] = hgt_lev.reshape(self._shape3Dplus)
     self.p["temp_lev"] = temp_lev.reshape(self._shape3Dplus)
     self.p["press_lev"] = press_lev.reshape(self._shape3Dplus)
-    self.p["relhum_lev"] = relhum_lev.reshape(self._shape3Dplus)
-    
-    self.p["cwc_q"] = cwc_q.reshape(self._shape3D)
-    self.p["iwc_q"] = iwc_q.reshape(self._shape3D)
-    self.p["rwc_q"] = rwc_q.reshape(self._shape3D)
-    self.p["swc_q"] = swc_q.reshape(self._shape3D)
-    self.p["gwc_q"] = gwc_q.reshape(self._shape3D)
-    
-    self.p["hwc_q"] = hwc_q.reshape(self._shape3D)
-    self.p["cwc_n"] = cwc_n.reshape(self._shape3D)
-    self.p["iwc_n"] = iwc_n.reshape(self._shape3D)
-    self.p["rwc_n"] = rwc_n.reshape(self._shape3D)
-    self.p["swc_n"] = swc_n.reshape(self._shape3D)
-    self.p["gwc_n"] = gwc_n.reshape(self._shape3D)
-    self.p["hwc_n"] = hwc_n.reshape(self._shape3D)
-
-    
+    self.p["relhum_lev"] = relhum_lev.reshape(self._shape3Dplus)    
     
   #def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto",checkData=True):
     #'''
@@ -1382,7 +1366,7 @@ class pyPamtra(object):
       write the complete state of the session (profile,results,settings to a file
       '''
       f = open(fname, "w")
-      pickle.dump([self.r,self.p,self._helperP,self.nmlSet,self.set], f)
+      pickle.dump([self.r,self.p,self._helperP,self.nmlSet,self.set,self.df], f)
       f.close()
     else:
       '''
@@ -1426,7 +1410,7 @@ class pyPamtra(object):
     else:  
       try: 
 	f = open(fname, "r")
-	[self.r,self.p,self._helperP,self.nmlSet,self.set] = pickle.load(f)
+	[self.r,self.p,self._helperP,self.nmlSet,self.set,self.df] = pickle.load(f)
 	f.close()
       except:
 	print formatExceptionInfo()	
@@ -1435,6 +1419,7 @@ class pyPamtra(object):
       self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
       self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],)
       self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"]+1,)
+      self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
       return
   
 

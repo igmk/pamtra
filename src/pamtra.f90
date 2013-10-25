@@ -60,15 +60,23 @@ program pamtra
     end if
 
     !!! read n-moments file
-    if (n_moments == 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
+!     if (n_moments == 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
+
+
+    call read_descriptor_file(err)
+    if (err /= 0) then
+        msg = 'Error in read_descriptor_file!'
+        call report(fatal, msg, nameOfRoutine)
+        errorstatus = err
+        go to 666
+    end if
 
 !!! read the data
 call get_atmosphere
 ! 1tmporary: this should go into the call get_atmosphere routine!
 
 
-atmo_nlyrs(:,:) = profiles_nlyr
-atmo_max_nlyr = MAXVAL(atmo_nlyrs)
+atmo_max_nlyrs =profiles_nlyr
 atmo_ngridx = profiles_ngridx
 atmo_ngridy = profiles_ngridy
 
@@ -80,7 +88,8 @@ if (err /= 0) then
   return
 end if
 
-!temporary loop to fill atmosphere array:
+atmo_nlyrs(:,:) = profiles_nlyr
+
 !temporary loop to fill atmosphere array:
 do i_y = 1, profiles_ngridy !i_x_in, i_x_fin
   do i_x = 1, profiles_ngridx
@@ -112,7 +121,6 @@ do i_y = 1, profiles_ngridy !i_x_in, i_x_fin
     atmo_day(i_x,i_y) = profiles_day
     atmo_year(i_x,i_y) = profiles_year
     atmo_time(i_x,i_y) =profiles_time
-    atmo_date_str(i_x,i_y) = profiles_year//profiles_month//profiles_day//profiles_time
     atmo_deltax(i_x,i_y) = profiles_deltax
     atmo_deltay(i_x,i_y) = profiles_deltay
     atmo_model_i(i_x,i_y) = profiles(i_x,i_y)%isamp
@@ -129,15 +137,18 @@ do i_y = 1, profiles_ngridy !i_x_in, i_x_fin
 end do
 
 
-    call read_descriptor_file(err)
+    ! make sure that all the levels and layer variables are present
+    call fillMissing_atmosphere_vars(err)
     if (err /= 0) then
-        msg = 'Error in read_descriptor_file!'
+        msg = 'Error in fillMissing_atmosphere_vars!'
         call report(fatal, msg, nameOfRoutine)
-        errorstatus = err
-        go to 666
+      errorstatus = err
+      return
     end if
+
+
     ! now allocate variables
-    call allocate_output_vars(err, atmo_max_nlyr)
+    call allocate_output_vars(err, atmo_max_nlyrs)
     if (err /= 0) then
         msg = 'Error in allocate_output_vars!'
         call report(fatal, msg, nameOfRoutine)

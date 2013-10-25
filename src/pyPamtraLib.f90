@@ -3,9 +3,8 @@
     use kinds, only: long
     !    use constants !physical constants live here
     use settings !all settings go here
-    use vars_atmosphere !input variables and reading routine
+    use vars_atmosphere !input variables 
     use vars_output !output variables
-    use vars_profile
     use vars_jacobian, only: allocate_jacobian_vars, deallocate_jacobian_vars
     use double_moments_module !double moments variables are stored here
     use report_module
@@ -62,7 +61,7 @@
 
 !fill frqs_str array!
     do fi = 1, nfrq
-        write(frqs_str(fi),"(F8.2)") freqs(fi)
+        write(frqs_str(fi),"(i4.4,f0.3)") int(freqs(fi)),freqs(fi) -int(freqs(fi))
     end do
 
 
@@ -80,79 +79,91 @@
 
 
 
+! 
+! 
+! !!! read the data
+! call get_atmosphere
+! ! 1tmporary: this should go into the call get_atmosphere routine!
+! !python input can have different number of nlayer
+! 
+! 
+! 
+! atmo_max_nlyrs = profiles_nlyr
+! atmo_ngridx = profiles_ngridx
+! atmo_ngridy = profiles_ngridy
+! 
+! call allocate_atmosphere_vars(err)
+! if (err /= 0) then
+!     msg = 'Error in allocate_atmosphere_vars!'
+!     call report(fatal, msg, nameOfRoutine)
+!   errorstatus = err
+!   return
+! end if
+! 
+! atmo_nlyrs(:,:) = profiles_nlyr
+! 
+! !temporary loop to fill atmosphere array:
+! do i_y = 1, profiles_ngridy !i_x_in, i_x_fin
+!   do i_x = 1, profiles_ngridx
+! print*, i_x, i_y
+!       atmo_relhum_lev(i_x,i_y,:) = profiles(i_x,i_y)%relhum_lev
+!       atmo_press_lev(i_x,i_y,:) = profiles(i_x,i_y)%press_lev
+!       atmo_temp_lev(i_x,i_y,:) = profiles(i_x,i_y)%temp_lev
+!       atmo_hgt_lev(i_x,i_y,:) = profiles(i_x,i_y)%hgt_lev
+! 
+!       atmo_hydro_reff(i_x,i_y,:,:) = nan()
+!       atmo_hydro_n(i_x,i_y,:,:) = nan()
+! 
+! 
+!       atmo_hydro_q(i_x,i_y,:,1) = profiles(i_x,i_y)%cloud_water_q
+! !       atmo_hydro_n(i_x,i_y,:,1) = profiles(i_x,i_y)%cloud_water_n
+! 
+!       atmo_hydro_q(i_x,i_y,:,2) = profiles(i_x,i_y)%cloud_ice_q
+! !       atmo_hydro_n(i_x,i_y,:,2) = profiles(i_x,i_y)%cloud_ice_n
+! 
+!       atmo_hydro_q(i_x,i_y,:,3) = profiles(i_x,i_y)%rain_q
+! !       atmo_hydro_n(i_x,i_y,:,3) = profiles(i_x,i_y)%rain_n
+! 
+!       atmo_hydro_q(i_x,i_y,:,4) = profiles(i_x,i_y)%snow_q
+! !       atmo_hydro_n(i_x,i_y,:,4) = profiles(i_x,i_y)%snow_n
+! 
+!       atmo_hydro_q(i_x,i_y,:,5) = profiles(i_x,i_y)%graupel_q
+! !       atmo_hydro_n(i_x,i_y,:,5) = profiles(i_x,i_y)%graupel_n
+! 
+! 
+!     atmo_month(i_x,i_y) = profiles_month
+!     atmo_day(i_x,i_y) = profiles_day
+!     atmo_year(i_x,i_y) = profiles_year
+!     atmo_time(i_x,i_y) =profiles_time
+! 
+!     atmo_date_str(i_x,i_y) = profiles_year//profiles_month//profiles_day//profiles_time
+!     atmo_deltax(i_x,i_y) = profiles_deltax
+!     atmo_deltay(i_x,i_y) = profiles_deltay
+!     atmo_model_i(i_x,i_y) = profiles(i_x,i_y)%isamp
+!     atmo_model_j(i_x,i_y) = profiles(i_x,i_y)%jsamp
+!     atmo_lon(i_x,i_y) = profiles(i_x,i_y)%longitude       
+!     atmo_lat(i_x,i_y) = profiles(i_x,i_y)%latitude       
+!     atmo_lfrac(i_x,i_y) = profiles(i_x,i_y)%land_fraction
+!     atmo_wind10u(i_x,i_y) = profiles(i_x,i_y)%wind_10u
+!     atmo_wind10v(i_x,i_y) = profiles(i_x,i_y)%wind_10v
+! 
+!     atmo_iwv(i_x,i_y) = profiles(i_x,i_y)%iwv
+! 
+!     end do
+! end do
 
-
-!!! read the data
-call get_atmosphere
-! 1tmporary: this should go into the call get_atmosphere routine!
-!python input can have different number of nlayer
-atmo_nlyrs(:,:) = profiles_nlyr
-atmo_max_nlyr = MAXVAL(atmo_nlyrs
-atmo_ngridx = profiles_ngridx
-atmo_ngridy = profiles_ngridy
-
-call allocate_atmosphere_vars(err)
-if (err /= 0) then
-    msg = 'Error in allocate_atmosphere_vars!'
-    call report(fatal, msg, nameOfRoutine)
-  errorstatus = err
-  return
-end if
-
-atmo_nlyrs(:,:) = profiles_nlyr
-
-!temporary loop to fill atmosphere array:
-do i_y = 1, profiles_ngridy !i_x_in, i_x_fin
-  do i_x = 1, profiles_ngridx
-      atmo_relhum_lev(i_x,i_y,:) = profiles(i_x,i_y)%relhum_lev
-      atmo_press_lev(i_x,i_y,:) = profiles(i_x,i_y)%press_lev
-      atmo_temp_lev(i_x,i_y,:) = profiles(i_x,i_y)%temp_lev
-      atmo_hgt_lev(i_x,i_y,:) = profiles(i_x,i_y)%hgt_lev
-
-      atmo_hydro_reff(i_x,i_y,:,:) = nan()
-      atmo_hydro_n(i_x,i_y,:,:) = nan()
-
-
-      atmo_hydro_q(i_x,i_y,:,1) = profiles(i_x,i_y)%cloud_water_q
-!       atmo_hydro_n(i_x,i_y,:,1) = profiles(i_x,i_y)%cloud_water_n
-
-      atmo_hydro_q(i_x,i_y,:,2) = profiles(i_x,i_y)%cloud_ice_q
-!       atmo_hydro_n(i_x,i_y,:,2) = profiles(i_x,i_y)%cloud_ice_n
-
-      atmo_hydro_q(i_x,i_y,:,3) = profiles(i_x,i_y)%rain_q
-!       atmo_hydro_n(i_x,i_y,:,3) = profiles(i_x,i_y)%rain_n
-
-      atmo_hydro_q(i_x,i_y,:,4) = profiles(i_x,i_y)%snow_q
-!       atmo_hydro_n(i_x,i_y,:,4) = profiles(i_x,i_y)%snow_n
-
-      atmo_hydro_q(i_x,i_y,:,5) = profiles(i_x,i_y)%graupel_q
-!       atmo_hydro_n(i_x,i_y,:,5) = profiles(i_x,i_y)%graupel_n
-
-
-    atmo_month(i_x,i_y) = profiles_month
-    atmo_day(i_x,i_y) = profiles_day
-    atmo_year(i_x,i_y) = profiles_year
-    atmo_time(i_x,i_y) =profiles_time
-
-    atmo_date_str(i_x,i_y) = profiles_year//profiles_month//profiles_day//profiles_time
-    atmo_deltax(i_x,i_y) = profiles_deltax
-    atmo_deltay(i_x,i_y) = profiles_deltay
-    atmo_model_i(i_x,i_y) = profiles(i_x,i_y)%isamp
-    atmo_model_j(i_x,i_y) = profiles(i_x,i_y)%jsamp
-    atmo_lon(i_x,i_y) = profiles(i_x,i_y)%longitude       
-    atmo_lat(i_x,i_y) = profiles(i_x,i_y)%latitude       
-    atmo_lfrac(i_x,i_y) = profiles(i_x,i_y)%land_fraction
-    atmo_wind10u(i_x,i_y) = profiles(i_x,i_y)%wind_10u
-    atmo_wind10v(i_x,i_y) = profiles(i_x,i_y)%wind_10v
-
-    atmo_iwv(i_x,i_y) = profiles(i_x,i_y)%iwv
-
-    end do
-end do
+      ! make sure that all the levels and layer variables are present
+      call fillMissing_atmosphere_vars(err)
+      if (err /= 0) then
+          msg = 'Error in fillMissing_atmosphere_vars!'
+          call report(fatal, msg, nameOfRoutine)
+        errorstatus = err
+        return
+      end if
 
 
       ! now allocate variables
-      call allocate_output_vars(err,atmo_max_nlyr)
+      call allocate_output_vars(err,atmo_max_nlyrs)
       if (err /= 0) then
           msg = 'Error in allocate_output_vars!'
           call report(fatal, msg, nameOfRoutine)

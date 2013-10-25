@@ -49,8 +49,7 @@ subroutine run_rt(errorstatus)
     freq = freqs(i_f)
     frq_str = frqs_str(i_f)
     wavelength = c / (freq*1.d3)   ! microns
-    GROUND_TEMP = atmo_temp_lev(i_x,i_y,1)
-print*, "replace by atmo_groundtemp?"
+
     !  if (verbose .gt. 0) print*, "calculating: ", frq_str, " Y:",i_y, " of ", ngridy, "X:", i_x, " of ", ngridx
 
     write(xstr, '(i3.3)') atmo_model_i(i_x,i_y)
@@ -66,11 +65,9 @@ print*, "replace by atmo_groundtemp?"
     ! pressure for this model).  Assign/compute the missing fields first
     ! make layer averages
 
-    call get_atmosG0()
-
     if (verbose >= 2) call report(info,nxstr//' '//nystr//'type to local variables done',nameOfRoutine)
 
-    call get_surface(err,freq, ground_temp, salinity, ground_albedo,ground_index,ground_type)
+    call get_surface(err,freq, atmo_groundtemp(i_x,i_y), salinity, ground_albedo,ground_index,ground_type)
     if (err /= 0) then
         msg = 'error in get_surface'
         call report(err,msg, nameOfRoutine)
@@ -127,10 +124,13 @@ print*, "replace by atmo_groundtemp?"
     !&&&&&&&&   I/O FILE NAMES   &&&&&&&&&&&&&&&&&&
 
     OUT_FILE_PAS = output_path(:len_trim(output_path))//"/"//&
-    atmo_date_str(i_x,i_y)//'x'//xstr//'y'//ystr//'f'//frq_str//"_passive"
+      atmo_year(i_x, i_y)//atmo_month(i_x, i_y)//atmo_day(i_x, i_y)//atmo_time(i_x, i_y)//&
+      'x'//xstr//'y'//ystr//'f'//trim(frq_str)//"_passive"
 
     OUT_FILE_ACT = output_path(:len_trim(output_path))//"/"//&
-    atmo_date_str(i_x,i_y)//'x'//xstr//'y'//ystr//'f'//frq_str//"_active"
+      atmo_year(i_x, i_y)//atmo_month(i_x, i_y)//atmo_day(i_x, i_y)//atmo_time(i_x, i_y)//&
+      'x'//xstr//'y'//ystr//'f'//trim(frq_str)//"_active"
+
 
     !save active to ASCII
     if (active .and. (write_nc .eqv. .false.) .and. (in_python .eqv. .false.)) then

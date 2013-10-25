@@ -2,7 +2,7 @@ subroutine write_nc_results
 
     use kinds
     use vars_output
-    use vars_atmosphere, only: atmo_ngridx, atmo_ngridy, atmo_max_nlyr,&
+    use vars_atmosphere, only: atmo_ngridx, atmo_ngridy, atmo_max_nlyrs,&
       atmo_year, atmo_month, atmo_day, atmo_time, atmo_model_i,&
       atmo_model_j, atmo_lfrac, atmo_lon, atmo_lat, atmo_iwv
     use netcdf
@@ -75,7 +75,7 @@ subroutine write_nc_results
         call check(nf90_def_dim(ncid, 'nstokes', nstokes, dstokesID))
     end if
     if (active) then
-        call check(nf90_def_dim(ncid, 'atmo_max_nlyr', atmo_max_nlyr, dlayerID))
+        call check(nf90_def_dim(ncid, 'atmo_max_nlyrs', atmo_max_nlyrs, dlayerID))
     end if
     if ((active) .and. (radar_mode .eq. "spectrum")) then
         call check(nf90_def_dim(ncid, 'nfft', radar_nfft, dnfftID))
@@ -260,40 +260,40 @@ subroutine write_nc_results
 
     if (active) then                             !reshapeing needed due to Fortran's crazy Netcdf handling...
         call check(nf90_put_var(ncid, heightVarID, &
-        RESHAPE( radar_hgt, (/ atmo_max_nlyr, atmo_ngridy, atmo_ngridx/), ORDER = (/3,2,1/))))
+        RESHAPE( radar_hgt, (/ atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/3,2,1/))))
         call check(nf90_put_var(ncid, ZeVarID, &
-        RESHAPE( Ze, (/ nfrq, atmo_max_nlyr, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+        RESHAPE( Ze, (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
         call check(nf90_put_var(ncid, AttHydroVarID, &
-        RESHAPE( Att_hydro, (/nfrq, atmo_max_nlyr, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+        RESHAPE( Att_hydro, (/nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
         call check(nf90_put_var(ncid, AttAtmoVarID, &
-        RESHAPE( Att_atmo, (/nfrq, atmo_max_nlyr, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+        RESHAPE( Att_atmo, (/nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
         if ((radar_mode == "moments") .or.(radar_mode == "spectrum") ) then
             call check(nf90_put_var(ncid, velVarID, &
-            RESHAPE( radar_moments(:,:,:,:,1), (/ nfrq, atmo_max_nlyr, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( radar_moments(:,:,:,:,1), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
             call check(nf90_put_var(ncid, swVarID, &
-            RESHAPE( radar_moments(:,:,:,:,2), (/ nfrq, atmo_max_nlyr, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( radar_moments(:,:,:,:,2), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
             call check(nf90_put_var(ncid, skewVarID, &
-            RESHAPE( radar_moments(:,:,:,:,3), (/ nfrq, atmo_max_nlyr, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( radar_moments(:,:,:,:,3), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
             call check(nf90_put_var(ncid, kurtVarID, &
-            RESHAPE( radar_moments(:,:,:,:,4), (/ nfrq, atmo_max_nlyr, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( radar_moments(:,:,:,:,4), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
             call check(nf90_put_var(ncid, lSloVarID, &
-            RESHAPE( radar_slopes(:,:,:,:,1), (/ nfrq, atmo_max_nlyr, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( radar_slopes(:,:,:,:,1), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
             call check(nf90_put_var(ncid, rSloVarID, &
-            RESHAPE( radar_slopes(:,:,:,:,2), (/ nfrq, atmo_max_nlyr, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( radar_slopes(:,:,:,:,2), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
 
             call check(nf90_put_var(ncid, lEdgVarID, &
-            RESHAPE( radar_edge(:,:,:,:,1), (/ nfrq, atmo_max_nlyr, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( radar_edge(:,:,:,:,1), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
             call check(nf90_put_var(ncid, rEdgVarID, &
-            RESHAPE( radar_edge(:,:,:,:,2), (/ nfrq, atmo_max_nlyr, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( radar_edge(:,:,:,:,2), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
 
             call check(nf90_put_var(ncid, RadarSNRID, &
-            RESHAPE( radar_snr, (/ nfrq, atmo_max_nlyr, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( radar_snr, (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
             call check(nf90_put_var(ncid, rQualVarID, &
-            RESHAPE( radar_quality(:,:,:,:), (/ nfrq, atmo_max_nlyr, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( radar_quality(:,:,:,:), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
             if (radar_mode == "spectrum") then
                 call check(nf90_put_var(ncid, RadarVelID, radar_vel))
                 call check(nf90_put_var(ncid, RadarSpecID, &
-                RESHAPE( radar_spectra, (/ radar_nfft, nfrq, atmo_max_nlyr, atmo_ngridy, atmo_ngridx/), ORDER = (/5,4,3,2,1/))))
+                RESHAPE( radar_spectra, (/ radar_nfft, nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/5,4,3,2,1/))))
             end if
         end if
 

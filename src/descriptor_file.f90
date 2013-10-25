@@ -118,9 +118,7 @@ subroutine allocate_descriptor_file(errorstatus)
   character(len=80) :: msg
   character(len=30) :: nameOfRoutine = 'allocate_descriptor_file'
 
-      print*, "n_hydro1", n_hydro, err
   if (verbose >= 5) call report(info,'Start of ', nameOfRoutine)
-      print*, "n_hydro2", n_hydro, err
   call assert_true(err,n_hydro>0,&
       "n_hydro must be greater zero")  
   if (err > 0) then
@@ -163,8 +161,6 @@ subroutine deallocate_descriptor_file()
 
   character(len=30) :: nameOfRoutine = 'deallocate_descriptor_file'
   if (verbose >= 5) call report(info,'Start of ', nameOfRoutine)
-
-  call printDescriptorVars()
 
   if (allocated(hydro_name_arr)) deallocate(hydro_name_arr)
   if (allocated(as_ratio_arr)) deallocate(as_ratio_arr)

@@ -38,9 +38,6 @@ def PamtraFortranWrapper(
     else:
       if settings["pyVerbose"] > 3: print("pyPamtraLib.settings."+key +" = " + str(nmlSettings[key]))
       exec("pyPamtraLib.settings."+key +" = " + str(nmlSettings[key]))
-
-  for key in nmlSettings.keys():
-    exec("print key, pyPamtraLib.settings."+key )
     
   #see whether it worked:
   if settings["pyVerbose"] > 3:
@@ -48,8 +45,7 @@ def PamtraFortranWrapper(
     pyPamtraLib.settings.print_settings()
     
 
-
-  #deal with teh descriptor_file
+  #deal with the descriptor_file
   pyPamtraLib.descriptor_file.n_hydro = len(descriptorFile.data)
   
   #allocation of string array does not work via f2py. Thus we allocate the arrays in Fortran:
@@ -76,14 +72,46 @@ def PamtraFortranWrapper(
     if settings["pyVerbose"] > 3: print("pyPamtraLib.descriptor_file."+name4d +"_arr = descriptorFile.data4D['"+name4d+"'].tolist()")
     exec("pyPamtraLib.descriptor_file."+name4d +"_arr = descriptorFile.data4D['"+name4d+"'].tolist()")
   
-
   #see whether it worked:
   if settings["pyVerbose"] > 3:
     print "Fortran view on descriptor_file variables"
     pyPamtraLib.descriptor_file.printdescriptorvars()
+    
+    
+  pyPamtraLib.vars_atmosphere.atmo_ngridx = profile["ngridx"]  
+  pyPamtraLib.vars_atmosphere.atmo_ngridy = profile["ngridy"]  
+  pyPamtraLib.vars_atmosphere.atmo_max_nlyrs = profile["max_nlyrs"]  
+  
+  error = pyPamtraLib.vars_atmosphere.allocate_atmosphere_vars()  
+  if error > 0: raise RuntimeError("Error in allocate_vars_atmosphere")
+  
+  #return  dict(),pyPamtraLib    
+  #deal with the atmospheric input_file
+  for key in profile.keys():
+    if key in ["ngridx","ngridy","max_nlyrs"]:
+      continue
+    
+    elif type(profile[key]) in [int, float, str]:
+      if settings["pyVerbose"] > 3: print("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
+      exec("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"']")
+    elif type(profile[key]) == np.ndarray:
+      if settings["pyVerbose"] > 3: print("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
+      exec("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
+    #pyPamtraLib.vars_atmosphere.atmo_max_nlyr
+  
+  pyPamtraLib.vars_atmosphere.fillmissing_atmosphere_vars()  
+  
+  #see whether it worked:
+  if settings["pyVerbose"] > 3:
+    print "Fortran view on vars_atmosphere variables"
+    pyPamtraLib.vars_atmosphere.print_vars_atmosphere()
+    
+    
+  #now, finally rund the model  
   error = pyPamtraLib.pypamtralib.run_pamtra() 
   if error > 0: raise RuntimeError("Error in run_pamtra")
   
+  #process the results!
   results = dict()
   for key in ["tb","Ze","Att_hydro","Att_atmo","radar_hgt","radar_moments","radar_slopes","radar_quality","radar_snr", "radar_spectra","psd_d_bound","psd_f","psd_mass","psd_area"]:
     if settings["pyVerbose"] > 3: print("allocTest = pyPamtraLib.vars_output."+key.lower()+" == None")

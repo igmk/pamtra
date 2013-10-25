@@ -55,6 +55,63 @@ python module pyPamtraLib ! in
                 use vars_atmosphere
             end subroutine deallocate_output_vars
         end module vars_output
+        module vars_atmosphere ! in :pyPamtraLib:vars_atmosphere.f90
+            use report_module
+            use kinds
+            use settings, only: maxfreq
+            integer(kind=long_bn), allocatable,dimension(:,:) :: atmo_unixtime
+            real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_hgt
+            character(len=4), allocatable,dimension(:,:) :: atmo_time
+            real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_temp_lev
+            real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_press_lev
+            real(kind=sgl), allocatable,dimension(:,:) :: atmo_lfrac
+            real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_hgt_lev
+            character(len=4), allocatable,dimension(:,:) :: atmo_year
+            real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_vapor_pressure
+            real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_relhum
+            real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_relhum_lev
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: atmo_hydro_reff
+            real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_temp
+            integer(kind=long_bn) :: atmo_ngridy
+            integer(kind=long_bn) :: atmo_ngridx
+            real(kind=dbl), allocatable,dimension(:,:) :: atmo_groundtemp
+            real(kind=sgl) :: cwp
+            real(kind=dbl), allocatable,dimension(:,:) :: atmo_iwv
+            integer(kind=long_bn), allocatable,dimension(:,:) :: atmo_model_i
+            integer(kind=long_bn), allocatable,dimension(:,:) :: atmo_model_j
+            real(kind=sgl), allocatable,dimension(:,:) :: atmo_lon
+            real(kind=sgl) :: gwp
+            real(kind=sgl) :: swp
+            real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_rho_vap
+            real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_delta_hgt_lev
+            real(kind=sgl), allocatable,dimension(:,:) :: atmo_deltax
+            character(len=2), allocatable,dimension(:,:) :: atmo_month
+            real(kind=sgl) :: rwp
+            real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_q_hum
+            integer(kind=long_bn), allocatable,dimension(:,:) :: atmo_nlyrs
+            real(kind=sgl) :: iwp
+            integer(kind=long_bn) :: atmo_max_nlyrs
+            real(kind=sgl) :: hwp
+            real(kind=sgl), allocatable,dimension(:,:) :: atmo_wind10u
+            real(kind=sgl), allocatable,dimension(:,:) :: atmo_wind10v
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: atmo_hydro_n
+            character(len=2), allocatable,dimension(:,:) :: atmo_day
+            real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_press
+            real(kind=sgl), allocatable,dimension(:,:) :: atmo_lat
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: atmo_hydro_q
+            real(kind=sgl), allocatable,dimension(:,:) :: atmo_deltay
+            subroutine allocate_atmosphere_vars(errorstatus) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
+                use descriptor_file, only: n_hydro
+                integer(kind=long_bn) intent(out) :: errorstatus
+            end subroutine allocate_atmosphere_vars
+            subroutine deallocate_atmosphere_vars ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
+            end subroutine deallocate_atmosphere_vars
+            subroutine fillmissing_atmosphere_vars(errorstatus) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
+                integer(kind=long_bn) intent(out) :: errorstatus
+            end subroutine fillmissing_atmosphere_vars
+            subroutine print_vars_atmosphere ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
+            end subroutine print_vars_atmosphere
+        end module vars_atmosphere
         module settings ! in :pyPamtraLib:settings.f90
             use kinds
             character(len=300) :: nc_out_file
@@ -198,7 +255,6 @@ python module pyPamtraLib ! in
             use vars_output
             use vars_atmosphere
             use settings
-            use vars_profile
             use report_module
             use double_moments_module
             character(len=40) :: gitversion
