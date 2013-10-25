@@ -130,7 +130,8 @@
                     UP_RAD, DOWN_RAD)
 
       use kinds
-      use vars_atmosphere, only: wind10u, wind10v
+      use vars_atmosphere, only: atmo_wind10u, atmo_wind10v
+      use vars_index, only: i_x, i_y
     use vars_rt, only : &
         rt_hydros_present_reverse
      use settings, only: verbose
@@ -372,17 +373,17 @@ lobatto_quadrature
      ELSEIF(GROUND_TYPE .EQ. 'O') THEN
     ! call fastem4 ocean emissivity model. the correction due to transmittance is not necessary in
     ! our multi-stream model (?!)
-        wind10 = sqrt(wind10u**2+wind10v**2)
-        IF (wind10u >= 0.0 .AND. wind10v >= 0.0 ) iquadrant = 1
-        IF (wind10u >= 0.0 .AND. wind10v <  0.0 ) iquadrant = 2
-        IF (wind10u <  0.0 .AND. wind10v >= 0.0 ) iquadrant = 4
-        IF (wind10u <  0.0 .AND. wind10v <  0.0 ) iquadrant = 3
-        IF (abs(wind10v) >= 0.0001) THEN
-           windratio = wind10u / wind10v
+        wind10 = sqrt(atmo_wind10u(i_x,i_y)**2+atmo_wind10v(i_x,i_y)**2)
+        IF (atmo_wind10u(i_x,i_y) >= 0.0 .AND. atmo_wind10v(i_x,i_y) >= 0.0 ) iquadrant = 1
+        IF (atmo_wind10u(i_x,i_y) >= 0.0 .AND. atmo_wind10v(i_x,i_y) <  0.0 ) iquadrant = 2
+        IF (atmo_wind10u(i_x,i_y) <  0.0 .AND. atmo_wind10v(i_x,i_y) >= 0.0 ) iquadrant = 4
+        IF (atmo_wind10u(i_x,i_y) <  0.0 .AND. atmo_wind10v(i_x,i_y) <  0.0 ) iquadrant = 3
+        IF (abs(atmo_wind10v(i_x,i_y)) >= 0.0001) THEN
+           windratio = atmo_wind10u(i_x,i_y) / atmo_wind10v(i_x,i_y)
         ELSE
            windratio = 0.0
-           IF (abs(wind10u) > 0.0001) THEN
-              windratio = 999999.0 * wind10u
+           IF (abs(atmo_wind10u(i_x,i_y)) > 0.0001) THEN
+              windratio = 999999.0 * atmo_wind10u(i_x,i_y)
            ENDIF
         ENDIF
         windangle        = atan(abs(windratio))

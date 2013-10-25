@@ -8,7 +8,7 @@ subroutine run_rt(errorstatus)
     use settings !all settings go here
     use vars_atmosphere !input variables and reading routine
     use vars_output !output variables
-    use vars_rt, only: rt_kextatmo
+    use vars_rt, only: rt_kextatmo, allocate_rt_vars, deallocate_rt_vars
     use double_moments_module
     use mod_io_strings, only: xstr, nxstr, ystr, nystr, frq_str
     use report_module
@@ -38,6 +38,14 @@ subroutine run_rt(errorstatus)
 
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
 
+    call allocate_rt_vars(err)
+    if (err /= 0) then
+        msg = 'Error in allocate_rt_vars!'
+        call report(fatal, msg, nameOfRoutine)
+      errorstatus = err
+      return
+    end if
+
     freq = freqs(i_f)
     frq_str = frqs_str(i_f)
     wavelength = c / (freq*1.d3)   ! microns
@@ -45,10 +53,10 @@ subroutine run_rt(errorstatus)
 print*, "replace by atmo_groundtemp?"
     !  if (verbose .gt. 0) print*, "calculating: ", frq_str, " Y:",i_y, " of ", ngridy, "X:", i_x, " of ", ngridx
 
-    write(xstr, '(i3.3)') model_i
-    write(ystr, '(i3.3)') model_j
-    write(nxstr, '(i4)') ngridx
-    write(nystr, '(i4)') ngridy
+    write(xstr, '(i3.3)') atmo_model_i(i_x,i_y)
+    write(ystr, '(i3.3)') atmo_model_j(i_x,i_y)
+    write(nxstr, '(i4)') atmo_ngridx
+    write(nystr, '(i4)') atmo_ngridy
 
     msg = "calculating: "// frq_str// " Y: "//ystr//" of "//nystr//" X: "//xstr//" of "//nxstr
 
@@ -119,10 +127,10 @@ print*, "replace by atmo_groundtemp?"
     !&&&&&&&&   I/O FILE NAMES   &&&&&&&&&&&&&&&&&&
 
     OUT_FILE_PAS = output_path(:len_trim(output_path))//"/"//&
-    date_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_passive"
+    atmo_date_str(i_x,i_y)//'x'//xstr//'y'//ystr//'f'//frq_str//"_passive"
 
     OUT_FILE_ACT = output_path(:len_trim(output_path))//"/"//&
-    date_str//'x'//xstr//'y'//ystr//'f'//frq_str//"_active"
+    atmo_date_str(i_x,i_y)//'x'//xstr//'y'//ystr//'f'//frq_str//"_active"
 
     !save active to ASCII
     if (active .and. (write_nc .eqv. .false.) .and. (in_python .eqv. .false.)) then
@@ -130,13 +138,13 @@ print*, "replace by atmo_groundtemp?"
     end if
 
 
-    if (write_nc) then
-        !      Output integrated quantities
-        call collect_boundary_output(lon,lat,lfrac,&
-        iwv, cwp,iwp,rwp,swp, &
-        gwp,hwp,model_i,model_j,i_x,i_y)
-        if (verbose >= 2) print*, i_x,i_y, 'collect_boundary_output done'
-    end if
+!     if (write_nc) then
+!         !      Output integrated quantities
+!         call collect_boundary_output(atmo_lon(i_x,i_y),atmo_lat,atmo_lfrac,&
+!         atmo_iwv, cwp,iwp,rwp,swp, &
+!         gwp,hwp,atmo_model_i,atmo_model_j,i_x,i_y)
+!         if (verbose >= 2) print*, i_x,i_y, 'collect_boundary_output done'
+!     end if
 
     ! find the output level
 print*, "EMILIANO, double check here height index of atom_hgt_lev, please (run_rt.f90)"
@@ -173,6 +181,9 @@ print*, "EMILIANO, double check here height index of atom_hgt_lev, please (run_r
         angles_deg(1+NUMMU:2*NUMMU) = (180.*acos(MU_VALUES(1:NUMMU))/pi)
 
     end if
+
+    !DEALLOCATE rt variables
+    call deallocate_rt_vars()
 
     if (verbose >= 1) call report(info,'End of ', nameOfRoutine)
     errorstatus = err

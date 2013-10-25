@@ -34,7 +34,22 @@ module vars_rt
 
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
+
+
     nlyr = atmo_nlyrs(i_x,i_y)
+
+    call assert_true(err,(nlyr>0),&
+        "nlyr must be greater zero")   
+    call assert_true(err,(nstokes>0),&
+        "nstokes must be greater zero")   
+    call assert_true(err,(nummu>0),&
+        "nummu must be greater zero")   
+    if (err > 0) then
+        errorstatus = fatal
+        msg = "assertation error"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+    end if  
 
     allocate(rt_kextatmo(nlyr), stat=alloc_status)
     allocate(rt_kexttot(nlyr), stat=alloc_status)

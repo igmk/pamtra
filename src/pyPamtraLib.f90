@@ -4,7 +4,6 @@
     !    use constants !physical constants live here
     use settings !all settings go here
     use vars_atmosphere !input variables and reading routine
-    use vars_rt, only: allocate_rt_vars, deallocate_rt_vars
     use vars_output !output variables
     use vars_profile
     use vars_jacobian, only: allocate_jacobian_vars, deallocate_jacobian_vars
@@ -70,7 +69,7 @@
       !!! read variables from namelist file
 !       call settings_read  !from settings.f90
 
-      in_python = .false.! we are _not_ in python
+      in_python = .true.! we are _not_ in python
 
       if (verbose >= 1) then
           msg = "input_file: "//input_file(:len_trim(input_file))//&
@@ -86,29 +85,25 @@
 !!! read the data
 call get_atmosphere
 ! 1tmporary: this should go into the call get_atmosphere routine!
-
-year = profiles_year
-month = profiles_month
-day = profiles_day
-time = profiles_time
-ngridx = profiles_ngridx
-ngridy = profiles_ngridy
-deltax = profiles_deltax
-deltay = profiles_deltay
-date_str = year//month//day//time
-
-
 !python input can have different number of nlayer
-atmo_max_nlyr = profiles_nlyr
+atmo_nlyrs(:,:) = profiles_nlyr
+atmo_max_nlyr = MAXVAL(atmo_nlyrs
+atmo_ngridx = profiles_ngridx
+atmo_ngridy = profiles_ngridy
 
-call allocate_atmosphere_vars()
+call allocate_atmosphere_vars(err)
+if (err /= 0) then
+    msg = 'Error in allocate_atmosphere_vars!'
+    call report(fatal, msg, nameOfRoutine)
+  errorstatus = err
+  return
+end if
 
 atmo_nlyrs(:,:) = profiles_nlyr
 
 !temporary loop to fill atmosphere array:
-do i_y = 1, ngridy !i_x_in, i_x_fin
-  do i_x = 1, ngridx
-print*, i_y, i_x
+do i_y = 1, profiles_ngridy !i_x_in, i_x_fin
+  do i_x = 1, profiles_ngridx
       atmo_relhum_lev(i_x,i_y,:) = profiles(i_x,i_y)%relhum_lev
       atmo_press_lev(i_x,i_y,:) = profiles(i_x,i_y)%press_lev
       atmo_temp_lev(i_x,i_y,:) = profiles(i_x,i_y)%temp_lev
@@ -132,11 +127,38 @@ print*, i_y, i_x
 
       atmo_hydro_q(i_x,i_y,:,5) = profiles(i_x,i_y)%graupel_q
 !       atmo_hydro_n(i_x,i_y,:,5) = profiles(i_x,i_y)%graupel_n
+
+
+    atmo_month(i_x,i_y) = profiles_month
+    atmo_day(i_x,i_y) = profiles_day
+    atmo_year(i_x,i_y) = profiles_year
+    atmo_time(i_x,i_y) =profiles_time
+
+    atmo_date_str(i_x,i_y) = profiles_year//profiles_month//profiles_day//profiles_time
+    atmo_deltax(i_x,i_y) = profiles_deltax
+    atmo_deltay(i_x,i_y) = profiles_deltay
+    atmo_model_i(i_x,i_y) = profiles(i_x,i_y)%isamp
+    atmo_model_j(i_x,i_y) = profiles(i_x,i_y)%jsamp
+    atmo_lon(i_x,i_y) = profiles(i_x,i_y)%longitude       
+    atmo_lat(i_x,i_y) = profiles(i_x,i_y)%latitude       
+    atmo_lfrac(i_x,i_y) = profiles(i_x,i_y)%land_fraction
+    atmo_wind10u(i_x,i_y) = profiles(i_x,i_y)%wind_10u
+    atmo_wind10v(i_x,i_y) = profiles(i_x,i_y)%wind_10v
+
+    atmo_iwv(i_x,i_y) = profiles(i_x,i_y)%iwv
+
     end do
 end do
-      ! now allocate variables
-      call allocate_output_vars(atmo_max_nlyr)
 
+
+      ! now allocate variables
+      call allocate_output_vars(err,atmo_max_nlyr)
+      if (err /= 0) then
+          msg = 'Error in allocate_output_vars!'
+          call report(fatal, msg, nameOfRoutine)
+        errorstatus = err
+        return
+      end if
 
 
       msg = 'Start loop over frequencies & profiles!'
@@ -149,52 +171,8 @@ end do
               !for jacobian mode. non disturbed profile is expected in grid 1,1!
             call allocate_jacobian_vars(atmo_nlyrs(i_x,i_y))
           end if
-          grid_y: do i_y = 1, ngridy !i_x_in, i_x_fin
-              grid_x: do i_x = 1, ngridx !i_y_in, i_y_fin
-
-                  call allocate_rt_vars(err)
-                  if (err /= 0) then
-                      msg = 'Error in allocate_rt_vars!'
-                      call report(fatal, msg, nameOfRoutine)
-                    errorstatus = err
-                    return
-                  end if
-                  !   ground_temp = profiles(i_x,i_y)%temp_lev(0)       ! K
-                  lat = profiles(i_x,i_y)%latitude                  ! °
-                  lon = profiles(i_x,i_y)%longitude                 ! °
-                  lfrac = profiles(i_x,i_y)%land_fraction
-!                   relhum_lev = profiles(i_x,i_y)%relhum_lev         ! %
-!                   press_lev = profiles(i_x,i_y)%press_lev           ! Pa
-!                   temp_lev = profiles(i_x,i_y)%temp_lev             ! K
-!                   hgt_lev = profiles(i_x,i_y)%hgt_lev               ! m
-
-                  model_i = profiles(i_x,i_y)%isamp
-                  model_j = profiles(i_x,i_y)%jsamp
-                  wind10u = profiles(i_x,i_y)%wind_10u
-                  wind10v = profiles(i_x,i_y)%wind_10v
-
-                  iwv = profiles(i_x,i_y)%iwv
-                  cwp = profiles(i_x,i_y)%cwp
-                  iwp = profiles(i_x,i_y)%iwp
-                  rwp = profiles(i_x,i_y)%rwp
-                  swp = profiles(i_x,i_y)%swp
-                  gwp = profiles(i_x,i_y)%gwp
-                  hwp = profiles(i_x,i_y)%hwp
-
-!                   cwc_q = profiles(i_x,i_y)%cloud_water_q           ! kg/kg
-!                   iwc_q = profiles(i_x,i_y)%cloud_ice_q             ! kg/kg
-!                   rwc_q = profiles(i_x,i_y)%rain_q                  ! kg/kg
-!                   swc_q = profiles(i_x,i_y)%snow_q                  ! kg/kg
-!                   gwc_q = profiles(i_x,i_y)%graupel_q               ! kg/kg
-!                   if (n_moments .eq. 2) then
-!                       hwc_q = profiles(i_x,i_y)%hail_q              ! kg/kg
-!                       cwc_n = profiles(i_x,i_y)%cloud_water_n       ! #/kg
-!                       iwc_n = profiles(i_x,i_y)%cloud_ice_n         ! #/kg
-!                       rwc_n = profiles(i_x,i_y)%rain_n              ! #/kg
-!                       swc_n = profiles(i_x,i_y)%snow_n              ! #/kg
-!                       gwc_n = profiles(i_x,i_y)%graupel_n           ! #/kg
-!                       hwc_n = profiles(i_x,i_y)%hail_n              ! #/kg
-!                   end if
+          grid_y: do i_y = 1, atmo_ngridy !i_x_in, i_x_fin
+              grid_x: do i_x = 1, atmo_ngridx !i_y_in, i_y_fin
 
                   !run the model
                   call run_rt(err)
@@ -204,8 +182,7 @@ end do
                       errorstatus = err
                       return
                   end if
-                  !DEALLOCATE rt variables
-                  call deallocate_rt_vars()
+
               end do grid_x
           end do grid_y
           if (jacobian_mode) then
