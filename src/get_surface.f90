@@ -101,9 +101,18 @@ subroutine get_surface &
 
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
 
-
-
-
+      call assert_true(err,(freq>0),&
+          "freq must be positive")  
+      call assert_true(err,(ground_temp>=0),&
+          "ground_temp must be positive")   
+      call assert_true(err,(salinity>0),&
+          "salinity must be positive")   
+       if (err > 0) then
+          errorstatus = fatal
+          msg = "assertation error"
+          call report(errorstatus, msg, nameOfRoutine)
+          return
+      end if    
 
     if (atmo_lfrac(i_x,i_y) >= 0.5_dbl .and. atmo_lfrac(i_x,i_y) <= 1.0_dbl) then
         ground_type = 'S' ! changed to specular after advice of cathrine prigent
@@ -150,6 +159,16 @@ subroutine get_surface &
         ! this is for ground_type specified in run_params.nml
         ground_albedo = 1.d0 - emissivity
     end if
+
+      call assert_true(err,(ground_albedo>0),&
+          "freq must be positive")  
+       if (err > 0) then
+          errorstatus = fatal
+          msg = "assertation error"
+          call report(errorstatus, msg, nameOfRoutine)
+          return
+      end if    
+
 
     errorstatus = err
     if (verbose >= 1) call report(info,'End of ', nameOfRoutine)

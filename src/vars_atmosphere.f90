@@ -335,7 +335,7 @@ module vars_atmosphere
         end do
     !for ground temp, simply use the lowes avalable one if not provided
     if (isnan(atmo_groundtemp(nx,ny))) &
-        atmo_groundtemp(nx,ny) = atmo_temp_lev(nx,ny,nz)
+        atmo_groundtemp(nx,ny) = atmo_temp_lev(nx,ny,1)
 
     !test whether we still have nans in our data!
     call assert_false(err,ANY(ISNAN(atmo_q_hum(nx,ny,1:atmo_nlyrs(nx,ny)))),&
@@ -373,6 +373,7 @@ call assert_false(err,ANY(ISNAN(atmo_groundtemp(:,:))),&
         return
     end if  
 
+   if (verbose >= 5) call print_vars_atmosphere()
 
     errorstatus = err
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
