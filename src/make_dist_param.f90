@@ -31,7 +31,7 @@ subroutine make_dist_params(errorstatus)
 
   use drop_size_dist, only: dist_name, p_1, p_2, p_3, p_4, a_ms, b_ms, d_1, moment_in, & ! IN
                             q_h, n_tot, r_eff, layer_t,                                & ! IN
-                            n_0, lambda, mu, gam, n_t, sig, d_ln, d_mono                 ! OUT
+                            n_0, lambda, mu, gam, n_t, sig, d_ln, d_mono, d_m, n_0_star ! OUT
 
 ! Imported Scalar Variables with intent (in):
 
@@ -71,6 +71,8 @@ subroutine make_dist_params(errorstatus)
   sig = -99.
   d_ln = nan()
   d_mono = -99.
+  d_m = -99.
+  n_0_star = -99.
 
 ! check for "reasonable" input values
   if (moment_in == 3 .and. q_h <= 0.) then      
@@ -401,6 +403,30 @@ subroutine make_dist_params(errorstatus)
     if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
     return
   endif
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! NORMALIZED MODIFIED GAMMA distribution   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  if (trim(dist_name) == 'norm_mgamma') then
+! ! The user MUST specify d_m, n_0_star and mu parameters
+    call assert_false(err,(p_1 == -99. .or. p_2 == -99..or. p_3 == -99.),&
+        'Normalized Modified Gamma case: p_1, p_2, and p_3 parameters must be specified...')
+    call assert_true(err,(moment_in == 0),&
+        'Normalized Modified Gamma case: currently only implemented for moment_in = 0')
+    if (err > 0) then
+        errorstatus = fatal
+        msg = "assertation error"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+    end if    
+    d_m  = p_1
+    n_0_star = p_2
+    mu = p_3
+    errorstatus = err
+    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+    return
+  endif
+
 
 !  If we are here something went wrong...
   msg = 'Distribution not yet implemented: '//trim(dist_name)

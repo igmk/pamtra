@@ -41,8 +41,7 @@ subroutine make_dist(errorstatus)
   use constants, only: pi, delta_d_mono
 
   use drop_size_dist, only: dist_name, d_1, d_2, nbin, n_0, lambda, mu, gam, n_t, d_ln, sig, d_mono, & ! IN
-                            d_ds, d_bound_ds, f_ds, n_ds, delta_d_ds                                               ! OUT
-
+                            d_ds, d_bound_ds, f_ds, n_ds, delta_d_ds, b_ms, n_0_star, d_m
   implicit none
 
 !- End of header ---------------------------------------------------------------
@@ -53,7 +52,7 @@ subroutine make_dist(errorstatus)
 
 ! Local scalar:
 
-  real(kind=dbl) :: d_1_work, d_2_work, work1
+  real(kind=dbl) :: d_1_work, d_2_work, work1, tmp1, tmp2, tmpX
   integer(kind=long) :: i
 
 ! Error handling
@@ -89,12 +88,21 @@ subroutine make_dist(errorstatus)
       f_ds(i) = n_t / (d_bound_ds(i) * sig * sqrt(2._dbl * pi)) * &
                 EXP(-( (log(d_bound_ds(i)) - d_ln)**2 )/(2. * sig**2) )
     enddo
-! modified gamma, gamma or exponetial distribution
-  else
+! normalized modified gamma
+!follows the definition from Testud et al, 
+!but with Dmax as size descriptor and 
+!WITHOUT fixed exponent of mass size relation! Instead, use, b of mass size relation
+!d_m defined as M_(b+1)/M_b (with M_i the ith moment)
+!N_0_star = (b_ms+1)**(b_ms+1)/gamma(b_ms+1) *M_b**(b_ms+2)/M_(b+1)**(b_ms+1)
+  else if (trim(dist_name) == 'norm_mgamma') then
     do i=1,nbin+1
-      f_ds(i) = n_0 * d_bound_ds(i)**mu * EXP(-lambda * d_bound_ds(i)**gam)
+      tmpX =  d_bound_ds(i)/d_m
+      tmp1 = gamma(b_ms+1)/(b_ms+1)**(b_ms+1) * (b_ms+mu+1)**(b_ms+mu+1)/gamma(b_ms+mu+1)
+      tmp2 = exp(-(b_ms+mu+1)*tmpX)
+      f_ds(i) = n_0_star * tmp1 * tmpX**mu * tmp2
     enddo
   endif
+
   do i=1,nbin
     delta_d_ds(i) =  d_bound_ds(i+1) - d_bound_ds(i)
     n_ds(i) = (f_ds(i) + f_ds(i+1)) / 2._dbl * delta_d_ds(i)  ! trapezoid approximation of the integral

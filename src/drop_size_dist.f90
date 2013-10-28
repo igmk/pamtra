@@ -40,6 +40,7 @@ module drop_size_dist
   real(kind=dbl)                 ::  n_0, lambda, gam, mu    ! parameter of the modified Gamma distribution
   real(kind=dbl)                 ::  n_t, sig, d_ln          ! parameter of the log-normal distribution
   real(kind=dbl)                 ::  d_mono                  ! diameter for the monodisperse distribution
+  real(kind=dbl)                 ::  d_m, n_0_star           ! additional parameter for the normalized gamam distribution (with mu)
 
 ! make_dist OUT
   real(kind=dbl), dimension(:), allocatable  :: d_ds         ! particle diameter                        [m]
@@ -122,8 +123,8 @@ subroutine run_drop_size_dist(errorstatus)
   call make_dist_params(errorstatus)
 
   if (verbose >= 4) then
-    write(6,'(2(a15),8(a20))') 'hydro_name','dist_name','n_0','lambda','mu','gam','n_t','sig','d_ln','d_mono'
-    write(6,'(2(a15),8(e20.10))') trim(hydro_name),trim(dist_name),n_0, lambda, mu, gam, n_t, sig, d_ln, d_mono
+    write(6,'(2(a15),8(a20))') 'hydro_name','dist_name','n_0','lambda','mu','gam','n_t','sig','d_ln','d_mono', 'd_m', 'n_0_star'
+    write(6,'(2(a15),8(e20.10))') trim(hydro_name),trim(dist_name),n_0, lambda, mu, gam, n_t, sig, d_ln, d_mono, d_m, n_0_star
   endif
 
   if (errorstatus == 2) then
