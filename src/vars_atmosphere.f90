@@ -77,6 +77,7 @@ module vars_atmosphere
        atmo_temp, &
        atmo_hgt, &
        atmo_delta_hgt_lev, &
+       atmo_airturb, &
        atmo_vapor_pressure, &
        atmo_rho_vap, &
        atmo_q_hum 
@@ -147,6 +148,7 @@ module vars_atmosphere
 
     allocate(atmo_hgt(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
     allocate(atmo_delta_hgt_lev(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
+    allocate(atmo_airturb(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
 
 
     allocate(atmo_hydro_q(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs,n_hydro))
@@ -185,6 +187,7 @@ module vars_atmosphere
     atmo_q_hum(:,:,:) = nan()
     atmo_hgt(:,:,:) = nan()
     atmo_delta_hgt_lev(:,:,:) = nan()
+    atmo_airturb(:,:,:) = 0.d0
 
     atmo_hydro_q(:,:,:,:) = nan()
     atmo_hydro_reff(:,:,:,:) = nan()
@@ -217,6 +220,7 @@ module vars_atmosphere
     if (allocated(atmo_temp)) deallocate(atmo_temp)
     if (allocated(atmo_hgt)) deallocate(atmo_hgt)
     if (allocated(atmo_delta_hgt_lev)) deallocate(atmo_delta_hgt_lev)
+    if (allocated(atmo_airturb)) deallocate(atmo_airturb)
 
     if (allocated(atmo_hydro_q)) deallocate(atmo_hydro_q)
     if (allocated(atmo_hydro_reff)) deallocate(atmo_hydro_reff)
@@ -271,6 +275,16 @@ module vars_atmosphere
       do ny = 1, atmo_ngridy
           if (verbose >= 5) print*,  "processing", nx, ny, nz
 
+          !these one depend not on z:
+          if (atmo_unixtime(nx,ny) /= -9999) then
+                call GMTIME(atmo_unixtime(nx,ny),timestamp)
+                write(atmo_year(nx,ny),"(i4.4)") timestamp(6)+1900
+                write(atmo_month(nx,ny),"(i2.2)") timestamp(5)+1
+                write(atmo_day(nx,ny),"(i2.2)") timestamp(4)
+                write(atmo_time(nx,ny)(1:2),"(i2.2)") timestamp(3)
+                write(atmo_time(nx,ny)(3:4),"(i2.2)") timestamp(2)
+          end if
+
           ! make the lev vairables which are needed
           ! not needed anywhere as of today are press_lev and relhum_lev:
 
@@ -302,14 +316,6 @@ module vars_atmosphere
           !now teh non-lev variables
           do nz = 1, atmo_nlyrs(nx,ny)
 
-          if (atmo_unixtime(nx,ny) /= -9999) then
-                call GMTIME(atmo_unixtime(nx,ny),timestamp)
-                write(atmo_year(nx,ny),"(i4.4)") timestamp(6)+1900
-                write(atmo_month(nx,ny),"(i2.2)") timestamp(5)+1
-                write(atmo_day(nx,ny),"(i2.2)") timestamp(4)
-                write(atmo_time(nx,ny)(1:2),"(i2.2)") timestamp(3)
-                write(atmo_time(nx,ny)(3:4),"(i2.2)") timestamp(2)
-          end if
           ! first test the non lev variables for nan and calculate them otherwise
           if (isnan(atmo_temp(nx,ny,nz))) &
                 atmo_temp(nx,ny,nz) = 0.5 * (atmo_temp_lev(nx,ny,nz) + atmo_temp_lev(nx,ny,nz+1)) 
@@ -322,7 +328,7 @@ module vars_atmosphere
                 atmo_hgt(nx,ny,nz) = (atmo_hgt_lev(nx,ny,nz)+atmo_hgt_lev(nx,ny,nz+1))*0.5d0
           if (isnan(atmo_delta_hgt_lev(nx,ny,nz))) &
                 atmo_delta_hgt_lev(nx,ny,nz) = atmo_hgt_lev(nx,ny,nz+1) - atmo_hgt_lev(nx,ny,nz)
-          ! now the ones which depend on several
+         ! now the ones which depend on several
           if (isnan(atmo_vapor_pressure(nx,ny,nz))) &
                 atmo_vapor_pressure(nx,ny,nz) = atmo_relhum(nx,ny,nz) * &
                 e_sat_gg_water(atmo_temp(nx,ny,nz)) ! Pa
@@ -346,6 +352,8 @@ module vars_atmosphere
         "found nan in atmo_vapor_pressure")   
     call assert_false(err,ANY(ISNAN(atmo_delta_hgt_lev(nx,ny,1:atmo_nlyrs(nx,ny)))),&
         "found nan in atmo_delta_hgt_lev")   
+    call assert_false(err,ANY(ISNAN(atmo_airturb(nx,ny,1:atmo_nlyrs(nx,ny)))),&
+        "found nan in atmo_airturb")   
     call assert_false(err,ANY(ISNAN(atmo_hgt(nx,ny,1:atmo_nlyrs(nx,ny)))),&
         "found nan in atmo_hgt")   
     call assert_false(err,ANY(ISNAN(atmo_press(nx,ny,1:atmo_nlyrs(nx,ny)))),&
@@ -400,6 +408,7 @@ call assert_false(err,ANY(ISNAN(atmo_groundtemp(:,:))),&
     print*, "atmo_temp", atmo_temp
     print*, "atmo_hgt", atmo_hgt
     print*, "atmo_delta_hgt_lev", atmo_delta_hgt_lev
+    print*, "atmo_airturb", atmo_airturb
 
     print*, "atmo_hydro_q", atmo_hydro_q
     print*, "atmo_hydro_reff", atmo_hydro_reff

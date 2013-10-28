@@ -94,11 +94,15 @@ class pamDescriptorFile(object):
     return mlab.rec2csv(data, fname, delimiter=' ',withheader=False)
       
   def addHydrometeor(self,hydroTuple):
+    assert hydroTuple[0] not in self.data["hydro_name"]
     self.data = np.append(self.data,np.array(tuple(hydroTuple),dtype=zip(self.names,self.types)))
     self.nhydro += 1
     return
     
   def removeHydrometeor(self,hydroName):
+    if hydroName == "all":
+      self.__init__()
+      return
     removed = False
     self.dataNew = np.recarray((0,),dtype=zip(self.names, self.types))
     for ii in range(self.data.shape[0]):
@@ -136,8 +140,7 @@ class pyPamtra(object):
     self.df = pamDescriptorFile()
     
     self.p = dict()
-    self._helperP = dict()
-    self.r = dict()
+    /*-.r = dict()
     
  
   
@@ -151,9 +154,6 @@ class pyPamtra(object):
     # sec inoutput_mode
     self.nmlSet["write_nc"]= True
     self.nmlSet["dump_to_file"]= False
-    self.nmlSet["input_path"]= 'profile/'
-    self.nmlSet["output_path"]= 'output/'
-    self.nmlSet["input_type"]= 'profile'
     self.nmlSet["tmp_path"]= '/tmp/'
     self.nmlSet["data_path"]= 'data/'
     self.nmlSet["crm_case"]= ''
@@ -166,7 +166,6 @@ class pyPamtra(object):
     self.nmlSet["obs_height"]= 833000.
     self.nmlSet["units"]= 'T'
     self.nmlSet["outpol"]= 'VH'
-    self.nmlSet["freq_str"]= ''
     self.nmlSet["file_desc"]= ''
     self.nmlSet["creator"]= 'Pamtrauser'
     # sec run_mode
@@ -183,8 +182,6 @@ class pyPamtra(object):
     # sec hyd_opts
     self.nmlSet["lhyd_extinction"]= True
     self.nmlSet["lphase_flag"]=  True
-    self.nmlSet["n_moments"]= 1
-    self.nmlSet["moments_file"]= 'snowCRYSTAL'
     # radar_simulator
     #number of FFT points in the Doppler spectrum [typically 256 or 512]
     self.nmlSet["radar_nfft"]= 256
@@ -194,8 +191,6 @@ class pyPamtra(object):
     self.nmlSet["radar_max_v"]= 7.885
     #MaximumNyquistVelocity in m/sec
     self.nmlSet["radar_min_v"]= -7.885
-    #turbulence broadening standard deviation st, typical range [0.1 - 0.4] m/sec
-    self.nmlSet["radar_turbulence_st"]= 0.15
     #radar noise offset in same unit as Ze 10*log10(mm⁶/m³). noise is calculated with noise"]=  radar_pnoise0 + 20*log10(range)
     self.nmlSet["radar_pnoise0"]= -84.031043312334901 # value for BArrow MMCR for 2008, 4, 15,
     self.nmlSet["radar_airmotion"]=  False
@@ -542,7 +537,7 @@ class pyPamtra(object):
     
     The following variables are only needed together with the 2 moments scheme!
     "hwc_q","hwp", "cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"
-    '''
+    #'''
       
     allVars = self.default_p_vars  
       
@@ -552,6 +547,8 @@ class pyPamtra(object):
     
     if not ("hgt_lev" in kwargs.keys() and "temp_lev" in kwargs.keys() and "press_lev" in kwargs.keys() and ("relhum_lev" in kwargs.keys() or "q" in kwargs.keys())):
       raise TypeError("I need hgt_lev and temp_lev and press_lev and (relhum_lev or q)!")
+    
+    assert self.df.nhydro > 0
     
     noDims = len(np.shape(kwargs["hgt_lev"]))
     
@@ -581,7 +578,7 @@ class pyPamtra(object):
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
-    self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nydro)
+    self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
 
     self.p["nlyrs"] = np.sum(kwargs["hgt_lev"]!=missingNumber,axis=-1) -1
     self.p["nlyrs"] = self.p["nlyrs"].reshape(self._shape2D)
@@ -627,8 +624,8 @@ class pyPamtra(object):
       else:
         self.p[qValue] = kwargs[qValue].reshape(self._shape3D)
 
-    if "q" in kwargs.keys():
-      self._helperP["q"] = kwargs["q"].reshape(self._shape3D)
+    #if "q" in kwargs.keys():
+      #self._helperP["q"] = kwargs["q"].reshape(self._shape3D)
 
     if "relhum_lev" in kwargs.keys():
       self.p["relhum_lev"] = kwargs["relhum_lev"].reshape(self._shape3Dplus)
@@ -646,96 +643,96 @@ class pyPamtra(object):
 
     
     
-  def _calcPressTempRelhum(self):
-    if set(("temp","relhum","press","dz")).issubset(self._helperP.keys()):
-      return
-    else:
-      if self.set["pyVerbose"] > 0:
-        print 'calculating "temp","relhum","press","dz"'
-      self._helperP["temp"] = (self.p["temp_lev"][...,0:-1] + self.p["temp_lev"][...,1:])/2.
-      self._helperP["relhum"] = (self.p["relhum_lev"][...,0:-1] + self.p["relhum_lev"][...,1:])/2.
-      dz = np.diff(self.p["hgt_lev"],axis=-1)
-      self._helperP["dz"] = dz
+  #def _calcPressTempRelhum(self):
+    #if set(("temp","relhum","press","dz")).issubset(self._helperP.keys()):
+      #return
+    #else:
+      #if self.set["pyVerbose"] > 0:
+        #print 'calculating "temp","relhum","press","dz"'
+      #self._helperP["temp"] = (self.p["temp_lev"][...,0:-1] + self.p["temp_lev"][...,1:])/2.
+      #self._helperP["relhum"] = (self.p["relhum_lev"][...,0:-1] + self.p["relhum_lev"][...,1:])/2.
+      #dz = np.diff(self.p["hgt_lev"],axis=-1)
+      #self._helperP["dz"] = dz
       
-      #if not self._radiosonde:
+      ##if not self._radiosonde:
 
-        #p0 = self.p["press_lev"][...,0:-1]
-        #p1 = self.p["press_lev"][...,1:]
-        #xp = ne.evaluate("-1.*log(p1/p0)/dz")
+        ##p0 = self.p["press_lev"][...,0:-1]
+        ##p1 = self.p["press_lev"][...,1:]
+        ##xp = ne.evaluate("-1.*log(p1/p0)/dz")
 
-      #else: #to allow array operations, cases with varying heights or invalid data have to be treated a bit differently:
+      ##else: #to allow array operations, cases with varying heights or invalid data have to be treated a bit differently:
 
-      dz[dz<=0]=9999
-      self._helperP["relhum"][self._helperP["relhum"]<=0] = 1
-      self._helperP["temp"][self._helperP["temp"]<=0] = 1
+      #dz[dz<=0]=9999
+      #self._helperP["relhum"][self._helperP["relhum"]<=0] = 1
+      #self._helperP["temp"][self._helperP["temp"]<=0] = 1
       
-      press_lev1 = deepcopy(self.p["press_lev"])
-      press_lev1[press_lev1==missingNumber]=1
+      #press_lev1 = deepcopy(self.p["press_lev"])
+      #press_lev1[press_lev1==missingNumber]=1
       
-      p0 = press_lev1[...,0:-1]
-      p1 = press_lev1[...,1:]
+      #p0 = press_lev1[...,0:-1]
+      #p1 = press_lev1[...,1:]
       
-      if neAvail: xp = ne.evaluate("-1.*log(p1/p0)/dz")
-      else: xp = -1.*np.log(p1/p0)/dz
+      #if neAvail: xp = ne.evaluate("-1.*log(p1/p0)/dz")
+      #else: xp = -1.*np.log(p1/p0)/dz
       
-      xp[xp==0] = 9999
+      #xp[xp==0] = 9999
         
-      if neAvail: self._helperP["press"] = ne.evaluate("-1.*p0/xp*(exp(-xp*dz)-1.)/dz")
-      else: self._helperP["press"] = -1.*p0/xp*(np.exp(-xp*dz)-1.)/dz
+      #if neAvail: self._helperP["press"] = ne.evaluate("-1.*p0/xp*(exp(-xp*dz)-1.)/dz")
+      #else: self._helperP["press"] = -1.*p0/xp*(np.exp(-xp*dz)-1.)/dz
       
-      del p0,p1,xp
+      #del p0,p1,xp
         
-      return
+      #return
 
-  def _calcQ(self):
+  #def _calcQ(self):
     
-    if set(("q",)).issubset(self._helperP.keys()):
-      return
-    else:
-      self._calcPressTempRelhum()
+    #if set(("q",)).issubset(self._helperP.keys()):
+      #return
+    #else:
+      #self._calcPressTempRelhum()
       
-      if self.set["pyVerbose"] > 0:
-        print 'calculating "q"'
-      self._helperP["q"] = meteoSI.rh2q(self._helperP["relhum"],self._helperP["temp"],self._helperP["press"])
-      return
+      #if self.set["pyVerbose"] > 0:
+        #print 'calculating "q"'
+      #self._helperP["q"] = meteoSI.rh2q(self._helperP["relhum"],self._helperP["temp"],self._helperP["press"])
+      #return
 
-  def _calcQ_lev(self):
-    if set(("q_lev",)).issubset(self._helperP.keys()):
-      return
-    else:
-      if self.set["pyVerbose"] > 0:
-        print 'calculating "q_lev"'
-      qBot = self._helperP["q"][...,0:1] + 0.25*(self._helperP["q"][...,0:1]-self._helperP["q"][...,1:2])
-      qTop = self._helperP["q"][...,-1:] + 0.25*(self._helperP["q"][...,-1:]-self._helperP["q"][...,-2:-1])
-      qMid = (self._helperP["q"][...,0:-1] + self._helperP["q"][...,1:])/2.
+  #def _calcQ_lev(self):
+    #if set(("q_lev",)).issubset(self._helperP.keys()):
+      #return
+    #else:
+      #if self.set["pyVerbose"] > 0:
+        #print 'calculating "q_lev"'
+      #qBot = self._helperP["q"][...,0:1] + 0.25*(self._helperP["q"][...,0:1]-self._helperP["q"][...,1:2])
+      #qTop = self._helperP["q"][...,-1:] + 0.25*(self._helperP["q"][...,-1:]-self._helperP["q"][...,-2:-1])
+      #qMid = (self._helperP["q"][...,0:-1] + self._helperP["q"][...,1:])/2.
       
-      self._helperP["q_lev"] = np.concatenate((qBot,qMid,qTop),axis=-1)
-      return
+      #self._helperP["q_lev"] = np.concatenate((qBot,qMid,qTop),axis=-1)
+      #return
 
-  def _calcMoistRho(self):
-    if set(("rho_moist",)).issubset(self._helperP.keys()):
-      return
-    else:
-      self._calcQ()
-      self._calcPressTempRelhum()
+  #def _calcMoistRho(self):
+    #if set(("rho_moist",)).issubset(self._helperP.keys()):
+      #return
+    #else:
+      #self._calcQ()
+      #self._calcPressTempRelhum()
       
-      if self.set["pyVerbose"] > 0:
-        print 'calculating "rho_moist"'
+      #if self.set["pyVerbose"] > 0:
+        #print 'calculating "rho_moist"'
 
-      self._helperP["rho_moist"] = meteoSI.moist_rho_q(self._helperP["press"],self._helperP["temp"],self._helperP["q"],np.sum(self.p["hydro_q"],axis=-1))
-      return
+      #self._helperP["rho_moist"] = meteoSI.moist_rho_q(self._helperP["press"],self._helperP["temp"],self._helperP["q"],np.sum(self.p["hydro_q"],axis=-1))
+      #return
 
-  def _calcRelhum_lev(self):
-    if set(("relhum_lev",)).issubset(self.p.keys()):
-      return
-    else:
-      self._calcQ_lev()
+  #def _calcRelhum_lev(self):
+    #if set(("relhum_lev",)).issubset(self.p.keys()):
+      #return
+    #else:
+      #self._calcQ_lev()
       
-      if self.set["pyVerbose"] > 0:
-        print 'calculating "relhum_lev"'
+      #if self.set["pyVerbose"] > 0:
+        #print 'calculating "relhum_lev"'
         
-      self.p["relhum_lev"] = meteoSI.q2rh(self._helperP["q_lev"],self.p["temp_lev"],self.p["press_lev"])
-      return
+      #self.p["relhum_lev"] = meteoSI.q2rh(self._helperP["q_lev"],self.p["temp_lev"],self.p["press_lev"])
+      #return
 
   def _checkData(self):
     maxLimits = {"relhum_lev":2,"hydro_q":0.05,"temp_lev":320,"press_lev":110000}
@@ -774,22 +771,15 @@ class pyPamtra(object):
     for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v"]:
       self.p[key] = self.p[key][condition].reshape(self._shape2D)
       
-    for key in ["iwv","cwp","iwp","rwp","swp","gwp","hwp"]:
-      if key in self.p.keys():
-        self.p[key] = self.p[key][condition].reshape(self._shape2D)
-
     for key in ["hydro_q","hydro_n","hydro_reff"]:
       self.p[key] = self.p[key][condition].reshape(self._shape4D)
       
     for key in ["hgt_lev","temp_lev","press_lev","relhum_lev"]:
       self.p[key] = self.p[key][condition].reshape(self._shape3Dplus)
     
-    for key in ['q_lev', 'temp', 'q', 'dz', 'press', 'relhum', 'rho_moist']:
-      if key in self._helperP.keys():
-        if key in ['q_lev']:
-          self._helperP[key] = self._helperP[key][condition].reshape(self._shape3Dplus)
-        if key in ['temp', 'q', 'dz', 'press', 'relhum', 'rho_moist']:
-          self._helperP[key] = self._helperP[key][condition].reshape(self._shape3D)
+    for key in ["airturb",'temp', 'press', 'relhum','hgt']:
+      self.p[key] = self.p[key][condition].reshape(self._shape3D)    
+ 
     return
 
   def rescaleHeights(self,new_hgt_lev):
@@ -812,7 +802,7 @@ class pyPamtra(object):
       newP = np.ones(self._shape3D) * missingNumber
       for x in xrange(self._shape2D[0]):
         for y in xrange(self._shape2D[1]):
-          for h in xrange(self.df.nydro):
+          for h in xrange(self.df.nhydro):
           #interpolate!
             newP[x,y,:,h] = np.interp(new_hgt,old_hgt[x,y,:,h],self.p[key][x,y,:,h])
       #save new array
@@ -1366,14 +1356,14 @@ class pyPamtra(object):
       write the complete state of the session (profile,results,settings to a file
       '''
       f = open(fname, "w")
-      pickle.dump([self.r,self.p,self._helperP,self.nmlSet,self.set,self.df], f)
+      pickle.dump([self.r,self.p,self.nmlSet,self.set,self.df], f)
       f.close()
     else:
       '''
       write the complete state of the session (profile,results,settings to several files
       '''      
       os.makedirs(fname)
-      for dic in ["r","p", "_helperP","nmlSet","set"]:
+      for dic in ["r","p", "nmlSet","set","df"]:
 	for key in self.__dict__[dic].keys():
 	  if self.set["pyVerbose"]>1: print "saving: "+fname+"/"+dic+"%"+key+"%"+".npy"  
 	  data = self.__dict__[dic][key]
@@ -1398,7 +1388,7 @@ class pyPamtra(object):
     '''
     if os.path.isdir(fname):
       try: 
-	for key in ["r","p", "_helperP","set"]:
+	for key in ["r","p","nmlSet","set","df"]:
 	  self.__dict__[key] = dict()
 	self.__dict__["nmlSet"] = OrderedDict()
 	for fnames in os.listdir(fname):
@@ -1410,7 +1400,7 @@ class pyPamtra(object):
     else:  
       try: 
 	f = open(fname, "r")
-	[self.r,self.p,self._helperP,self.nmlSet,self.set,self.df] = pickle.load(f)
+	[self.r,self.p,self.nmlSet,self.set,self.df] = pickle.load(f)
 	f.close()
       except:
 	print formatExceptionInfo()	

@@ -46,7 +46,6 @@ module settings
     integer(kind=long):: radar_aliasing_nyquist_interv !how many additional nyquists intervalls shall be added to the spectrum to deal with aliasing effects
     real(kind=dbl) :: radar_max_V !MinimumNyquistVelocity in m/sec
     real(kind=dbl) :: radar_min_V !MaximumNyquistVelocity in m/sec
-    real(kind=dbl) :: radar_turbulence_st !turbulence broadening standard deviation st, typical range [0.1 - 0.4] m/sec
     real(kind=dbl) :: radar_pnoise0 !radar noise
     real(kind=dbl) :: radar_airmotion_vmin
     real(kind=dbl) :: radar_airmotion_vmax
@@ -116,7 +115,7 @@ contains
         namelist / hyd_opts / lhyd_extinction, lphase_flag
 	namelist / moments / n_moments, moments_file
 	namelist / radar_simulator / radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
-		  radar_turbulence_st, radar_pnoise0, radar_airmotion, radar_airmotion_model, &
+		  radar_pnoise0, radar_airmotion, radar_airmotion_model, &
 		  radar_airmotion_vmin, radar_airmotion_vmax, radar_airmotion_linear_steps, &
 		  radar_airmotion_step_vmin, radar_fallVel_cloud, radar_fallVel_rain, radar_fallVel_ice,&
 		  radar_fallVel_snow, radar_fallVel_graupel, radar_fallVel_hail, radar_aliasing_nyquist_interv, &
@@ -163,7 +162,7 @@ contains
             print*, "hyd_opts ",  lhyd_extinction, lphase_flag!, softsphere_adjust
             print*, "moments ",  n_moments, moments_file
             print*, "radar_simulator ",  radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
-            radar_turbulence_st, radar_pnoise0, radar_airmotion, radar_airmotion_model, &
+            radar_pnoise0, radar_airmotion, radar_airmotion_model, &
             radar_airmotion_vmin, radar_airmotion_vmax, radar_airmotion_linear_steps, &
             radar_airmotion_step_vmin, radar_save_noise_corrected_spectra, radar_use_hildebrand,&
             radar_convolution_fft
@@ -238,9 +237,7 @@ contains
         radar_max_V=7.885
         !MaximumNyquistVelocity in m/sec
         radar_min_V=-7.885
-        !turbulence broadening standard deviation st, typical range [0.1 - 0.4] m/sec
-        radar_turbulence_st=0.15
-          !radar noise offset in same unit as Ze 10*log10(mm⁶/m³). noise is calculated with noise = radar_pnoise0 + 20*log10(range)
+        !radar noise offset in same unit as Ze 10*log10(mm⁶/m³). noise is calculated with noise = radar_pnoise0 + 20*log10(range)
         radar_pnoise0=-84.031043312334901 ! value for BArrow MMCR for 2008, 4, 15,
 
         radar_airmotion = .false.
@@ -320,7 +317,6 @@ contains
       print*, 'radar_noise_distance_factor: ', radar_noise_distance_factor
       print*, 'radar_airmotion_step_vmin: ', radar_airmotion_step_vmin
       print*, 'crm_data2: ', crm_data2
-      print*, 'radar_turbulence_st: ', radar_turbulence_st
       print*, 'radar_use_hildebrand: ', radar_use_hildebrand
       print*, 'radar_convolution_fft: ', radar_convolution_fft
       print*, 'active: ', active

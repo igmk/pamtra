@@ -18,6 +18,7 @@ delta_h)
     use kinds
     use settings
     use constants
+    use vars_atmosphere, only: atmo_airturb
     use vars_output, only: radar_spectra, radar_snr, radar_vel,radar_hgt, &
     radar_moments, radar_slopes, radar_edge, radar_quality, Ze, Att_hydro !output of the radar simulator
     use report_module
@@ -142,8 +143,8 @@ print*, radar_Pnoise
         spectra_velo_aliased = (/(((ii*del_v)+min_V_aliased),ii=0,radar_nfft_aliased)/) ! [m/s]
 
         !get turbulence (no turbulence in clear sky...)
-        if (radar_turbulence_st > 0.d0 .and. back > 0) then
-            ss = radar_turbulence_st/del_v;            !in array indices!
+        if (atmo_airturb(i_x,i_y,i_z) > 0.d0 .and. back > 0) then
+            ss = atmo_airturb(i_x,i_y,i_z)/del_v;            !in array indices!
 
             turb(:) = 0.d0
             tt = 1
