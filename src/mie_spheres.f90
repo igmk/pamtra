@@ -81,7 +81,7 @@ module mie_spheres
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
     character(len=80) :: msg
-    character(len=14) :: nameOfRoutine = 'calc_mie_spheres'
+    character(len=30) :: nameOfRoutine = 'calc_mie_spheres'
 
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 

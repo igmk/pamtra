@@ -101,6 +101,13 @@ subroutine make_dist(errorstatus)
       tmp2 = exp(-(b_ms+mu+1)*tmpX)
       f_ds(i) = n_0_star * tmp1 * tmpX**mu * tmp2
     enddo
+
+
+! modified gamma, gamma or exponetial distribution
+  else
+    do i=1,nbin+1
+      f_ds(i) = n_0 * d_bound_ds(i)**mu * EXP(-lambda * d_bound_ds(i)**gam)
+    enddo
   endif
 
   do i=1,nbin
