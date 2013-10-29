@@ -181,9 +181,9 @@
 !                       MIDENTITY, MTRANSPOSE, MMULT, MINVERT
 !
 !
-subroutine RT4(errorstatus, nstokes,nummu,mu_values,out_file,quad_type,ground_temp,&
+subroutine RT4(errorstatus,mu_values,out_file,&
 ground_type,ground_albedo,ground_index,sky_temp,&
-wavelength,units,outpol,noutlevels,outlevels)
+wavelength,outlevels)
 
     use kinds
     use vars_atmosphere
@@ -199,28 +199,45 @@ wavelength,units,outpol,noutlevels,outlevels)
         rt_emisvec_reverse
     use vars_index, only: i_x,i_y,i_f
         
-    use settings, only: write_nc, in_python, numazimuths, verbose
+    use settings, only: write_nc,&
+        in_python,&
+        numazimuths,&
+        verbose,&
+        nstokes,&
+        nummu,&
+        quad_type,&
+        noutlevels,&
+        outpol,&
+        units
+
     use report_module
 
     implicit none
 
-    INTEGER   MAXV, MAXLAY
-    PARAMETER (MAXV=64)
-    PARAMETER (MAXLAY=200)
+    integer   maxv, maxlay
+    parameter (maxv=64)
+    parameter (maxlay=200)
 
-    INTEGER   NSTOKES, NUMMU
-    INTEGER   NUM_LAYERS
-    INTEGER   NOUTLEVELS, OUTLEVELS(MAXLAY)
-    real(kind=dbl)    GROUND_TEMP, GROUND_ALBEDO
-    COMPLEX*16 GROUND_INDEX
-    real(kind=dbl)    SKY_TEMP, WAVELENGTH, MAX_DELTA_TAU
-    real(kind=dbl)    MU_VALUES(MAXV)
-    real(kind=dbl)    HEIGHT(MAXLAY), TEMPERATURES(MAXLAY)
-    real(kind=dbl)    GAS_EXTINCT(MAXLAY)
-    real(kind=dbl)    UP_RAD(MAXV*(MAXLAY+1)), DOWN_RAD(MAXV*(MAXLAY+1))
-    real(kind=dbl)    UP_FLUX(4*(MAXLAY+1)), DOWN_FLUX(4*(MAXLAY+1))
-    CHARACTER QUAD_TYPE*1, UNITS*1, OUTPOL*2, GROUND_TYPE*1
-    CHARACTER*64 LAYER_FILE, OUT_FILE
+    real(kind=dbl), intent(in) ::  mu_values(maxv)
+    character*64, intent(in) :: out_file
+    character, intent(in) ::  ground_type*1
+    real(kind=dbl), intent(in) ::  ground_albedo
+    complex*16, intent(in) ::   ground_index
+    real(kind=dbl), intent(in) ::  sky_temp
+    real(kind=dbl), intent(in) ::   wavelength
+    integer, intent(in) ::  outlevels(maxlay)
+
+    integer   num_layers
+
+    real(kind=dbl)    ground_temp
+    real(kind=dbl)    max_delta_tau
+    real(kind=dbl)    height(maxlay), temperatures(maxlay)
+    real(kind=dbl)    gas_extinct(maxlay)
+    real(kind=dbl)    up_rad(maxv*(maxlay+1)), down_rad(maxv*(maxlay+1))
+    real(kind=dbl)    up_flux(4*(maxlay+1)), down_flux(4*(maxlay+1))
+
+    character*64 layer_file
+
 
     ! Error handling
 
@@ -240,10 +257,34 @@ wavelength,units,outpol,noutlevels,outlevels)
     !scat_files = ''
     !scat_files(atmo_nlyrs(i_x,i_y)) = '1.txt'
 
+
+    ground_temp = atmo_groundtemp(i_x,i_y)
     num_layers = atmo_nlyrs(i_x,i_y)
     height(1:atmo_nlyrs(i_x,i_y)+1) = atmo_hgt_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1:1:-1)             ! [m]
     temperatures(1:atmo_nlyrs(i_x,i_y)+1) = atmo_temp_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1:1:-1)      ! [K]
     gas_extinct(1:atmo_nlyrs(i_x,i_y)) = rt_kextatmo(atmo_nlyrs(i_x,i_y):1:-1)         ! [Np/m]
+
+    !do some tests
+    call assert_true(err,(maxlay>num_layers),&
+        "maxlay>num_layers")  
+    call assert_true(err,(ground_temp>1),&
+        "ground_temp must be greater 1")  
+    call assert_true(err,(num_layers>1),&
+        "num_layers must be greater 1")   
+    call assert_true(err,all(height(1:atmo_nlyrs(i_x,i_y)+1)>=0),&
+        "height must be positive")  
+print*, height(1:atmo_nlyrs(i_x,i_y)+1)
+    call assert_true(err,all(temperatures(1:atmo_nlyrs(i_x,i_y)+1)>1),&
+        "temperatures must be greater 1")   
+    call assert_false(err,all(isnan(gas_extinct(1:atmo_nlyrs(i_x,i_y)+1))),&
+        "gas_extinct must be non nan zero")       
+    if (err > 0) then
+        errorstatus = fatal
+        msg = "assertation error"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+    end if    
+
 
     rt_hydros_present_reverse(1:atmo_nlyrs(i_x,i_y)) = rt_hydros_present(atmo_nlyrs(i_x,i_y):1:-1)
 

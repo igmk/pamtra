@@ -23,7 +23,7 @@ subroutine run_rt(errorstatus)
 
     real(kind=dbl), dimension(maxv) :: MU_VALUES
     real(kind=dbl) :: wavelength       ! microns
-    real(kind=dbl) :: GROUND_TEMP, ground_albedo
+    real(kind=dbl) :: ground_albedo
 
     complex(kind=dbl) :: ground_index
 
@@ -35,6 +35,29 @@ subroutine run_rt(errorstatus)
     integer(kind=long) :: err = 0
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'run_rt'
+
+    interface
+      subroutine RT4(errorstatus,mu_values,out_file,&
+      ground_type,ground_albedo,ground_index,sky_temp,&
+      wavelength,outlevels)
+        use kinds
+        implicit none
+    integer   maxv, maxlay
+    parameter (maxv=64)
+    parameter (maxlay=200)
+        real(kind=dbl), intent(in) ::  mu_values(maxv)
+        character*64, intent(in) :: out_file
+        character, intent(in) ::  ground_type*1
+        real(kind=dbl), intent(in) ::  ground_albedo
+        complex*16, intent(in) ::   ground_index
+        real(kind=dbl), intent(in) ::  sky_temp
+        real(kind=dbl), intent(in) ::   wavelength
+        integer, intent(in) ::  outlevels(maxlay)
+        integer(kind=long), intent(out) :: errorstatus
+      end subroutine RT4
+
+    end interface
+
 
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
 
@@ -171,9 +194,9 @@ print*, "EMILIANO, double check here height index of atom_hgt_lev, please (run_r
 
         if (verbose >= 2) print*, i_x,i_y, "Entering rt4 ...."
 
-        call rt4(err, nstokes,nummu,mu_values,out_file_pas,quad_type,ground_temp,&
+        call rt4(err, mu_values,out_file_pas,&
         ground_type,ground_albedo,ground_index,sky_temp,&
-        wavelength,units,outpol,noutlevels,outlevels)
+        wavelength,outlevels)
 
         if (verbose >= 2) print*, i_x,i_y, "....rt4 finished"
         !calculate human readable angles!
