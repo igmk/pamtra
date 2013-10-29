@@ -265,15 +265,14 @@ wavelength,outlevels)
     gas_extinct(1:atmo_nlyrs(i_x,i_y)) = rt_kextatmo(atmo_nlyrs(i_x,i_y):1:-1)         ! [Np/m]
 
     !do some tests
-    call assert_true(err,(maxlay>num_layers),&
-        "maxlay>num_layers")  
+    call assert_true(err,(maxlay>=num_layers),&
+        "maxlay>=num_layers")  
     call assert_true(err,(ground_temp>1),&
         "ground_temp must be greater 1")  
     call assert_true(err,(num_layers>1),&
         "num_layers must be greater 1")   
     call assert_true(err,all(height(1:atmo_nlyrs(i_x,i_y)+1)>=0),&
         "height must be positive")  
-print*, height(1:atmo_nlyrs(i_x,i_y)+1)
     call assert_true(err,all(temperatures(1:atmo_nlyrs(i_x,i_y)+1)>1),&
         "temperatures must be greater 1")   
     call assert_false(err,all(isnan(gas_extinct(1:atmo_nlyrs(i_x,i_y)+1))),&
