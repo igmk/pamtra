@@ -73,8 +73,6 @@ freq)              ! in
 
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
 
-print*, gas_mod, freq,atmo_temp(i_x,i_y,1),atmo_rho_vap(i_x,i_y,1),atmo_press(i_x,i_y,1),absair,abswv
-
     do nz = 1, atmo_nlyrs(i_x,i_y)
         tc = atmo_temp(i_x,i_y,nz) - t_abs
         if (gas_mod .eq. 'L93') then
@@ -106,8 +104,7 @@ print*, gas_mod, freq,atmo_temp(i_x,i_y,1),atmo_rho_vap(i_x,i_y,1),atmo_press(i_
     end do
 
     errorstatus = err
-print*, gas_mod, freq,atmo_temp(i_x,i_y,1),atmo_rho_vap(i_x,i_y,1),atmo_press(i_x,i_y,1),absair,abswv, rt_kextatmo(1)
-stop
+
     if (verbose >= 1) call report(info,'End of ', nameOfRoutine)
 
     return
