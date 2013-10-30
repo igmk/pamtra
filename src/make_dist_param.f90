@@ -409,9 +409,11 @@ subroutine make_dist_params(errorstatus)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if (trim(dist_name) == 'norm_mgamma') then
 ! ! The user MUST specify d_m, n_0_star and mu parameters
-    call assert_false(err,(p_1 == -99. .or. p_2 == -99. .or. p_3 == -99.),&
-        'Normalized Modified Gamma case: p_1, p_2, and p_3 parameters must be specified...')
-    call assert_true(err,(moment_in == 0),&
+    call assert_false(err,(p_1 == -99. .or. p_2 == -99.),&
+        'Normalized Modified Gamma case: p_1 and p_2 parameters must be specified')
+    call assert_true(err,(p_3 /= -99. .NEQV. p_4 /= -99.),& ! NEQV = xor
+        'Normalized Modified Gamma case: p_3 xor p_4 parameters must be specified...' )
+   call assert_true(err,(moment_in == 0),&
         'Normalized Modified Gamma case: currently only implemented for moment_in = 0')
     if (err > 0) then
         errorstatus = fatal
@@ -421,7 +423,8 @@ subroutine make_dist_params(errorstatus)
     end if    
     d_m  = p_1
     n_0_star = p_2
-    mu = p_3
+    if (p_3 /= -99.) mu = p_3
+    if (p_4 /= -99.) mu = p_4 -(b_ms+1) !shifted mu value for better numerical handling in optimal estimation!
     errorstatus = err
     if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
     return

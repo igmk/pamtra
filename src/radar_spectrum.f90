@@ -97,7 +97,9 @@ subroutine radar_spectrum(&
     call assert_true(err,all(mass>0),&
         "nan or negative mass")  
     call assert_true(err,all(area>0),&
-        "nan or negative area")         
+        "nan or negative area")        
+    call assert_true(err,(radar_nfft_aliased > 0),&
+        "nan or negative radar_nfft_aliased") 
     if (err > 0) then
       errorstatus = fatal
       msg = "assertation error"
@@ -157,7 +159,8 @@ subroutine radar_spectrum(&
             call report(errorstatus, msg, nameOfRoutine)
             return
         end if
-        if (verbose >= 4) print*,"jj,dD_dU(jj)",jj,dD_dU(jj)
+        if (verbose >= 4) print*,"jj,diameter_spec_cp(jj),vel_spec(jj), back_spec_ref(jj),dD_dU(jj)",jj,&
+            diameter_spec_cp(jj),vel_spec(jj),back_spec_ref(jj),dD_dU(jj)
         del_v_model(jj) = ABS(vel_spec(jj+1)-vel_spec(jj))
     end do
     dD_dU(nbins+1) = dD_dU(nbins)

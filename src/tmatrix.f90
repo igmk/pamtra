@@ -143,12 +143,11 @@ module tmatrix
 
 	!we want the volume equivalent radius
         if (as_ratio <= 1) then
-          axi = 0.5_dbl*dmax(ir)*as_ratio**(1.0_dbl/3.0_dbl)
+          !oblate, with axis of rotation vertically
+          axi = 0.5_dbl*dmax(ir)*as_ratio**(1.0_dbl/3.0_dbl) 
         else 
-          errorstatus = fatal
-          msg = "please review formular for as_ratio>1"
-          call report(errorstatus, msg, nameOfRoutine)
-          return
+          !prolate, with axis of rotation vertically
+          axi = 0.5_dbl*dmax(ir)/as_ratio**(2.0_dbl/3.0_dbl) 
         end if
 
 	call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
@@ -162,14 +161,13 @@ module tmatrix
 	end if          
       
 	back_spec(ir) = 4*pi*ndens_eff*scatter_matrix_part(1,16,1,16,2)
-      
-	
+
 	scatter_matrix = scatter_matrix + scatter_matrix_part * ndens_eff * del_d_eff
 	extinct_matrix = extinct_matrix + extinct_matrix_part * ndens_eff * del_d_eff
 	emis_vector = emis_vector + emis_vector_part * ndens_eff * del_d_eff
       
       end do !nbins
-	
+
       call assert_false(err,any(isnan(scatter_matrix)),&
 	  "nan in scatter matrix")
       call assert_false(err,any(isnan(extinct_matrix)),&
@@ -185,8 +183,9 @@ module tmatrix
 	  return
       end if   	
 
+      errorstatus = err
       if (verbose >= 2) call report(info,'End of ', nameOfRoutine) 
-      
+      return
       
       
   end subroutine calc_tmatrix
@@ -415,10 +414,10 @@ module tmatrix
   1241    continue ! thet0 jj
 
 
-	if (verbose >= 3) call report(info,'End of ', nameOfRoutine) 
-
-
+      errorstatus = err
+      if (verbose >= 3) call report(info,'End of ', nameOfRoutine) 
       return
+
   end subroutine calc_single_tmatrix
 
 end module tmatrix

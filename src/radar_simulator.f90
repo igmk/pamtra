@@ -130,7 +130,6 @@ delta_h)
         !calculate the noise level depending on range:
          radar_Pnoise = radar_Pnoise0 + (20 * log10(radar_hgt(i_x,i_y,i_z)))
          radar_Pnoise = 10**(0.1*radar_Pnoise)
-print*, radar_Pnoise
 
         !get delta velocity
         del_v = (radar_max_V-radar_min_V) / radar_nfft ![m/s]

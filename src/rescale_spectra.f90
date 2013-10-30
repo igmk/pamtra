@@ -93,6 +93,9 @@ contains
         "min x1 must be larger than x2")    
     if (err /= 0) then
       msg = 'error in tranforming the spectrum to velocity space...'
+
+      print*, "nx1, nx2, maxval(x1), maxval(x2), minval(x1), minval(x2)"
+      print*, nx1, nx2, maxval(x1), maxval(x2), minval(x1), minval(x2) 
       call report(err, msg, nameOfRoutine)
       errorstatus = err
       return

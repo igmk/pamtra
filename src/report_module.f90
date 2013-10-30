@@ -1,18 +1,18 @@
 !
 Module report_module
 
-    use kinds, only: long
-    use settings, only: verbose
+    use kinds
     use vars_index, only: i_x, i_y, i_z, i_f, i_h
     implicit none
     save
     ! status values
-    Integer(Kind=long), Parameter :: nstatus = 3
-    Integer(Kind=long), Parameter :: success = 0
-    Integer(Kind=long), Parameter :: warning = 1
-    Integer(Kind=long), Parameter :: fatal   = 2
-    Integer(Kind=long), Parameter :: info    = 3
-    Character(len=*), Parameter :: status_text(0:nstatus) = &
+    Integer(kind=long) :: verbose=0
+    Integer(kind=long), Parameter :: nstatus = 3
+    Integer(kind=long), Parameter :: success = 0
+    Integer(kind=long), Parameter :: warning = 1
+    Integer(kind=long), Parameter :: fatal   = 2
+    Integer(kind=long), Parameter :: info    = 3
+    character(len=7), Parameter :: status_text(0:nstatus) = &
     (/ 'success', &
     'warning', &
     'fatal  ', &

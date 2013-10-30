@@ -202,7 +202,7 @@ module vars_output
     if (allocated(radar_vel)) deallocate(radar_vel)
     if (allocated(radar_moments)) deallocate(radar_moments)
     if (allocated(radar_slopes)) deallocate(radar_slopes)
-    if (allocated(radar_slopes)) deallocate(radar_edge)
+    if (allocated(radar_edge)) deallocate(radar_edge)
     if (allocated(radar_quality)) deallocate(radar_quality)
     if (allocated(psd_d_bound)) deallocate(psd_d_bound)
     if (allocated(psd_f)) deallocate(psd_f)

@@ -3,6 +3,32 @@
 
 python module pyPamtraLib ! in 
     interface  ! in :pyPamtraLib
+        module report_module ! in :pyPamtraLib:report_module.f90
+            use vars_index, only: i_f,i_h,i_z,i_y,i_x
+            use kinds
+            integer(kind=long_bn), parameter,optional :: info=3
+            integer(kind=long_bn), parameter,optional :: fatal=2
+            integer(kind=long_bn), parameter,optional :: nstatus=3
+            integer(kind=long_bn), optional :: verbose=0
+            integer(kind=long_bn), parameter,optional :: success=0
+            character(len=7), parameter,optional,dimension(4),depend(info,fatal,success,warning) :: status_text=(/'success','warning','fatal','info'/)
+            integer(kind=long_bn), parameter,optional :: warning=1
+            subroutine report(status,message,nameofroutine) ! in :pyPamtraLib:report_module.f90:report_module
+                integer(kind=long_bn) intent(in) :: status
+                character*(*) intent(in) :: message
+                character*(*) intent(in) :: nameofroutine
+            end subroutine report
+            subroutine assert_true(error,logic,message) ! in :pyPamtraLib:report_module.f90:report_module
+                integer intent(inout) :: error
+                logical intent(in) :: logic
+                character*(*) intent(in) :: message
+            end subroutine assert_true
+            subroutine assert_false(error,logic,message) ! in :pyPamtraLib:report_module.f90:report_module
+                integer intent(inout) :: error
+                logical intent(in) :: logic
+                character*(*) intent(in) :: message
+            end subroutine assert_false
+        end module report_module
         module deallocate_everything ! in :pyPamtraLib:deallocate_everything.f90
             subroutine do_deallocate_everything(errorstatus) ! in :pyPamtraLib:deallocate_everything.f90:deallocate_everything
                 use kinds
@@ -114,11 +140,11 @@ python module pyPamtraLib ! in
             end subroutine print_vars_atmosphere
         end module vars_atmosphere
         module settings ! in :pyPamtraLib:settings.f90
+            use report_module
             use kinds
             logical :: jacobian_mode
             integer(kind=long_bn) :: radar_nfft
             character(len=100) :: input_path
-            integer(kind=long_bn), optional :: verbose=0
             character(len=8) :: radar_mode
             integer(kind=long_bn) :: radar_no_ave
             real(kind=dbl) :: radar_min_spectral_snr
@@ -200,9 +226,18 @@ python module pyPamtraLib ! in
             character(len=10) :: input_type
             integer, parameter,optional :: maxleg=200
             real(kind=dbl) :: emissivity
-            subroutine settings_read ! in :pyPamtraLib:settings.f90:settings
+            subroutine settings_read(errorstatus) ! in :pyPamtraLib:settings.f90:settings
                 use kinds
+                integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine settings_read
+            subroutine test_settings(errorstatus) ! in :pyPamtraLib:settings.f90:settings
+                use kinds
+                integer(kind=long_bn) intent(out) :: errorstatus
+            end subroutine test_settings
+            subroutine add_settings(errorstatus) ! in :pyPamtraLib:settings.f90:settings
+                use kinds
+                integer(kind=long_bn) intent(out) :: errorstatus
+            end subroutine add_settings
             subroutine settings_fill_default ! in :pyPamtraLib:settings.f90:settings
                 use kinds
             end subroutine settings_fill_default

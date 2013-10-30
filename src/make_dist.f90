@@ -7,6 +7,10 @@ subroutine make_dist(errorstatus)
 ! 
 ! LOG-NORMAL:      n(D) = n_t / (D * sig * sqrt(2. * pi)) * EXP[-( (ln(D) - d_ln)**2 )/(2. * sig**2) ]
 ! 
+! Normalized gamma:       
+!       X =  D(i)/d_m
+!       n(D) = n_0_star * (gamma(b_ms+1)/(b_ms+1)**(b_ms+1) * (b_ms+mu+1)**(b_ms+mu+1)/gamma(b_ms+mu+1)) * X**mu * exp(-(b_ms+mu+1)*X)
+!
 ! MODIFIED-GAMMA:  n(D) = n_0 * D**mu * EXP(-lambda * D**gam)
 ! 
 ! The following distribution are special cases of the mod-gamma distribution

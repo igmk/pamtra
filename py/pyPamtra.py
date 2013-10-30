@@ -140,7 +140,7 @@ class pyPamtra(object):
     self.df = pamDescriptorFile()
     
     self.p = dict()
-    /*-.r = dict()
+    self.r = dict()
     
  
   
@@ -475,6 +475,8 @@ class pyPamtra(object):
       self.p["hydro_n"][:,:,:,4] = self.p["gwc_n"]
       self.p["hydro_n"][:,:,:,5] = self.p["hwc_n"]
 
+      
+    self.p["airturb"] = np.zeros(self._shape3D)
     for key in ["cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"] :
       del self.p[key]
       
@@ -622,8 +624,15 @@ class pyPamtra(object):
         self.p[qValue] = np.zeros(self._shape4D)
         warnings.warn(qValue + " set to 0", Warning)
       else:
-        self.p[qValue] = kwargs[qValue].reshape(self._shape3D)
+        self.p[qValue] = kwargs[qValue].reshape(self._shape4D)
 
+    for qValue in ["airturb"]:
+      if qValue not in kwargs.keys():
+        self.p[qValue] = np.zeros(self._shape3D)
+        warnings.warn(qValue + " set to 0", Warning)
+      else:
+        self.p[qValue] = kwargs[qValue].reshape(self._shape3D)
+        
     #if "q" in kwargs.keys():
       #self._helperP["q"] = kwargs["q"].reshape(self._shape3D)
 
@@ -735,7 +744,7 @@ class pyPamtra(object):
       #return
 
   def _checkData(self):
-    maxLimits = {"relhum_lev":2,"hydro_q":0.05,"temp_lev":320,"press_lev":110000}
+    maxLimits = {"relhum_lev":200,"hydro_q":0.05,"temp_lev":320,"press_lev":110000}
     minLimits = {"relhum_lev":0,"hydro_q": 0 ,"temp_lev":170,"press_lev":1}
     for key in maxLimits.keys():
       if np.max(self.p[key]) > maxLimits[key]:
@@ -769,17 +778,20 @@ class pyPamtra(object):
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
 
     for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v"]:
-      self.p[key] = self.p[key][condition].reshape(self._shape2D)
+      if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape2D)
       
     for key in ["hydro_q","hydro_n","hydro_reff"]:
-      self.p[key] = self.p[key][condition].reshape(self._shape4D)
+      if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape4D)
       
     for key in ["hgt_lev","temp_lev","press_lev","relhum_lev"]:
-      self.p[key] = self.p[key][condition].reshape(self._shape3Dplus)
+      if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3Dplus)
     
     for key in ["airturb",'temp', 'press', 'relhum','hgt']:
-      self.p[key] = self.p[key][condition].reshape(self._shape3D)    
+      if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3D)    
  
+    for key in self.df.data4D.keys():
+      self.df.data4D[key] = self.df.data4D[key][condition].reshape(self._shape4D)
+
     return
 
   def rescaleHeights(self,new_hgt_lev):
@@ -797,7 +809,7 @@ class pyPamtra(object):
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
 
 
-    for key in ["hydro_q","hydro_n","hydro_reff"]:
+    for key in ["hydro_q","hydro_n","hydro_reff",]:
       #make new array
       newP = np.ones(self._shape3D) * missingNumber
       for x in xrange(self._shape2D[0]):
@@ -817,6 +829,15 @@ class pyPamtra(object):
           newP[x,y] = np.interp(new_hgt_lev,old_hgt_lev[x,y],self.p[key][x,y])
       self.p[key] = newP
       self.p[key][self.p[key]<-1] = missingNumber
+      
+    for key in ["airturb"]:
+      newP = np.ones(self._shape3D) * missingNumber
+      for x in xrange(self._shape2D[0]):
+        for y in xrange(self._shape2D[1]):
+          newP[x,y] = np.interp(new_hgt,old_hgt[x,y],self.p[key][x,y])
+      self.p[key] = newP
+      self.p[key][self.p[key]<-1] = missingNumber
+      
       
     for key in ["press_lev"]:
       newP = np.ones(self._shape3Dplus) * missingNumber

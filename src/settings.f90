@@ -4,7 +4,7 @@ module settings
     ! and global settings!
 
     use kinds
-
+    use report_module
     implicit none
     save
 
@@ -28,8 +28,6 @@ module settings
 
     ! set by command line options
     integer(kind=long) :: nfrq
-    integer(kind=long) :: verbose = 0
-
 
     !!Set by namelist file
     integer(kind=long):: n_moments
@@ -96,11 +94,13 @@ module settings
     integer(kind=long):: radar_nfft_aliased, radar_maxTurbTerms !are gained from radar_aliasing_nyquist_interv and radar_nfft
 contains
 
-    subroutine settings_read
+    subroutine settings_read(errorstatus)
 
     use kinds
     implicit none
-
+    integer(kind=long), intent(out) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'settings_read'
 
         ! name list declarations
@@ -122,61 +122,95 @@ contains
 		  radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr, radar_convolution_fft, &
                   radar_K2, radar_noise_distance_factor, radar_receiver_uncertainty_std
 
-    if (verbose >= 2) print*,'Start of ', nameOfRoutine
+    if (verbose >= 3) print*,'Start of ', nameOfRoutine
 
-        ! first put default values
-        call settings_fill_default()
+      ! first put default values
+      call settings_fill_default()
+  
     
-     
-        ! read name list parameter file
-        open(7, file=namelist_file,delim='APOSTROPHE')
-        read(7,nml=inoutput_mode)
-        read(7,nml=output)
-        read(7,nml=run_mode)
-        read(7,nml=surface_params)
-        read(7,nml=gas_abs_mod)
-        read(7,nml=hyd_opts)
-        read(7,nml=moments)
-        read(7,nml=radar_simulator)
+      ! read name list parameter file
+      open(7, file=namelist_file,delim='APOSTROPHE')
+      read(7,nml=inoutput_mode)
+      read(7,nml=output)
+      read(7,nml=run_mode)
+      read(7,nml=surface_params)
+      read(7,nml=gas_abs_mod)
+      read(7,nml=hyd_opts)
+      read(7,nml=moments)
+      read(7,nml=radar_simulator)
 
-        close(7)
+      close(7)
 
-        !test some variables
-        if (MOD(radar_nfft, 2) == 1) STOP "radar_nfft has to be even!"
+      call add_settings(err)
+      if (err /= 0) then
+          msg = 'error in add_settings!'
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+      end if
 
+      call test_settings(err)
+      if (err /= 0) then
+          msg = 'error in test_settings!'
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+      end if
 
-
-        !mix some variables to make new ones:
-        radar_nfft_aliased = radar_nfft *(1+2*radar_aliasing_nyquist_interv)
-        radar_maxTurbTerms = radar_nfft_aliased * 12
-
-        if (verbose > 3) then
-            print*, "inoutput_mode ",  input_path, output_path,&
-            tmp_path, dump_to_file, write_nc, data_path,&
-            input_type, crm_case, crm_data, crm_data2, crm_constants, &
-            jacobian_mode, save_psd
-            print*, "output ",  obs_height,units,outpol,freq_str,file_desc,creator
-            print*, "run_mode ",  active, passive,radar_mode
-            print*, "surface_params ",  ground_type,salinity, emissivity
-            print*, "gas_abs_mod ",  lgas_extinction, gas_mod
-            print*, "hyd_opts ",  lhyd_extinction, lphase_flag!, softsphere_adjust
-            print*, "moments ",  n_moments, moments_file
-            print*, "radar_simulator ",  radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
-            radar_pnoise0, radar_airmotion, radar_airmotion_model, &
-            radar_airmotion_vmin, radar_airmotion_vmax, radar_airmotion_linear_steps, &
-            radar_airmotion_step_vmin, radar_save_noise_corrected_spectra, radar_use_hildebrand,&
-            radar_convolution_fft
-
-        end if
-
-        if (n_moments .ne. 1 .and. n_moments .ne. 2) stop "n_moments is not 1 or 2"
-
-        if (verbose > 1) print *,"PASSIVE: ", passive, "ACTIVE: ", active
-
-
-        return
+    errorstatus = err
+    if (verbose >= 3) print*,'End of ', nameOfRoutine
+    return
   end subroutine settings_read
     
+  subroutine test_settings(errorstatus)
+    use kinds
+    implicit none
+    integer(kind=long), intent(out) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
+    character(len=15) :: nameOfRoutine = 'test_settings'
+    !test for settings go here
+    if (verbose >= 4) print*,'Start of ', nameOfRoutine
+
+    call assert_false(err,MOD(radar_nfft, 2) == 1,&
+        "radar_nfft has to be even") 
+    call assert_true(err,(gas_mod == "L93") .or. (gas_mod == "R98"),&
+        "gas_mod has to be L93 or R98") 
+    if (err /= 0) then
+      msg = 'value in settings not allowed'
+      call report(err, msg, nameOfRoutine)
+      errorstatus = err
+      return
+    end if
+
+    errorstatus = err
+    if (verbose >= 4) print*,'End of ', nameOfRoutine
+    return
+
+  end subroutine test_settings
+
+  subroutine add_settings(errorstatus)
+    use kinds
+    implicit none
+    integer(kind=long), intent(out) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
+    character(len=15) :: nameOfRoutine = 'add_settings'
+    !additional variables derived from others go here
+
+    if (verbose >= 4) print*,'Start of ', nameOfRoutine
+    !mix some variables to make new ones:
+    radar_nfft_aliased = radar_nfft *(1+2*radar_aliasing_nyquist_interv)
+    radar_maxTurbTerms = radar_nfft_aliased * 12
+
+ 
+    errorstatus = err
+    if (verbose > 3) call print_settings()
+    if (verbose >= 4) print*,'End of ', nameOfRoutine
+    return
+
+  end subroutine add_settings
+
   subroutine settings_fill_default
     use kinds
     implicit none

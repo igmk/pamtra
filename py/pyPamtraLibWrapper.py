@@ -15,6 +15,9 @@ def PamtraFortranWrapper(
   profile
   ):
     
+  pyPamtraLib.report_module.verbose = settings["verbose"]
+   
+    
   #be sure everything is cleaned up before we start
   error = pyPamtraLib.deallocate_everything.do_deallocate_everything()
   if error > 0: raise RuntimeError("Error in deallocate everything")
@@ -22,7 +25,6 @@ def PamtraFortranWrapper(
   pyPamtraLib.settings.settings_fill_default()    
   
   pyPamtraLib.settings.in_python = True
-  pyPamtraLib.settings.verbose = settings["verbose"]
   pyPamtraLib.settings.nfrq = len(settings["freqs"])
   pyPamtraLib.settings.freqs[:len(settings["freqs"])] = settings["freqs"]
   

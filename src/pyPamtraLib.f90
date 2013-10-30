@@ -64,11 +64,24 @@
         write(frqs_str(fi),"(i4.4,f0.3)") int(freqs(fi)),freqs(fi) -int(freqs(fi))
     end do
 
+      in_python = .true.! we are _in_ python
 
-      !!! read variables from namelist file
-!       call settings_read  !from settings.f90
 
-      in_python = .true.! we are _not_ in python
+    !!! add missing settings and test them
+    call add_settings(err)  !from settings.f90
+    if (err /= 0) then
+        msg = 'error in add_settings!'
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
+        return
+    end if
+    call test_settings(err)  !from settings.f90
+    if (err /= 0) then
+        msg = 'error in test_settings!'
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
+        return
+    end if
 
       if (verbose >= 1) then
           msg = "input_file: "//input_file(:len_trim(input_file))//&
