@@ -11,7 +11,7 @@ subroutine hydrometeor_extinction(errorstatus)
   use drop_size_dist
   use report_module
   use scatProperties
-  use vars_output, only: psd_area, psd_d_bound, psd_f, psd_mass
+  use vars_output, only: out_psd_area, out_psd_d_bound, out_psd_f, out_psd_mass
   use vars_index, only: i_x,i_y, i_z
 
   implicit none
@@ -20,8 +20,8 @@ subroutine hydrometeor_extinction(errorstatus)
 !   use conversions
 !   use tmat_snow_db
 !   use tmat_rain_db
-!   use vars_output, only: radar_spectra, radar_snr, radar_moments,&
-!        radar_quality, radar_slopes, Ze, Att_hydro !output of the radar simulator for jacobian mode
+!   use vars_output, only: out_radar_spectra, out_radar_snr, out_radar_moments,&
+!        out_radar_quality, radar_slopes, Ze, out_att_hydro !output of the radar simulator for jacobian mode
 !         use report_module
 ! 
 
@@ -174,10 +174,10 @@ subroutine hydrometeor_extinction(errorstatus)
       end if
 
       if (save_psd) then
-        psd_d_bound(i_x,i_y,i_z,ih,1:nbin+1) =  d_bound_ds
-        psd_f(i_x,i_y,i_z,ih,1:nbin+1) = f_ds
-        psd_mass(i_x,i_y,i_z,ih,1:nbin+1) = mass_ds
-        psd_area(i_x,i_y,i_z,ih,1:nbin+1) = area_ds
+        out_psd_d_bound(i_x,i_y,i_z,ih,1:nbin+1) =  d_bound_ds
+        out_psd_f(i_x,i_y,i_z,ih,1:nbin+1) = f_ds
+        out_psd_mass(i_x,i_y,i_z,ih,1:nbin+1) = mass_ds
+        out_psd_area(i_x,i_y,i_z,ih,1:nbin+1) = area_ds
       end if
 
       call calc_scatProperties(err)

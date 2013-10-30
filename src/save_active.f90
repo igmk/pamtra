@@ -20,8 +20,8 @@ subroutine save_active(OUT_FILE_ACT,nx,ny,fi)
      open (unit=22, file=OUT_FILE_ACT, status='unknown')
      write (22,*) "C           z[m]           Ze[dBz] Attenuation_hydro[dB] Attenuation_atmo[dB]"
      do nz = 1, atmo_nlyrs(nx,ny)
-        write (22,2222) radar_hgt(nx,ny,nz), Ze(nx,ny,nz,fi), &
-              Att_hydro(nx,ny,nz,fi), Att_atmo(nx,ny,nz,fi)
+        write (22,2222) out_radar_hgt(nx,ny,nz), out_Ze(nx,ny,nz,fi), &
+              out_att_hydro(nx,ny,nz,fi), out_att_atmo(nx,ny,nz,fi)
 2222    format(1x, f16.4,1x, f16.4,1x, f16.4,1x, f16.4)
      end do
      close(22)
@@ -32,11 +32,11 @@ subroutine save_active(OUT_FILE_ACT,nx,ny,fi)
       " Spec Width [m/s]    Skewness [-]     Kurtosis [-] LeftSlope[dBs/m]",&
       " RightSlop[dBs/m] Atten_hydro[dB]    Atten_atmo[dB]"
      do nz = 1, atmo_nlyrs(nx,ny)
-        write (22,3333) radar_hgt(nx,ny,nz), Ze(nx,ny,nz,fi), &
-              radar_moments(nx,ny,nz,fi,1), radar_moments(nx,ny,nz,fi,2), &
-              radar_moments(nx,ny,nz,fi,3), radar_moments(nx,ny,nz,fi,4), &
-              radar_slopes(nx,ny,nz,fi,1), radar_slopes(nx,ny,nz,fi,2), &
-              Att_hydro(nx,ny,nz,fi), Att_atmo(nx,ny,nz,fi)
+        write (22,3333) out_radar_hgt(nx,ny,nz), out_Ze(nx,ny,nz,fi), &
+              out_radar_moments(nx,ny,nz,fi,1), out_radar_moments(nx,ny,nz,fi,2), &
+              out_radar_moments(nx,ny,nz,fi,3), out_radar_moments(nx,ny,nz,fi,4), &
+              out_radar_slopes(nx,ny,nz,fi,1), out_radar_slopes(nx,ny,nz,fi,2), &
+              out_att_hydro(nx,ny,nz,fi), out_att_atmo(nx,ny,nz,fi)
 3333    format(1x, f16.4,1x, f16.4,1x, f16.4,1x, f16.4,&
               f16.4,1x, f16.4,1x, f16.4,1x, f16.4,&
               f16.4,1x, f16.4,1x)

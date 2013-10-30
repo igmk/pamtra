@@ -19,8 +19,8 @@ delta_h)
     use settings
     use constants
     use vars_atmosphere, only: atmo_airturb
-    use vars_output, only: radar_spectra, radar_snr, radar_vel,radar_hgt, &
-    radar_moments, radar_slopes, radar_edge, radar_quality, Ze, Att_hydro !output of the radar simulator
+    use vars_output, only: out_radar_spectra, out_radar_snr, out_radar_vel,out_radar_hgt, &
+    out_radar_moments, out_radar_slopes, out_radar_edge, out_radar_quality, out_ze, out_att_hydro !output of the radar simulator
     use report_module
     use vars_index, only: i_x,i_y, i_z, i_f
 
@@ -112,23 +112,23 @@ delta_h)
     wavelength = c / (frequency*1.d9)   ! [m]
 
     !first, calculate the attenuation for hydrometeors
-    Att_hydro(i_x,i_y,i_z,i_f) = 10*log10(exp(kexthydro*delta_h))
+    out_att_hydro(i_x,i_y,i_z,i_f) = 10*log10(exp(kexthydro*delta_h))
 
     !transform backscattering in linear reflectivity units, 10*log10(back) would be in dBz
     Ze_back = 1.d18* (1.d0/ (K2*pi**5) ) * back * (wavelength)**4 ![mm⁶/m³]
 
     if (radar_mode == "simple") then
 	if (Ze_back .eq. 0.d0) then
-	  Ze(i_x,i_y,i_z,i_f) = -9999.d0
+	  out_Ze(i_x,i_y,i_z,i_f) = -9999.d0
         else 
-	  Ze(i_x,i_y,i_z,i_f) = 10*log10(Ze_back)
+	  out_Ze(i_x,i_y,i_z,i_f) = 10*log10(Ze_back)
 	end if
-      if (verbose >= 3) print*, "i_x,i_y,i_z,i_f,ze", i_x,i_y,i_z,i_f,Ze(i_x,i_y,i_z,i_f)
+      if (verbose >= 3) print*, "i_x,i_y,i_z,i_f,out_Ze", i_x,i_y,i_z,i_f,out_Ze(i_x,i_y,i_z,i_f)
     else if ((radar_mode == "moments") .or. (radar_mode == "spectrum")) then
 
 
         !calculate the noise level depending on range:
-         radar_Pnoise = radar_Pnoise0 + (20 * log10(radar_hgt(i_x,i_y,i_z)))
+         radar_Pnoise = radar_Pnoise0 + (20 * log10(out_radar_hgt(i_x,i_y,i_z)))
          radar_Pnoise = 10**(0.1*radar_Pnoise)
 
         !get delta velocity
@@ -310,24 +310,24 @@ delta_h)
         end if
 
           ! collect results for output
-        !   radar_spectra(i_x,i_y,i_z,fi,:) = 10*log10(particle_spectrum(513:1024))
+        !   out_radar_spectra(i_x,i_y,i_z,fi,:) = 10*log10(particle_spectrum(513:1024))
 
         !if wanted, apply the noise correction to the spectrum to be saved.
         if (radar_save_noise_corrected_spectra) noise_turb_spectra = noise_removed_turb_spectra
 
         WHERE (ISNAN(noise_turb_spectra)) noise_turb_spectra = -9999.d0
 
-        radar_spectra(i_x,i_y,i_z,i_f,:) = 10*log10(noise_turb_spectra)
-        radar_snr(i_x,i_y,i_z,i_f) = SNR
-        radar_vel(:) = spectra_velo(:)
-        radar_moments(i_x,i_y,i_z,i_f,:) = moments(1:4)
-        radar_slopes(i_x,i_y,i_z,i_f,:) = slope(:)
-        radar_edge(i_x,i_y,i_z,i_f,:) = edge(:)
-        radar_quality(i_x,i_y,i_z,i_f) = quailty_aliasing + quality_2ndPeak
+        out_radar_spectra(i_x,i_y,i_z,i_f,:) = 10*log10(noise_turb_spectra)
+        out_radar_snr(i_x,i_y,i_z,i_f) = SNR
+        out_radar_vel(:) = spectra_velo(:)
+        out_radar_moments(i_x,i_y,i_z,i_f,:) = moments(1:4)
+        out_radar_slopes(i_x,i_y,i_z,i_f,:) = slope(:)
+        out_radar_edge(i_x,i_y,i_z,i_f,:) = edge(:)
+        out_radar_quality(i_x,i_y,i_z,i_f) = quailty_aliasing + quality_2ndPeak
 
         moments(0) = 10*log10(moments(0))
         IF (ISNAN(moments(0))) moments(0) = -9999.d0
-        Ze(i_x,i_y,i_z,i_f) = moments(0)
+        out_Ze(i_x,i_y,i_z,i_f) = moments(0)
 
         if (allocated(turb_spectra)) deallocate(turb_spectra)
 
