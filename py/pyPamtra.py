@@ -17,6 +17,7 @@ import itertools
 from copy import deepcopy
 #from collections import OrderedDict
 from matplotlib import mlab
+import multiprocessing
 
 import namelist #parser for fortran namelist files
 
@@ -42,26 +43,16 @@ missingNumber=-9999.
 #logging.basicConfig(filename='example.log',level=logging.DEBUG)
 
 
+
 class pamDescriptorFile(object):
   #class with the descriptor file content in data. In case you want to use 4D data, use data4D instead, the coreesponding column in data is automatically removed.
   
-  
-  class data4D(dict):
-    def __init__(self, parent):
-        self.parent = parent
-        
-    def __setitem__(self, key, val):
-        assert len(self.parent.data) == val.shape[-1]
-        assert key not in ["hydro_name", "liq_ice", "moment_in", "dist_name", "scat_name", "vel_size_mod"]
-        print "changing", key, "to 4D"
-        self.parent.data = mlab.rec_drop_fields(self.parent.data,[key])
-        dict.__setitem__(self, key, val)
-        
+         
   def __init__(self):
     self.names =np.array(["hydro_name", "as_ratio", "liq_ice", "rho_ms", "a_ms", "b_ms", "alpha_as", "beta_as", "moment_in", "nbin", "dist_name", "p_1", "p_2", "p_3", "p_4", "d_1", "d_2", "scat_name", "vel_size_mod"])
     self.types = ["S15",float,int,float,float,float,float,float,int,int,"S15",float,float,float,float,float,float, "S15", "S15"]  
     self.data = np.recarray((0,),dtype=zip(self.names, self.types))
-    self.data4D = pamDescriptorFile.data4D(self)
+    self.data4D = dict()
     self.nhydro = 0
     return
     
@@ -119,6 +110,29 @@ class pamDescriptorFile(object):
       self.nhydro -= 1
     return
 
+    
+  def add4D(self, key, arr):
+    print "changing", key, "to 4D"
+    self.data = mlab.rec_drop_fields(self.data,[key])
+    self.data4D[key] = arr
+    
+  def remove4D(self, key, val):
+    self.data = mlab.rec_append_fields(self.data,key,val)
+    del data4D[key]
+    
+    
+    
+#class data4D(dict):
+  ## for the 4D data of descriptor file
+  #def __init__(self, parent):
+      #self.parent = parent
+      
+  #def __setitem__(self, key, val):
+      #assert len(self.parent.data) == val.shape[-1]
+      #assert key not in ["hydro_name", "liq_ice", "moment_in", "dist_name", "scat_name", "vel_size_mod"]
+      #print "changing", key, "to 4D"
+      #self.parent.data = mlab.rec_drop_fields(self.parent.data,[key])
+      #dict.__setitem__(self, key, val)
 
 class pyPamtra(object):
 
@@ -336,23 +350,22 @@ class pyPamtra(object):
     """
     read classical Pamtra Namelist File from inputFile
     """
-    raise NotImplementedError("not yet implemented again in v1.0")
 
-    #nmlFile = namelist.Namelist(inputFile)
-    #if nmlFile == {}:
-      #raise IOError("file not found: "+inputFile)
+    nmlFile = namelist.Namelist(inputFile)
+    if nmlFile == {}:
+      raise IOError("file not found: "+inputFile)
 
-    #for key in nmlFile.keys():
-      #for subkey in nmlFile[key]["par"][0].keys():
-        #if subkey.lower() in self._nmlDefaultKeys:
-          #if nmlFile[key]["par"][0][subkey][0] == ".true.": value = True
-          #elif nmlFile[key]["par"][0][subkey][0] == ".false.": value = False
-          #else: value = nmlFile[key]["par"][0][subkey][0]
-          #self.nmlSet[key][subkey.lower()] = value
-          #if self.set["pyVerbose"] > 1: print subkey.lower(), ":", value
-        #elif self.set["pyVerbose"] > 0:
-          #print "Setting '"+ subkey.lower() +"' from '"+ inputFile +"' skipped."
-    #if self.set["pyVerbose"] > 1: print "reading nml file done: ", inputFile
+    for key in nmlFile.keys():
+      for subkey in nmlFile[key]["par"][0].keys():
+        if subkey.lower() in self._nmlDefaultSet.keys():
+          if nmlFile[key]["par"][0][subkey][0] == ".true.": value = True
+          elif nmlFile[key]["par"][0][subkey][0] == ".false.": value = False
+          else: value = nmlFile[key]["par"][0][subkey][0]
+          self.nmlSet[subkey.lower()] = value
+          if self.set["pyVerbose"] > 1: print subkey.lower(), ":", value
+        elif self.set["pyVerbose"] > 0:
+          print "Setting '"+ subkey.lower() +"' from '"+ inputFile +"' skipped."
+    if self.set["pyVerbose"] > 1: print "reading nml file done: ", inputFile
     return
     
   def readPamtraProfile(self,inputFile,n_moments=1):
@@ -1305,10 +1318,16 @@ class pyPamtra(object):
     return
 
     
-  def runParallelPamtra(self,freqs,pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto",checkData=True):
+  def runParallelPamtra(self,freqs,pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto",checkData=True,timeout=86400):
     '''
     run Pamtra from python
     '''
+    if pp_deltaF==0: pp_deltaF = self.set["nfreqs"]
+    if pp_deltaX==0: pp_deltaX = self.p["ngridx"]
+    if pp_deltaY==0: pp_deltaY = self.p["ngridy"]
+    
+    if pp_local_workers == "auto": pp_local_workers = multiprocessing.cpu_count()
+    pool = multiprocessing.Pool(processes=pp_local_workers)
     tttt = time.time()
 
     
@@ -1320,27 +1339,49 @@ class pyPamtra(object):
 
     if checkData: self._checkData()
 
-    fortResults = list()
-    
-    for pp_startF in np.arange(0,self.set["nfreqs"],pp_deltaF):
-      pp_endF = pp_startF + pp_deltaF
-      if pp_endF > self.set["nfreqs"]: pp_endF = self.set["nfreqs"]
-      pp_nfreqs = pp_endF - pp_startF
-      for pp_startX in np.arange(0,self.p["ngridx"],pp_deltaX):
-        pp_endX = pp_startX + pp_deltaX
-        if pp_endX > self.p["ngridx"]: pp_endX = self.p["ngridx"]
-        pp_ngridx = pp_endX - pp_startX
-        for pp_startY in np.arange(0,self.p["ngridy"],pp_deltaY):
-          pp_endY = pp_startY + pp_deltaY
-          if pp_endY > self.p["ngridy"]: pp_endY = self.p["ngridy"]
-          pp_ngridy = pp_endY - pp_startY
-    
-          
-          profilePart = self._sliceProfile(pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY)
-          fortResult, fortObject = pyPamtraLibWrapper.PamtraFortranWrapper(self.set,self.nmlSet,self.df,profilePart)
-          fortResults.append(fortResult)
-    
-    self.r =  fortResult._unscliceResults(fortResult)
+    jobs = list()
+    self.pp_resultData = list()
+    pp_i = 0
+    self._prepareResults()
+    try: 
+      for pp_startF in np.arange(0,self.set["nfreqs"],pp_deltaF):
+        pp_endF = pp_startF + pp_deltaF
+        if pp_endF > self.set["nfreqs"]: pp_endF = self.set["nfreqs"]
+        for pp_startX in np.arange(0,self.p["ngridx"],pp_deltaX):
+          pp_endX = pp_startX + pp_deltaX
+          if pp_endX > self.p["ngridx"]: pp_endX = self.p["ngridx"]
+          pp_ngridx = pp_endX - pp_startX
+          for pp_startY in np.arange(0,self.p["ngridy"],pp_deltaY):
+            pp_endY = pp_startY + pp_deltaY
+            if pp_endY > self.p["ngridy"]: pp_endY = self.p["ngridy"]
+            pp_ngridy = pp_endY - pp_startY
+      
+            print "submitting job ", pp_i, pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY
+      
+            indices = [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY]       
+            profilePart, dfPart, settings = self._sliceProfile(*indices)
+
+            jobs.append(pool.apply_async(pyPamtraLibWrapper.parallelPamtraFortranWrapper,(
+            indices,
+            settings,self.nmlSet,dfPart,profilePart),{"returnModule":False}))#),callback=self.pp_resultData.append)
+           
+            
+            pp_i += 1
+            print "submitted job: ", pp_i
+
+            
+      #pool.close()
+      #pool.join()
+    except KeyboardInterrupt:
+      pool.terminate()
+      pool.join()
+      print "TERMINATED: KeyboardInterrupt"
+
+    print "waiting for all jobs to finish"
+    for jj,job in enumerate(jobs):
+      self._joinResults(job.get(timeout=timeout))
+      print "got job", jj+1
+
     self.r["nmlSettings"] = self.nmlSet
 
     
@@ -1348,12 +1389,35 @@ class pyPamtra(object):
     return    
     
   def _sliceProfile(self,pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY):
+    
+   
     profilePart = dict()
     for key in self.p.keys():
-      profilePart[key] = self.p[key][pp_startX:pp_endX,pp_startY:pp_endY]
-    return profilePart
+      #import pdb;pdb.set_trace()
+      if type(self.p[key]) is not np.ndarray:
+        profilePart[key] = self.p[key]
+      else:
+        profilePart[key] = self.p[key][pp_startX:pp_endX,pp_startY:pp_endY]
+        
+    profilePart["ngridx"] = pp_endX - pp_startX
+    profilePart["ngridy"] = pp_endY - pp_startY
+       
+    dfData = deepcopy(self.df)   
+    for key in dfData.data4D.keys():
+      dfData.data4D[key] = self.df.data4D[key][pp_startX:pp_endX,pp_startY:pp_endY]
+       
+    settings = deepcopy(self.set)
+    settings["nfreqs"] = pp_endF - pp_startF
+    settings["freqs"] = self.set["freqs"][pp_startF:pp_endF]
+       
+    return profilePart, dfData, settings
     
-  def _unscliceResults(fortResults):
+  def _prepareResults(self):
+    
+    try: maxNBin1 = np.max(self.df.data["nbin"]) + 1
+    except: maxNBin1 = np.max(self.df.data4D["nbin"]) + 1
+    radar_spectrum_length = self.nmlSet["radar_nfft"]
+    
     
     self.r = dict()
     self.r["Ze"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
@@ -1364,11 +1428,50 @@ class pyPamtra(object):
     self.r["radar_snr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
     self.r["radar_moments"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],4,))*missingNumber
     self.r["radar_slopes"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],2,))*missingNumber
+    self.r["radar_edges"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],2,))*missingNumber
     self.r["radar_quality"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],),dtype=int)*missingNumber
     self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles,self.set["nfreqs"],self._nstokes))*missingNumber
+    self.r["psd_area"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin1))*missingNumber
+    self.r["psd_f"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin1))*missingNumber
+    self.r["psd_d_bound"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin1))*missingNumber
+    self.r["psd_mass"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin1))*missingNumber
 
-    raise NotImplementedError("Feature Incomplete")
-    return self.r
+
+    
+    return 
+    
+  def _joinResults(self,resultList):
+    '''
+    Collect the data of parallel pyPamtra    
+    '''
+    #if pp_ii == 1: import pdb;pdb.set_trace()
+    #logging.debug(str(pp_ii)+": callback started ")
+    #print "toll", results[0][0][1]
+    #print "toller", np.shape(self.r["radar_snr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF])    
+    if self.set["pyVerbose"] > 2: print "Callback started:", 
+    
+    [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY], results = resultList
+       
+    self.r["pamtraVersion"] = results["pamtraVersion"]
+    self.r["pamtraHash"] = results["pamtraVersion"]
+    self.r["Ze"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF] = results["Ze"]
+    self.r["Att_hydro"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF] = results["Att_hydro"] 
+    self.r["Att_atmo"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF] = results["Att_atmo"]
+    self.r["radar_hgt"][pp_startX:pp_endX,pp_startY:pp_endY,:]= results["radar_hgt"]
+    self.r["tb"][pp_startX:pp_endX,pp_startY:pp_endY,:,:,pp_startF:pp_endF,:]= results["tb"]
+    self.r["radar_spectra"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_spectra"]
+    self.r["radar_snr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_snr"]
+    self.r["radar_moments"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_moments"]
+    self.r["radar_slopes"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_slopes"]
+    self.r["radar_quality"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_quality"]
+    self.r["radar_vel"]= results["radar_vel"]
+    self.r["angles_deg"]= results["angles_deg"]
+    for key in ["psd_d_bound","psd_f","psd_mass","psd_area"]:
+      self.r[key][pp_startX:pp_endX,pp_startY:pp_endY] = results[key]
+    
+    return
+    
+    
     
   def writeResultsToNumpy(self,fname,seperateFiles=False):
     
@@ -1481,7 +1584,7 @@ class pyPamtra(object):
     cdfFile.createDimension('frequency',int(self.set["nfreqs"]))
     
     if (self.r["nmlSettings"]["run_mode"]["passive"]):
-      cdfFile.createDimension('angles',len(self.r["angles"]))
+      cdfFile.createDimension('angles',len(self.r["angles_deg"]))
       cdfFile.createDimension('outlevels',int(self._noutlevels))
       cdfFile.createDimension('stokes',int(self._nstokes))
       

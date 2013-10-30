@@ -46,29 +46,29 @@ python module pyPamtraLib ! in
         module vars_output ! in :pyPamtraLib:vars_output.f90
             use report_module
             use kinds
-            real(kind=sgl), allocatable,dimension(:,:) :: iwps
+            real(kind=dbl), allocatable,dimension(:) :: out_angles_deg
             real(kind=sgl), allocatable,dimension(:,:) :: cwps
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: psd_f
-            real(kind=dbl), allocatable,dimension(:) :: radar_vel
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: psd_d_bound
-            real(kind=dbl) dimension(32) :: angles_deg
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: psd_mass
-            real(kind=dbl), allocatable,dimension(:,:,:) :: radar_hgt
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: radar_slopes
-            real(kind=sgl), allocatable,dimension(:,:) :: gwps
-            real(kind=sgl), allocatable,dimension(:,:) :: swps
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: radar_edge
-            real(kind=dbl), allocatable,dimension(:,:,:,:) :: radar_snr
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: radar_moments
-            real(kind=sgl), allocatable,dimension(:,:) :: hwps
-            integer, allocatable,dimension(:,:,:,:) :: radar_quality
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: radar_spectra
-            real(kind=dbl), allocatable,dimension(:,:,:,:) :: att_hydro
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: psd_area
-            real(kind=dbl), allocatable,dimension(:,:,:,:) :: att_atmo
-            real(kind=dbl), allocatable,dimension(:,:,:,:) :: ze
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_att_hydro
+            real(kind=sgl), allocatable,dimension(:,:) :: iwps
             real(kind=sgl), allocatable,dimension(:,:) :: rwps
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: tb
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_slopes
+            real(kind=sgl), allocatable,dimension(:,:) :: gwps
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_moments
+            real(kind=sgl), allocatable,dimension(:,:) :: swps
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_tb
+            real(kind=dbl), allocatable,dimension(:,:,:) :: out_radar_hgt
+            real(kind=sgl), allocatable,dimension(:,:) :: hwps
+            real(kind=dbl), allocatable,dimension(:) :: out_radar_vel
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_ze
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_area
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_radar_snr
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_d_bound
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_edge
+            integer, allocatable,dimension(:,:,:,:) :: out_radar_quality
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_mass
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_spectra
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_f
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_att_atmo
             subroutine allocate_output_vars(errorstatus,no_allocated_lyrs) ! in :pyPamtraLib:vars_output.f90:vars_output
                 use vars_atmosphere
                 use descriptor_file, only: nbin_arr,n_hydro

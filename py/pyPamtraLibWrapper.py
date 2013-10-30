@@ -1,5 +1,5 @@
 import pyPamtraLib
-#import os
+import os
 #import logging
 #import collections
 import numpy as np
@@ -12,12 +12,13 @@ def PamtraFortranWrapper(
   settings,
   nmlSettings,
   descriptorFile,
-  profile
+  profile,
+  returnModule=True
   ):
     
   pyPamtraLib.report_module.verbose = settings["verbose"]
    
-    
+       
   #be sure everything is cleaned up before we start
   error = pyPamtraLib.deallocate_everything.do_deallocate_everything()
   if error > 0: raise RuntimeError("Error in deallocate everything")
@@ -109,18 +110,18 @@ def PamtraFortranWrapper(
     pyPamtraLib.vars_atmosphere.print_vars_atmosphere()
     
     
-  #now, finally rund the model  
+  ##now, finally rund the model  
   error = pyPamtraLib.pypamtralib.run_pamtra() 
-  if error > 0: raise RuntimeError("Error in run_pamtra")
+  #if error > 0: raise RuntimeError("Error in run_pamtra")
   
-  #process the results!
+  ##process the results!
   results = dict()
-  for key in ["tb","Ze","Att_hydro","Att_atmo","radar_hgt","radar_moments","radar_slopes","radar_quality","radar_snr", "radar_spectra","psd_d_bound","psd_f","psd_mass","psd_area"]:
-    if settings["pyVerbose"] > 3: print("allocTest = pyPamtraLib.vars_output."+key.lower()+" == None")
-    exec("allocTest = pyPamtraLib.vars_output."+key.lower()+" == None")
+  for key in ["tb","Ze","Att_hydro","Att_atmo","radar_hgt","radar_moments","radar_slopes","radar_quality","radar_snr", "radar_spectra","radar_vel","psd_d_bound","psd_f","psd_mass","psd_area","angles_deg"]:
+    if settings["pyVerbose"] > 3: print("allocTest = pyPamtraLib.vars_output.out_"+key.lower()+" == None")
+    exec("allocTest = pyPamtraLib.vars_output.out_"+key.lower()+" == None")
     if not allocTest:
-      if settings["pyVerbose"] > 3: print("results['"+key+"'] = pyPamtraLib.vars_output."+key.lower())
-      exec("results['"+key+"'] = pyPamtraLib.vars_output."+key.lower())
+      if settings["pyVerbose"] > 3: print("results['"+key+"'] = pyPamtraLib.vars_output.out_"+key.lower())
+      exec("results['"+key+"'] = pyPamtraLib.vars_output.out_"+key.lower())
     else:
       if settings["pyVerbose"] > 3: print "filling key", key
       if key in ["radar_quality"]: results[key] = -9999
@@ -129,8 +130,11 @@ def PamtraFortranWrapper(
     
   results["pamtraVersion"] = "".join(list(pyPamtraLib.pypamtralib.gitversion)).strip()      
   results["pamtraHash"] = "".join(list(pyPamtraLib.pypamtralib.githash)).strip()  
-
-  return results, pyPamtraLib
+  
+  if settings["pyVerbose"] > 2: "processed results"
+        
+  if returnModule: return results, pyPamtraLib
+  else: return results
 
 def _str_py2f(array,length=None):
   # the byte order of fortran and numpy string arrays is different, this here works sometimes...
@@ -165,6 +169,12 @@ def setFortranStrList(fortranList,pythonList,charLength=None):
     #we have to fill teh rest of the variable with spaces, otherwise it contains only random!
     _str_py2f(fortranList)[pp][len(pythonStr):] = " "
   return
+  
+def parallelPamtraFortranWrapper(indices, *args, **kwargs):
+  print 'starting', __name__, 'parent process:', os.getppid(), 'process id:', os.getpid()
+  results = PamtraFortranWrapper(*args, **kwargs)
+  return indices, results
+  #return indices, dict()
   
   
 #def PamtraFortranWrapper_OLD(nmlSettings,nmlDefaultSettings,nmlFile,*pamtraArgs):
