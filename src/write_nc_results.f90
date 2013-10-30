@@ -7,7 +7,8 @@ subroutine write_nc_results
       atmo_model_j, atmo_lfrac, atmo_lon, atmo_lat, atmo_iwv
     use netcdf
     use settings, only: active, passive, creator, radar_mode, &
-    n_moments, radar_nfft, radar_mode, nfrq, freqs, nc_out_file
+    n_moments, radar_nfft, radar_mode, nfrq, freqs, nc_out_file, &
+    nummu, nstokes, noutlevels
     use report_module
 
     implicit none
@@ -22,10 +23,7 @@ subroutine write_nc_results
     AttAtmoVarID, AttHydroVarID,&
     lSloVarID,rSloVarID, lEdgVarID, rEdgVarID, kurtVarID, skewVarID, swVarID, velVarID,&
     frequencyVarID, anglesVarID, RadarVelID, RadarSpecID, RadarSNRID
-          
-          
-    integer :: nang = 32, nout = 2, nstokes = 2
-
+                  
     integer, dimension(2) :: dim2d
     integer, dimension(3) :: dim3d
     integer, dimension(4) :: dim4d
@@ -70,8 +68,8 @@ subroutine write_nc_results
     call check(nf90_def_dim(ncid, 'nlat', atmo_ngridy, dlatID))
     call check(nf90_def_dim(ncid, 'nfreq', nfrq, dfrqID))
     if (passive) then
-        call check(nf90_def_dim(ncid, 'nang', nang, dangID))
-        call check(nf90_def_dim(ncid, 'nout', nout, doutID))
+        call check(nf90_def_dim(ncid, 'nang', nummu*2, dangID))
+        call check(nf90_def_dim(ncid, 'nout', noutlevels, doutID))
         call check(nf90_def_dim(ncid, 'nstokes', nstokes, dstokesID))
     end if
     if (active) then
@@ -255,7 +253,9 @@ subroutine write_nc_results
     call check(nf90_put_var(ncid, gwpVarID, gwps))
     call check(nf90_put_var(ncid, hwpVarID, hwps))
     if (passive) then
-        call check(nf90_put_var(ncid, tbVarID, tb))
+        call check(nf90_put_var(ncid, tbVarID, &
+        RESHAPE( out_tb, (/ nstokes,nfrq,2*nummu,noutlevels,atmo_ngridy,atmo_ngridx /),&
+        ORDER = (/ 6,5,4,3,2,1 /))))
     end if
 
     if (active) then                             !reshapeing needed due to Fortran's crazy Netcdf handling...

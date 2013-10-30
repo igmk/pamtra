@@ -60,7 +60,8 @@ DOWN_RAD,a,b,fi)
                 end do
                 do i = 1, nstokes
                                   !	      tb_up(a,b,l,j,i) = out(i)
-                    tb(i,fi,(nummu+1)-j,l,b,a) = out(i)
+!                     tb(i,fi,(nummu+1)-j,l,b,a) = out(i)
+                    out_tb(a,b,l,(nummu+1)-j,fi,i) = out(i)
                 end do
                !	    write (3, form1) height (li), phid, - mu_values (j), (out (i),i = 1, nstokes)
             end do
@@ -78,7 +79,8 @@ DOWN_RAD,a,b,fi)
                 end do
                 do i = 1, nstokes
                     !	      tb_down(a,b,l,j,i) = out(i)
-                    tb(i,fi,nummu+j,l,b,a) = out(i)
+!                     tb(i,fi,nummu+j,l,b,a) = out(i)
+                    out_tb(a,b,l,nummu+j,fi,i) = out(i)
                 end do
                !	    write (3, form1) height (li), phid, mu_values(j), (out(i),i = 1, nstokes)
             end do

@@ -16,7 +16,7 @@ module vars_output
 
 
   !for passive
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: tb
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: out_tb
   real(kind=dbl), dimension(32) :: angles_deg !2*NUMMU=32
 
   !for active 
@@ -111,8 +111,8 @@ module vars_output
 
 !     if (write_nc .or. in_python) then
     if (passive) then
-        allocate(tb(nstokes,nfrq,2*nummu,noutlevels,atmo_ngridy,atmo_ngridx))
-        tb = 0._dbl
+        allocate(out_tb(atmo_ngridx,atmo_ngridy,noutlevels,2*nummu,nfrq,nstokes))
+        out_tb = 0._dbl
     end if
 
     if (active) then
@@ -192,7 +192,7 @@ module vars_output
     if (allocated(gwps)) deallocate(gwps)
     if (allocated(hwps)) deallocate(hwps)
 
-    if (allocated(tb)) deallocate(tb)
+    if (allocated(out_tb)) deallocate(out_tb)
     if (allocated(Ze)) deallocate(Ze)
     if (allocated(radar_hgt)) deallocate(radar_hgt)
     if (allocated(Att_hydro)) deallocate(Att_hydro)
