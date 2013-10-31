@@ -1,6 +1,6 @@
 subroutine radar_calc_moments(errorstatus,radar_spectrum_in,noise_model,radar_spectrum_out,moments,slope,edge,quality)
 
-    ! written by P. Kollias, tranlated to Fortran by M. Maahn (12.2012)
+    ! written by P. Kollias, translated to Fortran by M. Maahn (12.2012)
     ! calculate the 0th -4th moment and the slopes of the peak of a radar spectrum!
     !
     ! in
@@ -89,11 +89,11 @@ subroutine radar_calc_moments(errorstatus,radar_spectrum_in,noise_model,radar_sp
 
     !!get the borders of the most significant peak
     do ii = spec_max+1, radar_nfft
-        if (radar_spectrum_out(ii) <= radar_noise_distance_factor*noise ) EXIT
+        if (radar_spectrum_in(ii) <= radar_noise_distance_factor*noise ) EXIT
     end do
     right_edge = ii
     do jj = spec_max-1, 1, -1
-        if (radar_spectrum_out(jj) <= radar_noise_distance_factor*noise ) EXIT
+        if (radar_spectrum_in(jj) <= radar_noise_distance_factor*noise ) EXIT
     end do
     left_edge = jj
 
