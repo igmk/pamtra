@@ -48,12 +48,13 @@ class pamDescriptorFile(object):
   #class with the descriptor file content in data. In case you want to use 4D data, use data4D instead, the coreesponding column in data is automatically removed.
   
          
-  def __init__(self):
+  def __init__(self,parent):
     self.names =np.array(["hydro_name", "as_ratio", "liq_ice", "rho_ms", "a_ms", "b_ms", "alpha_as", "beta_as", "moment_in", "nbin", "dist_name", "p_1", "p_2", "p_3", "p_4", "d_1", "d_2", "scat_name", "vel_size_mod"])
     self.types = ["S15",float,int,float,float,float,float,float,int,int,"S15",float,float,float,float,float,float, "S15", "S15"]  
     self.data = np.recarray((0,),dtype=zip(self.names, self.types))
     self.data4D = dict()
     self.nhydro = 0
+    self.parent = parent
     return
     
    
@@ -88,13 +89,17 @@ class pamDescriptorFile(object):
     assert hydroTuple[0] not in self.data["hydro_name"]
     self.data = np.append(self.data,np.array(tuple(hydroTuple),dtype=zip(self.names,self.types)))
     self.nhydro += 1
+    for key in ["hydro_q","hydro_reff","hydro_n"]:
+      if key in self.parent.p.keys():    
+        self.parent.p[key] = np.concatenate([self.parent.p[key],np.ones(self.parent._shape3D + tuple([1]))*missingNumber],axis=-1)
     return
     
   def removeHydrometeor(self,hydroName):
     if hydroName == "all":
       self.__init__()
       return
-    removed = False
+    removed = False#
+    hydroIndex = np.where(self.parent.df.data["hydro_name"]==hydroName)[0][0]
     self.dataNew = np.recarray((0,),dtype=zip(self.names, self.types))
     for ii in range(self.data.shape[0]):
       if self.data[ii][0] == hydroName:
@@ -108,6 +113,9 @@ class pamDescriptorFile(object):
       raise ValueError("Did not find "+hydroName)
     else:
       self.nhydro -= 1
+      for key in ["hydro_q","hydro_reff","hydro_n"]:
+        if key in self.parent.p.keys():
+          self.parent.p[key] = np.delete(self.parent.p[key],hydroIndex,axis=-1)
     return
 
     
@@ -120,19 +128,7 @@ class pamDescriptorFile(object):
     self.data = mlab.rec_append_fields(self.data,key,val)
     del data4D[key]
     
-    
-    
-#class data4D(dict):
-  ## for the 4D data of descriptor file
-  #def __init__(self, parent):
-      #self.parent = parent
-      
-  #def __setitem__(self, key, val):
-      #assert len(self.parent.data) == val.shape[-1]
-      #assert key not in ["hydro_name", "liq_ice", "moment_in", "dist_name", "scat_name", "vel_size_mod"]
-      #print "changing", key, "to 4D"
-      #self.parent.data = mlab.rec_drop_fields(self.parent.data,[key])
-      #dict.__setitem__(self, key, val)
+
 
 class pyPamtra(object):
 
@@ -151,7 +147,7 @@ class pyPamtra(object):
     self._noutlevels = 2
     self._nangles = 32
     
-    self.df = pamDescriptorFile()
+    self.df = pamDescriptorFile(self)
     
     self.p = dict()
     self.r = dict()
@@ -563,7 +559,7 @@ class pyPamtra(object):
     if not ("hgt_lev" in kwargs.keys() and "temp_lev" in kwargs.keys() and "press_lev" in kwargs.keys() and ("relhum_lev" in kwargs.keys() or "q" in kwargs.keys())):
       raise TypeError("I need hgt_lev and temp_lev and press_lev and (relhum_lev or q)!")
     
-    assert self.df.nhydro > 0
+    #assert self.df.nhydro > 0
     
     noDims = len(np.shape(kwargs["hgt_lev"]))
     
@@ -1326,6 +1322,8 @@ class pyPamtra(object):
     if pp_deltaX==0: pp_deltaX = self.p["ngridx"]
     if pp_deltaY==0: pp_deltaY = self.p["ngridy"]
     
+    if hasattr(self, "fortObject"): del self.fortObject
+    
     if pp_local_workers == "auto": pp_local_workers = multiprocessing.cpu_count()
     pool = multiprocessing.Pool(processes=pp_local_workers)
     tttt = time.time()
@@ -1424,18 +1422,26 @@ class pyPamtra(object):
     self.r["Att_hydro"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
     self.r["Att_atmo"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
     self.r["radar_hgt"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],))*missingNumber
-    self.r["radar_spectra"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],radar_spectrum_length,))*missingNumber
+    if self.nmlSet["radar_mode"]=="spectrum":
+      self.r["radar_spectra"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],radar_spectrum_length,))*missingNumber
+    else:
+      self.r["radar_spectra"] = np.array([missingNumber])
     self.r["radar_snr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
     self.r["radar_moments"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],4,))*missingNumber
     self.r["radar_slopes"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],2,))*missingNumber
     self.r["radar_edges"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],2,))*missingNumber
     self.r["radar_quality"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],),dtype=int)*missingNumber
     self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles,self.set["nfreqs"],self._nstokes))*missingNumber
-    self.r["psd_area"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin1))*missingNumber
-    self.r["psd_f"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin1))*missingNumber
-    self.r["psd_d_bound"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin1))*missingNumber
-    self.r["psd_mass"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin1))*missingNumber
-
+    if self.nmlSet["save_psd"]:
+      self.r["psd_area"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin1))*missingNumber
+      self.r["psd_f"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin1))*missingNumber
+      self.r["psd_d_bound"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin1))*missingNumber
+      self.r["psd_mass"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin1))*missingNumber
+    else: #save memory
+      self.r["psd_area"] = np.array([missingNumber])
+      self.r["psd_f"] = np.array([missingNumber])
+      self.r["psd_d_bound"] = np.array([missingNumber])
+      self.r["psd_mass"] =np.array([missingNumber])
 
     
     return 
@@ -1459,15 +1465,18 @@ class pyPamtra(object):
     self.r["Att_atmo"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF] = results["Att_atmo"]
     self.r["radar_hgt"][pp_startX:pp_endX,pp_startY:pp_endY,:]= results["radar_hgt"]
     self.r["tb"][pp_startX:pp_endX,pp_startY:pp_endY,:,:,pp_startF:pp_endF,:]= results["tb"]
-    self.r["radar_spectra"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_spectra"]
+    if self.nmlSet["radar_mode"]=="spectrum":
+      self.r["radar_spectra"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_spectra"]
     self.r["radar_snr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_snr"]
     self.r["radar_moments"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_moments"]
     self.r["radar_slopes"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_slopes"]
+    self.r["radar_edges"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_edges"]
     self.r["radar_quality"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_quality"]
     self.r["radar_vel"]= results["radar_vel"]
     self.r["angles_deg"]= results["angles_deg"]
-    for key in ["psd_d_bound","psd_f","psd_mass","psd_area"]:
-      self.r[key][pp_startX:pp_endX,pp_startY:pp_endY] = results[key]
+    if self.nmlSet["save_psd"]:
+      for key in ["psd_d_bound","psd_f","psd_mass","psd_area"]:
+        self.r[key][pp_startX:pp_endX,pp_startY:pp_endY] = results[key]
     
     return
     
@@ -1748,6 +1757,16 @@ class pyPamtra(object):
 	nc_rslop[:] = np.array(self.r["radar_slopes"][...,1],dtype='f')
 	if not pyNc: nc_rslop._FillValue =missingNumber
 
+        nc_lslop=cdfFile.createVariable('Radar_LeftEdge', 'f',dim4d,**fillVDict)
+        nc_lslop.units="m/s"
+        nc_lslop[:] = np.array(self.r["radar_edges"][...,0],dtype='f')
+        if not pyNc: nc_lslop._FillValue =missingNumber
+        
+        nc_rslop=cdfFile.createVariable('Radar_RightEdge', 'f',dim4d,**fillVDict)
+        nc_rslop.units="m/s"
+        nc_rslop[:] = np.array(self.r["radar_edges"][...,1],dtype='f')
+        if not pyNc: nc_rslop._FillValue =missingNumber	
+	
 	nc_qual=cdfFile.createVariable('Radar_Quality', 'i',dim4d,**fillVDict)
 	nc_qual.units="bytes"
 	nc_qual.description="1st byte: aliasing; 2nd byte: 2nd peak present; 7th: no peak found"

@@ -20,7 +20,7 @@ delta_h)
     use constants
     use vars_atmosphere, only: atmo_airturb
     use vars_output, only: out_radar_spectra, out_radar_snr, out_radar_vel,out_radar_hgt, &
-    out_radar_moments, out_radar_slopes, out_radar_edge, out_radar_quality, out_ze, out_att_hydro !output of the radar simulator
+    out_radar_moments, out_radar_slopes, out_radar_edges, out_radar_quality, out_ze, out_att_hydro !output of the radar simulator
     use report_module
     use vars_index, only: i_x,i_y, i_z, i_f
 
@@ -322,7 +322,7 @@ delta_h)
         out_radar_vel(:) = spectra_velo(:)
         out_radar_moments(i_x,i_y,i_z,i_f,:) = moments(1:4)
         out_radar_slopes(i_x,i_y,i_z,i_f,:) = slope(:)
-        out_radar_edge(i_x,i_y,i_z,i_f,:) = edge(:)
+        out_radar_edges(i_x,i_y,i_z,i_f,:) = edge(:)
         out_radar_quality(i_x,i_y,i_z,i_f) = quailty_aliasing + quality_2ndPeak
 
         moments(0) = 10*log10(moments(0))

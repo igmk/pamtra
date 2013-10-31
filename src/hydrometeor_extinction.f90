@@ -143,6 +143,11 @@ subroutine hydrometeor_extinction(errorstatus)
       scat_name  = scat_name_arr(ih)
       vel_size_mod  = vel_size_mod_arr(ih)
 
+      !short cut in case we disabled the particle
+      if (dist_name == "disabled") then
+        if (verbose >=3) print*, i_x,i_y,i_z,ih,hydro_name, dist_name, "DISABLED"
+        CYCLE
+      end if
 
 ! Convert specific quantities [kg/kg] in absolute ones [kg/m3]
 !       q_h        = q2abs(q_hydro(ih,i_z),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),q_hum(i_z),&
@@ -156,6 +161,7 @@ subroutine hydrometeor_extinction(errorstatus)
 
       if (verbose >= 2) print*, ih, hydro_name
 
+print*, "TODO: make this one smarter that it can handle moment_in=1"
       if (q_h < hydro_threshold) then
 	if (verbose >=3) print*, i_x,i_y,i_z,ih,hydro_name, "q_h below threshold", q_h
 	CYCLE

@@ -116,7 +116,7 @@ def PamtraFortranWrapper(
   
   ##process the results!
   results = dict()
-  for key in ["tb","Ze","Att_hydro","Att_atmo","radar_hgt","radar_moments","radar_slopes","radar_quality","radar_snr", "radar_spectra","radar_vel","psd_d_bound","psd_f","psd_mass","psd_area","angles_deg"]:
+  for key in ["tb","Ze","Att_hydro","Att_atmo","radar_hgt","radar_moments","radar_edges","radar_slopes","radar_quality","radar_snr", "radar_spectra","radar_vel","psd_d_bound","psd_f","psd_mass","psd_area","angles_deg"]:
     if settings["pyVerbose"] > 3: print("allocTest = pyPamtraLib.vars_output.out_"+key.lower()+" == None")
     exec("allocTest = pyPamtraLib.vars_output.out_"+key.lower()+" == None")
     if not allocTest:

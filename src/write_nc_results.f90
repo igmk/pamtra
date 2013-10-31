@@ -282,9 +282,9 @@ subroutine write_nc_results
             RESHAPE( out_radar_slopes(:,:,:,:,2), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
 
             call check(nf90_put_var(ncid, lEdgVarID, &
-            RESHAPE( out_radar_edge(:,:,:,:,1), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( out_radar_edges(:,:,:,:,1), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
             call check(nf90_put_var(ncid, rEdgVarID, &
-            RESHAPE( out_radar_edge(:,:,:,:,2), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( out_radar_edges(:,:,:,:,2), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
 
             call check(nf90_put_var(ncid, RadarSNRID, &
             RESHAPE( out_radar_snr, (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))

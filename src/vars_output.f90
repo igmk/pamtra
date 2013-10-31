@@ -28,7 +28,7 @@ module vars_output
   real(kind=dbl), allocatable, dimension(:,:,:,:) ::    out_radar_snr
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) ::    out_radar_moments
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) ::    out_radar_slopes
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:) ::    out_radar_edge
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) ::    out_radar_edges
   integer, allocatable, dimension(:,:,:,:) ::    out_radar_quality
   real(kind=dbl), allocatable, dimension(:) :: out_radar_vel
 
@@ -134,7 +134,7 @@ module vars_output
         out_radar_snr(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq),&
         out_radar_moments(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,4),&
         out_radar_slopes(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,2),&
-        out_radar_edge(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,2),&
+        out_radar_edges(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,2),&
         out_radar_quality(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq),&
         out_radar_vel(radar_nfft))
         !set to -9999, because height of profiles can vary!
@@ -143,7 +143,7 @@ module vars_output
         out_radar_vel = -9999.d0
         out_radar_moments = -9999.d0
         out_radar_slopes = -9999.d0
-        out_radar_edge = -9999.d0
+        out_radar_edges = -9999.d0
         out_radar_quality = -9999
     end if
 
@@ -204,7 +204,7 @@ module vars_output
     if (allocated(out_radar_vel)) deallocate(out_radar_vel)
     if (allocated(out_radar_moments)) deallocate(out_radar_moments)
     if (allocated(out_radar_slopes)) deallocate(out_radar_slopes)
-    if (allocated(out_radar_edge)) deallocate(out_radar_edge)
+    if (allocated(out_radar_edges)) deallocate(out_radar_edges)
     if (allocated(out_radar_quality)) deallocate(out_radar_quality)
     if (allocated(out_psd_d_bound)) deallocate(out_psd_d_bound)
     if (allocated(out_psd_f)) deallocate(out_psd_f)
