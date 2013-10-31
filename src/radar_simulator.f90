@@ -315,9 +315,10 @@ delta_h)
         !if wanted, apply the noise correction to the spectrum to be saved.
         if (radar_save_noise_corrected_spectra) noise_turb_spectra = noise_removed_turb_spectra
 
-        WHERE (ISNAN(noise_turb_spectra)) noise_turb_spectra = -9999.d0
 
         out_radar_spectra(i_x,i_y,i_z,i_f,:) = 10*log10(noise_turb_spectra)
+        WHERE (ISNAN(noise_turb_spectra)) noise_turb_spectra = -9999.d0
+
         out_radar_snr(i_x,i_y,i_z,i_f) = SNR
         out_radar_vel(:) = spectra_velo(:)
         out_radar_moments(i_x,i_y,i_z,i_f,:) = moments(1:4)

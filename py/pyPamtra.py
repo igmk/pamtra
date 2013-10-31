@@ -216,6 +216,7 @@ class pyPamtra(object):
     self.nmlSet["radar_min_spectral_snr"]=  1.2#threshold for peak detection. if radar_no_Ave >> 150, it can be set to 1.1
     self.nmlSet["radar_convolution_fft"]=  True #use fft for convolution of spectrum. is alomst 10 times faster, but can introduce aretfacts for radars with *extremely* low noise levels or if noise is turned off at all.
     self.nmlSet["radar_k2"]=  0.93 # dielectric constant |K|² (always for liquid water by convention) for the radar equation
+    self.nmlSet["radar_nPeaks"] = 3
     self.nmlSet["radar_noise_distance_factor"]=  0.25
     self.nmlSet["radar_receiver_uncertainty_std"]=  0.e0 #dB
 

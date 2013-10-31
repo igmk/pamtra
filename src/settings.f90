@@ -42,6 +42,7 @@ module settings
     integer(kind=long):: radar_no_Ave !number of average spectra for noise variance reduction, typical range [1 40]
     integer(kind=long):: radar_airmotion_linear_steps !for linear air velocity model, how many staps shall be calculated?
     integer(kind=long):: radar_aliasing_nyquist_interv !how many additional nyquists intervalls shall be added to the spectrum to deal with aliasing effects
+    integer(kind=long) :: radar_nPeaks
     real(kind=dbl) :: radar_max_V !MinimumNyquistVelocity in m/sec
     real(kind=dbl) :: radar_min_V !MaximumNyquistVelocity in m/sec
     real(kind=dbl) :: radar_pnoise0 !radar noise
@@ -81,8 +82,6 @@ module settings
     character(10) :: input_type, crm_case
     character(100) :: crm_data, crm_data2, crm_constants
     character(8) :: radar_airmotion_model, radar_mode
-    character(30) :: radar_fallVel_cloud, radar_fallVel_rain, radar_fallVel_ice,&
-    radar_fallVel_snow, radar_fallVel_graupel, radar_fallVel_hail
 
     character(99)  :: input_file        ! name of profile
     character(300) :: namelist_file     ! name of nml_file
@@ -117,10 +116,9 @@ contains
 	namelist / radar_simulator / radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
 		  radar_pnoise0, radar_airmotion, radar_airmotion_model, &
 		  radar_airmotion_vmin, radar_airmotion_vmax, radar_airmotion_linear_steps, &
-		  radar_airmotion_step_vmin, radar_fallVel_cloud, radar_fallVel_rain, radar_fallVel_ice,&
-		  radar_fallVel_snow, radar_fallVel_graupel, radar_fallVel_hail, radar_aliasing_nyquist_interv, &
+		  radar_airmotion_step_vmin, radar_aliasing_nyquist_interv, &
 		  radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr, radar_convolution_fft, &
-                  radar_K2, radar_noise_distance_factor, radar_receiver_uncertainty_std
+                  radar_K2, radar_noise_distance_factor, radar_receiver_uncertainty_std, radar_nPeaks
 
     if (verbose >= 3) print*,'Start of ', nameOfRoutine
 
@@ -281,13 +279,6 @@ contains
         radar_airmotion_linear_steps = 30
         radar_airmotion_step_vmin = 0.5d0
 
-        radar_fallVel_cloud ="khvorostyanov01_drops"
-        radar_fallVel_rain = "khvorostyanov01_drops"
-        radar_fallVel_ice ="heymsfield10_particles"
-        radar_fallVel_snow ="heymsfield10_particles"
-        radar_fallVel_graupel ="khvorostyanov01_spheres"
-        radar_fallVel_hail ="khvorostyanov01_spheres"
-
         radar_aliasing_nyquist_interv = 1
         radar_save_noise_corrected_spectra = .false.
         radar_use_hildebrand = .false.
@@ -296,6 +287,8 @@ contains
         radar_K2 = 0.93 ! dielectric constant |K|² (always for liquid water by convention) for the radar equation
         radar_noise_distance_factor = 0.25
         radar_receiver_uncertainty_std = 0.d0 !dB
+        radar_nPeaks = 3 !number of peaks the radar simulator is looking for
+      
 
         ! create frequency string if not set in pamtra
         if (freq_str == "") then
@@ -359,6 +352,7 @@ contains
       print*, 'n_moments: ', n_moments
       print*, 'lhyd_extinction: ', lhyd_extinction
       print*, 'radar_k2: ', radar_k2
+      print*, 'radar_nPeaks', radar_nPeaks
       print*, 'salinity: ', salinity
       print*, 'radar_airmotion_vmax: ', radar_airmotion_vmax
       print*, 'output_path: ', output_path

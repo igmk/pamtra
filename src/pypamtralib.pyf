@@ -166,18 +166,17 @@ python module pyPamtraLib ! in
             logical :: lphase_flag
             character(len=1), parameter,optional :: quad_type='l'
             real(kind=dbl) :: radar_k2
+            integer(kind=long_bn) :: radar_npeaks
             real(kind=dbl) :: radar_airmotion_step_vmin
             character(len=100) :: crm_data2
             character(len=100) :: crm_constants
             integer(kind=long_bn) :: radar_nfft_aliased
             character(len=3) :: gas_mod
             real(kind=dbl) :: radar_noise_distance_factor
-            character(len=30) :: radar_fallvel_snow
             logical :: radar_save_noise_corrected_spectra
             integer(kind=long_bn) :: n_moments
             real(kind=dbl) dimension(100) :: freqs
             integer(kind=long_bn) :: radar_maxturbterms
-            character(len=30) :: radar_fallvel_hail
             real(kind=dbl) :: radar_airmotion_vmax
             character(len=100) :: output_path
             integer, parameter,optional :: noutlevels=2
@@ -185,7 +184,6 @@ python module pyPamtraLib ! in
             character(len=18) :: freq_str
             character(len=20) :: file_desc
             integer(kind=long_bn) :: nfrq
-            character(len=30) :: radar_fallvel_rain
             character(len=100) :: creator
             character(len=8) :: radar_airmotion_model
             real(kind=dbl) :: radar_pnoise0
@@ -194,7 +192,6 @@ python module pyPamtraLib ! in
             integer, parameter,optional :: aziorder=0
             character(len=300) :: namelist_file
             character(len=1) :: ground_type
-            character(len=30) :: radar_fallvel_graupel
             character(len=10) :: crm_case
             logical :: write_nc
             integer, parameter,optional :: nummu=16
@@ -206,9 +203,7 @@ python module pyPamtraLib ! in
             character(len=20) :: moments_file
             real(kind=dbl) :: radar_receiver_uncertainty_std
             logical :: save_psd
-            character(len=30) :: radar_fallvel_cloud
             integer, parameter,optional :: nstokes=2
-            character(len=30) :: radar_fallvel_ice
             character(len=99) :: input_file
             integer, parameter,optional :: maxfreq=100
             logical :: radar_use_hildebrand
