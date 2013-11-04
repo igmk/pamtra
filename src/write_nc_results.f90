@@ -164,7 +164,7 @@ subroutine write_nc_results
         call check(nf90_put_att(ncid, AttHydroVarID, "missing_value", -9999))
         if ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments")) then
 
-            call check(nf90_def_var(ncid,'out_radar_snr', nf90_double,dim4d, RadarSNRID))
+            call check(nf90_def_var(ncid,'Radar_SNR', nf90_double,dim4d, RadarSNRID))
             call check(nf90_put_att(ncid, RadarSNRID, "units", "dB"))
             call check(nf90_put_att(ncid, RadarSNRID, "missing_value", -9999))
 
@@ -172,7 +172,7 @@ subroutine write_nc_results
             call check(nf90_put_att(ncid, velVarID, "units", "m/s"))
             call check(nf90_put_att(ncid, velVarID, "missing_value", -9999))
 
-            call check(nf90_def_var(ncid,'out_radar_spectralWidth', nf90_double,dim4d, swVarID))
+            call check(nf90_def_var(ncid,'Radar_SpectralWidth', nf90_double,dim4d, swVarID))
             call check(nf90_put_att(ncid, swVarID, "units", "m/s"))
             call check(nf90_put_att(ncid, swVarID, "missing_value", -9999))
 
@@ -200,14 +200,14 @@ subroutine write_nc_results
             call check(nf90_put_att(ncid, rEdgVarID, "units", "m/s"))
             call check(nf90_put_att(ncid, rEdgVarID, "missing_value", -9999))
 
-            call check(nf90_def_var(ncid,'out_radar_quality', nf90_int,dim4d, rQualVarID))
+            call check(nf90_def_var(ncid,'Radar_Quality', nf90_int,dim4d, rQualVarID))
             call check(nf90_put_att(ncid, rQualVarID, "units", "bytes"))
             call check(nf90_put_att(ncid, rQualVarID, "description", "1st byte: aliasing; "// &
             "2nd byte: 2nd peak present; 7th: no peak found"))
             call check(nf90_put_att(ncid, rQualVarID, "missing_value", -9999))
 
             if (radar_mode == "spectrum") then
-                call check(nf90_def_var(ncid,'out_radar_velocity', nf90_double,(/dnfftID/), RadarVelID))
+                call check(nf90_def_var(ncid,'Radar_Velocity', nf90_double,(/dnfftID/), RadarVelID))
                 call check(nf90_put_att(ncid, RadarVelID, "units", "m/s"))
                 call check(nf90_put_att(ncid, RadarVelID, "missing_value", -9999))
 

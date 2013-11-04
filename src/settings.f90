@@ -285,7 +285,7 @@ contains
         radar_min_spectral_snr = 1.2!threshold for peak detection. if radar_no_Ave >> 150, it can be set to 1.1
         radar_convolution_fft = .true. !use fft for convolution of spectrum. is alomst 10 times faster, but can introduce aretfacts for radars with *extremely* low noise levels or if noise is turned off at all.
         radar_K2 = 0.93 ! dielectric constant |K|² (always for liquid water by convention) for the radar equation
-        radar_noise_distance_factor = 0.25
+        radar_noise_distance_factor = 1.25
         radar_receiver_uncertainty_std = 0.d0 !dB
         radar_nPeaks = 3 !number of peaks the radar simulator is looking for
       

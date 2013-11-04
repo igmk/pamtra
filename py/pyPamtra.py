@@ -89,6 +89,7 @@ class pamDescriptorFile(object):
     assert hydroTuple[0] not in self.data["hydro_name"]
     self.data = np.append(self.data,np.array(tuple(hydroTuple),dtype=zip(self.names,self.types)))
     self.nhydro += 1
+    self.parent._shape4D = (self.parent.p["ngridx"],self.parent.p["ngridy"],self.parent.p["max_nlyrs"],self.nhydro)
     for key in ["hydro_q","hydro_reff","hydro_n"]:
       if key in self.parent.p.keys():    
         self.parent.p[key] = np.concatenate([self.parent.p[key],np.ones(self.parent._shape3D + tuple([1]))*missingNumber],axis=-1)
@@ -113,6 +114,7 @@ class pamDescriptorFile(object):
       raise ValueError("Did not find "+hydroName)
     else:
       self.nhydro -= 1
+      self.parent._shape4D = (self.parent.p["ngridx"],self.parent.p["ngridy"],self.parent.p["max_nlyrs"],self.nhydro)
       for key in ["hydro_q","hydro_reff","hydro_n"]:
         if key in self.parent.p.keys():
           self.parent.p[key] = np.delete(self.parent.p[key],hydroIndex,axis=-1)
@@ -122,7 +124,7 @@ class pamDescriptorFile(object):
   def add4D(self, key, arr):
     print "changing", key, "to 4D"
     self.data = mlab.rec_drop_fields(self.data,[key])
-    self.data4D[key] = arr
+    self.data4D[key] = arr.reshape(self.parent._shape4D)
     
   def remove4D(self, key, val):
     self.data = mlab.rec_append_fields(self.data,key,val)
@@ -216,7 +218,7 @@ class pyPamtra(object):
     self.nmlSet["radar_min_spectral_snr"]=  1.2#threshold for peak detection. if radar_no_Ave >> 150, it can be set to 1.1
     self.nmlSet["radar_convolution_fft"]=  True #use fft for convolution of spectrum. is alomst 10 times faster, but can introduce aretfacts for radars with *extremely* low noise levels or if noise is turned off at all.
     self.nmlSet["radar_k2"]=  0.93 # dielectric constant |K|² (always for liquid water by convention) for the radar equation
-    self.nmlSet["radar_nPeaks"] = 3
+    self.nmlSet["radar_npeaks"] = 3
     self.nmlSet["radar_noise_distance_factor"]=  0.25
     self.nmlSet["radar_receiver_uncertainty_std"]=  0.e0 #dB
 
