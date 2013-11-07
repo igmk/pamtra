@@ -71,7 +71,8 @@ module settings
     radar_save_noise_corrected_spectra, & !remove the noise from the calculated spectrum again (for testing)
     radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise0) we can skip that.
     radar_convolution_fft,&!use fft for convolution of spectrum
-    save_psd
+    save_psd, &
+    radar_smooth_spectrum
 
     character(3) :: gas_mod
     character(20) :: moments_file,file_desc
@@ -118,7 +119,8 @@ contains
 		  radar_airmotion_vmin, radar_airmotion_vmax, radar_airmotion_linear_steps, &
 		  radar_airmotion_step_vmin, radar_aliasing_nyquist_interv, &
 		  radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr, radar_convolution_fft, &
-                  radar_K2, radar_noise_distance_factor, radar_receiver_uncertainty_std, radar_nPeaks
+                  radar_K2, radar_noise_distance_factor, radar_receiver_uncertainty_std,&
+                  radar_nPeaks, radar_smooth_spectrum
 
     if (verbose >= 3) print*,'Start of ', nameOfRoutine
 
@@ -288,7 +290,7 @@ contains
         radar_noise_distance_factor = 1.25
         radar_receiver_uncertainty_std = 0.d0 !dB
         radar_nPeaks = 3 !number of peaks the radar simulator is looking for
-      
+        radar_smooth_spectrum = .true.
 
         ! create frequency string if not set in pamtra
         if (freq_str == "") then
@@ -346,6 +348,7 @@ contains
       print*, 'crm_data2: ', crm_data2
       print*, 'radar_use_hildebrand: ', radar_use_hildebrand
       print*, 'radar_convolution_fft: ', radar_convolution_fft
+      print*, 'radar_smooth_spectrum', radar_smooth_spectrum
       print*, 'active: ', active
       print*, 'radar_max_v: ', radar_max_v
       print*, 'radar_save_noise_corrected_spectra: ', radar_save_noise_corrected_spectra

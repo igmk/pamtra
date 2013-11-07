@@ -18,6 +18,7 @@ delta_h)
     use kinds
     use settings
     use constants
+    use radar_moments, only: radar_calc_moments
     use vars_atmosphere, only: atmo_airturb
     use vars_output, only: out_radar_spectra, out_radar_snr, out_radar_vel,out_radar_hgt, &
     out_radar_moments, out_radar_slopes, out_radar_edges, out_radar_quality, out_ze, out_att_hydro !output of the radar simulator
@@ -61,20 +62,6 @@ delta_h)
             REAL(kind=dbl), intent(in), DIMENSION(N) :: A
             REAL(kind=dbl), intent(out), DIMENSION(M+N-1) :: Y
         end subroutine convolution
-
-        subroutine radar_calc_moments(errorstatus,radar_spectrum_in,noise_model, radar_spectrum_out,moments,slope,edge,quality)
-            use kinds
-            use settings, only: radar_nfft
-            implicit none
-	    integer(kind=long), intent(out) :: errorstatus
-            real(kind=dbl), dimension(radar_nfft), intent(in):: radar_spectrum_in
-            real(kind=dbl), intent(in):: noise_model
-            real(kind=dbl), dimension(radar_nfft), intent(out):: radar_spectrum_out
-            real(kind=dbl), dimension(0:4), intent(out):: moments
-            real(kind=dbl), dimension(2), intent(out):: slope
-            real(kind=dbl), dimension(2), intent(out):: edge
-            integer, intent(out) :: quality
-        end subroutine radar_calc_moments
 
         subroutine random(errorstatus,n, pseudo, x_noise)
             use kinds
@@ -296,7 +283,9 @@ delta_h)
       end if
 
 
-        call radar_calc_moments(err,noise_turb_spectra,radar_Pnoise,noise_removed_turb_spectra,moments,slope,edge,quality_2ndPeak)
+        call radar_calc_moments(err,radar_nfft,&
+          noise_turb_spectra,radar_Pnoise,noise_removed_turb_spectra,&
+          moments,slope,edge,quality_2ndPeak)
 	if (err /= 0) then
 	  msg = 'error in radar_calc_moments!'
 	  call report(err, msg, nameOfRoutine)

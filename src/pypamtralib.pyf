@@ -218,6 +218,7 @@ python module pyPamtraLib ! in
             logical :: lhyd_extinction
             real(kind=dbl) :: radar_airmotion_vmin
             real(kind=dbl) :: salinity
+            logical :: radar_smooth_spectrum
             character(len=10) :: input_type
             integer, parameter,optional :: maxleg=200
             real(kind=dbl) :: emissivity

@@ -57,6 +57,7 @@ OBJECTS=kinds.o \
 	mie_spheres.o \
 	dia2vel.o \
 	rescale_spectra.o \
+	radar_moments.o \
 	radar_spectrum.o \
 	radar_simulator.o \
 	vars_jacobian.o \
@@ -109,7 +110,6 @@ OBJECTS=kinds.o \
 	viscosity_air.o\
 	versionNumber.auto.o \
 	smooth_savitzky_golay.o \
-	radar_calc_moments.o \
 	radar_hildebrand_sekhon.o \
 	write_nc_results.o \
 	tmatrix_amplq.lp.o \

@@ -154,7 +154,11 @@ class pyPamtra(object):
     self.p = dict()
     self.r = dict()
     
- 
+    self.p["ngridx"] = 0
+    self.p["ngridy"] = 0
+    self.p["max_nlyrs"] = 0
+    
+    return
   
   def _prepareNmlUnitsDimensions(self):
   
@@ -217,6 +221,7 @@ class pyPamtra(object):
     self.nmlSet["radar_use_hildebrand"]=  False
     self.nmlSet["radar_min_spectral_snr"]=  1.2#threshold for peak detection. if radar_no_Ave >> 150, it can be set to 1.1
     self.nmlSet["radar_convolution_fft"]=  True #use fft for convolution of spectrum. is alomst 10 times faster, but can introduce aretfacts for radars with *extremely* low noise levels or if noise is turned off at all.
+    self.nmlSet["radar_smooth_spectrum"]=  True #smooth spectrum before moment estimation
     self.nmlSet["radar_k2"]=  0.93 # dielectric constant |K|² (always for liquid water by convention) for the radar equation
     self.nmlSet["radar_npeaks"] = 3
     self.nmlSet["radar_noise_distance_factor"]=  0.25
@@ -1492,14 +1497,14 @@ class pyPamtra(object):
       write the complete state of the session (profile,results,settings to a file
       '''
       f = open(fname, "w")
-      pickle.dump([self.r,self.p,self.nmlSet,self.set,self.df], f)
+      pickle.dump([self.r,self.p,self.nmlSet,self.set,self.df.data,self.df.data4D], f)
       f.close()
     else:
       '''
       write the complete state of the session (profile,results,settings to several files
       '''      
       os.makedirs(fname)
-      for dic in ["r","p", "nmlSet","set","df"]:
+      for dic in ["r","p", "nmlSet","set","df.data","df.data4D"]:
 	for key in self.__dict__[dic].keys():
 	  if self.set["pyVerbose"]>1: print "saving: "+fname+"/"+dic+"%"+key+"%"+".npy"  
 	  data = self.__dict__[dic][key]
@@ -1524,9 +1529,9 @@ class pyPamtra(object):
     '''
     if os.path.isdir(fname):
       try: 
-	for key in ["r","p","nmlSet","set","df"]:
+	for key in ["r","p","nmlSet","set","df.data","df.data4D"]:
 	  self.__dict__[key] = dict()
-	self.__dict__["nmlSet"] = OrderedDict()
+        self.__dict__["nmlSet"] = OrderedDict()
 	for fnames in os.listdir(fname):
 	  key,subkey,dummy = fnames.split("%")
 	  self.__dict__[key][subkey] = np.load(fname+"/"+fnames)
@@ -1536,12 +1541,13 @@ class pyPamtra(object):
     else:  
       try: 
 	f = open(fname, "r")
-	[self.r,self.p,self.nmlSet,self.set,self.df] = pickle.load(f)
+	[self.r,self.p,self.nmlSet,self.set,self.df.data,self.data4D] = pickle.load(f)
 	f.close()
       except:
 	print formatExceptionInfo()	
 	raise IOError ("Could not read data from file")
       
+      self.df.nhydro = len(self.df.data)
       self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
       self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],)
       self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"]+1,)
