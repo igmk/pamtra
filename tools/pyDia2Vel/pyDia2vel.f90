@@ -10,7 +10,7 @@ subroutine pyDia2vel(model,nbins,diameter_spec,velSpec)
   real, intent(in),dimension(nbins) :: diameter_spec
   real, intent(out),dimension(nbins) :: velSpec
 
-  real(kind=dbl) :: temp, press, rho, my, rho_air, viscosity_air,&
+  real(kind=dbl) :: temp, press, rho, my, rho_air, viscosity,&
     mass_size_a, mass_size_b,&
     area_size_a,area_size_b
   real(kind=dbl),dimension(nbins) :: diameter_spec_cp
@@ -31,7 +31,8 @@ subroutine pyDia2vel(model,nbins,diameter_spec,velSpec)
   press =101300
 
   rho = rho_air(temp,press)
-  my = viscosity_air(temp)/rho
+  call viscosity_air(temp,viscosity)
+  my = viscosity/rho
 
   diameter_spec_cp = DBLE(diameter_spec)
 
@@ -138,7 +139,7 @@ print*, "khvorostyanov01_particles_hexPlates: mass_size_a", mass_size_a
     mass_size_a =mass_size_a * 10.d0**(2.d0 * mass_size_b -3.d0)
     area_size_a = area_size_a  * 10.d0**(2.d0 * area_size_b -4.d0)
 
-    call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
+    call dia2vel_heymsfield10_particles_ms_as(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
          area_size_a,area_size_b,vel_spec) 
 
 
@@ -152,7 +153,7 @@ print*, "khvorostyanov01_particles_hexPlates: mass_size_a", mass_size_a
     mass_size_a =mass_size_a * 10.d0**(mass_size_b * 2.d0 - 3.d0)
     area_size_a = area_size_a  * 10.d0**( area_size_b * 2.d0 - 4.d0)
 
-    call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
+    call dia2vel_heymsfield10_particles_ms_as(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
          area_size_a,area_size_b,vel_spec)       
 
   else if (model .eq. "heymsfield10_particles_aggregates") then
@@ -165,11 +166,11 @@ print*, "khvorostyanov01_particles_hexPlates: mass_size_a", mass_size_a
     mass_size_a =mass_size_a * 10.d0**(2.d0 * mass_size_b -3.d0)
     area_size_a = area_size_a  * 10.d0**(2.d0 * area_size_b -4.d0)
 
-print*, "dia2vel_heymsfield10_particles_aggregates: area_size_a", area_size_a
-print*, "dia2vel_heymsfield10_particles_aggregates: mass_size_a", mass_size_a
+print*, "dia2vel_heymsfield10_particles_ms_as_aggregates: area_size_a", area_size_a
+print*, "dia2vel_heymsfield10_particles_ms_as_aggregates: mass_size_a", mass_size_a
 
 
-    call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
+    call dia2vel_heymsfield10_particles_ms_as(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
          area_size_a,area_size_b,vel_spec)       
 
   else if (model .eq. "heymsfield10_particles_MPACE") then
@@ -186,7 +187,7 @@ print*, "dia2vel_heymsfield10_particles_aggregates: mass_size_a", mass_size_a
 print*, "heymsfield10_particles_MPACE: area_size_a", area_size_a
 print*, "heymsfield10_particles_MPACE: mass_size_a", mass_size_a
 
-    call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
+    call dia2vel_heymsfield10_particles_ms_as(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
          area_size_a,area_size_b,vel_spec)    
 
   else if (model .eq. "heymsfield10_particles_sector") then
@@ -199,7 +200,7 @@ print*, "heymsfield10_particles_MPACE: mass_size_a", mass_size_a
     mass_size_a =mass_size_a * 10.d0**(2.d0 * mass_size_b -3.d0)
     area_size_a = area_size_a  * 10.d0**(2.d0 * area_size_b -4.d0)
 
-    call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
+    call dia2vel_heymsfield10_particles_ms_as(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
          area_size_a,area_size_b,vel_spec) 
 
  else if (model .eq. "heymsfield10_particles_cosmoIce") then
@@ -220,7 +221,7 @@ print*, "heymsfield10_particles_cosmoIce: area_size_a", area_size_a
 !      area_size_b = 1.85d0 !from mitchell 1996 similar to a_msnow&b_snow
 
 
-    call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
+    call dia2vel_heymsfield10_particles_ms_as(err,nbins,diameter_spec_cp,rho,my,mass_size_a,mass_size_b,&
          area_size_a,area_size_b,vel_spec) 
 
 

@@ -3,6 +3,141 @@
 
 python module pyDia2vel ! in 
     interface  ! in :pyDia2vel
+        module dia2vel ! in :pyDia2vel:dia2vel.f90
+            subroutine dia2vel_heymsfield10_particles_ms_as(errorstatus,ndia,diaspec_si,rho_air_si,nu_si,mass_size_a_si,mass_size_b,area_size_a_si,area_size_b,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+                use report_module
+                use kinds
+                use constants
+                use settings, only: verbose
+                integer(kind=long_bn) intent(out) :: errorstatus
+                integer, optional,intent(in),check(len(diaspec_si)>=ndia),depend(diaspec_si) :: ndia=len(diaspec_si)
+                real(kind=dbl) dimension(ndia),intent(in) :: diaspec_si
+                real(kind=dbl) intent(in) :: rho_air_si
+                real(kind=dbl) intent(in) :: nu_si
+                real(kind=dbl) intent(in) :: mass_size_a_si
+                real(kind=dbl) intent(in) :: mass_size_b
+                real(kind=dbl) intent(in) :: area_size_a_si
+                real(kind=dbl) intent(in) :: area_size_b
+                real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
+            end subroutine dia2vel_heymsfield10_particles_ms_as
+            subroutine dia2vel_heymsfield10_particles(errorstatus,ndia,diaspec_si,rho_air_si,nu_si,mass,area,k,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+                use report_module
+                use kinds
+                use constants
+                use settings, only: verbose
+                integer(kind=long_bn) intent(out) :: errorstatus
+                integer, optional,intent(in),check(len(diaspec_si)>=ndia),depend(diaspec_si) :: ndia=len(diaspec_si)
+                real(kind=dbl) dimension(ndia),intent(in) :: diaspec_si
+                real(kind=dbl) intent(in) :: rho_air_si
+                real(kind=dbl) intent(in) :: nu_si
+                real(kind=dbl) dimension(ndia),intent(in),depend(ndia) :: mass
+                real(kind=dbl) dimension(ndia),intent(in),depend(ndia) :: area
+                real(kind=dbl) intent(in) :: k
+                real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
+            end subroutine dia2vel_heymsfield10_particles
+            subroutine dia2vel_khvorostyanov01_particles(errorstatus,ndia,diaspec_si,rho_air_si,nu_si,mass_size_a_si,mass_size_b,area_size_a_si,area_size_b,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+                use report_module
+                use kinds
+                use constants
+                use settings, only: verbose
+                integer(kind=long_bn) intent(out) :: errorstatus
+                integer, optional,intent(in),check(len(diaspec_si)>=ndia),depend(diaspec_si) :: ndia=len(diaspec_si)
+                real(kind=dbl) dimension(ndia),intent(in) :: diaspec_si
+                real(kind=dbl) intent(in) :: rho_air_si
+                real(kind=dbl) intent(in) :: nu_si
+                real(kind=dbl) intent(in) :: mass_size_a_si
+                real(kind=dbl) intent(in) :: mass_size_b
+                real(kind=dbl) intent(in) :: area_size_a_si
+                real(kind=dbl) intent(in) :: area_size_b
+                real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
+            end subroutine dia2vel_khvorostyanov01_particles
+            subroutine dia2vel_khvorostyanov01_spheres(errorstatus,ndia,diaspec,rho_air,my,rho_particle,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+                use report_module
+                use kinds
+                use constants
+                use settings, only: verbose
+                integer(kind=long_bn) intent(out) :: errorstatus
+                integer, optional,intent(in),check(len(diaspec)>=ndia),depend(diaspec) :: ndia=len(diaspec)
+                real(kind=dbl) dimension(ndia),intent(in) :: diaspec
+                real(kind=dbl) intent(in) :: rho_air
+                real(kind=dbl) intent(in) :: my
+                real(kind=dbl) dimension(ndia),intent(in),depend(ndia) :: rho_particle
+                real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
+            end subroutine dia2vel_khvorostyanov01_spheres
+            subroutine dia2vel_khvorostyanov01_drops(errorstatus,ndia,diaspec,rho_air,my,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+                use report_module
+                use kinds
+                use constants
+                use settings, only: verbose
+                integer(kind=long_bn) intent(out) :: errorstatus
+                integer, optional,intent(in),check(len(diaspec)>=ndia),depend(diaspec) :: ndia=len(diaspec)
+                real(kind=dbl) dimension(ndia),intent(in) :: diaspec
+                real(kind=dbl) intent(in) :: rho_air
+                real(kind=dbl) intent(in) :: my
+                real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
+            end subroutine dia2vel_khvorostyanov01_drops
+            subroutine dia2vel_foote69_rain(errorstatus,ndia,diaspec,rho_air,temp,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+                use report_module
+                use kinds
+                use constants
+                use settings, only: verbose
+                integer(kind=long_bn) intent(out) :: errorstatus
+                integer, optional,intent(in),check(len(diaspec)>=ndia),depend(diaspec) :: ndia=len(diaspec)
+                real(kind=dbl) dimension(ndia),intent(in) :: diaspec
+                real(kind=dbl) intent(in) :: rho_air
+                real(kind=dbl) intent(in) :: temp
+                real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
+            end subroutine dia2vel_foote69_rain
+            subroutine dia2vel_pavlos_cloud(errorstatus,ndia,diaspec,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+                use report_module
+                use kinds
+                use constants
+                use settings, only: verbose
+                integer(kind=long_bn) intent(out) :: errorstatus
+                integer, optional,intent(in),check(len(diaspec)>=ndia),depend(diaspec) :: ndia=len(diaspec)
+                real(kind=dbl) dimension(ndia),intent(in) :: diaspec
+                real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
+            end subroutine dia2vel_pavlos_cloud
+            subroutine dia2vel_metek_rain(errorstatus,ndia,diaspec,rho_air,temp,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+                use report_module
+                use kinds
+                use constants
+                use settings, only: verbose
+                integer(kind=long_bn) intent(out) :: errorstatus
+                integer, optional,intent(in),check(len(diaspec)>=ndia),depend(diaspec) :: ndia=len(diaspec)
+                real(kind=dbl) dimension(ndia),intent(in) :: diaspec
+                real(kind=dbl) intent(in) :: rho_air
+                real(kind=dbl) intent(in) :: temp
+                real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
+            end subroutine dia2vel_metek_rain
+            subroutine dia2vel_rogers_drops(errorstatus,ndia,diaspec,rho_air,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+                use report_module
+                use kinds
+                use constants
+                use settings, only: verbose
+                integer(kind=long_bn) intent(out) :: errorstatus
+                integer, optional,intent(in),check(len(diaspec)>=ndia),depend(diaspec) :: ndia=len(diaspec)
+                real(kind=dbl) dimension(ndia),intent(in) :: diaspec
+                real(kind=dbl) intent(in) :: rho_air
+                real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
+            end subroutine dia2vel_rogers_drops
+            subroutine dia2vel_rogers_graupel(errorstatus,ndia,diaspec,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+                use report_module
+                use kinds
+                use constants
+                use settings, only: verbose
+                integer(kind=long_bn) intent(out) :: errorstatus
+                integer, optional,intent(in),check(len(diaspec)>=ndia),depend(diaspec) :: ndia=len(diaspec)
+                real(kind=dbl) dimension(ndia),intent(in) :: diaspec
+                real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
+            end subroutine dia2vel_rogers_graupel
+        end module dia2vel
+        subroutine viscosity_air(t,eta) ! in :pyDia2vel:viscosity_air.f90
+            use report_module
+            use kinds
+            real(kind=dbl) intent(in) :: t
+            real(kind=dbl) intent(out) :: eta
+        end subroutine viscosity_air
         subroutine pydia2vel(model,nbins,diameter_spec,velspec) ! in :pyDia2vel:pyDia2vel.f90
             use kinds
             use dia2vel
