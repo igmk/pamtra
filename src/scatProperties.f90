@@ -7,7 +7,8 @@ module scatProperties
       active, &
       radar_mode, &
       maxnleg, &
-      freqs
+      freqs, &
+      hydro_fullSpec
   use mie_spheres, only: calc_mie_spheres
   use tmatrix, only: calc_tmatrix
   use vars_rt, only: rt_kexttot,&
@@ -29,7 +30,8 @@ module scatProperties
         mass_ds, &
         area_ds
   use constants, only: pi, Im
-  use vars_index, only: i_z, i_f
+  use vars_index, only: i_x, i_y, i_z, i_f, i_h
+  use vars_hydroFullSpec, only: hydrofs_as_ratio
 
   implicit none
 
@@ -94,6 +96,7 @@ module scatProperties
     real(kind=dbl), dimension(nstokes,nummu,2) :: emis_vector_hydro
     real(kind=dbl), dimension(radar_nfft_aliased) :: radar_spec_hydro
     real(kind=dbl), dimension(nbin+1) :: back_spec_dia
+    real(kind=dbl), allocatable, dimension(:) :: as_ratio_list
     real(kind=dbl) :: kext_hydro
     real(kind=dbl) :: salb_hydro
     real(kind=dbl) :: back_hydro
@@ -112,7 +115,7 @@ module scatProperties
     integer(kind=long) :: err = 0
     character(len=80) :: msg
     character(len=40) :: nameOfRoutine = 'calc_scatProperties'
-
+  
   if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
     if (scat_name == "disabled") then
@@ -155,8 +158,13 @@ module scatProperties
     if (scat_name == "tmatrix") then
     
       !some fixed settings for Tmatrix
+      allocate(as_ratio_list(nbin+1))
+      if (hydro_fullSpec) then
+        as_ratio_list(:) = hydrofs_as_ratio(i_x,i_y,i_z,i_h,:)
+      else
+        as_ratio_list(:) =  as_ratio
+      end if
 
-  
       call calc_tmatrix(err,&
         freq*1.d9,&
         refIndex,&
@@ -166,13 +174,13 @@ module scatProperties
         delta_d_ds, &
         f_ds,&
         density2scat,&
-        as_ratio,& 
+        as_ratio_list,& 
         scatter_matrix_hydro(:,:,:,:,1:2),&
         extinct_matrix_hydro(:,:,:,1),&
         emis_vector_hydro(:,:,1),&
         back_spec_dia)
 
-        
+      if (allocated(as_ratio_list)) deallocate(as_ratio_list)
       if (err /= 0) then
           msg = 'error in calc_tmatrix!'
           call report(err, msg, nameOfRoutine)

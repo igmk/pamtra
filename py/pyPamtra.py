@@ -115,7 +115,7 @@ class pamDescriptorFile(object):
     else:
       self.nhydro -= 1
       self.parent._shape4D = (self.parent.p["ngridx"],self.parent.p["ngridy"],self.parent.p["max_nlyrs"],self.nhydro)
-      for key in ["hydro_q","hydro_reff","hydro_n"]:
+      for key in ["hydro_q","hydro_reff","hydro_n", "nbin"]:
         if key in self.parent.p.keys():
           self.parent.p[key] = np.delete(self.parent.p[key],hydroIndex,axis=-1)
     return
@@ -130,8 +130,28 @@ class pamDescriptorFile(object):
     self.data = mlab.rec_append_fields(self.data,key,val)
     del data4D[key]
     
+  def addFullSpectra(self):
+    self.dataFullSpec = dict()
+    #assert len(self.data4D.keys()) == 0
+    assert len(self.data) >0
+    assert np.min(self.data["nbin"]) == np.max(self.data["nbin"])
 
-
+    fs_nbin =  np.min(self.data["nbin"])
+    
+    self.dataFullSpec["delta_d_ds"] = np.ones(self.parent._shape4D+(fs_nbin,))
+    self.dataFullSpec["density2scat"] = np.ones(self.parent._shape4D+(fs_nbin+1,))
+    self.dataFullSpec["diameter2scat"] = np.ones(self.parent._shape4D+(fs_nbin+1,))
+    self.dataFullSpec["d_bound_ds"] = np.ones(self.parent._shape4D+(fs_nbin+1,))
+    self.dataFullSpec["f_ds"] = np.ones(self.parent._shape4D+(fs_nbin+1,))
+    self.dataFullSpec["mass_ds"] = np.ones(self.parent._shape4D+(fs_nbin+1,))
+    self.dataFullSpec["area_ds"] = np.ones(self.parent._shape4D+(fs_nbin+1,))
+    self.dataFullSpec["as_ratio"] = np.ones(self.parent._shape4D+(fs_nbin+1,))
+  
+    #for name in self.names:
+      #if name not in ["hydro_name","liq_ice","scat_name","vel_size_mod"]:
+        #self.data = mlab.rec_drop_fields(self.data,[name])
+    #return
+    
 class pyPamtra(object):
 
   '''
@@ -198,6 +218,7 @@ class pyPamtra(object):
     # sec hyd_opts
     self.nmlSet["lhyd_extinction"]= True
     self.nmlSet["lphase_flag"]=  True
+    self.nmlSet["hydro_fullspec"] = False
     # radar_simulator
     #number of FFT points in the Doppler spectrum [typically 256 or 512]
     self.nmlSet["radar_nfft"]= 256
@@ -1412,6 +1433,10 @@ class pyPamtra(object):
     for key in dfData.data4D.keys():
       dfData.data4D[key] = self.df.data4D[key][pp_startX:pp_endX,pp_startY:pp_endY]
        
+    if hasattr(dfData,"dataFullSpec"):
+      for key in dfData.dataFullSpec.keys():
+        dfData.dataFullSpec[key] = self.df.dataFullSpec[key][pp_startX:pp_endX,pp_startY:pp_endY]
+       
     settings = deepcopy(self.set)
     settings["nfreqs"] = pp_endF - pp_startF
     settings["freqs"] = self.set["freqs"][pp_startF:pp_endF]
@@ -1421,7 +1446,11 @@ class pyPamtra(object):
   def _prepareResults(self):
     
     try: maxNBin1 = np.max(self.df.data["nbin"]) + 1
-    except: maxNBin1 = np.max(self.df.data4D["nbin"]) + 1
+    except: 
+      try: 
+        maxNBin1 = np.max(self.df.data4D["nbin"]) + 1
+      except:
+        maxNBin1 = self.df.dataFullSpec["d_bound_ds"].shape[-1]
     radar_spectrum_length = self.nmlSet["radar_nfft"]
     
     

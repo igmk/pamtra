@@ -79,10 +79,11 @@ subroutine radar_spectrum(&
     character(len=14) :: nameOfRoutine = 'radar_spectrum'
 
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+    err = 0
 
     call assert_true(err,all(diameter_spec > 0),&
         "nan or negative diameter_spec")
-    call assert_true(err,all(back_spec > 0),&
+    call assert_true(err,all(back_spec >= 0),&
         "nan or negative back_spec")   
     call assert_true(err,nbins>0,&
         "nbins must be greater than 1 for the radar simulator!")
@@ -96,7 +97,7 @@ subroutine radar_spectrum(&
         "nan or negative frequency")  
     call assert_true(err,all(mass>0),&
         "nan or negative mass")  
-    call assert_true(err,all(area>0),&
+    call assert_true(err,all(area>=0),&
         "nan or negative area")        
     call assert_true(err,(radar_nfft_aliased > 0),&
         "nan or negative radar_nfft_aliased") 
@@ -127,6 +128,10 @@ subroutine radar_spectrum(&
       k_factor = 0.5d0
       call dia2vel_heymsfield10_particles(err,nbins+1,diameter_spec_cp,rho,nu,&
             mass,area,k_factor,vel_spec)
+      !if in-situ measurements are used, mass or area might be zero (since corresponding ndens=0 as well)
+      where ((area == 0.d0) .or. (mass == 0.d0))
+        vel_spec = 0.d0
+      end where
     else
       errorstatus = fatal
       print*,"liq_ice=", liq_ice
@@ -134,7 +139,7 @@ subroutine radar_spectrum(&
       call report(errorstatus, msg, nameOfRoutine)
       return
     end if
-    call assert_true(err,all(vel_spec>0),&
+    call assert_true(err,all(vel_spec>=0) .and. (MAXVAL(vel_spec) < HUGE(vel_spec)),&
         "nan or negative vel_spec")   
     if (err /= 0) then
       msg = 'error in dia2vel_XX!'
@@ -153,13 +158,14 @@ subroutine radar_spectrum(&
     !move from dimension to velocity!
     do jj=1,nbins
         dD_dU(jj) = (diameter_spec_cp(jj+1)-diameter_spec_cp(jj))/(vel_spec(jj+1)-vel_spec(jj)) ![m/(m/s)]
-        !is all particles fall with the same velocity, dD_dU gets infinitive!
+!         is all particles fall with the same velocity, dD_dU gets infinitive!
         if (abs(dD_dU(jj)) .ge. huge(dD_dU(jj))) then
-            print*, jj,(diameter_spec_cp(jj+1)-diameter_spec_cp(jj)), (vel_spec(jj+1)-vel_spec(jj))
-            errorstatus = fatal
-            msg = "Stop in radar_spectrum: dD_dU is infinitive"
-            call report(errorstatus, msg, nameOfRoutine)
-            return
+!             print*, jj,(diameter_spec_cp(jj+1)-diameter_spec_cp(jj)), (vel_spec(jj+1)-vel_spec(jj))
+!             errorstatus = fatal
+            msg = "radar_spectrum: dD_dU is infinitive"
+            call report(warning, msg, nameOfRoutine)
+!             return
+            dD_dU(jj) = 0.d0
         end if
         if (verbose >= 4) print*,"jj,diameter_spec_cp(jj),vel_spec(jj), back_spec_ref(jj),dD_dU(jj)",jj,&
             diameter_spec_cp(jj),vel_spec(jj),back_spec_ref(jj),dD_dU(jj)
@@ -168,8 +174,8 @@ subroutine radar_spectrum(&
     dD_dU(nbins+1) = dD_dU(nbins)
 
 
-    call assert_false(err,any(isnan(dD_dU)),&
-        "nan or negative dD_dU")   
+    call assert_false(err,any(isnan(dD_dU) .or. all(dD_dU <= 0.d0)),&
+        "nan dD_dU")   
     call assert_false(err,any(vel_spec<0) .or. any(isnan(vel_spec)),&
         "nan or negative vel_spec")   
     if (err /= 0) then

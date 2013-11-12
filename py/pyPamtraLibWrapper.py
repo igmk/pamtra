@@ -110,6 +110,24 @@ def PamtraFortranWrapper(
     pyPamtraLib.vars_atmosphere.print_vars_atmosphere()
     
     
+  if nmlSettings["hydro_fullspec"]:
+    assert descriptorFile.dataFullSpec
+    #assert nmlSettings["save_psd"] = False #because there is nothing to save!
+    
+    error = pyPamtraLib.vars_hydrofullspec.allocate_hydrofs_vars(descriptorFile.dataFullSpec["delta_d_ds"].shape[-1])
+    if error > 0: raise RuntimeError("Error in allocate_hydrofs_vars")
+    
+    for key in descriptorFile.dataFullSpec.keys():
+      if settings["pyVerbose"] > 3: print("pyPamtraLib.vars_hydrofullspec.hydrofs_"+key +" = descriptorFile.dataFullSpec['"+key+"'].tolist()")
+      exec("pyPamtraLib.vars_hydrofullspec.hydrofs_"+key +" = descriptorFile.dataFullSpec['"+key+"'].tolist()")
+      
+    if settings["pyVerbose"] > 3:
+      print "Fortran view on hydro_fullspec variables"
+      pyPamtraLib.vars_hydrofullspec.print_hydrofs_vars()
+    
+    
+    
+    
   ##now, finally rund the model  
   error = pyPamtraLib.pypamtralib.run_pamtra() 
   #if error > 0: raise RuntimeError("Error in run_pamtra")

@@ -31,6 +31,7 @@ module deallocate_everything
         use vars_output, only: deallocate_output_vars
         use vars_rt, only: deallocate_rt_vars
         use vars_atmosphere, only: deallocate_atmosphere_vars
+        use vars_hydroFullSpec, only: deallocate_hydrofs_vars
 
         integer(kind=long), intent(out) :: errorstatus
         integer(kind=long) :: err = 0
@@ -45,6 +46,7 @@ module deallocate_everything
         call deallocate_scatProperties()
         call deallocate_rt_vars()
         call deallocate_atmosphere_vars()
+        call deallocate_hydrofs_vars()
 
         if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
 

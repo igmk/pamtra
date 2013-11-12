@@ -40,6 +40,7 @@ python module pyPamtraLib ! in
                 use report_module
                 use drop_size_dist, only: deallocatevars_drop_size_dist
                 use scatproperties, only: deallocate_scatproperties
+                use vars_hydrofullspec, only: deallocate_hydrofs_vars
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine do_deallocate_everything
         end module deallocate_everything
@@ -221,6 +222,7 @@ python module pyPamtraLib ! in
             logical :: radar_smooth_spectrum
             character(len=10) :: input_type
             integer, parameter,optional :: maxleg=200
+            logical :: hydro_fullspec
             real(kind=dbl) :: emissivity
             subroutine settings_read(errorstatus) ! in :pyPamtraLib:settings.f90:settings
                 use kinds
@@ -278,6 +280,31 @@ python module pyPamtraLib ! in
             subroutine printdescriptorvars ! in :pyPamtraLib:descriptor_file.f90:descriptor_file
             end subroutine printdescriptorvars
         end module descriptor_file
+        module vars_hydrofullspec ! in :pyPamtraLib:vars_hydroFullSpec.f90
+            use report_module
+            use kinds
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_area_ds
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_delta_d_ds
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_d_bound_ds
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_diameter2scat
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_mass_ds
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_f_ds
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_density2scat
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_as_ratio
+            integer(kind=long_bn) :: hydrofs_nbins
+            subroutine allocate_hydrofs_vars(errorstatus,nbins) ! in :pyPamtraLib:vars_hydroFullSpec.f90:vars_hydrofullspec
+                use vars_atmosphere, only: atmo_ngridy,atmo_ngridx,atmo_max_nlyrs
+                use descriptor_file, only: n_hydro
+                integer(kind=long_bn) intent(out) :: errorstatus
+                integer intent(in) :: nbins
+            end subroutine allocate_hydrofs_vars
+            subroutine deallocate_hydrofs_vars ! in :pyPamtraLib:vars_hydroFullSpec.f90:vars_hydrofullspec
+            end subroutine deallocate_hydrofs_vars
+            subroutine print_hydrofs_vars ! in :pyPamtraLib:vars_hydroFullSpec.f90:vars_hydrofullspec
+                use vars_atmosphere, only: atmo_ngridy,atmo_ngridx,atmo_max_nlyrs
+                use descriptor_file, only: n_hydro
+            end subroutine print_hydrofs_vars
+        end module vars_hydrofullspec
         module pypamtralib ! in :pyPamtraLib:pyPamtraLib.f90
             use vars_index, only: i_f,i_y,i_x
             use descriptor_file

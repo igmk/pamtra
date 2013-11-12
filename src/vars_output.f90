@@ -66,6 +66,8 @@ module vars_output
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'allocate_output_vars' 
 
+    if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
+
     call assert_true(err,(atmo_ngridx>0),&
         "atmo_ngridx must be greater zero")   
     call assert_true(err,(atmo_ngridy>0),&
@@ -87,7 +89,8 @@ module vars_output
         return
     end if  
 
-    if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
+    if (verbose >= 5) print*, atmo_ngridx, atmo_ngridy, no_allocated_lyrs, &
+      radar_nfft, nummu, nstokes, nfrq, MAXVAL(nbin_arr) +1
 
     if (write_nc) then
 !         allocate(is(atmo_ngridy,atmo_ngridx),js(atmo_ngridy,atmo_ngridx))

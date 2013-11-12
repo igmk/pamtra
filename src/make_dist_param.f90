@@ -177,6 +177,11 @@ subroutine make_dist_params(errorstatus)
     gam = 1._dbl
     mu = 0._dbl
     if (trim(dist_name) == 'exp') then
+! !  everything fixed 
+      if (p_1 /= -99. .and. p_2 /= -99. .and.moment_in ==0) then
+        lambda = p_1
+        n_0 = p_2
+      end if
 ! ! fixed n_tot (via p_1)
       if (p_1 /= -99. .and. p_2 == -99. .and. p_3 == -99.) then
         if (moment_in == 3)  lambda = (p_1 * a_ms * dgamma(b_ms+1._dbl) / q_h)**(1._dbl / b_ms)

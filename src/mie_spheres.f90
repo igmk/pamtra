@@ -84,6 +84,7 @@ module mie_spheres
     character(len=30) :: nameOfRoutine = 'calc_mie_spheres'
 
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+    err = 0
 
     if (verbose >= 4) print*, "calc_mie_spheres(",&
       errorstatus, &
@@ -193,8 +194,8 @@ module mie_spheres
 	  return
       end if         
       
-      if (verbose >= 4) print*, "density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x"
-      if (verbose >= 4) print*, density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x 
+      if (verbose >= 4) print*, "ir, density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x"
+      if (verbose >= 4) print*, ir, density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x 
       
       call miecross (nmie, x, a, b, qext, qscat, qback)
       

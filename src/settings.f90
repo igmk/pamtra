@@ -72,7 +72,8 @@ module settings
     radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise0) we can skip that.
     radar_convolution_fft,&!use fft for convolution of spectrum
     save_psd, &
-    radar_smooth_spectrum
+    radar_smooth_spectrum, &
+    hydro_fullSpec
 
     character(3) :: gas_mod
     character(20) :: moments_file,file_desc
@@ -112,7 +113,7 @@ contains
         namelist / run_mode / active, passive,radar_mode
         namelist / surface_params / ground_type,salinity, emissivity
         namelist / gas_abs_mod / lgas_extinction, gas_mod
-        namelist / hyd_opts / lhyd_extinction, lphase_flag
+        namelist / hyd_opts / lhyd_extinction, lphase_flag, hydro_fullSpec
 	namelist / moments / n_moments, moments_file
 	namelist / radar_simulator / radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
 		  radar_pnoise0, radar_airmotion, radar_airmotion_model, &
@@ -259,6 +260,7 @@ contains
         ! sec hyd_opts
         lhyd_extinction=.true.
         lphase_flag = .true.
+        hydro_fullSpec = .false.
 !        ! sec moments
         n_moments=1
         moments_file='snowCRYSTAL'
@@ -343,6 +345,7 @@ contains
       print*, 'moments_file: ', moments_file
       print*, 'radar_receiver_uncertainty_std: ', radar_receiver_uncertainty_std
       print*, 'hydro_threshold: ', hydro_threshold
+      print*, 'hydro_fullSpec: ', hydro_fullSpec
       print*, 'radar_noise_distance_factor: ', radar_noise_distance_factor
       print*, 'radar_airmotion_step_vmin: ', radar_airmotion_step_vmin
       print*, 'crm_data2: ', crm_data2

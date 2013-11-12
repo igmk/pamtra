@@ -39,6 +39,7 @@ OBJECTS=kinds.o \
 	descriptor_file.o \
 	vars_atmosphere.o \
 	vars_rt.o \
+        vars_hydroFullSpec.o \
 	mod_io_strings.o \
 	getopt.o \
 	parse_options.o \
@@ -179,7 +180,7 @@ pyprecompile:
 	@echo "Make backup before deleting old signature file, auto creating will most likely fail."
 	@echo "####################################################################################"
 	@echo ""
-	f2py --overwrite-signature -m pyPamtraLib -h pypamtralib.pyf report_module.f90 deallocate_everything.f90 vars_output.f90 vars_atmosphere.f90 settings.f90 descriptor_file.f90 pyPamtraLib.f90
+	f2py --overwrite-signature -m pyPamtraLib -h pypamtralib.pyf report_module.f90 deallocate_everything.f90 vars_output.f90 vars_atmosphere.f90 settings.f90 descriptor_file.f90 vars_hydroFullSpec.f90 pyPamtraLib.f90
 
 py: pyPamtraLib.f90 precompile $(OBJECTS)
 	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 

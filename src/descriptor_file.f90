@@ -150,6 +150,28 @@ subroutine allocate_descriptor_file(errorstatus)
   allocate(scat_name_arr(n_hydro))
   allocate(vel_size_mod_arr(n_hydro))
 
+  !fill dummy values
+  hydro_name_arr = "-9999"
+  as_ratio_arr = -9999.d0
+  liq_ice_arr = -9999
+  rho_ms_arr = -9999.d0
+  a_ms_arr = -9999.d0
+  b_ms_arr = -9999.d0
+  alpha_as_arr = -9999.d0
+  beta_as_arr = -9999.d0
+  moment_in_arr = -9999
+  nbin_arr = -9999.d0
+  dist_name_arr = "-9999"
+  p_1_arr = -9999.d0
+  p_2_arr = -9999.d0
+  p_3_arr = -9999.d0
+  p_4_arr = -9999.d0
+  d_1_arr = -9999.d0
+  d_2_arr = -9999.d0
+  scat_name_arr = "-9999"
+  vel_size_mod_arr = "-9999"
+
+
   errorstatus = err
   if (verbose >= 5) call report(info,'End of ', nameOfRoutine)
   return

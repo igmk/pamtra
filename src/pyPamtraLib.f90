@@ -165,15 +165,15 @@
 !     end do
 ! end do
 
-      ! make sure that all the levels and layer variables are present
-      call fillMissing_atmosphere_vars(err)
-      if (err /= 0) then
-          msg = 'Error in fillMissing_atmosphere_vars!'
-          call report(fatal, msg, nameOfRoutine)
-        errorstatus = err
-        return
-      end if
-
+!       ! make sure that all the levels and layer variables are present
+!       call fillMissing_atmosphere_vars(err)
+!       if (err /= 0) then
+!           msg = 'Error in fillMissing_atmosphere_vars!'
+!           call report(fatal, msg, nameOfRoutine)
+!         errorstatus = err
+!         return
+!       end if
+! 
 
       ! now allocate variables
       call allocate_output_vars(err,atmo_max_nlyrs)

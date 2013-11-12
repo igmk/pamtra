@@ -54,7 +54,7 @@ module tmatrix
       real(kind=dbl), dimension(nbins), intent(in) :: del_d
       real(kind=dbl), dimension(nbins+1), intent(in) :: ndens    
       real(kind=dbl), dimension(nbins+1), intent(in) :: density
-      real(kind=dbl), intent(in) :: as_ratio
+      real(kind=dbl), dimension(nbins+1), intent(in) :: as_ratio
 
       real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
       real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
@@ -98,14 +98,12 @@ module tmatrix
       call assert_false(err,(any(isnan(dmax)) .or. any(dmax <= 0.d0)),&
 	  "nan or negative dmax")
       call assert_false(err,(any(isnan(del_d)) .or. any(del_d <= 0.d0)),&
-	  "nan ref_index")
-      call assert_false(err,(isnan(real(ref_index)) .or. isnan(imag(ref_index))),&
-	  "nan or negative del_d")
-      call assert_false(err,(any(isnan(ndens)) .or. any(ndens <= 0.d0)),&
+	  "nan del_d")
+      call assert_false(err,(any(isnan(ndens)) .or. any(ndens < 0.d0)),&
 	  "nan or negative ndens")
       call assert_false(err,(any(isnan(density)) .or. any(density <= 0.d0)),&
 	  "nan or negative density")
-      call assert_false(err,(isnan(as_ratio) .or. as_ratio < 0.d0),&
+      call assert_false(err,any(isnan(as_ratio)) .or. any(as_ratio < 0.d0),&
 	  "nan or negative as_ratio")
       if (err > 0) then
 	  errorstatus = fatal
@@ -121,6 +119,12 @@ module tmatrix
       azimuth0_num = 1   
       quad ="L" !quadratur
 	
+    !initialize
+      back_spec(:) = 0.d0
+      scatter_matrix = 0.d0
+      extinct_matrix = 0.d0
+      emis_vector = 0.d0
+
     do ir = 1, nbins+1
 
       if (ir == 1) then
@@ -134,59 +138,65 @@ module tmatrix
         del_d_eff = del_d(ir)
       end if
 
-	if (phase == -1 .and. density(ir) /= 917.d0) then
-	    mMix = eps_mix((1.d0,0.d0),ref_index,density(ir))
-	else
-		  mMix = ref_index
-	end if      
-	mindex =conjg(mMix) !different convention
+      !in case we have no hydrometeors, we need no tmatrix calculations!
+      if (ndens_eff == 0.d0) then
+        if (verbose >= 4) print*, "Skipped iteration", ir, "because ndens_eff", ndens_eff
+        CYCLE
+      end if
 
-	!we want the volume equivalent radius
-        if (as_ratio <= 1) then
-          !oblate, with axis of rotation vertically
-          axi = 0.5_dbl*dmax(ir)*as_ratio**(1.0_dbl/3.0_dbl) 
-        else 
-          !prolate, with axis of rotation vertically
-          axi = 0.5_dbl*dmax(ir)/as_ratio**(2.0_dbl/3.0_dbl) 
-        end if
+      if (phase == -1 .and. density(ir) /= 917.d0) then
+          mMix = eps_mix((1.d0,0.d0),ref_index,density(ir))
+      else
+                mMix = ref_index
+      end if      
+      mindex =conjg(mMix) !different convention
 
-	call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
-	    as_ratio, alpha, beta, azimuth_num, azimuth0_num,&
-	    scatter_matrix_part,extinct_matrix_part,emis_vector_part)
-	if (err /= 0) then
-	    msg = 'error in calc_single_tmatrix!'
-	    call report(err, msg, nameOfRoutine)
-	    errorstatus = err
-	    return
-	end if          
-      
-	back_spec(ir) = 4*pi*ndens_eff*scatter_matrix_part(1,16,1,16,2)
+      !we want the volume equivalent radius
+      if (as_ratio(ir) <= 1) then
+        !oblate, with axis of rotation vertically
+        axi = 0.5_dbl*dmax(ir)*as_ratio(ir)**(1.0_dbl/3.0_dbl) 
+      else 
+        !prolate, with axis of rotation vertically
+        axi = 0.5_dbl*dmax(ir)/as_ratio(ir)**(2.0_dbl/3.0_dbl) 
+      end if
 
-	scatter_matrix = scatter_matrix + scatter_matrix_part * ndens_eff * del_d_eff
-	extinct_matrix = extinct_matrix + extinct_matrix_part * ndens_eff * del_d_eff
-	emis_vector = emis_vector + emis_vector_part * ndens_eff * del_d_eff
-      
-      end do !nbins
+      call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
+          as_ratio(ir), alpha, beta, azimuth_num, azimuth0_num,&
+          scatter_matrix_part,extinct_matrix_part,emis_vector_part)
+      if (err /= 0) then
+          msg = 'error in calc_single_tmatrix!'
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+      end if          
+    
+      back_spec(ir) = 4*pi*ndens_eff*scatter_matrix_part(1,16,1,16,2)
 
-      call assert_false(err,any(isnan(scatter_matrix)),&
-	  "nan in scatter matrix")
-      call assert_false(err,any(isnan(extinct_matrix)),&
-	  "nan in extinct_matrix")
-      call assert_false(err,any(isnan(emis_vector)),&
-	  "nan in emis_vector")
-      call assert_false(err,any(isnan(back_spec)),&
-	  "nan in back_spec")	  
-      if (err > 0) then
-	  errorstatus = fatal
-	  msg = "assertation error"
-	  call report(errorstatus, msg, nameOfRoutine)
-	  return
-      end if   	
+      scatter_matrix = scatter_matrix + scatter_matrix_part * ndens_eff * del_d_eff
+      extinct_matrix = extinct_matrix + extinct_matrix_part * ndens_eff * del_d_eff
+      emis_vector = emis_vector + emis_vector_part * ndens_eff * del_d_eff
+    
+    end do !nbins
 
-      errorstatus = err
-      if (verbose >= 2) call report(info,'End of ', nameOfRoutine) 
-      return
-      
+    call assert_false(err,any(isnan(scatter_matrix)),&
+        "nan in scatter matrix")
+    call assert_false(err,any(isnan(extinct_matrix)),&
+        "nan in extinct_matrix")
+    call assert_false(err,any(isnan(emis_vector)),&
+        "nan in emis_vector")
+    call assert_false(err,any(isnan(back_spec)),&
+        "nan in back_spec")	  
+    if (err > 0) then
+        errorstatus = fatal
+        msg = "assertation error"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+    end if   	
+
+    errorstatus = err
+    if (verbose >= 2) call report(info,'End of ', nameOfRoutine) 
+    return
+    
       
   end subroutine calc_tmatrix
 
