@@ -183,11 +183,10 @@ subroutine hydrometeor_extinction(errorstatus)
         end if
 
   ! Convert specific quantities [kg/kg] in absolute ones [kg/m3]
-  !       q_h        = q2abs(q_hydro(i_h,i_z),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),q_hum(i_z),&
-  !                    q_hydro(1,i_z),q_hydro(2,i_z),q_hydro(3,i_z),q_hydro(4,i_z),q_hydro(5,i_z))
         q_h        = q2abs(atmo_hydro_q(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
                     atmo_q_hum(i_x,i_y,i_z),sum(atmo_hydro_q(i_x,i_y,i_z, :)))
-        n_tot      = atmo_hydro_n(i_x,i_y,i_z, i_h)
+        n_tot      = q2abs(atmo_hydro_n(i_x,i_y,i_z, ih),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
+                  atmo_q_hum(i_x,i_y,i_z),sum(atmo_hydro_q(i_x,i_y,i_z, :)))
         r_eff      = atmo_hydro_reff(i_x,i_y,i_z, i_h)
         layer_t    = atmo_temp(i_x,i_y,i_z)
         pressure   = atmo_press(i_x,i_y,i_z)

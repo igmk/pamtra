@@ -53,7 +53,7 @@ subroutine read_descriptor_file(errorstatus)
 ! Check file existence
   INQUIRE(FILE=trim(descriptor_file_name), EXIST=file_exists)
   if (.not.(file_exists)) then
-    msg = 'file does not exist!'
+    msg = 'descriptor file does not exist!'
     errorstatus = fatal
     call report(errorstatus, msg, nameOfRoutine)
     return
@@ -112,7 +112,6 @@ subroutine read_descriptor_file(errorstatus)
 end subroutine read_descriptor_file
 
 subroutine allocate_descriptor_file(errorstatus)
-  integer             :: ii
   integer(kind=long), intent(out) :: errorstatus
   integer(kind=long) :: err = 0
   character(len=80) :: msg

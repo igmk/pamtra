@@ -12,7 +12,7 @@ module vars_output
 !   integer, allocatable, dimension(:,:) :: is, js
 !   real(kind=sgl), allocatable, dimension(:,:) :: lons, lats, lfracs, iwvs  
 !   !find smarter solution here: 
-  real(kind=sgl), allocatable, dimension(:,:) :: cwps, iwps, rwps, swps, gwps,hwps
+!   real(kind=sgl), allocatable, dimension(:,:) :: cwps, iwps, rwps, swps, gwps,hwps
 
 
   !for passive
@@ -96,17 +96,17 @@ module vars_output
 !         allocate(is(atmo_ngridy,atmo_ngridx),js(atmo_ngridy,atmo_ngridx))
 !         allocate(lons(atmo_ngridy,atmo_ngridx),lats(atmo_ngridy,atmo_ngridx),lfracs(atmo_ngridy,atmo_ngridx))
 !         allocate(iwvs(atmo_ngridy,atmo_ngridx))
-        allocate(cwps(atmo_ngridy,atmo_ngridx),iwps(atmo_ngridy,atmo_ngridx),rwps(atmo_ngridy,atmo_ngridx),&
-        swps(atmo_ngridy,atmo_ngridx),gwps(atmo_ngridy,atmo_ngridx),hwps(atmo_ngridy,atmo_ngridx))
+!         allocate(cwps(atmo_ngridy,atmo_ngridx),iwps(atmo_ngridy,atmo_ngridx),rwps(atmo_ngridy,atmo_ngridx),&
+!         swps(atmo_ngridy,atmo_ngridx),gwps(atmo_ngridy,atmo_ngridx),hwps(atmo_ngridy,atmo_ngridx))
       
 !         lons = 0.; lats = 0.; lfracs = 0.;
         
-        cwps(:,:) = nan()
-        iwps(:,:)= nan()
-        rwps(:,:)= nan()
-        swps(:,:)= nan()
-        gwps(:,:)= nan()
-        hwps(:,:)= nan()
+!         cwps(:,:) = nan()
+!         iwps(:,:)= nan()
+!         rwps(:,:)= nan()
+!         swps(:,:)= nan()
+!         gwps(:,:)= nan()
+!         hwps(:,:)= nan()
 
       
     end if
@@ -189,12 +189,12 @@ module vars_output
 !     if (allocated(lats)) deallocate(lats)
 !     if (allocated(lfracs)) deallocate(lfracs)
 !     if (allocated(iwvs)) deallocate(iwvs)
-    if (allocated(cwps)) deallocate(cwps)
-    if (allocated(iwps)) deallocate(iwps)
-    if (allocated(rwps)) deallocate(rwps)
-    if (allocated(swps)) deallocate(swps)
-    if (allocated(gwps)) deallocate(gwps)
-    if (allocated(hwps)) deallocate(hwps)
+!     if (allocated(cwps)) deallocate(cwps)
+!     if (allocated(iwps)) deallocate(iwps)
+!     if (allocated(rwps)) deallocate(rwps)
+!     if (allocated(swps)) deallocate(swps)
+!     if (allocated(gwps)) deallocate(gwps)
+!     if (allocated(hwps)) deallocate(hwps)
 
     if (allocated(out_angles_deg)) deallocate(out_angles_deg)
     if (allocated(out_tb)) deallocate(out_tb)

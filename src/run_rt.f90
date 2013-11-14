@@ -160,25 +160,17 @@ subroutine run_rt(errorstatus)
         call save_active(OUT_FILE_ACT,i_x,i_y,i_f)
     end if
 
-
-!     if (write_nc) then
-!         !      Output integrated quantities
-!         call collect_boundary_output(atmo_lon(i_x,i_y),atmo_lat,atmo_lfrac,&
-!         atmo_iwv, cwp,iwp,rwp,swp, &
-!         gwp,hwp,atmo_model_i,atmo_model_j,i_x,i_y)
-!         if (verbose >= 2) print*, i_x,i_y, 'collect_boundary_output done'
-!     end if
-
     ! find the output level
 print*, "EMILIANO, double check here height index of atom_hgt_lev, please (run_rt.f90)"
-    if (obs_height > 99999._dbl .or. obs_height > atmo_hgt_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1)) then
+    if (atmo_obs_height(i_x,i_y) > 99999._dbl .or. atmo_obs_height(i_x,i_y) > atmo_hgt_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1)) then
         outlevels(1) = 1
-    else if (obs_height .lt. 0.1 .or. obs_height .lt. atmo_hgt_lev(i_x,i_y,2)) then
+    else if (atmo_obs_height(i_x,i_y) .lt. 0.1 .or. atmo_obs_height(i_x,i_y) .lt. atmo_hgt_lev(i_x,i_y,2)) then
         outlevels(1) = atmo_nlyrs(i_x,i_y) + 1
     else
         out_search: do nz = 1, atmo_nlyrs(i_x,i_y)
-            if (atmo_hgt_lev(i_x,i_y,nz+1) .ge. obs_height) then
-                if (abs(atmo_hgt_lev(i_x,i_y,nz+1) - obs_height) .lt. abs(atmo_hgt_lev(i_x,i_y,nz) - obs_height)) then
+            if (atmo_hgt_lev(i_x,i_y,nz+1) .ge. atmo_obs_height(i_x,i_y)) then
+                if (abs(atmo_hgt_lev(i_x,i_y,nz+1) - atmo_obs_height(i_x,i_y)) .lt. &
+                    abs(atmo_hgt_lev(i_x,i_y,nz) - atmo_obs_height(i_x,i_y))) then
                     outlevels(1) = atmo_nlyrs(i_x,i_y)-nz+1
                 else
                     outlevels(1) = atmo_nlyrs(i_x,i_y)-nz+2

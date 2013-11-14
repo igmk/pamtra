@@ -77,71 +77,26 @@ program pamtra
         go to 666
     end if
 
-!!! read the data
-call get_atmosphere
-! 1tmporary: this should go into the call get_atmosphere routine!
+    call screen_input(err)
+    if (err /= 0) then
+        msg = 'Error in screen_input!'
+        call report(fatal, msg, nameOfRoutine)
+      errorstatus = err
+      go to 666
+    end if
 
+    call allocate_atmosphere_vars(err)
+    if (err /= 0) then
+        msg = 'Error in allocate_atmosphere_vars!'
+        call report(fatal, msg, nameOfRoutine)
+      errorstatus = err
+      go to 666
+    end if
 
-atmo_max_nlyrs =profiles_nlyr
-atmo_ngridx = profiles_ngridx
-atmo_ngridy = profiles_ngridy
-
-call allocate_atmosphere_vars(err)
-if (err /= 0) then
-    msg = 'Error in allocate_atmosphere_vars!'
-    call report(fatal, msg, nameOfRoutine)
-  errorstatus = err
-  return
-end if
-
-atmo_nlyrs(:,:) = profiles_nlyr
-
-!temporary loop to fill atmosphere array:
-do i_y = 1, profiles_ngridy !i_x_in, i_x_fin
-  do i_x = 1, profiles_ngridx
-
-      atmo_relhum_lev(i_x,i_y,:) = profiles(i_x,i_y)%relhum_lev
-      atmo_press_lev(i_x,i_y,:) = profiles(i_x,i_y)%press_lev
-      atmo_temp_lev(i_x,i_y,:) = profiles(i_x,i_y)%temp_lev
-      atmo_hgt_lev(i_x,i_y,:) = profiles(i_x,i_y)%hgt_lev
-
-      atmo_hydro_reff(i_x,i_y,:,:) = nan()
-      atmo_hydro_n(i_x,i_y,:,:) = nan()
-
-
-      atmo_hydro_q(i_x,i_y,:,1) = profiles(i_x,i_y)%cloud_water_q
-!       atmo_hydro_n(i_x,i_y,:,1) = profiles(i_x,i_y)%cloud_water_n
-
-      atmo_hydro_q(i_x,i_y,:,2) = profiles(i_x,i_y)%cloud_ice_q
-!       atmo_hydro_n(i_x,i_y,:,2) = profiles(i_x,i_y)%cloud_ice_n
-
-      atmo_hydro_q(i_x,i_y,:,3) = profiles(i_x,i_y)%rain_q
-!       atmo_hydro_n(i_x,i_y,:,3) = profiles(i_x,i_y)%rain_n
-
-      atmo_hydro_q(i_x,i_y,:,4) = profiles(i_x,i_y)%snow_q
-!       atmo_hydro_n(i_x,i_y,:,4) = profiles(i_x,i_y)%snow_n
-
-      atmo_hydro_q(i_x,i_y,:,5) = profiles(i_x,i_y)%graupel_q
-!       atmo_hydro_n(i_x,i_y,:,5) = profiles(i_x,i_y)%graupel_n
-    atmo_month(i_x,i_y) = profiles_month
-    atmo_day(i_x,i_y) = profiles_day
-    atmo_year(i_x,i_y) = profiles_year
-    atmo_time(i_x,i_y) =profiles_time
-    atmo_deltax(i_x,i_y) = profiles_deltax
-    atmo_deltay(i_x,i_y) = profiles_deltay
-    atmo_model_i(i_x,i_y) = profiles(i_x,i_y)%isamp
-    atmo_model_j(i_x,i_y) = profiles(i_x,i_y)%jsamp
-    atmo_lon(i_x,i_y) = profiles(i_x,i_y)%longitude       
-    atmo_lat(i_x,i_y) = profiles(i_x,i_y)%latitude       
-    atmo_lfrac(i_x,i_y) = profiles(i_x,i_y)%land_fraction
-    atmo_wind10u(i_x,i_y) = profiles(i_x,i_y)%wind_10u
-    atmo_wind10v(i_x,i_y) = profiles(i_x,i_y)%wind_10v
-
-    atmo_iwv(i_x,i_y) = profiles(i_x,i_y)%iwv
-
-    end do
-end do
-
+    if (atmo_input_type == 'lev' .or. atmo_input_type == 'lay') &
+        call read_new_fill_variables(err)
+    if (atmo_input_type == 'cla') &
+        call read_classic_fill_variables(err)
 
     ! make sure that all the levels and layer variables are present
     call fillMissing_atmosphere_vars(err)
@@ -149,22 +104,39 @@ end do
         msg = 'Error in fillMissing_atmosphere_vars!'
         call report(fatal, msg, nameOfRoutine)
       errorstatus = err
-      return
+      go to 666
     end if
 
-
-    ! now allocate variables
-    call allocate_output_vars(err, atmo_max_nlyrs)
+    call add_obs_height(errorstatus)
     if (err /= 0) then
-        msg = 'Error in allocate_output_vars!'
+        msg = 'Error in fillMissing_atmosphere_vars!'
         call report(fatal, msg, nameOfRoutine)
-        errorstatus = err
-        go to 666
+      errorstatus = err
+      go to 666
     end if
+
+      ! now allocate output variables
+      call allocate_output_vars(err,atmo_max_nlyrs)
+      if (err /= 0) then
+          msg = 'Error in allocate_output_vars!'
+          call report(fatal, msg, nameOfRoutine)
+        errorstatus = err
+      go to 666
+      end if
+
+
+! do i_x = 1, atmo_ngridx
+!   do i_y = 1, atmo_ngridy
+! print*,"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    LAYER"
+!     call print_out_layer(i_x,i_y)
+! print*,'-----------  ',atmo_nlyrs(i_x,i_y)
+! print*,"@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@    LEVEL"
+!     call print_out_level(i_x,i_y)
+!   enddo
+! enddo
+
     msg = 'Start loop over frequencies & profiles!'
     if (verbose >= 2)  call report(info, msg, nameOfRoutine)
-
-
 
     grid_f: do i_f =1, nfrq
         if (jacobian_mode) then
@@ -191,8 +163,9 @@ end do
         end if
     end do grid_f
 
-    
+
     if (write_nc) then
+!       call collect_boundary_output
       call write_nc_results
     end if
 

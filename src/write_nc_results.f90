@@ -90,16 +90,17 @@ subroutine write_nc_results
     call check(nf90_put_att(ncid, frequencyVarID, "units", "GHz"))
     call check(nf90_put_att(ncid, frequencyVarID, "missing_value", -9999))
 
+
     !create variables and apply meta data
     dim2d = (/dlatID,dlonID/)
     !  call put_2d_var(ncid,'longitude',lons,2,/ngridx,ngridy/)
-    call check(nf90_def_var(ncid,'model_i', nf90_int,dim2d, isVarID))
-    call check(nf90_put_att(ncid, isVarID, "units", "-"))
-    call check(nf90_put_att(ncid, isVarID, "missing_value", -9999))
-
-    call check(nf90_def_var(ncid,'model_j', nf90_int,dim2d, jsVarID))
-    call check(nf90_put_att(ncid, jsVarID, "units", "-"))
-    call check(nf90_put_att(ncid, jsVarID, "missing_value", -9999))
+!     call check(nf90_def_var(ncid,'model_i', nf90_int,dim2d, isVarID))
+!     call check(nf90_put_att(ncid, isVarID, "units", "-"))
+!     call check(nf90_put_att(ncid, isVarID, "missing_value", -9999))
+! 
+!     call check(nf90_def_var(ncid,'model_j', nf90_int,dim2d, jsVarID))
+!     call check(nf90_put_att(ncid, jsVarID, "units", "-"))
+!     call check(nf90_put_att(ncid, jsVarID, "missing_value", -9999))
 
     call check(nf90_def_var(ncid,'longitude', nf90_float,dim2d, lonVarID))
     call check(nf90_put_att(ncid, lonVarID, "units", "deg.dec"))
@@ -117,29 +118,29 @@ subroutine write_nc_results
     call check(nf90_put_att(ncid, iwvVarID, "units", "kg/m^2"))
     call check(nf90_put_att(ncid, iwvVarID, "missing_value", -9999))
 
-    call check(nf90_def_var(ncid,'cwp', nf90_float,dim2d, cwpVarID))
-    call check(nf90_put_att(ncid, cwpVarID, "units", "kg/m^2"))
-    call check(nf90_put_att(ncid, cwpVarID, "missing_value", -9999))
-
-    call check(nf90_def_var(ncid,'iwp', nf90_float,dim2d, iwpVarID))
-    call check(nf90_put_att(ncid, iwpVarID, "units", "kg/m^2"))
-    call check(nf90_put_att(ncid, iwpVarID, "missing_value", -9999))
-
-    call check(nf90_def_var(ncid,'rwp', nf90_float,dim2d, rwpVarID))
-    call check(nf90_put_att(ncid, rwpVarID, "units", "kg/m^2"))
-    call check(nf90_put_att(ncid, rwpVarID, "missing_value", -9999))
-
-    call check(nf90_def_var(ncid,'swp', nf90_float,dim2d, swpVarID))
-    call check(nf90_put_att(ncid, swpVarID, "units", "kg/m^2"))
-    call check(nf90_put_att(ncid, swpVarID, "missing_value", -9999))
-
-    call check(nf90_def_var(ncid,'gwp', nf90_float,dim2d, gwpVarID))
-    call check(nf90_put_att(ncid, gwpVarID, "units", "kg/m^2"))
-    call check(nf90_put_att(ncid, gwpVarID, "missing_value", -9999))
-
-    call check(nf90_def_var(ncid,'hwp', nf90_float,dim2d, hwpVarID))
-    call check(nf90_put_att(ncid, hwpVarID, "units", "kg/m^2"))
-    call check(nf90_put_att(ncid, hwpVarID, "missing_value", -9999))
+!     call check(nf90_def_var(ncid,'cwp', nf90_float,dim2d, cwpVarID))
+!     call check(nf90_put_att(ncid, cwpVarID, "units", "kg/m^2"))
+!     call check(nf90_put_att(ncid, cwpVarID, "missing_value", -9999))
+! 
+!     call check(nf90_def_var(ncid,'iwp', nf90_float,dim2d, iwpVarID))
+!     call check(nf90_put_att(ncid, iwpVarID, "units", "kg/m^2"))
+!     call check(nf90_put_att(ncid, iwpVarID, "missing_value", -9999))
+! 
+!     call check(nf90_def_var(ncid,'rwp', nf90_float,dim2d, rwpVarID))
+!     call check(nf90_put_att(ncid, rwpVarID, "units", "kg/m^2"))
+!     call check(nf90_put_att(ncid, rwpVarID, "missing_value", -9999))
+! 
+!     call check(nf90_def_var(ncid,'swp', nf90_float,dim2d, swpVarID))
+!     call check(nf90_put_att(ncid, swpVarID, "units", "kg/m^2"))
+!     call check(nf90_put_att(ncid, swpVarID, "missing_value", -9999))
+! 
+!     call check(nf90_def_var(ncid,'gwp', nf90_float,dim2d, gwpVarID))
+!     call check(nf90_put_att(ncid, gwpVarID, "units", "kg/m^2"))
+!     call check(nf90_put_att(ncid, gwpVarID, "missing_value", -9999))
+! 
+!     call check(nf90_def_var(ncid,'hwp', nf90_float,dim2d, hwpVarID))
+!     call check(nf90_put_att(ncid, hwpVarID, "units", "kg/m^2"))
+!     call check(nf90_put_att(ncid, hwpVarID, "missing_value", -9999))
 
 
     if (active) then
@@ -233,10 +234,10 @@ subroutine write_nc_results
     if (passive) then
         call check(nf90_put_var(ncid, anglesVarID, out_angles_deg))
     end if
-    call check(nf90_put_var(ncid, isVarID, &
-      RESHAPE( atmo_model_i, (/ atmo_ngridy, atmo_ngridx/), ORDER = (/2,1/))))
-    call check(nf90_put_var(ncid, jsVarID, &
-      RESHAPE( atmo_model_j, (/ atmo_ngridy, atmo_ngridx/), ORDER = (/2,1/))))
+!     call check(nf90_put_var(ncid, isVarID, &
+!       RESHAPE( atmo_model_i, (/ atmo_ngridy, atmo_ngridx/), ORDER = (/2,1/))))
+!     call check(nf90_put_var(ncid, jsVarID, &
+!       RESHAPE( atmo_model_j, (/ atmo_ngridy, atmo_ngridx/), ORDER = (/2,1/))))
     call check(nf90_put_var(ncid, lonVarID, &
       RESHAPE( atmo_lon, (/ atmo_ngridy, atmo_ngridx/), ORDER = (/2,1/))))
     call check(nf90_put_var(ncid, latVarID, &
@@ -246,12 +247,12 @@ subroutine write_nc_results
     call check(nf90_put_var(ncid, iwvVarID,  &
       RESHAPE( atmo_iwv, (/ atmo_ngridy, atmo_ngridx/), ORDER = (/2,1/))))
 
-    call check(nf90_put_var(ncid, cwpVarID, cwps))
-    call check(nf90_put_var(ncid, iwpVarID, iwps))
-    call check(nf90_put_var(ncid, rwpVarID, rwps))
-    call check(nf90_put_var(ncid, swpVarID, swps))
-    call check(nf90_put_var(ncid, gwpVarID, gwps))
-    call check(nf90_put_var(ncid, hwpVarID, hwps))
+!     call check(nf90_put_var(ncid, cwpVarID, cwps))
+!     call check(nf90_put_var(ncid, iwpVarID, iwps))
+!     call check(nf90_put_var(ncid, rwpVarID, rwps))
+!     call check(nf90_put_var(ncid, swpVarID, swps))
+!     call check(nf90_put_var(ncid, gwpVarID, gwps))
+!     call check(nf90_put_var(ncid, hwpVarID, hwps))
     if (passive) then
         call check(nf90_put_var(ncid, tbVarID, &
         RESHAPE( out_tb, (/ nstokes,nfrq,2*nummu,noutlevels,atmo_ngridy,atmo_ngridx /),&
