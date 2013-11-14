@@ -12,7 +12,7 @@ contains
         real(kind=dbl), intent(in) :: t,&
         p
 
-        real(kind=dbl), intent(in) :: spec_var,& ! specific variable to convert
+        real(kind=dbl), intent(in) :: spec_var,& ! specific variable to convert [kg/kg]
         qv,& 
         q_all_hydro
 
@@ -21,6 +21,27 @@ contains
 
 
     end function q2abs
+
+    real(kind=dbl) function abs2spec(abs_var,t,p,qv,q_all_hydro)
+
+        use kinds
+        use constants, only: r_d, r_v
+
+        implicit none
+
+        real(kind=dbl), intent(in) :: t,&
+        p
+
+        real(kind=dbl), intent(in) :: abs_var,& ! absolute variable to convert [kg/m3]
+        qv,& 
+        q_all_hydro
+
+
+        abs2spec = abs_var/p*(r_d*(1._dbl+(r_v/r_d-1._dbl)*qv-q_all_hydro)*t)
+
+
+    end function abs2spec
+
 
     real(kind=dbl) function vapor2rh(temp_p,pres_p,hum_massmix)
 
