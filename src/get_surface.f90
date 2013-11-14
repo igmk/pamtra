@@ -108,6 +108,7 @@ subroutine get_surface &
       call assert_true(err,(salinity>0),&
           "salinity must be positive")   
        if (err > 0) then
+          print*, freq, ground_temp, salinity
           errorstatus = fatal
           msg = "assertation error"
           call report(errorstatus, msg, nameOfRoutine)

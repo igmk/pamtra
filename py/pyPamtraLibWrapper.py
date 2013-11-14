@@ -102,7 +102,8 @@ def PamtraFortranWrapper(
       exec("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
     #pyPamtraLib.vars_atmosphere.atmo_max_nlyr
   
-  pyPamtraLib.vars_atmosphere.fillmissing_atmosphere_vars()  
+  error = pyPamtraLib.vars_atmosphere.fillmissing_atmosphere_vars()  
+  if error > 0: raise RuntimeError("Error in fillmissing_atmosphere_vars")
   
   #see whether it worked:
   if settings["pyVerbose"] > 3:

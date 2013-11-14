@@ -86,7 +86,7 @@ subroutine make_soft_spheroid(errorstatus)
         soft_d_eff(i) = ((6._dbl * mass(i) * as_ratio**2._dbl) / (pi * rho_ms))**(1._dbl/3._dbl)
       enddo
     endif
-endif
+  endif
 
 ! Calculate the density of the soft spheroids
   if (rho_ms < 0.) then

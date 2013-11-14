@@ -15,18 +15,10 @@ import random
 import string
 import itertools
 from copy import deepcopy
-#from collections import OrderedDict
 from matplotlib import mlab
 import multiprocessing
 
 import namelist #parser for fortran namelist files
-
-#try: 
-  #import numexpr as ne
-  #neAvail = True
-#except:
-  #warnings.warn("numexpr not available", Warning)
-  #neAvail = False
 
 import meteoSI
 try: 
@@ -34,10 +26,7 @@ try:
 except: 
   warnings.warn("pyPamtraLib not available", Warning)
 
-#try:
-  #import pp
-#except:
-  #warnings.warn("parallel python not available", Warning)
+
 
 missingNumber=-9999.
 #logging.basicConfig(filename='example.log',level=logging.DEBUG)
@@ -182,7 +171,7 @@ class pyPamtra(object):
   
   def _prepareNmlUnitsDimensions(self):
   
-    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","iwv","cwp","iwp","rwp","swp","gwp","hwp","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime"]
+    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime"]
   
     self.nmlSet = dict() #settings which are required for the nml file. keeping the order is important for fortran
     self.nmlSet["hydro_threshold"]=  1.e-10   # [kg/kg] 
@@ -274,7 +263,8 @@ class pyPamtra(object):
     self.dimensions["lfrac"] = ["ngridx","ngridy"]
     self.dimensions["wind10u"] = ["ngridx","ngridy"]
     self.dimensions["wind10v"] = ["ngridx","ngridy"]
-    
+    self.dimensions["obs_height"] = ["ngridx","ngridy"]
+
     self.dimensions["iwv"] = ["ngridx","ngridy"]
     self.dimensions["cwp"] = ["ngridx","ngridy"]
     self.dimensions["iwp"] = ["ngridx","ngridy"]
@@ -314,7 +304,8 @@ class pyPamtra(object):
     self.units["lfrac"] = "-"
     self.units["wind10u"] = "m/s"
     self.units["wind10v"] = "m/s"
-    
+    self.units["obs_height"] = "m"
+
     self.units["iwv"] = "kg/m^2"
     self.units["cwp"] = "kg/m^2"
     self.units["iwp"] = "kg/m^2"
@@ -672,8 +663,8 @@ class pyPamtra(object):
       else:
         self.p[qValue] = kwargs[qValue].reshape(self._shape3D)
         
-    #if "q" in kwargs.keys():
-      #self._helperP["q"] = kwargs["q"].reshape(self._shape3D)
+    if "obs_height" in kwargs.keys():
+      self.p["obs_height"] = kwargs["obs_height"].reshape(self._shape2D)
 
     if "relhum_lev" in kwargs.keys():
       self.p["relhum_lev"] = kwargs["relhum_lev"].reshape(self._shape3Dplus)
@@ -688,99 +679,6 @@ class pyPamtra(object):
     
     return
 
-
-    
-    
-  #def _calcPressTempRelhum(self):
-    #if set(("temp","relhum","press","dz")).issubset(self._helperP.keys()):
-      #return
-    #else:
-      #if self.set["pyVerbose"] > 0:
-        #print 'calculating "temp","relhum","press","dz"'
-      #self._helperP["temp"] = (self.p["temp_lev"][...,0:-1] + self.p["temp_lev"][...,1:])/2.
-      #self._helperP["relhum"] = (self.p["relhum_lev"][...,0:-1] + self.p["relhum_lev"][...,1:])/2.
-      #dz = np.diff(self.p["hgt_lev"],axis=-1)
-      #self._helperP["dz"] = dz
-      
-      ##if not self._radiosonde:
-
-        ##p0 = self.p["press_lev"][...,0:-1]
-        ##p1 = self.p["press_lev"][...,1:]
-        ##xp = ne.evaluate("-1.*log(p1/p0)/dz")
-
-      ##else: #to allow array operations, cases with varying heights or invalid data have to be treated a bit differently:
-
-      #dz[dz<=0]=9999
-      #self._helperP["relhum"][self._helperP["relhum"]<=0] = 1
-      #self._helperP["temp"][self._helperP["temp"]<=0] = 1
-      
-      #press_lev1 = deepcopy(self.p["press_lev"])
-      #press_lev1[press_lev1==missingNumber]=1
-      
-      #p0 = press_lev1[...,0:-1]
-      #p1 = press_lev1[...,1:]
-      
-      #if neAvail: xp = ne.evaluate("-1.*log(p1/p0)/dz")
-      #else: xp = -1.*np.log(p1/p0)/dz
-      
-      #xp[xp==0] = 9999
-        
-      #if neAvail: self._helperP["press"] = ne.evaluate("-1.*p0/xp*(exp(-xp*dz)-1.)/dz")
-      #else: self._helperP["press"] = -1.*p0/xp*(np.exp(-xp*dz)-1.)/dz
-      
-      #del p0,p1,xp
-        
-      #return
-
-  #def _calcQ(self):
-    
-    #if set(("q",)).issubset(self._helperP.keys()):
-      #return
-    #else:
-      #self._calcPressTempRelhum()
-      
-      #if self.set["pyVerbose"] > 0:
-        #print 'calculating "q"'
-      #self._helperP["q"] = meteoSI.rh2q(self._helperP["relhum"],self._helperP["temp"],self._helperP["press"])
-      #return
-
-  #def _calcQ_lev(self):
-    #if set(("q_lev",)).issubset(self._helperP.keys()):
-      #return
-    #else:
-      #if self.set["pyVerbose"] > 0:
-        #print 'calculating "q_lev"'
-      #qBot = self._helperP["q"][...,0:1] + 0.25*(self._helperP["q"][...,0:1]-self._helperP["q"][...,1:2])
-      #qTop = self._helperP["q"][...,-1:] + 0.25*(self._helperP["q"][...,-1:]-self._helperP["q"][...,-2:-1])
-      #qMid = (self._helperP["q"][...,0:-1] + self._helperP["q"][...,1:])/2.
-      
-      #self._helperP["q_lev"] = np.concatenate((qBot,qMid,qTop),axis=-1)
-      #return
-
-  #def _calcMoistRho(self):
-    #if set(("rho_moist",)).issubset(self._helperP.keys()):
-      #return
-    #else:
-      #self._calcQ()
-      #self._calcPressTempRelhum()
-      
-      #if self.set["pyVerbose"] > 0:
-        #print 'calculating "rho_moist"'
-
-      #self._helperP["rho_moist"] = meteoSI.moist_rho_q(self._helperP["press"],self._helperP["temp"],self._helperP["q"],np.sum(self.p["hydro_q"],axis=-1))
-      #return
-
-  #def _calcRelhum_lev(self):
-    #if set(("relhum_lev",)).issubset(self.p.keys()):
-      #return
-    #else:
-      #self._calcQ_lev()
-      
-      #if self.set["pyVerbose"] > 0:
-        #print 'calculating "relhum_lev"'
-        
-      #self.p["relhum_lev"] = meteoSI.q2rh(self._helperP["q_lev"],self.p["temp_lev"],self.p["press_lev"])
-      #return
 
   def _checkData(self):
     maxLimits = {"relhum_lev":200,"hydro_q":0.05,"temp_lev":320,"press_lev":110000}
@@ -816,7 +714,7 @@ class pyPamtra(object):
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
 
-    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v"]:
+    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","obs_height"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape2D)
       
     for key in ["hydro_q","hydro_n","hydro_reff"]:
@@ -967,7 +865,7 @@ class pyPamtra(object):
 
     
   def createFullProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
-      iwv,cwp,iwp,rwp,swp,gwp,hwp,
+      obs_height,
       hgt_lev,press_lev,temp_lev,relhum_lev,
       hydro_q,hydro_n,hydro_reff):
     
@@ -1013,310 +911,17 @@ class pyPamtra(object):
     self.p["model_j"] = np.array(np.where(lon.reshape(self._shape2D))[1]).reshape(self._shape2D) +1
     self.p["wind10u"] = wind10u.reshape(self._shape2D)
     self.p["wind10v"] = wind10v.reshape(self._shape2D)
+    self.p["obs_height"] = obs_height.reshape(self._shape2D)
 
-    self.p["hydro_q"] = iwv.reshape(self._shape4D)
-    self.p["hydro_n"] = cwp.reshape(self._shape4D)
-    self.p["hydro_reff"] = iwp.reshape(self._shape4D)
-
+    self.p["hydro_q"] = hydro_q.reshape(self._shape4D)
+    self.p["hydro_n"] = hydro_n.reshape(self._shape4D)
+    self.p["hydro_reff"] = hydro_reff.reshape(self._shape4D)
     
     self.p["hgt_lev"] = hgt_lev.reshape(self._shape3Dplus)
     self.p["temp_lev"] = temp_lev.reshape(self._shape3Dplus)
     self.p["press_lev"] = press_lev.reshape(self._shape3Dplus)
     self.p["relhum_lev"] = relhum_lev.reshape(self._shape3Dplus)    
-    
-  #def runParallelPamtra(self,freqs,pp_servers=(),pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto",checkData=True):
-    #'''
-    #run Pamtra analouge to runPamtra, but with with parallel python
-    
-    #input:
-    
-    #freqs: list with frequencies
-    #pp_servers: tuple with servers, ("*") activates auto detection
-    #pp_local_workers: number of local workers, "auto" is usually amount of cores
-    #pp_deltaF,pp_deltaX,pp_deltaY: length of the peaces in frequency,x and y direction. 0 means no slicing
-    #activeFreqs, passiveFreqs: if not "auto", run_mode active/passive is set according to frequenccies found here. Can speed up calculations, if radar AND radiometer are simulated.
-    
-    #In my experience, smaller pieces (e.g. pp_deltaF=0,pp_deltaX=1,pp_deltaY=1) work much better than bigger ones, even though overhead might be bigger.
-    
-    #output is collected by _ppCallback()
-    #'''
-    #tttt = time.time()
-    
-    #if checkData: self._checkData()
-        
-    ##if the namelist file is empty, write it. Otherwise existing one is used.
-    ##if not os.path.isfile(self.set["namelist_file"]):
-      ##self.writeNmlFile(self.set["namelist_file"])
-    ##else: 
-      ##if self.set["namelist_file"].split(".")[-1] == "tmp": 
-        ##raise ValueError("Namelitsfile "+ self.set["namelist_file"] +" ends with .tmp, but is existing already")
-      ##elif self.set["pyVerbose"] > 0:
-        ##print("NOT writing temporary nml file to run pamtra using exisiting nml file instead: "+self.set["namelist_file"])
-
-    #if pp_local_workers == "auto":
-      #self.job_server = pp.Server(ppservers=pp_servers,secret="pyPamtra") 
-    #else:
-      #self.job_server = pp.Server(pp_local_workers,ppservers=pp_servers,secret="pyPamtra") 
-      
-    #if int(self.set["verbose"]) > 0:  
-      #raise IOError('There is a weired bug if the fortran part prints anything (i.e. verbosity is larger than 0). Use the non-parallel pyPamtra version for debugging! verbose=', self.set["verbose"])
-    #if self.set["pyVerbose"] > 0: 
-      #print "Starting pp with: "
-      #pp_nodes = self.job_server.get_active_nodes()
-      #for key in pp_nodes.keys():
-        #print key+": "+str(pp_nodes[key])+" nodes"
-    
-    #if type(freqs) in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
-    
-    ##save memory if no spectrum is needed!
-    #if self.nmlSet["radar_mode"] == "spectrum":
-      #radar_spectrum_length = int(self.nmlSet["radar_nfft"])
-    #else:
-      #radar_spectrum_length = 1
-
-    
-    #self.set["freqs"] = freqs
-    #self.set["nfreqs"] = len(freqs)
-    
-    #assert self.set["nfreqs"] > 0
-    
-    #if pp_deltaF==0: pp_deltaF = self.set["nfreqs"]
-    #if pp_deltaX==0: pp_deltaX = self.p["ngridx"]
-    #if pp_deltaY==0: pp_deltaY = self.p["ngridy"]
-    
-    #pp_ii = -1
-    #pp_jobs = dict()
-    
-    #self.r["Ze"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-    #self.r["Att_hydro"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-    #self.r["Att_atmo"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-    
-    #self.r["Ze_cw"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-    #self.r["Ze_rr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-    #self.r["Ze_ci"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-    #self.r["Ze_sn"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-    #self.r["Ze_gr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-    #self.r["Ze_ha"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-    #self.r["Att_cw"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-    #self.r["Att_rr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-    #self.r["Att_ci"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-    #self.r["Att_sn"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-    #self.r["Att_gr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-    #self.r["Att_ha"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-
-    #self.r["hgt"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],))*missingNumber
-    
-    #self.r["radar_spectra"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],radar_spectrum_length,))*missingNumber
-    #self.r["radar_snr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-    #self.r["radar_moments"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],4,))*missingNumber
-    #self.r["radar_slopes"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],2,))*missingNumber
-    #self.r["radar_quality"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],),dtype=int)*missingNumber
-    #self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles,self.set["nfreqs"],self._nstokes))*missingNumber
-    
-    #self.pp_noJobs = len(np.arange(0,self.set["nfreqs"],pp_deltaF))*len(np.arange(0,self.p["ngridx"],pp_deltaX))*len(np.arange(0,self.p["ngridy"],pp_deltaY))
-    #self.pp_jobsDone = 0
-    
-    ##fi = open("/tmp/pp_logfile.txt","w")
-    ##fi.write("Starting pp with %i jobs \n\r"%(self.pp_noJobs))
-    ##fi.close()
-    
-    #self.hosts=[]
-    
-    #for pp_startF in np.arange(0,self.set["nfreqs"],pp_deltaF):
-      #pp_endF = pp_startF + pp_deltaF
-      #if pp_endF > self.set["nfreqs"]: pp_endF = self.set["nfreqs"]
-      #pp_nfreqs = pp_endF - pp_startF
-      #for pp_startX in np.arange(0,self.p["ngridx"],pp_deltaX):
-        #pp_endX = pp_startX + pp_deltaX
-        #if pp_endX > self.p["ngridx"]: pp_endX = self.p["ngridx"]
-        #pp_ngridx = pp_endX - pp_startX
-        #for pp_startY in np.arange(0,self.p["ngridy"],pp_deltaY):
-          #pp_endY = pp_startY + pp_deltaY
-          #if pp_endY > self.p["ngridy"]: pp_endY = self.p["ngridy"]
-          #pp_ngridy = pp_endY - pp_startY
-          
-          #pp_ii+=1
-          
-          ##if activeFreqs or passiveFreqs is given, change runMode accordingly!
-          #ii_nmlSet = deepcopy(self.nmlSet)
-          #subFreqs = set(self.set["freqs"][pp_startF:pp_endF])
-          #if activeFreqs != "auto":
-	    #if len(subFreqs.intersection(activeFreqs)) > 0:
-	      #ii_nmlSet["run_mode"]["active"] = True
-	    #else:
-	      #ii_nmlSet["run_mode"]["active"] = False
-          #if passiveFreqs != "auto":
-	    #if len(subFreqs.intersection(passiveFreqs)) > 0:
-	      #ii_nmlSet["run_mode"]["passive"] = True
-	    #else:
-	      #ii_nmlSet["run_mode"]["passive"] = False
-
-          #pp_jobs[pp_ii] = self.job_server.submit(pyPamtraLibWrapper.PamtraFortranWrapper, (
-          ##self.set
-          #ii_nmlSet,
-          ##self._nmlDefaultValues,
-          #self.set["namelist_file"],
-          #self.set["verbose"],
-          ##input
-          #pp_ngridx,
-          #pp_ngridy,
-          #self.p["max_nlyrs"],
-          #self.p["nlyrs"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #pp_nfreqs,
-          #self.set["freqs"][pp_startF:pp_endF],
-          #radar_spectrum_length,
-          #self.p["unixtime"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["deltax"],self.p["deltay"],
-          #self.p["lat"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["lon"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["model_i"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["model_j"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["wind10u"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["wind10v"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["lfrac"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["relhum_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["press_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["temp_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["hgt_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["cwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["iwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["rwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["swc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["gwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["hwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["cwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["iwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["rwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["swc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["gwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          #self.p["hwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist()
-          #),tuple(), 
-          #("pyPamtraLibWrapper","pyPamtraLib","os","logging","collections","numpy","string","random"),
-          #callback=self._ppCallback,
-          #callbackargs=(pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii,))
-          
-          ##res = pyPamtraLibWrapper.PamtraFortranWrapper(
-          ###self.set
-          ##self.set["namelist_file"],
-          ###input
-          ##pp_ngridx,
-          ##pp_ngridy,
-          ##self.p["max_nlyrs"],
-          ##self.p["nlyrs"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##pp_nfreqs,
-          ##self.set["freqs"][pp_startF:pp_endF],
-          ##radar_spectrum_length,
-          ##self.p["unixtime"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["deltax"],self.p["deltay"],
-          ##self.p["lat"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["lon"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["model_i"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["model_j"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["wind10u"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["wind10v"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["lfrac"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["relhum_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["press_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["temp_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["hgt_lev"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["cwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["iwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["rwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["swc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["gwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["hwc_q"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["cwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["iwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["rwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["swc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["gwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist(),
-          ##self.p["hwc_n"][pp_startX:pp_endX,pp_startY:pp_endY].tolist()
-          ##)
-          ##print(res[-1],res[-2])
-          ##sys.exit()
-          #if self.set["pyVerbose"] > 0: 
-            #sys.stdout.write("\r"+20*" "+"\r"+ "%i, %5.3f%% submitted"%(pp_ii+1,(pp_ii+1)/float(self.pp_noJobs)*100))
-            #sys.stdout.flush()
-    #if self.set["pyVerbose"] > 0: 
-      #print " "
-      #print self.pp_noJobs, "jobs submitted"
-
-
-    #if self.set["pyVerbose"] > 0: print " "; self.job_server.get_active_nodes()
-    #self.job_server.wait()
-    
-    #self.r["nmlSettings"] = self.nmlSet
-
-    #self.r["pamtraVersion"] = self.r["pamtraVersion"].strip()
-    #self.r["pamtraHash"] = self.r["pamtraHash"].strip()
-    
-    #if self.set["pyVerbose"] > 0: print " "; self.job_server.print_stats()
-    #self.job_server.destroy()
-    #del self.job_server
-    
-    ##remove temporary nml file
-    ##if self.set["namelist_file"].split(".")[-1] == "tmp": os.remove(self.set["namelist_file"])
-    
-    #if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
-  
-  #def _ppCallback(self,pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii,*results):
-    #'''
-    #Collect the data of parallel pyPamtra    
-    #'''
-    ##if pp_ii == 1: import pdb;pdb.set_trace()
-    ##logging.debug(str(pp_ii)+": callback started ")
-    ##print "toll", results[0][0][1]
-    ##print "toller", np.shape(self.r["radar_snr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF])    
-    #if self.set["pyVerbose"] > 2: print "Callback started:", pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii
-
-    
-    #((data,host,),) = results
-
-    ##print "am tollsten", shape(data[0]), shape(data[0][0]),shape(data[0][20])
-  
-    #if self.set["pyVerbose"] > 2: print "Callback received:", pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii
- 
-  
-    #(self.r["pamtraVersion"],
-    #self.r["pamtraHash"], 
-    #self.r["Ze"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
-    #self.r["Ze_cw"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
-    #self.r["Ze_rr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
-    #self.r["Ze_ci"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
-    #self.r["Ze_sn"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
-    #self.r["Ze_gr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
-    #self.r["Ze_ha"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
-    #self.r["Att_hydro"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
-    #self.r["Att_cw"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
-    #self.r["Att_rr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
-    #self.r["Att_ci"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
-    #self.r["Att_sn"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
-    #self.r["Att_gr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
-    #self.r["Att_ha"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
-    #self.r["Att_atmo"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF], 
-    #self.r["radar_hgt"][pp_startX:pp_endX,pp_startY:pp_endY,:],
-    #self.r["tb"][pp_startX:pp_endX,pp_startY:pp_endY,:,:,pp_startF:pp_endF,:], 
-    #self.r["radar_spectra"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
-    #self.r["radar_snr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
-    #self.r["radar_moments"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
-    #self.r["radar_slopes"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
-    #self.r["radar_quality"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF],
-    #self.r["radar_vel"],
-    #self.r["angles"],
-    #)= data
-        
-    #if self.set["pyVerbose"] > 2: print "Callback parsed:", pp_startX,pp_endX,pp_startY,pp_endY,pp_startF,pp_endF,pp_ii
-
-    #self.pp_jobsDone += 1
-    #if self.set["pyVerbose"] > 0: 
-      #sys.stdout.write("\r"+50*" "+"\r"+ "%s: %6i, %8.3f%% collected (#%6i, %s)"%(datetime.datetime.now().strftime("%Y%m%d-%H:%M:%S"),self.pp_jobsDone,(self.pp_jobsDone)/float(self.pp_noJobs)*100,pp_ii+1,host))
-      #sys.stdout.flush()
-    #if self.set["pyVerbose"] > 1: print " "; self.job_server.print_stats()
-    ###fi = open("/tmp/pp_logfile.txt","a")
-    ###fi.write("%s: %6i, %8.3f%% collected (#%6i, %s)\n\r"%(datetime.datetime.now().strftime("%Y%m%d-%H:%M:%S"),self.pp_jobsDone,(self.pp_jobsDone)/float(self.pp_noJobs)*100,pp_ii+1,host))
-    ###fi.close()
-    #return
-    
+    return   
     
   def runPamtra(self,freqs,checkData=True):
     '''
