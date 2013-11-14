@@ -1,5 +1,4 @@
 subroutine write_nc_results
-
     use kinds
     use vars_output
     use vars_atmosphere, only: atmo_ngridx, atmo_ngridy, atmo_max_nlyrs,&
