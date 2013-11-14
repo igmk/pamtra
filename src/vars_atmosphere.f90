@@ -685,6 +685,7 @@ module vars_atmosphere
 
     use descriptor_file, only: n_hydro, moment_in_arr
     use constants, only: r_v, r_d
+    use settings, only: obs_height
 
     implicit none
 
@@ -804,6 +805,10 @@ module vars_atmosphere
     if (isnan(atmo_groundtemp(nx,ny))) &
         atmo_groundtemp(nx,ny) = atmo_temp_lev(nx,ny,1)
 
+    !for atmo_obs_height, simply use the nml value
+    if (isnan(atmo_obs_height(nx,ny))) &
+        atmo_obs_height(nx,ny) = obs_height
+
     !test whether we still have nans in our data!
 ! 3D variable
     call assert_false(err,ANY(ISNAN(atmo_temp_lev(nx,ny,1:atmo_nlyrs(nx,ny)))),&
@@ -860,8 +865,8 @@ module vars_atmosphere
         "found nan in atmo_obs_height")
     call assert_false(err,ANY(ISNAN(atmo_groundtemp(:,:))),&
         "found nan in atmo_groundtemp")
-    call assert_false(err,ANY(ISNAN(atmo_iwv(:,:))),&
-        "found nan in atmo_iwv")
+!     call assert_false(err,ANY(ISNAN(atmo_iwv(:,:))),&
+!         "found nan in atmo_iwv")
 
     if (err > 0) then
         errorstatus = fatal

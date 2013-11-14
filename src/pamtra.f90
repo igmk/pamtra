@@ -109,7 +109,7 @@ program pamtra
 
     call add_obs_height(errorstatus)
     if (err /= 0) then
-        msg = 'Error in fillMissing_atmosphere_vars!'
+        msg = 'Error in add_obs_height!'
         call report(fatal, msg, nameOfRoutine)
       errorstatus = err
       go to 666

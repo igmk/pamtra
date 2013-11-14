@@ -178,6 +178,11 @@ contains
         "radar_nfft has to be even") 
     call assert_true(err,(gas_mod == "L93") .or. (gas_mod == "R98"),&
         "gas_mod has to be L93 or R98") 
+    if (hydro_fullSpec) then
+      call assert_true(err,in_python,&
+          "hydro_fullSpec works only in python!") 
+    end if
+
     if (err /= 0) then
       msg = 'value in settings not allowed'
       call report(err, msg, nameOfRoutine)
