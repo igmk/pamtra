@@ -41,7 +41,7 @@ subroutine make_soft_spheroid(errorstatus)
 
   use drop_size_dist, only: rho_ms, as_ratio, a_ms, b_ms, d_bound_ds,nbin, mass_ds,  &    ! IN
 		     soft_rho_eff, soft_d_eff,liq_ice                                     ! OUT
-
+  use settings, only: hydro_limit_density_area
   implicit none
 
 !- End of header ---------------------------------------------------------------
@@ -97,7 +97,6 @@ endif
         if (as_ratio < 0.) soft_rho_eff(i) = (6._dbl * mass(i)) / (pi *  d_bound_ds(i)**3._dbl)
         if (as_ratio > 0.) soft_rho_eff(i) = (6._dbl * mass(i)) / (pi *  d_bound_ds(i)**3._dbl * as_ratio)
         if (soft_rho_eff(i) < 5._dbl) soft_rho_eff(i) = 5._dbl
-        if (soft_rho_eff(i) > rho_ice) soft_rho_eff(i) = rho_ice
       enddo
     endif
     ! prolate spheroid
@@ -105,10 +104,28 @@ endif
       do i=1,nbin+1
         soft_rho_eff(i) = (6._dbl * mass(i) * as_ratio**2._dbl) / (pi *  d_bound_ds(i)**3._dbl)
         if (soft_rho_eff(i) < 5._dbl) soft_rho_eff(i) = 5._dbl
-        if (soft_rho_eff(i) > rho_ice) soft_rho_eff(i) = rho_ice
       enddo
     endif
   endif
+
+!   reduce mass and density in case density is larger than 917
+  if ((liq_ice == -1) .and. &
+      hydro_limit_density_area) then 
+    do i=1,nbin+1
+      if (soft_rho_eff(i) > rho_ice) then
+        Write( msg, '("density too high:", f10.2)' )  soft_rho_eff(i)   
+        call report(warning, msg, nameOfRoutine)
+        soft_rho_eff(i) = rho_ice
+        if (as_ratio <= 0.) then
+          mass(i) =  (pi *  d_bound_ds(i)**3._dbl) * soft_rho_eff(i) / 6._dbl
+        else if ((as_ratio > 0.d0) .and. (as_ratio <= 1.d0)) then
+          mass(i) =  (pi *  d_bound_ds(i)**3._dbl * as_ratio) * soft_rho_eff(i) / 6._dbl
+        else if (as_ratio > 1.d0) then
+          mass(i) =  (pi *  d_bound_ds(i)**3._dbl) * soft_rho_eff(i)  /  (6._dbl * as_ratio**2._dbl) 
+        end if
+      end if
+    end do
+  end if
 
   if (minval(soft_rho_eff) <= 0. .or. minval(soft_d_eff) <= 0.) then
     msg = 'something wrong in make_soft_spheroid!'

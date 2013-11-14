@@ -172,7 +172,7 @@ python module pyPamtraLib ! in
             character(len=100) :: crm_data2
             character(len=100) :: crm_constants
             integer(kind=long_bn) :: radar_nfft_aliased
-            character(len=3) :: gas_mod
+            logical :: hydro_limit_density_area
             real(kind=dbl) :: radar_noise_distance_factor
             logical :: radar_save_noise_corrected_spectra
             integer(kind=long_bn) :: n_moments
@@ -182,6 +182,7 @@ python module pyPamtraLib ! in
             character(len=100) :: output_path
             integer, parameter,optional :: noutlevels=2
             integer, parameter,optional :: numazimuths=1
+            character(len=3) :: gas_mod
             character(len=18) :: freq_str
             character(len=20) :: file_desc
             integer(kind=long_bn) :: nfrq

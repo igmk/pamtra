@@ -9,6 +9,7 @@ module drop_size_dist
   use report_module
 
   use constants, only: rho_water
+  use settings, only: hydro_limit_density_area
 
   use conversions, only: q2abs
 
@@ -151,6 +152,7 @@ subroutine run_drop_size_dist(errorstatus)
 ! Calculate particle MASS at bin boundaries
   do ibin=1,nbin+1
     mass_ds(ibin) = a_ms * d_bound_ds(ibin)**b_ms
+    !if mass density is larger than ice it is corrected, see drop_size_dist.f90
   enddo
 
 ! Calculate particle AREA at bin boundaries
@@ -158,6 +160,14 @@ subroutine run_drop_size_dist(errorstatus)
   if (alpha_as > 0. .and. beta_as > 0.) then
     do ibin=1,nbin+1
       area_ds(ibin) = alpha_as * d_bound_ds(ibin)**beta_as
+      !if area is larger than a square:
+      if ((liq_ice == -1) .and. &
+          hydro_limit_density_area .and. &
+          (area_ds(ibin) > 0.25*d_bound_ds(ibin)**2)) then
+        Write( msg, '("area too large:", f10.2)' )  area_ds(ibin)
+        call report(warning, msg, nameOfRoutine)
+        area_ds(ibin) = 0.25*d_bound_ds(ibin)**2
+      end if
     enddo
   endif
 

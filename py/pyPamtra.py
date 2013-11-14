@@ -55,6 +55,7 @@ class pamDescriptorFile(object):
     self.data4D = dict()
     self.nhydro = 0
     self.parent = parent
+    self.dataFullSpec = dict()
     return
     
    
@@ -131,12 +132,11 @@ class pamDescriptorFile(object):
     del data4D[key]
     
   def addFullSpectra(self):
-    self.dataFullSpec = dict()
     #assert len(self.data4D.keys()) == 0
     assert len(self.data) >0
     assert np.min(self.data["nbin"]) == np.max(self.data["nbin"])
 
-    fs_nbin =  np.min(self.data["nbin"])
+    fs_nbin =  np.max(self.data["nbin"])
     
     self.dataFullSpec["delta_d_ds"] = np.ones(self.parent._shape4D+(fs_nbin,))
     self.dataFullSpec["density2scat"] = np.ones(self.parent._shape4D+(fs_nbin+1,))
@@ -219,6 +219,7 @@ class pyPamtra(object):
     self.nmlSet["lhyd_extinction"]= True
     self.nmlSet["lphase_flag"]=  True
     self.nmlSet["hydro_fullspec"] = False
+    self.nmlSet["hydro_limit_density_area"] = True
     # radar_simulator
     #number of FFT points in the Doppler spectrum [typically 256 or 512]
     self.nmlSet["radar_nfft"]= 256
@@ -1433,9 +1434,8 @@ class pyPamtra(object):
     for key in dfData.data4D.keys():
       dfData.data4D[key] = self.df.data4D[key][pp_startX:pp_endX,pp_startY:pp_endY]
        
-    if hasattr(dfData,"dataFullSpec"):
-      for key in dfData.dataFullSpec.keys():
-        dfData.dataFullSpec[key] = self.df.dataFullSpec[key][pp_startX:pp_endX,pp_startY:pp_endY]
+    for key in dfData.dataFullSpec.keys():
+      dfData.dataFullSpec[key] = self.df.dataFullSpec[key][pp_startX:pp_endX,pp_startY:pp_endY]
        
     settings = deepcopy(self.set)
     settings["nfreqs"] = pp_endF - pp_startF
@@ -1526,14 +1526,14 @@ class pyPamtra(object):
       write the complete state of the session (profile,results,settings to a file
       '''
       f = open(fname, "w")
-      pickle.dump([self.r,self.p,self.nmlSet,self.set,self.df.data,self.df.data4D], f)
+      pickle.dump([self.r,self.p,self.nmlSet,self.set,self.df.data,self.df.data4D,df.dataFullSpec], f)
       f.close()
     else:
       '''
       write the complete state of the session (profile,results,settings to several files
       '''      
       os.makedirs(fname)
-      for dic in ["r","p", "nmlSet","set","df.data","df.data4D"]:
+      for dic in ["r","p", "nmlSet","set","df.data","df.data4D","df.dataFullSpec"]:
 	for key in self.__dict__[dic].keys():
 	  if self.set["pyVerbose"]>1: print "saving: "+fname+"/"+dic+"%"+key+"%"+".npy"  
 	  data = self.__dict__[dic][key]
@@ -1558,7 +1558,7 @@ class pyPamtra(object):
     '''
     if os.path.isdir(fname):
       try: 
-	for key in ["r","p","nmlSet","set","df.data","df.data4D"]:
+	for key in ["r","p","nmlSet","set","df.data","df.data4D","df.dataFullSpec"]:
 	  self.__dict__[key] = dict()
         self.__dict__["nmlSet"] = OrderedDict()
 	for fnames in os.listdir(fname):
@@ -1570,7 +1570,7 @@ class pyPamtra(object):
     else:  
       try: 
 	f = open(fname, "r")
-	[self.r,self.p,self.nmlSet,self.set,self.df.data,self.data4D] = pickle.load(f)
+	[self.r,self.p,self.nmlSet,self.set,self.df.data,self.df.data4D,df.dataFullSpec] = pickle.load(f)
 	f.close()
       except:
 	print formatExceptionInfo()	
