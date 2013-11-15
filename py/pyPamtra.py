@@ -1152,7 +1152,7 @@ class pyPamtra(object):
       write the complete state of the session (profile,results,settings to a file
       '''
       f = open(fname, "w")
-      pickle.dump([self.r,self.p,self.nmlSet,self.set,self.df.data,self.df.data4D,df.dataFullSpec], f)
+      pickle.dump([self.r,self.p,self.nmlSet,self.set,self.df.data,self.df.data4D,self.df.dataFullSpec], f)
       f.close()
     else:
       '''
@@ -1196,7 +1196,7 @@ class pyPamtra(object):
     else:  
       try: 
 	f = open(fname, "r")
-	[self.r,self.p,self.nmlSet,self.set,self.df.data,self.df.data4D,df.dataFullSpec] = pickle.load(f)
+	[self.r,self.p,self.nmlSet,self.set,self.df.data,self.df.data4D,self.df.dataFullSpec] = pickle.load(f)
 	f.close()
       except:
 	print formatExceptionInfo()	
