@@ -12,7 +12,8 @@ fort*
 !py/libs/fortran-namelist
 output/
 profiles/
-profile/
+profile/*
+!profile/example_input*
 data/
 playground/
 *~
@@ -31,6 +32,7 @@ check_moments
 py/codefriedhof.py
 *.png
 *.py
+!pamtra.py
 snowCRYSTALuli
 cl340d14.dda
 runtestc

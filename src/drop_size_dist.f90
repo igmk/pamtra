@@ -164,7 +164,7 @@ subroutine run_drop_size_dist(errorstatus)
       if ((liq_ice == -1) .and. &
           hydro_limit_density_area .and. &
           (area_ds(ibin) > d_bound_ds(ibin)**2)) then
-        Write( msg, '("area too large:", f10.2)' )  area_ds(ibin)
+        Write( msg, '("area too large:", e10.2)' )  area_ds(ibin)
         call report(warning, msg, nameOfRoutine)
         area_ds(ibin) =  d_bound_ds(ibin)**2
       end if

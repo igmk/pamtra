@@ -423,9 +423,11 @@ module vars_atmosphere
 ! READ column integrated water vapor and hydrometeors properties
           read(14,*) work_xwp
           atmo_iwv(i,j) = work_xwp(1)
-          if (radar_mode == "simple") allocate(work_xwc(n_tot_moment+4,atmo_nlyrs(i,j)))
+          if ((.not. active) .or. radar_mode == "simple") &
+              allocate(work_xwc(n_tot_moment+4,atmo_nlyrs(i,j)))
 ! For radar moments or spectrum mode then atmospheric turbulence should be provided in the last column of the input file
-          if (radar_mode == "moments" .or. radar_mode == "spectrum") allocate(work_xwc(n_tot_moment+5,atmo_nlyrs(i,j)))
+          if (active .and. (radar_mode == "moments" .or. radar_mode == "spectrum")) &
+              allocate(work_xwc(n_tot_moment+5,atmo_nlyrs(i,j)))
 ! READ lowest level variable (ONLY for "lev" input type)
           if (atmo_input_type == 'lev') read(14,*) atmo_hgt_lev(i,j,1),&
                      atmo_press_lev(i,j,1),atmo_temp_lev(i,j,1),atmo_relhum_lev(i,j,1)

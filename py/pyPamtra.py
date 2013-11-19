@@ -389,6 +389,58 @@ class pyPamtra(object):
     if self.set["pyVerbose"] > 1: print "reading nml file done: ", inputFile
     return
     
+    
+  def readNewPamtraProfile(self,inputFile):
+    #make sure that a descriptor file was defined
+    assert self.df.nhydro > 0
+    
+    f = open(inputFile,"r")
+    g = csv.reader(f,delimiter=" ",skipinitialspace=True)
+    levLay = g.next()
+    self.p["ngridx"], self.p["ngridy"], self.p["max_nlyrs"] = g.next()
+
+    self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
+    self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
+    self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
+    self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
+    self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,0)
+
+    self.p["model_i"] = np.ones(self._shape2D) * missingNumber
+    self.p["model_j"] = np.ones(self._shape2D)* missingNumber
+    self.p["lat"] = np.ones(self._shape2D) * missingNumber
+    self.p["lon"] = np.ones(self._shape2D) * missingNumber
+    self.p["lfrac"] = np.ones(self._shape2D) * missingNumber
+    self.p["wind10u"] = np.ones(self._shape2D) * missingNumber
+    self.p["wind10v"] = np.ones(self._shape2D) * missingNumber
+    self.p["groundtemp"] = np.ones(self._shape2D) * missingNumber
+    self.p["obs_height"] = np.ones(self._shape2D) * missingNumber
+
+    self.p["hydro_q"] = np.ones(self._shape4D)  * missingNumber
+    self.p["hydro_n"] = np.ones(self._shape4D) * missingNumber
+    self.p["hydro_reff"] = np.ones(self._shape4D) * missingNumber
+    if (nmlSet["active"] and (nmlSet["radar_mode"] in ["moments","spectrum"])):
+      self.p["airturb"] = np.ones(self._shape4D) * missingNumber
+    
+    if levLay == "Layer":
+      self.p["hgt"] = np.ones(self._shape3D) * missingNumber
+      self.p["temp"] = np.ones(self._shape3D) * missingNumber
+      self.p["press"] = np.ones(self._shape3D) * missingNumber
+      self.p["relhum"] = np.ones(self._shape3D) * missingNumber
+    elif levLay == "level":
+      self.p["hgt_lev"] = np.ones(self._shape3Dplus) * missingNumber
+      self.p["temp_lev"] = np.ones(self._shape3Dplus) * missingNumber
+      self.p["press_lev"] = np.ones(self._shape3Dplus) * missingNumber
+      self.p["relhum_lev"] = np.ones(self._shape3Dplus) * missingNumber
+    else:
+      raise IOError("Did not understand layer/level: "+layLev)
+    
+    
+    
+    
+    
+    f.close()
+    return 
+    
   def readPamtraProfile(self,inputFile,n_moments=1):
     """
     read classical pamtra profile from file
