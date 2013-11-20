@@ -34,7 +34,7 @@ use rt_utilities, only: lobatto_quadrature
     character(len=80) :: msg
     character(len=40) :: nameOfRoutine = 'scatcnv'
 
-    if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
+    if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
     if (ANY(ISNAN(coef))) then
 	msg = 'Error, got nan in legendre coef'
@@ -72,7 +72,7 @@ use rt_utilities, only: lobatto_quadrature
 
       call transform_ext_emis(MU_VALUES, EXTINCT, ALBEDO,ext_matrix,emis_vec)
 
-      if (verbose >= 1) call report(info,'END of ', nameOfRoutine)
+      if (verbose >= 3) call report(info,'END of ', nameOfRoutine)
 
       return
 

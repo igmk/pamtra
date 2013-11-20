@@ -175,7 +175,7 @@ class pyPamtra(object):
   
   def _prepareNmlUnitsDimensions(self):
   
-    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime"]
+    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb"]
   
     self.nmlSet = dict() #settings which are required for the nml file. keeping the order is important for fortran
     self.nmlSet["hydro_threshold"]=  1.e-10   # [kg/kg] 
@@ -635,7 +635,10 @@ class pyPamtra(object):
       if key not in allVars:
         raise TypeError("Could not parse "+key)
     
-    if not ("hgt_lev" in kwargs.keys() and "temp_lev" in kwargs.keys() and "press_lev" in kwargs.keys() and ("relhum_lev" in kwargs.keys() or "q" in kwargs.keys())):
+    if not (("hgt_lev" in kwargs.keys()) and 
+        ("temp_lev" in kwargs.keys() or "temp" in kwargs.keys()) and 
+        ("press_lev" in kwargs.keys() or "press" in kwargs.keys()) and 
+        ("relhum_lev" in kwargs.keys() or  "relhum" in kwargs.keys())):#"q" in kwargs.keys()
       raise TypeError("I need hgt_lev and temp_lev and press_lev and (relhum_lev or q)!")
     
     #assert self.df.nhydro > 0
@@ -675,13 +678,18 @@ class pyPamtra(object):
     self.p["nlyrs"] = np.sum(kwargs["hgt_lev"]!=missingNumber,axis=-1) -1
     self.p["nlyrs"] = self.p["nlyrs"].reshape(self._shape2D)
     
-    self.p["hgt_lev"] = kwargs["hgt_lev"].reshape(self._shape3Dplus)
-    self.p["temp_lev"] = kwargs["temp_lev"].reshape(self._shape3Dplus)
-    self.p["press_lev"] = kwargs["press_lev"].reshape(self._shape3Dplus)
+    for key in ["hgt_lev","temp_lev","press_lev","relhum_lev"]:
+      if key in kwargs.keys():
+        self.p[key]= kwargs[key].reshape(self._shape3Dplus)
+
+    for key in ["hgt","temp","press","relhum"]:
+      if key in kwargs.keys():
+        self.p[key]= kwargs[key].reshape(self._shape3D)
 
 
-    self.p["model_i"] = np.array(np.where(self.p["press_lev"][:,:,0])[0]).reshape(self._shape2D) +1
-    self.p["model_j"] = np.array(np.where(self.p["press_lev"][:,:,0])[1]).reshape(self._shape2D) +1
+
+    self.p["model_i"] = np.array(np.where(np.logical_not(np.isnan(self.p["hgt_lev"][:,:,0])))[0]).reshape(self._shape2D) +1
+    self.p["model_j"] = np.array(np.where(np.logical_not(np.isnan(self.p["hgt_lev"][:,:,0])))[1]).reshape(self._shape2D) +1
 
     if "timestamp" not in kwargs.keys():
       self.p["unixtime"] = np.ones(self._shape2D)* int(time.time())
@@ -726,10 +734,6 @@ class pyPamtra(object):
     if "obs_height" in kwargs.keys():
       self.p["obs_height"] = kwargs["obs_height"].reshape(self._shape2D)
 
-    if "relhum_lev" in kwargs.keys():
-      self.p["relhum_lev"] = kwargs["relhum_lev"].reshape(self._shape3Dplus)
-    else:
-      self._calcRelhum_lev()
 
     #clean up: remove all nans
     for key in self.p.keys():
@@ -1313,15 +1317,15 @@ class pyPamtra(object):
     cdfFile.createDimension('grid_y',int(self.p["ngridy"]))
     cdfFile.createDimension('frequency',int(self.set["nfreqs"]))
     
-    if (self.r["nmlSettings"]["run_mode"]["passive"]):
+    if (self.r["nmlSettings"]["passive"]):
       cdfFile.createDimension('angles',len(self.r["angles_deg"]))
       cdfFile.createDimension('outlevels',int(self._noutlevels))
       cdfFile.createDimension('stokes',int(self._nstokes))
       
-    if (self.r["nmlSettings"]["run_mode"]["radar_mode"] in ["spectrum","moments"]):
-      cdfFile.createDimension('nfft',int(self.r["nmlSettings"]["radar_simulator"]["radar_nfft"])) 
+    if (self.r["nmlSettings"]["radar_mode"] in ["spectrum","moments"]):
+      cdfFile.createDimension('nfft',int(self.r["nmlSettings"]["radar_nfft"])) 
       
-    if (self.r["nmlSettings"]["run_mode"]["active"]):
+    if (self.r["nmlSettings"]["active"]):
       cdfFile.createDimension('heightbins',int(self.p["max_nlyrs"]))
     
     dim2d = ("grid_x","grid_y",)
@@ -1329,9 +1333,7 @@ class pyPamtra(object):
     dim4d = ("grid_x","grid_y","heightbins","frequency")
     dim5d = ("grid_x","grid_y","heightbins","frequency","nfft")
     dim6d = ("grid_x","grid_y","outlevels","angles","frequency","stokes")
-      
-      
-      
+
 
     attUnit = "dBz"
     zeUnit = "dBz"
@@ -1359,7 +1361,7 @@ class pyPamtra(object):
     
     
     
-    if (self.r["nmlSettings"]["run_mode"]["active"]):
+    if (self.r["nmlSettings"]["active"]):
 
       nc_heightbins = cdfFile.createVariable('heightbins', 'i',("heightbins",),**fillVDict)
       nc_heightbins.units = "-"
@@ -1372,7 +1374,7 @@ class pyPamtra(object):
       if not pyNc: nc_height._FillValue =missingNumber
       
     
-    if (self.r["nmlSettings"]["run_mode"]["passive"]):
+    if (self.r["nmlSettings"]["passive"]):
       nc_angle = cdfFile.createVariable('angles','f',('angles',),**fillVDict)
       nc_angle.units = 'deg'
       nc_angle[:] = np.array(self.r["angles"],dtype="f")
@@ -1384,7 +1386,7 @@ class pyPamtra(object):
       
       nc_out = cdfFile.createVariable('outlevels', 'f',("outlevels",),**fillVDict)
       nc_out.units = "m over sea level (top of atmosphere value) OR m over ground (ground value)"
-      nc_out[:] = np.array([self.r["nmlSettings"]["output"]["obs_height"],0],dtype="f")
+      nc_out[:] = np.array([self.r["nmlSettings"]["obs_height"],0],dtype="f")
       if not pyNc: nc_out._FillValue =missingNumber
       
     #create and write variables
@@ -1425,7 +1427,7 @@ class pyPamtra(object):
     if not pyNc: nc_lfrac._FillValue =missingNumber
     
     
-    if (self.r["nmlSettings"]["run_mode"]["active"]):
+    if (self.r["nmlSettings"]["active"]):
          
       nc_Ze = cdfFile.createVariable('Ze', 'f',dim4d,**fillVDict)
       nc_Ze.units = zeUnit
@@ -1442,7 +1444,7 @@ class pyPamtra(object):
       nc_Attenuation_Atmosphere[:] = np.array(self.r["Att_atmo"],dtype='f')
       if not pyNc: nc_Attenuation_Atmosphere._FillValue =missingNumber
       
-      if ((self.r["nmlSettings"]["run_mode"]["radar_mode"] == "spectrum") or (self.r["nmlSettings"]["run_mode"]["radar_mode"] == "moments")):
+      if ((self.r["nmlSettings"]["radar_mode"] == "spectrum") or (self.r["nmlSettings"]["radar_mode"] == "moments")):
 	nc_snr=cdfFile.createVariable('Radar_SNR', 'f',dim4d,**fillVDict)
 	nc_snr.units="dB"
 	nc_snr[:] = np.array(self.r["radar_snr"],dtype='f')
@@ -1495,7 +1497,7 @@ class pyPamtra(object):
 	if not pyNc: nc_qual._FillValue =missingNumber
 	
 	
-	if ((self.r["nmlSettings"]["run_mode"]["radar_mode"] == "spectrum")): 
+	if ((self.r["nmlSettings"]["radar_mode"] == "spectrum")): 
 
 	  nc_vel=cdfFile.createVariable('Radar_Velocity', 'f',("nfft",),**fillVDict)
 	  nc_vel.units="m/s"
@@ -1507,7 +1509,7 @@ class pyPamtra(object):
 	  nc_spec[:] = np.array(self.r["radar_spectra"],dtype='f')
 	  if not pyNc: nc_spec._FillValue =missingNumber
 	     
-    if (self.r["nmlSettings"]["run_mode"]["passive"]):
+    if (self.r["nmlSettings"]["passive"]):
       nc_tb = cdfFile.createVariable('tb', 'f',dim6d,**fillVDict)
       nc_tb.units = "K"
       nc_tb[:] = np.array(self.r["tb"],dtype='f')

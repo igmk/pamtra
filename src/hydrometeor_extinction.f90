@@ -89,7 +89,13 @@ subroutine hydrometeor_extinction(errorstatus)
 
         pressure = atmo_press(i_x,i_y,i_z)
         layer_t = atmo_temp(i_x,i_y,i_z)
-        rt_hydros_present(i_z) = .true.
+        if (SUM(f_ds) > 0.d0) then
+          rt_hydros_present(i_z) = .true.
+        else
+          rt_hydros_present(i_z) = .false.
+          call deallocateVars_drop_size_dist()
+          CYCLE
+        end if
 
       else
         moment_in  = moment_in_arr(i_h)

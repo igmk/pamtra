@@ -95,7 +95,8 @@ module vars_atmosphere
 !##################################################################################################################################
   subroutine screen_input(errorstatus)
 
-    use settings, only: verbose, input_path, input_file, obs_height, output_path, nc_out_file, file_desc, freq_str
+    use settings, only: verbose, input_path, input_file, obs_height,&
+      output_path, nc_out_file, file_desc, freq_str
     use descriptor_file, only: moment_in_arr, n_hydro
 
     implicit none
@@ -376,7 +377,7 @@ module vars_atmosphere
 !##################################################################################################################################
   subroutine read_new_fill_variables(errorstatus)
 
-    use settings, only: verbose, input_path, input_file, obs_height, radar_mode
+    use settings, only: verbose, input_path, input_file, obs_height, radar_mode, active
     use descriptor_file, only: moment_in_arr, n_hydro
 
     implicit none

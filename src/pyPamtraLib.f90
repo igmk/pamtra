@@ -123,7 +123,6 @@
           end if
           grid_y: do i_y = 1, atmo_ngridy !i_x_in, i_x_fin
               grid_x: do i_x = 1, atmo_ngridx !i_y_in, i_y_fin
-
                   !run the model
                   call run_rt(err)
                   if (err /= 0) then

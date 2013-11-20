@@ -60,6 +60,7 @@ subroutine run_rt(errorstatus)
 
 
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
+    if (verbose >= 1) print*, "running...", i_f, i_x, i_y
 
     call allocate_rt_vars(err)
     if (err /= 0) then

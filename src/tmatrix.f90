@@ -101,6 +101,8 @@ module tmatrix
 	  "nan del_d")
       call assert_false(err,(any(isnan(ndens)) .or. any(ndens < 0.d0)),&
 	  "nan or negative ndens")
+      call assert_true(err,SUM(ndens)>0,&
+          "sum(ndens) must be greater zero")    
       call assert_false(err,(any(isnan(density)) .or. any(density <= 0.d0)),&
 	  "nan or negative density")
       call assert_false(err,any(isnan(as_ratio)) .or. any(as_ratio < 0.d0),&
@@ -169,7 +171,8 @@ module tmatrix
           errorstatus = err
           return
       end if          
-    
+
+      !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, sc
       back_spec(ir) = 4*pi*ndens_eff*scatter_matrix_part(1,16,1,16,2)
 
       scatter_matrix = scatter_matrix + scatter_matrix_part * ndens_eff * del_d_eff

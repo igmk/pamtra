@@ -15,7 +15,8 @@ module scatProperties
       rt_back,&
       rt_scattermatrix, &
       rt_extmatrix, &
-      rt_emisvec
+      rt_emisvec, &
+      rt_hydros_present
   use report_module
   use drop_size_dist, only: liq_ice,&
         nbin,&
@@ -118,7 +119,7 @@ module scatProperties
   
   if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
-    if (scat_name == "disabled") then
+    if ((scat_name == "disabled") .or. (.not. rt_hydros_present(i_z))) then
       if (verbose >= 3) print*, "OK, we are done here"
       return
     end if
