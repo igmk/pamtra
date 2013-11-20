@@ -119,7 +119,7 @@ module vars_atmosphere
         errorstatus = fatal
         return
     end if
-print*,'atmo_input_type',atmo_input_type
+
 ! OPEN input file
     open(UNIT=14, FILE=input_path(:len_trim(input_path))//"/"//input_file(:len_trim(input_file)),&
     STATUS='OLD', iostat=err)
