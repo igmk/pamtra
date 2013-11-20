@@ -107,6 +107,11 @@ contains
       call report(warning, msg, nameOfRoutine)
     end if
 
+    if (verbose >= 7) then
+      print*, "IN X", x1
+      print*, "IN Y", y1
+    end if
+    
     x1_sorted = x1
     y1_sorted = y1
 
@@ -164,6 +169,11 @@ contains
       call report(warning, msg, nameOfRoutine)
     end if
 
+    if (verbose >= 7) then
+      print*, "OUT X", x2
+      print*, "OUT Y", y2
+    end if    
+    
     if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
     errorstatus = err
     return
