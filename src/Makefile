@@ -7,7 +7,7 @@ FC=gfortran
 CC=gcc
 FCFLAGS=-c -fPIC -Wunused -O2 #-I../include/ uninitialized
 ifeq ($(ARCH),Darwin)
-	FC=/opt/local/bin/gfortran
+	FC=/opt/local/bin/gfortran-mp-4.8
 	NCFLAGS=-I/opt/local/include/ 
 	NCFLAGS_F2PY=-I/opt/local/include/ 
 	LFLAGS=-L/opt/local/lib/ -llapack -ldfftpack

@@ -107,13 +107,19 @@ module vars_atmosphere
     character(len=14) :: nameOfRoutine = 'screen_input' 
 
 ! work variables
-    character(len=50)   :: str_work
-    real(kind=dbl) :: outlev_dum, max_height, height_1, height_2
-    real(kind=dbl), dimension(5) :: dum_5      
     real(kind=dbl), dimension(8) :: dum_8      
-    integer(kind=long)  :: ind_i, ind_j, ind_lev, nlay
 
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
+
+
+    atmo_input_type = trim(input_file(len_trim(input_file)-2:len_trim(input_file))) 
+
+    if (atmo_input_type .ne. 'cla' .and. atmo_input_type .ne. 'lev' .and. atmo_input_type .ne. 'lay')  then
+        msg = "Unknown ascii input file type"//trim(atmo_input_type)
+        call report(err,msg,nameOfRoutine)
+        errorstatus = fatal
+        return
+    end if
 
 ! OPEN input file
     open(UNIT=14, FILE=input_path(:len_trim(input_path))//"/"//input_file(:len_trim(input_file)),&
@@ -125,48 +131,13 @@ module vars_atmosphere
         return
     end if
 
-! READ input type
-        read(14,*) str_work
-    str_work = trim(str_work)
-    if (str_work == 'layer') then
-        atmo_input_type = 'lay'
-    elseif (str_work == 'level') then
-        atmo_input_type = 'lev'
-    elseif (str_work == 'classic' .or. str_work(1:2) == '19' .or. str_work(1:2) == '20') then
-        atmo_input_type = 'cla'
-    else
-        msg = "Unknown input file type"//trim(str_work)
-        call report(err,msg,nameOfRoutine)
-        errorstatus = fatal
-        return
-    endif
-
 ! Screen NEW input file format
     if (atmo_input_type == 'lev' .or. atmo_input_type == 'lay') then
-    atmo_max_nlyrs = 1
-! READ atmo_ngridx, atmo_ngridy
-      read(14,*) atmo_ngridx, atmo_ngridy
-! GET atmo_max_nlyrs and add a layer if output_height < height of the highest level/layer
-      do ind_i = 1, atmo_ngridx
-	do ind_j = 1, atmo_ngridy
-	  read(14,*) dum_5
-	  nlay = dum_5(5)
-	  read(14,*) dum_8
-	  outlev_dum = dum_8(8)
-	  read(14,*)
-	  do ind_lev = 1,nlay-2
-	    read(14,*)
-	  enddo
-	  read(14,*) height_1
-	  read(14,*) height_2
-! IF variable on layers find the heighest level
-	  if (atmo_input_type == 'lay') max_height = height_2 + (height_2 - height_1) * .5_dbl
-	  if (atmo_input_type == 'lev') max_height = height_2
-	  if (max_height > outlev_dum) nlay = nlay + 1
-	  if (nlay > atmo_max_nlyrs) atmo_max_nlyrs = nlay
-	enddo
-      enddo
-    if (atmo_input_type == 'lev') atmo_max_nlyrs = atmo_max_nlyrs - 1  ! n. of layers = n. of levels - 1
+! READ atmo_ngridx, atmo_ngridy, atmo_max_nlyrs
+      read(14,*) atmo_ngridx, atmo_ngridy, atmo_max_nlyrs
+! add one layer/level to be able to insert the observation height as a new layer/level
+      atmo_max_nlyrs = atmo_max_nlyrs + 1
+      close(14)
     endif
 
 ! Screen OLD input file format
@@ -182,20 +153,14 @@ module vars_atmosphere
         call report(errorstatus, msg, nameOfRoutine)
         return
       end if  
-
-      if (str_work /= 'classic') rewind(14)
       read(14,*) dum_8
       atmo_ngridx = dum_8(5)
       atmo_ngridy = dum_8(6)
       atmo_max_nlyrs = dum_8(7)
-      do ind_lev = 1,atmo_max_nlyrs+3
-	read(14,*)
-      enddo
-      read(14,*) max_height
-      if (max_height > obs_height) atmo_max_nlyrs = atmo_max_nlyrs + 1
+! add one layer/level to be able to insert the observation height as a new layer/level
+      atmo_max_nlyrs = atmo_max_nlyrs + 1
+      close(14)
     endif
-
-    close(14)
 
     nc_out_file = trim(output_path)//"/"//trim(input_file(1:len_trim(input_file)-4))//&
     trim(freq_str)//trim(file_desc)//'.nc'
@@ -377,7 +342,7 @@ module vars_atmosphere
 !##################################################################################################################################
   subroutine read_new_fill_variables(errorstatus)
 
-    use settings, only: verbose, input_path, input_file, obs_height, radar_mode, active
+    use settings, only: verbose, input_path, input_file, radar_mode, active
     use descriptor_file, only: moment_in_arr, n_hydro
 
     implicit none
@@ -405,7 +370,6 @@ module vars_atmosphere
 ! OPEN input file
     open(UNIT=14, FILE=input_path(:len_trim(input_path))//"/"//input_file(:len_trim(input_file)),&
     STATUS='OLD', iostat=err)
-    read(14,*)
     read(14,*)
       do i = 1, atmo_ngridx
         do j = 1, atmo_ngridy
@@ -544,24 +508,25 @@ module vars_atmosphere
           dh_1 = atmo_hgt_lev(i,j,lev_use) - atmo_hgt(i,j,lay_use) ! used for the derivative
           dh = atmo_obs_height(i,j) - atmo_hgt(i,j,lay_use)        ! height increment
           ! INSERT obs_height as the new level
-          atmo_hgt_lev(i,j,atmo_nlyrs(i,j)+1:lev_2+1:-1) = atmo_hgt_lev(i,j,atmo_nlyrs(i,j):lev_2:-1)
+          atmo_hgt_lev(i,j,atmo_nlyrs(i,j)+2:lev_2+1:-1) = atmo_hgt_lev(i,j,atmo_nlyrs(i,j)+1:lev_2:-1)
           atmo_hgt_lev(i,j,lev_2) = atmo_obs_height(i,j)
 
           derivative = (atmo_temp_lev(i,j,lev_use) - atmo_temp(i,j,lay_use)) / dh_1
           var_newlev = atmo_temp(i,j,lay_use) + derivative * dh
-          atmo_temp_lev(i,j,atmo_nlyrs(i,j)+1:lev_2+1:-1) = atmo_temp_lev(i,j,atmo_nlyrs(i,j):lev_2:-1)
+          atmo_temp_lev(i,j,atmo_nlyrs(i,j)+2:lev_2+1:-1) = atmo_temp_lev(i,j,atmo_nlyrs(i,j)+1:lev_2:-1)
           atmo_temp_lev(i,j,lev_2) = var_newlev
 
           derivative = (atmo_relhum_lev(i,j,lev_use) - atmo_relhum(i,j,lay_use)) / dh_1
           var_newlev = atmo_relhum(i,j,lay_use) + derivative * dh
-          atmo_relhum_lev(i,j,atmo_nlyrs(i,j)+1:lev_2+1:-1) = atmo_relhum_lev(i,j,atmo_nlyrs(i,j):lev_2:-1)
+          atmo_relhum_lev(i,j,atmo_nlyrs(i,j)+2:lev_2+1:-1) = atmo_relhum_lev(i,j,atmo_nlyrs(i,j)+1:lev_2:-1)
           atmo_relhum_lev(i,j,lev_2) = var_newlev
 
           derivative = (log(atmo_press_lev(i,j,lev_use)) - log(atmo_press(i,j,lay_use))) / dh_1
           var_newlev = exp ( log(atmo_press(i,j,lay_use)) + derivative * dh )
-          atmo_press_lev(i,j,atmo_nlyrs(i,j)+1:lev_2+1:-1) = atmo_press_lev(i,j,atmo_nlyrs(i,j):lev_2:-1)
+          atmo_press_lev(i,j,atmo_nlyrs(i,j)+2:lev_2+1:-1) = atmo_press_lev(i,j,atmo_nlyrs(i,j)+1:lev_2:-1)
           atmo_press_lev(i,j,lev_2) = var_newlev
 
+! recalculate delta_hgt_lev
           atmo_delta_hgt_lev(i,j,atmo_nlyrs(i,j)+1:lev_2+1:-1)  = atmo_delta_hgt_lev(i,j,atmo_nlyrs(i,j):lev_2:-1)
           atmo_delta_hgt_lev(i,j,lev_1)  = atmo_hgt_lev(i,j,lev_1+1) - atmo_hgt_lev(i,j,lev_1)
           atmo_delta_hgt_lev(i,j,lev_2)  = atmo_hgt_lev(i,j,lev_2+1) - atmo_hgt_lev(i,j,lev_2)
@@ -588,21 +553,17 @@ module vars_atmosphere
 
           do ii = 0, 1
             atmo_relhum(i,j,lay_use+ii) = 0.5_dbl * (atmo_relhum_lev(i,j,lev_1+ii) + atmo_relhum_lev(i,j,lev_1+1+ii))
-            atmo_press(i,j,lay_use+ii) = &
+            atmo_press(i,j,lay_use+ii)  = &
             exp( 0.5_dbl * (log(atmo_press_lev(i,j,lev_1+ii)) + log(atmo_press_lev(i,j,lev_1+1+ii))))
-            atmo_temp(i,j,lay_use+ii) = 0.5_dbl * (atmo_temp_lev(i,j,lev_1+ii) + atmo_temp_lev(i,j,lev_1+1+ii))
-            atmo_hgt(i,j,lay_use+ii) = 0.5_dbl * (atmo_hgt_lev(i,j,lev_1+ii) + atmo_hgt_lev(i,j,lev_1+1+ii))
+            atmo_temp(i,j,lay_use+ii)   = 0.5_dbl * (atmo_temp_lev(i,j,lev_1+ii) + atmo_temp_lev(i,j,lev_1+1+ii))
+            atmo_hgt(i,j,lay_use+ii)    = 0.5_dbl * (atmo_hgt_lev(i,j,lev_1+ii) + atmo_hgt_lev(i,j,lev_1+1+ii))
             atmo_vapor_pressure(i,j,lay_use+ii) = atmo_relhum(i,j,lay_use+ii) * e_sat_gg_water(atmo_temp(i,j,lay_use+ii)) ! Pa
-            atmo_rho_vap(i,j,lay_use+ii) = atmo_vapor_pressure(i,j,lay_use+ii)/(atmo_temp(i,j,lay_use+ii) * r_v)  ! [kg/m3]
-            atmo_q_hum(i,j,lay_use+ii) = r_v/r_d*atmo_vapor_pressure(i,j,lay_use+ii)/&
+            atmo_rho_vap(i,j,lay_use+ii)        = atmo_vapor_pressure(i,j,lay_use+ii)/(atmo_temp(i,j,lay_use+ii) * r_v)  ! [kg/m3]
+            atmo_q_hum(i,j,lay_use+ii)          = r_v/r_d*atmo_vapor_pressure(i,j,lay_use+ii)/&
                 (atmo_press(i,j,lay_use+ii) - (1._dbl- r_v/r_d) * atmo_vapor_pressure(i,j,lay_use+ii))  ! [kg/kg]
           enddo
           atmo_nlyrs(i,j) = atmo_nlyrs(i,j)+1
 
-! print*,'---------------------------------------------'
-! print*,i,j 
-! print*,atmo_hgt_lev(i,j,lev_1),atmo_hgt(i,j,lay_use),atmo_hgt_lev(i,j,lev_2)
-! print*,atmo_hgt_lev(i,j,lev_use), atmo_obs_height(i,j)
         endif
       enddo
     enddo
@@ -896,24 +857,25 @@ module vars_atmosphere
     write(6,'(7a12)') 'year', 'month', 'day', 'time', 'nlyrs', 'model_i', 'model_j'
     write(6,'(4a12,3i12)') atmo_year(i,j), atmo_month(i,j), atmo_day(i,j), atmo_time(i,j), atmo_nlyrs(i,j),&
                            atmo_model_i(i,j), atmo_model_j(i,j)
-    write(6,'(8a12)') 'lat', 'lon','lfrac','wind10u','wind10v','groundtemp','hgt_lay','obs_height'
+    write(6,'(8a12)') 'lat', 'lon','lfrac','wind10u','wind10v','groundtemp','ground_hgt','obs_height'
     write(6,'(8f12.4)') atmo_lat(i,j), atmo_lon(i,j),atmo_lfrac(i,j),atmo_wind10u(i,j),atmo_wind10v(i,j),&
                         atmo_groundtemp(i,j),atmo_hgt_lev(i,j,1),atmo_obs_height(i,j)
-    write(6,'(5a12)') 'height','pressure','temp.','RH','air_turb'
+    write(6,'(6a12)') 'lay_number','height','pressure','temp.','RH','air_turb'
     do nz=1,atmo_nlyrs(i,j)
-      write(6,'(5f12.4)') atmo_hgt(i,j,nz), atmo_press(i,j,nz), atmo_temp(i,j,nz), atmo_relhum(i,j,nz), atmo_airturb(i,j,nz)
+      write(6,'(i12,5f12.4)') nz,atmo_hgt(i,j,nz), atmo_press(i,j,nz), &
+                              atmo_temp(i,j,nz), atmo_relhum(i,j,nz), atmo_airturb(i,j,nz)
     enddo
-    write(6,'(7a12)') 'height','Q_hydro1','Q_hydro2','Q_hydro3','Q_hydro4','Q_hydro5','Q_hydro6'
+    write(6,'(8a12)') 'lay_number','height','Q_hydro1','Q_hydro2','Q_hydro3','Q_hydro4','Q_hydro5','Q_hydro6'
     do nz=1,atmo_nlyrs(i,j)
-      write(6,'(7f12.4)') atmo_hgt(i,j,nz),atmo_hydro_q(i,j,nz,:)
+      write(6,'(i12,7f12.4)') nz,atmo_hgt(i,j,nz),atmo_hydro_q(i,j,nz,:)
     enddo
-    write(6,'(7a12)') 'height','N_hydro1','N_hydro2','N_hydro3','N_hydro4','N_hydro5','N_hydro6'
+    write(6,'(8a12)') 'lay_number','height','N_hydro1','N_hydro2','N_hydro3','N_hydro4','N_hydro5','N_hydro6'
     do nz=1,atmo_nlyrs(i,j)
-      write(6,'(7f12.4)') atmo_hgt(i,j,nz),atmo_hydro_n(i,j,nz,:)
+      write(6,'(i12,7f12.4)') nz,atmo_hgt(i,j,nz),atmo_hydro_n(i,j,nz,:)
     enddo
-    write(6,'(7a12)') 'height','Ref_hydro1','Ref_hydro2','Ref_hydro3','Ref_hydro4','Ref_hydro5','Ref_hydro6'
+    write(6,'(8a12)') 'lay_number','height','Ref_hydro1','Ref_hydro2','Ref_hydro3','Ref_hydro4','Ref_hydro5','Ref_hydro6'
     do nz=1,atmo_nlyrs(i,j)
-      write(6,'(7f12.4)') atmo_hgt(i,j,nz),atmo_hydro_reff(i,j,nz,:)
+      write(6,'(i12,7f12.4)') nz,atmo_hgt(i,j,nz),atmo_hydro_reff(i,j,nz,:)
     enddo
 
     return
@@ -927,28 +889,28 @@ module vars_atmosphere
 
     integer(kind=long) :: i, j, nz
 
-    write(6,'(7a12)') 'year', 'month', 'day', 'time', 'nlyrs', 'model_i', 'model_j'
-    write(6,'(4a12,3i12)') atmo_year(i,j), atmo_month(i,j), atmo_day(i,j), atmo_time(i,j), atmo_nlyrs(i,j),&
+    write(6,'(7a12)') 'year', 'month', 'day', 'time', 'nlev', 'model_i', 'model_j'
+    write(6,'(4a12,3i12)') atmo_year(i,j), atmo_month(i,j), atmo_day(i,j), atmo_time(i,j), atmo_nlyrs(i,j)+1,&
                            atmo_model_i(i,j), atmo_model_j(i,j)
-    write(6,'(8a12)') 'lat', 'lon','lfrac','wind10u','wind10v','groundtemp','hgt_lev','obs_height'
+    write(6,'(8a12)') 'lat', 'lon','lfrac','wind10u','wind10v','groundtemp','ground_hgt','obs_height'
     write(6,'(8f12.4)') atmo_lat(i,j), atmo_lon(i,j),atmo_lfrac(i,j),atmo_wind10u(i,j),atmo_wind10v(i,j),&
                         atmo_groundtemp(i,j),atmo_hgt_lev(i,j,1),atmo_obs_height(i,j)
-    write(6,'(4a12)') 'height','pressure','temp.','RH'
+    write(6,'(5a12)') 'lev_number','height','pressure','temp.','RH'
     do nz=1,atmo_nlyrs(i,j)+1
-      write(6,'(4f12.4)') atmo_hgt_lev(i,j,nz), atmo_press_lev(i,j,nz), atmo_temp_lev(i,j,nz), atmo_relhum_lev(i,j,nz)
+      write(6,'(i12,4f12.4)') nz,atmo_hgt_lev(i,j,nz), atmo_press_lev(i,j,nz), atmo_temp_lev(i,j,nz), atmo_relhum_lev(i,j,nz)
     enddo
-    write(6,'(7a12)') 'height','Q_hydro1','Q_hydro2','Q_hydro3','Q_hydro4','Q_hydro5','Q_hydro6'
-    do nz=1,atmo_nlyrs(i,j)
-      write(6,'(7f12.4)') atmo_hgt_lev(i,j,nz+1),atmo_hydro_q(i,j,nz,:)
-    enddo
-    write(6,'(7a12)') 'height','N_hydro1','N_hydro2','N_hydro3','N_hydro4','N_hydro5','N_hydro6'
-    do nz=1,atmo_nlyrs(i,j)
-      write(6,'(7f12.4)') atmo_hgt_lev(i,j,nz+1),atmo_hydro_n(i,j,nz,:)
-    enddo
-    write(6,'(7a12)') 'height','Ref_hydro1','Ref_hydro2','Ref_hydro3','Ref_hydro4','Ref_hydro5','Ref_hydro6'
-    do nz=1,atmo_nlyrs(i,j)
-      write(6,'(7f12.4)') atmo_hgt_lev(i,j,nz+1),atmo_hydro_reff(i,j,nz,:)
-    enddo
+!     write(6,'(7a12)') 'height','Q_hydro1','Q_hydro2','Q_hydro3','Q_hydro4','Q_hydro5','Q_hydro6'
+!     do nz=1,atmo_nlyrs(i,j)
+!       write(6,'(7f12.4)') atmo_hgt_lev(i,j,nz+1),atmo_hydro_q(i,j,nz,:)
+!     enddo
+!     write(6,'(7a12)') 'height','N_hydro1','N_hydro2','N_hydro3','N_hydro4','N_hydro5','N_hydro6'
+!     do nz=1,atmo_nlyrs(i,j)
+!       write(6,'(7f12.4)') atmo_hgt_lev(i,j,nz+1),atmo_hydro_n(i,j,nz,:)
+!     enddo
+!     write(6,'(7a12)') 'height','Ref_hydro1','Ref_hydro2','Ref_hydro3','Ref_hydro4','Ref_hydro5','Ref_hydro6'
+!     do nz=1,atmo_nlyrs(i,j)
+!       write(6,'(7f12.4)') atmo_hgt_lev(i,j,nz+1),atmo_hydro_reff(i,j,nz,:)
+!     enddo
 
     return
 
