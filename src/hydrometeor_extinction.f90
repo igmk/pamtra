@@ -181,7 +181,11 @@ subroutine hydrometeor_extinction(errorstatus)
           d_2   = d_2_arr(i_x,i_y,i_z,i_h)
         end if 
 
-
+        if (PRODUCT(SHAPE(descriptor_canting_arr)) == n_hydro) then
+          dsd_canting   = descriptor_canting_arr(1,1,1,i_h)
+        else
+          dsd_canting   = descriptor_canting_arr(i_x,i_y,i_z,i_h)
+        end if 
         !short cut in case we disabled the particle
         if (dist_name == "disabled") then
           if (verbose >=3) print*, i_x,i_y,i_z,i_h,hydro_name, dist_name, "DISABLED"

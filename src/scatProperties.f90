@@ -29,10 +29,11 @@ module scatProperties
         pressure, &
         layer_t, &
         mass_ds, &
-        area_ds
+        area_ds, &
+        dsd_canting
   use constants, only: pi, Im
   use vars_index, only: i_x, i_y, i_z, i_f, i_h
-  use vars_hydroFullSpec, only: hydrofs_as_ratio
+  use vars_hydroFullSpec, only: hydrofs_as_ratio, hydrofs_canting
 
   implicit none
 
@@ -97,7 +98,7 @@ module scatProperties
     real(kind=dbl), dimension(nstokes,nummu,2) :: emis_vector_hydro
     real(kind=dbl), dimension(radar_nfft_aliased) :: radar_spec_hydro
     real(kind=dbl), dimension(nbin+1) :: back_spec_dia
-    real(kind=dbl), allocatable, dimension(:) :: as_ratio_list
+    real(kind=dbl), allocatable, dimension(:) :: as_ratio_list, canting_list
     real(kind=dbl) :: kext_hydro
     real(kind=dbl) :: salb_hydro
     real(kind=dbl) :: back_hydro
@@ -160,11 +161,15 @@ module scatProperties
     
       !some fixed settings for Tmatrix
       allocate(as_ratio_list(nbin+1))
+      allocate(canting_list(nbin+1))
       if (hydro_fullSpec) then
         as_ratio_list(:) = hydrofs_as_ratio(i_x,i_y,i_z,i_h,:)
+        canting_list(:) = hydrofs_canting(i_x,i_y,i_z,i_h,:)
       else
         as_ratio_list(:) =  as_ratio
+        canting_list(:) =  dsd_canting
       end if
+
 
       call calc_tmatrix(err,&
         freq*1.d9,&
@@ -176,12 +181,15 @@ module scatProperties
         f_ds,&
         density2scat,&
         as_ratio_list,& 
+        canting_list, &
         scatter_matrix_hydro(:,:,:,:,1:2),&
         extinct_matrix_hydro(:,:,:,1),&
         emis_vector_hydro(:,:,1),&
         back_spec_dia)
 
       if (allocated(as_ratio_list)) deallocate(as_ratio_list)
+      if (allocated(canting_list)) deallocate(canting_list)
+
       if (err /= 0) then
           msg = 'error in calc_tmatrix!'
           call report(err, msg, nameOfRoutine)

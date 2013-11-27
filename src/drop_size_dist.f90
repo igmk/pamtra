@@ -30,6 +30,7 @@ module drop_size_dist
 
   real(kind=dbl)      :: layer_t              ! Layer temperature [K]
   real(kind=dbl)      :: pressure             ! Layer Pressure [Pa]
+  real(kind=dbl)      :: dsd_canting          ! canting angle in deg of the particles
 
 ! make_mass_size IN/OUT
   real(kind=dbl)      :: rho_ms               ! density of the particle [kg/m^3]

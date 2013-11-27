@@ -40,8 +40,8 @@ class pamDescriptorFile(object):
   
          
   def __init__(self,parent):
-    self.names =np.array(["hydro_name", "as_ratio", "liq_ice", "rho_ms", "a_ms", "b_ms", "alpha_as", "beta_as", "moment_in", "nbin", "dist_name", "p_1", "p_2", "p_3", "p_4", "d_1", "d_2", "scat_name", "vel_size_mod"])
-    self.types = ["S15",float,int,float,float,float,float,float,int,int,"S15",float,float,float,float,float,float, "S15", "S15"]  
+    self.names =np.array(["hydro_name", "as_ratio", "liq_ice", "rho_ms", "a_ms", "b_ms", "alpha_as", "beta_as", "moment_in", "nbin", "dist_name", "p_1", "p_2", "p_3", "p_4", "d_1", "d_2", "scat_name", "vel_size_mod","canting"])
+    self.types = ["S15",float,int,float,float,float,float,float,int,int,"S15",float,float,float,float,float,float, "S15", "S15",float]  
     self.data = np.recarray((0,),dtype=zip(self.names, self.types))
     self.data4D = dict()
     self.nhydro = 0
@@ -58,7 +58,7 @@ class pamDescriptorFile(object):
       if row[0][0] == "!":
         continue
       #make sure line is complete
-      assert len(row) == 19  
+      assert len(row) == len(self.names)  
 
       for ii, item in enumerate(row):
       #python does not like double types
@@ -141,6 +141,7 @@ class pamDescriptorFile(object):
     self.dataFullSpec["mass_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
     self.dataFullSpec["area_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
     self.dataFullSpec["as_ratio"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["canting"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
   
     #for name in self.names:
       #if name not in ["hydro_name","liq_ice","scat_name","vel_size_mod"]:

@@ -19,6 +19,7 @@ module tmatrix
     ndens,&
     density,&
     as_ratio,&
+    canting,&
     scatter_matrix,&
     extinct_matrix,&
     emis_vector,&
@@ -37,6 +38,7 @@ module tmatrix
       !       ndens           number density (not normed) [1/m³]
       !       density         dbl (nbins) density of softspheres
       !       as_ratio        double  aspect ratio
+      !       canting        double  canting angle (deg) -> beta in tmatrix code
       !
       !   output:
       !       scatter_matrix  double  scattering matrix []
@@ -55,6 +57,7 @@ module tmatrix
       real(kind=dbl), dimension(nbins+1), intent(in) :: ndens    
       real(kind=dbl), dimension(nbins+1), intent(in) :: density
       real(kind=dbl), dimension(nbins+1), intent(in) :: as_ratio
+      real(kind=dbl), dimension(nbins+1), intent(in) :: canting
 
       real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
       real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
@@ -106,7 +109,9 @@ module tmatrix
       call assert_false(err,(any(isnan(density)) .or. any(density <= 0.d0)),&
 	  "nan or negative density")
       call assert_false(err,any(isnan(as_ratio)) .or. any(as_ratio < 0.d0),&
-	  "nan or negative as_ratio")
+          "nan or negative as_ratio")
+      call assert_false(err,any(isnan(canting)) .or. any(canting < 0.d0),&
+          "nan or negative canting")
       if (err > 0) then
 	  errorstatus = fatal
 	  msg = "assertation error"
@@ -116,7 +121,6 @@ module tmatrix
        
       !T Matrix settings
       alpha = 0.0_dbl    ! orientation of the particle [°]
-      beta = 0.0_dbl!orientation of the particle [°]
       azimuth_num = 30
       azimuth0_num = 1   
       quad ="L" !quadratur
@@ -140,6 +144,8 @@ module tmatrix
         del_d_eff = del_d(ir)
       end if
 
+      beta = canting(ir)
+      if ((isnan(beta)) .or. (beta < 0)) beta = 0.d0
       !in case we have no hydrometeors, we need no tmatrix calculations!
       if (ndens_eff == 0.d0) then
         if (verbose >= 4) print*, "Skipped iteration", ir, "because ndens_eff", ndens_eff

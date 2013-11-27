@@ -14,6 +14,7 @@ module vars_hydroFullSpec
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_f_ds
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_mass_ds
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_area_ds
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_canting
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_as_ratio
   
   contains
@@ -59,6 +60,7 @@ module vars_hydroFullSpec
     allocate(hydrofs_f_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins+1))
     allocate(hydrofs_mass_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins+1))
     allocate(hydrofs_area_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins+1))
+    allocate(hydrofs_canting(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins+1))
     allocate(hydrofs_as_ratio(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins+1))
 
 
@@ -81,6 +83,7 @@ module vars_hydroFullSpec
     if (allocated(hydrofs_f_ds)) deallocate(hydrofs_f_ds)
     if (allocated(hydrofs_mass_ds)) deallocate(hydrofs_mass_ds)
     if (allocated(hydrofs_area_ds)) deallocate(hydrofs_area_ds)
+    if (allocated(hydrofs_canting)) deallocate(hydrofs_canting)
     if (allocated(hydrofs_as_ratio)) deallocate(hydrofs_as_ratio)
  
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
@@ -106,6 +109,7 @@ module vars_hydroFullSpec
             print*, "hydrofs_f_ds", hydrofs_f_ds(xx,yy,zz,hh, :)
             print*, "hydrofs_mass_ds", hydrofs_mass_ds(xx,yy,zz,hh, :)
             print*, "hydrofs_area_ds", hydrofs_area_ds(xx,yy,zz,hh, :)
+            print*, "hydrofs_canting", hydrofs_canting(xx,yy,zz,hh, :)
             print*, "hydrofs_as_ratio", hydrofs_as_ratio(xx,yy,zz,hh, :)
 
           end do
