@@ -129,7 +129,14 @@ contains
       ! first put default values
       call settings_fill_default()
   
-    
+      if (namelist_file == "None") then
+        if (verbose >= 3) print*,'No namelist file to read!', namelist_file
+        errorstatus = success
+        return
+      end if
+
+  
+
       ! read name list parameter file
       open(7, file=namelist_file,delim='APOSTROPHE')
       read(7,nml=inoutput_mode)

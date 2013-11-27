@@ -20,7 +20,7 @@ subroutine parse_options(gitVersion,gitHash)
     opts(6) = option_s( "verbose", .true., 'v' )
     opts(7) = option_s( "help", .false., 'h' )
 
-    namelist_file = 'run_params.nml'
+    namelist_file = 'None'
     input_file = 'standard.dat'
     coords = (/1,1,1,1/)
     frqs_str = ''
@@ -57,7 +57,7 @@ subroutine parse_options(gitVersion,gitHash)
                 print*,'Usage: pamtra [options]'
                 print*,''
                 print*,'Available options:'
-                print*,'   -n|--namelist     namelist file (default run_params.nml)'
+                print*,'   -n|--namelist     namelist file (default None)'
                 print*,'   -p|--profile      profile file  (default standard.dat)'
                 print*,'   -d|--descriptor   descriptor file  (default descriptor_file.txt)'
                 print*,'   -g|--grid         start_lon,end_lon,start_lat,end_lat (number of grid point)'
