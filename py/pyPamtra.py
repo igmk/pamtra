@@ -29,6 +29,8 @@ except:
 
 
 missingNumber=-9999.
+missingIntNumber=int(missingNumber)
+
 #logging.basicConfig(filename='example.log',level=logging.DEBUG)
 
 
@@ -390,14 +392,21 @@ class pyPamtra(object):
     return
     
     
-  def readNewPamtraProfile(self,inputFile):
+  def readPamtraProfile(self,inputFile):
     #make sure that a descriptor file was defined
     assert self.df.nhydro > 0
     
     f = open(inputFile,"r")
     g = csv.reader(f,delimiter=" ",skipinitialspace=True)
-    levLay = g.next()
-    self.p["ngridx"], self.p["ngridy"], self.p["max_nlyrs"] = g.next()
+    levLay = str(g.next()[0]).lower()
+    
+    if levLay not in ["layer","level"]:
+      f.close()
+      self.readClassicPamtraProfile(inputFile)
+      return
+      
+    
+    self.p["ngridx"], self.p["ngridy"], self.p["max_nlyrs"] = np.array(np.array(g.next()[:3]),dtype=int)
 
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
@@ -405,43 +414,112 @@ class pyPamtra(object):
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,0)
 
-    self.p["model_i"] = np.ones(self._shape2D) * missingNumber
-    self.p["model_j"] = np.ones(self._shape2D)* missingNumber
-    self.p["lat"] = np.ones(self._shape2D) * missingNumber
-    self.p["lon"] = np.ones(self._shape2D) * missingNumber
-    self.p["lfrac"] = np.ones(self._shape2D) * missingNumber
-    self.p["wind10u"] = np.ones(self._shape2D) * missingNumber
-    self.p["wind10v"] = np.ones(self._shape2D) * missingNumber
-    self.p["groundtemp"] = np.ones(self._shape2D) * missingNumber
-    self.p["obs_height"] = np.ones(self._shape2D) * missingNumber
-
-    self.p["hydro_q"] = np.ones(self._shape4D)  * missingNumber
-    self.p["hydro_n"] = np.ones(self._shape4D) * missingNumber
-    self.p["hydro_reff"] = np.ones(self._shape4D) * missingNumber
-    if (nmlSet["active"] and (nmlSet["radar_mode"] in ["moments","spectrum"])):
-      self.p["airturb"] = np.ones(self._shape4D) * missingNumber
+    self.p["model_i"] = np.ones(self._shape2D,dtype=int) *missingIntNumber
+    self.p["model_j"] = np.ones(self._shape2D,dtype=int)* missingIntNumber
+    self.p["lat"] = np.ones(self._shape2D) * np.nan
+    self.p["lon"] = np.ones(self._shape2D) * np.nan
+    self.p["lfrac"] = np.ones(self._shape2D) * np.nan
+    self.p["wind10u"] = np.ones(self._shape2D) * np.nan
+    self.p["wind10v"] = np.ones(self._shape2D) * np.nan
+    self.p["groundtemp"] = np.ones(self._shape2D) * np.nan
+    self.p["unixtime"] = np.ones(self._shape2D,dtype=int) * missingIntNumber
+    self.p["obs_height"] = np.ones(self._shape2D) * np.nan
+    self.p["nlyrs"] = np.ones(self._shape2D,dtype=int) * missingIntNumber
+    self.p["iwv"] = np.ones(self._shape2D) * np.nan
     
-    if levLay == "Layer":
-      self.p["hgt"] = np.ones(self._shape3D) * missingNumber
-      self.p["temp"] = np.ones(self._shape3D) * missingNumber
-      self.p["press"] = np.ones(self._shape3D) * missingNumber
-      self.p["relhum"] = np.ones(self._shape3D) * missingNumber
+    self.p["hydro_q"] = np.ones(self._shape4D)  * np.nan
+    self.p["hydro_n"] = np.ones(self._shape4D) * np.nan
+    self.p["hydro_reff"] = np.ones(self._shape4D) * np.nan
+    if (self.nmlSet["active"] and (self.nmlSet["radar_mode"] in ["moments","spectrum"])):
+      self.p["airturb"] = np.ones(self._shape4D) * np.nan
+    
+    self.p["hgt_lev"] = np.ones(self._shape3Dplus) * np.nan
+    if levLay == "layer":
+      self.p["hgt"] = np.ones(self._shape3D) * np.nan
+      self.p["temp"] = np.ones(self._shape3D) * np.nan
+      self.p["press"] = np.ones(self._shape3D) * np.nan
+      self.p["relhum"] = np.ones(self._shape3D) * np.nan
     elif levLay == "level":
-      self.p["hgt_lev"] = np.ones(self._shape3Dplus) * missingNumber
-      self.p["temp_lev"] = np.ones(self._shape3Dplus) * missingNumber
-      self.p["press_lev"] = np.ones(self._shape3Dplus) * missingNumber
-      self.p["relhum_lev"] = np.ones(self._shape3Dplus) * missingNumber
+      self.p["temp_lev"] = np.ones(self._shape3Dplus) * np.nan
+      self.p["press_lev"] = np.ones(self._shape3Dplus) * np.nan
+      self.p["relhum_lev"] = np.ones(self._shape3Dplus) * np.nan
     else:
       raise IOError("Did not understand layer/level: "+layLev)
     
+    for xx in xrange(self._shape2D[0]):
+      for yy in xrange(self._shape2D[1]):
+        
+        #first all the stuff wihtout heigth dimension
+        year,month,day,time, self.p["nlyrs"][xx,yy], self.p["model_i"][xx,yy], self.p["model_j"][xx,yy] = g.next()[:7]
+        self.p["unixtime"][xx,yy] = calendar.timegm(datetime.datetime(year = int(year), month = int(month), day = int(day), hour = int(time[0:2]), minute = int(time[2:4]), second = 0).timetuple())
+        self.p["lat"][xx,yy], self.p["lon"][xx,yy], self.p["lfrac"][xx,yy],self.p["wind10u"][xx,yy],self.p["wind10v"][xx,yy],self.p["groundtemp"][xx,yy],self.p["hgt_lev"][xx,yy,0],self.p["obs_height"][xx,yy]  = np.array(np.array(g.next()[:8]),dtype=float)
+ 
+        self.p["iwv"][xx,yy] = np.array(np.array(g.next()[0]),dtype=float)
+        
+        #if levels are provided we have one line more:
+        if levLay == "level":
+          dataLine = g.next()
+          #in case we have spaces after the last value...
+          try: dataLine = dataLine.remove("")
+          except: pass
+          dataLine = np.array(np.array(dataLine),dtype=float)
+          self.p["hgt_lev"][xx,yy,0],self.p["press_lev"][xx,yy,0],self.p["temp_lev"][xx,yy,0],self.p["relhum_lev"][xx,yy,0] = dataLine
+
+          #in the file its actually nlevels, so:
+          self.p["nlyrs"][xx,yy] = self.p["nlyrs"][xx,yy] - 1
+          
+        for zz in xrange(self.p["nlyrs"][xx,yy]):
+          dataLine =g.next()
+          dataLineCOPY = deepcopy(dataLine)
+          try: dataLine = dataLine.remove("")
+          except: pass
+          dataLine = map(float,dataLine)
+          #do we have layer or levels
+          hgt,press,temp,relhum = dataLine[:4]
+          if levLay == "layer":
+            self.p["hgt"][xx,yy,zz] = dataLine.pop(0)
+            self.p["press"][xx,yy,zz] = dataLine.pop(0)
+            self.p["temp"][xx,yy,zz] = dataLine.pop(0)
+            self.p["relhum"][xx,yy,zz] = dataLine.pop(0)
+          elif levLay == "level":
+            self.p["hgt_lev"][xx,yy,zz+1] = dataLine.pop(0)
+            self.p["press_lev"][xx,yy,zz+1] = dataLine.pop(0)
+            self.p["temp_lev"][xx,yy,zz+1] = dataLine.pop(0)
+            self.p["relhum_lev"][xx,yy,zz+1] = dataLine.pop(0)
+          else:
+            raise IOError("Did not understand layer/level: "+layLev)
     
-    
-    
-    
+          #for hydrometeors it's always layers:
+          for hh in xrange(self.df.nhydro):
+            if self.df.data["moment_in"][hh] == 0:
+              pass #nothing to read...
+            elif self.df.data["moment_in"][hh] == 1:
+              self.p["hydro_n"][xx,yy,zz,hh] = dataLine.pop(0)
+            elif self.df.data["moment_in"][hh] == 2:
+              self.p["hydro_reff"][xx,yy,zz,hh] = dataLine.pop(0)             
+            elif self.df.data["moment_in"][hh] == 3:
+              self.p["hydro_q"][xx,yy,zz,hh] = dataLine.pop(0)          
+            elif self.df.data["moment_in"][hh] == 12:
+              self.p["hydro_n"][xx,yy,zz,hh] = dataLine.pop(0)
+              self.p["hydro_reff"][xx,yy,zz,hh] = dataLine.pop(0)             
+            elif self.df.data["moment_in"][hh] == 13:
+              self.p["hydro_n"][xx,yy,zz,hh] = dataLine.pop(0)
+              self.p["hydro_q"][xx,yy,zz,hh] = dataLine.pop(0)      
+            elif self.df.data["moment_in"][hh] == 23:
+              self.p["hydro_reff"][xx,yy,zz,hh] = dataLine.pop(0)
+              self.p["hydro_q"][xx,yy,zz,hh] = dataLine.pop(0)   
+            else:
+              raise IOError ('Did not understand df.data["moment_in"]')
+            if "airturb" in self.p.keys():
+              self.p["airturb"][xx,yy,zz,hh] = dataLine.pop(0)   
+              
+          #make sure we used all the data!  
+          assert len(dataLine)  == 0
+                    
     f.close()
     return 
     
-  def readPamtraProfile(self,inputFile,n_moments=1):
+  def readClassicPamtraProfile(self,inputFile,n_moments=1):
     """
     read classical pamtra profile from file
     """
@@ -745,15 +823,19 @@ class pyPamtra(object):
 
 
   def _checkData(self):
-    maxLimits = {"relhum_lev":200,"hydro_q":0.05,"temp_lev":320,"press_lev":110000}
-    minLimits = {"relhum_lev":0,"hydro_q": 0 ,"temp_lev":170,"press_lev":1}
-    for key in maxLimits.keys():
-      if np.max(self.p[key]) > maxLimits[key]:
-        raise ValueError("unrealistic value for "+ key + ": " +str(np.max(self.p[key])) + ", maximum is " + str(maxLimits[key]))
-    for key in minLimits.keys():
-      if len(self.p[key][self.p[key] != missingNumber]) > 0:
-        if np.min(self.p[key][self.p[key] != missingNumber]) < minLimits[key]:
-          raise ValueError("unrealistic value for "+ key + ": " +str(np.min(self.p[key])) + ", minimum is " + str(minLimits[key]))
+    maxLimits = {"relhum_lev":200,"hydro_q":0.05,"temp_lev":320,"press_lev":110000,"relhum":200,"temp":320,"press":110000}
+    minLimits = {"relhum_lev":0,"hydro_q": 0 ,"temp_lev":170,"press_lev":1,"relhum":0,"temp":170,"press":1}
+    for key in self.p.keys():
+      if type(self.p[key]) != np.ndarray:
+        continue
+      p_data = self.p[key][~np.isnan(self.p[key])]
+      if key in maxLimits.keys():
+        if np.max(p_data) > maxLimits[key]:
+          raise ValueError("unrealistic value for "+ key + ": " +str(np.max(p_data)) + ", maximum is " + str(maxLimits[key]))
+      if key in minLimits.keys():
+        if len(p_data[p_data != missingNumber]) > 0:
+          if np.min(p_data[p_data != missingNumber]) < minLimits[key]:
+            raise ValueError("unrealistic value for "+ key + ": " +str(np.min(p_data)) + ", minimum is " + str(minLimits[key]))
 
   def filterProfiles(self,condition):
     '''
