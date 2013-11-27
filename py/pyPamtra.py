@@ -398,9 +398,9 @@ class pyPamtra(object):
     
     f = open(inputFile,"r")
     g = csv.reader(f,delimiter=" ",skipinitialspace=True)
-    levLay = str(g.next()[0]).lower()
+    levLay = inputFile.split(".")[-1]
     
-    if levLay not in ["layer","level"]:
+    if levLay not in ["lay","lev"]:
       f.close()
       self.readClassicPamtraProfile(inputFile)
       return
@@ -434,17 +434,17 @@ class pyPamtra(object):
       self.p["airturb"] = np.ones(self._shape4D) * np.nan
     
     self.p["hgt_lev"] = np.ones(self._shape3Dplus) * np.nan
-    if levLay == "layer":
+    if levLay == "lay":
       self.p["hgt"] = np.ones(self._shape3D) * np.nan
       self.p["temp"] = np.ones(self._shape3D) * np.nan
       self.p["press"] = np.ones(self._shape3D) * np.nan
       self.p["relhum"] = np.ones(self._shape3D) * np.nan
-    elif levLay == "level":
+    elif levLay == "lev":
       self.p["temp_lev"] = np.ones(self._shape3Dplus) * np.nan
       self.p["press_lev"] = np.ones(self._shape3Dplus) * np.nan
       self.p["relhum_lev"] = np.ones(self._shape3Dplus) * np.nan
     else:
-      raise IOError("Did not understand layer/level: "+layLev)
+      raise IOError("Did not understand lay/lev: "+layLev)
     
     for xx in xrange(self._shape2D[0]):
       for yy in xrange(self._shape2D[1]):
@@ -457,7 +457,7 @@ class pyPamtra(object):
         self.p["iwv"][xx,yy] = np.array(np.array(g.next()[0]),dtype=float)
         
         #if levels are provided we have one line more:
-        if levLay == "level":
+        if levLay == "lev":
           dataLine = g.next()
           #in case we have spaces after the last value...
           try: dataLine = dataLine.remove("")
@@ -476,18 +476,18 @@ class pyPamtra(object):
           dataLine = map(float,dataLine)
           #do we have layer or levels
           hgt,press,temp,relhum = dataLine[:4]
-          if levLay == "layer":
+          if levLay == "lay":
             self.p["hgt"][xx,yy,zz] = dataLine.pop(0)
             self.p["press"][xx,yy,zz] = dataLine.pop(0)
             self.p["temp"][xx,yy,zz] = dataLine.pop(0)
             self.p["relhum"][xx,yy,zz] = dataLine.pop(0)
-          elif levLay == "level":
+          elif levLay == "lev":
             self.p["hgt_lev"][xx,yy,zz+1] = dataLine.pop(0)
             self.p["press_lev"][xx,yy,zz+1] = dataLine.pop(0)
             self.p["temp_lev"][xx,yy,zz+1] = dataLine.pop(0)
             self.p["relhum_lev"][xx,yy,zz+1] = dataLine.pop(0)
           else:
-            raise IOError("Did not understand layer/level: "+layLev)
+            raise IOError("Did not understand lay/lev: "+layLev)
     
           #for hydrometeors it's always layers:
           for hh in xrange(self.df.nhydro):
