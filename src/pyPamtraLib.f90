@@ -91,7 +91,12 @@
       end if
 
 
-
+      if (add_obs_height_to_layer) then
+          msg = 'add_obs_height_to_layer not implemented yet in python'
+          call report(fatal, msg, nameOfRoutine)
+          errorstatus = err
+          return
+        end if
 !         call add_obs_height(errorstatus)
 !         if (err /= 0) then
 !             msg = 'Error in add_obs_height!'

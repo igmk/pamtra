@@ -107,12 +107,14 @@ program pamtra
       go to 666
     end if
 
-    call add_obs_height(errorstatus)
-    if (err /= 0) then
-        msg = 'Error in add_obs_height!'
-        call report(fatal, msg, nameOfRoutine)
-      errorstatus = err
-      go to 666
+    if (add_obs_height_to_layer) then
+      call add_obs_height(errorstatus)
+      if (err /= 0) then
+          msg = 'Error in add_obs_height!'
+          call report(fatal, msg, nameOfRoutine)
+        errorstatus = err
+        go to 666
+      end if
     end if
 
       ! now allocate output variables

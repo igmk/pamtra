@@ -74,7 +74,8 @@ module settings
     save_psd, &
     radar_smooth_spectrum, &
     hydro_fullSpec, &
-    hydro_limit_density_area
+    hydro_limit_density_area, &
+    add_obs_height_to_layer
 
     character(3) :: gas_mod
     character(20) :: moments_file,file_desc
@@ -110,7 +111,7 @@ contains
         tmp_path, dump_to_file, write_nc, data_path,&
         input_type, crm_case, crm_data, crm_data2, crm_constants, &
         jacobian_mode, save_psd
-        namelist / output / obs_height,units,outpol,freq_str,file_desc,creator
+        namelist / output / obs_height,units,outpol,freq_str,file_desc,creator, add_obs_height_to_layer
         namelist / run_mode / active, passive,radar_mode
         namelist / surface_params / ground_type,salinity, emissivity
         namelist / gas_abs_mod / lgas_extinction, gas_mod
@@ -217,6 +218,8 @@ contains
     radar_nfft_aliased = radar_nfft *(1+2*radar_aliasing_nyquist_interv)
     radar_maxTurbTerms = radar_nfft_aliased * 12
 
+    !in python some options are missing:
+    if (in_python) add_obs_height_to_layer = .false.
  
     errorstatus = err
     if (verbose > 3) call print_settings()
@@ -259,6 +262,7 @@ contains
         freq_str=''
         file_desc=''
         creator='Pamtrauser'
+        add_obs_height_to_layer = .true.
         ! sec run_mode
         active=.true.
         passive=.true.
