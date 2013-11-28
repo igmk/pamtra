@@ -57,16 +57,16 @@ subroutine radar_spectrum(&
     implicit none
 
     integer,intent(in) ::  nbins 
-    real(kind=dbl), dimension(nbins+1),intent(in):: diameter_spec, back_spec
+    real(kind=dbl), dimension(nbins),intent(in):: diameter_spec, back_spec
     integer,intent(in) ::  liq_ice
-    real(kind=dbl), dimension(nbins+1),intent(in):: mass, area
+    real(kind=dbl), dimension(nbins),intent(in):: mass, area
     real(kind=dbl), intent(in):: temp, frequency, press,back
-
-    real(kind=dbl), dimension(nbins+1):: vel_spec,dD_dU,back_vel_spec, back_spec_ref,&
-    del_v_model, diameter_spec_cp
-    real(kind=dbl), dimension(nbins+1) :: vel_spec_ext, back_vel_spec_ext
-    real(kind=dbl), dimension(:,:), allocatable :: particle_spec_ext
     real(kind=dbl), intent(out), dimension(radar_nfft_aliased):: particle_spec
+
+    real(kind=dbl), dimension(nbins):: vel_spec,dD_dU,back_vel_spec, back_spec_ref,&
+    del_v_model, diameter_spec_cp
+    real(kind=dbl), dimension(nbins) :: vel_spec_ext, back_vel_spec_ext
+    real(kind=dbl), dimension(:,:), allocatable :: particle_spec_ext
     real(kind=dbl), dimension(radar_nfft_aliased):: out_radar_velo_aliased
     real(kind=dbl):: del_v_radar, K2, wavelength, &
     delta_air, rho_air, rho, viscosity, nu, Ze, K, &
@@ -123,10 +123,10 @@ subroutine radar_spectrum(&
     
     
     if (liq_ice == 1) then !water
-      call dia2vel_khvorostyanov01_drops(err,nbins+1,diameter_spec_cp,rho,nu,vel_spec)
+      call dia2vel_khvorostyanov01_drops(err,nbins,diameter_spec_cp,rho,nu,vel_spec)
     else if (liq_ice == -1) then
       k_factor = 0.5d0
-      call dia2vel_heymsfield10_particles(err,nbins+1,diameter_spec_cp,rho,nu,&
+      call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,nu,&
             mass,area,k_factor,vel_spec)
       !if in-situ measurements are used, mass or area might be zero (since corresponding ndens=0 as well)
       where ((area == 0.d0) .or. (mass == 0.d0))
@@ -171,7 +171,7 @@ subroutine radar_spectrum(&
             diameter_spec_cp(jj),vel_spec(jj),back_spec_ref(jj),dD_dU(jj)
         del_v_model(jj) = ABS(vel_spec(jj+1)-vel_spec(jj))
     end do
-    dD_dU(nbins+1) = dD_dU(nbins)
+    dD_dU(nbins) = dD_dU(nbins)
 
 
     call assert_false(err,any(isnan(dD_dU) .or. all(dD_dU <= 0.d0)),&
@@ -186,7 +186,7 @@ subroutine radar_spectrum(&
     end if
 
 
-    del_v_model(nbins+1) = del_v_model(nbins)
+    del_v_model(nbins) = del_v_model(nbins)
     back_vel_spec = back_spec_ref * ABS(dD_dU)  !non-SI: [mm⁶/m³/m * m/(m/s)]
 
     !get delta velocity
@@ -218,7 +218,7 @@ subroutine radar_spectrum(&
         if (radar_airmotion_model .eq. "constant") then
             vel_spec = vel_spec + radar_airmotion_vmin
             !interpolate OR average (depending who's bins size is greater) from N(D) bins to radar bins.
-            call rescale_spectra(err,nbins+1,radar_nfft_aliased,.true.,vel_spec,back_vel_spec,out_radar_velo_aliased,particle_spec) ! particle_spec in [mm⁶/m³/m * m/(m/s)]
+            call rescale_spectra(err,nbins,radar_nfft_aliased,.true.,vel_spec,back_vel_spec,out_radar_velo_aliased,particle_spec) ! particle_spec in [mm⁶/m³/m * m/(m/s)]
         !step function
         else if (radar_airmotion_model .eq. "step") then
 
@@ -227,13 +227,13 @@ subroutine radar_spectrum(&
             vel_spec_ext = vel_spec + radar_airmotion_vmin
             back_vel_spec_ext = back_vel_spec * radar_airmotion_step_vmin
             !interpolate OR average (depending who's bins size is greater) from N(D) bins to radar bins.
-            call rescale_spectra(err,nbins+1,radar_nfft_aliased,.true.,vel_spec_ext,back_vel_spec_ext,out_radar_velo_aliased,&
+            call rescale_spectra(err,nbins,radar_nfft_aliased,.true.,vel_spec_ext,back_vel_spec_ext,out_radar_velo_aliased,&
             particle_spec_ext(1,:))! particle_spec in [mm⁶/m³/m * m/(m/s)]
             !for vmax
             vel_spec_ext = vel_spec + radar_airmotion_vmax
             back_vel_spec_ext = back_vel_spec *(1.d0-radar_airmotion_step_vmin)
             !interpolate OR average (depending who's bins size is greater) from N(D) bins to radar bins.
-            call rescale_spectra(err,nbins+1,radar_nfft_aliased,.true.,vel_spec_ext,back_vel_spec_ext,out_radar_velo_aliased,&
+            call rescale_spectra(err,nbins,radar_nfft_aliased,.true.,vel_spec_ext,back_vel_spec_ext,out_radar_velo_aliased,&
             particle_spec_ext(2,:))
             !join results
             particle_spec = SUM(particle_spec_ext,1)
@@ -247,7 +247,7 @@ subroutine radar_spectrum(&
                 vel_spec_ext = vel_spec + radar_airmotion_vmin + (jj-1)*delta_air
                 back_vel_spec_ext = back_vel_spec / REAL(radar_airmotion_linear_steps)
                 !interpolate OR average (depending whos bins size is greater) from N(D) bins to radar bins.
-                call rescale_spectra(err,nbins+1,radar_nfft_aliased,.true.,vel_spec_ext,back_vel_spec_ext,out_radar_velo_aliased,&
+                call rescale_spectra(err,nbins,radar_nfft_aliased,.true.,vel_spec_ext,back_vel_spec_ext,out_radar_velo_aliased,&
                 particle_spec_ext(jj,:))
             end do
             !join results
@@ -262,7 +262,7 @@ subroutine radar_spectrum(&
     else
         !no air motion, just rescale
         if (verbose >= 3) call report(info, "Averaging spectrum and Adding without vertical air motion", nameOfRoutine)
-        call rescale_spectra(err,nbins+1,radar_nfft_aliased,.true.,vel_spec,back_vel_spec,out_radar_velo_aliased,particle_spec) ! particle_spec in [mm⁶/m³/m * m/(m/s)]
+        call rescale_spectra(err,nbins,radar_nfft_aliased,.true.,vel_spec,back_vel_spec,out_radar_velo_aliased,particle_spec) ! particle_spec in [mm⁶/m³/m * m/(m/s)]
     end if
 
     if (err /= 0) then

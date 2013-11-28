@@ -17,6 +17,9 @@ plt.clf()
 pam = pyPamtra.pyPamtra()
 pam.df.readFile("descriptor_file_COSMO.txt")
 pam.readPamtraProfile("profile/example_input.lev")
+
+print "##########################"
+
 pam.runPamtra(35.5)
 
 
@@ -33,6 +36,8 @@ plt.plot(Ze.compressed(),label="pyPamtra level")
 pam = pyPamtra.pyPamtra()
 pam.df.readFile("descriptor_file_COSMO.txt")
 pam.readPamtraProfile("profile/example_input.lay")
+print "##########################"
+
 pam.runPamtra(35.5)
 Ze = np.ma.masked_equal(pam.r["Ze"],-9999).ravel()
 
@@ -41,6 +46,7 @@ plt.plot(pam.r["tb"].ravel(),label="pyPamtra layer")
 plt.figure(2)
 plt.plot(Ze.compressed(),label="pyPamtra layer")
 
+print "##########################"
 
 
 os.system("./pamtra -f 35.5 -d descriptor_file_COSMO.txt -p example_input.lev")
@@ -57,6 +63,8 @@ plt.plot(Ze.compressed(),":",lw=4,label="Pamtra level")
 
 print Ze.compressed()
 ncData.close()
+
+print "##########################"
 
 os.system("./pamtra -f 35.5 -d descriptor_file_COSMO.txt -p example_input.lay")
 ncData = netCDF4.Dataset("output/example_input_035.5000.nc")

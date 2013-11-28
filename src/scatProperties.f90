@@ -22,7 +22,7 @@ module scatProperties
         nbin,&
         diameter2scat, &
         delta_d_ds, &
-        f_ds,&
+        n_ds,&
         density2scat,&
         as_ratio, &
         d_bound_ds, &
@@ -97,7 +97,7 @@ module scatProperties
     real(kind=dbl), dimension(nstokes,nstokes,nummu,2) :: extinct_matrix_hydro
     real(kind=dbl), dimension(nstokes,nummu,2) :: emis_vector_hydro
     real(kind=dbl), dimension(radar_nfft_aliased) :: radar_spec_hydro
-    real(kind=dbl), dimension(nbin+1) :: back_spec_dia
+    real(kind=dbl), dimension(nbin) :: back_spec_dia, particle_density
     real(kind=dbl), allocatable, dimension(:) :: as_ratio_list, canting_list
     real(kind=dbl) :: kext_hydro
     real(kind=dbl) :: salb_hydro
@@ -139,7 +139,10 @@ module scatProperties
     legen_coef4_hydro(:)  = 0.d0
     nlegen_coef_hydro     = 0
 
-
+    !normalize particle density
+    particle_density = n_ds / delta_d_ds
+    
+    
     !get the refractive index
      if (liq_ice == 1) then
         call ref_water(0.d0, layer_t-273.15, freq, refre, refim, absind, abscof)
@@ -160,8 +163,8 @@ module scatProperties
     if (scat_name == "tmatrix") then
     
       !some fixed settings for Tmatrix
-      allocate(as_ratio_list(nbin+1))
-      allocate(canting_list(nbin+1))
+      allocate(as_ratio_list(nbin))
+      allocate(canting_list(nbin))
       if (hydro_fullSpec) then
         as_ratio_list(:) = hydrofs_as_ratio(i_x,i_y,i_z,i_h,:)
         canting_list(:) = hydrofs_canting(i_x,i_y,i_z,i_h,:)
@@ -182,7 +185,7 @@ module scatProperties
         nbin,&
         diameter2scat, &
         delta_d_ds, &
-        f_ds,&
+        particle_density,&
         density2scat,&
         as_ratio_list,& 
         canting_list, &
@@ -221,7 +224,7 @@ module scatProperties
             nbin,&
             diameter2scat,&
             delta_d_ds, &
-            f_ds,&
+            particle_density,&
             density2scat, &
             refre, &
             refim, & !positive(?)
@@ -312,7 +315,7 @@ module scatProperties
 
     if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
 
-      call radar_spectrum(err,nbin,d_bound_ds, rt_back(i_z),  back_spec_dia,layer_t,pressure,freq,&
+      call radar_spectrum(err,nbin,diameter2scat, rt_back(i_z),  back_spec_dia,layer_t,pressure,freq,&
         liq_ice,mass_ds,area_ds,radar_spec_hydro)
       if (err /= 0) then
           msg = 'error in radar_spectrum!'

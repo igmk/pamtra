@@ -78,12 +78,12 @@ subroutine allocateVars_drop_size_dist
   allocate(d_ds(nbin))
   allocate(n_ds(nbin))
   allocate(delta_d_ds(nbin))
-  allocate(density2scat(nbin+1))
-  allocate(diameter2scat(nbin+1))
+  allocate(density2scat(nbin))
+  allocate(diameter2scat(nbin))
   allocate(d_bound_ds(nbin+1))
   allocate(f_ds(nbin+1))
-  allocate(mass_ds(nbin+1))
-  allocate(area_ds(nbin+1))
+  allocate(mass_ds(nbin))
+  allocate(area_ds(nbin))
 
 end subroutine allocateVars_drop_size_dist
 
@@ -151,23 +151,23 @@ subroutine run_drop_size_dist(errorstatus)
   endif
 
 ! Calculate particle MASS at bin boundaries
-  do ibin=1,nbin+1
-    mass_ds(ibin) = a_ms * d_bound_ds(ibin)**b_ms
+  do ibin=1,nbin
+    mass_ds(ibin) = a_ms * d_ds(ibin)**b_ms
     !if mass density is larger than ice it is corrected, see drop_size_dist.f90
   enddo
 
 ! Calculate particle AREA at bin boundaries
   area_ds(:) = -99.
   if (alpha_as > 0. .and. beta_as > 0.) then
-    do ibin=1,nbin+1
-      area_ds(ibin) = alpha_as * d_bound_ds(ibin)**beta_as
+    do ibin=1,nbin
+      area_ds(ibin) = alpha_as * d_ds(ibin)**beta_as
       !if area is larger than a square:
       if ((liq_ice == -1) .and. &
           hydro_limit_density_area .and. &
-          (area_ds(ibin) > d_bound_ds(ibin)**2)) then
-        Write( msg, '("area too large:", e10.2)' )  area_ds(ibin)
+          (area_ds(ibin) > d_ds(ibin)**2)) then
+        Write( msg, '("area too large:", e10.2, e10.2)' )  area_ds(ibin), d_ds(ibin)**2
         call report(warning, msg, nameOfRoutine)
-        area_ds(ibin) =  d_bound_ds(ibin)**2
+        area_ds(ibin) =  d_ds(ibin)**2
       end if
     enddo
   endif
@@ -191,7 +191,7 @@ subroutine run_drop_size_dist(errorstatus)
   endif
   if (liq_ice == 1) then
     density2scat(:) = rho_water
-    diameter2scat = d_bound_ds
+    diameter2scat = d_ds
   endif
 
   if (errorstatus == 2) then

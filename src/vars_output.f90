@@ -32,8 +32,8 @@ module vars_output
   integer, allocatable, dimension(:,:,:,:) ::    out_radar_quality
   real(kind=dbl), allocatable, dimension(:) :: out_radar_vel
 
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_d_bound
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_f
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_d
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_n
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_mass
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_area
 
@@ -58,7 +58,7 @@ module vars_output
     use descriptor_file, only: n_hydro, nbin_arr
 
     integer, intent(in) :: no_allocated_lyrs
-    integer(kind=long)  :: max_nbin1                                           ! maximum number of nbins+1
+    integer(kind=long)  :: max_nbin                                           ! maximum number of nbins+1
     real(kind=dbl) :: nan
 
     integer(kind=long), intent(out) :: errorstatus
@@ -152,16 +152,16 @@ module vars_output
 
     if (save_psd) then
         !how much space do we need?
-        max_nbin1 = MAXVAL(nbin_arr) +1
+        max_nbin = MAXVAL(nbin_arr) 
     
         allocate(&
-          out_psd_d_bound(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin1),&
-          out_psd_f(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin1),&
-          out_psd_mass(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin1),&
-          out_psd_area(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin1))
+          out_psd_d(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin),&
+          out_psd_n(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin),&
+          out_psd_mass(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin),&
+          out_psd_area(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin))
 
-          out_psd_d_bound = -9999.d0
-          out_psd_f = -9999.d0
+          out_psd_d = -9999.d0
+          out_psd_n = -9999.d0
           out_psd_mass = -9999.d0
           out_psd_area = -9999.d0
 
@@ -209,8 +209,8 @@ module vars_output
     if (allocated(out_radar_slopes)) deallocate(out_radar_slopes)
     if (allocated(out_radar_edges)) deallocate(out_radar_edges)
     if (allocated(out_radar_quality)) deallocate(out_radar_quality)
-    if (allocated(out_psd_d_bound)) deallocate(out_psd_d_bound)
-    if (allocated(out_psd_f)) deallocate(out_psd_f)
+    if (allocated(out_psd_d)) deallocate(out_psd_d)
+    if (allocated(out_psd_n)) deallocate(out_psd_n)
     if (allocated(out_psd_mass)) deallocate(out_psd_mass)
     if (allocated(out_psd_area)) deallocate(out_psd_area)
 

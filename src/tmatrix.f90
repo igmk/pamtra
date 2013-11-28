@@ -52,17 +52,17 @@ module tmatrix
       complex(kind=dbl) :: ref_index
       integer, intent(in) :: phase
       integer, intent(in) :: nbins
-      real(kind=dbl), dimension(nbins+1), intent(in) :: dmax
+      real(kind=dbl), dimension(nbins), intent(in) :: dmax
       real(kind=dbl), dimension(nbins), intent(in) :: del_d
-      real(kind=dbl), dimension(nbins+1), intent(in) :: ndens    
-      real(kind=dbl), dimension(nbins+1), intent(in) :: density
-      real(kind=dbl), dimension(nbins+1), intent(in) :: as_ratio
-      real(kind=dbl), dimension(nbins+1), intent(in) :: canting
+      real(kind=dbl), dimension(nbins), intent(in) :: ndens    
+      real(kind=dbl), dimension(nbins), intent(in) :: density
+      real(kind=dbl), dimension(nbins), intent(in) :: as_ratio
+      real(kind=dbl), dimension(nbins), intent(in) :: canting
 
       real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
       real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
       real(kind=dbl), intent(out), dimension(nstokes,nummu) :: emis_vector
-      real(kind=dbl), intent(out), dimension(nbins+1) :: back_spec
+      real(kind=dbl), intent(out), dimension(nbins) :: back_spec
 
       complex(kind=dbl) :: mMix
       complex(kind=dbl) :: eps_mix 
@@ -131,18 +131,11 @@ module tmatrix
       extinct_matrix = 0.d0
       emis_vector = 0.d0
 
-    do ir = 1, nbins+1
+    do ir = 1, nbins
 
-      if (ir == 1) then
-        ndens_eff = ndens(1)/2.d0
-        del_d_eff = del_d(1)
-      else if (ir == nbins+1) then
-        ndens_eff = ndens(nbins+1)/2.d0
-        del_d_eff = del_d(nbins)
-      else
+
         ndens_eff = ndens(ir)
         del_d_eff = del_d(ir)
-      end if
 
       beta = canting(ir)
       !in case we have no hydrometeors, we need no tmatrix calculations!

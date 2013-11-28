@@ -14,7 +14,7 @@ output/
 profiles/
 profile/*
 !profile/example_input*
-data/
+data
 playground/
 *~
 .nfs*

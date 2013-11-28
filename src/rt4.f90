@@ -245,7 +245,11 @@ wavelength,outlevels)
     integer(kind=long) :: err = 0
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'rt4'
+    
+    if (verbose >= 1) call report(info, 'Start of ', nameOfRoutine)
 
+    err = success
+    
     height = 0.
     temperatures = 0.
     gas_extinct = 0.
@@ -253,7 +257,6 @@ wavelength,outlevels)
 
     LAYER_FILE=""
 
-    if (verbose >= 1) call report(info, 'Start of ', nameOfRoutine)
     !scat_files = ''
     !scat_files(atmo_nlyrs(i_x,i_y)) = '1.txt'
 

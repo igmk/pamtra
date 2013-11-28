@@ -262,7 +262,7 @@ contains
         freq_str=''
         file_desc=''
         creator='Pamtrauser'
-        add_obs_height_to_layer = .true.
+        add_obs_height_to_layer = .false.
         ! sec run_mode
         active=.true.
         passive=.true.

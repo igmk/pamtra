@@ -58,12 +58,12 @@ python module pyPamtraLib ! in
             real(kind=dbl), allocatable,dimension(:) :: out_angles_deg
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_area
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_ze
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_d_bound
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_radar_snr
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_mass
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_d
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_spectra
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_f
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_att_atmo
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_n
             subroutine allocate_output_vars(errorstatus,no_allocated_lyrs) ! in :pyPamtraLib:vars_output.f90:vars_output
                 use vars_atmosphere
                 use descriptor_file, only: nbin_arr,n_hydro
@@ -138,7 +138,7 @@ python module pyPamtraLib ! in
             end subroutine deallocate_atmosphere_vars
             subroutine read_new_fill_variables(errorstatus) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
                 use descriptor_file, only: n_hydro,moment_in_arr
-                use settings, only: radar_mode,obs_height,input_path,verbose,input_file
+                use settings, only: radar_mode,active,input_path,verbose,input_file
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine read_new_fill_variables
             subroutine add_obs_height(errorstatus) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
@@ -154,6 +154,7 @@ python module pyPamtraLib ! in
             subroutine fillmissing_atmosphere_vars(errorstatus) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
                 use descriptor_file, only: n_hydro,moment_in_arr
                 use constants, only: r_d,r_v
+                use settings, only: obs_height
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine fillmissing_atmosphere_vars
             subroutine print_out_layer(i,j) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
@@ -195,6 +196,7 @@ python module pyPamtraLib ! in
             character(len=1), parameter,optional :: quad_type='l'
             real(kind=dbl) :: radar_k2
             integer(kind=long_bn) :: radar_npeaks
+            logical :: add_obs_height_to_layer
             real(kind=dbl) :: radar_airmotion_step_vmin
             character(len=100) :: crm_data2
             character(len=100) :: crm_constants
@@ -281,7 +283,7 @@ python module pyPamtraLib ! in
             real(kind=dbl), allocatable,dimension(:) :: n_tot_arr
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: beta_as_arr
             character(len=15), allocatable,dimension(:) :: hydro_name_arr
-            real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_4_arr
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: descriptor_canting_arr
             real(kind=dbl), allocatable,dimension(:) :: r_eff_arr
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: b_ms_arr
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: d_1_arr
@@ -289,6 +291,7 @@ python module pyPamtraLib ! in
             integer(kind=long_bn), allocatable,dimension(:) :: liq_ice_arr
             character(len=15), allocatable,dimension(:) :: vel_size_mod_arr
             character(len=15), allocatable,dimension(:) :: dist_name_arr
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_4_arr
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_1_arr
             integer(kind=long_bn) :: n_hydro
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_3_arr
@@ -312,14 +315,14 @@ python module pyPamtraLib ! in
             use report_module
             use kinds
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_area_ds
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_delta_d_ds
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_d_bound_ds
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_diameter2scat
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_mass_ds
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_f_ds
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_density2scat
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_as_ratio
             integer(kind=long_bn) :: hydrofs_nbins
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_d_bound_ds
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_canting
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_mass_ds
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_n_ds
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_as_ratio
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_rho_ds
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_d_ds
             subroutine allocate_hydrofs_vars(errorstatus,nbins) ! in :pyPamtraLib:vars_hydroFullSpec.f90:vars_hydrofullspec
                 use vars_atmosphere, only: atmo_ngridy,atmo_ngridx,atmo_max_nlyrs
                 use descriptor_file, only: n_hydro

@@ -3,7 +3,7 @@ import pyPamtraImport
 
 pam = pyPamtraImport.createUsStandardProfile(hgt_lev=[100,200,300])
 
-pam.df.addHydrometeor(("ice", -99., -1, 917., 130., 3.0, 0.684, 2., 3, 1, "mono_cosmo_ice", -99., -99., -99., -99., -99., -99., "mie-sphere", "test"))
+pam.df.addHydrometeor(("ice", -99., -1, 917., 130., 3.0, 0.684, 2., 3, 1, "mono_cosmo_ice", -99., -99., -99., -99., -99., -99., "mie-sphere", "test",0.0))
 
 pam.p["hydro_q"][0,0,1] = 1e-2
 

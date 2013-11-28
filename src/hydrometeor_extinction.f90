@@ -6,11 +6,10 @@ subroutine hydrometeor_extinction(errorstatus)
       atmo_delta_hgt_lev, atmo_hydro_q, atmo_hydro_reff, atmo_hydro_n
   use vars_rt, only:rt_hydros_present
   use vars_hydroFullSpec, only: &
-      hydrofs_delta_d_ds, &
-      hydrofs_density2scat, &
-      hydrofs_diameter2scat, &
+      hydrofs_rho_ds, &
+      hydrofs_d_ds, &
       hydrofs_d_bound_ds, &
-      hydrofs_f_ds, &
+      hydrofs_n_ds, &
       hydrofs_mass_ds, &
       hydrofs_area_ds, &
       hydrofs_nbins
@@ -26,7 +25,7 @@ subroutine hydrometeor_extinction(errorstatus)
   use drop_size_dist
   use report_module
   use scatProperties
-  use vars_output, only: out_psd_area, out_psd_d_bound, out_psd_f, out_psd_mass
+  use vars_output, only: out_psd_area, out_psd_d, out_psd_n, out_psd_mass
   use vars_index, only: i_x,i_y, i_z, i_h
 
   implicit none
@@ -79,13 +78,14 @@ subroutine hydrometeor_extinction(errorstatus)
         nbin = hydrofs_nbins
         call allocateVars_drop_size_dist()
 
-        delta_d_ds(:) = hydrofs_delta_d_ds(i_x,i_y,i_z,i_h,:)
-        density2scat(:) = hydrofs_density2scat(i_x,i_y,i_z,i_h,:)
-        diameter2scat(:) = hydrofs_diameter2scat(i_x,i_y,i_z,i_h,:)
+        density2scat(:) = hydrofs_rho_ds(i_x,i_y,i_z,i_h,:)
+        diameter2scat(:) = hydrofs_d_ds(i_x,i_y,i_z,i_h,:)
         d_bound_ds(:) = hydrofs_d_bound_ds(i_x,i_y,i_z,i_h,:)
-        f_ds(:) = hydrofs_f_ds(i_x,i_y,i_z,i_h,:)
+        n_ds(:) = hydrofs_n_ds(i_x,i_y,i_z,i_h,:)
         mass_ds(:) = hydrofs_mass_ds(i_x,i_y,i_z,i_h,:)
         area_ds(:) = hydrofs_area_ds(i_x,i_y,i_z,i_h,:)
+        delta_d_ds(:) = d_bound_ds(2:) - d_bound_ds(:-1)
+
 
         pressure = atmo_press(i_x,i_y,i_z)
         layer_t = atmo_temp(i_x,i_y,i_z)
@@ -224,10 +224,10 @@ subroutine hydrometeor_extinction(errorstatus)
         end if
 
         if (save_psd) then
-          out_psd_d_bound(i_x,i_y,i_z,i_h,1:nbin+1) =  d_bound_ds
-          out_psd_f(i_x,i_y,i_z,i_h,1:nbin+1) = f_ds
-          out_psd_mass(i_x,i_y,i_z,i_h,1:nbin+1) = mass_ds
-          out_psd_area(i_x,i_y,i_z,i_h,1:nbin+1) = area_ds
+          out_psd_d(i_x,i_y,i_z,i_h,1:nbin) =  d_ds
+          out_psd_n(i_x,i_y,i_z,i_h,1:nbin) = n_ds
+          out_psd_mass(i_x,i_y,i_z,i_h,1:nbin) = mass_ds
+          out_psd_area(i_x,i_y,i_z,i_h,1:nbin) = area_ds
         end if
 
       end if !hydro_fullSpec

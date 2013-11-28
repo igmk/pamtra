@@ -47,10 +47,10 @@ module mie_spheres
     real(kind=dbl), intent(in) :: t    ! temperature [K]
     integer, intent(in) :: liq_ice
     integer, intent(in) :: nbins
-    real(kind=dbl), intent(in), dimension(nbins+1) :: diameter
+    real(kind=dbl), intent(in), dimension(nbins) :: diameter
     real(kind=dbl), intent(in), dimension(nbins) :: del_d    
-    real(kind=dbl), intent(in), dimension(nbins+1) ::  ndens
-    real(kind=dbl), intent(in), dimension(nbins+1) :: density
+    real(kind=dbl), intent(in), dimension(nbins) ::  ndens
+    real(kind=dbl), intent(in), dimension(nbins) :: density
     real(kind=dbl), intent(in) :: refre
     real(kind=dbl), intent(in) :: refim !positive(?)
 
@@ -58,7 +58,7 @@ module mie_spheres
     real(kind=dbl), intent(out) :: albedo
     real(kind=dbl), intent(out) :: back_scatt
     real(kind=dbl), intent(out), dimension(200) :: legen, legen2, legen3, legen4 
-    real(kind=dbl), intent(out), dimension(nbins+1) :: back_spec
+    real(kind=dbl), intent(out), dimension(nbins) :: back_spec
     integer, intent(out) :: nlegen
 
     real(kind=dbl) :: wavelength
@@ -96,7 +96,6 @@ module mie_spheres
       "ndens", ndens, &
       "density", density
    
-
       call assert_true(err,all(density>=0),&
           "density must be positive")  
       call assert_true(err,all(ndens>=0),&
@@ -125,12 +124,12 @@ module mie_spheres
 
       if (liq_ice == -1 .and. density(1) /= 917.d0) then
           m_ice = refre-Im*refim  ! mimicking a
-          msphere = eps_mix((1.d0,0.d0),m_ice,density(nbins+1))
+          msphere = eps_mix((1.d0,0.d0),m_ice,density(nbins))
       else
                 msphere = refre-im*refim
       end if
      
-      x = pi * diameter(nbins+1) / wavelength
+      x = pi * diameter(nbins) / wavelength
       nterms = 0 
       n_tot = 0.d0
       call miecalc (err,nterms, x, msphere, a, b) 
@@ -162,18 +161,11 @@ module mie_spheres
       sump4 (:) = 0.0d0 
 
 
-    do ir = 1, nbins+1
+    do ir = 1, nbins
 
-      if (ir == 1) then
-        ndens_eff = ndens(1)/2.d0
-        del_d_eff = del_d(1)
-      else if (ir == nbins+1) then
-        ndens_eff = ndens(nbins+1)/2.d0
-        del_d_eff = del_d(nbins)
-      else
         ndens_eff = ndens(ir)
         del_d_eff = del_d(ir)
-      end if
+
 
       n_tot = n_tot + (ndens_eff * del_d_eff)
 

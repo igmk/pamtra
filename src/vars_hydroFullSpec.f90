@@ -7,11 +7,10 @@ module vars_hydroFullSpec
   save
   
   integer(kind=long) :: hydrofs_nbins
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_delta_d_ds
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_density2scat
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_diameter2scat
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_rho_ds
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_d_ds
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_d_bound_ds
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_f_ds
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_n_ds
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_mass_ds
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_area_ds
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_canting
@@ -53,15 +52,14 @@ module vars_hydroFullSpec
     end if  
 
 
-    allocate(hydrofs_delta_d_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
-    allocate(hydrofs_density2scat(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins+1))
-    allocate(hydrofs_diameter2scat(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins+1))
+    allocate(hydrofs_rho_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
+    allocate(hydrofs_d_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
     allocate(hydrofs_d_bound_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins+1))
-    allocate(hydrofs_f_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins+1))
-    allocate(hydrofs_mass_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins+1))
-    allocate(hydrofs_area_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins+1))
-    allocate(hydrofs_canting(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins+1))
-    allocate(hydrofs_as_ratio(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins+1))
+    allocate(hydrofs_n_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
+    allocate(hydrofs_mass_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
+    allocate(hydrofs_area_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
+    allocate(hydrofs_canting(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
+    allocate(hydrofs_as_ratio(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
 
 
     errorstatus = err
@@ -76,11 +74,10 @@ module vars_hydroFullSpec
 
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
-    if (allocated(hydrofs_delta_d_ds)) deallocate(hydrofs_delta_d_ds)
-    if (allocated(hydrofs_density2scat)) deallocate(hydrofs_density2scat)
-    if (allocated(hydrofs_diameter2scat)) deallocate(hydrofs_diameter2scat)
+    if (allocated(hydrofs_rho_ds)) deallocate(hydrofs_rho_ds)
+    if (allocated(hydrofs_d_ds)) deallocate(hydrofs_d_ds)
     if (allocated(hydrofs_d_bound_ds)) deallocate(hydrofs_d_bound_ds)
-    if (allocated(hydrofs_f_ds)) deallocate(hydrofs_f_ds)
+    if (allocated(hydrofs_n_ds)) deallocate(hydrofs_n_ds)
     if (allocated(hydrofs_mass_ds)) deallocate(hydrofs_mass_ds)
     if (allocated(hydrofs_area_ds)) deallocate(hydrofs_area_ds)
     if (allocated(hydrofs_canting)) deallocate(hydrofs_canting)
@@ -102,11 +99,10 @@ module vars_hydroFullSpec
         do zz=1,atmo_max_nlyrs
           do hh=1,n_hydro
             print*, "xx", xx, "yy", yy, "zz", zz, "hh", hh
-            print*, "hydrofs_delta_d_ds", hydrofs_delta_d_ds(xx,yy,zz,hh, :)
-            print*, "hydrofs_density2scat", hydrofs_density2scat(xx,yy,zz,hh, :)
-            print*, "hydrofs_diameter2scat", hydrofs_diameter2scat(xx,yy,zz,hh, :)
+            print*, "hydrofs_rho_ds", hydrofs_rho_ds(xx,yy,zz,hh, :)
+            print*, "hydrofs_d_ds", hydrofs_d_ds(xx,yy,zz,hh, :)
             print*, "hydrofs_d_bound_ds", hydrofs_d_bound_ds(xx,yy,zz,hh, :)
-            print*, "hydrofs_f_ds", hydrofs_f_ds(xx,yy,zz,hh, :)
+            print*, "hydrofs_n_ds", hydrofs_n_ds(xx,yy,zz,hh, :)
             print*, "hydrofs_mass_ds", hydrofs_mass_ds(xx,yy,zz,hh, :)
             print*, "hydrofs_area_ds", hydrofs_area_ds(xx,yy,zz,hh, :)
             print*, "hydrofs_canting", hydrofs_canting(xx,yy,zz,hh, :)

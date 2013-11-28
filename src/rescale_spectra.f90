@@ -66,6 +66,8 @@ contains
     real(kind=dbl), dimension(nx1+nx2+1) :: y12,y12_sorted
     real(kind=dbl), dimension(nx2+1) :: y2_interp
 
+    integer :: ii, ii_arr(1)
+    
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
     character(len=80) :: msg
@@ -83,8 +85,8 @@ contains
 
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
-    call assert_true(err,nx1>1,&
-        "nx1 must be greater 1") 
+    call assert_true(err,nx1>0,&
+        "nx1 must be greater 0") 
     call assert_true(err,nx2>1,&
         "nx2 must be greater 1")   
     call assert_true(err,maxval(x1)<=maxval(x2),&
@@ -102,6 +104,7 @@ contains
     end if
 
 
+  
     if (all(y1==0)) then
       msg = "all values zero"
       call report(warning, msg, nameOfRoutine)
@@ -112,56 +115,69 @@ contains
       print*, "IN Y", y1
     end if
     
-    x1_sorted = x1
-    y1_sorted = y1
+    !special case mono disperse
+    if (nx1 == 1) then
+      !find closest neighbour
+      y2(:) = 0.d0
+      ii_arr = MINLOC(ABS(x1(1) - x2))
+      ii = ii_arr(1)
+      y2(ii) = y1(1)
+    
+    else
 
-    if (sort) then
-      call dsort(err,x1_sorted, y1_sorted, nx1, 2)
+
+      
+      x1_sorted = x1
+      y1_sorted = y1
+
+      if (sort) then
+        call dsort(err,x1_sorted, y1_sorted, nx1, 2)
+        if (err /= 0) then
+            msg = 'error in dsort!'
+            call report(err, msg, nameOfRoutine)
+            errorstatus = err
+            stop !return
+        end if       
+      end if
+
+
+      x2_shift(2:nx2) = x2(2:) - 0.5d0*(x2(2:) - x2(1:nx2-1))
+      x2_shift(1) = x2(1) -  0.5d0*(x2(2) - x2(1))
+      x2_shift(nx2+1) = x2(nx2) +  0.5d0*(x2(nx2) - x2(nx2-1))  
+
+
+      call interpolate_spectra(err,nx1,nx2+1,x1_sorted,y1_sorted,x2_shift,y2_interp)
       if (err /= 0) then
-	  msg = 'error in dsort!'
-	  call report(err, msg, nameOfRoutine)
-	  errorstatus = err
-	  stop !return
-      end if       
-    end if
+          msg = 'error in interpolate_spectra!'
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+      end if
 
+      !join interpolated and original array
+      x12(1:nx1)=x1_sorted
+      x12(nx1+1:nx1+nx2+1)=x2_shift
+      y12(1:nx1)=y1_sorted
+      y12(nx1+1:nx1+nx2+1)=y2_interp
 
-    x2_shift(2:nx2) = x2(2:) - 0.5d0*(x2(2:) - x2(1:nx2-1))
-    x2_shift(1) = x2(1) -  0.5d0*(x2(2) - x2(1))
-    x2_shift(nx2+1) = x2(nx2) +  0.5d0*(x2(nx2) - x2(nx2-1))  
+      !make order right
+      x12_sorted = x12
+      y12_sorted=y12
+      call dsort(err,x12_sorted, y12_sorted, nx1+nx2+1, 2)
+      if (err /= 0) then
+          msg = 'error in dsort!'
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          stop !return
+      end if     
 
-
-    call interpolate_spectra(err,nx1,nx2+1,x1_sorted,y1_sorted,x2_shift,y2_interp)
-    if (err /= 0) then
-	msg = 'error in interpolate_spectra!'
-	call report(err, msg, nameOfRoutine)
-	errorstatus = err
-	return
-    end if
-
-    !join interpolated and original array
-    x12(1:nx1)=x1_sorted
-    x12(nx1+1:nx1+nx2+1)=x2_shift
-    y12(1:nx1)=y1_sorted
-    y12(nx1+1:nx1+nx2+1)=y2_interp
-
-    !make order right
-    x12_sorted = x12
-    y12_sorted=y12
-    call dsort(err,x12_sorted, y12_sorted, nx1+nx2+1, 2)
-    if (err /= 0) then
-	msg = 'error in dsort!'
-	call report(err, msg, nameOfRoutine)
-	errorstatus = err
-	stop !return
-    end if     
-
-    call average_spectra(err,nx1+nx2+1,nx2+1,x12_sorted,y12_sorted,x2_shift,y2)
-    if (err /= 0) then
-	msg = 'error in average_spectra!'
-	call report(err, msg, nameOfRoutine)
-	errorstatus = err
-	return
+      call average_spectra(err,nx1+nx2+1,nx2+1,x12_sorted,y12_sorted,x2_shift,y2)
+      if (err /= 0) then
+          msg = 'error in average_spectra!'
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+      end if
     end if
 
     if (all(y2==0)) then

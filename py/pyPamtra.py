@@ -132,16 +132,15 @@ class pamDescriptorFile(object):
     assert np.min(self.data["nbin"]) == np.max(self.data["nbin"])
 
     self.fs_nbin =  np.max(self.data["nbin"])
-    
-    self.dataFullSpec["delta_d_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
-    self.dataFullSpec["density2scat"] = np.ones(self.parent._shape4D+(self.fs_nbin+1,))
-    self.dataFullSpec["diameter2scat"] = np.ones(self.parent._shape4D+(self.fs_nbin+1,))
+        
+    self.dataFullSpec["rho_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["d_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
     self.dataFullSpec["d_bound_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin+1,))
-    self.dataFullSpec["f_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin+1,))
-    self.dataFullSpec["mass_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin+1,))
-    self.dataFullSpec["area_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin+1,))
-    self.dataFullSpec["as_ratio"] = np.ones(self.parent._shape4D+(self.fs_nbin+1,))
-    self.dataFullSpec["canting"] = np.ones(self.parent._shape4D+(self.fs_nbin+1,))
+    self.dataFullSpec["n_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["mass_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["area_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["as_ratio"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["canting"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
   
     #for name in self.names:
       #if name not in ["hydro_name","liq_ice","scat_name","vel_size_mod"]:
@@ -883,8 +882,8 @@ class pyPamtra(object):
       self.df.data4D[key] = self.df.data4D[key][condition].reshape(self._shape4D)
       
     for key in self.df.dataFullSpec.keys():
-      if key == "delta_d_ds": shape5D = self._shape5D
-      else: shape5D = self._shape5Dplus
+      if key == "d_bound_ds": shape5D = self._shape5Dplus
+      else: shape5D = self._shape5D
       self.df.dataFullSpec[key] = self.df.dataFullSpec[key][condition].reshape(shape5D)
     return
 
@@ -1211,12 +1210,12 @@ class pyPamtra(object):
     
   def _prepareResults(self):
     
-    try: maxNBin1 = np.max(self.df.data["nbin"]) + 1
+    try: maxNBin = np.max(self.df.data["nbin"]) 
     except: 
       try: 
-        maxNBin1 = np.max(self.df.data4D["nbin"]) + 1
+        maxNBin = np.max(self.df.data4D["nbin"])
       except:
-        maxNBin1 = self.df.dataFullSpec["d_bound_ds"].shape[-1]
+        maxNBin = self.df.dataFullSpec["d_ds"].shape[-1]
     radar_spectrum_length = self.nmlSet["radar_nfft"]
     
     
@@ -1236,14 +1235,14 @@ class pyPamtra(object):
     self.r["radar_quality"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],),dtype=int)*missingNumber
     self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles,self.set["nfreqs"],self._nstokes))*missingNumber
     if self.nmlSet["save_psd"]:
-      self.r["psd_area"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin1))*missingNumber
-      self.r["psd_f"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin1))*missingNumber
-      self.r["psd_d_bound"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin1))*missingNumber
-      self.r["psd_mass"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin1))*missingNumber
+      self.r["psd_area"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
+      self.r["psd_n"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
+      self.r["psd_d"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
+      self.r["psd_mass"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
     else: #save memory
       self.r["psd_area"] = np.array([missingNumber])
-      self.r["psd_f"] = np.array([missingNumber])
-      self.r["psd_d_bound"] = np.array([missingNumber])
+      self.r["psd_n"] = np.array([missingNumber])
+      self.r["psd_d"] = np.array([missingNumber])
       self.r["psd_mass"] =np.array([missingNumber])
 
     

@@ -41,6 +41,8 @@ program pamtra
     character(len=200) :: msg
     character(len=14) :: nameOfRoutine = 'pamtra'
 
+    errorstatus = success
+    
     !get git data
     call versionNumber(gitVersion,gitHash)
 

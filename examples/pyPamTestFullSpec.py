@@ -8,25 +8,23 @@ freqs = [35.5,80,150]
 
 pam.set["verbose"] = 5
 pam.set["pyVerbose"] =5
-
 pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
-#pam.nmlSet["save_psd"] = True
+pam.nmlSet["jacobian_mode"] = True
 pam.nmlSet["radar_mode"] = "spectrum"
 
 
-pam.df.addHydrometeor(('ice', -99.0, -1, 917,917 *  pi / 6., 3, pi/4., 2, 0, 10, 'exp', 3000, 3e8, -99.0, -99.0, 100e-6,  1000e-6, 'mie-sphere', 'test'))
+pam.df.addHydrometeor(('ice', -99.0, -1, 917,917 *  pi / 6., 3, pi/4., 2, 0, 10, 'exp', 3000, 3e8, -99.0, -99.0, 100e-6,  1000e-6, 'mie-sphere', 'test',0.0))
 pam.p["hydro_q"][:] = 0.001
 
 pam.nmlSet["hydro_fullspec"] = True
 pam.df.addFullSpectra()
 
-pam.df.dataFullSpec["d_bound_ds"][0,0,0,0,:] = np.linspace(100e-6,1000e-6,10)
-pam.df.dataFullSpec["delta_d_ds"][0,0,0,0,:] = np.diff(pam.df.dataFullSpec["d_bound_ds"][0,0,0,0,:])
-pam.df.dataFullSpec["density2scat"][0,0,0,0,:] = 917
-pam.df.dataFullSpec["diameter2scat"][0,0,0,0,:] = pam.df.dataFullSpec["d_bound_ds"][0,0,0,0,:]
-pam.df.dataFullSpec["f_ds"][0,0,0,0,:] = 3e8 * np.exp(-3000 * pam.df.dataFullSpec["d_bound_ds"][0,0,0,0,:])
-pam.df.dataFullSpec["area_ds"][0,0,0,0,:] = pi/4. *  pam.df.dataFullSpec["d_bound_ds"][0,0,0,0,:] ** 2
-pam.df.dataFullSpec["mass_ds"][0,0,0,0,:] =pi / 6. *917 *  pam.df.dataFullSpec["d_bound_ds"][0,0,0,0,:] ** 3
+pam.df.dataFullSpec["d_bound_ds"][0,0,0,0,:] = np.linspace(100e-6,1000e-6,11)
+pam.df.dataFullSpec["rho_ds"][0,0,0,0,:] = 917
+pam.df.dataFullSpec["d_ds"][0,0,0,0,:] = pam.df.dataFullSpec["d_bound_ds"][0,0,0,0,:-1] + 0.5*np.diff(pam.df.dataFullSpec["d_bound_ds"][0,0,0,0])
+pam.df.dataFullSpec["n_ds"][0,0,0,0,:] = 3e8 * np.exp(-3000 * pam.df.dataFullSpec["d_ds"][0,0,0,0,:]) * np.diff(pam.df.dataFullSpec["d_bound_ds"][0,0,0,0,:])
+pam.df.dataFullSpec["area_ds"][0,0,0,0,:] = pi/4. *  pam.df.dataFullSpec["d_ds"][0,0,0,0,:] ** 2
+pam.df.dataFullSpec["mass_ds"][0,0,0,0,:] =pi / 6. *917 *  pam.df.dataFullSpec["d_ds"][0,0,0,0,:] ** 3
 pam.df.dataFullSpec["as_ratio"][0,0,0,0,:] = 0.6
 
 
