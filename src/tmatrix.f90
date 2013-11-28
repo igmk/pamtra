@@ -145,7 +145,6 @@ module tmatrix
       end if
 
       beta = canting(ir)
-      if ((isnan(beta)) .or. (beta < 0)) beta = 0.d0
       !in case we have no hydrometeors, we need no tmatrix calculations!
       if (ndens_eff == 0.d0) then
         if (verbose >= 4) print*, "Skipped iteration", ir, "because ndens_eff", ndens_eff

@@ -857,7 +857,7 @@ class pyPamtra(object):
     self.p["ngridx"] = np.sum(condition)
     self.p["ngridy"] = 1
     
-    try: self.df.fs_nbin =  self.df.dataFullSpec["d_bound_ds"].shape[-1]
+    try: self.df.fs_nbin =  self.df.dataFullSpec["delta_d_ds"].shape[-1]
     except: self.df.fs_nbin = 0
     
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)

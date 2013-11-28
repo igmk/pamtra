@@ -170,6 +170,10 @@ module scatProperties
         canting_list(:) =  dsd_canting
       end if
 
+      where (canting_list < 0) canting_list = 0.d0
+      where (isnan(canting_list)) canting_list = 0.d0
+      where (as_ratio_list < 0) as_ratio_list = 0.d0
+      where (isnan(as_ratio_list)) as_ratio_list = 0.d0
 
       call calc_tmatrix(err,&
         freq*1.d9,&
