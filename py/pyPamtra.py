@@ -133,15 +133,15 @@ class pamDescriptorFile(object):
 
     self.fs_nbin =  np.max(self.data["nbin"])
     
-    self.dataFullSpec["delta_d_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin-1,))
-    self.dataFullSpec["density2scat"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
-    self.dataFullSpec["diameter2scat"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
-    self.dataFullSpec["d_bound_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
-    self.dataFullSpec["f_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
-    self.dataFullSpec["mass_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
-    self.dataFullSpec["area_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
-    self.dataFullSpec["as_ratio"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
-    self.dataFullSpec["canting"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["delta_d_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["density2scat"] = np.ones(self.parent._shape4D+(self.fs_nbin+1,))
+    self.dataFullSpec["diameter2scat"] = np.ones(self.parent._shape4D+(self.fs_nbin+1,))
+    self.dataFullSpec["d_bound_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin+1,))
+    self.dataFullSpec["f_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin+1,))
+    self.dataFullSpec["mass_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin+1,))
+    self.dataFullSpec["area_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin+1,))
+    self.dataFullSpec["as_ratio"] = np.ones(self.parent._shape4D+(self.fs_nbin+1,))
+    self.dataFullSpec["canting"] = np.ones(self.parent._shape4D+(self.fs_nbin+1,))
   
     #for name in self.names:
       #if name not in ["hydro_name","liq_ice","scat_name","vel_size_mod"]:
@@ -413,6 +413,7 @@ class pyPamtra(object):
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
+    self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,0)
 
     self.p["model_i"] = np.ones(self._shape2D,dtype=int) *missingIntNumber
@@ -546,8 +547,8 @@ class pyPamtra(object):
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"]+1,)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],4+n_moments)
-    self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],4+n_moments,0)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],4+n_moments,1)
+    self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],4+n_moments,0)
 
     self.p["model_i"] = np.zeros(self._shape2D)
     self.p["model_j"] = np.zeros(self._shape2D)
@@ -751,8 +752,8 @@ class pyPamtra(object):
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
+    self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
-    self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin-1)
 
     self.p["nlyrs"] = np.sum(kwargs["hgt_lev"]!=missingNumber,axis=-1) -1
     self.p["nlyrs"] = self.p["nlyrs"].reshape(self._shape2D)
@@ -863,8 +864,8 @@ class pyPamtra(object):
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
+    self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
-    self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin-1)
         
     for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","obs_height"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape2D)
@@ -882,8 +883,8 @@ class pyPamtra(object):
       self.df.data4D[key] = self.df.data4D[key][condition].reshape(self._shape4D)
       
     for key in self.df.dataFullSpec.keys():
-      if key == "delta_d_ds": shape5D = self._shape5Dplus
-      else: shape5D = self._shape5D
+      if key == "delta_d_ds": shape5D = self._shape5D
+      else: shape5D = self._shape5Dplus
       self.df.dataFullSpec[key] = self.df.dataFullSpec[key][condition].reshape(shape5D)
     return
 
@@ -900,8 +901,8 @@ class pyPamtra(object):
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
+    self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
-    self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin-1)
     assert len(df.data4D.keys() == 0) 
     assert len(df.dataFullSpec.keys() == 0) 
 
@@ -1060,8 +1061,8 @@ class pyPamtra(object):
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
+    self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
-    self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin-1)
     self.p["unixtime"] = timestamp.reshape(self._shape2D)
         
     self.p["lat"] = lat.reshape(self._shape2D)
@@ -1348,8 +1349,8 @@ class pyPamtra(object):
       self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],)
       self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"]+1,)
       self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
-      self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)    
-      self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin-1)
+      self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)    
+      self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
       
       return
   

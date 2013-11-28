@@ -332,6 +332,7 @@ contains
     !for debuging
     subroutine print_settings()
 
+      print*, 'add_obs_height_to_layer: ', add_obs_height_to_layer
       print*, 'jacobian_mode: ', jacobian_mode
       print*, 'radar_nfft: ', radar_nfft
       print*, 'input_path: ', input_path
