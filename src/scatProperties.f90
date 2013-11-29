@@ -124,7 +124,6 @@ module scatProperties
       if (verbose >= 3) print*, "OK, we are done here"
       return
     end if
-
     freq = freqs(i_f)
 
     !initilaize empyt results

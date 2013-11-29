@@ -856,7 +856,7 @@ class pyPamtra(object):
     self.p["ngridx"] = np.sum(condition)
     self.p["ngridy"] = 1
     
-    try: self.df.fs_nbin =  self.df.dataFullSpec["delta_d_ds"].shape[-1]
+    try: self.df.fs_nbin =  self.df.dataFullSpec["d_ds"].shape[-1]
     except: self.df.fs_nbin = 0
     
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
@@ -1277,12 +1277,10 @@ class pyPamtra(object):
     self.r["radar_vel"]= results["radar_vel"]
     self.r["angles_deg"]= results["angles_deg"]
     if self.nmlSet["save_psd"]:
-      for key in ["psd_d_bound","psd_f","psd_mass","psd_area"]:
+      for key in ["psd_d","psd_n","psd_mass","psd_area"]:
         self.r[key][pp_startX:pp_endX,pp_startY:pp_endY] = results[key]
     
     return
-    
-    
     
   def writeResultsToNumpy(self,fname,seperateFiles=False):
     

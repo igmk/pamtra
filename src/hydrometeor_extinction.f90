@@ -89,11 +89,11 @@ subroutine hydrometeor_extinction(errorstatus)
 
         pressure = atmo_press(i_x,i_y,i_z)
         layer_t = atmo_temp(i_x,i_y,i_z)
-        if (SUM(f_ds) > 0.d0) then
+        if (SUM(n_ds) > 0.d0) then
           rt_hydros_present(i_z) = .true.
         else
-          rt_hydros_present(i_z) = .false.
           call deallocateVars_drop_size_dist()
+          ! not neccesary to set rt_hydros_present to false - its default value is false!
           CYCLE
         end if
 
@@ -243,14 +243,12 @@ subroutine hydrometeor_extinction(errorstatus)
       end if
 
       call deallocateVars_drop_size_dist()
-
     end do hydros
 
     call finalize_rt3_scatProperties()
 
     !convert rt3 to rt4 input
     if (nlegen_coef>0) then
-
       call scatcnv(err,scatfiles(i_z),nlegen_coef,legen_coef,rt_kexttot(i_z),salbedo,&
 	scatter_matrix_scatcnv,extinct_matrix_scatcnv,emis_vector_scatcnv)
       if (err /= 0) then
@@ -259,6 +257,7 @@ subroutine hydrometeor_extinction(errorstatus)
 	  errorstatus = err
 	  return
       end if   
+
       rt_scattermatrix(i_z,:,:,:,:,:) = rt_scattermatrix(i_z,:,:,:,:,:) + scatter_matrix_scatcnv
       rt_extmatrix(i_z,:,:,:,:) = rt_extmatrix(i_z,:,:,:,:) + extinct_matrix_scatcnv
       rt_emisvec(i_z,:,:,:) = rt_emisvec(i_z,:,:,:) + emis_vector_scatcnv
@@ -273,6 +272,10 @@ subroutine hydrometeor_extinction(errorstatus)
 	  errorstatus = err
 	  return
       end if   
+    else
+      if (verbose >= 5) print*, "Skipped radar simulator because of active .and. rt_hydros_present(i_z)", &
+            active, rt_hydros_present(i_z)
+
     end if
 
 

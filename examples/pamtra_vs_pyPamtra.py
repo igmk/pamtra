@@ -47,6 +47,7 @@ plt.figure(2)
 plt.plot(Ze.compressed(),label="pyPamtra layer")
 
 print "##########################"
+os.remove("output/example_input_035.5000.nc")
 
 
 os.system("./pamtra -f 35.5 -d descriptor_file_COSMO.txt -p example_input.lev")
