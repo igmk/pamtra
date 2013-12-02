@@ -30,7 +30,8 @@ module scatProperties
         layer_t, &
         mass_ds, &
         area_ds, &
-        dsd_canting
+        dsd_canting, &
+        soft_rho_eff
   use constants, only: pi, Im
   use vars_index, only: i_x, i_y, i_z, i_f, i_h
   use vars_hydroFullSpec, only: hydrofs_as_ratio, hydrofs_canting
@@ -118,6 +119,38 @@ module scatProperties
     character(len=80) :: msg
     character(len=40) :: nameOfRoutine = 'calc_scatProperties'
   
+    interface
+      subroutine radar_spectrum(&
+          errorstatus, &
+          nbins,&             !in
+          diameter_spec,&     !in
+          back,&              !in
+          back_spec,&         !in
+          temp,&              !in
+          press,&             !in
+          frequency,&         !in
+          rho_particle,&      !in
+          vel_size_mod,&      !in
+          mass,&              !in
+          area,&              !in
+          particle_spec)      !out
+
+
+          use kinds
+          use settings, only: radar_nfft_aliased
+
+          integer,intent(in) ::  nbins 
+          real(kind=dbl), dimension(nbins+1),intent(in):: diameter_spec, back_spec
+          real(kind=dbl), dimension(nbins+1),intent(in):: mass, area, rho_particle
+          character(len=15),intent(in) :: vel_size_mod
+
+          real(kind=dbl), intent(in):: temp, frequency, press,back
+          real(kind=dbl), intent(out), dimension(radar_nfft_aliased):: particle_spec
+          integer(kind=long), intent(out) :: errorstatus
+      end subroutine radar_spectrum
+    end interface
+
+
   if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
     if ((scat_name == "disabled") .or. (.not. rt_hydros_present(i_z))) then
@@ -313,7 +346,7 @@ module scatProperties
     if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
 
       call radar_spectrum(err,nbin,d_bound_ds, rt_back(i_z),  back_spec_dia,layer_t,pressure,freq,&
-        liq_ice,mass_ds,area_ds,radar_spec_hydro)
+        soft_rho_eff,vel_size_mod,mass_ds,area_ds,radar_spec_hydro)
       if (err /= 0) then
           msg = 'error in radar_spectrum!'
           call report(err, msg, nameOfRoutine)
