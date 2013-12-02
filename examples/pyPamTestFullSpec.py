@@ -25,6 +25,7 @@ pam.df.dataFullSpec["d_ds"][0,0,0,0,:] = pam.df.dataFullSpec["d_bound_ds"][0,0,0
 pam.df.dataFullSpec["n_ds"][0,0,0,0,:] = 3e8 * np.exp(-3000 * pam.df.dataFullSpec["d_ds"][0,0,0,0,:]) * np.diff(pam.df.dataFullSpec["d_bound_ds"][0,0,0,0,:])
 pam.df.dataFullSpec["area_ds"][0,0,0,0,:] = pi/4. *  pam.df.dataFullSpec["d_ds"][0,0,0,0,:] ** 2
 pam.df.dataFullSpec["mass_ds"][0,0,0,0,:] =pi / 6. *917 *  pam.df.dataFullSpec["d_ds"][0,0,0,0,:] ** 3
+
 pam.df.dataFullSpec["as_ratio"][0,0,0,0,:] = 0.6
 
 

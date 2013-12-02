@@ -7,7 +7,8 @@ subroutine radar_spectrum(&
     temp,&              !in
     press,&             !in
     frequency,&         !in
-    liq_ice,&           !in
+    rho_particle,&      !in
+    vel_size_mod,&      !in
     mass,&              !in
     area,&              !in
     particle_spec)      !out
@@ -41,7 +42,7 @@ subroutine radar_spectrum(&
     !temp: temperature in K
     !press: air pressure in Pa
     !frequency in GHz
-    !liq_ice: liquid = 1; ice = -1
+    !rho_particle: density of particle
     !mass: mass of particle [kg]
     !area: cross section area [m²]
     !area_size_b: b of mass size relation, needed for graupel, hail, snow, ice
@@ -57,9 +58,10 @@ subroutine radar_spectrum(&
     implicit none
 
     integer,intent(in) ::  nbins 
+
     real(kind=dbl), dimension(nbins),intent(in):: diameter_spec, back_spec
-    integer,intent(in) ::  liq_ice
-    real(kind=dbl), dimension(nbins),intent(in):: mass, area
+    real(kind=dbl), dimension(nbins),intent(in):: mass, area, rho_particle
+    character(len=15),intent(in) :: vel_size_mod
     real(kind=dbl), intent(in):: temp, frequency, press,back
     real(kind=dbl), intent(out), dimension(radar_nfft_aliased):: particle_spec
 
@@ -121,24 +123,33 @@ subroutine radar_spectrum(&
     call viscosity_air(temp,viscosity)
     nu = viscosity/rho !kinematic viscosity
     
-    
-    if (liq_ice == 1) then !water
+    if (vel_size_mod == "khvorostyanov01_drops") then
       call dia2vel_khvorostyanov01_drops(err,nbins,diameter_spec_cp,rho,nu,vel_spec)
-    else if (liq_ice == -1) then
+    else if (vel_size_mod == "khvorostyanov01_spheres") then
+      call dia2vel_khvorostyanov01_spheres(err,nbins,diameter_spec_cp,rho,nu,rho_particle,vel_spec)
+    else if (vel_size_mod .eq. "rogers_drops") then
+      call dia2vel_rogers_drops(err,nbins,diameter_spec_cp,rho,vel_spec)
+    else if (vel_size_mod == "heymsfield10_particles") then
       k_factor = 0.5d0
       call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,nu,&
             mass,area,k_factor,vel_spec)
-      !if in-situ measurements are used, mass or area might be zero (since corresponding ndens=0 as well)
-      where ((area == 0.d0) .or. (mass == 0.d0))
-        vel_spec = 0.d0
-      end where
+!     equations need to be rearanged:
+!     else if (radar_fallVel_ice .eq. "khvorostyanov01_particles") then
+!         call dia2vel_khvorostyanov01_particles(err,nbins,diameter_spec_cp,rho,nu,&
+!             mass_size_a,mass_size_b,area_size_a,area_size_b,vel_spec)
+    else if (vel_size_mod .eq. "rogers_graupel") then
+      call dia2vel_rogers_graupel(err,nbins,diameter_spec_cp,vel_spec)
     else
       errorstatus = fatal
-      print*,"liq_ice=", liq_ice
-      msg = 'Did not understand variable liq_ice'
+      msg = 'Did not understand variable vel_size_mod: '//vel_size_mod
       call report(errorstatus, msg, nameOfRoutine)
-      return
     end if
+
+    !if in-situ measurements are used, mass or area might be zero (since corresponding ndens=0 as well)
+    where ((area == 0.d0) .or. (mass == 0.d0))
+      vel_spec = 0.d0
+    end where
+
     call assert_true(err,all(vel_spec>=0) .and. (MAXVAL(vel_spec) < HUGE(vel_spec)),&
         "nan or negative vel_spec")   
     if (err /= 0) then
@@ -286,10 +297,10 @@ subroutine radar_spectrum(&
       return
     end if
     
-    if (verbose >= 4) print*,liq_ice,"K",K
-    if (verbose >= 4) print*,liq_ice," Ze SUM(back_vel_spec)*del_v_model",10*log10(SUM(back_vel_spec*del_v_model))
-    if (verbose >= 4) print*,liq_ice," Ze SUM(back_vel_spec_ext)*del_v_model",10*log10(SUM(back_vel_spec_ext*del_v_model))
-    if (verbose >= 4) print*,liq_ice," Ze SUM(particle_spec)*del_v_radar",10*log10(SUM(particle_spec)*del_v_radar)
+    if (verbose >= 4) print*,"K",K
+    if (verbose >= 4) print*," Ze SUM(back_vel_spec)*del_v_model",10*log10(SUM(back_vel_spec*del_v_model))
+    if (verbose >= 4) print*," Ze SUM(back_vel_spec_ext)*del_v_model",10*log10(SUM(back_vel_spec_ext*del_v_model))
+    if (verbose >= 4) print*," Ze SUM(particle_spec)*del_v_radar",10*log10(SUM(particle_spec)*del_v_radar)
 
 
 
