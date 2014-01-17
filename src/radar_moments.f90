@@ -213,7 +213,9 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_spectrum_in,noise_mod
       !slopes are estimated between max of peak and max of nosise level
       noiseMax = 10*log10(MAXVAL(radar_spectrum_only_noise) - noise)
       specMax =  10*log10(MAXVAL(radar_spectrum_in) - noise)
-
+!test:
+noiseMax = 10*log10(noise)
+specMax = 10*log10(MAXVAL(radar_spectrum_in)) !without any noise removed!
 
       call assert_false(err,spec_max_pp == left_edge_pp,&
           "spectra_velo(spec_max_pp) == spectra_velo(left_edge_pp)")
