@@ -91,7 +91,8 @@ module tmatrix
       if (verbose >= 4) print*,"frequency,ref_index,phase,nbins,dmax,del_d,ndens,density,as_ratio"
       if (verbose >= 4) print*,frequency,ref_index,phase,nbins,dmax,del_d,ndens,density,as_ratio
 
-    
+      err = 0
+
       call assert_false(err,(isnan(frequency) .or. frequency < 0.d0),&
 	  "nan or negative frequency")
       call assert_false(err,(isnan(real(ref_index)) .or. isnan(imag(ref_index))),&
@@ -106,7 +107,7 @@ module tmatrix
 	  "nan or negative ndens")
       call assert_true(err,SUM(ndens)>0,&
           "sum(ndens) must be greater zero")    
-      call assert_false(err,(any(isnan(density)) .or. any(density <= 0.d0)),&
+      call assert_false(err,(any(isnan(density)) .or. any(density < 0.d0)),&
 	  "nan or negative density")
       call assert_false(err,any(isnan(as_ratio)) .or. any(as_ratio < 0.d0),&
           "nan or negative as_ratio")

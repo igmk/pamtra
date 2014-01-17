@@ -61,7 +61,7 @@ subroutine radar_spectrum(&
 
     real(kind=dbl), dimension(nbins),intent(in):: diameter_spec, back_spec
     real(kind=dbl), dimension(nbins),intent(in):: mass, area, rho_particle
-    character(len=15),intent(in) :: vel_size_mod
+    character(len=30),intent(in) :: vel_size_mod
     real(kind=dbl), intent(in):: temp, frequency, press,back
     real(kind=dbl), intent(out), dimension(radar_nfft_aliased):: particle_spec
 
@@ -97,7 +97,7 @@ subroutine radar_spectrum(&
         "nan or negative press")  
     call assert_true(err,frequency>0,&
         "nan or negative frequency")  
-    call assert_true(err,all(mass>0),&
+    call assert_true(err,all(mass>=0),&
         "nan or negative mass")  
     call assert_true(err,all(area>=0),&
         "nan or negative area")        
@@ -143,6 +143,7 @@ subroutine radar_spectrum(&
       errorstatus = fatal
       msg = 'Did not understand variable vel_size_mod: '//vel_size_mod
       call report(errorstatus, msg, nameOfRoutine)
+      return
     end if
 
     !if in-situ measurements are used, mass or area might be zero (since corresponding ndens=0 as well)
@@ -167,7 +168,7 @@ subroutine radar_spectrum(&
 
 
     !move from dimension to velocity!
-    do jj=1,nbins
+    do jj=1,nbins-1
         dD_dU(jj) = (diameter_spec_cp(jj+1)-diameter_spec_cp(jj))/(vel_spec(jj+1)-vel_spec(jj)) ![m/(m/s)]
 !         is all particles fall with the same velocity, dD_dU gets infinitive!
         if (abs(dD_dU(jj)) .ge. huge(dD_dU(jj))) then
@@ -182,7 +183,7 @@ subroutine radar_spectrum(&
             diameter_spec_cp(jj),vel_spec(jj),back_spec_ref(jj),dD_dU(jj)
         del_v_model(jj) = ABS(vel_spec(jj+1)-vel_spec(jj))
     end do
-    dD_dU(nbins) = dD_dU(nbins)
+    dD_dU(nbins) = dD_dU(nbins-1)
 
 
     call assert_false(err,any(isnan(dD_dU) .or. all(dD_dU <= 0.d0)),&

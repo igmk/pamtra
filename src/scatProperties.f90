@@ -1,5 +1,69 @@
 module scatProperties
 
+
+  use kinds
+
+  implicit none
+
+    !rt3 style
+    real(kind=dbl) :: salbedo
+    real(kind=dbl), dimension(6,200) :: legen_coef
+    integer :: nlegen_coef
+
+    !rt4 style
+
+    !needed by rt3 and rt4
+    character(len=15) :: scat_name
+    character(len=30) :: vel_size_mod
+    real(kind=dbl), allocatable, dimension(:) :: radar_spec
+    
+  contains
+  
+  subroutine allocate_scatProperties()
+    use kinds
+    use settings, only: radar_nfft_aliased
+   implicit none
+   allocate(radar_spec(radar_nfft_aliased)) 
+   return
+  end subroutine allocate_scatProperties
+
+    subroutine prepare_rt3_scatProperties()
+      use kinds
+      implicit none
+
+
+
+      salbedo     = 0.d0
+      legen_coef(:,:)   = 0.d0
+      nlegen_coef     = 0
+      return
+    end subroutine prepare_rt3_scatProperties
+
+    subroutine prepare_rt4_scatProperties()
+    use kinds
+    use vars_rt, only: rt_kexttot,&
+      rt_back,&
+      rt_scattermatrix, &
+      rt_extmatrix, &
+      rt_emisvec
+    use vars_index, only: i_z
+
+      implicit none
+
+      rt_kexttot(i_z) = 0.d0  
+      rt_back(i_z) = 0.d0
+
+      rt_scattermatrix(i_z,:,:,:,:,:)=0.d0
+      rt_extmatrix(i_z,:,:,:,:)=0.d0
+      rt_emisvec(i_z,:,:,:)=0.d0
+
+      radar_spec(:) = 0.d0
+      return
+
+    end subroutine prepare_rt4_scatProperties
+
+  subroutine calc_scatProperties(errorstatus)
+
   use kinds
   use settings, only: nstokes,&
       nummu,&
@@ -37,55 +101,6 @@ module scatProperties
   use vars_index, only: i_x, i_y, i_z, i_f, i_h
   use vars_hydroFullSpec, only: hydrofs_as_ratio, hydrofs_canting
 
-  implicit none
-
-    !rt3 style
-    real(kind=dbl) :: salbedo
-    real(kind=dbl), dimension(6,200) :: legen_coef
-    integer :: nlegen_coef
-
-    !rt4 style
-
-    !needed by rt3 and rt4
-    character(len=15) :: scat_name
-    character(len=15) :: vel_size_mod
-    real(kind=dbl), allocatable, dimension(:) :: radar_spec
-    
-  contains
-  
-  subroutine allocate_scatProperties()
-   implicit none
-   allocate(radar_spec(radar_nfft_aliased)) 
-   return
-  end subroutine allocate_scatProperties
-
-    subroutine prepare_rt3_scatProperties()
-      implicit none
-
-
-
-      salbedo     = 0.d0
-      legen_coef(:,:)   = 0.d0
-      nlegen_coef     = 0
-      return
-    end subroutine prepare_rt3_scatProperties
-
-    subroutine prepare_rt4_scatProperties()
-      implicit none
-
-      rt_kexttot(i_z) = 0.d0  
-      rt_back(i_z) = 0.d0
-
-      rt_scattermatrix(i_z,:,:,:,:,:)=0.d0
-      rt_extmatrix(i_z,:,:,:,:)=0.d0
-      rt_emisvec(i_z,:,:,:)=0.d0
-
-      radar_spec(:) = 0.d0
-      return
-
-    end subroutine prepare_rt4_scatProperties
-
-  subroutine calc_scatProperties(errorstatus)
     implicit none
 
     real(kind=dbl) :: freq
@@ -136,15 +151,15 @@ module scatProperties
           area,&              !in
           particle_spec)      !out
 
-
           use kinds
           use settings, only: radar_nfft_aliased
+          implicit none
 
           integer,intent(in) ::  nbins 
+
           real(kind=dbl), dimension(nbins),intent(in):: diameter_spec, back_spec
           real(kind=dbl), dimension(nbins),intent(in):: mass, area, rho_particle
-          character(len=15),intent(in) :: vel_size_mod
-
+          character(len=30),intent(in) :: vel_size_mod
           real(kind=dbl), intent(in):: temp, frequency, press,back
           real(kind=dbl), intent(out), dimension(radar_nfft_aliased):: particle_spec
           integer(kind=long), intent(out) :: errorstatus
@@ -192,7 +207,6 @@ module scatProperties
 
 
 !!!!modern RT4 routines !!!
-
     if (scat_name == "tmatrix") then
     
       !some fixed settings for Tmatrix
@@ -250,6 +264,7 @@ module scatProperties
 !!!!old style RT3 routines !!!
 
     else if (scat_name == "mie-sphere") then
+
       call calc_mie_spheres(err,&
             freq*1d9,&
             layer_t,&
@@ -271,7 +286,8 @@ module scatProperties
             legen_coef3_hydro,&
             legen_coef4_hydro,&
             back_spec_dia)    
-          
+
+
       nlegen_coef = max(nlegen_coef,nlegen_coef_hydro)
       if (err /= 0) then
           msg = 'error in calc_mie_spheres!'
@@ -285,7 +301,6 @@ module scatProperties
       call report(errorstatus, msg, nameOfRoutine)
       return
     end if
-
 
     !sum up
     rt_kexttot(i_z) = rt_kexttot(i_z) + kext_hydro
@@ -316,10 +331,6 @@ module scatProperties
       legen_coef(6,:) = legen_coef(3,:)
     end if
 
-
-
-
-
     !do checks
     if (rt_kexttot(i_z) .lt. 0. .or. isnan(rt_kexttot(i_z))) then
       print*, "rt_kexttot(i_z)",rt_kexttot(i_z)
@@ -344,7 +355,6 @@ module scatProperties
       call report(errorstatus, msg, nameOfRoutine)
       return
     end if   
-
 
     if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
       call radar_spectrum(err,nbin,d_ds, rt_back(i_z),  back_spec_dia,layer_t,pressure,freq,&
@@ -372,6 +382,8 @@ module scatProperties
   end subroutine calc_scatProperties
 
   subroutine finalize_rt3_scatProperties()
+    use vars_index, only: i_x, i_y, i_z, i_f, i_h
+    use vars_rt, only: rt_kexttot
     implicit none
 
 

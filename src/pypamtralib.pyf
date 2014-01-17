@@ -289,7 +289,7 @@ python module pyPamtraLib ! in
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: d_1_arr
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_2_arr
             integer(kind=long_bn), allocatable,dimension(:) :: liq_ice_arr
-            character(len=15), allocatable,dimension(:) :: vel_size_mod_arr
+            character(len=30), allocatable,dimension(:) :: vel_size_mod_arr
             character(len=15), allocatable,dimension(:) :: dist_name_arr
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_4_arr
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_1_arr

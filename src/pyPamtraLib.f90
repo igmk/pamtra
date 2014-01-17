@@ -9,7 +9,7 @@
     use double_moments_module !double moments variables are stored here
     use report_module
     use descriptor_file
-    use vars_index, only: i_x, i_y, i_f
+    use vars_index, only: i_x, i_y, i_z, i_f, i_h
 
     implicit none
     character(40) :: gitHash, gitVersion
@@ -134,6 +134,8 @@
                       msg = 'Error in run_rt!'
                       call report(fatal, msg, nameOfRoutine)
                       errorstatus = err
+print*, "i_x, i_y, i_z, i_f, i_h"
+print*, i_x, i_y, i_z, i_f, i_h
                       return
                   end if
 

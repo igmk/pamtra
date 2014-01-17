@@ -162,7 +162,6 @@ module mie_spheres
 
 
     do ir = 1, nbins
-
         ndens_eff = ndens(ir)
         del_d_eff = del_d(ir)
 
@@ -241,8 +240,8 @@ module mie_spheres
     back_scatt = sumqback 
     albedo = scatter / extinction 
 
-      if (verbose >= 4) print*,"ir, extinction, scatter, back_scatt, albedo"
-      if (verbose >= 4) print*,ir, extinction, scatter, back_scatt, albedo
+      if (verbose >= 4) print*, "extinction, scatter, back_scatt, albedo"
+      if (verbose >= 4) print*,  extinction, scatter, back_scatt, albedo
        
     
     ! if the liq_ice function is not desired then leave now           

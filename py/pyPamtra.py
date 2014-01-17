@@ -40,8 +40,8 @@ class pamDescriptorFile(object):
   
          
   def __init__(self,parent):
-    self.names =np.array(["hydro_name", "as_ratio", "liq_ice", "rho_ms", "a_ms", "b_ms", "alpha_as", "beta_as", "moment_in", "nbin", "dist_name", "p_1", "p_2", "p_3", "p_4", "d_1", "d_2", "scat_name", "vel_size_mod","canting"])
-    self.types = ["S15",float,int,float,float,float,float,float,int,int,"S15",float,float,float,float,float,float, "S15", "S15",float]  
+    self.names = np.array(["hydro_name", "as_ratio", "liq_ice", "rho_ms", "a_ms", "b_ms", "alpha_as", "beta_as", "moment_in", "nbin", "dist_name", "p_1", "p_2", "p_3", "p_4", "d_1", "d_2", "scat_name", "vel_size_mod","canting"])
+    self.types = ["S15",float,int,float,float,float,float,float,int,int,"S15",float,float,float,float,float,float, "S15", "S30",float]  
     self.data = np.recarray((0,),dtype=zip(self.names, self.types))
     self.data4D = dict()
     self.nhydro = 0
@@ -132,15 +132,17 @@ class pamDescriptorFile(object):
     assert np.min(self.data["nbin"]) == np.max(self.data["nbin"])
 
     self.fs_nbin =  np.max(self.data["nbin"])
-        
-    self.dataFullSpec["rho_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
-    self.dataFullSpec["d_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
-    self.dataFullSpec["d_bound_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin+1,))
-    self.dataFullSpec["n_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
-    self.dataFullSpec["mass_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
-    self.dataFullSpec["area_ds"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
-    self.dataFullSpec["as_ratio"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
-    self.dataFullSpec["canting"] = np.ones(self.parent._shape4D+(self.fs_nbin,))
+    self.parent._shape5Dplus = (self.parent.p["ngridx"],self.parent.p["ngridy"],self.parent.p["max_nlyrs"],self.nhydro,self.fs_nbin+1)
+    self.parent._shape5D = (self.parent.p["ngridx"],self.parent.p["ngridy"],self.parent.p["max_nlyrs"],self.nhydro,self.fs_nbin)
+    
+    self.dataFullSpec["rho_ds"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["d_ds"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["d_bound_ds"] = np.zeros(self.parent._shape4D+(self.fs_nbin+1,))
+    self.dataFullSpec["n_ds"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["mass_ds"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["area_ds"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["as_ratio"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["canting"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
   
     #for name in self.names:
       #if name not in ["hydro_name","liq_ice","scat_name","vel_size_mod"]:
@@ -852,6 +854,9 @@ class pyPamtra(object):
     
     condition = condition.reshape(self._shape2D)
     
+    #make sure we did not removed everything!  
+    assert np.any(~condition)
+    
     #create a new shape!
     self.p["ngridx"] = np.sum(condition)
     self.p["ngridy"] = 1
@@ -885,6 +890,9 @@ class pyPamtra(object):
       if key == "d_bound_ds": shape5D = self._shape5Dplus
       else: shape5D = self._shape5D
       self.df.dataFullSpec[key] = self.df.dataFullSpec[key][condition].reshape(shape5D)
+      
+
+      
     return
 
   def rescaleHeights(self,new_hgt_lev):
@@ -1095,7 +1103,8 @@ class pyPamtra(object):
     self.set["freqs"] = freqs
     self.set["nfreqs"] = len(freqs)
     assert self.set["nfreqs"] > 0
-
+    assert np.prod(self._shape2D)>0
+    
     if checkData: self._checkData()
 
     fortResults, fortObject = pyPamtraLibWrapper.PamtraFortranWrapper(self.set,self.nmlSet,self.df,self.p)
@@ -1129,7 +1138,8 @@ class pyPamtra(object):
     self.set["freqs"] = freqs
     self.set["nfreqs"] = len(freqs)
     assert self.set["nfreqs"] > 0
-
+    assert np.prod(self._shape2D)>0
+    
     if checkData: self._checkData()
 
     jobs = list()

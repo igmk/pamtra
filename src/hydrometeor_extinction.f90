@@ -4,7 +4,13 @@ subroutine hydrometeor_extinction(errorstatus)
   use vars_atmosphere, only: atmo_nlyrs, atmo_temp, atmo_q_hum,&
       atmo_press,&
       atmo_delta_hgt_lev, atmo_hydro_q, atmo_hydro_reff, atmo_hydro_n
-  use vars_rt, only:rt_hydros_present
+  use vars_rt, only: &
+      rt_hydros_present, &
+      rt_kexttot,&
+      rt_back, &
+      rt_scattermatrix, &
+      rt_extmatrix, &
+      rt_emisvec
   use vars_hydroFullSpec, only: &
       hydrofs_rho_ds, &
       hydrofs_d_ds, &
@@ -19,7 +25,9 @@ subroutine hydrometeor_extinction(errorstatus)
       save_psd, &
       hydro_fullSpec, &
       passive, &
-      active          
+      active, &
+      nstokes, &
+      nummu
   use constants
   use descriptor_file
   use drop_size_dist
@@ -80,6 +88,7 @@ subroutine hydrometeor_extinction(errorstatus)
 
         density2scat(:) = hydrofs_rho_ds(i_x,i_y,i_z,i_h,:)
         diameter2scat(:) = hydrofs_d_ds(i_x,i_y,i_z,i_h,:)
+        d_ds(:) = hydrofs_d_ds(i_x,i_y,i_z,i_h,:)
         d_bound_ds(:) = hydrofs_d_bound_ds(i_x,i_y,i_z,i_h,:)
         n_ds(:) = hydrofs_n_ds(i_x,i_y,i_z,i_h,:)
         mass_ds(:) = hydrofs_mass_ds(i_x,i_y,i_z,i_h,:)
