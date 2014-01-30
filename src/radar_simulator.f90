@@ -19,7 +19,7 @@ delta_h)
     use settings
     use constants
     use radar_moments, only: radar_calc_moments
-    use vars_atmosphere, only: atmo_airturb
+    use vars_atmosphere, only: atmo_airturb, atmo_radar_prop
     use vars_output, only: out_radar_spectra, out_radar_snr, out_radar_vel,out_radar_hgt, &
     out_radar_moments, out_radar_slopes, out_radar_edges, out_radar_quality, out_ze, out_att_hydro !output of the radar simulator
     use report_module
@@ -76,22 +76,17 @@ delta_h)
 
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
-    if (ANY(ISNAN(particle_spectrum))) then
-	print*,particle_spectrum
-	errorstatus = fatal
-	msg = "got nan in values in backscattering spectrum"
-	call report(errorstatus, msg, nameOfRoutine)
-	return
-    end if
-
-    if (ISNAN(back) .or. back < 0.d0) then
-	print*,back
-	errorstatus = fatal
-	msg = "got nan or negative vaue in linear Ze"
-	call report(errorstatus, msg, nameOfRoutine)
-	return
-    end if
-      
+    call assert_false(err,(ANY(ISNAN(particle_spectrum))),&
+        "got nan in values in backscattering spectrum")
+    call assert_false(err,(ISNAN(back) .or. back < 0.d0),&
+        "got nan or negative value in linear Ze") 
+    if (err > 0) then
+      errorstatus = fatal
+      msg = "assertation error"
+      call report(errorstatus, msg, nameOfRoutine)
+      return
+    end if   
+     
     frequency = freqs(i_f)
     ! get |K|**2 and lambda
 
@@ -115,8 +110,27 @@ delta_h)
 
 
         !calculate the noise level depending on range:
-         radar_Pnoise = radar_Pnoise0 + (20 * log10(out_radar_hgt(i_x,i_y,i_z)))
-         radar_Pnoise = 10**(0.1*radar_Pnoise)
+        ! did not find any value in the atmo arrays, take the one from namelist file!
+        if (ANY(ISNAN(atmo_radar_prop(i_x,i_y,:)))) then
+          radar_Pnoise = radar_Pnoise0 + (20 * log10(out_radar_hgt(i_x,i_y,i_z)))
+          radar_Pnoise = 10**(0.1*radar_Pnoise)
+          if (verbose >= 3) print*, "took radar noise from nml file", radar_Pnoise
+        else
+          ! take the one from teh atmo files
+          radar_Pnoise = 10**(0.1*atmo_radar_prop(i_x,i_y,1)) * &
+            out_radar_hgt(i_x,i_y,i_z)**2 + &
+            10**(0.1*atmo_radar_prop(i_x,i_y,2))
+          if (verbose >= 3) print*, "took radar noise from atmo array", radar_Pnoise
+        end if
+        call assert_true(err,(radar_Pnoise > 0),&
+            "nan or negative radar_Pnoise") 
+        if (err > 0) then
+          errorstatus = fatal
+          msg = "assertation error"
+          call report(errorstatus, msg, nameOfRoutine)
+          return
+        end if   
+
 
         !get delta velocity
         del_v = (radar_max_V-radar_min_V) / radar_nfft ![m/s]

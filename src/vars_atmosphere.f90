@@ -91,6 +91,8 @@ module vars_atmosphere
        atmo_hydro_reff_column, &
        atmo_hydro_n_column
 
+  !trashbin for time dependent radar properties, first col is radarnoise_factor, second, radarnoise_offset
+  real(kind=dbl), allocatable, dimension(:,:,:) :: atmo_radar_prop
   contains
 !##################################################################################################################################
   subroutine screen_input(errorstatus)
@@ -242,6 +244,8 @@ module vars_atmosphere
     allocate(atmo_hydro_n(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs,n_hydro))
     allocate(atmo_hydro_n_column(atmo_ngridx,atmo_ngridy,n_hydro))
 
+    allocate(atmo_radar_prop(atmo_ngridx,atmo_ngridy,2))
+
 
     atmo_month(:,:) = "na"
     atmo_day(:,:) = "na"
@@ -287,6 +291,8 @@ module vars_atmosphere
     atmo_nlyrs(:,:) = -9999
     atmo_unixtime(:,:) = -9999
 
+    atmo_radar_prop(:,:,:) = nan()
+  
     errorstatus = err
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
     return
@@ -337,6 +343,7 @@ module vars_atmosphere
     if (allocated(atmo_wind10u)) deallocate(atmo_wind10u)
     if (allocated(atmo_wind10v)) deallocate(atmo_wind10v)
     if (allocated(atmo_obs_height)) deallocate(atmo_obs_height)
+    if (allocated(atmo_radar_prop)) deallocate(atmo_radar_prop)
 
   end subroutine deallocate_atmosphere_vars
 !##################################################################################################################################
@@ -959,6 +966,7 @@ module vars_atmosphere
     print*, "atmo_wind10u", atmo_wind10u
     print*, "atmo_wind10v", atmo_wind10v
     print*, "atmo_obs_height", atmo_obs_height
+    print*, "atmo_radar_prop", atmo_radar_prop
 
   end subroutine print_vars_atmosphere
 

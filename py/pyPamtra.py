@@ -179,7 +179,7 @@ class pyPamtra(object):
   
   def _prepareNmlUnitsDimensions(self):
   
-    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb"]
+    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb","radar_prop"]
   
     self.nmlSet = dict() #settings which are required for the nml file. keeping the order is important for fortran
     self.nmlSet["hydro_threshold"]=  1.e-10   # [kg/kg] 
@@ -291,6 +291,8 @@ class pyPamtra(object):
     self.dimensions["hydro_reff"] = ["ngridx","ngridy","max_nlyrs","nhydro"]
     
     self.dimensions["radar_hgt"] = ["ngridx","ngridy","max_nlyrs"]
+    self.dimensions["radar_prop"] = ["ngridx","ngridy","2"]
+
     self.dimensions["Ze"] = ["gridx","gridy","lyr","frequency"]
     self.dimensions["Att_hydros"] = ["gridx","gridy","lyr","frequency"]
     self.dimensions["Att_atmo"] = ["gridx","gridy","lyr","frequency"]
@@ -326,7 +328,8 @@ class pyPamtra(object):
     self.units["temp_lev"] = "K"
     self.units["p_lev"] = "Pa"
     self.units["relhum_lev"] = "1"
-    
+    self.units["rdar_prop"] = "dBz"
+
     self.units["hydro_q"] = "kg/kg"
     self.units["hydro_n"] = "-"
     self.units["hydro_reff"] = "m"
@@ -429,7 +432,8 @@ class pyPamtra(object):
     self.p["obs_height"] = np.ones(self._shape2D) * np.nan
     self.p["nlyrs"] = np.ones(self._shape2D,dtype=int) * missingIntNumber
     self.p["iwv"] = np.ones(self._shape2D) * np.nan
-    
+    self.p["radar_prop"] = np.ones(self._shape2D+tuple([2])) * np.nan
+
     self.p["hydro_q"] = np.ones(self._shape4D)  * np.nan
     self.p["hydro_n"] = np.ones(self._shape4D) * np.nan
     self.p["hydro_reff"] = np.ones(self._shape4D) * np.nan
@@ -566,7 +570,8 @@ class pyPamtra(object):
     self.p["swp"] = np.zeros(self._shape2D)
     self.p["gwp"] = np.zeros(self._shape2D)
     self.p["hwp"] = np.zeros(self._shape2D)
-    
+    self.p["radar_prop"] = np.ones(self._shape2D+tuple([2])) * np.nan
+
     self.p["hgt_lev"] = np.zeros(self._shape3Dplus)
     self.p["temp_lev"] = np.zeros(self._shape3Dplus)
     self.p["press_lev"] = np.zeros(self._shape3Dplus)
@@ -814,7 +819,11 @@ class pyPamtra(object):
         
     if "obs_height" in kwargs.keys():
       self.p["obs_height"] = kwargs["obs_height"].reshape(self._shape2D)
-
+      
+    if "radar_prop" in kwargs.keys():
+      self.p["radar_prop"] = kwargs["radar_prop"].reshape(self._shape2D+tuple([2]))
+    else:
+      self.p["radar_prop"] = np.zeros(self._shape2D+tuple([2]))*np.nan
 
     #clean up: remove all nans
     for key in self.p.keys():
@@ -891,6 +900,7 @@ class pyPamtra(object):
       else: shape5D = self._shape5D
       self.df.dataFullSpec[key] = self.df.dataFullSpec[key][condition].reshape(shape5D)
       
+    if "radar_prop" in self.p.keys(): self.p["radar_prop"] = self.p[key]["radar_prop"].reshape(self._shape2D+tuple([2]))
 
       
     return
@@ -1034,7 +1044,7 @@ class pyPamtra(object):
   def createFullProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
       obs_height,
       hgt_lev,press_lev,temp_lev,relhum_lev,
-      hydro_q,hydro_n,hydro_reff):
+      hydro_q,hydro_n,hydro_reff,radar_prop):
     
     '''
     create comple PAmtra Profile
@@ -1089,6 +1099,8 @@ class pyPamtra(object):
     self.p["temp_lev"] = temp_lev.reshape(self._shape3Dplus)
     self.p["press_lev"] = press_lev.reshape(self._shape3Dplus)
     self.p["relhum_lev"] = relhum_lev.reshape(self._shape3Dplus)    
+    
+    self.p["radar_prop"] = radar_prop.reshape(self._shape2D)    
     return   
     
   def runPamtra(self,freqs,checkData=True):
@@ -1118,7 +1130,7 @@ class pyPamtra(object):
     return
 
     
-  def runParallelPamtra(self,freqs,pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto",checkData=True,timeout=86400):
+  def runParallelPamtra(self,freqs,pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto",checkData=True,timeout=None):
     '''
     run Pamtra from python
     '''
@@ -1182,7 +1194,11 @@ class pyPamtra(object):
 
     print "waiting for all jobs to finish"
     for jj,job in enumerate(jobs):
-      self._joinResults(job.get(timeout=timeout))
+      try: self._joinResults(job.get(timeout=timeout))
+      except: 
+        pool.terminate()
+        pool.join()
+        print "KILLED pool due to timeout of job", jj+1
       print "got job", jj+1
 
     self.r["nmlSettings"] = self.nmlSet

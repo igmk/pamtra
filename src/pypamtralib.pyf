@@ -100,6 +100,7 @@ python module pyPamtraLib ! in
             real(kind=dbl), allocatable,dimension(:,:) :: atmo_groundtemp
             real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_hydro_reff_column
             real(kind=sgl) :: cwp
+            real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_radar_prop
             real(kind=dbl), allocatable,dimension(:,:) :: atmo_iwv
             integer(kind=long_bn), allocatable,dimension(:,:) :: atmo_model_i
             integer(kind=long_bn), allocatable,dimension(:,:) :: atmo_model_j
@@ -337,7 +338,7 @@ python module pyPamtraLib ! in
             end subroutine print_hydrofs_vars
         end module vars_hydrofullspec
         module pypamtralib ! in :pyPamtraLib:pyPamtraLib.f90
-            use vars_index, only: i_f,i_y,i_x
+            use vars_index, only: i_f,i_h,i_z,i_y,i_x
             use descriptor_file
             use kinds, only: long
             use vars_jacobian, only: deallocate_jacobian_vars,allocate_jacobian_vars

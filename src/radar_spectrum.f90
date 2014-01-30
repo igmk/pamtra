@@ -175,7 +175,7 @@ subroutine radar_spectrum(&
 !             print*, jj,(diameter_spec_cp(jj+1)-diameter_spec_cp(jj)), (vel_spec(jj+1)-vel_spec(jj))
 !             errorstatus = fatal
             msg = "radar_spectrum: dD_dU is infinitive"
-            call report(warning, msg, nameOfRoutine)
+            if (.not. hydro_fullspec) call report(warning, msg, nameOfRoutine)
 !             return
             dD_dU(jj) = 0.d0
         end if

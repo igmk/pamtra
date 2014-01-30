@@ -3,7 +3,7 @@ ARCH=$(shell uname -s)
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
-FC=gfortran
+FC=gfortran 
 CC=gcc
 FCFLAGS=-c -fPIC -Wunused -O2 #-I../include/ uninitialized
 ifeq ($(ARCH),Darwin)
