@@ -864,7 +864,7 @@ class pyPamtra(object):
     condition = condition.reshape(self._shape2D)
     
     #make sure we did not removed everything!  
-    assert np.any(~condition)
+    assert np.sum(condition)>=1
     
     #create a new shape!
     self.p["ngridx"] = np.sum(condition)
@@ -900,7 +900,7 @@ class pyPamtra(object):
       else: shape5D = self._shape5D
       self.df.dataFullSpec[key] = self.df.dataFullSpec[key][condition].reshape(shape5D)
       
-    if "radar_prop" in self.p.keys(): self.p["radar_prop"] = self.p[key]["radar_prop"].reshape(self._shape2D+tuple([2]))
+    if "radar_prop" in self.p.keys(): self.p["radar_prop"] = self.p["radar_prop"][condition].reshape(self._shape2D+tuple([2]))
 
       
     return

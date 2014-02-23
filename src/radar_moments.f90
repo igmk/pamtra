@@ -15,7 +15,8 @@ module radar_moments
   implicit none
 
   contains 
-subroutine radar_calc_moments(errorstatus,radar_nfft,radar_spectrum_in,noise_model,radar_spectrum_out,moments,slope,edge,quality)
+subroutine radar_calc_moments(errorstatus,radar_nfft,radar_spectrum_in,noise_model,&
+  radar_spectrum_out,moments,slope,edge,quality,noise)
 
     ! written by P. Kollias, translated to Fortran by M. Maahn (12.2012)
     ! calculate the 0th -4th moment and the slopes of the peak of a radar spectrum!
@@ -36,11 +37,12 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_spectrum_in,noise_mod
     real(kind=dbl), dimension(0:4), intent(out):: moments
     real(kind=dbl), dimension(2), intent(out):: slope
     real(kind=dbl), dimension(2), intent(out):: edge
+    real(kind=dbl), intent(out):: noise
     integer, intent(out) :: quality
     real(kind=dbl), dimension(radar_nPeaks+1,radar_nfft):: radar_spectrum_arr
     real(kind=dbl), dimension(radar_nfft):: radar_spectrum_only_noise
     real(kind=dbl), dimension(radar_nfft):: radar_spectrum_4mom
-    real(kind=dbl) :: del_v, noise, specMax, noiseMax
+    real(kind=dbl) :: del_v, specMax, noiseMax
     integer :: spec_max_ii, spec_max_ii_a(1), right_edge,left_edge, &
     spec_max_pp, right_edge_pp, left_edge_pp, ii, jj
     real(kind=dbl), dimension(radar_nfft) :: spectra_velo, specLog
@@ -248,6 +250,9 @@ specMax = 10*log10(MAXVAL(radar_spectrum_in)) !without any noise removed!
     if (verbose >= 5) print*, "radar_spectrum_smooth", SHAPE(radar_spectrum_4mom),  radar_spectrum_4mom
     if (verbose >= 5) print*, "spectra_velo", SHAPE(spectra_velo), spectra_velo
 ! 
+    !noise for the output
+    noise = noise * radar_nfft
+
     call assert_true(err,radar_noise_distance_factor>=1,&
         "radar_noise_distance_factor too small")
     call assert_false(err,any(ISNAN(slope)),&

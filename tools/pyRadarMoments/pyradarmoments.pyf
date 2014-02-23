@@ -57,11 +57,12 @@ python module pyRadarMoments ! in
             character(len=1), parameter,optional :: quad_type='l'
             real(kind=dbl) :: radar_k2
             integer(kind=long_bn) :: radar_npeaks
+            logical :: add_obs_height_to_layer
             real(kind=dbl) :: radar_airmotion_step_vmin
             character(len=100) :: crm_data2
             character(len=100) :: crm_constants
             integer(kind=long_bn) :: radar_nfft_aliased
-            character(len=3) :: gas_mod
+            logical :: hydro_limit_density_area
             real(kind=dbl) :: radar_noise_distance_factor
             logical :: radar_save_noise_corrected_spectra
             integer(kind=long_bn) :: n_moments
@@ -71,6 +72,7 @@ python module pyRadarMoments ! in
             character(len=100) :: output_path
             integer, parameter,optional :: noutlevels=2
             integer, parameter,optional :: numazimuths=1
+            character(len=3) :: gas_mod
             character(len=18) :: freq_str
             character(len=20) :: file_desc
             integer(kind=long_bn) :: nfrq
@@ -111,6 +113,7 @@ python module pyRadarMoments ! in
             logical :: radar_smooth_spectrum
             character(len=10) :: input_type
             integer, parameter,optional :: maxleg=200
+            logical :: hydro_fullspec
             real(kind=dbl) :: emissivity
             subroutine settings_read(errorstatus) ! in :pyRadarMoments:settings.f90:settings
                 use kinds
@@ -135,7 +138,7 @@ python module pyRadarMoments ! in
             use kinds
             use constants
             use settings, only: radar_min_v,radar_min_spectral_snr,radar_use_hildebrand,radar_smooth_spectrum,radar_no_ave,radar_noise_distance_factor,radar_max_v,radar_npeaks
-            subroutine radar_calc_moments(errorstatus,radar_nfft,radar_spectrum_in,noise_model,radar_spectrum_out,moments,slope,edge,quality) ! in :pyRadarMoments:radar_moments.f90:radar_moments
+            subroutine radar_calc_moments(errorstatus,radar_nfft,radar_spectrum_in,noise_model,radar_spectrum_out,moments,slope,edge,quality,noise) ! in :pyRadarMoments:radar_moments.f90:radar_moments
                 integer(kind=long_bn) intent(out) :: errorstatus
                 integer, optional,intent(in),check(len(radar_spectrum_in)>=radar_nfft),depend(radar_spectrum_in) :: radar_nfft=len(radar_spectrum_in)
                 real(kind=dbl) dimension(radar_nfft),intent(in) :: radar_spectrum_in
@@ -145,6 +148,7 @@ python module pyRadarMoments ! in
                 real(kind=dbl) dimension(2),intent(out) :: slope
                 real(kind=dbl) dimension(2),intent(out) :: edge
                 integer intent(out) :: quality
+                real(kind=dbl) intent(out) :: noise
             end subroutine radar_calc_moments
         end module radar_moments
     end interface 

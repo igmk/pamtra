@@ -42,6 +42,7 @@ delta_h)
     real(kind=dbl), dimension(0:4):: moments
     real(kind=dbl), dimension(2):: slope
     real(kind=dbl), dimension(2):: edge
+    real(kind=dbl) :: noise_out
     real(kind=dbl):: SNR, del_v, ss, K2, wavelength, Ze_back, dielec_water, K, &
     min_V_aliased, max_V_aliased, receiver_uncertainty, radar_Pnoise, frequency
     integer :: ii, tt, turbLen,alloc_status,ts_imin, ts_imax, startI, stopI
@@ -114,13 +115,15 @@ delta_h)
         if (ANY(ISNAN(atmo_radar_prop(i_x,i_y,:)))) then
           radar_Pnoise = radar_Pnoise0 + (20 * log10(out_radar_hgt(i_x,i_y,i_z)))
           radar_Pnoise = 10**(0.1*radar_Pnoise)
-          if (verbose >= 3) print*, "took radar noise from nml file", radar_Pnoise
+          if (verbose >= 3) print*, "took radar noise from nml file", 10*log10(radar_Pnoise), &
+              radar_Pnoise0
         else
           ! take the one from teh atmo files
           radar_Pnoise = 10**(0.1*atmo_radar_prop(i_x,i_y,1)) * &
             out_radar_hgt(i_x,i_y,i_z)**2 + &
             10**(0.1*atmo_radar_prop(i_x,i_y,2))
-          if (verbose >= 3) print*, "took radar noise from atmo array", radar_Pnoise
+          if (verbose >= 3) print*, "took radar noise from atmo array", 10*log10(radar_Pnoise), &
+                  atmo_radar_prop(i_x,i_y,1), atmo_radar_prop(i_x,i_y,2)
         end if
         call assert_true(err,(radar_Pnoise > 0),&
             "nan or negative radar_Pnoise") 
@@ -299,7 +302,7 @@ delta_h)
 
         call radar_calc_moments(err,radar_nfft,&
           noise_turb_spectra,radar_Pnoise,noise_removed_turb_spectra,&
-          moments,slope,edge,quality_2ndPeak)
+          moments,slope,edge,quality_2ndPeak,noise_out)
 	if (err /= 0) then
 	  msg = 'error in radar_calc_moments!'
 	  call report(err, msg, nameOfRoutine)

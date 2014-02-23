@@ -136,7 +136,7 @@ contains
             msg = 'error in dsort!'
             call report(err, msg, nameOfRoutine)
             errorstatus = err
-            stop !return
+            return
         end if       
       end if
 
@@ -168,7 +168,7 @@ contains
           msg = 'error in dsort!'
           call report(err, msg, nameOfRoutine)
           errorstatus = err
-          stop !return
+          return
       end if     
 
       call average_spectra(err,nx1+nx2+1,nx2+1,x12_sorted,y12_sorted,x2_shift,y2)
