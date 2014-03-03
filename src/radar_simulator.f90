@@ -76,7 +76,9 @@ delta_h)
     end interface
 
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
-
+    err = 0
+    
+    
     call assert_false(err,(ANY(ISNAN(particle_spectrum))),&
         "got nan in values in backscattering spectrum")
     call assert_false(err,(ISNAN(back) .or. back < 0.d0),&
@@ -112,7 +114,7 @@ delta_h)
 
         !calculate the noise level depending on range:
         ! did not find any value in the atmo arrays, take the one from namelist file!
-        if (ANY(ISNAN(atmo_radar_prop(i_x,i_y,:)))) then
+        if (ANY(ISNAN(atmo_radar_prop(i_x,i_y,:))) .or. .not. (all(atmo_radar_prop(i_x,i_y,:) >= 0.))) then
           radar_Pnoise = radar_Pnoise0 + (20 * log10(out_radar_hgt(i_x,i_y,i_z)))
           radar_Pnoise = 10**(0.1*radar_Pnoise)
           if (verbose >= 3) print*, "took radar noise from nml file", 10*log10(radar_Pnoise), &
