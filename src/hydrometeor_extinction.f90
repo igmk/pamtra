@@ -98,6 +98,13 @@ subroutine hydrometeor_extinction(errorstatus)
 
         pressure = atmo_press(i_x,i_y,i_z)
         layer_t = atmo_temp(i_x,i_y,i_z)
+        
+        if (PRODUCT(SHAPE(descriptor_canting_arr)) == n_hydro) then
+          dsd_canting   = descriptor_canting_arr(1,1,1,i_h)
+        else
+          dsd_canting   = descriptor_canting_arr(i_x,i_y,i_z,i_h)
+        end if         
+        
         if (SUM(n_ds) > 0.d0) then
           rt_hydros_present(i_z) = .true.
         else
