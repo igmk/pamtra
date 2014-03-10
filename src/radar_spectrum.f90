@@ -55,6 +55,14 @@ subroutine radar_spectrum(&
     use report_module
     use dia2vel
     use rescale_spec
+    use vars_output, only:  &
+      out_debug_diameter, &
+      out_debug_back_of_d, &
+      out_debug_radarvel, &
+      out_debug_radarback, &
+      out_debug_radarback_wturb, &
+      out_debug_radarback_wturb_wnoise
+      
     implicit none
 
     integer,intent(in) ::  nbins 
@@ -164,6 +172,26 @@ subroutine radar_spectrum(&
     back_spec_ref = (1d0/ (K2*pi**5) ) * back_spec * (wavelength)**4 ![m⁶/m⁴]
     back_spec_ref =  back_spec_ref * 1d18 !now non-SI: [mm⁶/m³/m]
 
+    !spetial output for testing the radar simulator
+    if (verbose == -666) then
+      print*, "##########################################"
+      print*, "Diameter (D)"
+      print*, diameter_spec
+      print*, "##########################################"
+      print*, "back_spec_ref (D) [mm⁶/m³/m]"
+      print*, back_spec_ref
+      print*, "##########################################"
+      if (nbins>300) then
+            msg = 'too many bins for debug output'
+            call report(err, msg, nameOfRoutine)
+            errorstatus = err
+          return
+      end if
+      out_debug_diameter(:nbins) = diameter_spec
+      out_debug_back_of_d(:nbins) = back_spec_ref
+    end if    
+    
+    
     Ze = 1d18* (1d0/ (K2*pi**5) ) * back * (wavelength)**4
 
 
@@ -303,7 +331,25 @@ subroutine radar_spectrum(&
     if (verbose >= 4) print*," Ze SUM(back_vel_spec_ext)*del_v_model",10*log10(SUM(back_vel_spec_ext*del_v_model))
     if (verbose >= 4) print*," Ze SUM(particle_spec)*del_v_radar",10*log10(SUM(particle_spec)*del_v_radar)
 
+    !spetial output for testing the radar simulator
+    if (verbose == -666) then
+      print*, "##########################################"
+      print*, "velocity (v)"
+      print*, out_radar_velo_aliased
+      print*, "##########################################"
+      print*, "particle_spec without turbulence (v) [mm⁶/m³/(m/s)]"
+      print*, particle_spec
+      print*, "##########################################"
+      
+      if (radar_aliasing_nyquist_interv /= 0) then
+            msg = 'radar_aliasing_nyquist_interv has to be 0 for debug output'
+            call report(err, msg, nameOfRoutine)
+            errorstatus = err
+        return
+      end if
+      out_debug_radarback(:) = particle_spec(:)
 
+    end if  
 
     errorstatus = err
     if (verbose >= 2) call report(info,'End of ', nameOfRoutine)

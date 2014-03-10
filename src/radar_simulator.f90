@@ -21,7 +21,13 @@ delta_h)
     use radar_moments, only: radar_calc_moments
     use vars_atmosphere, only: atmo_airturb, atmo_radar_prop
     use vars_output, only: out_radar_spectra, out_radar_snr, out_radar_vel,out_radar_hgt, &
-    out_radar_moments, out_radar_slopes, out_radar_edges, out_radar_quality, out_ze, out_att_hydro !output of the radar simulator
+    out_radar_moments, out_radar_slopes, out_radar_edges, out_radar_quality, out_ze, out_att_hydro, & !output of the radar simulator
+      out_debug_diameter, &
+      out_debug_back_of_d, &
+      out_debug_radarvel, &
+      out_debug_radarback, &
+      out_debug_radarback_wturb, &
+      out_debug_radarback_wturb_wnoise
     use report_module
     use vars_index, only: i_x,i_y, i_z, i_f
 
@@ -89,6 +95,7 @@ delta_h)
       call report(errorstatus, msg, nameOfRoutine)
       return
     end if   
+     
      
     frequency = freqs(i_f)
     ! get |K|**2 and lambda
@@ -203,8 +210,7 @@ delta_h)
         !       print*, "WARNING: radar_aliasing_nyquist_interv too small to handle aliasing effects, increase it!"
         !       stop
         !     end if
-    
-    
+
         quailty_aliasing = 0
         !lets look for aliasing effects. if we calculated radar_aliasing_nyquist_interv for a broader spectrum than necessary, fold it again:
         if (radar_aliasing_nyquist_interv > 0) then
@@ -232,7 +238,20 @@ delta_h)
             end if
         end if
 
-
+        !spetial output for testing the radar simulator
+        if (verbose == -666) then
+          print*, "##########################################"
+          print*, "velocity (m/s)"
+          print*, spectra_velo
+          print*, "##########################################"
+          print*, "particle_spec with turbulence (v) [mm⁶/m³/(m/s)] ", MAXVAL(turb_spectra_aliased)
+          print*, turb_spectra_aliased
+          print*, "##########################################"
+      out_debug_radarvel(:) = spectra_velo(:) 
+      out_debug_radarback_wturb(:) = turb_spectra_aliased
+      
+        end if  
+        
         !get the SNR
         SNR = 10.d0*log10(Ze_back/radar_Pnoise)
         !this here is for scaling, if we have now a wrong Ze due to all the turbulence, rescaling etc...
@@ -267,6 +286,16 @@ delta_h)
             end if
         end if
 
+        
+        !spetial output for testing the radar simulator
+        if (verbose == -666) then
+          print*, "##########################################"
+          print*, "particle_spec with turbulence and noise (v) [mm⁶/m³/(m/s)] ", MAXVAL(noise_turb_spectra)
+          print*, noise_turb_spectra
+          print*, "##########################################"
+          out_debug_radarback_wturb_wnoise(:) = noise_turb_spectra(:)
+        end if  
+        
         !apply spectral resolution
         noise_turb_spectra = noise_turb_spectra * del_v !now [mm⁶/m³]
 

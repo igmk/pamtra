@@ -5,6 +5,7 @@ module vars_output
 
   use kinds
   use report_module
+  use settings, only: radar_nfft
   implicit none
 
   save
@@ -37,6 +38,15 @@ module vars_output
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_mass
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_area
 
+  real(kind=dbl), dimension(300) :: out_debug_diameter
+  real(kind=dbl), dimension(300) :: out_debug_back_of_d
+  real(kind=dbl), allocatable, dimension(:) :: out_debug_radarvel
+  real(kind=dbl), allocatable, dimension(:) :: out_debug_radarback
+  real(kind=dbl), allocatable, dimension(:) :: out_debug_radarback_wturb
+  real(kind=dbl), allocatable, dimension(:) :: out_debug_radarback_wturb_wnoise
+
+  
+  
   contains
 
   subroutine allocate_output_vars(errorstatus, no_allocated_lyrs)
@@ -47,7 +57,7 @@ module vars_output
       passive,&
       radar_mode,&
       save_psd,&
-      in_python,&
+!       in_python,&
       nstokes,&
       nfrq,&
       nummu,&
@@ -167,6 +177,19 @@ module vars_output
 
     end if
 
+    !debuging stuff, only deallocated if necessary:
+    if (allocated(out_debug_radarvel)) deallocate(out_debug_radarvel)
+    if (allocated(out_debug_radarback)) deallocate(out_debug_radarback)
+    if (allocated(out_debug_radarback_wturb)) deallocate(out_debug_radarback_wturb)
+    if (allocated(out_debug_radarback_wturb_wnoise)) deallocate(out_debug_radarback_wturb_wnoise)
+    
+    allocate(out_debug_radarvel(radar_nfft))
+    allocate(out_debug_radarback(radar_nfft))
+    allocate(out_debug_radarback_wturb(radar_nfft))
+    allocate(out_debug_radarback_wturb_wnoise(radar_nfft))
+    out_debug_diameter(:) = 0.d0
+    out_debug_back_of_d(:) = 0.d0
+    
     errorstatus = err
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
     return

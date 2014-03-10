@@ -47,28 +47,35 @@ python module pyPamtraLib ! in
         module vars_output ! in :pyPamtraLib:vars_output.f90
             use report_module
             use kinds
+            use settings, only: radar_nfft
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_edges
+            real(kind=dbl), allocatable,dimension(:) :: out_debug_radarvel
             real(kind=dbl), allocatable,dimension(:) :: out_radar_vel
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_att_hydro
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_slopes
-            integer, allocatable,dimension(:,:,:,:) :: out_radar_quality
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_moments
+            real(kind=dbl), allocatable,dimension(:) :: out_debug_radarback_wturb_wnoise
             real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_tb
             real(kind=dbl), allocatable,dimension(:,:,:) :: out_radar_hgt
             real(kind=dbl), allocatable,dimension(:) :: out_angles_deg
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_area
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_ze
+            real(kind=dbl) dimension(300) :: out_debug_back_of_d
+            real(kind=dbl), allocatable,dimension(:) :: out_debug_radarback_wturb
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_area
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_radar_snr
+            real(kind=dbl) dimension(300) :: out_debug_diameter
+            integer, allocatable,dimension(:,:,:,:) :: out_radar_quality
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_mass
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_d
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_spectra
+            real(kind=dbl), allocatable,dimension(:) :: out_debug_radarback
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_att_atmo
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_n
             subroutine allocate_output_vars(errorstatus,no_allocated_lyrs) ! in :pyPamtraLib:vars_output.f90:vars_output
                 use vars_atmosphere
                 use descriptor_file, only: nbin_arr,n_hydro
                 use mod_io_strings
-                use settings, only: write_nc,nstokes,radar_nfft,in_python,radar_mode,nummu,passive,noutlevels,nfrq,active,save_psd
+                use settings, only: ,write_nc,radar_mode,passive,active,save_psd
                 integer(kind=long_bn) intent(out) :: errorstatus
                 integer intent(in) :: no_allocated_lyrs
             end subroutine allocate_output_vars
