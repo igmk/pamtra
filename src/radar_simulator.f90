@@ -19,7 +19,7 @@ delta_h)
     use settings
     use constants
     use radar_moments, only: radar_calc_moments
-    use vars_atmosphere, only: atmo_airturb, atmo_radar_prop
+    use vars_atmosphere, only: atmo_airturb, atmo_radar_prop, atmo_lat, atmo_lon
     use vars_output, only: out_radar_spectra, out_radar_snr, out_radar_vel,out_radar_hgt, &
     out_radar_moments, out_radar_slopes, out_radar_edges, out_radar_quality, out_ze, out_att_hydro, & !output of the radar simulator
       out_debug_diameter, &
@@ -51,7 +51,7 @@ delta_h)
     real(kind=dbl) :: noise_out
     real(kind=dbl):: SNR, del_v, ss, K2, wavelength, Ze_back, dielec_water, K, &
     min_V_aliased, max_V_aliased, receiver_uncertainty, radar_Pnoise, frequency
-    integer :: ii, tt, turbLen,alloc_status,ts_imin, ts_imax, startI, stopI
+    integer :: ii, tt, turbLen,alloc_status,ts_imin, ts_imax, startI, stopI, seed
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
@@ -70,12 +70,12 @@ delta_h)
             REAL(kind=dbl), intent(out), DIMENSION(M+N-1) :: Y
         end subroutine convolution
 
-        subroutine random(errorstatus,n, pseudo, x_noise)
+        subroutine random(errorstatus,n, seedval, x_noise)
             use kinds
             implicit none
 	    integer(kind=long), intent(out) :: errorstatus
             integer, intent(in) :: n
-            logical, intent(in) :: pseudo
+            integer, intent(in) :: seedval
             real(kind=dbl), intent(out), dimension(n) :: x_noise
         end subroutine random
   
@@ -267,7 +267,13 @@ delta_h)
 
             !get noise. if jacobian_mode, random number generator is always initiated with the same number
             if (verbose > 2) print*, "get noise"
-            call random(err,radar_no_Ave*radar_nfft,jacobian_mode,x_noise)
+            if (randomseed == -1) then
+              !get it from lat lon
+              seed = INT(ABS((atmo_lat(i_x,i_y) * atmo_lon(i_x,i_y) * 1000)))
+            else
+              seed = randomseed
+	    end if
+	    call random(err,radar_no_Ave*radar_nfft,seed,x_noise)
 	    if (err /= 0) then
 		msg = 'error in random!'
 		call report(err, msg, nameOfRoutine)
@@ -314,7 +320,7 @@ delta_h)
         !apply a receiver uncertainty:
       if (radar_receiver_uncertainty_std /= 0) then
         !get random
-        call random(err,2,jacobian_mode,rand_number)
+        call random(err,2,seed,rand_number)
         if (err /= 0) then
             msg = 'error in random!'
             call report(err, msg, nameOfRoutine)

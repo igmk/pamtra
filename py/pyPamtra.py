@@ -205,6 +205,7 @@ class pyPamtra(object):
     self.nmlSet["active"]= True
     self.nmlSet["passive"]= True
     self.nmlSet["radar_mode"]= "simple" #"splitted"|"moments"|"spectrum"
+    self.nmlSet["randomseed"] = 0 #0 is real noise, other value gives always the same random numbers
     # sec surface params
     self.nmlSet["ground_type"]= 'S'
     self.nmlSet["salinity"]= 33.0

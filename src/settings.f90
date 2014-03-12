@@ -95,6 +95,8 @@ module settings
     character(300) :: descriptor_file_name
 
     integer(kind=long):: radar_nfft_aliased, radar_maxTurbTerms !are gained from radar_aliasing_nyquist_interv and radar_nfft
+    
+    integer(kind=long) :: randomseed !random seed, 0 means time dependence
 contains
 
     subroutine settings_read(errorstatus)
@@ -112,7 +114,7 @@ contains
         input_type, crm_case, crm_data, crm_data2, crm_constants, &
         jacobian_mode, save_psd
         namelist / output / obs_height,units,outpol,freq_str,file_desc,creator, add_obs_height_to_layer
-        namelist / run_mode / active, passive,radar_mode
+        namelist / run_mode / active, passive,radar_mode, randomseed
         namelist / surface_params / ground_type,salinity, emissivity
         namelist / gas_abs_mod / lgas_extinction, gas_mod
         namelist / hyd_opts / lhyd_extinction, lphase_flag, hydro_fullSpec, hydro_limit_density_area
@@ -181,7 +183,7 @@ contains
     character(len=15) :: nameOfRoutine = 'test_settings'
     !test for settings go here
     if (verbose >= 4) print*,'Start of ', nameOfRoutine
-
+    err = 0
     call assert_false(err,MOD(radar_nfft, 2) == 1,&
         "radar_nfft has to be even") 
     call assert_true(err,(gas_mod == "L93") .or. (gas_mod == "R98"),&
@@ -189,6 +191,10 @@ contains
     if (hydro_fullSpec) then
       call assert_true(err,in_python,&
           "hydro_fullSpec works only in python!") 
+    end if
+    if (jacobian_mode) then
+      call assert_true(err,randomseed/=0,&
+          "randomniness not allowed in jacobian mode") 
     end if
 
     if (err /= 0) then
@@ -267,6 +273,7 @@ contains
         active=.true.
         passive=.true.
         radar_mode="simple" !"splitted"|"moments"|"spectrum"
+        randomseed = 0
         ! sec surface params
         ground_type='S'
         salinity=33.0
@@ -388,6 +395,7 @@ contains
       print*, 'radar_airmotion_vmin: ', radar_airmotion_vmin
       print*, 'emissivity: ', emissivity
       print*, 'save_psd: ', save_psd
+      print*, "randomseed", randomseed
 
     end subroutine print_settings
     

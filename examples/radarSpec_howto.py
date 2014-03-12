@@ -12,7 +12,7 @@ pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 pam.nmlSet["jacobian_mode"] = True
 pam.nmlSet["radar_mode"] = "spectrum"
 pam.nmlSet["radar_aliasing_nyquist_interv"] = 0
-
+pam.nmlSet["save_psd"] = True
 
 pam.df.addHydrometeor(('ice', -99.0, -1, 917,917 *  pi / 6., 3, pi/4., 2, 0, 10, 'exp', 3000, 3e8, -99.0, -99.0, 100e-6,  200e-6, 'mie-sphere', 'heymsfield10_particles',0.0))
 pam.p["hydro_q"][:] = 0.002
@@ -38,10 +38,22 @@ velocity = pam.fortObject.vars_output.out_debug_radarvel
 
 eta_wo_turb[eta_wo_turb<= 0.0] = 1e-8
 
+matplotlib.rcParams.update({'font.size': 18})
+
+
+plt.figure()
+plt.plot(pam.r["psd_d"].ravel(),pam.r["psd_n"].ravel())
+plt.xlabel("Diameter [m]")
+plt.ylabel("number concentration [1/m^4]")
+plt.title("Particle size distribution")
+#plt.xscale("log")
+plt.xlim(100e-6,200e-6)
+plt.savefig("radar_howto_0.png")
+
 plt.figure()
 plt.plot(diameter, np.log10(sigma_D))
 plt.xlabel("Diameter [m]")
-plt.ylabel("sigma [dB]")
+plt.ylabel("Backscattering [dB]")
 plt.title("Backscattering per diameter")
 #plt.xscale("log")
 plt.xlim(100e-6,200e-6)
@@ -51,7 +63,7 @@ plt.savefig("radar_howto_1.png")
 plt.figure()
 plt.plot(velocity, np.log10(eta_wo_turb)*10)
 plt.xlabel("Velocity [m/s]]")
-plt.ylabel("Eta [dB]")
+plt.ylabel("Backscattering [dB]")
 plt.ylim(-40,0)
 plt.xlim(-7.5,7.5)
 plt.title("diameter to velocity")
@@ -62,7 +74,7 @@ plt.plot(velocity,np.log10(eta_turb)*10)
 
 
 plt.xlabel("Velocity [m/s]]")
-plt.ylabel("Eta [dB]")
+plt.ylabel("Backscattering [dB]")
 plt.ylim(-40,0)
 plt.xlim(-7.5,7.5)
 plt.title("applying turbulence")
@@ -71,7 +83,7 @@ plt.savefig("radar_howto_3.png")
 plt.figure()
 plt.plot(velocity, 10*np.log10(eta_turb_noisy))
 plt.xlabel("Velocity [m/s]]")
-plt.ylabel("Eta [dB]")
+plt.ylabel("Backscattering [dB]")
 plt.ylim(-40,0)
 plt.xlim(-7.5,7.5)
 plt.title("applying noise")

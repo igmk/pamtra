@@ -212,6 +212,7 @@ python module pyPamtraLib ! in
             logical :: hydro_limit_density_area
             real(kind=dbl) :: radar_noise_distance_factor
             logical :: radar_save_noise_corrected_spectra
+            integer(kind=long_bn) :: randomseed
             integer(kind=long_bn) :: n_moments
             real(kind=dbl) dimension(100) :: freqs
             integer(kind=long_bn) :: radar_maxturbterms
