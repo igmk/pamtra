@@ -42,12 +42,12 @@ delta_h)
     real(kind=dbl), dimension(radar_no_Ave,radar_nfft):: noise_turb_spectra_tmp
     real(kind=dbl), dimension(radar_nfft):: noise_turb_spectra,&
     snr_turb_spectra,spectra_velo, turb_spectra_aliased, noise_removed_turb_spectra
-    integer::quality_2ndPeak, quailty_aliasing
+    integer::quality_moments, quailty_aliasing
     real(kind=dbl), dimension(2) :: rand_number
     real(kind=dbl), dimension(:),allocatable:: turb_spectra
-    real(kind=dbl), dimension(0:4):: moments
-    real(kind=dbl), dimension(2):: slope
-    real(kind=dbl), dimension(2):: edge
+    real(kind=dbl), dimension(0:4,radar_nPeaks):: moments
+    real(kind=dbl), dimension(2,radar_nPeaks):: slope
+    real(kind=dbl), dimension(2,radar_nPeaks):: edge
     real(kind=dbl) :: noise_out
     real(kind=dbl):: SNR, del_v, ss, K2, wavelength, Ze_back, dielec_water, K, &
     min_V_aliased, max_V_aliased, receiver_uncertainty, radar_Pnoise, frequency
@@ -121,18 +121,17 @@ delta_h)
 
         !calculate the noise level depending on range:
         ! did not find any value in the atmo arrays, take the one from namelist file!
-        if (ANY(ISNAN(atmo_radar_prop(i_x,i_y,:))) .or. .not. (all(atmo_radar_prop(i_x,i_y,:) >= 0.))) then
-          radar_Pnoise = radar_Pnoise0 + (20 * log10(out_radar_hgt(i_x,i_y,i_z)))
-          radar_Pnoise = 10**(0.1*radar_Pnoise)
+        if (ISNAN(atmo_radar_prop(i_x,i_y,1)) .or. .not. (atmo_radar_prop(i_x,i_y,1) >= 0.)) then
+          radar_Pnoise = 10**(0.1*radar_Pnoise0) * &
+            (out_radar_hgt(i_x,i_y,i_z)/1000.)**2 
           if (verbose >= 3) print*, "took radar noise from nml file", 10*log10(radar_Pnoise), &
               radar_Pnoise0
         else
           ! take the one from teh atmo files
           radar_Pnoise = 10**(0.1*atmo_radar_prop(i_x,i_y,1)) * &
-            out_radar_hgt(i_x,i_y,i_z)**2 + &
-            10**(0.1*atmo_radar_prop(i_x,i_y,2))
+            (out_radar_hgt(i_x,i_y,i_z)/1000.)**2 
           if (verbose >= 3) print*, "took radar noise from atmo array", 10*log10(radar_Pnoise), &
-                  atmo_radar_prop(i_x,i_y,1), atmo_radar_prop(i_x,i_y,2)
+                  atmo_radar_prop(i_x,i_y,1)
         end if
         call assert_true(err,(radar_Pnoise > 0),&
             "nan or negative radar_Pnoise") 
@@ -337,9 +336,9 @@ delta_h)
       end if
 
 
-        call radar_calc_moments(err,radar_nfft,&
+        call radar_calc_moments(err,radar_nfft,radar_nPeaks,&
           noise_turb_spectra,radar_Pnoise,noise_removed_turb_spectra,&
-          moments,slope,edge,quality_2ndPeak,noise_out)
+          moments,slope,edge,quality_moments,noise_out)
 	if (err /= 0) then
 	  msg = 'error in radar_calc_moments!'
 	  call report(err, msg, nameOfRoutine)
@@ -348,7 +347,7 @@ delta_h)
 	  return
       end if   
         if (verbose >= 4) then
-            print*,"TOTAL"," Ze moments",10*log10(moments(0))
+            print*,"TOTAL"," Ze moments",10*log10(moments(0,1))
             print*,"#####################"
         end if
 
@@ -364,14 +363,14 @@ delta_h)
 
         out_radar_snr(i_x,i_y,i_z,i_f) = SNR
         out_radar_vel(:) = spectra_velo(:)
-        out_radar_moments(i_x,i_y,i_z,i_f,:) = moments(1:4)
-        out_radar_slopes(i_x,i_y,i_z,i_f,:) = slope(:)
-        out_radar_edges(i_x,i_y,i_z,i_f,:) = edge(:)
-        out_radar_quality(i_x,i_y,i_z,i_f) = quailty_aliasing + quality_2ndPeak
+        out_radar_moments(i_x,i_y,i_z,i_f,:) = moments(1:4,1)
+        out_radar_slopes(i_x,i_y,i_z,i_f,:) = slope(:,1)
+        out_radar_edges(i_x,i_y,i_z,i_f,:) = edge(:,1)
+        out_radar_quality(i_x,i_y,i_z,i_f) = quailty_aliasing + quality_moments
 
-        moments(0) = 10*log10(moments(0))
-        IF (ISNAN(moments(0))) moments(0) = -9999.d0
-        out_Ze(i_x,i_y,i_z,i_f) = moments(0)
+        moments(0,1) = 10*log10(moments(0,1))
+        IF (ISNAN(moments(0,1))) moments(0,1) = -9999.d0
+        out_Ze(i_x,i_y,i_z,i_f) = moments(0,1)
 
         if (allocated(turb_spectra)) deallocate(turb_spectra)
 

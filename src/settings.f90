@@ -45,7 +45,7 @@ module settings
     integer(kind=long) :: radar_nPeaks
     real(kind=dbl) :: radar_max_V !MinimumNyquistVelocity in m/sec
     real(kind=dbl) :: radar_min_V !MaximumNyquistVelocity in m/sec
-    real(kind=dbl) :: radar_pnoise0 !radar noise
+    real(kind=dbl) :: radar_pnoise0 !radar noise at 1km
     real(kind=dbl) :: radar_airmotion_vmin
     real(kind=dbl) :: radar_airmotion_vmax
     real(kind=dbl) :: radar_airmotion_step_vmin
@@ -197,6 +197,9 @@ contains
           "randomniness not allowed in jacobian mode") 
     end if
 
+    call assert_true(err,(radar_nPeaks == 1),&
+        "radar_nPeaks higher than one not implemented yet!") 
+
     if (err /= 0) then
       msg = 'value in settings not allowed'
       call report(err, msg, nameOfRoutine)
@@ -298,8 +301,8 @@ contains
         radar_max_V=7.885
         !MaximumNyquistVelocity in m/sec
         radar_min_V=-7.885
-        !radar noise offset in same unit as Ze 10*log10(mm⁶/m³). noise is calculated with noise = radar_pnoise0 + 20*log10(range)
-        radar_pnoise0=-84.031043312334901 ! value for BArrow MMCR for 2008, 4, 15,
+        !radar noise at 1km in same unit as Ze 10*log10(mm⁶/m³). noise is calculated with noise = radar_pnoise0 + 20*log10(range/1000)
+        radar_pnoise0=-32.23 ! mean value for BArrow MMCR during ISDAC
 
         radar_airmotion = .false.
         radar_airmotion_model = "step" !"constant","linear","step"
@@ -316,7 +319,7 @@ contains
         radar_K2 = 0.93 ! dielectric constant |K|² (always for liquid water by convention) for the radar equation
         radar_noise_distance_factor = 1.25
         radar_receiver_uncertainty_std = 0.d0 !dB
-        radar_nPeaks = 3 !number of peaks the radar simulator is looking for
+        radar_nPeaks = 1 !number of peaks the radar simulator is looking for
         radar_smooth_spectrum = .true.
 
         ! create frequency string if not set in pamtra

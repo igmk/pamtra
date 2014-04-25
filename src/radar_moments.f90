@@ -6,7 +6,6 @@ module radar_moments
     radar_min_V,&
     radar_use_hildebrand,&
     radar_no_Ave,&
-    radar_nPeaks,&
     radar_noise_distance_factor,&
     radar_min_spectral_snr,&
     radar_smooth_spectrum
@@ -15,7 +14,7 @@ module radar_moments
   implicit none
 
   contains 
-subroutine radar_calc_moments(errorstatus,radar_nfft,radar_spectrum_in,noise_model,&
+subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum_in,noise_model,&
   radar_spectrum_out,moments,slope,edge,quality,noise)
 
     ! written by P. Kollias, translated to Fortran by M. Maahn (12.2012)
@@ -30,13 +29,13 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_spectrum_in,noise_mod
     ! edge, dimension(2): left(0) and right(1) edge the peak [m/s]
     ! quality
 
-    integer, intent(in) :: radar_nfft
+    integer, intent(in) :: radar_nfft, radar_nPeaks
     real(kind=dbl), dimension(radar_nfft), intent(in):: radar_spectrum_in
     real(kind=dbl), intent(in):: noise_model
     real(kind=dbl), dimension(radar_nfft), intent(out):: radar_spectrum_out
-    real(kind=dbl), dimension(0:4), intent(out):: moments
-    real(kind=dbl), dimension(2), intent(out):: slope
-    real(kind=dbl), dimension(2), intent(out):: edge
+    real(kind=dbl), dimension(0:4,radar_nPeaks), intent(out):: moments
+    real(kind=dbl), dimension(2,radar_nPeaks), intent(out):: slope
+    real(kind=dbl), dimension(2,radar_nPeaks), intent(out):: edge
     real(kind=dbl), intent(out):: noise
     integer, intent(out) :: quality
     real(kind=dbl), dimension(radar_nPeaks+1,radar_nfft):: radar_spectrum_arr
@@ -158,7 +157,7 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_spectrum_in,noise_mod
 
       if (nn > 1) then 
         additionalPeaks = .true.
-        !additional peaks are as of know NOT processed...
+        !additional peaks are as of now NOT processed...
         CYCLE
       end if
 
@@ -183,30 +182,31 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_spectrum_in,noise_mod
       radar_spectrum_4mom(right_edge:radar_nfft) = 0.d0
 
 !     calculate the moments
-      moments(0) = SUM(radar_spectrum_4mom) ! mm⁶/m³
-      moments(1) = SUM(radar_spectrum_4mom*spectra_velo)/moments(0) ! m/s
-      moments(2) = SQRT(SUM(radar_spectrum_4mom * (spectra_velo-moments(1))**2)/moments(0)) ! m/s
-      moments(3) = SUM(radar_spectrum_4mom * (spectra_velo-moments(1))**3)/(moments(0)*moments(2)**3) ![-]
-      moments(4) = SUM(radar_spectrum_4mom * (spectra_velo-moments(1))**4)/(moments(0)*moments(2)**4) ![-]
+      moments(0,nn) = SUM(radar_spectrum_4mom) ! mm⁶/m³
+      moments(1,nn) = SUM(radar_spectrum_4mom*spectra_velo)/moments(0,nn) ! m/s
+      moments(2,nn) = SQRT(SUM(radar_spectrum_4mom * (spectra_velo-moments(1,nn))**2)/moments(0,nn)) ! m/s
+      moments(3,nn) = SUM(radar_spectrum_4mom * (spectra_velo-moments(1,nn))**3)/(moments(0,nn)*moments(2,nn)**3) ![-]
+      moments(4,nn) = SUM(radar_spectrum_4mom * (spectra_velo-moments(1,nn))**4)/(moments(0,nn)*moments(2,nn)**4) ![-]
 
-      edge(1) = spectra_velo(left_edge+1)
-      edge(2) = spectra_velo(right_edge-1)      
+      edge(1,nn) = spectra_velo(left_edge+1)
+      edge(2,nn) = spectra_velo(right_edge-1)      
 
-!     output spectrum is with noise removed but without the smoothing
-      radar_spectrum_out = radar_spectrum_in - noise
-      radar_spectrum_out(1:left_edge) = 0.d0
-      radar_spectrum_out(right_edge:radar_nfft) = 0.d0
-
+      if (nn == 1) then 
+  !     output spectrum is with main peak only and noise removed but without the smoothing
+        radar_spectrum_out = radar_spectrum_in - noise
+        radar_spectrum_out(1:left_edge) = 0.d0
+        radar_spectrum_out(right_edge:radar_nfft) = 0.d0
+        end if
       end if
     end do
 
     if (additionalPeaks) quality = quality + 2
 
-    if (moments(1) == -9999) then
-      slope(:) = -9999
+    if (moments(1,1) == -9999) then
+      slope(:,1) = -9999
     !sometimes the estimation of noise goes wrong
     else if ((MAXVAL(radar_spectrum_only_noise) - noise) <= 0) then
-      slope(:) = -9999
+      slope = -9999
       moments = -9999
       edge = -9999
       quality = quality + 128 !error in oise estiamtion
@@ -229,19 +229,19 @@ specMax = 10*log10(MAXVAL(radar_spectrum_in)) !without any noise removed!
         errorstatus = err
         return
       end if
-
-      slope(:) = 0.d0 ! dB/(m/s)
-      slope(1) = (specMax-noiseMax)/(spectra_velo(spec_max_pp)-spectra_velo(left_edge_pp))
-      slope(2) = (noiseMax-specMax)/(spectra_velo(right_edge_pp)-spectra_velo(spec_max_pp))
+      ! so far we have only nn = 1:
+      slope(:,1) = 0.d0 ! dB/(m/s)
+      slope(1,1) = (specMax-noiseMax)/(spectra_velo(spec_max_pp)-spectra_velo(left_edge_pp))
+      slope(2,1) = (noiseMax-specMax)/(spectra_velo(right_edge_pp)-spectra_velo(spec_max_pp))
     end if
 
 
 
 
     if (verbose >= 5) print*, "left slope",specMax, noiseMax, spectra_velo(spec_max_pp),&
-      spectra_velo(left_edge_pp+1), slope(1)
+      spectra_velo(left_edge_pp+1), slope(1,1)
     if (verbose >= 5) print*, "right slope",noiseMax,specMax, spectra_velo(right_edge_pp-1),&
-      spectra_velo(spec_max_pp), slope(2)
+      spectra_velo(spec_max_pp), slope(2,1)
 
     if (verbose >= 5) print*, "radar_nfft", radar_nfft
     if (verbose >= 5) print*, "left_edge", left_edge_pp
@@ -257,9 +257,9 @@ specMax = 10*log10(MAXVAL(radar_spectrum_in)) !without any noise removed!
         "radar_noise_distance_factor too small")
     call assert_false(err,any(ISNAN(slope)),&
         "nan in slope")
-    call assert_false(err,slope(1) >= HUGE(slope(1)),&
+    call assert_false(err,slope(1,1) >= HUGE(slope(1,1)),&
         "inf in left slope")
-    call assert_false(err,slope(2) >= HUGE(slope(2)),&
+    call assert_false(err,slope(2,1) >= HUGE(slope(2,1)),&
         "inf in right slope")
     call assert_false(err,any(ISNAN(moments)),&
         "nan in moments")
