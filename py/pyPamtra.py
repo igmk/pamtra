@@ -179,7 +179,7 @@ class pyPamtra(object):
   
   def _prepareNmlUnitsDimensions(self):
   
-    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb","radar_prop"]
+    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb","radar_prop","groundtemp"]
   
     self.nmlSet = dict() #settings which are required for the nml file. keeping the order is important for fortran
     self.nmlSet["hydro_threshold"]=  1.e-10   # [kg/kg] 
@@ -442,17 +442,14 @@ class pyPamtra(object):
       self.p["airturb"] = np.ones(self._shape4D) * np.nan
     
     self.p["hgt_lev"] = np.ones(self._shape3Dplus) * np.nan
-    if levLay == "lay":
-      self.p["hgt"] = np.ones(self._shape3D) * np.nan
-      self.p["temp"] = np.ones(self._shape3D) * np.nan
-      self.p["press"] = np.ones(self._shape3D) * np.nan
-      self.p["relhum"] = np.ones(self._shape3D) * np.nan
-    elif levLay == "lev":
-      self.p["temp_lev"] = np.ones(self._shape3Dplus) * np.nan
-      self.p["press_lev"] = np.ones(self._shape3Dplus) * np.nan
-      self.p["relhum_lev"] = np.ones(self._shape3Dplus) * np.nan
-    else:
-      raise IOError("Did not understand lay/lev: "+layLev)
+    self.p["hgt"] = np.ones(self._shape3D) * np.nan
+    self.p["temp"] = np.ones(self._shape3D) * np.nan
+    self.p["press"] = np.ones(self._shape3D) * np.nan
+    self.p["relhum"] = np.ones(self._shape3D) * np.nan
+    self.p["temp_lev"] = np.ones(self._shape3Dplus) * np.nan
+    self.p["press_lev"] = np.ones(self._shape3Dplus) * np.nan
+    self.p["relhum_lev"] = np.ones(self._shape3Dplus) * np.nan
+
     
     for xx in xrange(self._shape2D[0]):
       for yy in xrange(self._shape2D[1]):
@@ -716,6 +713,10 @@ class pyPamtra(object):
     "hwc_q","hwp", "cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"
     #'''
       
+      
+    #make sure that an descriptor file exists already!
+    assert self.df.data.shape[0] > 0
+      
     allVars = self.default_p_vars  
       
     for key in kwargs.keys():
@@ -726,7 +727,7 @@ class pyPamtra(object):
         ("temp_lev" in kwargs.keys() or "temp" in kwargs.keys()) and 
         ("press_lev" in kwargs.keys() or "press" in kwargs.keys()) and 
         ("relhum_lev" in kwargs.keys() or  "relhum" in kwargs.keys())):#"q" in kwargs.keys()
-      raise TypeError("I need hgt_lev and temp_lev and press_lev and (relhum_lev or q)!")
+      raise TypeError("I need hgt_lev and temp_lev and press_lev and (relhum_lev or relhum)!")
     
     #assert self.df.nhydro > 0
     
@@ -754,7 +755,17 @@ class pyPamtra(object):
       #self._radiosonde = True
     #else:
       #self._radiosonde = False
-      
+    
+    if "hydro_q" in kwargs.keys():
+      self.df.nhydro = kwargs["hydro_q"].shape[-1]
+    elif "hydro_n" in kwargs.keys():
+      self.df.nhydro = kwargs["hydro_n"].shape[-1]
+    elif "hydro_reff" in kwargs.keys():
+      self.df.nhydro = kwargs["hydro_reff"].shape[-1]
+    else:
+      self.df.nhydro = 0
+    
+    
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
@@ -794,7 +805,7 @@ class pyPamtra(object):
       else:
         raise TypeError("timestamp has to be int, float or datetime object")
       
-    for environment, preset in [["lat",50.938056],["lon",6.956944],["lfrac",1],["wind10u",0],["wind10v",0]]:
+    for environment, preset in [["lat",50.938056],["lon",6.956944],["lfrac",1],["wind10u",0],["wind10v",0],["groundtemp",np.nan]]:
       if environment not in kwargs.keys():
         self.p[environment] = np.ones(self._shape2D)*preset
         warnings.warn("%s set to %s"%(environment,preset,), Warning)
@@ -826,11 +837,11 @@ class pyPamtra(object):
     else:
       self.p["radar_prop"] = np.zeros(self._shape2D+tuple([2]))*np.nan
 
-    #clean up: remove all nans
-    for key in self.p.keys():
-      #apply only to arrays, lists or tupels
-      if np.sum(np.shape(self.p[key])) > 0:
-        self.p[key][np.isnan(self.p[key])] = missingNumber
+    ##clean up: remove all nans
+    #for key in self.p.keys():
+      ##apply only to arrays, lists or tupels
+      #if np.sum(np.shape(self.p[key])) > 0:
+        #self.p[key][np.isnan(self.p[key])] = missingNumber
     
     return
 
@@ -842,10 +853,10 @@ class pyPamtra(object):
       if type(self.p[key]) != np.ndarray:
         continue
       p_data = self.p[key][~np.isnan(self.p[key])]
-      if key in maxLimits.keys():
+      if key in maxLimits.keys() and len(p_data)>0:
         if np.max(p_data) > maxLimits[key]:
           raise ValueError("unrealistic value for "+ key + ": " +str(np.max(p_data)) + ", maximum is " + str(maxLimits[key]))
-      if key in minLimits.keys():
+      if key in minLimits.keys() and len(p_data)>0:
         if len(p_data[p_data != missingNumber]) > 0:
           if np.min(p_data[p_data != missingNumber]) < minLimits[key]:
             raise ValueError("unrealistic value for "+ key + ": " +str(np.min(p_data)) + ", minimum is " + str(minLimits[key]))
@@ -1041,7 +1052,7 @@ class pyPamtra(object):
       #self.r["PIA"][:,:,hh,:] = Att_atmo[:,:,hh,:] +Att_hydro[:,:,hh,:] + 2*np.sum(Att_atmo[:,:,:hh,:] +Att_hydro[:,:,:hh,:],axis=2)#only half for the current layer
     #return
 
-    
+   
   def createFullProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
       obs_height,
       hgt_lev,press_lev,temp_lev,relhum_lev,

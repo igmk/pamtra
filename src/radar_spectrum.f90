@@ -115,6 +115,7 @@ subroutine radar_spectrum(&
       errorstatus = fatal
       msg = "assertation error"
       call report(errorstatus, msg, nameOfRoutine)
+print*, area
       return
     end if   
     

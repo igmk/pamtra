@@ -74,7 +74,6 @@ subroutine hydrometeor_extinction(errorstatus)
 
     hydros: do i_h = 1,n_hydro
 
-
       !these ones are fore sure 1D
       hydro_name = hydro_name_arr(i_h)
       liq_ice    = liq_ice_arr(i_h)
@@ -216,6 +215,7 @@ subroutine hydrometeor_extinction(errorstatus)
         r_eff      = atmo_hydro_reff(i_x,i_y,i_z, i_h)
         layer_t    = atmo_temp(i_x,i_y,i_z)
         pressure   = atmo_press(i_x,i_y,i_z)
+
 
         if (verbose >= 2) print*, i_h, hydro_name
 

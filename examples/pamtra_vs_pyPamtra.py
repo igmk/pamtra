@@ -15,11 +15,15 @@ plt.figure(2)
 plt.clf()
 
 pam = pyPamtra.pyPamtra()
-pam.df.readFile("descriptor_file_COSMO.txt")
-pam.readPamtraProfile("profile/example_input.lev")
+pam.df.readFile("../descriptor_file_COSMO.txt")
+pam.readPamtraProfile("../profile/example_input.lev")
+pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 
 print "##########################"
 
+
+
+#pam.set["pyVerbose"] = 10
 pam.runPamtra(35.5)
 
 
@@ -34,9 +38,11 @@ plt.title("Ze")
 plt.plot(Ze.compressed(),label="pyPamtra level")
 
 pam = pyPamtra.pyPamtra()
-pam.df.readFile("descriptor_file_COSMO.txt")
-pam.readPamtraProfile("profile/example_input.lay")
+pam.df.readFile("../descriptor_file_COSMO.txt")
+pam.readPamtraProfile("../profile/example_input.lay")
 print "##########################"
+pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
+
 
 pam.runPamtra(35.5)
 Ze = np.ma.masked_equal(pam.r["Ze"],-9999).ravel()
@@ -47,12 +53,12 @@ plt.figure(2)
 plt.plot(Ze.compressed(),label="pyPamtra layer")
 
 print "##########################"
-os.remove("output/example_input_035.5000.nc")
+os.remove("../output/example_input_035.5000.nc")
 
 
-os.system("./pamtra -f 35.5 -d descriptor_file_COSMO.txt -p example_input.lev")
+os.system("cd .. && ./pamtra -f 35.5 -d descriptor_file_COSMO.txt -p example_input.lev")
 
-ncData = netCDF4.Dataset("output/example_input_035.5000.nc")
+ncData = netCDF4.Dataset("../output/example_input_035.5000.nc")
 Ze = np.ma.masked_equal(ncData.variables["Ze"],-9999).ravel()
 
 plt.figure(1)
@@ -67,8 +73,8 @@ ncData.close()
 
 print "##########################"
 
-os.system("./pamtra -f 35.5 -d descriptor_file_COSMO.txt -p example_input.lay")
-ncData = netCDF4.Dataset("output/example_input_035.5000.nc")
+os.system("cd .. && ./pamtra -f 35.5 -d descriptor_file_COSMO.txt -p example_input.lay")
+ncData = netCDF4.Dataset("../output/example_input_035.5000.nc")
 Ze = np.ma.masked_equal(ncData.variables["Ze"],-9999).ravel()
 
 plt.figure(1)
@@ -82,3 +88,10 @@ plt.plot(Ze.compressed(),":",lw=4,label="Pamtra layer")
 print Ze.compressed()
 plt.legend()
 ncData.close()
+
+
+for nx in [0,1]:
+  for ny in [0,1]:
+    for nz in range(pam.p["max_nlyrs"]):
+      print nx, ny, nz, pam.p["nlyrs"][nx,ny], pam.p["hgt_lev"][nx,ny,nz]
+

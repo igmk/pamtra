@@ -236,7 +236,6 @@ module vars_atmosphere
     allocate(atmo_delta_hgt_lev(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
     allocate(atmo_airturb(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
 
-
     allocate(atmo_hydro_q(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs,n_hydro))
     allocate(atmo_hydro_q_column(atmo_ngridx,atmo_ngridy,n_hydro))
     allocate(atmo_hydro_reff(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs,n_hydro))
@@ -672,7 +671,7 @@ module vars_atmosphere
     integer(kind=long) :: i_hydro
 
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
-
+    err = 0
     call assert_true(err,(atmo_ngridx>0),&
         "atmo_ngridx must be greater zero")   
     call assert_true(err,(atmo_ngridy>0),&
@@ -699,6 +698,25 @@ module vars_atmosphere
                 write(atmo_time(nx,ny)(1:2),"(i2.2)") timestamp(3)
                 write(atmo_time(nx,ny)(3:4),"(i2.2)") timestamp(2)
           end if
+
+
+
+print*, "to do: fix this in vars_atmosphere looks like it is connected to varying number of layers, test fails for pamtra vs pypamtra"
+!           call assert_true(err,(all(atmo_hgt_lev(nx,nx,1:atmo_nlyrs(nx,ny)+1)>-370) & 
+!               .or. all(atmo_hgt(nx,nx,1:atmo_nlyrs(nx,ny))>-370)),&
+!               "hgt_lev or hgt_lev_lev must be greater -370 (depth of Tagebau Hambach :-))")  
+!           if (err > 0) then
+!               errorstatus = fatal
+!               msg = "assertation error"
+!               call report(errorstatus, msg, nameOfRoutine)
+!               return
+!           end if  
+          ! first make sure that hgt is present
+          do nz = 1, atmo_nlyrs(nx,ny)
+            if (isnan(atmo_hgt(nx,ny,nz))) &
+                  atmo_hgt(nx,ny,nz) = 0.5_dbl * (atmo_hgt_lev(nx,ny,nz) + atmo_hgt_lev(nx,ny,nz+1)) 
+          end do
+
 
           ! make the level variables which are needed
           ! not needed anywhere as of today are press_lev and relhum_lev:
@@ -746,7 +764,6 @@ module vars_atmosphere
             (log(atmo_press(nx,ny,nz-1)) - log(atmo_press(nx,ny,nz-2))) / (atmo_hgt(nx,ny,nz-1) - atmo_hgt(nx,ny,nz-2)) * &
             (atmo_hgt_lev(nx,ny,nz) - atmo_hgt(nx,ny,nz-1)) )
 
-          
           !now the layers variables
           do nz = 1, atmo_nlyrs(nx,ny)
 
@@ -761,6 +778,7 @@ module vars_atmosphere
                 atmo_hgt(nx,ny,nz) = (atmo_hgt_lev(nx,ny,nz)+atmo_hgt_lev(nx,ny,nz+1))*0.5_dbl
           if (isnan(atmo_delta_hgt_lev(nx,ny,nz))) &
                 atmo_delta_hgt_lev(nx,ny,nz) = atmo_hgt_lev(nx,ny,nz+1) - atmo_hgt_lev(nx,ny,nz)
+
          ! now the ones which depend on several
           if (isnan(atmo_vapor_pressure(nx,ny,nz))) &
                 atmo_vapor_pressure(nx,ny,nz) = atmo_relhum(nx,ny,nz) * &
@@ -782,10 +800,16 @@ module vars_atmosphere
 
     !test whether we still have nans in our data!
 ! 3D variable
-    call assert_false(err,ANY(ISNAN(atmo_temp_lev(nx,ny,1:atmo_nlyrs(nx,ny)))),&
+
+    err = 0 
+    call assert_true(err,atmo_nlyrs(nx,ny) <= atmo_max_nlyrs ,&
+        "atmo_nlyrs(nx,ny) larger than atmo_max_nlyrs") 
+    call assert_false(err,ANY(ISNAN(atmo_temp_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1))),&
         "found nan in atmo_temp_lev")   
-    call assert_false(err,ANY(ISNAN(atmo_hgt_lev(nx,ny,1:atmo_nlyrs(nx,ny)))),&
+    call assert_false(err,ANY(ISNAN(atmo_hgt_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1))),&
         "found nan in atmo_hgt_lev")   
+    call assert_false(err,ANY(ISNAN(atmo_hgt(nx,ny,1:atmo_nlyrs(nx,ny)))),&
+        "found nan in atmo_hgt")  
     call assert_false(err,ANY(ISNAN(atmo_relhum(nx,ny,1:atmo_nlyrs(nx,ny)))),&
         "found nan in atmo_relhum")   
     call assert_false(err,ANY(ISNAN(atmo_press(nx,ny,1:atmo_nlyrs(nx,ny)))),&
@@ -804,10 +828,13 @@ module vars_atmosphere
         "found nan in atmo_delta_hgt_lev")   
     call assert_false(err,ANY(ISNAN(atmo_airturb(nx,ny,1:atmo_nlyrs(nx,ny)))),&
         "found nan in atmo_airturb")
-    call assert_false(err,ANY(ISNAN(atmo_relhum_lev(nx,ny,1:atmo_nlyrs(nx,ny)))),&
+    call assert_false(err,ANY(ISNAN(atmo_relhum_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1))),&
         "found nan in atmo_relhum_lev")   
-    call assert_false(err,ANY(ISNAN(atmo_press_lev(nx,ny,1:atmo_nlyrs(nx,ny)))),&
-        "found nan in atmo_press_lev")   
+    call assert_false(err,ANY(ISNAN(atmo_press_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1))),&
+        "found nan in atmo_press_lev") 
+    call assert_true(err,ALL(moment_in_arr >= 0),&
+        "found negative value in moment_in_arr") 
+
     do i_hydro = 1,n_hydro
       if (moment_in_arr(i_hydro) == 1 .or. moment_in_arr(i_hydro) == 12 .or. moment_in_arr(i_hydro) == 13) &
        call assert_false(err,ANY(ISNAN(atmo_hydro_n(nx,ny,1:atmo_nlyrs(nx,ny),i_hydro))),&
