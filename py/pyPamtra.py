@@ -227,8 +227,8 @@ class pyPamtra(object):
     self.nmlSet["radar_max_v"]= 7.885
     #MaximumNyquistVelocity in m/sec
     self.nmlSet["radar_min_v"]= -7.885
-    #radar noise offset in same unit as Ze 10*log10(mm⁶/m³). noise is calculated with noise"]=  radar_pnoise0 + 20*log10(range)
-    self.nmlSet["radar_pnoise0"]= -84.031043312334901 # value for BArrow MMCR for 2008, 4, 15,
+    #radar noise in 1km in same unit as Ze 10*log10(mm⁶/m³). noise is calculated with noise"]=  radar_pnoise0 + 20*log10(range/1000)
+    self.nmlSet["radar_pnoise0"]= -32.23 # mean value for BArrow MMCR during iSDAC
     self.nmlSet["radar_airmotion"]=  False
     self.nmlSet["radar_airmotion_model"]=  "step" #"constant","linear","step"
     self.nmlSet["radar_airmotion_vmin"]=  -4.e0
@@ -243,7 +243,7 @@ class pyPamtra(object):
     self.nmlSet["radar_convolution_fft"]=  True #use fft for convolution of spectrum. is alomst 10 times faster, but can introduce aretfacts for radars with *extremely* low noise levels or if noise is turned off at all.
     self.nmlSet["radar_smooth_spectrum"]=  True #smooth spectrum before moment estimation
     self.nmlSet["radar_k2"]=  0.93 # dielectric constant |K|² (always for liquid water by convention) for the radar equation
-    self.nmlSet["radar_npeaks"] = 3
+    self.nmlSet["radar_npeaks"] = 1
     self.nmlSet["radar_noise_distance_factor"]=  2.0
     self.nmlSet["radar_receiver_uncertainty_std"]=  0.e0 #dB
 
@@ -1197,8 +1197,8 @@ class pyPamtra(object):
     for jj,job in enumerate(jobs):
       try: self._joinResults(job.get(timeout=timeout))
       except: 
-        pool.terminate()
-        pool.join()
+        #pool.terminate()
+        #pool.join()
         print "KILLED pool due to timeout of job", jj+1
       print "got job", jj+1
 

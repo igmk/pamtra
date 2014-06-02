@@ -65,6 +65,7 @@ python module pyRadarMoments ! in
             logical :: hydro_limit_density_area
             real(kind=dbl) :: radar_noise_distance_factor
             logical :: radar_save_noise_corrected_spectra
+            integer(kind=long_bn) :: randomseed
             integer(kind=long_bn) :: n_moments
             real(kind=dbl) dimension(100) :: freqs
             integer(kind=long_bn) :: radar_maxturbterms
@@ -137,16 +138,17 @@ python module pyRadarMoments ! in
             use report_module
             use kinds
             use constants
-            use settings, only: radar_min_v,radar_min_spectral_snr,radar_use_hildebrand,radar_smooth_spectrum,radar_no_ave,radar_noise_distance_factor,radar_max_v,radar_npeaks
-            subroutine radar_calc_moments(errorstatus,radar_nfft,radar_spectrum_in,noise_model,radar_spectrum_out,moments,slope,edge,quality,noise) ! in :pyRadarMoments:radar_moments.f90:radar_moments
+            use settings, only: radar_min_v,radar_min_spectral_snr,radar_use_hildebrand,radar_smooth_spectrum,radar_no_ave,radar_noise_distance_factor,radar_max_v
+            subroutine radar_calc_moments(errorstatus,radar_nfft,radar_npeaks,radar_spectrum_in,noise_model,radar_spectrum_out,moments,slope,edge,quality,noise) ! in :pyRadarMoments:radar_moments.f90:radar_moments
                 integer(kind=long_bn) intent(out) :: errorstatus
                 integer, optional,intent(in),check(len(radar_spectrum_in)>=radar_nfft),depend(radar_spectrum_in) :: radar_nfft=len(radar_spectrum_in)
+                integer intent(in) :: radar_npeaks
                 real(kind=dbl) dimension(radar_nfft),intent(in) :: radar_spectrum_in
                 real(kind=dbl) intent(in) :: noise_model
                 real(kind=dbl) dimension(radar_nfft),intent(out),depend(radar_nfft) :: radar_spectrum_out
-                real(kind=dbl) dimension(5),intent(out) :: moments
-                real(kind=dbl) dimension(2),intent(out) :: slope
-                real(kind=dbl) dimension(2),intent(out) :: edge
+                real(kind=dbl) dimension(5,radar_npeaks),intent(out),depend(radar_npeaks) :: moments
+                real(kind=dbl) dimension(2,radar_npeaks),intent(out),depend(radar_npeaks) :: slope
+                real(kind=dbl) dimension(2,radar_npeaks),intent(out),depend(radar_npeaks) :: edge
                 integer intent(out) :: quality
                 real(kind=dbl) intent(out) :: noise
             end subroutine radar_calc_moments

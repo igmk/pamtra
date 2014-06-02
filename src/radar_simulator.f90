@@ -121,7 +121,7 @@ delta_h)
 
         !calculate the noise level depending on range:
         ! did not find any value in the atmo arrays, take the one from namelist file!
-        if (ISNAN(atmo_radar_prop(i_x,i_y,1)) .or. .not. (atmo_radar_prop(i_x,i_y,1) >= 0.)) then
+        if (ISNAN(atmo_radar_prop(i_x,i_y,1)) .or. (atmo_radar_prop(i_x,i_y,1) == -9999.)) then
           radar_Pnoise = 10**(0.1*radar_Pnoise0) * &
             (out_radar_hgt(i_x,i_y,i_z)/1000.)**2 
           if (verbose >= 3) print*, "took radar noise from nml file", 10*log10(radar_Pnoise), &
@@ -257,7 +257,6 @@ delta_h)
         K = (Ze_back/SUM(turb_spectra_aliased*del_v))
         snr_turb_spectra = (K* turb_spectra_aliased + radar_Pnoise/(radar_nfft*del_v))
         !   snr_turb_spectra =turb_spectra_aliased + radar_Pnoise/(radar_nfft*del_v)
-
 
 
         if (radar_no_Ave .eq. 0) then !0 means infinity-> no noise

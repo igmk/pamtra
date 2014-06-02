@@ -34,6 +34,8 @@ subroutine pyDia2vel(model,nbins,diameter_spec,velSpec)
   call viscosity_air(temp,viscosity)
   my = viscosity/rho
 
+  print*, "rho", rho, "my", my
+
   diameter_spec_cp = DBLE(diameter_spec)
 
   if (model .eq. "khvorostyanov01_spheres") then

@@ -91,7 +91,7 @@ module vars_atmosphere
        atmo_hydro_reff_column, &
        atmo_hydro_n_column
 
-  !trashbin for time dependent radar properties, first col is radarnoise_factor, second, radarnoise_offset
+  !trashbin for time dependent radar properties, first col is radarnoise_factor, second currently not used
   real(kind=dbl), allocatable, dimension(:,:,:) :: atmo_radar_prop
   contains
 !##################################################################################################################################
