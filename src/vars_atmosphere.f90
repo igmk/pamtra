@@ -701,16 +701,15 @@ module vars_atmosphere
 
 
 
-print*, "to do: fix this in vars_atmosphere looks like it is connected to varying number of layers, test fails for pamtra vs pypamtra"
-!           call assert_true(err,(all(atmo_hgt_lev(nx,nx,1:atmo_nlyrs(nx,ny)+1)>-370) & 
-!               .or. all(atmo_hgt(nx,nx,1:atmo_nlyrs(nx,ny))>-370)),&
-!               "hgt_lev or hgt_lev_lev must be greater -370 (depth of Tagebau Hambach :-))")  
-!           if (err > 0) then
-!               errorstatus = fatal
-!               msg = "assertation error"
-!               call report(errorstatus, msg, nameOfRoutine)
-!               return
-!           end if  
+          call assert_true(err,(all(atmo_hgt_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1)>-370) & 
+              .or. all(atmo_hgt(nx,ny,1:atmo_nlyrs(nx,ny))>-370)),&
+              "hgt_lev or hgt_lev_lev must be greater -370 (depth of Tagebau Hambach :-))")  
+          if (err > 0) then
+              errorstatus = fatal
+              msg = "assertation error"
+              call report(errorstatus, msg, nameOfRoutine)
+              return
+          end if  
           ! first make sure that hgt is present
           do nz = 1, atmo_nlyrs(nx,ny)
             if (isnan(atmo_hgt(nx,ny,nz))) &

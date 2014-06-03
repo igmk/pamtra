@@ -716,7 +716,13 @@ class pyPamtra(object):
       
     #make sure that an descriptor file exists already!
     assert self.df.data.shape[0] > 0
-      
+    if "hydro_q" in kwargs.keys():
+      assert self.df.nhydro == kwargs["hydro_q"].shape[-1]
+    elif "hydro_n" in kwargs.keys():
+      assert  self.df.nhydro == kwargs["hydro_n"].shape[-1]
+    elif "hydro_reff" in kwargs.keys():
+      assert self.df.nhydro == kwargs["hydro_reff"].shape[-1]
+ 
     allVars = self.default_p_vars  
       
     for key in kwargs.keys():
@@ -756,15 +762,7 @@ class pyPamtra(object):
     #else:
       #self._radiosonde = False
     
-    if "hydro_q" in kwargs.keys():
-      self.df.nhydro = kwargs["hydro_q"].shape[-1]
-    elif "hydro_n" in kwargs.keys():
-      self.df.nhydro = kwargs["hydro_n"].shape[-1]
-    elif "hydro_reff" in kwargs.keys():
-      self.df.nhydro = kwargs["hydro_reff"].shape[-1]
-    else:
-      self.df.nhydro = 0
-    
+   
     
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
@@ -1206,10 +1204,11 @@ class pyPamtra(object):
 
     print "waiting for all jobs to finish"
     for jj,job in enumerate(jobs):
+      import pdb;pdb.set_trace()
       try: self._joinResults(job.get(timeout=timeout))
       except: 
-        #pool.terminate()
-        #pool.join()
+        pool.terminate()
+        pool.join()
         print "KILLED pool due to timeout of job", jj+1
       print "got job", jj+1
 
