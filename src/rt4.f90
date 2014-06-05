@@ -274,8 +274,8 @@ wavelength,outlevels)
         "ground_temp must be greater 1")  
     call assert_true(err,(num_layers>0),&
         "num_layers must be greater 0")   
-    call assert_true(err,all(height(1:atmo_nlyrs(i_x,i_y)+1)>=0),&
-        "height must be positive")  
+    call assert_true(err,all(height(1:atmo_nlyrs(i_x,i_y)+1)>=-370),&
+        "height must be greater -370 (depth of Tagebau Hambach :-))")  
     call assert_true(err,all(temperatures(1:atmo_nlyrs(i_x,i_y)+1)>1),&
         "temperatures must be greater 1")   
     call assert_false(err,all(isnan(gas_extinct(1:atmo_nlyrs(i_x,i_y)+1))),&

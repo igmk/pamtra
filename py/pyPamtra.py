@@ -207,7 +207,7 @@ class pyPamtra(object):
     self.nmlSet["radar_mode"]= "simple" #"splitted"|"moments"|"spectrum"
     self.nmlSet["randomseed"] = 0 #0 is real noise, other value gives always the same random numbers
     # sec surface params
-    self.nmlSet["ground_type"]= 'S'
+    self.nmlSet["ground_type"]= 'L'
     self.nmlSet["salinity"]= 33.0
     self.nmlSet["emissivity"]= 0.6
     # sec gas_abs_mod
@@ -337,8 +337,8 @@ class pyPamtra(object):
     
     self.units["radar_hgt"] = "m"
     self.units["Ze"] = "dBz OR mm^6 m^-3"
-    self.units["Att_hydros"] = "dB OR linear"
-    self.units["Att_atmo"] = "dB OR linear"
+    self.units["Att_hydros"] = "dB"
+    self.units["Att_atmo"] = "dB"
     self.units["tb"] = "K"  
   
     return
@@ -890,9 +890,9 @@ class pyPamtra(object):
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
         
-    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","obs_height"]:
+    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","obs_height","groundtemp"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape2D)
-      
+
     for key in ["hydro_q","hydro_n","hydro_reff"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape4D)
       
@@ -900,7 +900,17 @@ class pyPamtra(object):
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3Dplus)
     
     for key in ["airturb",'temp', 'press', 'relhum','hgt']:
-      if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3D)    
+      if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3D)   
+      
+    if "radar_prop" in self.p.keys(): self.p["radar_prop"] = self.p["radar_prop"][condition].reshape(self._shape2D+tuple([2]))
+
+    #make sure we did not forget something
+    for key in self.p.keys():
+      if type(self.p[key]) == np.ndarray:
+        assert self.p[key].shape[0] == self.p["lat"].shape[0]
+        assert self.p[key].shape[1] == self.p["lat"].shape[1]
+
+    
  
     for key in self.df.data4D.keys():
       self.df.data4D[key] = self.df.data4D[key][condition].reshape(self._shape4D)
@@ -910,13 +920,12 @@ class pyPamtra(object):
       else: shape5D = self._shape5D
       self.df.dataFullSpec[key] = self.df.dataFullSpec[key][condition].reshape(shape5D)
       
-    if "radar_prop" in self.p.keys(): self.p["radar_prop"] = self.p["radar_prop"][condition].reshape(self._shape2D+tuple([2]))
 
       
     return
 
   def rescaleHeights(self,new_hgt_lev):
-  
+    sys.exit("not adapted yet to new layer option")
     # sort height vectors
     old_hgt_lev = self.p["hgt_lev"]
     new_hgt = (new_hgt_lev[...,1:] + new_hgt_lev[...,:-1])/2.
@@ -1129,7 +1138,7 @@ class pyPamtra(object):
     
     if checkData: self._checkData()
 
-    fortResults, fortObject = pyPamtraLibWrapper.PamtraFortranWrapper(self.set,self.nmlSet,self.df,self.p)
+    fortResults, fortObject = pyPamtraLibWrapper.PamtraFortranWrapper(self.set,self.nmlSet,self.df.data,self.df.data4D,self.df.dataFullSpec,self.p)
     self.r = fortResults
     self.fortObject = fortObject
     
@@ -1144,21 +1153,23 @@ class pyPamtra(object):
     '''
     run Pamtra from python
     '''
+    
+    if type(freqs) in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
+    self.set["freqs"] = freqs
+    self.set["nfreqs"] = len(freqs)
+    
     if pp_deltaF==0: pp_deltaF = self.set["nfreqs"]
     if pp_deltaX==0: pp_deltaX = self.p["ngridx"]
     if pp_deltaY==0: pp_deltaY = self.p["ngridy"]
-    
+
     if hasattr(self, "fortObject"): del self.fortObject
     
     if pp_local_workers == "auto": pp_local_workers = multiprocessing.cpu_count()
-    pool = multiprocessing.Pool(processes=pp_local_workers)
+    pool = multiprocessing.Pool(processes=pp_local_workers,maxtasksperchild=100)
     tttt = time.time()
 
     
-    if type(freqs) in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
-    
-    self.set["freqs"] = freqs
-    self.set["nfreqs"] = len(freqs)
+
     assert self.set["nfreqs"] > 0
     assert np.prod(self._shape2D)>0
     
@@ -1184,11 +1195,11 @@ class pyPamtra(object):
             print "submitting job ", pp_i, pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY
       
             indices = [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY]       
-            profilePart, dfPart, settings = self._sliceProfile(*indices)
+            profilePart, dfPart,dfPart4D,dfPartFS, settings = self._sliceProfile(*indices)
 
             jobs.append(pool.apply_async(pyPamtraLibWrapper.parallelPamtraFortranWrapper,(
             indices,
-            settings,self.nmlSet,dfPart,profilePart),{"returnModule":False}))#),callback=self.pp_resultData.append)
+            settings,self.nmlSet,dfPart,dfPart4D,dfPartFS,profilePart),{"returnModule":False}))#),callback=self.pp_resultData.append)
            
             
             pp_i += 1
@@ -1204,11 +1215,9 @@ class pyPamtra(object):
 
     print "waiting for all jobs to finish"
     for jj,job in enumerate(jobs):
-      import pdb;pdb.set_trace()
+      #import pdb;pdb.set_trace()
       try: self._joinResults(job.get(timeout=timeout))
-      except: 
-        pool.terminate()
-        pool.join()
+      except multiprocessing.TimeoutError: 
         print "KILLED pool due to timeout of job", jj+1
       print "got job", jj+1
 
@@ -1216,6 +1225,7 @@ class pyPamtra(object):
 
     pool.terminate()
     if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
+    del pool, jobs
     return    
     
   def _sliceProfile(self,pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY):
@@ -1232,18 +1242,19 @@ class pyPamtra(object):
     profilePart["ngridx"] = pp_endX - pp_startX
     profilePart["ngridy"] = pp_endY - pp_startY
        
-    dfData = deepcopy(self.df)   
-    for key in dfData.data4D.keys():
-      dfData.data4D[key] = self.df.data4D[key][pp_startX:pp_endX,pp_startY:pp_endY]
-       
-    for key in dfData.dataFullSpec.keys():
-      dfData.dataFullSpec[key] = self.df.dataFullSpec[key][pp_startX:pp_endX,pp_startY:pp_endY]
+    dfData = self.df.data
+    dfData4D = dict()
+    for key in self.df.data4D.keys():
+      dfData4D[key] = self.df.data4D[key][pp_startX:pp_endX,pp_startY:pp_endY]
+    dfDataFS = dict()
+    for key in self.df.dataFullSpec.keys():
+      dfDataFS[key] = self.df.dataFullSpec[key][pp_startX:pp_endX,pp_startY:pp_endY]
        
     settings = deepcopy(self.set)
     settings["nfreqs"] = pp_endF - pp_startF
     settings["freqs"] = self.set["freqs"][pp_startF:pp_endF]
        
-    return profilePart, dfData, settings
+    return profilePart, dfData, dfData4D, dfDataFS, settings
     
   def _prepareResults(self):
     
@@ -1495,7 +1506,7 @@ class pyPamtra(object):
     if (self.r["nmlSettings"]["passive"]):
       nc_angle = cdfFile.createVariable('angles','f',('angles',),**fillVDict)
       nc_angle.units = 'deg'
-      nc_angle[:] = np.array(self.r["angles"],dtype="f")
+      nc_angle[:] = np.array(self.r["angles_deg"],dtype="f")
       if not pyNc: nc_angle._FillValue =missingNumber
       
       nc_stokes = cdfFile.createVariable('stokes', 'c',("stokes",),**fillVDict)

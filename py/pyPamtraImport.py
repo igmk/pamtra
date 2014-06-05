@@ -87,7 +87,7 @@ def readWrfDataset(fname,kind):
   return pam
 
   
-def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp/",fnameInTar="",concatenateAxis=1,debug=False,verbosity=0,df_kind="default",constantFields=None):
+def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex=0,tmpDir="/tmp/",fnameInTar="",concatenateAxis=1,debug=False,verbosity=0,df_kind="default",constantFields=None,maxLevel=0):
   '''
   import wrf Dataset with fname of kind 
   
@@ -142,18 +142,22 @@ def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp
           ncFile = netCDF4.Dataset(fname,"r")
           if verbosity>1:print "opend ", fname
 
+        if maxLevel  == 0: maxLevel = ncFile.variables["hfl"].shape[1]
+          
         #import pdb;pdb.set_trace()
         dataSingle = dict()  
         for var in variables1Dx:  
           dataSingle[var] = ncFile.variables[var][:]
         for var in variables1Dy:  
           dataSingle[var] = ncFile.variables[var][[colIndex]]
-        for var in variables2D:  
-          dataSingle[var] = ncFile.variables[var][[colIndex],::-1] #reverse height order
+        for var in [ "hfl"]:  
+          dataSingle[var] = ncFile.variables[var][[colIndex],::-1][...,:maxLevel] #reverse height order and cut heights
+        for var in [ "hhl"]:  
+          dataSingle[var] = ncFile.variables[var][[colIndex],::-1][...,:maxLevel+1] #reverse height order and cut heights
         for var in variables3D:  
           dataSingle[var] = ncFile.variables[var][[colIndex],forecastIndex,:]
         for var in variables4D:
-          dataSingle[var] = np.swapaxes(ncFile.variables[var][[colIndex],:,forecastIndex,:],1,2)[...,::-1]#reverse height order  
+          dataSingle[var] = np.swapaxes(ncFile.variables[var][[colIndex],:,forecastIndex,:],1,2)[...,::-1][...,:maxLevel]#reverse height order  
           
         ncFile.close()
         if verbosity>1:print "closed nc"
@@ -246,7 +250,7 @@ def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp
     data["press_lev"] = np.zeros(shape3Dplus) + np.nan
     data["press_lev"][...,0] = data["surface_air_pressure"]
     
-    data["relhum"] = meteoSI.q2rh(data["qv"],data["temperature"],data["p"])
+    data["relhum"] = meteoSI.q2rh(data["qv"],data["temperature"],data["p"]) * 100.
     
     data["hydro_q"] = np.zeros(data["qc"].shape + (nHydro,)) + np.nan
     data["hydro_q"][...,0] = data["qc"]
@@ -268,7 +272,7 @@ def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp
     
     conFields = ncToDict(constantFields)
     data = dict()
-    
+    if maxLevel  == 0: maxLevel = conFields["HHL"].shape[1] - 1
     files = np.sort(glob.glob(fnames))
     if len(files) == 0: raise RuntimeError( "no files found")
     files.sort()
@@ -303,7 +307,7 @@ def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp
         for var in variables3D:  
           dataSingle[var] = np.swapaxes(ncFile.variables[var][forecastIndex],0,1)
         for var in variables4D:
-          dataSingle[var] = np.swapaxes(ncFile.variables[var][forecastIndex],0,2)[...,::-1]#reverse height order  
+          dataSingle[var] = np.swapaxes(ncFile.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel]#reverse height order  
         timestamp =   ncFile.variables["time"][:]
         ncFile.close()
         if verbosity>1:print "closed nc"
@@ -325,7 +329,7 @@ def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp
           dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,1)
         for key in ["HHL"]:
           dataSingle[key]  = np.zeros(shape3Dplus)
-          dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1]
+          dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1]
             
     
         if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
@@ -359,7 +363,7 @@ def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp
     data["press_lev"] = np.zeros(shape3Dplus) + np.nan
     data["press_lev"][...,0] = data["surface_air_pressure"]
     
-    data["relhum"] = meteoSI.q2rh(data["QV"],data["T"],data["P"])
+    data["relhum"] = meteoSI.q2rh(data["QV"],data["T"],data["P"]) * 100.
     
     data["hydro_q"] = np.zeros(data["QC"].shape + (nHydro,)) + np.nan
     data["hydro_q"][...,0] = data["QC"]
@@ -376,11 +380,10 @@ def readCosmoDe1MomDataset(fnames,kind,forecastIndex = 1,colIndex=0,tmpDir="/tmp
   pamData = dict()
   for cosmoVar,pamVar in varPairs:
     pamData[pamVar] = data[cosmoVar]
-    
+   
   pam = pyPamtra.pyPamtra()
   pam.set["pyVerbose"]= verbosity
-  
-  pam = descriptorFile_cosmo_1mom(pam,kind=df_kind)  
+  pam.df.readFile(descriptorFile)
   pam.createProfile(**pamData)
   del data
 
@@ -447,21 +450,7 @@ def _createUsStandardProfile(**kwargs):
     pamData["relhum_lev"] = np.zeros_like(kwargs["hgt_lev"])
   
   return pamData
-  
-  
-def descriptorFile_cosmo_1mom(pamObject, kind="default"):
-  if kind == "default":
-    pamObject.df.addHydrometeor(('cwc_q', -99.0, 1, -99.0, -99.0, -99.0, -99.0, -99.0, 3, 1, 'mono', -99.0, -99.0, -99.0, -99.0, 2e-05, -99.0, 'mie-sphere', 'khvorostyanov01_drops', -99.0))
-    pamObject.df.addHydrometeor(('iwc_q', -99.0, -1, 917.0, 130.0, 3.0, 0.684, 2.0, 3, 1, 'mono_cosmo_ice', -99.0, -99.0, -99.0, -99.0, -99.0, -99.0, 'mie-sphere', 'heymsfield10_particles', -99.0))
-    pamObject.df.addHydrometeor(('rwc_q', -99.0, 1, -99.0, -99.0, -99.0, -99.0, -99.0, 3, 50, 'exp', -99.0, -99.0, 8000000.0, -99.0, 0.00012, 0.006, 'mie-sphere', 'khvorostyanov01_drops', -99.0))
-    pamObject.df.addHydrometeor(('swc_q', -99.0, -1, 200.0, 0.038, 2.0, 0.3971, 1.88, 3, 50, 'exp_field_t', -99.0, -99.0, -99.0, -99.0, 5.1e-11, 0.02, 'mie-sphere', 'heymsfield10_particles', -99.0))
-    pamObject.df.addHydrometeor(('gwc_q', -99.0, -1, 400.0, 169.6, 3.1, -99.0, -99.0, 3, 50, 'exp', -99.0, -99.0, 4000000.0, -99.0, 1e-10, 0.01, 'mie-sphere', 'khvorostyanov01_spheres', -99.0))
-  else:
-    raise ValueError("Do not know kind "+ kind)
-  return pamObject
-    
-    
-    
+      
 #helper function    
 def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='netCDF4',tmpDir="/tmp/",skipFiles=[]):
   '''
@@ -490,6 +479,7 @@ def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='net
   if len(ncFiles) == 0:
     raise IOError('No files found: ' + str(ncFilePath))
 
+  noFiles = len(ncFiles)
   for ncFile in deepcopy(ncFiles):
     if ncFile.split("/")[-1] in skipFiles or ncFile in skipFiles:
       ncFiles.remove(ncFile)
@@ -512,7 +502,7 @@ def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='net
       if keys == 'all':
         keys = ncData.variables.keys()
       #make sure the join dimension is actually present!
-      assert joinDimension in ncData.dimensions.keys()
+      if noFiles > 1: assert joinDimension in ncData.dimensions.keys()
       #get the axis to join the arrays
       for key in keys:
         joinDimensionNumber[key] = -9999

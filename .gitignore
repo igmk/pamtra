@@ -32,7 +32,7 @@ check_moments
 py/codefriedhof.py
 *.png
 *.py
-!pamtra.py
+!py/*.py
 !examples/*py
 snowCRYSTALuli
 cl340d14.dda

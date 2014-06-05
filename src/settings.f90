@@ -278,7 +278,7 @@ contains
         radar_mode="simple" !"splitted"|"moments"|"spectrum"
         randomseed = 0
         ! sec surface params
-        ground_type='S'
+        ground_type='L'
         salinity=33.0
         emissivity=0.6
         ! sec gas_abs_mod
