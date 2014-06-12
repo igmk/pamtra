@@ -293,6 +293,7 @@ module tmatrix
 
       wave_num = 2.0_dbl*pi/LAM
       
+      err = 0
       call assert_true(err,axi> 0.d0,"nan or negative in axi")	  
       call assert_true(err,frequency> 0.d0,"nan or negative in frequency")   
       call assert_true(err,(wave_num > 0.d0),"nan or <= 0 in wave-num")
