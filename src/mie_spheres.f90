@@ -5,6 +5,7 @@ module mie_spheres
   use settings, only: lphase_flag, maxnleg
   use report_module
   use mie_scat_utlities  
+  use vars_index, only: i_x,i_y, i_z, i_h
   implicit none
 
 
@@ -86,7 +87,9 @@ module mie_spheres
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
     err = 0
 
-    if (verbose >= 4) print*, "calc_mie_spheres(",&
+    if (verbose >= 4) print*, "calc_mie_spheres",&
+!     if ((liq_ice == -1) .and. (nbins == 50)) print*, "calc_mie_spheres",&
+      i_x,i_y, i_z, i_h, &
       errorstatus, &
       freq, & ! frequency [Hz]
       t, &
@@ -95,7 +98,7 @@ module mie_spheres
        "diameter", diameter, &
       "ndens", ndens, &
       "density", density
-   
+
       call assert_true(err,all(density>=0),&
           "density must be positive")  
       call assert_true(err,all(ndens>=0),&
@@ -119,7 +122,7 @@ module mie_spheres
           return
       end if    
 
-     
+
       wavelength = c/(freq) !
 
       if (liq_ice == -1 .and. density(1) /= 917.d0) then

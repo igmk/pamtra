@@ -62,7 +62,8 @@ subroutine radar_spectrum(&
       out_debug_radarback, &
       out_debug_radarback_wturb, &
       out_debug_radarback_wturb_wnoise
-      
+    use vars_index, only: i_x,i_y, i_z, i_f, i_h
+
     implicit none
 
     integer,intent(in) ::  nbins 
@@ -95,7 +96,7 @@ subroutine radar_spectrum(&
         "nan or negative diameter_spec")
     call assert_true(err,all(back_spec >= 0),&
         "nan or negative back_spec")   
-    call assert_true(err,nbins>0,&
+    call assert_true(err,nbins>1,&
         "nbins must be greater than 1 for the radar simulator!")
     call assert_true(err,back>0,&
         "nan or negative back")
@@ -107,15 +108,16 @@ subroutine radar_spectrum(&
         "nan or negative frequency")  
     call assert_true(err,all(mass>=0),&
         "nan or negative mass")  
-    call assert_true(err,all(area>=0),&
+    if (vel_size_mod == "heymsfield10_particles") then
+      call assert_true(err,all(area>=0),&
         "nan or negative area")        
+    end if
     call assert_true(err,(radar_nfft_aliased > 0),&
         "nan or negative radar_nfft_aliased") 
     if (err > 0) then
       errorstatus = fatal
       msg = "assertation error"
       call report(errorstatus, msg, nameOfRoutine)
-print*, area
       return
     end if   
     
@@ -131,7 +133,8 @@ print*, area
     rho = rho_air(temp, press)
     call viscosity_air(temp,viscosity)
     nu = viscosity/rho !kinematic viscosity
-    
+
+    err = 0
     if (vel_size_mod == "khvorostyanov01_drops") then
       call dia2vel_khvorostyanov01_drops(err,nbins,diameter_spec_cp,rho,nu,vel_spec)
     else if (vel_size_mod == "khvorostyanov01_spheres") then
@@ -214,7 +217,6 @@ print*, area
     end do
     dD_dU(nbins) = dD_dU(nbins-1)
 
-
     call assert_false(err,any(isnan(dD_dU) .or. all(dD_dU <= 0.d0)),&
         "nan dD_dU")   
     call assert_false(err,any(vel_spec<0) .or. any(isnan(vel_spec)),&
@@ -229,18 +231,23 @@ print*, area
 
     del_v_model(nbins) = del_v_model(nbins)
     back_vel_spec = back_spec_ref * ABS(dD_dU)  !non-SI: [mm⁶/m³/m * m/(m/s)]
-
     !get delta velocity
     del_v_radar = (radar_max_V-radar_min_V)/radar_nfft ![m/s]
 
     min_V_aliased = radar_min_V - radar_aliasing_nyquist_interv*(radar_max_V-radar_min_V)
     max_V_aliased = radar_max_V + radar_aliasing_nyquist_interv*(radar_max_V-radar_min_V)
 
+    call assert_true(err,radar_min_V<=0,&
+        "radar_min_V must be smaller equal 0")   
+    call assert_true(err,radar_max_V>=0,&
+        "radar_max_V must be greater equal 0")   
     call assert_true(err,min_V_aliased<=MINVAL(vel_spec),&
         "increase radar_aliasing_nyquist_interv to the left!")   
     call assert_true(err,max_V_aliased>=MAXVAL(vel_spec),&
         "increase radar_aliasing_nyquist_interv to the right!")  
     if (err /= 0) then
+      print*, "min_V_aliased, MINVAL(vel_spec), max_V_aliased, MAXVAL(vel_spec)"
+      print*, min_V_aliased, MINVAL(vel_spec), max_V_aliased, MAXVAL(vel_spec)
       msg = 'error in radar_spectrum!'
       call report(err, msg, nameOfRoutine)
       errorstatus = err
@@ -321,7 +328,9 @@ print*, area
     call assert_true(err,all(particle_spec >= 0),&
         "nan or negative particle_spec") 
     if (err /= 0) then
-      msg = 'error in tranforming the spectrum to velocity space...'
+    print*, i_x,i_y, i_z, i_f, i_h
+    print*, "particle_spec", particle_spec
+      msg = 'error in transforming the spectrum to velocity space...'
       call report(err, msg, nameOfRoutine)
       errorstatus = err
       return

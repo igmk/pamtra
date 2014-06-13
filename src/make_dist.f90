@@ -56,7 +56,7 @@ subroutine make_dist(errorstatus)
 
 ! Local scalar:
 
-  real(kind=dbl) :: d_1_work, d_2_work, work1, tmp1, tmp2, tmpX
+  real(kind=dbl) :: d_1_work, d_2_work, work1, tmp1, tmp2, tmpX, n_tot
   integer(kind=long) :: i
 
 ! Error handling
@@ -119,6 +119,11 @@ subroutine make_dist(errorstatus)
     n_ds(i) = (f_ds(i) + f_ds(i+1)) / 2._dbl * delta_d_ds(i)  ! trapezoid approximation of the integral
   enddo
 
+  n_tot = SUM(n_ds)
+  !remove numerical instabilities
+  WHERE (n_ds < n_tot/nbin * 1d-60) n_ds = 0.d0
+
+! print*, n_ds
 ! print*,'d_ds',d_ds
 ! print*,'f_ds',f_ds
 ! print*,'n_ds',n_ds
