@@ -107,9 +107,9 @@ module tmatrix
 	  "nan or negative ndens")
       call assert_true(err,SUM(ndens)>0,&
           "sum(ndens) must be greater zero")    
-      call assert_false(err,(any(isnan(density)) .or. any(density < 0.d0)),&
+      call assert_false(err,(any(isnan(density)) .or. any(density <= 0.d0)),&
 	  "nan or negative density")
-      call assert_false(err,any(isnan(as_ratio)) .or. any(as_ratio < 0.d0),&
+      call assert_false(err,any(isnan(as_ratio)) .or. any(as_ratio <= 0.d0),&
           "nan or negative as_ratio")
       call assert_false(err,any(isnan(canting)) .or. any(canting < 0.d0),&
           "nan or negative canting")
@@ -119,7 +119,7 @@ module tmatrix
 	  call report(errorstatus, msg, nameOfRoutine)
 	  return
       end if   
-       
+
       !T Matrix settings
       alpha = 0.0_dbl    ! orientation of the particle [°]
       azimuth_num = 30

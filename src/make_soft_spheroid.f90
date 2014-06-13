@@ -41,14 +41,14 @@ subroutine make_soft_spheroid(errorstatus)
 
   use drop_size_dist, only: rho_ms, as_ratio, a_ms, b_ms, d_ds,nbin, mass_ds,  &    ! IN
 		     soft_rho_eff, soft_d_eff,liq_ice                                     ! OUT
-  use settings, only: hydro_limit_density_area
+  use settings, only: hydro_limit_density_area, hydro_softsphere_min_density
   implicit none
 
 !- End of header ---------------------------------------------------------------
 
 ! Local array:
 
-  real(kind=dbl), dimension(nbin+1) :: mass         ! particle mass  [kg]
+  real(kind=dbl), dimension(nbin) :: mass         ! particle mass  [kg]
 
 ! Local scalar:
 
@@ -108,14 +108,20 @@ subroutine make_soft_spheroid(errorstatus)
     endif
   endif
 
-!   reduce mass and density in case density is larger than 917
+!   change mass and density in case density is larger than 917 or below hydro_softsphere_min_density
   if ((liq_ice == -1) .and. &
       hydro_limit_density_area) then 
     do i=1,nbin
-      if (soft_rho_eff(i) > rho_ice) then
-        Write( msg, '("density too high:", f10.2)' )  soft_rho_eff(i)   
-        call report(warning, msg, nameOfRoutine)
-        soft_rho_eff(i) = rho_ice
+      if ((soft_rho_eff(i) > rho_ice) .or. (soft_rho_eff(i) < hydro_softsphere_min_density)) then
+        if (soft_rho_eff(i) > rho_ice) then
+          soft_rho_eff(i) = rho_ice
+          Write( msg, '("density too high:", f10.2)' )  soft_rho_eff(i)   
+          if (verbose >= 1) call report(warning, msg, nameOfRoutine)
+        else
+          Write( msg, '("density too low:", f10.2)' )  soft_rho_eff(i)   
+          if (verbose >= 1) call report(warning, msg, nameOfRoutine)
+          soft_rho_eff(i) = hydro_softsphere_min_density
+        end if
         if (as_ratio <= 0.) then
           mass(i) =  (pi *  d_ds(i)**3._dbl) * soft_rho_eff(i) / 6._dbl
         else if ((as_ratio > 0.d0) .and. (as_ratio <= 1.d0)) then

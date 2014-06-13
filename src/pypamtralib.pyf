@@ -189,6 +189,7 @@ python module pyPamtraLib ! in
             character(len=9) :: frq_str_s
             integer, parameter,optional :: maxnleg=200
             logical :: radar_airmotion
+            integer, parameter,optional :: src_code=2
             character(len=9) :: frq_str_e
             real(kind=dbl) :: obs_height
             character(len=1), parameter,optional :: deltam='n'
@@ -196,7 +197,7 @@ python module pyPamtraLib ! in
             character(len=2) :: outpol
             integer(kind=long_bn) :: radar_aliasing_nyquist_interv
             logical :: dump_to_file
-            integer, parameter,optional :: src_code=2
+            real(kind=dbl) :: hydro_softsphere_min_density
             logical :: lgas_extinction
             character(len=100) :: crm_data
             real(kind=dbl) :: hydro_threshold

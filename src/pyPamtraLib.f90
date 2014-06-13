@@ -134,8 +134,6 @@
                       msg = 'Error in run_rt!'
                       call report(fatal, msg, nameOfRoutine)
                       errorstatus = err
-print*, "i_x, i_y, i_z, i_f, i_h"
-print*, i_x, i_y, i_z, i_f, i_h
                       return
                   end if
 
