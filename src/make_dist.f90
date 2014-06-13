@@ -122,7 +122,6 @@ subroutine make_dist(errorstatus)
   n_tot = SUM(n_ds)
   !remove numerical instabilities
   WHERE (n_ds < n_tot/nbin * 1d-60) n_ds = 0.d0
-
 ! print*, n_ds
 ! print*,'d_ds',d_ds
 ! print*,'f_ds',f_ds
