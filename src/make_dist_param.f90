@@ -186,7 +186,8 @@ subroutine make_dist_params(errorstatus)
         n_0 = n_0 /(nbin-1)
       endif
     endif
-    if (trim(dist_name) == 'const_cosmo_ice' .and. moment_in == 3) then
+    if (trim(dist_name) == 'const_cosmo_ice' .and. moment_in == 3 &
+        .and. nbin == 2) then
 ! ! Monodisperse size distribution coherent with COSMO-de 1-moment scheme
 ! Number_concentration of activated ice ctystal is temperature dependent
 ! from COSMO-de code src_gscp.f90 routine: hydci_pp_gr
@@ -203,12 +204,11 @@ subroutine make_dist_params(errorstatus)
       endif
       d_1 = d_mono - (0.5_dbl* delta_d_mono)
       d_2 = d_mono + (0.5_dbl* delta_d_mono)
-!       n_0 = n_0 / nbin
     endif
 
 ! ! Check that the variables have been filled in
     if (lambda /= 0._dbl .or. mu /= 0._dbl .or. gam /= 0._dbl .or. &
-       n_0 <= 0._dbl) then
+       n_0 <= 0._dbl .or. ISNAN(n_0) .or. n_0 >= HUGE(n_0)) then
       msg = 'Monodisperse case: something wrong or this parameters combination is not yet implemented...'
       errorstatus = fatal
       call report(errorstatus, msg, nameOfRoutine)

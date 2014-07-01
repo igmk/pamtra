@@ -123,8 +123,8 @@ subroutine make_dist(errorstatus)
   !remove numerical instabilities
   WHERE (n_ds < n_tot/nbin * 1d-60) n_ds = 0.d0
 
-! 
 ! print*, "lambda", lambda, "mu", mu, "n_0", n_0, "gam", gam
+! print*, n_ds
 ! print*,'d_ds',d_ds
 ! print*,'d_bound_ds',d_bound_ds
 ! print*,'delta_d_ds',delta_d_ds
