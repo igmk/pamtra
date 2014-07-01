@@ -201,7 +201,7 @@ subroutine run_drop_size_dist(errorstatus)
   end if
 
   ! print results of dist if verbosity is high
-  if (verbose >= 10) then
+  if (verbose >= 1) then
     call check_print(dist_name)
   end if 
 
