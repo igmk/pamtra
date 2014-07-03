@@ -10,12 +10,12 @@ ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran-mp-4.8
 	NCFLAGS=-I/opt/local/include/ 
 	NCFLAGS_F2PY=-I/opt/local/include/ 
-	LFLAGS=-L/opt/local/lib/ -llapack -ldfftpack
+	LFLAGS= -L../lib -ldfftpack  -L/opt/local/lib/ -llapack
 	LDFLAGS=-lnetcdf -lnetcdff 
 else
 	NCFLAGS :=  $(shell nc-config --fflags)  -O2
 	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
-	LFLAGS := -llapack -ldfftpack
+	LFLAGS := -llapack -L../lib -ldfftpack
 	LDFLAGS := $(shell nc-config --flibs)
 endif
 
@@ -118,8 +118,10 @@ OBJECTS=kinds.o \
 
 BIN=pamtra
 
-all: precompile pamtra py
+all: precompile  dfftpack pamtra py
 
+dfftpack:
+	cd ../tools/dfftpack && $(MAKE) && cp libdfftpack.a ../../lib/libdfftpack.a
 
 pamtra: pamtra.f90 $(OBJECTS)
 	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS) 
@@ -208,6 +210,7 @@ precompile:
 	$(FC) $(FCFLAGS) versionNumber.auto.f90 #otherwise error on first make run!
 clean:
 	rm -rf $(OBJECTS) $(BIN) *.mod *~
+	cd ../tools/dfftpack/ && $(MAKE) clean
 
 test: test1 test2 test3 test4 test5 test6 cleantest
 

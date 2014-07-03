@@ -94,6 +94,8 @@ module settings
     character(9) :: frq_str_s,frq_str_e
     character(8), dimension(maxfreq) :: frqs_str
     character(300) :: descriptor_file_name
+    character(10) :: tmatrix_db
+    character(300) :: tmatrix_db_path
 
     integer(kind=long):: radar_nfft_aliased, radar_maxTurbTerms !are gained from radar_aliasing_nyquist_interv and radar_nfft
     
@@ -119,7 +121,7 @@ contains
         namelist / surface_params / ground_type,salinity, emissivity
         namelist / gas_abs_mod / lgas_extinction, gas_mod
         namelist / hyd_opts / lhyd_extinction, lphase_flag, hydro_fullSpec, hydro_limit_density_area,&
-                  hydro_softsphere_min_density
+                  hydro_softsphere_min_density, tmatrix_db, tmatrix_db_path
 	namelist / moments / n_moments, moments_file
 	namelist / radar_simulator / radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
 		  radar_pnoise0, radar_airmotion, radar_airmotion_model, &
@@ -292,6 +294,8 @@ contains
         hydro_fullSpec = .false.
         hydro_limit_density_area = .true.
         hydro_softsphere_min_density = 10. !kg/m^3
+        tmatrix_db = "none" ! none or file
+        tmatrix_db_path = "database/"
 !        ! sec moments
         n_moments=1
         moments_file='snowCRYSTAL'
@@ -368,6 +372,8 @@ contains
       print*, 'dump_to_file: ', dump_to_file
       print*, 'passive: ', passive
       print*, 'radar_airmotion_model: ', radar_airmotion_model
+      print*, 'tmatrix_db_path: ', tmatrix_db_path
+      print*, 'tmatrix_db: ', tmatrix_db
       print*, 'crm_data: ', crm_data
       print*, 'tmp_path: ', tmp_path
       print*, 'lgas_extinction: ', lgas_extinction

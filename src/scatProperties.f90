@@ -236,6 +236,7 @@ module scatProperties
         density2scat,&
         as_ratio_list,& 
         canting_list, &
+        layer_t, &
         scatter_matrix_hydro(:,:,:,:,1:2),&
         extinct_matrix_hydro(:,:,:,1),&
         emis_vector_hydro(:,:,1),&
