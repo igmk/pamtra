@@ -43,6 +43,8 @@ subroutine make_dist(errorstatus)
   use report_module
 
   use constants, only: pi, delta_d_mono
+  
+  use settings, only: hydro_adaptive_grid
 
   use drop_size_dist, only: dist_name, d_1, d_2, nbin, n_0, lambda, mu, gam, n_t, d_ln, sig, d_mono, & ! IN
                             d_ds, d_bound_ds, f_ds, n_ds, delta_d_ds, b_ms, n_0_star, d_m
@@ -57,7 +59,7 @@ subroutine make_dist(errorstatus)
 ! Local scalar:
 
   real(kind=dbl) :: d_1_work, d_2_work, work1, tmp1, tmp2, tmpX, n_tot
-  integer(kind=long) :: i
+  integer(kind=long) :: i,j
 
 ! Error handling
 
@@ -65,7 +67,7 @@ subroutine make_dist(errorstatus)
 !   integer(kind=long) :: err = 0
 !   character(len=80) :: msg
   character(len=14) :: nameOfRoutine = 'make_dist'
-
+  
   if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
   d_1_work = d_1
@@ -84,6 +86,16 @@ subroutine make_dist(errorstatus)
     d_bound_ds(i) = d_1_work + work1 * (i-1)
     if (i <= nbin) d_ds(i) = d_bound_ds(i) + work1 * .5_dbl
   enddo
+
+! Create a logspace diameter array
+!   work1 = (dlog(d_2_work)-dlog(d_1_work)) / nbin
+!   do i = 1, nbin+1
+!     d_bound_ds(i) = exp(work1 * (i-1)  + dlog(d_1_work))
+!   enddo
+!   do i = 1, nbin
+!     d_ds(i) = (d_bound_ds(i) + d_bound_ds(i+1)) * .5_dbl
+!   enddo
+
 
 ! calculate the particle number concentration
 ! ! LOG-NORMAL distribution
@@ -107,11 +119,26 @@ subroutine make_dist(errorstatus)
     enddo
 
 
-! modified gamma, gamma or exponetial distribution
+! modified gamma, gamma or exponetial distribution with adaptiv grid
   else
-    do i=1,nbin+1
+    search_loop: do i=1,nbin+1
       f_ds(i) = n_0 * d_bound_ds(i)**mu * EXP(-lambda * d_bound_ds(i)**gam)
-    enddo
+      if (hydro_adaptive_grid) then
+	if (f_ds(i) < 0.1) then
+	! Create new particle diameter array
+	  d_2 = d_bound_ds(i)
+	  work1 = (d_2 - d_1_work) / nbin      ! Delta diameter
+	  do j=1,nbin+1 
+	    d_bound_ds(j) = d_1_work + work1 * (j-1)
+	    if (j <= nbin) d_ds(j) = d_bound_ds(j) + work1 * .5_dbl
+	  enddo
+	  do j=1,nbin+1
+	    f_ds(j) = n_0 * d_bound_ds(j)**mu * EXP(-lambda * d_bound_ds(j)**gam)
+	  enddo
+	  exit search_loop 
+	end if
+      end if 
+    enddo search_loop
   endif
 
   do i=1,nbin

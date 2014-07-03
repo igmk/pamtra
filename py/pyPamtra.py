@@ -218,7 +218,8 @@ class pyPamtra(object):
     self.nmlSet["lphase_flag"]=  True
     self.nmlSet["hydro_fullspec"] = False
     self.nmlSet["hydro_limit_density_area"] = True
-    self.nmlSet["hydro_softsphere_min_density"] = 10.  
+    self.nmlSet["hydro_softsphere_min_density"] = 10.    
+    self.nmlSet["hydro_adaptive_grid"] = True
     self.nmlSet["tmatrix_db"] = "none" 
     self.nmlSet["tmatrix_db_path"] = "database/" 
     # radar_simulator

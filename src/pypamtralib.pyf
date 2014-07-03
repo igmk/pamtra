@@ -230,6 +230,7 @@ python module pyPamtraLib ! in
             real(kind=dbl) :: radar_airmotion_vmin
             character(len=100) :: creator
             character(len=8) :: radar_airmotion_model
+            logical :: hydro_adaptive_grid
             real(kind=dbl) :: radar_pnoise0
             character(len=100) :: data_path
             character(len=300) :: tmatrix_db_path

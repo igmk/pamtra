@@ -76,6 +76,7 @@ module settings
     radar_smooth_spectrum, &
     hydro_fullSpec, &
     hydro_limit_density_area, &
+    hydro_adaptive_grid, & ! apply an adaptive grid to the psd. good to reduce mass overestimations for small amounts. works only for modified gamma
     add_obs_height_to_layer
 
     character(3) :: gas_mod
@@ -121,7 +122,7 @@ contains
         namelist / surface_params / ground_type,salinity, emissivity
         namelist / gas_abs_mod / lgas_extinction, gas_mod
         namelist / hyd_opts / lhyd_extinction, lphase_flag, hydro_fullSpec, hydro_limit_density_area,&
-                  hydro_softsphere_min_density, tmatrix_db, tmatrix_db_path
+                  hydro_softsphere_min_density, hydro_adaptive_grid, tmatrix_db, tmatrix_db_path
 	namelist / moments / n_moments, moments_file
 	namelist / radar_simulator / radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
 		  radar_pnoise0, radar_airmotion, radar_airmotion_model, &
@@ -294,6 +295,7 @@ contains
         hydro_fullSpec = .false.
         hydro_limit_density_area = .true.
         hydro_softsphere_min_density = 10. !kg/m^3
+        hydro_adaptive_grid = .true.
         tmatrix_db = "none" ! none or file
         tmatrix_db_path = "database/"
 !        ! sec moments
@@ -386,6 +388,7 @@ contains
       print*, 'hydro_fullSpec: ', hydro_fullSpec
       print*, 'hydro_limit_density_area: ', hydro_limit_density_area
       print*, 'hydro_softsphere_min_density: ', hydro_softsphere_min_density
+      print*, 'hydro_adaptive_grid: ', hydro_adaptive_grid
       print*, 'radar_noise_distance_factor: ', radar_noise_distance_factor
       print*, 'radar_airmotion_step_vmin: ', radar_airmotion_step_vmin
       print*, 'crm_data2: ', crm_data2
