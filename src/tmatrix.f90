@@ -89,7 +89,8 @@ module tmatrix
       if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)    
       
       if (verbose >= 4) print*,"frequency,ref_index,phase,nbins,dmax,del_d,ndens,density,as_ratio"
-      if (verbose >= 4) print*,frequency,ref_index,phase,nbins,dmax,del_d,ndens,density,as_ratio
+      if (verbose >= 4) print*,frequency,ref_index,phase,nbins,dmax,del_d,"N ",&
+        ndens,"rho ", density,"AR ",as_ratio
 
       err = 0
 
@@ -107,9 +108,9 @@ module tmatrix
 	  "nan or negative ndens")
       call assert_true(err,SUM(ndens)>0,&
           "sum(ndens) must be greater zero")    
-      call assert_false(err,(any(isnan(density)) .or. any(density <= 0.d0)),&
+      call assert_false(err,(any(isnan(density)) .or. any(density < 0.d0)),&
 	  "nan or negative density")
-      call assert_false(err,any(isnan(as_ratio)) .or. any(as_ratio <= 0.d0),&
+      call assert_false(err,any(isnan(as_ratio)) .or. any(as_ratio < 0.d0),&
           "nan or negative as_ratio")
       call assert_false(err,any(isnan(canting)) .or. any(canting < 0.d0),&
           "nan or negative canting")
@@ -144,7 +145,18 @@ module tmatrix
         if (verbose >= 4) print*, "Skipped iteration", ir, "because ndens_eff", ndens_eff
         CYCLE
       end if
-
+      call assert_true(err,ndens_eff>0,&
+          "nan or negative ndens_eff")
+      call assert_true(err,del_d_eff>0,&
+          "nan or negative del_d_eff")
+      call assert_true(err,density(ir)>0,&
+          "nan or negative density(ir)")
+      if (err > 0) then
+          errorstatus = fatal
+          msg = "assertation error"
+          call report(errorstatus, msg, nameOfRoutine)
+          return
+      end if   
       if (phase == -1 .and. density(ir) /= 917.d0) then
           mMix = eps_mix((1.d0,0.d0),ref_index,density(ir))
       else
@@ -294,7 +306,8 @@ module tmatrix
       wave_num = 2.0_dbl*pi/LAM
       
       err = 0
-      call assert_true(err,axi> 0.d0,"nan or negative in axi")	  
+      call assert_true(err,as_ratio> 0.d0,"nan or negative in as_ratio")    
+      call assert_true(err,axi> 0.d0,"nan or negative in axi")    
       call assert_true(err,frequency> 0.d0,"nan or negative in frequency")   
       call assert_true(err,(wave_num > 0.d0),"nan or <= 0 in wave-num")
       call assert_true(err,(LAM > 0.d0),"nan or <= 0 in LAM")

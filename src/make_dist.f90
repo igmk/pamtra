@@ -133,7 +133,7 @@ subroutine make_dist(errorstatus)
 
   errorstatus = success
 
-  if (verbose >= 1) call report(info,'End of ', nameOfRoutine)
+  if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
 
   return
 end subroutine make_dist
