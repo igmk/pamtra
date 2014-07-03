@@ -1,7 +1,8 @@
 module tmatrix
   use kinds
   use constants, only: pi, c
-  use settings, only: nummu, nstokes, verbose, active, passive
+  use settings, only: nummu, nstokes, verbose, active, passive, &
+    tmatrix_db, tmatrix_db_path
   use rt_utilities, only: lobatto_quadrature
   use report_module
 
@@ -20,6 +21,7 @@ module tmatrix
     density,&
     as_ratio,&
     canting,&
+    temp, &
     scatter_matrix,&
     extinct_matrix,&
     emis_vector,&
@@ -39,6 +41,7 @@ module tmatrix
       !       density         dbl (nbins) density of softspheres
       !       as_ratio        double  aspect ratio
       !       canting        double  canting angle (deg) -> beta in tmatrix code
+      !       temp           double temperature [K]
       !
       !   output:
       !       scatter_matrix  double  scattering matrix []
@@ -49,7 +52,7 @@ module tmatrix
       implicit none
 
       real(kind=dbl), intent(in) :: frequency
-      complex(kind=dbl) :: ref_index
+      complex(kind=dbl), intent(in) :: ref_index
       integer, intent(in) :: phase
       integer, intent(in) :: nbins
       real(kind=dbl), dimension(nbins), intent(in) :: dmax
@@ -58,6 +61,7 @@ module tmatrix
       real(kind=dbl), dimension(nbins), intent(in) :: density
       real(kind=dbl), dimension(nbins), intent(in) :: as_ratio
       real(kind=dbl), dimension(nbins), intent(in) :: canting
+      real(kind=dbl), intent(in) :: temp
 
       real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
       real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
@@ -76,11 +80,19 @@ module tmatrix
       integer :: azimuth0_num   
       integer :: ir
       character(1) :: quad
+      character(7) ::db_file
+      character(600) ::db_path
+      character(5) ::format_str
+      logical ::file_exists
   
       real(kind=dbl), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix_part
       real(kind=dbl), dimension(nstokes,nstokes,nummu) :: extinct_matrix_part
       real(kind=dbl), dimension(nstokes,nummu) :: emis_vector_part
   
+      real(kind=dbl), dimension(nstokes*nummu*nstokes*nummu*2) :: scatter_matrix_flat
+      real(kind=dbl), dimension(nstokes*nstokes*nummu) :: extinct_matrix_flat
+      real(kind=dbl), dimension(nstokes*nummu) :: emis_vector_flat
+
       integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0
       character(len=80) :: msg
@@ -161,16 +173,133 @@ module tmatrix
         axi = 0.5_dbl*dmax(ir)/as_ratio(ir)**(2.0_dbl/3.0_dbl) 
       end if
 
-      call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
-          as_ratio(ir), alpha, beta, azimuth_num, azimuth0_num,&
-          scatter_matrix_part,extinct_matrix_part,emis_vector_part)
-      if (err /= 0) then
-          msg = 'error in calc_single_tmatrix!'
-          call report(err, msg, nameOfRoutine)
-          errorstatus = err
-          return
-      end if          
+      if (tmatrix_db == "none") then
+        call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
+            as_ratio(ir), alpha, beta, azimuth_num, azimuth0_num,&
+            scatter_matrix_part,extinct_matrix_part,emis_vector_part)
+        if (err /= 0) then
+            msg = 'error in calc_single_tmatrix!'
+            call report(err, msg, nameOfRoutine)
+            errorstatus = err
+            return
+        end if          
+      else if (tmatrix_db == "file") then
+        
+        db_path =""
+!         write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,E12.6,2(A6,ES36.30),4(A6,ES14.8),A1)'),&
+!                   "/v01","/quad_", quad, &
+!                   "/numu_",nummu,"/azno_",azimuth_num, "/a0no_", azimuth0_num, "/nsto_",nstokes,&
+!                   "/freq_",frequency, &
+!                   "/min1_", REAL(mindex), "/min2_",IMAG(mindex), &
+!                   "/axxi_",axi, "/asra_",as_ratio(ir), "/alph_",alpha, "/beta_",beta,"/"
 
+        write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,ES12.6,A6,SP,I3.2,SS,2(A6,ES10.4),A6,A5,4(A6,ES14.8),A1)'),&
+                  "/v01","/quad_", quad, &
+                  "/numu_",nummu,"/azno_",azimuth_num, "/a0no_", azimuth0_num, "/nsto_",nstokes,&
+                  "/freq_",frequency, &
+                  "/phas_",phase, "/temp_",temp, "/dens_",density(ir), "/meth_","stand",&
+                  "/axxi_",axi, "/asra_",as_ratio(ir), "/alph_",alpha, "/beta_",beta,"/"
+
+        db_file = "dat.dat"
+        INQUIRE(FILE=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file), EXIST=file_exists)
+
+        if (file_exists) then
+          if (verbose > 0) print * , TRIM(db_path)//TRIM(db_file), " exists, opening"
+
+          open(112,file=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file),action="READ")
+
+          write(format_str,"(I5.5)") SHAPE(scatter_matrix_flat)
+          read(112,"("//format_str//"(ES25.17, 2x))")scatter_matrix_flat
+
+          write(format_str,"(I5.5)") SHAPE(extinct_matrix_flat)
+          read(112,"("//format_str//"(ES25.17, 2x))")extinct_matrix_flat
+
+          write(format_str,"(I5.5)") SHAPE(emis_vector_flat)
+          read(112,"("//format_str//"(ES25.17, 2x))")emis_vector_flat
+
+          close(112)
+          if (verbose > 0) print * , TRIM(db_path)//TRIM(db_file), " closed"
+
+          err = 0
+          call assert_true(err,PRODUCT(SHAPE(scatter_matrix_part)) == PRODUCT(SHAPE(scatter_matrix_flat)),&
+              "shape of scatter_matrix_flat does not match")
+          call assert_true(err,PRODUCT(SHAPE(extinct_matrix_part)) == PRODUCT(SHAPE(extinct_matrix_flat)),&
+              "shape of extinct_matrix_flat does not match")
+          call assert_true(err,PRODUCT(SHAPE(emis_vector_part)) == PRODUCT(SHAPE(emis_vector_flat)),&
+              "shape of emis_vector_flat does not match")
+          if (err > 0) then
+              errorstatus = fatal
+              msg = "assertation error"
+              call report(errorstatus, msg, nameOfRoutine)
+              return
+          end if   
+
+          scatter_matrix_part =reshape(scatter_matrix_flat,SHAPE(scatter_matrix_part))
+          extinct_matrix_part =reshape(extinct_matrix_flat,SHAPE(extinct_matrix_part))
+          emis_vector_part =reshape(emis_vector_flat,SHAPE(emis_vector_part))
+
+          ! for debugging only: calculate scatter matrix and compare with file
+          if (verbose .gt. 20) then
+            call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
+                as_ratio(ir), alpha, beta, azimuth_num, azimuth0_num,&
+                scatter_matrix_part,extinct_matrix_part,emis_vector_part)
+            if (err /= 0) then
+                msg = 'error in calc_single_tmatrix!'
+                call report(err, msg, nameOfRoutine)
+                errorstatus = err
+                return
+            end if 
+            print*, MAXVAL((ABS(reshape(emis_vector_flat,SHAPE(emis_vector_part)) &
+                - emis_vector_part) /emis_vector_part))
+            print*, MAXVAL((ABS(reshape(extinct_matrix_flat,SHAPE(extinct_matrix_part)) &
+                - extinct_matrix_part) /extinct_matrix_part))
+            print*, MAXVAL((ABS(reshape(scatter_matrix_flat,SHAPE(scatter_matrix_part)) &
+                - scatter_matrix_part) /scatter_matrix_part))
+
+          end if
+
+        else
+          !file does not exist
+          if (verbose > 0) print * , TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file), " NOT FOUND. calculating..."
+          CALL EXECUTE_COMMAND_LINE("mkdir -p "//TRIM(tmatrix_db_path)//TRIM(db_path))
+
+          call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
+              as_ratio(ir), alpha, beta, azimuth_num, azimuth0_num,&
+              scatter_matrix_part,extinct_matrix_part,emis_vector_part)
+          if (err /= 0) then
+              msg = 'error in calc_single_tmatrix!'
+              call report(err, msg, nameOfRoutine)
+              errorstatus = err
+              return
+          end if 
+
+          scatter_matrix_flat =reshape(scatter_matrix_part,SHAPE(scatter_matrix_flat))
+          extinct_matrix_flat =reshape(extinct_matrix_part,SHAPE(extinct_matrix_flat))
+          emis_vector_flat =reshape(emis_vector_part,SHAPE(emis_vector_flat))
+          if (verbose > 0) print * ,TRIM(db_path)//TRIM(db_file), " open..."
+
+          open(112,file=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file),ACTION="WRITE")
+
+          write(format_str,"(I5.5)") SHAPE(scatter_matrix_flat)
+          write(112,"("//format_str//"(ES25.17, 2x))")scatter_matrix_flat
+
+          write(format_str,"(I5.5)") SHAPE(extinct_matrix_flat)
+          write(112,"("//format_str//"(ES25.17, 2x))")extinct_matrix_flat
+
+          write(format_str,"(I5.5)") SHAPE(emis_vector_flat)
+          write(112,"("//format_str//"(ES25.17, 2x))")emis_vector_flat
+
+          close(112)
+          if (verbose > 0) print * , TRIM(db_path)//TRIM(db_file), " closed"
+
+        end if
+
+      else
+            msg = 'do not understand tmatrix_db: '//tmatrix_db
+            call report(err, msg, nameOfRoutine)
+            errorstatus = err
+            return
+      end if
       !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, sc
       back_spec(ir) = 4*pi*ndens_eff*scatter_matrix_part(1,16,1,16,2)
 

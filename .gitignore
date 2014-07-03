@@ -46,3 +46,4 @@ tools/pp_scripts/nodesConfig.sh
 *.sqlite
 gmon.out
 check_moments
+database
