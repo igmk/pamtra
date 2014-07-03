@@ -179,41 +179,43 @@ python module pyPamtraLib ! in
         module settings ! in :pyPamtraLib:settings.f90
             use report_module
             use kinds
-            logical :: jacobian_mode
+            character(len=300) :: nc_out_file
             integer(kind=long_bn) :: radar_nfft
             character(len=100) :: input_path
             character(len=8) :: radar_mode
             integer(kind=long_bn) :: radar_no_ave
             real(kind=dbl) :: radar_min_spectral_snr
-            character(len=300) :: nc_out_file
+            logical :: jacobian_mode
             character(len=9) :: frq_str_s
             integer, parameter,optional :: maxnleg=200
             logical :: radar_airmotion
-            integer, parameter,optional :: src_code=2
+            real(kind=dbl) :: hydro_softsphere_min_density
             character(len=9) :: frq_str_e
             real(kind=dbl) :: obs_height
+            logical :: lphase_flag
             character(len=1), parameter,optional :: deltam='n'
-            logical :: passive
-            character(len=2) :: outpol
-            integer(kind=long_bn) :: radar_aliasing_nyquist_interv
-            logical :: dump_to_file
-            real(kind=dbl) :: hydro_softsphere_min_density
             logical :: lgas_extinction
+            character(len=2) :: outpol
+            logical :: dump_to_file
+            integer, parameter,optional :: src_code=2
+            logical :: passive
             character(len=100) :: crm_data
             real(kind=dbl) :: hydro_threshold
-            logical :: lphase_flag
+            integer(kind=long_bn) :: radar_aliasing_nyquist_interv
             character(len=1), parameter,optional :: quad_type='l'
             real(kind=dbl) :: radar_k2
             integer(kind=long_bn) :: radar_npeaks
+            logical :: hydro_limit_density_area
             logical :: add_obs_height_to_layer
             real(kind=dbl) :: radar_airmotion_step_vmin
             character(len=100) :: crm_data2
             character(len=100) :: crm_constants
+            character(len=10) :: input_type
             integer(kind=long_bn) :: radar_nfft_aliased
-            logical :: hydro_limit_density_area
+            real(kind=dbl), parameter,optional :: direct_mu=0._dbl
             real(kind=dbl) :: radar_noise_distance_factor
-            logical :: radar_save_noise_corrected_spectra
             integer(kind=long_bn) :: randomseed
+            logical :: radar_save_noise_corrected_spectra
             integer(kind=long_bn) :: n_moments
             real(kind=dbl) dimension(100) :: freqs
             integer(kind=long_bn) :: radar_maxturbterms
@@ -221,12 +223,12 @@ python module pyPamtraLib ! in
             character(len=100) :: output_path
             integer, parameter,optional :: noutlevels=2
             integer, parameter,optional :: numazimuths=1
-            character(len=3) :: gas_mod
             character(len=18) :: freq_str
             character(len=20) :: file_desc
-            integer(kind=long_bn) :: nfrq
+            real(kind=dbl) :: radar_airmotion_vmin
             character(len=100) :: creator
             character(len=8) :: radar_airmotion_model
+            logical :: hydro_adaptive_grid
             real(kind=dbl) :: radar_pnoise0
             character(len=100) :: data_path
             integer(kind=long_bn) :: radar_airmotion_linear_steps
@@ -240,13 +242,12 @@ python module pyPamtraLib ! in
             integer, parameter,optional :: maxv=64
             character(len=100) :: tmp_path
             character(len=1) :: units
-            real(kind=dbl), parameter,optional :: direct_mu=0._dbl
+            character(len=3) :: gas_mod
             character(len=20) :: moments_file
             real(kind=dbl) :: radar_receiver_uncertainty_std
             logical :: save_psd
             integer, parameter,optional :: nstokes=2
             character(len=99) :: input_file
-            integer, parameter,optional :: maxfreq=100
             logical :: radar_use_hildebrand
             logical :: radar_convolution_fft
             character(len=300) :: descriptor_file_name
@@ -257,10 +258,10 @@ python module pyPamtraLib ! in
             real(kind=dbl), parameter,optional :: direct_flux=0._dbl
             logical :: in_python
             logical :: lhyd_extinction
-            real(kind=dbl) :: radar_airmotion_vmin
+            integer(kind=long_bn) :: nfrq
             real(kind=dbl) :: salinity
             logical :: radar_smooth_spectrum
-            character(len=10) :: input_type
+            integer, parameter,optional :: maxfreq=100
             integer, parameter,optional :: maxleg=200
             logical :: hydro_fullspec
             real(kind=dbl) :: emissivity

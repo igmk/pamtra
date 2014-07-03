@@ -219,6 +219,7 @@ class pyPamtra(object):
     self.nmlSet["hydro_fullspec"] = False
     self.nmlSet["hydro_limit_density_area"] = True
     self.nmlSet["hydro_softsphere_min_density"] = 10.    
+    self.nmlSet["hydro_adaptive_grid"] = True
     # radar_simulator
     #number of FFT points in the Doppler spectrum [typically 256 or 512]
     self.nmlSet["radar_nfft"]= 256
