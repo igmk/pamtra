@@ -79,11 +79,13 @@ module tmatrix
       integer :: azimuth_num
       integer :: azimuth0_num   
       integer :: ir
+      integer :: n_lines, work1
+      character(len=1)    :: work2
       character(1) :: quad
       character(7) ::db_file
       character(600) ::db_path
       character(5) ::format_str
-      logical ::file_exists
+      logical ::file_exists, file_OK
   
       real(kind=dbl), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix_part
       real(kind=dbl), dimension(nstokes,nstokes,nummu) :: extinct_matrix_part
@@ -205,17 +207,35 @@ module tmatrix
 !                   "/min1_", REAL(mindex), "/min2_",IMAG(mindex), &
 !                   "/axxi_",axi, "/asra_",as_ratio(ir), "/alph_",alpha, "/beta_",beta,"/"
 
-        write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,ES12.6,A6,SP,I3.2,SS,2(A6,ES10.4),A6,A5,4(A6,ES14.8),A1)'),&
+        write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,ES12.6,A6,SP,I3.2,SS,2(A6,ES10.4),A6,A5,4(A6,ES10.4),A1)'),&
                   "/v01","/quad_", quad, &
                   "/numu_",nummu,"/azno_",azimuth_num, "/a0no_", azimuth0_num, "/nsto_",nstokes,&
                   "/freq_",frequency, &
                   "/phas_",phase, "/temp_",temp, "/dens_",density(ir), "/meth_","stand",&
-                  "/axxi_",axi, "/asra_",as_ratio(ir), "/alph_",alpha, "/beta_",beta,"/"
+                  "/diam_",axi, "/asra_",as_ratio(ir), "/alph_",alpha, "/beta_",beta,"/"
 
         db_file = "dat.dat"
         INQUIRE(FILE=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file), EXIST=file_exists)
 
+        !check whether file is not empty
         if (file_exists) then
+          open(112,file=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file),action="READ")
+          n_lines = 0
+          do
+            read(112,*,IOSTAT=work1)  work2
+            if (work1 /= 0) exit
+            n_lines = n_lines + 1
+          end do
+          rewind(112)
+          if (n_lines == 3) then 
+            file_OK = .true.
+          else
+            file_OK = .false.
+          end if
+
+        end if
+        if (file_exists .and. file_OK) then
+
           if (verbose > 0) print * , TRIM(db_path)//TRIM(db_file), " exists, opening"
 
           open(112,file=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file),action="READ")
@@ -230,7 +250,7 @@ module tmatrix
           read(112,"("//format_str//"(ES25.17, 2x))")emis_vector_flat
 
           close(112)
-          if (verbose > 0) print * , TRIM(db_path)//TRIM(db_file), " closed"
+          if (verbose > 1) print * , TRIM(db_path)//TRIM(db_file), " closed"
 
           err = 0
           call assert_true(err,PRODUCT(SHAPE(scatter_matrix_part)) == PRODUCT(SHAPE(scatter_matrix_flat)),&
@@ -271,7 +291,10 @@ module tmatrix
           end if
 
         else
-          !file does not exist
+          !file does not exist or is not OK
+          
+          if (file_exists) close(112)
+
           if (verbose > 0) print * , TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file), " NOT FOUND. calculating..."
           CALL EXECUTE_COMMAND_LINE("mkdir -p "//TRIM(tmatrix_db_path)//TRIM(db_path))
 
@@ -288,21 +311,21 @@ module tmatrix
           scatter_matrix_flat =reshape(scatter_matrix_part,SHAPE(scatter_matrix_flat))
           extinct_matrix_flat =reshape(extinct_matrix_part,SHAPE(extinct_matrix_flat))
           emis_vector_flat =reshape(emis_vector_part,SHAPE(emis_vector_flat))
-          if (verbose > 0) print * ,TRIM(db_path)//TRIM(db_file), " open..."
+          if (verbose > 1) print * ,TRIM(db_path)//TRIM(db_file), " open..."
 
-          open(112,file=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file),ACTION="WRITE")
+          open(113,file=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file),ACTION="WRITE")
 
           write(format_str,"(I5.5)") SHAPE(scatter_matrix_flat)
-          write(112,"("//format_str//"(ES25.17, 2x))")scatter_matrix_flat
+          write(113,"("//format_str//"(ES25.17, 2x))")scatter_matrix_flat
 
           write(format_str,"(I5.5)") SHAPE(extinct_matrix_flat)
-          write(112,"("//format_str//"(ES25.17, 2x))")extinct_matrix_flat
+          write(113,"("//format_str//"(ES25.17, 2x))")extinct_matrix_flat
 
           write(format_str,"(I5.5)") SHAPE(emis_vector_flat)
-          write(112,"("//format_str//"(ES25.17, 2x))")emis_vector_flat
+          write(113,"("//format_str//"(ES25.17, 2x))")emis_vector_flat
 
-          close(112)
-          if (verbose > 0) print * , TRIM(db_path)//TRIM(db_file), " closed"
+          close(113)
+          if (verbose > 1) print * , TRIM(db_path)//TRIM(db_file), " closed"
 
         end if
 

@@ -202,7 +202,7 @@ def setFortranStrList(fortranList,pythonList,charLength=None):
   return
   
 def parallelPamtraFortranWrapper(indices, *args, **kwargs):
-  print 'starting', __name__, 'parent process:', os.getppid(), 'process id:', os.getpid()
+  if args[0]["pyVerbose"] > 1: print 'starting', __name__, 'parent process:', os.getppid(), 'process id:', os.getpid()
   results = PamtraFortranWrapper(*args, **kwargs)
   return indices, results
   #return indices, dict()

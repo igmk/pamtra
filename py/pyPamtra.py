@@ -1222,7 +1222,7 @@ class pyPamtra(object):
       try: self._joinResults(job.get(timeout=timeout))
       except multiprocessing.TimeoutError: 
         print "KILLED pool due to timeout of job", jj+1
-      print "got job", jj+1
+      if self.set["pyVerbose"] > 0: print "got job", jj+1
 
     self.r["nmlSettings"] = self.nmlSet
 

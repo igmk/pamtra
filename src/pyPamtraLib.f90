@@ -84,9 +84,7 @@
     end if
 
       if (verbose >= 1) then
-          msg = "input_file: "//input_file(:len_trim(input_file))//&
-          " namelist file: "//trim(namelist_file)//&
-          " freqs: "//trim(frqs_str(1))//" to "//trim(frqs_str(nfrq))
+          msg = "freqs: "//trim(frqs_str(1))//" to "//trim(frqs_str(nfrq))
           call report(info, msg, nameOfRoutine)
       end if
 
