@@ -82,7 +82,7 @@ module tmatrix
       integer :: n_lines, work1
       character(len=1)    :: work2
       character(1) :: quad
-      character(7) ::db_file
+      character(12) ::db_file
       character(600) ::db_path
       character(5) ::format_str
       logical ::file_exists, file_OK
@@ -214,7 +214,7 @@ module tmatrix
                   "/phas_",phase, "/temp_",temp, "/dens_",density(ir), "/meth_","stand",&
                   "/diam_",axi, "/asra_",as_ratio(ir), "/alph_",alpha, "/beta_",beta,"/"
 
-        db_file = "dat.dat"
+        db_file = "spheroid.dat"
         INQUIRE(FILE=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file), EXIST=file_exists)
 
         !check whether file is not empty

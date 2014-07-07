@@ -3,8 +3,11 @@ import pyPamtraLibWrapper
 import pyPamtraImport
 from copy import deepcopy
 
+pam = pyPamtra.pyPamtra()
+#!name       as_ratio    liq_ice     rho_ms    a_ms    b_ms    alpha    beta   moment_in   nbin      dist_name        p_1     p_2     p_3     p_4     d_1       d_2           scat_name   vel_size_mod           canting
+pam.df.addHydrometeor(('ice', 1.0, -1, 917,917 *  pi / 6., 3, pi/4., 2, 0, 10, 'exp', 3000, 3e8, -99.0, -99.0, 100e-6,  1000e-6, 'tmatrix', 'heymsfield10_particles',0.0))
 
-pam = pyPamtraImport.createUsStandardProfile(hgt_lev=np.arange(1000,1300,200))
+pam = pyPamtraImport.createUsStandardProfile(pam,hgt_lev=np.arange(1000,1300,200))
 pam.p["airturb"][:] = 0.2
 freqs = [35.5]#,80,150]
 
@@ -14,15 +17,16 @@ pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 pam.nmlSet["randomseed"] = 0
 pam.nmlSet["radar_mode"] = "spectrum"
 pam.nmlSet["radar_aliasing_nyquist_interv"] = 3
-#!name       as_ratio    liq_ice     rho_ms    a_ms    b_ms    alpha    beta   moment_in   nbin      dist_name        p_1     p_2     p_3     p_4     d_1       d_2           scat_name   vel_size_mod           canting
-pam.df.addHydrometeor(('ice', -99.0, -1, 917,917 *  pi / 6., 3, pi/4., 2, 0, 10, 'exp', 3000, 3e8, -99.0, -99.0, 100e-6,  1000e-6, 'mie-sphere', 'heymsfield10_particles',0.0))
 pam.p["hydro_q"][:] = 0.002
 
 pam.runPamtra(freqs,checkData=False)
 plt.plot(pam.r["radar_vel"],pam.r["radar_spectra"][0,0,0,0])
 
+pamFS = pyPamtra.pyPamtra()
+#!name       as_ratio    liq_ice     rho_ms    a_ms    b_ms    alpha    beta   moment_in   nbin      dist_name        p_1     p_2     p_3     p_4     d_1       d_2           scat_name   vel_size_mod           canting
+pamFS.df.addHydrometeor(('ice', 1.0, -1, 917,917 *  pi / 6., 3, pi/4., 2, 0, 10, 'exp', 3000, 3e8, -99.0, -99.0, 100e-6,  1000e-6, 'tmatrix', 'heymsfield10_particles',0.0))
 
-pamFS = pyPamtraImport.createUsStandardProfile(hgt_lev=np.arange(1000,1300,200))
+pamFS = pyPamtraImport.createUsStandardProfile(pamFS,hgt_lev=np.arange(1000,1300,200))
 pamFS.p["airturb"][:] = 0.2
 pamFS.set["verbose"] = 0
 pamFS.set["pyVerbose"] =0
@@ -30,8 +34,6 @@ pamFS.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 pamFS.nmlSet["randomseed"] = 0
 pamFS.nmlSet["radar_mode"] = "spectrum"
 pamFS.nmlSet["radar_aliasing_nyquist_interv"] = 3
-#!name       as_ratio    liq_ice     rho_ms    a_ms    b_ms    alpha    beta   moment_in   nbin      dist_name        p_1     p_2     p_3     p_4     d_1       d_2           scat_name   vel_size_mod           canting
-pamFS.df.addHydrometeor(('ice', -99.0, -1, 917,917 *  pi / 6., 3, pi/4., 2, 0, 10, 'exp', 3000, 3e8, -99.0, -99.0, 100e-6,  1000e-6, 'mie-sphere', 'heymsfield10_particles',0.0))
 pamFS.p["hydro_q"][:] = 0.002
 
 pamFS.nmlSet["randomseed"] = 0

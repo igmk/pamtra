@@ -90,8 +90,8 @@ plt.legend()
 ncData.close()
 
 
-for nx in [0,1]:
-  for ny in [0,1]:
-    for nz in range(pam.p["max_nlyrs"]):
-      print nx, ny, nz, pam.p["nlyrs"][nx,ny], pam.p["hgt_lev"][nx,ny,nz]
+#for nx in [0,1]:
+  #for ny in [0,1]:
+    #for nz in range(pam.p["max_nlyrs"]):
+      #print nx, ny, nz, pam.p["nlyrs"][nx,ny], pam.p["hgt_lev"][nx,ny,nz]
 
