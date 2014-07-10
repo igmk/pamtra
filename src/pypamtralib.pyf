@@ -221,6 +221,7 @@ python module pyPamtraLib ! in
             integer(kind=long_bn) :: radar_airmotion_linear_steps
             real(kind=dbl) dimension(100) :: freqs
             integer(kind=long_bn) :: radar_maxturbterms
+            character(len=10) :: radar_attenuation
             real(kind=dbl) :: radar_airmotion_vmax
             character(len=100) :: output_path
             integer, parameter,optional :: noutlevels=2

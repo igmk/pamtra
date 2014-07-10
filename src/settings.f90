@@ -88,6 +88,7 @@ module settings
     character(10) :: input_type, crm_case
     character(100) :: crm_data, crm_data2, crm_constants
     character(8) :: radar_airmotion_model, radar_mode
+    character(10) :: radar_attenuation
 
     character(99)  :: input_file        ! name of profile
     character(300) :: namelist_file     ! name of nml_file
@@ -130,7 +131,7 @@ contains
 		  radar_airmotion_step_vmin, radar_aliasing_nyquist_interv, &
 		  radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr, radar_convolution_fft, &
                   radar_K2, radar_noise_distance_factor, radar_receiver_uncertainty_std,&
-                  radar_nPeaks, radar_smooth_spectrum
+                  radar_nPeaks, radar_smooth_spectrum, radar_attenuation
 
     if (verbose >= 3) print*,'Start of ', nameOfRoutine
 
@@ -330,7 +331,7 @@ contains
         radar_receiver_uncertainty_std = 0.d0 !dB
         radar_nPeaks = 1 !number of peaks the radar simulator is looking for
         radar_smooth_spectrum = .true.
-
+        radar_attenuation = "disabled" ! "bottom-up" or "top-down"
         ! create frequency string if not set in pamtra
         if (freq_str == "") then
              ! get integer and character frequencies
@@ -395,6 +396,7 @@ contains
       print*, 'radar_use_hildebrand: ', radar_use_hildebrand
       print*, 'radar_convolution_fft: ', radar_convolution_fft
       print*, 'radar_smooth_spectrum', radar_smooth_spectrum
+      print*, 'radar_attenuation', radar_attenuation
       print*, 'active: ', active
       print*, 'radar_max_v: ', radar_max_v
       print*, 'radar_save_noise_corrected_spectra: ', radar_save_noise_corrected_spectra

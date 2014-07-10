@@ -19,9 +19,10 @@ delta_h)
     use settings
     use constants
     use radar_moments, only: radar_calc_moments
-    use vars_atmosphere, only: atmo_airturb, atmo_radar_prop, atmo_lat, atmo_lon
+    use vars_atmosphere, only: atmo_airturb, atmo_radar_prop, atmo_lat, atmo_lon, atmo_nlyrs
     use vars_output, only: out_radar_spectra, out_radar_snr, out_radar_vel,out_radar_hgt, &
     out_radar_moments, out_radar_slopes, out_radar_edges, out_radar_quality, out_ze, out_att_hydro, & !output of the radar simulator
+      out_att_atmo, &
       out_debug_diameter, &
       out_debug_back_of_d, &
       out_debug_radarvel, &
@@ -36,6 +37,7 @@ delta_h)
 
     real(kind=dbl),intent(in) ::  back, delta_h,kexthydro
     real(kind=dbl), dimension(radar_nfft_aliased),intent(in):: particle_spectrum
+    real(kind=dbl), dimension(radar_nfft_aliased) :: particle_spectrum_att
     real(kind=dbl), dimension(radar_nfft_aliased) :: spectra_velo_aliased
     real(kind=dbl), dimension(radar_maxTurbTerms):: turb
     real(kind=dbl), dimension(radar_nfft*radar_no_Ave):: x_noise
@@ -48,7 +50,7 @@ delta_h)
     real(kind=dbl), dimension(0:4,radar_nPeaks):: moments
     real(kind=dbl), dimension(2,radar_nPeaks):: slope
     real(kind=dbl), dimension(2,radar_nPeaks):: edge
-    real(kind=dbl) :: noise_out
+    real(kind=dbl) :: noise_out, PIA
     real(kind=dbl):: SNR, del_v, ss, K2, wavelength, Ze_back, dielec_water, K, &
     min_V_aliased, max_V_aliased, receiver_uncertainty, radar_Pnoise, frequency
     integer :: ii, tt, turbLen,alloc_status,ts_imin, ts_imax, startI, stopI, seed
@@ -109,6 +111,31 @@ delta_h)
     !transform backscattering in linear reflectivity units, 10*log10(back) would be in dBz
     Ze_back = 1.d18* (1.d0/ (K2*pi**5) ) * back * (wavelength)**4 ![mm⁶/m³]
 
+    !take care of path integrated attenuation
+    PIA = 0.d0
+    if (TRIM(radar_attenuation) == "top-down") then
+      if (i_z < atmo_nlyrs(i_x,i_y)) then
+        PIA = 2 * (SUM(out_att_hydro(i_x,i_y,atmo_nlyrs(i_x,i_y):i_z+1:-1,i_f)) + &
+            SUM(out_att_atmo(i_x,i_y,atmo_nlyrs(i_x,i_y):i_z+1:-1,i_f)))
+      end if
+      PIA = PIA + out_att_hydro(i_x,i_y,i_z,i_f) + out_att_atmo(i_x,i_y,i_z,i_f)
+    else if (TRIM(radar_attenuation) == "bottom-up") then
+      if (i_z > 1) then
+        PIA = 2 * (SUM(out_att_hydro(i_x,i_y,1:i_z-1,i_f)) + SUM(out_att_atmo(i_x,i_y,1:i_z-1,i_f)))
+      end if
+      PIA = PIA + out_att_hydro(i_x,i_y,i_z,i_f) + out_att_atmo(i_x,i_y,i_z,i_f)
+    else if (TRIM(radar_attenuation) /= "disabled") then
+      errorstatus = fatal
+      msg = "do not understand radar_attenuation: "//radar_attenuation
+      call report(errorstatus, msg, nameOfRoutine)
+      return
+    end if 
+
+    PIA = 10d0**(0.1d0*PIA) !linearize
+    Ze_back = Ze_back/PIA
+    particle_spectrum_att = particle_spectrum/PIA
+
+
     if (radar_mode == "simple") then
 	if (Ze_back .eq. 0.d0) then
 	  out_Ze(i_x,i_y,i_z,i_f) = -9999.d0
@@ -116,9 +143,8 @@ delta_h)
 	  out_Ze(i_x,i_y,i_z,i_f) = 10*log10(Ze_back)
 	end if
       if (verbose >= 3) print*, "i_x,i_y,i_z,i_f,out_Ze", i_x,i_y,i_z,i_f,out_Ze(i_x,i_y,i_z,i_f)
+
     else if ((radar_mode == "moments") .or. (radar_mode == "spectrum")) then
-
-
         !calculate the noise level depending on range:
         ! did not find any value in the atmo arrays, take the one from namelist file!
         if (ISNAN(atmo_radar_prop(i_x,i_y,1)) .or. (atmo_radar_prop(i_x,i_y,1) == -9999.)) then
@@ -173,18 +199,18 @@ delta_h)
 
             turbLen=tt-1
 
-            if (SIZE(particle_spectrum)+turbLen-1 .lt. floor(12.d0/del_v+1)+radar_nfft-1) then
-	      print*, SIZE(particle_spectrum)+turbLen-1,floor(12.d0/del_v+1)+radar_nfft-1
+            if (SIZE(particle_spectrum_att)+turbLen-1 .lt. floor(12.d0/del_v+1)+radar_nfft-1) then
+	      print*, SIZE(particle_spectrum_att)+turbLen-1,floor(12.d0/del_v+1)+radar_nfft-1
 	      errorstatus = fatal
 	      msg =  "vector resulting from convolution to short!"
 	      call report(errorstatus, msg, nameOfRoutine)
 	      return
             end if
 
-            allocate(turb_spectra(SIZE(particle_spectrum)+turbLen-1),stat=alloc_status)
+            allocate(turb_spectra(SIZE(particle_spectrum_att)+turbLen-1),stat=alloc_status)
 
             !convolute spectrum and noise
-            call convolution(err,particle_spectrum,SIZE(particle_spectrum),turb(1:turbLen),turbLen,turb_spectra)
+            call convolution(err,particle_spectrum_att,SIZE(particle_spectrum_att),turb(1:turbLen),turbLen,turb_spectra)
 	    if (err /= 0) then
 		msg = 'error in convolution!'
 		call report(err, msg, nameOfRoutine)
@@ -201,7 +227,7 @@ delta_h)
             ts_imin = 1
             ts_imax = radar_nfft_aliased
             allocate(turb_spectra(radar_nfft_aliased),stat=alloc_status)
-            turb_spectra = particle_spectrum
+            turb_spectra = particle_spectrum_att
         end if
 
 
@@ -306,7 +332,7 @@ delta_h)
         if (verbose >= 4) then
             print*,"second K",K
             print*,"TOTAL"," Ze back",10*log10(Ze_back)
-            print*,"TOTAL"," Ze SUM(particle_spectrum)*del_v",10*log10(SUM(particle_spectrum)*del_v)
+            print*,"TOTAL"," Ze SUM(particle_spectrum_att)*del_v",10*log10(SUM(particle_spectrum_att)*del_v)
             print*,"TOTAL"," Ze SUM(turb_spectra)*del_v",10*log10(SUM(turb_spectra)*del_v)
             print*,"TOTAL"," Ze SUM(turb_spectra_aliased)*del_v",10*log10(SUM(turb_spectra_aliased)*del_v)
             print*,"TOTAL"," Ze SUM(snr_turb_spectra)*del_v",10*log10(SUM(snr_turb_spectra)*del_v)
@@ -351,7 +377,7 @@ delta_h)
         end if
 
           ! collect results for output
-        !   out_radar_spectra(i_x,i_y,i_z,fi,:) = 10*log10(particle_spectrum(513:1024))
+        !   out_radar_spectra(i_x,i_y,i_z,fi,:) = 10*log10(particle_spectrum_att(513:1024))
 
         !if wanted, apply the noise correction to the spectrum to be saved.
         if (radar_save_noise_corrected_spectra) noise_turb_spectra = noise_removed_turb_spectra

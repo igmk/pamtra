@@ -27,7 +27,8 @@ subroutine hydrometeor_extinction(errorstatus)
       passive, &
       active, &
       nstokes, &
-      nummu
+      nummu, &
+      radar_attenuation
   use constants
   use descriptor_file
   use drop_size_dist
@@ -38,18 +39,10 @@ subroutine hydrometeor_extinction(errorstatus)
 
   implicit none
 
-!   use mod_io_strings
-!   use conversions
-!   use tmat_snow_db
-!   use tmat_rain_db
-!   use vars_output, only: out_radar_spectra, out_radar_snr, out_radar_moments,&
-!        out_radar_quality, radar_slopes, Ze, out_att_hydro !output of the radar simulator for jacobian mode
-!         use report_module
-! 
-
   real(kind=dbl) ::    scatter_matrix_scatcnv(nstokes,nummu,nstokes,nummu,4)
   real(kind=dbl) ::    extinct_matrix_scatcnv(nstokes,nstokes,nummu,2)
   real(kind=dbl) ::    emis_vector_scatcnv(nstokes,nummu,2)
+  integer(kind=long) :: increment, start, stop
 
   CHARACTER(len=64), dimension(atmo_nlyrs(i_x,i_y)) :: scatfiles
   
@@ -64,7 +57,18 @@ subroutine hydrometeor_extinction(errorstatus)
 
   call allocate_scatProperties()
 
-  grid_z: do i_z = 1, atmo_nlyrs(i_x,i_y)  ! loop over all layers
+  !in case we want to calczulate the attenuation top-down we have to reverse the order
+  if (TRIM(radar_attenuation) == "top-down") then
+    increment = -1
+    start = atmo_nlyrs(i_x,i_y) 
+    stop =  1
+  else
+    increment = 1
+    start = 1
+    stop = atmo_nlyrs(i_x,i_y)
+  end if
+
+  grid_z: do i_z = start, stop,increment  ! loop over all layers
 
     call prepare_rt3_scatProperties()
     call prepare_rt4_scatProperties()

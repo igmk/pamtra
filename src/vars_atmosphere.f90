@@ -799,7 +799,6 @@ module vars_atmosphere
 
     !test whether we still have nans in our data!
 ! 3D variable
-
     err = 0 
     call assert_true(err,atmo_nlyrs(nx,ny) <= atmo_max_nlyrs ,&
         "atmo_nlyrs(nx,ny) larger than atmo_max_nlyrs") 
@@ -807,6 +806,8 @@ module vars_atmosphere
         "found nan in atmo_temp_lev")   
     call assert_false(err,ANY(ISNAN(atmo_hgt_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1))),&
         "found nan in atmo_hgt_lev")   
+    call assert_true(err,atmo_hgt_lev(nx,ny,atmo_nlyrs(nx,ny)+1)>atmo_hgt_lev(nx,ny,1),&
+        "atmo_hgt_lev must be defined defined bottom-up")   
     call assert_false(err,ANY(ISNAN(atmo_hgt(nx,ny,1:atmo_nlyrs(nx,ny)))),&
         "found nan in atmo_hgt")  
     call assert_false(err,ANY(ISNAN(atmo_relhum(nx,ny,1:atmo_nlyrs(nx,ny)))),&
