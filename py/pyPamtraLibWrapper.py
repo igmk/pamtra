@@ -5,6 +5,7 @@ import os
 import numpy as np
 #import random
 #import string
+from copy import deepcopy 
 
 #logging.basicConfig(filename='/tmp/pyPamtraLibWrapper.log',level=logging.WARNING) #change WARNING to INFO or DEBUG if needed
 
@@ -17,7 +18,8 @@ def PamtraFortranWrapper(
   profile,
   returnModule=True
   ):
-    
+  import pyPamtraLib
+
   pyPamtraLib.report_module.verbose = settings["verbose"]
    
   #make sure the shape of the profiles is the same! 
@@ -110,6 +112,12 @@ def PamtraFortranWrapper(
     elif type(profile[key]) == np.ndarray:
       if settings["pyVerbose"] > 3: print("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
       exec("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
+    elif type(profile[key]) == np.ma.core.MaskedArray:
+      profile[key] = profile[key].filled(np.nan)
+      if settings["pyVerbose"] > 3: print("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
+      exec("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
+    else:
+      raise TypeError("do not understand type of "+ key+": " + str(type(profile[key])))
     #pyPamtraLib.vars_atmosphere.atmo_max_nlyr
   
   error = pyPamtraLib.vars_atmosphere.fillmissing_atmosphere_vars()  
@@ -151,21 +159,24 @@ def PamtraFortranWrapper(
     if settings["pyVerbose"] > 3: print("allocTest = pyPamtraLib.vars_output.out_"+key.lower()+" == None")
     exec("allocTest = pyPamtraLib.vars_output.out_"+key.lower()+" == None")
     if not allocTest:
-      if settings["pyVerbose"] > 3: print("results['"+key+"'] = pyPamtraLib.vars_output.out_"+key.lower())
-      exec("results['"+key+"'] = pyPamtraLib.vars_output.out_"+key.lower())
+      if settings["pyVerbose"] > 3: print("results['"+key+"'] = deepcopy(pyPamtraLib.vars_output.out_"+key.lower()+")")
+      exec("results['"+key+"'] = deepcopy(pyPamtraLib.vars_output.out_"+key.lower()+")")
     else:
       if settings["pyVerbose"] > 3: print "filling key", key
       if key in ["radar_quality"]: results[key] = -9999
       else: results[key] = -9999.
     
     
-  results["pamtraVersion"] = "".join(list(pyPamtraLib.pypamtralib.gitversion)).strip()      
-  results["pamtraHash"] = "".join(list(pyPamtraLib.pypamtralib.githash)).strip()  
+  results["pamtraVersion"] = deepcopy("".join(list(pyPamtraLib.pypamtralib.gitversion)).strip())
+  results["pamtraHash"] = deepcopy("".join(list(pyPamtraLib.pypamtralib.githash)).strip()  )
   
   if settings["pyVerbose"] > 2: "processed results"
         
-  if returnModule: return results, pyPamtraLib
-  else: return results
+  if returnModule: 
+    return results, pyPamtraLib
+  else: 
+    del pyPamtraLib
+    return results
 
 def _str_py2f(array,length=None):
   # the byte order of fortran and numpy string arrays is different, this here works sometimes...

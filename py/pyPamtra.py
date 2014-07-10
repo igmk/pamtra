@@ -708,13 +708,10 @@ class pyPamtra(object):
     The following variables are mandatroy:
     hgt_lev, temp_lev, press_lev and (relhum_lev OR q)
     
-    The following variables are optional and guessed if not provided:  "timestamp","lat","lon","lfrac","wind10u","wind10v","hgt_lev","cwc_q","iwc_q","rwc_q","swc_q","gwc_q"
+    The following variables are optional and guessed if not provided:  "timestamp","lat","lon","lfrac","wind10u","wind10v","hgt_lev","hydro_q","hydro_n","hydro_reff"
     
-    The integrated values are skipped if not provided, they have no effect on pamtra!:
-    "iwv","cwp","iwp","rwp","swp","gwp"
-    
-    The following variables are only needed together with the 2 moments scheme!
-    "hwc_q","hwp", "cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"
+    hydro_q, hydro_reff and hydro_n cann also provided as hydro_q+no001, hydro_q+no002 etc etc
+
     #'''
       
       
@@ -730,8 +727,9 @@ class pyPamtra(object):
     allVars = self.default_p_vars  
       
     for key in kwargs.keys():
-      if key not in allVars:
+      if key not in allVars and key.split("+")[0] not in allVars:
         raise TypeError("Could not parse "+key)
+    
     
     if not (("hgt_lev" in kwargs.keys()) and 
         ("temp_lev" in kwargs.keys() or "temp" in kwargs.keys()) and 
@@ -775,9 +773,9 @@ class pyPamtra(object):
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
 
-    self.p["nlyrs"] = np.sum(kwargs["hgt_lev"]!=missingNumber,axis=-1) -1
+    self.p["nlyrs"] = np.array(np.sum(kwargs["hgt_lev"]!=missingNumber,axis=-1) -1)
     self.p["nlyrs"] = self.p["nlyrs"].reshape(self._shape2D)
-    
+
     for key in ["hgt_lev","temp_lev","press_lev","relhum_lev"]:
       if key in kwargs.keys():
         self.p[key]= kwargs[key].reshape(self._shape3Dplus)
@@ -806,7 +804,7 @@ class pyPamtra(object):
         self.p["unixtime"] = np.ones(self._shape2D,dtype=int)*calendar.timegm(kwargs["timestamp"].timetuple())
       else:
         raise TypeError("timestamp has to be int, float or datetime object")
-      
+
     for environment, preset in [["lat",50.938056],["lon",6.956944],["lfrac",1],["wind10u",0],["wind10v",0],["groundtemp",np.nan]]:
       if environment not in kwargs.keys():
         self.p[environment] = np.ones(self._shape2D)*preset
@@ -818,9 +816,13 @@ class pyPamtra(object):
           self.p[environment] = kwargs[environment].reshape(self._shape2D)
     
     for qValue in ["hydro_q","hydro_reff","hydro_n"]:
-      if qValue not in kwargs.keys():
+      if qValue not in kwargs.keys()  and qValue+"+no000" not in kwargs.keys():
         self.p[qValue] = np.zeros(self._shape4D)
         warnings.warn(qValue + " set to 0", Warning)
+      elif qValue+"+no000" in kwargs.keys():
+        self.p[qValue] = np.zeros(self._shape4D)
+        for hh in xrange(self.df.nhydro):
+          self.p[qValue][...,hh] = kwargs[qValue+"+no"+str(hh).zfill(3)].reshape(self._shape3D)
       else:
         self.p[qValue] = kwargs[qValue].reshape(self._shape4D)
 
@@ -1395,8 +1397,8 @@ class pyPamtra(object):
       try: self.df.fs_nbin =  self.df.dataFullSpec["d_bound_ds"].shape[-1]
       except: self.df.fs_nbin = 0
       self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
-      self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],)
-      self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"]+1,)
+      self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
+      self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
       self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
       self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)    
       self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
