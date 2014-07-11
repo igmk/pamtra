@@ -706,13 +706,20 @@ class pyPamtra(object):
     Everything is needed in SI units, relhum is in Pa/PA not %
     
     The following variables are mandatroy:
-    hgt_lev, temp_lev, press_lev and (relhum_lev OR q)
+    hgt_lev, (temp_lev or temp), (press_lev or press) and (relhum_lev OR relhum)
     
     The following variables are optional and guessed if not provided:  "timestamp","lat","lon","lfrac","wind10u","wind10v","hgt_lev","hydro_q","hydro_n","hydro_reff"
     
-    hydro_q, hydro_reff and hydro_n cann also provided as hydro_q+no001, hydro_q+no002 etc etc
+    hydro_q, hydro_reff and hydro_n can also provided as hydro_q+no001, hydro_q+no002 etc etc
 
     #'''
+      
+      
+    #we don't wnat any masked arrays here:
+        
+    for key in kwargs.keys():
+      if type(kwargs[key]) == np.ma.core.MaskedArray:
+        kwargs[key] = kwargs[key].filled(np.nan)  
       
       
     #make sure that an descriptor file exists already!
@@ -1173,8 +1180,6 @@ class pyPamtra(object):
     if pp_local_workers == "auto": pp_local_workers = multiprocessing.cpu_count()
     pool = multiprocessing.Pool(processes=pp_local_workers,maxtasksperchild=100)
     tttt = time.time()
-
-    
 
     assert self.set["nfreqs"] > 0
     assert np.prod(self._shape2D)>0

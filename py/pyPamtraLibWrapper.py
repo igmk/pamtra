@@ -103,17 +103,17 @@ def PamtraFortranWrapper(
   #return  dict(),pyPamtraLib    
   #deal with the atmospheric input_file
   for key in profile.keys():
+    
+    assert type(profile[key]) != np.ma.core.MaskedArray
+    
     if key in ["ngridx","ngridy","max_nlyrs"]:
       continue
+    
     
     elif type(profile[key]) in [int, float, str]:
       if settings["pyVerbose"] > 3: print("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
       exec("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"']")
     elif type(profile[key]) == np.ndarray:
-      if settings["pyVerbose"] > 3: print("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
-      exec("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
-    elif type(profile[key]) == np.ma.core.MaskedArray:
-      profile[key] = profile[key].filled(np.nan)
       if settings["pyVerbose"] > 3: print("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
       exec("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
     else:
