@@ -72,7 +72,9 @@ module scatProperties
       radar_mode, &
       maxnleg, &
       freqs, &
-      hydro_fullSpec
+      hydro_fullSpec, &
+      radar_pol, &
+      radar_npol
   use mie_spheres, only: calc_mie_spheres
   use tmatrix, only: calc_tmatrix
   use vars_rt, only: rt_kexttot,&
@@ -352,6 +354,14 @@ module scatProperties
     if (nlegen_coef .gt. maxnleg) then
       print*, "nlegen_coef",nlegen_coef
       msg = 'nlegen_coef greater maxnleg'
+      errorstatus = fatal
+      call report(errorstatus, msg, nameOfRoutine)
+      return
+    end if   
+
+    if (radar_pol(1) /= "NN") then
+      print*, "nlegen_coef",nlegen_coef
+      msg = 'as of now, only radar_pol=NN is implemented'
       errorstatus = fatal
       call report(errorstatus, msg, nameOfRoutine)
       return

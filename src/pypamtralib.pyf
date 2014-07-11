@@ -47,27 +47,27 @@ python module pyPamtraLib ! in
         module vars_output ! in :pyPamtraLib:vars_output.f90
             use report_module
             use kinds
-            use settings, only: radar_nfft
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_edges
+            use settings, only: att_npol,radar_nfft,radar_npol
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_radar_edges
             real(kind=dbl), allocatable,dimension(:) :: out_debug_radarvel
             real(kind=dbl), allocatable,dimension(:) :: out_radar_vel
-            real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_att_hydro
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_slopes
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_moments
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_att_hydro
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_radar_slopes
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_radar_moments
             real(kind=dbl), allocatable,dimension(:) :: out_debug_radarback_wturb_wnoise
             real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_tb
             real(kind=dbl), allocatable,dimension(:,:,:) :: out_radar_hgt
             real(kind=dbl), allocatable,dimension(:) :: out_angles_deg
-            real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_ze
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_ze
             real(kind=dbl) dimension(300) :: out_debug_back_of_d
             real(kind=dbl), allocatable,dimension(:) :: out_debug_radarback_wturb
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_area
-            real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_radar_snr
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_snr
             real(kind=dbl) dimension(300) :: out_debug_diameter
-            integer, allocatable,dimension(:,:,:,:) :: out_radar_quality
+            integer, allocatable,dimension(:,:,:,:,:) :: out_radar_quality
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_mass
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_d
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_spectra
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_radar_spectra
             real(kind=dbl), allocatable,dimension(:) :: out_debug_radarback
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_att_atmo
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_n
@@ -197,6 +197,7 @@ python module pyPamtraLib ! in
             character(len=1), parameter,optional :: deltam='n'
             logical :: lgas_extinction
             character(len=2) :: outpol
+            integer(kind=long_bn) :: radar_npol
             logical :: dump_to_file
             integer, parameter,optional :: src_code=2
             logical :: passive
@@ -209,10 +210,13 @@ python module pyPamtraLib ! in
             logical :: hydro_limit_density_area
             logical :: add_obs_height_to_layer
             real(kind=dbl) :: radar_airmotion_step_vmin
+            character(len=2) dimension(5) :: radar_pol
             character(len=100) :: crm_data2
             character(len=100) :: crm_constants
             character(len=10) :: input_type
             integer(kind=long_bn) :: radar_nfft_aliased
+            character(len=1) dimension(5) :: att_pol
+            character(len=15) :: radar_polarisation
             real(kind=dbl), parameter,optional :: direct_mu=0._dbl
             real(kind=dbl) :: radar_noise_distance_factor
             integer(kind=long_bn) :: randomseed
@@ -250,6 +254,7 @@ python module pyPamtraLib ! in
             real(kind=dbl) :: radar_receiver_uncertainty_std
             logical :: save_psd
             integer, parameter,optional :: nstokes=2
+            integer(kind=long_bn) :: att_npol
             character(len=99) :: input_file
             logical :: radar_use_hildebrand
             logical :: radar_convolution_fft

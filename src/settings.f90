@@ -89,6 +89,11 @@ module settings
     character(100) :: crm_data, crm_data2, crm_constants
     character(8) :: radar_airmotion_model, radar_mode
     character(10) :: radar_attenuation
+    character(15) :: radar_polarisation
+    character(2), dimension(5) :: radar_pol
+    character(1), dimension(5) :: att_pol
+    integer(kind=long):: radar_npol, att_npol
+
 
     character(99)  :: input_file        ! name of profile
     character(300) :: namelist_file     ! name of nml_file
@@ -131,33 +136,32 @@ contains
 		  radar_airmotion_step_vmin, radar_aliasing_nyquist_interv, &
 		  radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr, radar_convolution_fft, &
                   radar_K2, radar_noise_distance_factor, radar_receiver_uncertainty_std,&
-                  radar_nPeaks, radar_smooth_spectrum, radar_attenuation
+                  radar_nPeaks, radar_smooth_spectrum, radar_attenuation, radar_polarisation
 
     if (verbose >= 3) print*,'Start of ', nameOfRoutine
 
       ! first put default values
       call settings_fill_default()
   
-      if (namelist_file == "None") then
+      if (namelist_file /= "None") then
+
+        if (verbose >= 3) print*,'Open namelist file: ', namelist_file
+        ! read name list parameter file
+        open(7, file=namelist_file,delim='APOSTROPHE')
+        read(7,nml=inoutput_mode)
+        read(7,nml=output)
+        read(7,nml=run_mode)
+        read(7,nml=surface_params)
+        read(7,nml=gas_abs_mod)
+        read(7,nml=hyd_opts)
+        read(7,nml=moments)
+        read(7,nml=radar_simulator)
+
+        close(7)
+
+      else
         if (verbose >= 3) print*,'No namelist file to read!', namelist_file
-        errorstatus = success
-        return
       end if
-
-  
-
-      ! read name list parameter file
-      open(7, file=namelist_file,delim='APOSTROPHE')
-      read(7,nml=inoutput_mode)
-      read(7,nml=output)
-      read(7,nml=run_mode)
-      read(7,nml=surface_params)
-      read(7,nml=gas_abs_mod)
-      read(7,nml=hyd_opts)
-      read(7,nml=moments)
-      read(7,nml=radar_simulator)
-
-      close(7)
 
       call add_settings(err)
       if (err /= 0) then
@@ -222,6 +226,9 @@ contains
   subroutine add_settings(errorstatus)
     use kinds
     implicit none
+    integer(kind=long) :: pos1 = 1, pos2, n = 0, ii
+
+
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
     character(len=80) :: msg
@@ -236,6 +243,27 @@ contains
     !in python some options are missing:
     if (in_python) add_obs_height_to_layer = .false.
  
+    !process radar_polarisation
+  
+    radar_npol = 0
+    DO
+      pos2 = INDEX(radar_polarisation(pos1:), ",")
+      IF (pos2 == 0) THEN
+        radar_npol = radar_npol + 1
+        radar_pol(radar_npol) = radar_polarisation(pos1:)
+        EXIT
+      END IF
+      radar_npol = radar_npol + 1
+      radar_pol(radar_npol) = radar_polarisation(pos1:pos1+pos2-2)
+      pos1 = pos2+pos1
+    END DO
+    
+    if (verbose > 5) print*, radar_npol, radar_pol, " old string: ", radar_polarisation
+
+!   as of now, pol for att_hydro is not implemented
+    att_npol = 1
+    att_pol(1) = "N"
+
     errorstatus = err
     if (verbose > 3) call print_settings()
     if (verbose >= 4) print*,'End of ', nameOfRoutine
@@ -302,6 +330,7 @@ contains
 !        ! sec moments
         n_moments=1
         moments_file='snowCRYSTAL'
+        radar_polarisation = "NN,HH,VV" ! comma spearated list "NN,HV,VH,VV,HH", translated into radar_pol array
         ! radar_simulator
         !number of FFT points in the Doppler spectrum [typically 256 or 512]
         radar_nfft=256
@@ -355,6 +384,7 @@ contains
       print*, 'add_obs_height_to_layer: ', add_obs_height_to_layer
       print*, 'jacobian_mode: ', jacobian_mode
       print*, 'radar_nfft: ', radar_nfft
+      print*, 'radar_polarisation: ', radar_polarisation
       print*, 'input_path: ', input_path
       print*, 'creator: ', creator
       print*, 'radar_mode: ', radar_mode

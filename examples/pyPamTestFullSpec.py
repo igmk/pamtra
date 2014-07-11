@@ -3,6 +3,8 @@ import pyPamtraLibWrapper
 import pyPamtraImport
 from copy import deepcopy
 
+plt.figure()
+
 pam = pyPamtra.pyPamtra()
 #!name       as_ratio    liq_ice     rho_ms    a_ms    b_ms    alpha    beta   moment_in   nbin      dist_name        p_1     p_2     p_3     p_4     d_1       d_2           scat_name   vel_size_mod           canting
 pam.df.addHydrometeor(('ice', 1.0, -1, 917,917 *  pi / 6., 3, pi/4., 2, 0, 10, 'exp', 3000, 3e8, -99.0, -99.0, 100e-6,  1000e-6, 'tmatrix', 'heymsfield10_particles',0.0))
@@ -20,7 +22,7 @@ pam.nmlSet["radar_aliasing_nyquist_interv"] = 3
 pam.p["hydro_q"][:] = 0.002
 
 pam.runPamtra(freqs,checkData=False)
-plt.plot(pam.r["radar_vel"],pam.r["radar_spectra"][0,0,0,0])
+plt.plot(pam.r["radar_vel"],pam.r["radar_spectra"][0,0,0,0,0])
 
 pamFS = pyPamtra.pyPamtra()
 #!name       as_ratio    liq_ice     rho_ms    a_ms    b_ms    alpha    beta   moment_in   nbin      dist_name        p_1     p_2     p_3     p_4     d_1       d_2           scat_name   vel_size_mod           canting
@@ -55,6 +57,6 @@ pamFS.df.dataFullSpec["as_ratio"][0,0,0,0,:] = 1.0
 pamFS.runPamtra(freqs,checkData=False)
 
 #plt.plot(pam.r["radar_vel"],pam.r["radar_spectra"][0,0,0,0])
-plt.plot(pamFS.r["radar_vel"],pamFS.r["radar_spectra"][0,0,0,0])
+plt.plot(pamFS.r["radar_vel"],pamFS.r["radar_spectra"][0,0,0,0,0])
 
 

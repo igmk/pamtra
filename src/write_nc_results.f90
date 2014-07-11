@@ -7,13 +7,14 @@ subroutine write_nc_results
     use netcdf
     use settings, only: active, passive, creator, radar_mode, &
     n_moments, radar_nfft, radar_mode, nfrq, freqs, nc_out_file, &
-    nummu, nstokes, noutlevels
+    nummu, nstokes, noutlevels, radar_npol, radar_pol, att_npol, att_pol
     use report_module
 
     implicit none
 
     integer :: ncid
-    integer :: dlonID, dlatID, dangID, dfrqID, doutID, dstokesID, dlayerID,dnfftID
+    integer :: dlonID, dlatID, dangID, dfrqID, doutID, dstokesID, dlayerID,&
+        dnfftID,dradpolID,dattpolID, dlenstrID
 
     integer :: isVarID, jsVarID, lonVarID, latVarID, lfracVarID, iwvVarID, cwpVarID,&
     iwpVarID, rwpVarID, swpVarID, gwpVarID, hwpVarID, &
@@ -21,13 +22,17 @@ subroutine write_nc_results
     ZeVarID,rQualVarID, &
     AttAtmoVarID, AttHydroVarID,&
     lSloVarID,rSloVarID, lEdgVarID, rEdgVarID, kurtVarID, skewVarID, swVarID, velVarID,&
-    frequencyVarID, anglesVarID, RadarVelID, RadarSpecID, RadarSNRID
+    frequencyVarID, anglesVarID, RadarVelID, RadarSpecID, RadarSNRID, radar_polID, & 
+    att_polID, passive_polID
                   
     integer, dimension(2) :: dim2d
     integer, dimension(3) :: dim3d
     integer, dimension(4) :: dim4d
-    integer, dimension(5) :: dim5d
-    integer, dimension(6) :: dim6d
+    integer, dimension(5) :: dim5d_att
+    integer, dimension(5) :: dim5d_rad
+    integer, dimension(5) :: dim5d_pas
+    integer, dimension(6) :: dim6d_rad
+    integer, dimension(6) :: dim6d_pas
 
     integer :: today(3), now(3)
 
@@ -63,16 +68,21 @@ subroutine write_nc_results
           atmo_day(1,1)//"-"//atmo_time(1,1)))
 
     !make dimensions
-    call check(nf90_def_dim(ncid, 'nlon', atmo_ngridx, dlonID))
-    call check(nf90_def_dim(ncid, 'nlat', atmo_ngridy, dlatID))
-    call check(nf90_def_dim(ncid, 'nfreq', nfrq, dfrqID))
+    call check(nf90_def_dim(ncid, 'grid_x', atmo_ngridx, dlonID))
+    call check(nf90_def_dim(ncid, 'grid_y', atmo_ngridy, dlatID))
+    call check(nf90_def_dim(ncid, 'frequency', nfrq, dfrqID))
+
     if (passive) then
-        call check(nf90_def_dim(ncid, 'nang', nummu*2, dangID))
-        call check(nf90_def_dim(ncid, 'nout', noutlevels, doutID))
-        call check(nf90_def_dim(ncid, 'nstokes', nstokes, dstokesID))
+        call check(nf90_def_dim(ncid, 'angles', nummu*2, dangID))
+        call check(nf90_def_dim(ncid, 'outlevels', noutlevels, doutID))
+        call check(nf90_def_dim(ncid, 'passive_polarisation', nstokes, dstokesID))
     end if
     if (active) then
         call check(nf90_def_dim(ncid, 'atmo_max_nlyrs', atmo_max_nlyrs, dlayerID))
+        call check(nf90_def_dim(ncid, 'radar_polarisation', radar_npol, dradpolID))
+        call check(nf90_def_dim(ncid, 'attenuation_polarisation', att_npol, dattpolID))
+        call check(nf90_def_dim(ncid, 'lenstr', 2, dlenstrID))
+
     end if
     if ((active) .and. (radar_mode .eq. "spectrum")) then
         call check(nf90_def_dim(ncid, 'nfft', radar_nfft, dnfftID))
@@ -83,11 +93,23 @@ subroutine write_nc_results
         call check(nf90_def_var(ncid,'angle', nf90_float,(/dangID/), anglesVarID))
         call check(nf90_put_att(ncid, anglesVarID, "units", "deg"))
         call check(nf90_put_att(ncid, anglesVarID, "missing_value", -9999))
+
+        call check(nf90_def_var(ncid,'passive_polarisation', NF90_CHAR,(/dstokesID/), passive_polID))
+        call check(nf90_put_att(ncid, passive_polID, "units", "-"))
+
     end if
 
     call check(nf90_def_var(ncid,'frequency', nf90_float,(/dfrqID/), frequencyVarID))
     call check(nf90_put_att(ncid, frequencyVarID, "units", "GHz"))
     call check(nf90_put_att(ncid, frequencyVarID, "missing_value", -9999))
+
+    if (active) then
+        call check(nf90_def_var(ncid,'attenuation_polarisation', NF90_CHAR,(/dattpolID/), att_polID))
+        call check(nf90_put_att(ncid, att_polID, "units", "-"))
+
+        call check(nf90_def_var(ncid,'radar_polarisation', NF90_CHAR,(/dlenstrID,dradpolID/), radar_polID))
+        call check(nf90_put_att(ncid, radar_polID, "units", "-"))
+    end if
 
 
     !create variables and apply meta data
@@ -117,32 +139,10 @@ subroutine write_nc_results
     call check(nf90_put_att(ncid, iwvVarID, "units", "kg/m^2"))
     call check(nf90_put_att(ncid, iwvVarID, "missing_value", -9999))
 
-!     call check(nf90_def_var(ncid,'cwp', nf90_float,dim2d, cwpVarID))
-!     call check(nf90_put_att(ncid, cwpVarID, "units", "kg/m^2"))
-!     call check(nf90_put_att(ncid, cwpVarID, "missing_value", -9999))
-! 
-!     call check(nf90_def_var(ncid,'iwp', nf90_float,dim2d, iwpVarID))
-!     call check(nf90_put_att(ncid, iwpVarID, "units", "kg/m^2"))
-!     call check(nf90_put_att(ncid, iwpVarID, "missing_value", -9999))
-! 
-!     call check(nf90_def_var(ncid,'rwp', nf90_float,dim2d, rwpVarID))
-!     call check(nf90_put_att(ncid, rwpVarID, "units", "kg/m^2"))
-!     call check(nf90_put_att(ncid, rwpVarID, "missing_value", -9999))
-! 
-!     call check(nf90_def_var(ncid,'swp', nf90_float,dim2d, swpVarID))
-!     call check(nf90_put_att(ncid, swpVarID, "units", "kg/m^2"))
-!     call check(nf90_put_att(ncid, swpVarID, "missing_value", -9999))
-! 
-!     call check(nf90_def_var(ncid,'gwp', nf90_float,dim2d, gwpVarID))
-!     call check(nf90_put_att(ncid, gwpVarID, "units", "kg/m^2"))
-!     call check(nf90_put_att(ncid, gwpVarID, "missing_value", -9999))
-! 
-!     call check(nf90_def_var(ncid,'hwp', nf90_float,dim2d, hwpVarID))
-!     call check(nf90_put_att(ncid, hwpVarID, "units", "kg/m^2"))
-!     call check(nf90_put_att(ncid, hwpVarID, "missing_value", -9999))
-
-
     if (active) then
+
+
+
 
         dim3d = (/dlayerID,dlatID,dlonID/)
         call check(nf90_def_var(ncid,'height', nf90_float,dim3d, heightVarID))
@@ -155,52 +155,57 @@ subroutine write_nc_results
         call check(nf90_put_att(ncid, AttAtmoVarID, "units", attUnit))
         call check(nf90_put_att(ncid, AttAtmoVarID, "missing_value", -9999))
 
-        call check(nf90_def_var(ncid,'Ze', nf90_double,dim4d, ZeVarID))
+        dim5d_att = (/dattpolID,dfrqID,dlayerID,dlatID,dlonID/)
+        call check(nf90_def_var(ncid,'Attenuation_Hydrometeors', nf90_double,dim5d_att, AttHydroVarID))
+        call check(nf90_put_att(ncid, AttHydroVarID, "units", attUnit))
+        call check(nf90_put_att(ncid, AttHydroVarID, "missing_value", -9999))
+
+        dim5d_rad= (/dradpolID,dfrqID,dlayerID,dlatID,dlonID/)
+
+        call check(nf90_def_var(ncid,'Ze', nf90_double,dim5d_rad, ZeVarID))
         call check(nf90_put_att(ncid, ZeVarID, "units", zeUnit))
         call check(nf90_put_att(ncid, ZeVarID, "missing_value", -9999))
 
-        call check(nf90_def_var(ncid,'Attenuation_Hydrometeors', nf90_double,dim4d, AttHydroVarID))
-        call check(nf90_put_att(ncid, AttHydroVarID, "units", attUnit))
-        call check(nf90_put_att(ncid, AttHydroVarID, "missing_value", -9999))
+
         if ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments")) then
 
-            call check(nf90_def_var(ncid,'Radar_SNR', nf90_double,dim4d, RadarSNRID))
+            call check(nf90_def_var(ncid,'Radar_SNR', nf90_double,dim5d_rad, RadarSNRID))
             call check(nf90_put_att(ncid, RadarSNRID, "units", "dB"))
             call check(nf90_put_att(ncid, RadarSNRID, "missing_value", -9999))
 
-            call check(nf90_def_var(ncid,'Radar_FallVelocity', nf90_double,dim4d, velVarID))
+            call check(nf90_def_var(ncid,'Radar_FallVelocity', nf90_double,dim5d_rad, velVarID))
             call check(nf90_put_att(ncid, velVarID, "units", "m/s"))
             call check(nf90_put_att(ncid, velVarID, "missing_value", -9999))
 
-            call check(nf90_def_var(ncid,'Radar_SpectralWidth', nf90_double,dim4d, swVarID))
+            call check(nf90_def_var(ncid,'Radar_SpectralWidth', nf90_double,dim5d_rad, swVarID))
             call check(nf90_put_att(ncid, swVarID, "units", "m/s"))
             call check(nf90_put_att(ncid, swVarID, "missing_value", -9999))
 
-            call check(nf90_def_var(ncid,'Radar_Skewness', nf90_double,dim4d, skewVarID))
+            call check(nf90_def_var(ncid,'Radar_Skewness', nf90_double,dim5d_rad, skewVarID))
             call check(nf90_put_att(ncid, skewVarID, "units", "-"))
             call check(nf90_put_att(ncid, skewVarID, "missing_value", -9999))
 
-            call check(nf90_def_var(ncid,'Radar_Kurtosis', nf90_double,dim4d, kurtVarID))
+            call check(nf90_def_var(ncid,'Radar_Kurtosis', nf90_double,dim5d_rad, kurtVarID))
             call check(nf90_put_att(ncid, kurtVarID, "units", "-"))
             call check(nf90_put_att(ncid, kurtVarID, "missing_value", -9999))
 
-            call check(nf90_def_var(ncid,'Radar_LeftSlope', nf90_double,dim4d, lSloVarID))
+            call check(nf90_def_var(ncid,'Radar_LeftSlope', nf90_double,dim5d_rad, lSloVarID))
             call check(nf90_put_att(ncid, lSloVarID, "units", "dB/(m/s)"))
             call check(nf90_put_att(ncid, lSloVarID, "missing_value", -9999))
 
-            call check(nf90_def_var(ncid,'Radar_RightSlope', nf90_double,dim4d, rSloVarID))
+            call check(nf90_def_var(ncid,'Radar_RightSlope', nf90_double,dim5d_rad, rSloVarID))
             call check(nf90_put_att(ncid, rSloVarID, "units", "dB/(m/s)"))
             call check(nf90_put_att(ncid, rSloVarID, "missing_value", -9999))
 
-            call check(nf90_def_var(ncid,'Radar_LeftEdge', nf90_double,dim4d, lEdgVarID))
+            call check(nf90_def_var(ncid,'Radar_LeftEdge', nf90_double,dim5d_rad, lEdgVarID))
             call check(nf90_put_att(ncid, lEdgVarID, "units", "m/s"))
             call check(nf90_put_att(ncid, lEdgVarID, "missing_value", -9999))
 
-            call check(nf90_def_var(ncid,'Radar_RightEdgee', nf90_double,dim4d, rEdgVarID))
+            call check(nf90_def_var(ncid,'Radar_RightEdgee', nf90_double,dim5d_rad, rEdgVarID))
             call check(nf90_put_att(ncid, rEdgVarID, "units", "m/s"))
             call check(nf90_put_att(ncid, rEdgVarID, "missing_value", -9999))
 
-            call check(nf90_def_var(ncid,'Radar_Quality', nf90_int,dim4d, rQualVarID))
+            call check(nf90_def_var(ncid,'Radar_Quality', nf90_int,dim5d_rad, rQualVarID))
             call check(nf90_put_att(ncid, rQualVarID, "units", "bytes"))
             call check(nf90_put_att(ncid, rQualVarID, "description", "1st byte: aliasing; "// &
             "2nd byte: 2nd peak present; 7th: no peak found"))
@@ -211,8 +216,8 @@ subroutine write_nc_results
                 call check(nf90_put_att(ncid, RadarVelID, "units", "m/s"))
                 call check(nf90_put_att(ncid, RadarVelID, "missing_value", -9999))
 
-                dim5d = (/dnfftID,dfrqID,dlayerID,dlatID,dlonID/)
-                call check(nf90_def_var(ncid,'Radar_Spectrum', nf90_double,dim5d, RadarSpecID))
+                dim6d_rad = (/dnfftID,dradpolID,dfrqID,dlayerID,dlatID,dlonID/)
+                call check(nf90_def_var(ncid,'Radar_Spectrum', nf90_double,dim6d_rad, RadarSpecID))
                 call check(nf90_put_att(ncid, RadarSpecID, "units", "dBz"))
                 call check(nf90_put_att(ncid, RadarSpecID, "missing_value", -9999))
  
@@ -221,8 +226,8 @@ subroutine write_nc_results
     end if
 
     if (passive) then
-        dim6d = (/dstokesID,dfrqID,dangID,doutID,dlatID,dlonID/)
-        call check(nf90_def_var(ncid,'tb', nf90_double,dim6d, tbVarID))
+        dim6d_pas = (/dstokesID,dfrqID,dangID,doutID,dlatID,dlonID/)
+        call check(nf90_def_var(ncid,'tb', nf90_double,dim6d_pas, tbVarID))
         call check(nf90_put_att(ncid, tbVarID, "units", "K"))
         call check(nf90_put_att(ncid, tbVarID, "missing_value", -9999))
     end if
@@ -232,6 +237,8 @@ subroutine write_nc_results
     call check(nf90_put_var(ncid, frequencyVarID, freqs(1:nfrq)))
     if (passive) then
         call check(nf90_put_var(ncid, anglesVarID, out_angles_deg))
+        call check(nf90_put_var(ncid, passive_polID, "HV"))
+
     end if
 !     call check(nf90_put_var(ncid, isVarID, &
 !       RESHAPE( atmo_model_i, (/ atmo_ngridy, atmo_ngridx/), ORDER = (/2,1/))))
@@ -258,43 +265,58 @@ subroutine write_nc_results
         ORDER = (/ 6,5,4,3,2,1 /))))
     end if
 
-    if (active) then                             !reshapeing needed due to Fortran's crazy Netcdf handling...
+    if (active) then
+        call check(nf90_put_var(ncid, att_polID, att_pol(:att_npol)))
+        call check(nf90_put_var(ncid, radar_polID, radar_pol(:radar_npol)))
+
+                             !reshapeing needed due to Fortran's crazy Netcdf handling...
         call check(nf90_put_var(ncid, heightVarID, &
         RESHAPE( out_radar_hgt, (/ atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/3,2,1/))))
         call check(nf90_put_var(ncid, ZeVarID, &
-        RESHAPE( out_Ze, (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+        RESHAPE( out_Ze, (/ radar_npol, nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/5,4,3,2,1/))))
         call check(nf90_put_var(ncid, AttHydroVarID, &
-        RESHAPE( out_att_hydro, (/nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+        RESHAPE( out_att_hydro, (/ att_npol, nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/5,4,3,2,1/))))
         call check(nf90_put_var(ncid, AttAtmoVarID, &
         RESHAPE( out_att_atmo, (/nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
         if ((radar_mode == "moments") .or.(radar_mode == "spectrum") ) then
             call check(nf90_put_var(ncid, velVarID, &
-            RESHAPE( out_radar_moments(:,:,:,:,1), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( out_radar_moments(:,:,:,:,:,1), &
+            (/ radar_npol, nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/5,4,3,2,1/))))
             call check(nf90_put_var(ncid, swVarID, &
-            RESHAPE( out_radar_moments(:,:,:,:,2), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( out_radar_moments(:,:,:,:,:,2),  &
+            (/ radar_npol, nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/5,4,3,2,1/))))
             call check(nf90_put_var(ncid, skewVarID, &
-            RESHAPE( out_radar_moments(:,:,:,:,3), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( out_radar_moments(:,:,:,:,:,3), &
+            (/ radar_npol, nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/5,4,3,2,1/))))
             call check(nf90_put_var(ncid, kurtVarID, &
-            RESHAPE( out_radar_moments(:,:,:,:,4), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( out_radar_moments(:,:,:,:,:,4), &
+            (/ radar_npol, nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/5,4,3,2,1/))))
             call check(nf90_put_var(ncid, lSloVarID, &
-            RESHAPE( out_radar_slopes(:,:,:,:,1), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( out_radar_slopes(:,:,:,:,:,1), &
+            (/ radar_npol, nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/5,4,3,2,1/))))
             call check(nf90_put_var(ncid, rSloVarID, &
-            RESHAPE( out_radar_slopes(:,:,:,:,2), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( out_radar_slopes(:,:,:,:,:,2), &
+            (/ radar_npol, nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/5,4,3,2,1/))))
 
             call check(nf90_put_var(ncid, lEdgVarID, &
-            RESHAPE( out_radar_edges(:,:,:,:,1), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( out_radar_edges(:,:,:,:,:,1), &
+            (/ radar_npol, nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/5,4,3,2,1/))))
             call check(nf90_put_var(ncid, rEdgVarID, &
-            RESHAPE( out_radar_edges(:,:,:,:,2), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( out_radar_edges(:,:,:,:,:,2), &
+            (/ radar_npol, nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/5,4,3,2,1/))))
 
             call check(nf90_put_var(ncid, RadarSNRID, &
-            RESHAPE( out_radar_snr, (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( out_radar_snr, &
+            (/ radar_npol, nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/5,4,3,2,1/))))
             call check(nf90_put_var(ncid, rQualVarID, &
-            RESHAPE( out_radar_quality(:,:,:,:), (/ nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/4,3,2,1/))))
+            RESHAPE( out_radar_quality, &
+            (/ radar_npol, nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/5,4,3,2,1/))))
             if (radar_mode == "spectrum") then
                 call check(nf90_put_var(ncid, RadarVelID, out_radar_vel))
                 call check(nf90_put_var(ncid, RadarSpecID, &
-                RESHAPE( out_radar_spectra, (/ radar_nfft, nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), &
-                ORDER = (/5,4,3,2,1/))))
+                RESHAPE( out_radar_spectra, &
+                (/ radar_nfft,radar_npol, nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), &
+                ORDER = (/6,5,4,3,2,1/))))
             end if
         end if
 

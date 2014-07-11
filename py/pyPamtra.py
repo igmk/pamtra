@@ -251,6 +251,7 @@ class pyPamtra(object):
     self.nmlSet["radar_noise_distance_factor"]=  2.0
     self.nmlSet["radar_receiver_uncertainty_std"]=  0.e0 #dB
     self.nmlSet["radar_attenuation"]=  "disabled" #! "bottom-up" or "top-down"
+    self.nmlSet["radar_polarisation"]=  "NN" #! comma separated
     #all settings which do not go into the nml file go here:
     self.set = dict()
     self.set["pyVerbose"] = 0
@@ -279,13 +280,7 @@ class pyPamtra(object):
     self.dimensions["obs_height"] = ["ngridx","ngridy"]
 
     self.dimensions["iwv"] = ["ngridx","ngridy"]
-    self.dimensions["cwp"] = ["ngridx","ngridy"]
-    self.dimensions["iwp"] = ["ngridx","ngridy"]
-    self.dimensions["rwp"] = ["ngridx","ngridy"]
-    self.dimensions["swp"] = ["ngridx","ngridy"]
-    self.dimensions["gwp"] = ["ngridx","ngridy"]
-    self.dimensions["hwp"] = ["ngridx","ngridy"]
-    
+
     self.dimensions["hgt_lev"] = ["ngridx","ngridy","max_nlyrs+1"]
     self.dimensions["temp_lev"] = ["ngridx","ngridy","max_nlyrs+1"]
     self.dimensions["p_lev"] = ["ngridx","ngridy","max_nlyrs+1"]
@@ -298,10 +293,10 @@ class pyPamtra(object):
     self.dimensions["radar_hgt"] = ["ngridx","ngridy","max_nlyrs"]
     self.dimensions["radar_prop"] = ["ngridx","ngridy","2"]
 
-    self.dimensions["Ze"] = ["gridx","gridy","lyr","frequency"]
-    self.dimensions["Att_hydros"] = ["gridx","gridy","lyr","frequency"]
+    self.dimensions["Ze"] = ["gridx","gridy","lyr","frequency","radar_npol"]
+    self.dimensions["Att_hydros"] = ["gridx","gridy","lyr","frequency","att_npol"]
     self.dimensions["Att_atmo"] = ["gridx","gridy","lyr","frequency"]
-    self.dimensions["tb"] = ["gridx","gridy","outlevels","angles","frequency","stokes"]
+    self.dimensions["tb"] = ["gridx","gridy","outlevels","angles","frequency","passive_npol"]
 
     
     self.units = dict()
@@ -322,12 +317,6 @@ class pyPamtra(object):
     self.units["obs_height"] = "m"
 
     self.units["iwv"] = "kg/m^2"
-    self.units["cwp"] = "kg/m^2"
-    self.units["iwp"] = "kg/m^2"
-    self.units["rwp"] = "kg/m^2"
-    self.units["swp"] = "kg/m^2"
-    self.units["gwp"] = "kg/m^2"
-    self.units["hwp"] = "kg/m^2"
     
     self.units["hgt_lev"] = "m"
     self.units["temp_lev"] = "K"
@@ -340,7 +329,7 @@ class pyPamtra(object):
     self.units["hydro_reff"] = "m"
     
     self.units["radar_hgt"] = "m"
-    self.units["Ze"] = "dBz OR mm^6 m^-3"
+    self.units["Ze"] = "dBz"
     self.units["Att_hydros"] = "dB"
     self.units["Att_atmo"] = "dB"
     self.units["tb"] = "K"  
@@ -1146,11 +1135,18 @@ class pyPamtra(object):
     
     self.set["freqs"] = freqs
     self.set["nfreqs"] = len(freqs)
+    self.set["radar_pol"] = self.nmlSet["radar_polarisation"].split(",")
+    self.set["radar_npol"] = len(self.set["radar_pol"])
+    self.set["att_pol"] = ["N"]
+    self.set["att_npol"] = len(self.set["att_pol"])
+
     assert self.set["nfreqs"] > 0
+    assert self.set["radar_npol"] > 0
+    assert self.set["att_npol"] > 0
     assert np.prod(self._shape2D)>0
     
     if checkData: self._checkData()
-
+    
     fortResults, fortObject = pyPamtraLibWrapper.PamtraFortranWrapper(self.set,self.nmlSet,self.df.data,self.df.data4D,self.df.dataFullSpec,self.p)
     self.r = fortResults
     self.fortObject = fortObject
@@ -1168,8 +1164,17 @@ class pyPamtra(object):
     '''
     
     if type(freqs) in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
+
     self.set["freqs"] = freqs
     self.set["nfreqs"] = len(freqs)
+    self.set["radar_pol"] = self.nmlSet["radar_polarisation"].split(",")
+    self.set["radar_npol"] = len(self.set["radar_pol"])
+    self.set["att_pol"] = ["N"]
+    self.set["att_npol"] = len(self.set["att_pol"])
+
+    assert self.set["nfreqs"] > 0
+    assert self.set["radar_npol"] > 0
+    assert self.set["att_npol"] > 0
     
     if pp_deltaF==0: pp_deltaF = self.set["nfreqs"]
     if pp_deltaX==0: pp_deltaX = self.p["ngridx"]
@@ -1279,20 +1284,21 @@ class pyPamtra(object):
     
     
     self.r = dict()
-    self.r["Ze"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-    self.r["Att_hydro"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
+    self.r["Ze"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],))*missingNumber
+    self.r["Att_hydro"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["att_npol"],))*missingNumber
     self.r["Att_atmo"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
     self.r["radar_hgt"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],))*missingNumber
     if self.nmlSet["radar_mode"]=="spectrum":
-      self.r["radar_spectra"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],radar_spectrum_length,))*missingNumber
+      self.r["radar_spectra"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],radar_spectrum_length,))*missingNumber
     else:
       self.r["radar_spectra"] = np.array([missingNumber])
-    self.r["radar_snr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],))*missingNumber
-    self.r["radar_moments"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],4,))*missingNumber
-    self.r["radar_slopes"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],2,))*missingNumber
-    self.r["radar_edges"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],2,))*missingNumber
-    self.r["radar_quality"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],),dtype=int)*missingNumber
+    self.r["radar_snr"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],))*missingNumber
+    self.r["radar_moments"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],4,))*missingNumber
+    self.r["radar_slopes"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],2,))*missingNumber
+    self.r["radar_edges"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],2,))*missingNumber
+    self.r["radar_quality"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],),dtype=int)*missingNumber
     self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles,self.set["nfreqs"],self._nstokes))*missingNumber
+    import pdb;pdb.set_trace()
     if self.nmlSet["save_psd"]:
       self.r["psd_area"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
       self.r["psd_n"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
@@ -1304,7 +1310,8 @@ class pyPamtra(object):
       self.r["psd_d"] = np.array([missingNumber])
       self.r["psd_mass"] =np.array([missingNumber])
 
-    
+    self.r["radar_pol"] = self.set["radar_pol"]
+    self.r["att_pol"] = self.set["att_pol"]
     return 
     
   def _joinResults(self,resultList):
@@ -1457,22 +1464,28 @@ class pyPamtra(object):
     cdfFile.createDimension('grid_y',int(self.p["ngridy"]))
     cdfFile.createDimension('frequency',int(self.set["nfreqs"]))
     
+    
     if (self.r["nmlSettings"]["passive"]):
       cdfFile.createDimension('angles',len(self.r["angles_deg"]))
       cdfFile.createDimension('outlevels',int(self._noutlevels))
-      cdfFile.createDimension('stokes',int(self._nstokes))
+      cdfFile.createDimension('passive_polarisation',int(self._nstokes))
       
     if (self.r["nmlSettings"]["radar_mode"] in ["spectrum","moments"]):
       cdfFile.createDimension('nfft',int(self.r["nmlSettings"]["radar_nfft"])) 
       
     if (self.r["nmlSettings"]["active"]):
       cdfFile.createDimension('heightbins',int(self.p["max_nlyrs"]))
-    
+      cdfFile.createDimension('radar_polarisation',int(self.set["radar_npol"]))
+      cdfFile.createDimension('attenuation_polarisation',int(self.set["att_npol"]))
+      cdfFile.createDimension('lenstr',2)
+      
     dim2d = ("grid_x","grid_y",)
     dim3d = ("grid_x","grid_y","heightbins",)
     dim4d = ("grid_x","grid_y","heightbins","frequency")
-    dim5d = ("grid_x","grid_y","heightbins","frequency","nfft")
-    dim6d = ("grid_x","grid_y","outlevels","angles","frequency","stokes")
+    dim5d_att = ("grid_x","grid_y","heightbins","frequency","attenuation_polarisation")
+    dim5d_rad = ("grid_x","grid_y","heightbins","frequency","radar_polarisation")
+    dim6d_rad = ("grid_x","grid_y","heightbins","frequency","radar_polarisation","nfft")
+    dim6d_pas = ("grid_x","grid_y","outlevels","angles","frequency","passive_polarisation")
 
 
     attUnit = "dBz"
@@ -1513,14 +1526,24 @@ class pyPamtra(object):
       nc_height[:] = np.array(self.r["radar_hgt"],dtype="f")
       if not pyNc: nc_height._FillValue =missingNumber
       
-    
+      nc_act_pol = cdfFile.createVariable('radar_polarisation', "S1",("radar_polarisation","lenstr",),**fillVDict)
+      nc_act_pol.units = "-"
+      dataTmp = np.zeros((self.set["radar_npol"],2),dtype="S1")
+      for dd in xrange(self.set["radar_npol"]):
+        dataTmp[dd] = list(self.set["radar_pol"][dd])
+      nc_act_pol[:] = dataTmp
+
+      nc_att_pol = cdfFile.createVariable('attenuation_polarisation', 'S1',("attenuation_polarisation"),**fillVDict)
+      nc_att_pol.units = "-"
+      nc_att_pol[:] = np.array(self.set["att_pol"],dtype="S1")
+      
     if (self.r["nmlSettings"]["passive"]):
       nc_angle = cdfFile.createVariable('angles','f',('angles',),**fillVDict)
       nc_angle.units = 'deg'
       nc_angle[:] = np.array(self.r["angles_deg"],dtype="f")
       if not pyNc: nc_angle._FillValue =missingNumber
       
-      nc_stokes = cdfFile.createVariable('stokes', 'c',("stokes",),**fillVDict)
+      nc_stokes = cdfFile.createVariable('passive_polarisation', 'S1',("passive_polarisation",),**fillVDict)
       nc_stokes.units = "-"
       nc_stokes[:] = "HV"
       
@@ -1569,12 +1592,12 @@ class pyPamtra(object):
     
     if (self.r["nmlSettings"]["active"]):
          
-      nc_Ze = cdfFile.createVariable('Ze', 'f',dim4d,**fillVDict)
+      nc_Ze = cdfFile.createVariable('Ze', 'f',dim5d_rad,**fillVDict)
       nc_Ze.units = zeUnit
       nc_Ze[:] = np.array(self.r["Ze"],dtype='f')
       if not pyNc: nc_Ze._FillValue =missingNumber
 
-      nc_Attenuation_Hydrometeors = cdfFile.createVariable('Attenuation_Hydrometeors', 'f',dim4d,**fillVDict)
+      nc_Attenuation_Hydrometeors = cdfFile.createVariable('Attenuation_Hydrometeors', 'f',dim5d_att,**fillVDict)
       nc_Attenuation_Hydrometeors.units = attUnit
       nc_Attenuation_Hydrometeors[:] = np.array(self.r["Att_hydro"],dtype='f')
       if not pyNc: nc_Attenuation_Hydrometeors._FillValue =missingNumber
@@ -1585,56 +1608,62 @@ class pyPamtra(object):
       if not pyNc: nc_Attenuation_Atmosphere._FillValue =missingNumber
       
       if ((self.r["nmlSettings"]["radar_mode"] == "spectrum") or (self.r["nmlSettings"]["radar_mode"] == "moments")):
-	nc_snr=cdfFile.createVariable('Radar_SNR', 'f',dim4d,**fillVDict)
+	nc_snr=cdfFile.createVariable('Radar_SNR', 'f',dim5d_rad,**fillVDict)
 	nc_snr.units="dB"
 	nc_snr[:] = np.array(self.r["radar_snr"],dtype='f')
 	if not pyNc: nc_snr._FillValue =missingNumber
 
-	nc_fvel=cdfFile.createVariable('Radar_FallVelocity', 'f',dim4d,**fillVDict)
+	nc_fvel=cdfFile.createVariable('Radar_FallVelocity', 'f',dim5d_rad,**fillVDict)
 	nc_fvel.units="m/s"
 	nc_fvel[:] = np.array(self.r["radar_moments"][...,0],dtype='f')
 	if not pyNc: nc_fvel._FillValue =missingNumber
 	
-	nc_specw=cdfFile.createVariable('Radar_SpectralWidth', 'f',dim4d,**fillVDict)
+	nc_specw=cdfFile.createVariable('Radar_SpectralWidth', 'f',dim5d_rad,**fillVDict)
 	nc_specw.units="m/s"
 	nc_specw[:] = np.array(self.r["radar_moments"][...,1],dtype='f')
 	if not pyNc: nc_specw._FillValue =missingNumber
 	
-	nc_skew=cdfFile.createVariable('Radar_Skewness', 'f',dim4d,**fillVDict)
+	nc_skew=cdfFile.createVariable('Radar_Skewness', 'f',dim5d_rad,**fillVDict)
 	nc_skew.units="-"
 	nc_skew[:] = np.array(self.r["radar_moments"][...,2],dtype='f')
 	if not pyNc: nc_skew._FillValue =missingNumber
 	
-	nc_kurt=cdfFile.createVariable('Radar_Kurtosis', 'f',dim4d,**fillVDict)
+	nc_kurt=cdfFile.createVariable('Radar_Kurtosis', 'f',dim5d_rad,**fillVDict)
 	nc_kurt.units="-"
 	nc_kurt[:] = np.array(self.r["radar_moments"][...,3],dtype='f')
 	if not pyNc: nc_kurt._FillValue =missingNumber
 	
-	nc_lslop=cdfFile.createVariable('Radar_LeftSlope', 'f',dim4d,**fillVDict)
+	nc_lslop=cdfFile.createVariable('Radar_LeftSlope', 'f',dim5d_rad,**fillVDict)
 	nc_lslop.units="dB/(m/s)"
 	nc_lslop[:] = np.array(self.r["radar_slopes"][...,0],dtype='f')
 	if not pyNc: nc_lslop._FillValue =missingNumber
 	
-	nc_rslop=cdfFile.createVariable('Radar_RightSlope', 'f',dim4d,**fillVDict)
+	nc_rslop=cdfFile.createVariable('Radar_RightSlope', 'f',dim5d_rad,**fillVDict)
 	nc_rslop.units="dB/(m/s)"
 	nc_rslop[:] = np.array(self.r["radar_slopes"][...,1],dtype='f')
 	if not pyNc: nc_rslop._FillValue =missingNumber
 
-        nc_lslop=cdfFile.createVariable('Radar_LeftEdge', 'f',dim4d,**fillVDict)
+        nc_lslop=cdfFile.createVariable('Radar_LeftEdge', 'f',dim5d_rad,**fillVDict)
         nc_lslop.units="m/s"
         nc_lslop[:] = np.array(self.r["radar_edges"][...,0],dtype='f')
         if not pyNc: nc_lslop._FillValue =missingNumber
         
-        nc_rslop=cdfFile.createVariable('Radar_RightEdge', 'f',dim4d,**fillVDict)
+        nc_rslop=cdfFile.createVariable('Radar_RightEdge', 'f',dim5d_rad,**fillVDict)
         nc_rslop.units="m/s"
         nc_rslop[:] = np.array(self.r["radar_edges"][...,1],dtype='f')
         if not pyNc: nc_rslop._FillValue =missingNumber	
 	
-	nc_qual=cdfFile.createVariable('Radar_Quality', 'i',dim4d,**fillVDict)
+	nc_qual=cdfFile.createVariable('Radar_Quality', 'i',dim5d_rad,**fillVDict)
 	nc_qual.units="bytes"
 	nc_qual.description="1st byte: aliasing; 2nd byte: 2nd peak present; 7th: no peak found"
 	nc_qual[:] = np.array(self.r["radar_quality"],dtype='i')
 	if not pyNc: nc_qual._FillValue =missingNumber
+	
+        #nc_qual=cdfFile.createVariable('Radar_Polarisation', 'i',dim5d_rad,**fillVDict)
+        #nc_qual.units="bytes"
+        #nc_qual.description="1st byte: aliasing; 2nd byte: 2nd peak present; 7th: no peak found"
+        #nc_qual[:] = np.array(self.r["radar_quality"],dtype='i')
+        #if not pyNc: nc_qual._FillValue =missingNumber	
 	
 	
 	if ((self.r["nmlSettings"]["radar_mode"] == "spectrum")): 
@@ -1644,13 +1673,13 @@ class pyPamtra(object):
 	  nc_vel[:] = np.array(self.r["radar_vel"],dtype='f')
 	  if not pyNc: nc_vel._FillValue =missingNumber
 	  
-	  nc_spec=cdfFile.createVariable('Radar_Spectrum', 'f',dim5d,**fillVDict)
+	  nc_spec=cdfFile.createVariable('Radar_Spectrum', 'f',dim6d_rad,**fillVDict)
 	  nc_spec.units="dBz"
 	  nc_spec[:] = np.array(self.r["radar_spectra"],dtype='f')
 	  if not pyNc: nc_spec._FillValue =missingNumber
 	     
     if (self.r["nmlSettings"]["passive"]):
-      nc_tb = cdfFile.createVariable('tb', 'f',dim6d,**fillVDict)
+      nc_tb = cdfFile.createVariable('tb', 'f',dim6d_pas,**fillVDict)
       nc_tb.units = "K"
       nc_tb[:] = np.array(self.r["tb"],dtype='f')
       if not pyNc: nc_tb._FillValue =missingNumber

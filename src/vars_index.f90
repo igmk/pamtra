@@ -6,7 +6,8 @@ module vars_index
   integer(kind=long) :: i_x= -99
   integer(kind=long) :: i_y= -99
   integer(kind=long) :: i_z= -99
-  integer(kind=long) :: i_f= -99
-  integer(kind=long) :: i_h= -99
+  integer(kind=long) :: i_f= -99 !frequency
+  integer(kind=long) :: i_h= -99 !hydrometeor
+  integer(kind=long) :: i_p= -99 !radar polarisation
 
 end module vars_index

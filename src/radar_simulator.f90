@@ -30,7 +30,7 @@ delta_h)
       out_debug_radarback_wturb, &
       out_debug_radarback_wturb_wnoise
     use report_module
-    use vars_index, only: i_x,i_y, i_z, i_f
+    use vars_index, only: i_x,i_y, i_z, i_f, i_p
 
     implicit none
   
@@ -53,7 +53,7 @@ delta_h)
     real(kind=dbl) :: noise_out, PIA
     real(kind=dbl):: SNR, del_v, ss, K2, wavelength, Ze_back, dielec_water, K, &
     min_V_aliased, max_V_aliased, receiver_uncertainty, radar_Pnoise, frequency
-    integer :: ii, tt, turbLen,alloc_status,ts_imin, ts_imax, startI, stopI, seed
+    integer(kind=long) :: ii, tt, turbLen,alloc_status,ts_imin, ts_imax, startI, stopI, seed
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
@@ -86,7 +86,7 @@ delta_h)
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
     err = 0
     
-    
+i_p = 1    
     call assert_false(err,(ANY(ISNAN(particle_spectrum))),&
         "got nan in values in backscattering spectrum")
     call assert_false(err,(ISNAN(back) .or. back < 0.d0),&
@@ -106,7 +106,7 @@ delta_h)
     wavelength = c / (frequency*1.d9)   ! [m]
 
     !first, calculate the attenuation for hydrometeors
-    out_att_hydro(i_x,i_y,i_z,i_f) = 10*log10(exp(kexthydro*delta_h))
+    out_att_hydro(i_x,i_y,i_z,i_f,1) = 10*log10(exp(kexthydro*delta_h))
 
     !transform backscattering in linear reflectivity units, 10*log10(back) would be in dBz
     Ze_back = 1.d18* (1.d0/ (K2*pi**5) ) * back * (wavelength)**4 ![mm⁶/m³]
@@ -115,15 +115,15 @@ delta_h)
     PIA = 0.d0
     if (TRIM(radar_attenuation) == "top-down") then
       if (i_z < atmo_nlyrs(i_x,i_y)) then
-        PIA = 2 * (SUM(out_att_hydro(i_x,i_y,atmo_nlyrs(i_x,i_y):i_z+1:-1,i_f)) + &
+        PIA = 2 * (SUM(out_att_hydro(i_x,i_y,atmo_nlyrs(i_x,i_y):i_z+1:-1,i_f,1)) + &
             SUM(out_att_atmo(i_x,i_y,atmo_nlyrs(i_x,i_y):i_z+1:-1,i_f)))
       end if
-      PIA = PIA + out_att_hydro(i_x,i_y,i_z,i_f) + out_att_atmo(i_x,i_y,i_z,i_f)
+      PIA = PIA + out_att_hydro(i_x,i_y,i_z,i_f,1) + out_att_atmo(i_x,i_y,i_z,i_f)
     else if (TRIM(radar_attenuation) == "bottom-up") then
       if (i_z > 1) then
-        PIA = 2 * (SUM(out_att_hydro(i_x,i_y,1:i_z-1,i_f)) + SUM(out_att_atmo(i_x,i_y,1:i_z-1,i_f)))
+        PIA = 2 * (SUM(out_att_hydro(i_x,i_y,1:i_z-1,i_f,1)) + SUM(out_att_atmo(i_x,i_y,1:i_z-1,i_f)))
       end if
-      PIA = PIA + out_att_hydro(i_x,i_y,i_z,i_f) + out_att_atmo(i_x,i_y,i_z,i_f)
+      PIA = PIA + out_att_hydro(i_x,i_y,i_z,i_f,1) + out_att_atmo(i_x,i_y,i_z,i_f)
     else if (TRIM(radar_attenuation) /= "disabled") then
       errorstatus = fatal
       msg = "do not understand radar_attenuation: "//radar_attenuation
@@ -138,11 +138,11 @@ delta_h)
 
     if (radar_mode == "simple") then
 	if (Ze_back .eq. 0.d0) then
-	  out_Ze(i_x,i_y,i_z,i_f) = -9999.d0
+	  out_Ze(i_x,i_y,i_z,i_f,i_p) = -9999.d0
         else 
-	  out_Ze(i_x,i_y,i_z,i_f) = 10*log10(Ze_back)
+	  out_Ze(i_x,i_y,i_z,i_f,i_p) = 10*log10(Ze_back)
 	end if
-      if (verbose >= 3) print*, "i_x,i_y,i_z,i_f,out_Ze", i_x,i_y,i_z,i_f,out_Ze(i_x,i_y,i_z,i_f)
+      if (verbose >= 3) print*, "i_x,i_y,i_z,i_f,out_Ze", i_x,i_y,i_z,i_f,out_Ze(i_x,i_y,i_z,i_f,i_p)
 
     else if ((radar_mode == "moments") .or. (radar_mode == "spectrum")) then
         !calculate the noise level depending on range:
@@ -383,19 +383,19 @@ delta_h)
         if (radar_save_noise_corrected_spectra) noise_turb_spectra = noise_removed_turb_spectra
 
 
-        out_radar_spectra(i_x,i_y,i_z,i_f,:) = 10*log10(noise_turb_spectra)
+        out_radar_spectra(i_x,i_y,i_z,i_f,i_p,:) = 10*log10(noise_turb_spectra)
         WHERE (ISNAN(noise_turb_spectra)) noise_turb_spectra = -9999.d0
 
-        out_radar_snr(i_x,i_y,i_z,i_f) = SNR
+        out_radar_snr(i_x,i_y,i_z,i_f,i_p) = SNR
         out_radar_vel(:) = spectra_velo(:)
-        out_radar_moments(i_x,i_y,i_z,i_f,:) = moments(1:4,1)
-        out_radar_slopes(i_x,i_y,i_z,i_f,:) = slope(:,1)
-        out_radar_edges(i_x,i_y,i_z,i_f,:) = edge(:,1)
-        out_radar_quality(i_x,i_y,i_z,i_f) = quailty_aliasing + quality_moments
+        out_radar_moments(i_x,i_y,i_z,i_f,i_p,:) = moments(1:4,1)
+        out_radar_slopes(i_x,i_y,i_z,i_f,i_p,:) = slope(:,1)
+        out_radar_edges(i_x,i_y,i_z,i_f,i_p,:) = edge(:,1)
+        out_radar_quality(i_x,i_y,i_z,i_f,i_p) = quailty_aliasing + quality_moments
 
         moments(0,1) = 10*log10(moments(0,1))
         IF (ISNAN(moments(0,1))) moments(0,1) = -9999.d0
-        out_Ze(i_x,i_y,i_z,i_f) = moments(0,1)
+        out_Ze(i_x,i_y,i_z,i_f,i_p) = moments(0,1)
 
         if (allocated(turb_spectra)) deallocate(turb_spectra)
 
