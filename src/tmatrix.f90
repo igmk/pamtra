@@ -2,7 +2,7 @@ module tmatrix
   use kinds
   use constants, only: pi, c
   use settings, only: nummu, nstokes, verbose, active, passive, &
-    tmatrix_db, tmatrix_db_path
+    tmatrix_db, tmatrix_db_path, radar_npol, radar_pol
   use rt_utilities, only: lobatto_quadrature
   use report_module
 
@@ -49,6 +49,7 @@ module tmatrix
       !       emis_vector     double  emission vector []
       !       back_spec       double  backscattering spectrum [nbins]
 
+      use vars_index, only: i_p
       implicit none
 
       real(kind=dbl), intent(in) :: frequency
@@ -66,7 +67,7 @@ module tmatrix
       real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
       real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
       real(kind=dbl), intent(out), dimension(nstokes,nummu) :: emis_vector
-      real(kind=dbl), intent(out), dimension(nbins) :: back_spec
+      real(kind=dbl), intent(out), dimension(radar_npol,nbins) :: back_spec
 
       complex(kind=dbl) :: mMix
       complex(kind=dbl) :: eps_mix 
@@ -142,7 +143,7 @@ module tmatrix
       quad ="L" !quadratur
 	
     !initialize
-      back_spec(:) = 0.d0
+      back_spec(:,:) = 0.d0
       scatter_matrix = 0.d0
       extinct_matrix = 0.d0
       emis_vector = 0.d0
@@ -335,9 +336,19 @@ module tmatrix
             errorstatus = err
             return
       end if
-      !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, sc
-      back_spec(ir) = 4*pi*ndens_eff*scatter_matrix_part(1,16,1,16,2)
 
+      do i_p= 1, radar_npol
+        if (radar_pol(i_p) == "NN") then
+          !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, sc
+          back_spec(i_p,ir) = 4*pi*ndens_eff*scatter_matrix_part(1,16,1,16,2)
+        else
+          msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)
+          err = fatal
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+        end if
+      end do 
       scatter_matrix = scatter_matrix + scatter_matrix_part * ndens_eff * del_d_eff
       extinct_matrix = extinct_matrix + extinct_matrix_part * ndens_eff * del_d_eff
       emis_vector = emis_vector + emis_vector_part * ndens_eff * del_d_eff

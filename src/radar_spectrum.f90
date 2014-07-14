@@ -62,7 +62,7 @@ subroutine radar_spectrum(&
       out_debug_radarback, &
       out_debug_radarback_wturb, &
       out_debug_radarback_wturb_wnoise
-    use vars_index, only: i_x,i_y, i_z, i_f, i_h
+    use vars_index, only: i_x,i_y, i_z, i_f, i_h, i_p
 
     implicit none
 
@@ -89,7 +89,10 @@ subroutine radar_spectrum(&
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'radar_spectrum'
 
-    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+    if (verbose >= 2) then
+      call report(info,'Start of ', nameOfRoutine)
+      print*, "i_x,i_y, i_z, i_f, i_h, i_p", i_x,i_y, i_z, i_f, i_h, i_p
+    end if
     err = 0
 
     call assert_true(err,all(diameter_spec > 0),&

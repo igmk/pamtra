@@ -226,7 +226,7 @@ contains
   subroutine add_settings(errorstatus)
     use kinds
     implicit none
-    integer(kind=long) :: pos1 = 1, pos2, n = 0, ii
+    integer(kind=long) :: pos1, pos2, ii
 
 
     integer(kind=long), intent(out) :: errorstatus
@@ -246,6 +246,9 @@ contains
     !process radar_polarisation
   
     radar_npol = 0
+    radar_pol = ""
+    pos1 = 1
+    pos2 = 1
     DO
       pos2 = INDEX(radar_polarisation(pos1:), ",")
       IF (pos2 == 0) THEN
@@ -444,6 +447,10 @@ contains
       print*, 'emissivity: ', emissivity
       print*, 'save_psd: ', save_psd
       print*, "randomseed", randomseed
+      print*, "radar_pol", radar_pol
+      print*, "radar_npol", radar_npol
+      print*, "radar_nfft_aliased", radar_nfft_aliased
+      print*, "radar_maxTurbTerms", radar_maxTurbTerms
 
     end subroutine print_settings
     

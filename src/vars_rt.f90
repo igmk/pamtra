@@ -2,10 +2,12 @@ module vars_rt
 
   use kinds
   use report_module
+  use settings, only : radar_npol
   implicit none
 
   real(kind=dbl), allocatable, dimension(:) :: rt_kextatmo, &
-       rt_kexttot, rt_back
+       rt_kexttot
+  real(kind=dbl), allocatable, dimension(:,:) :: rt_back
   real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: rt_scattermatrix_reverse,rt_scattermatrix
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: rt_extmatrix_reverse,rt_extmatrix
   real(kind=dbl), allocatable, dimension(:,:,:,:) :: rt_emisvec_reverse,rt_emisvec
@@ -53,7 +55,7 @@ module vars_rt
 
     allocate(rt_kextatmo(nlyr), stat=alloc_status)
     allocate(rt_kexttot(nlyr), stat=alloc_status)
-    allocate(rt_back(nlyr), stat=alloc_status)
+    allocate(rt_back(nlyr, radar_npol), stat=alloc_status)
     allocate(rt_scattermatrix_reverse(nlyr,nstokes,nummu,nstokes,nummu,4),stat=alloc_status)
     allocate(rt_scattermatrix(nlyr,nstokes,nummu,nstokes,nummu,4),stat=alloc_status)
     allocate(rt_extmatrix_reverse(nlyr,nstokes,nstokes,nummu,4),stat=alloc_status)
@@ -70,7 +72,7 @@ module vars_rt
     ! set them to zero, just in case they are not calculated but used for Ze/PIA calculation
     rt_kexttot(:) = 0d0
     rt_kextatmo(:) = 0d0
-    rt_back(:) = 0d0  
+    rt_back(:,:) = 0d0  
 
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
 

@@ -33,8 +33,24 @@ subroutine hydrometeor_extinction(errorstatus)
   use descriptor_file
   use drop_size_dist
   use report_module
-  use scatProperties
-  use vars_output, only: out_psd_area, out_psd_d, out_psd_n, out_psd_mass
+  use scatProperties, only: &
+    radar_spec, &
+    vel_size_mod, &
+    scat_name, &
+    salbedo, &
+    legen_coef, &
+    nlegen_coef, &
+    allocate_scatproperties, &
+    deallocate_scatproperties, &
+    prepare_rt3_scatproperties, &
+    prepare_rt4_scatproperties, &
+    calc_scatproperties, &
+    finalize_rt3_scatproperties
+  use vars_output, only: &
+    out_psd_area, &
+    out_psd_d, &
+    out_psd_n, &
+    out_psd_mass
   use vars_index, only: i_x,i_y, i_z, i_h
 
   implicit none
@@ -51,6 +67,19 @@ subroutine hydrometeor_extinction(errorstatus)
   character(len=80) :: msg
   character(len=40) :: nameOfRoutine = 'hydrometeor_extinction'
   
+  interface
+    subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,&
+    delta_h)
+        use kinds
+        use settings, only: radar_npol, radar_nfft_aliased
+        implicit none
+        real(kind=dbl), dimension(radar_npol),intent(in) ::  back
+        real(kind=dbl),intent(in) ::  delta_h,kexthydro
+        real(kind=dbl), dimension(radar_npol,radar_nfft_aliased),intent(in):: particle_spectrum
+        integer(kind=long), intent(out) :: errorstatus
+      end subroutine
+  end interface
+
   if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
 
@@ -284,7 +313,7 @@ subroutine hydrometeor_extinction(errorstatus)
     end if
 
     if (active .and. rt_hydros_present(i_z)) then
-      call radar_simulator(err,radar_spec, rt_back(i_z), rt_kexttot(i_z),&
+      call radar_simulator(err,radar_spec, rt_back(i_z,:), rt_kexttot(i_z),&
 	atmo_delta_hgt_lev(i_x,i_y,i_z))
       if (err /= 0) then
 	  msg = 'error in radar_simulator!'

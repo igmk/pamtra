@@ -15,15 +15,15 @@ module scatProperties
     !needed by rt3 and rt4
     character(len=15) :: scat_name
     character(len=30) :: vel_size_mod
-    real(kind=dbl), allocatable, dimension(:) :: radar_spec
+    real(kind=dbl), allocatable, dimension(:,:) :: radar_spec
     
   contains
   
   subroutine allocate_scatProperties()
     use kinds
-    use settings, only: radar_nfft_aliased
+    use settings, only: radar_nfft_aliased, radar_npol
    implicit none
-   allocate(radar_spec(radar_nfft_aliased)) 
+   allocate(radar_spec(radar_npol,radar_nfft_aliased)) 
    return
   end subroutine allocate_scatProperties
 
@@ -51,13 +51,13 @@ module scatProperties
       implicit none
 
       rt_kexttot(i_z) = 0.d0  
-      rt_back(i_z) = 0.d0
+      rt_back(i_z,:) = 0.d0
 
       rt_scattermatrix(i_z,:,:,:,:,:)=0.d0
       rt_extmatrix(i_z,:,:,:,:)=0.d0
       rt_emisvec(i_z,:,:,:)=0.d0
 
-      radar_spec(:) = 0.d0
+      radar_spec(:,:) = 0.d0
       return
 
     end subroutine prepare_rt4_scatProperties
@@ -100,7 +100,7 @@ module scatProperties
         soft_rho_eff, &
         d_ds
   use constants, only: pi, Im
-  use vars_index, only: i_x, i_y, i_z, i_f, i_h
+  use vars_index, only: i_x, i_y, i_z, i_f, i_h, i_p
   use vars_hydroFullSpec, only: hydrofs_as_ratio, hydrofs_canting
 
     implicit none
@@ -116,11 +116,14 @@ module scatProperties
     real(kind=dbl), dimension(nstokes,nstokes,nummu,2) :: extinct_matrix_hydro
     real(kind=dbl), dimension(nstokes,nummu,2) :: emis_vector_hydro
     real(kind=dbl), dimension(radar_nfft_aliased) :: radar_spec_hydro
-    real(kind=dbl), dimension(nbin) :: back_spec_dia, particle_density
+    real(kind=dbl), dimension(nbin) :: particle_density
+    real(kind=dbl), dimension(radar_npol) :: back_hydro
+    real(kind=dbl), dimension(radar_npol,radar_nfft_aliased) :: back_spec_dia
+    real(kind=dbl), dimension(radar_nfft_aliased) :: back_spec_mie
     real(kind=dbl), allocatable, dimension(:) :: as_ratio_list, canting_list
     real(kind=dbl) :: kext_hydro
     real(kind=dbl) :: salb_hydro
-    real(kind=dbl) :: back_hydro
+    real(kind=dbl) :: back_hydro_mie
     real(kind=dbl) :: refre
     real(kind=dbl) :: refim
     real(kind=dbl) :: absind
@@ -167,7 +170,6 @@ module scatProperties
           integer(kind=long), intent(out) :: errorstatus
       end subroutine radar_spectrum
     end interface
-
 
   if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
@@ -259,9 +261,18 @@ module scatProperties
       scatter_matrix_hydro(:,:,:,:,3) = scatter_matrix_hydro(:,:,:,:,2)
       extinct_matrix_hydro(:,:,:,2) = extinct_matrix_hydro(:,:,:,1)
       emis_vector_hydro(:,:,2) = emis_vector_hydro(:,:,1)
-
-      back_hydro = scatter_matrix_hydro(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
-      back_hydro = 4*pi*back_hydro!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squard entries!
+      
+      do i_p= 1, radar_npol
+        if (radar_pol(i_p) == "NN") then
+          back_hydro(i_p) = scatter_matrix_hydro(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
+        else
+          msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)
+          call report(err, msg, nameOfRoutine)
+          errorstatus = fatal
+          return
+        end if
+      end do 
+      back_hydro(:) = 4*pi*back_hydro(:)!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squard entries!
       kext_hydro = extinct_matrix_hydro(1,1,16,1) !11 of extinction matrix (=not polarized), at 0°, first quadrature. equal to extinct_matrix(1,1,16,2)
 
 !!!!old style RT3 routines !!!
@@ -282,15 +293,19 @@ module scatProperties
 !OUT
             kext_hydro,&
             salb_hydro,&
-            back_hydro,&
+            back_hydro_mie,&
             nlegen_coef_hydro,&
             legen_coef1_hydro,&
             legen_coef2_hydro,&
             legen_coef3_hydro,&
             legen_coef4_hydro,&
-            back_spec_dia)    
+            back_spec_mie)    
 
-
+      ! for mie polarisatuion does not matter
+      do i_p=1, radar_npol
+        back_spec_dia(i_p,:) = back_spec_mie(:)
+        back_hydro(i_p) = back_hydro_mie
+      end do
       nlegen_coef = max(nlegen_coef,nlegen_coef_hydro)
       if (err /= 0) then
           msg = 'error in calc_mie_spheres!'
@@ -307,7 +322,7 @@ module scatProperties
 
     !sum up
     rt_kexttot(i_z) = rt_kexttot(i_z) + kext_hydro
-    rt_back(i_z) = rt_back(i_z) + back_hydro
+    rt_back(i_z,:) = rt_back(i_z,:) + back_hydro(:)
 
     !sum up rt4 style
     rt_scattermatrix(i_z,:,:,:,:,:) = rt_scattermatrix(i_z,:,:,:,:,:) + scatter_matrix_hydro
@@ -335,7 +350,7 @@ module scatProperties
     end if
 
     !do checks
-    if (rt_kexttot(i_z) .lt. 0. .or. isnan(rt_kexttot(i_z))) then
+    if (rt_kexttot(i_z) .lt. 0.d0 .or. isnan(rt_kexttot(i_z))) then
       print*, "rt_kexttot(i_z)",rt_kexttot(i_z)
       msg = 'rt_kexttot(i_z) smaller than zero or nan!'
       errorstatus = fatal
@@ -343,9 +358,9 @@ module scatProperties
       return
     end if        
 
-    if (rt_back(i_z) .lt. 0. .or. isnan(rt_back(i_z))) then
-      print*, "rt_back(i_z)",rt_back(i_z)
-      msg = 'rt_back(i_z) smaller than zero or nan!'
+    if (ANY(rt_back(i_z,:) .lt. 0.d0) .or. ANY(isnan(rt_back(i_z,:)))) then
+      print*, "rt_back(i_z)",rt_back(i_z,:)
+      msg = 'rt_back(i_z,:) smaller than zero or nan!'
       errorstatus = fatal
       call report(errorstatus, msg, nameOfRoutine)
       return
@@ -359,26 +374,19 @@ module scatProperties
       return
     end if   
 
-    if (radar_pol(1) /= "NN") then
-      print*, "nlegen_coef",nlegen_coef
-      msg = 'as of now, only radar_pol=NN is implemented'
-      errorstatus = fatal
-      call report(errorstatus, msg, nameOfRoutine)
-      return
-    end if   
-
     if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
-      call radar_spectrum(err,nbin,d_ds, rt_back(i_z),  back_spec_dia,layer_t,pressure,freq,&
-        soft_rho_eff,vel_size_mod,mass_ds,area_ds,radar_spec_hydro)
 
-      if (err /= 0) then
-          msg = 'error in radar_spectrum!'
-          call report(err, msg, nameOfRoutine)
-          errorstatus = err
-          return
-      end if        
-
-      radar_spec(:) = radar_spec(:)+ radar_spec_hydro(:)
+      do  i_p= 1, radar_npol
+        call radar_spectrum(err,nbin,d_ds, rt_back(i_z,i_p),  back_spec_dia(i_p,:),layer_t,pressure,freq,&
+          soft_rho_eff,vel_size_mod,mass_ds,area_ds,radar_spec_hydro)
+        if (err /= 0) then
+            msg = 'error in radar_spectrum!'
+            call report(err, msg, nameOfRoutine)
+            errorstatus = err
+            return
+        end if        
+        radar_spec(i_p,:) = radar_spec(i_p,:)+ radar_spec_hydro(:)
+      end do 
     end if
     
     
