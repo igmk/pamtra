@@ -1147,7 +1147,7 @@ class pyPamtra(object):
     
     if checkData: self._checkData()
     
-    fortResults, fortObject = pyPamtraLibWrapper.PamtraFortranWrapper(self.set,self.nmlSet,self.df.data,self.df.data4D,self.df.dataFullSpec,self.p)
+    fortResults, self.fortError, fortObject = pyPamtraLibWrapper.PamtraFortranWrapper(self.set,self.nmlSet,self.df.data,self.df.data4D,self.df.dataFullSpec,self.p)
     self.r = fortResults
     self.fortObject = fortObject
     
@@ -1298,7 +1298,6 @@ class pyPamtra(object):
     self.r["radar_edges"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],2,))*missingNumber
     self.r["radar_quality"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],),dtype=int)*missingNumber
     self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles,self.set["nfreqs"],self._nstokes))*missingNumber
-    import pdb;pdb.set_trace()
     if self.nmlSet["save_psd"]:
       self.r["psd_area"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
       self.r["psd_n"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
@@ -1324,7 +1323,9 @@ class pyPamtra(object):
     #print "toller", np.shape(self.r["radar_snr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF])    
     if self.set["pyVerbose"] > 2: print "Callback started:", 
     
-    [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY], results = resultList
+    [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY], results, fortError = resultList
+       
+    self.fortError += fortError   
        
     self.r["pamtraVersion"] = results["pamtraVersion"]
     self.r["pamtraHash"] = results["pamtraVersion"]

@@ -150,7 +150,7 @@ def PamtraFortranWrapper(
     
     
   ##now, finally rund the model  
-  error = pyPamtraLib.pypamtralib.run_pamtra() 
+  pamError = pyPamtraLib.pypamtralib.run_pamtra() 
   #if error > 0: raise RuntimeError("Error in run_pamtra")
   
   ##process the results!
@@ -173,10 +173,10 @@ def PamtraFortranWrapper(
   if settings["pyVerbose"] > 2: "processed results"
         
   if returnModule: 
-    return results, pyPamtraLib
+    return results,pamError, pyPamtraLib
   else: 
     del pyPamtraLib
-    return results
+    return results,pamError
 
 def _str_py2f(array,length=None):
   # the byte order of fortran and numpy string arrays is different, this here works sometimes...
@@ -214,8 +214,8 @@ def setFortranStrList(fortranList,pythonList,charLength=None):
   
 def parallelPamtraFortranWrapper(indices, *args, **kwargs):
   if args[0]["pyVerbose"] > 1: print 'starting', __name__, 'parent process:', os.getppid(), 'process id:', os.getpid()
-  results = PamtraFortranWrapper(*args, **kwargs)
-  return indices, results
+  results, pamError = PamtraFortranWrapper(*args, **kwargs)
+  return indices, results, pamError
   #return indices, dict()
   
   

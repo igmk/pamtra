@@ -98,7 +98,6 @@ i_p = 1
       return
     end if   
      
-     
     frequency = freqs(i_f)
     ! get |K|**2 and lambda
 
@@ -151,13 +150,13 @@ i_p = 1
           radar_Pnoise = 10**(0.1*radar_Pnoise0) * &
             (out_radar_hgt(i_x,i_y,i_z)/1000.)**2 
           if (verbose >= 3) print*, "took radar noise from nml file", 10*log10(radar_Pnoise), &
-              radar_Pnoise0
+              radar_Pnoise0, out_radar_hgt(i_x,i_y,i_z)
         else
           ! take the one from teh atmo files
           radar_Pnoise = 10**(0.1*atmo_radar_prop(i_x,i_y,1)) * &
             (out_radar_hgt(i_x,i_y,i_z)/1000.)**2 
           if (verbose >= 3) print*, "took radar noise from atmo array", 10*log10(radar_Pnoise), &
-                  atmo_radar_prop(i_x,i_y,1)
+                  atmo_radar_prop(i_x,i_y,1), out_radar_hgt(i_x,i_y,i_z)
         end if
         call assert_true(err,(radar_Pnoise > 0),&
             "nan or negative radar_Pnoise") 
@@ -209,6 +208,7 @@ i_p = 1
 
             allocate(turb_spectra(SIZE(particle_spectrum_att)+turbLen-1),stat=alloc_status)
 
+
             !convolute spectrum and noise
             call convolution(err,particle_spectrum_att,SIZE(particle_spectrum_att),turb(1:turbLen),turbLen,turb_spectra)
 	    if (err /= 0) then
@@ -218,8 +218,11 @@ i_p = 1
                 if (allocated(turb_spectra)) deallocate(turb_spectra)
 		return
 	    end if   
-            !I don't like Nans here'
+
+
+            !I don't like Nans and negative values here'
             where(ISNAN(turb_spectra)) turb_spectra = 0.d0
+            where(turb_spectra<0) turb_spectra = 0.d0
             ts_imin = floor(12.d0/del_v+1)
             ts_imax = floor(12.d0/del_v+1)+radar_nfft_aliased-1
         else
@@ -281,6 +284,7 @@ i_p = 1
         SNR = 10.d0*log10(Ze_back/radar_Pnoise)
         !this here is for scaling, if we have now a wrong Ze due to all the turbulence, rescaling etc...
         K = (Ze_back/SUM(turb_spectra_aliased*del_v))
+        if (verbose >= 4) print*, "first K", K
         snr_turb_spectra = (K* turb_spectra_aliased + radar_Pnoise/(radar_nfft*del_v))
         !   snr_turb_spectra =turb_spectra_aliased + radar_Pnoise/(radar_nfft*del_v)
 
@@ -341,6 +345,12 @@ i_p = 1
             print*,"TOTAL"," Ze SUM(noise_turb_spectra)*del_v-radar_Pnoise",10*log10(SUM(noise_turb_spectra)-radar_Pnoise)
         end if
 
+        if (verbose >= 5) then
+            print*," linear spectrum befor receiver uncertainty"
+            print*,noise_turb_spectra
+            print*,"#####################"
+        end if
+
         !apply a receiver uncertainty:
       if (radar_receiver_uncertainty_std /= 0) then
         !get random
@@ -381,6 +391,12 @@ i_p = 1
 
         !if wanted, apply the noise correction to the spectrum to be saved.
         if (radar_save_noise_corrected_spectra) noise_turb_spectra = noise_removed_turb_spectra
+
+        if (verbose >= 5) then
+            print*,"final linear spectrum"
+            print*,noise_turb_spectra
+            print*,"#####################"
+        end if
 
 
         out_radar_spectra(i_x,i_y,i_z,i_f,i_p,:) = 10*log10(noise_turb_spectra)
