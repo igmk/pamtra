@@ -9,7 +9,7 @@ pam.df.addHydrometeor(('ice', -99.0, -1, 917,917 *  np.pi / 6., 3, np.pi/4., 2, 
 
 pam = pyPamtraImport.createUsStandardProfile(pam,hgt_lev=[100,200,300])
 
-
+pam.set["verbose"] = 10
 pam.p["hydro_q"][0,0,1] = 1e-2
 pam.nmlSet["data_path"] = '/net/marin//mmaahn/pamtra_data/'
 pam.nmlSet["radar_mode"] = "spectrum"

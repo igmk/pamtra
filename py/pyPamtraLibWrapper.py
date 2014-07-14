@@ -82,8 +82,8 @@ def PamtraFortranWrapper(
       if settings["pyVerbose"] > 3: print("pyPamtraLib.descriptor_file."+name +"_arr = [[[descriptorFile['"+name+"'].tolist()]]]")
       exec("pyPamtraLib.descriptor_file."+name +"_arr = [[[descriptorFile['"+name+"'].tolist()]]]")
   for name4d in descriptorFile4D.keys():
-    assert descriptorFile4D[key].shape[0] == profile["lat"].shape[0]
-    assert descriptorFile4D[key].shape[1] == profile["lat"].shape[1]
+    assert descriptorFile4D[name4d].shape[0] == profile["lat"].shape[0]
+    assert descriptorFile4D[name4d].shape[1] == profile["lat"].shape[1]
     if settings["pyVerbose"] > 3: print("pyPamtraLib.descriptor_file."+name4d +"_arr = descriptorFile4D['"+name4d+"'].tolist()")
     exec("pyPamtraLib.descriptor_file."+name4d +"_arr = descriptorFile4D['"+name4d+"'].tolist()")
   
