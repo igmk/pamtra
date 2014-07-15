@@ -125,7 +125,7 @@ contains
         namelist / gas_abs_mod / lgas_extinction, gas_mod
         namelist / hyd_opts / lhyd_extinction, lphase_flag, hydro_fullSpec, hydro_limit_density_area,&
                   hydro_softsphere_min_density, hydro_adaptive_grid, tmatrix_db, tmatrix_db_path, &
-                  hydro_includeHydroInRhoAir
+                  hydro_includeHydroInRhoAir, hydro_threshold
 	namelist / moments / n_moments, moments_file
 	namelist / radar_simulator / radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
 		  radar_pnoise0, radar_airmotion, radar_airmotion_model, &
