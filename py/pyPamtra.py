@@ -182,6 +182,7 @@ class pyPamtra(object):
     # sec hyd_opts
     self.nmlSet["lhyd_extinction"]= True
     self.nmlSet["lphase_flag"]=  True
+    self.nmlSet["hydro_includeHydroInRhoAir"] = True
     # radar_simulator
     #number of FFT points in the Doppler spectrum [typically 256 or 512]
     self.nmlSet["radar_nfft"]= 256

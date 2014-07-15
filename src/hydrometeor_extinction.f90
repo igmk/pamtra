@@ -5,7 +5,7 @@ subroutine hydrometeor_extinction(errorstatus)
       atmo_press,&
       atmo_delta_hgt_lev, atmo_hydro_q, atmo_hydro_reff, atmo_hydro_n
   use vars_rt, only:rt_hydros_present
-  use settings, only: verbose, hydro_threshold, save_psd
+  use settings, only: verbose, hydro_threshold, save_psd, hydro_includeHydroInRhoAir
   use constants
   use descriptor_file
   use drop_size_dist
@@ -147,10 +147,17 @@ subroutine hydrometeor_extinction(errorstatus)
 ! Convert specific quantities [kg/kg] in absolute ones [kg/m3]
 !       q_h        = q2abs(q_hydro(ih,i_z),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),q_hum(i_z),&
 !                    q_hydro(1,i_z),q_hydro(2,i_z),q_hydro(3,i_z),q_hydro(4,i_z),q_hydro(5,i_z))
-      q_h        = q2abs(atmo_hydro_q(i_x,i_y,i_z, ih),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
+      if (hydro_includeHydroInRhoAir) then
+        q_h        = q2abs(atmo_hydro_q(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
+                    atmo_q_hum(i_x,i_y,i_z),sum(atmo_hydro_q(i_x,i_y,i_z, :)))
+        n_tot      = q2abs(atmo_hydro_n(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
+                  atmo_q_hum(i_x,i_y,i_z),sum(atmo_hydro_q(i_x,i_y,i_z, :)))
+      else
+	q_h        = q2abs(atmo_hydro_q(i_x,i_y,i_z, ih),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
                   atmo_q_hum(i_x,i_y,i_z),0._dbl)
-      n_tot      = q2abs(atmo_hydro_n(i_x,i_y,i_z, ih),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
+	n_tot      = q2abs(atmo_hydro_n(i_x,i_y,i_z, ih),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
                   atmo_q_hum(i_x,i_y,i_z),0._dbl)
+      end if
       r_eff      = atmo_hydro_reff(i_x,i_y,i_z, ih)
       layer_t    = atmo_temp(i_x,i_y,i_z)
       pressure   = atmo_press(i_x,i_y,i_z)

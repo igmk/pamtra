@@ -72,7 +72,8 @@ module settings
     radar_save_noise_corrected_spectra, & !remove the noise from the calculated spectrum again (for testing)
     radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise0) we can skip that.
     radar_convolution_fft,&!use fft for convolution of spectrum
-    save_psd
+    save_psd, &
+    hydro_includeHydroInRhoAir
 
     character(3) :: gas_mod
     character(20) :: moments_file,file_desc
@@ -112,7 +113,8 @@ contains
         namelist / run_mode / active, passive,radar_mode
         namelist / surface_params / ground_type,salinity, emissivity
         namelist / gas_abs_mod / lgas_extinction, gas_mod
-        namelist / hyd_opts / lhyd_extinction, lphase_flag
+        namelist / hyd_opts / lhyd_extinction, lphase_flag, &
+		  hydro_threshold, hydro_includeHydroInRhoAir
 	namelist / moments / n_moments, moments_file
 	namelist / radar_simulator / radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
 		  radar_pnoise0, radar_airmotion, radar_airmotion_model, &
@@ -225,6 +227,7 @@ contains
         ! sec hyd_opts
         lhyd_extinction=.true.
         lphase_flag = .true.
+        hydro_includeHydroInRhoAir = .true.
 !        ! sec moments
         n_moments=1
         moments_file='snowCRYSTAL'
@@ -303,6 +306,7 @@ contains
       print*, 'radar_no_ave: ', radar_no_ave
       print*, 'input_type: ', input_type
       print*, 'dump_to_file: ', dump_to_file
+      print*, 'hydro_includeHydroInRhoAir: ', hydro_includeHydroInRhoAir
       print*, 'passive: ', passive
       print*, 'radar_airmotion_model: ', radar_airmotion_model
       print*, 'crm_data: ', crm_data
