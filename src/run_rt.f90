@@ -60,6 +60,7 @@ subroutine run_rt(errorstatus)
 
 
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
+    if (verbose >= 1) print*, "running...", i_f, i_x, i_y
 
     call allocate_rt_vars(err)
     if (err /= 0) then
@@ -119,8 +120,8 @@ subroutine run_rt(errorstatus)
     end if
     !save atmospheric attenuation and height for radar
     if (active) then
-        Att_atmo(i_x,i_y,:,i_f)  = 10._dbl*log10(exp(rt_kextatmo*atmo_delta_hgt_lev(i_x,i_y,:)))
-        radar_hgt(i_x,i_y,:) = atmo_hgt(i_x,i_y,:)
+        out_att_atmo(i_x,i_y,:,i_f)  = 10._dbl*log10(exp(rt_kextatmo*atmo_delta_hgt_lev(i_x,i_y,:)))
+        out_radar_hgt(i_x,i_y,:) = atmo_hgt(i_x,i_y,:)
     end if
 
 
@@ -191,8 +192,8 @@ subroutine run_rt(errorstatus)
 
         if (verbose >= 2) print*, i_x,i_y, "....rt4 finished"
         !calculate human readable angles!
-        angles_deg(1:NUMMU) = 180-(180.*acos(MU_VALUES(NUMMU:1:-1))/pi)
-        angles_deg(1+NUMMU:2*NUMMU) = (180.*acos(MU_VALUES(1:NUMMU))/pi)
+        out_angles_deg(1:NUMMU) = 180-(180.*acos(MU_VALUES(NUMMU:1:-1))/pi)
+        out_angles_deg(1+NUMMU:2*NUMMU) = (180.*acos(MU_VALUES(1:NUMMU))/pi)
 
     end if
 

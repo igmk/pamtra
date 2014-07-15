@@ -41,6 +41,8 @@ program pamtra
     character(len=200) :: msg
     character(len=14) :: nameOfRoutine = 'pamtra'
 
+    errorstatus = success
+    
     !get git data
     call versionNumber(gitVersion,gitHash)
 
@@ -48,7 +50,13 @@ program pamtra
     call parse_options(gitVersion,gitHash)
 
     !!! read variables from namelist file
-    call settings_read  !from settings.f90
+    call settings_read(err)  !from settings.f90
+    if (err /= 0) then
+        msg = 'error in settings_read!'
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
+        return
+    end if
 
     in_python = .false.! we are _not_ in python
 
@@ -101,12 +109,14 @@ program pamtra
       go to 666
     end if
 
-    call add_obs_height(errorstatus)
-    if (err /= 0) then
-        msg = 'Error in fillMissing_atmosphere_vars!'
-        call report(fatal, msg, nameOfRoutine)
-      errorstatus = err
-      go to 666
+    if (add_obs_height_to_layer) then
+      call add_obs_height(errorstatus)
+      if (err /= 0) then
+          msg = 'Error in add_obs_height!'
+          call report(fatal, msg, nameOfRoutine)
+        errorstatus = err
+        go to 666
+      end if
     end if
 
       ! now allocate output variables

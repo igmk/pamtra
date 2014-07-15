@@ -28,7 +28,7 @@ module dia2vel
     nDia,&              !in
     diaSpec_SI,&        !in
     rho_air_SI,&        !in
-    my_SI,&             !in
+    nu_SI,&             !in
     mass_size_a_SI,&    !in
     mass_size_b,&       !in
     area_size_a_SI,&    !in
@@ -43,7 +43,7 @@ module dia2vel
       
       integer, intent(in) :: nDia
       real(kind=dbl), intent(in), dimension(ndia)::diaSpec_SI
-      real(kind=dbl), intent(in) :: rho_air_SI, my_SI,mass_size_a_SI,mass_size_b,&
+      real(kind=dbl), intent(in) :: rho_air_SI, nu_SI,mass_size_a_SI,mass_size_b,&
       area_size_a_SI,area_size_b
       real(kind=dbl), dimension(ndia), intent(out) :: velSpec
       real(kind=dbl), dimension(ndia)::mass,area
@@ -61,9 +61,10 @@ module dia2vel
         nDia,&              !in
         diaSpec_SI,&        !in
         rho_air_SI,&        !in
-        my_SI,&             !in
+        nu_SI,&             !in
         mass,&              !in
-        area,&              !in
+        area,& 
+0.5d0,&             !in
         velSpec)            !out
   
   errorstatus = err
@@ -75,16 +76,17 @@ module dia2vel
     nDia,& 		!in
     diaSpec_SI,&	!in
     rho_air_SI,&	!in
-    my_SI,&		!in
+    nu_SI,&		!in
     mass,&              !in
-    area,&              !in
+    area,&
+    k,&                 !in
     velSpec)		!out
 
       !in
       !nDia: no of diameters
       !diaSpec_SI = diameter spectrum [m]
       !rho_air_SI = density of air [kg/m³]
-      !my_SI = kinematic viscosity of air [m²/s]
+      !nu_SI = kinematic viscosity of air [m²/s]
       !mass = mass of the particle [SI]
       !area = cross section area [SI]
       !out
@@ -105,10 +107,10 @@ module dia2vel
 
       integer, intent(in) :: nDia
       real(kind=dbl), intent(in), dimension(ndia)::diaSpec_SI, mass,area
-      real(kind=dbl), intent(in) :: rho_air_SI, my_SI
+      real(kind=dbl), intent(in) :: rho_air_SI, nu_SI, k
       real(kind=dbl), dimension(ndia), intent(out) :: velSpec
       real(kind=dbl), dimension(ndia)::area_proj, Xstar, Re
-      real(kind=dbl) ::k, delta_0, C_0, eta
+      real(kind=dbl) :: delta_0, C_0, eta
 
 
       integer(kind=long), intent(out) :: errorstatus
@@ -121,12 +123,12 @@ module dia2vel
       ! no check for baundaries due to different possible particle types
       err = success
 
-      k = 0.5d0 !defined in the paper
+!       k = 0.5d0 !defined in the paper
       delta_0 = 8.0d0
       C_0 = 0.35d0
 
       area_proj = area/((pi/4.d0)*diaSpec_SI**2)
-      eta = my_SI * rho_air_SI !now dynamic viscosity
+      eta = nu_SI * rho_air_SI !now dynamic viscosity
 
       Xstar = 8.d0 * rho_air_SI * mass * g / (pi * area_proj**(1.d0-k) * eta**2) !eq 9
       Re = delta_0**2/4.d0 * ((1.d0+((4.d0*sqrt(Xstar))/(delta_0**2*sqrt(C_0))))**0.5 - 1 )**2 !eq10
@@ -148,7 +150,7 @@ module dia2vel
     nDia,& 		!in
     diaSpec_SI,&	!in
     rho_air_SI,&	!in
-    my_SI,&		!in
+    nu_SI,&		!in
     mass_size_a_SI,&	!in
     mass_size_b,&	!in
     area_size_a_SI,&	!in
@@ -159,7 +161,7 @@ module dia2vel
       !nDia: no of diameters
       !diaSpec_SI = diameter spectrum [m]
       !rho_air_SI = density of air [kg/m³]
-      !my_SI = kinematic viscosity of air [m²/s]
+      !nu_SI = kinematic viscosity of air [m²/s]
       !mass_size_a_SI,mass_size_b parameters of mass size relation m = a*D_max^b [SI]
       !area_size_a_SI,area_size_b parameters of mass area relation A = a*D_max^b [SI]
       !out
@@ -180,7 +182,7 @@ module dia2vel
 
       integer, intent(in) :: nDia
       real(kind=dbl), intent(in), dimension(ndia)::diaSpec_SI
-      real(kind=dbl), intent(in) :: rho_air_SI, my_SI,mass_size_a_SI,mass_size_b,&
+      real(kind=dbl), intent(in) :: rho_air_SI, nu_SI,mass_size_a_SI,mass_size_b,&
       area_size_a_SI,area_size_b
       real(kind=dbl), dimension(ndia), intent(out) :: velSpec
       real(kind=dbl) :: rho_air, g_cp, my
@@ -206,7 +208,7 @@ module dia2vel
       g_cp = g*100.d0 !cm/s
       rho_air = rho_air_SI/1000.d0 !g/cm³
       diaSpec = 100.d0*diaSpec_SI !cm
-      my = my_SI*10000.d0 !cm² /s
+      my = nu_SI*10000.d0 !cm² /s
       c1 = 0.0902d0
       delta0 = 9.06d0
 

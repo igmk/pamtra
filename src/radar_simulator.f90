@@ -18,9 +18,17 @@ delta_h)
     use kinds
     use settings
     use constants
-    use vars_atmosphere, only: atmo_airturb
-    use vars_output, only: radar_spectra, radar_snr, radar_vel,radar_hgt, &
-    radar_moments, radar_slopes, radar_edge, radar_quality, Ze, Att_hydro !output of the radar simulator
+    use radar_moments, only: radar_calc_moments
+    use vars_atmosphere, only: atmo_airturb, atmo_radar_prop, atmo_lat, atmo_lon, atmo_nlyrs
+    use vars_output, only: out_radar_spectra, out_radar_snr, out_radar_vel,out_radar_hgt, &
+    out_radar_moments, out_radar_slopes, out_radar_edges, out_radar_quality, out_ze, out_att_hydro, & !output of the radar simulator
+      out_att_atmo, &
+      out_debug_diameter, &
+      out_debug_back_of_d, &
+      out_debug_radarvel, &
+      out_debug_radarback, &
+      out_debug_radarback_wturb, &
+      out_debug_radarback_wturb_wnoise
     use report_module
     use vars_index, only: i_x,i_y, i_z, i_f
 
@@ -29,21 +37,23 @@ delta_h)
 
     real(kind=dbl),intent(in) ::  back, delta_h,kexthydro
     real(kind=dbl), dimension(radar_nfft_aliased),intent(in):: particle_spectrum
+    real(kind=dbl), dimension(radar_nfft_aliased) :: particle_spectrum_att
     real(kind=dbl), dimension(radar_nfft_aliased) :: spectra_velo_aliased
     real(kind=dbl), dimension(radar_maxTurbTerms):: turb
     real(kind=dbl), dimension(radar_nfft*radar_no_Ave):: x_noise
     real(kind=dbl), dimension(radar_no_Ave,radar_nfft):: noise_turb_spectra_tmp
     real(kind=dbl), dimension(radar_nfft):: noise_turb_spectra,&
     snr_turb_spectra,spectra_velo, turb_spectra_aliased, noise_removed_turb_spectra
-    integer::quality_2ndPeak, quailty_aliasing
+    integer::quality_moments, quailty_aliasing
     real(kind=dbl), dimension(2) :: rand_number
     real(kind=dbl), dimension(:),allocatable:: turb_spectra
-    real(kind=dbl), dimension(0:4):: moments
-    real(kind=dbl), dimension(2):: slope
-    real(kind=dbl), dimension(2):: edge
+    real(kind=dbl), dimension(0:4,radar_nPeaks):: moments
+    real(kind=dbl), dimension(2,radar_nPeaks):: slope
+    real(kind=dbl), dimension(2,radar_nPeaks):: edge
+    real(kind=dbl) :: noise_out, PIA
     real(kind=dbl):: SNR, del_v, ss, K2, wavelength, Ze_back, dielec_water, K, &
     min_V_aliased, max_V_aliased, receiver_uncertainty, radar_Pnoise, frequency
-    integer :: ii, tt, turbLen,alloc_status,ts_imin, ts_imax, startI, stopI
+    integer :: ii, tt, turbLen,alloc_status,ts_imin, ts_imax, startI, stopI, seed
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
@@ -62,49 +72,33 @@ delta_h)
             REAL(kind=dbl), intent(out), DIMENSION(M+N-1) :: Y
         end subroutine convolution
 
-        subroutine radar_calc_moments(errorstatus,radar_spectrum_in,noise_model, radar_spectrum_out,moments,slope,edge,quality)
-            use kinds
-            use settings, only: radar_nfft
-            implicit none
-	    integer(kind=long), intent(out) :: errorstatus
-            real(kind=dbl), dimension(radar_nfft), intent(in):: radar_spectrum_in
-            real(kind=dbl), intent(in):: noise_model
-            real(kind=dbl), dimension(radar_nfft), intent(out):: radar_spectrum_out
-            real(kind=dbl), dimension(0:4), intent(out):: moments
-            real(kind=dbl), dimension(2), intent(out):: slope
-            real(kind=dbl), dimension(2), intent(out):: edge
-            integer, intent(out) :: quality
-        end subroutine radar_calc_moments
-
-        subroutine random(errorstatus,n, pseudo, x_noise)
+        subroutine random(errorstatus,n, seedval, x_noise)
             use kinds
             implicit none
 	    integer(kind=long), intent(out) :: errorstatus
             integer, intent(in) :: n
-            logical, intent(in) :: pseudo
+            integer, intent(in) :: seedval
             real(kind=dbl), intent(out), dimension(n) :: x_noise
         end subroutine random
   
     end interface
 
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
-
-    if (ANY(ISNAN(particle_spectrum))) then
-	print*,particle_spectrum
-	errorstatus = fatal
-	msg = "got nan in values in backscattering spectrum"
-	call report(errorstatus, msg, nameOfRoutine)
-	return
-    end if
-
-    if (ISNAN(back) .or. back < 0.d0) then
-	print*,back
-	errorstatus = fatal
-	msg = "got nan or negative vaue in linear Ze"
-	call report(errorstatus, msg, nameOfRoutine)
-	return
-    end if
-      
+    err = 0
+    
+    
+    call assert_false(err,(ANY(ISNAN(particle_spectrum))),&
+        "got nan in values in backscattering spectrum")
+    call assert_false(err,(ISNAN(back) .or. back < 0.d0),&
+        "got nan or negative value in linear Ze") 
+    if (err > 0) then
+      errorstatus = fatal
+      msg = "assertation error"
+      call report(errorstatus, msg, nameOfRoutine)
+      return
+    end if   
+     
+     
     frequency = freqs(i_f)
     ! get |K|**2 and lambda
 
@@ -112,25 +106,68 @@ delta_h)
     wavelength = c / (frequency*1.d9)   ! [m]
 
     !first, calculate the attenuation for hydrometeors
-    Att_hydro(i_x,i_y,i_z,i_f) = 10*log10(exp(kexthydro*delta_h))
+    out_att_hydro(i_x,i_y,i_z,i_f) = 10*log10(exp(kexthydro*delta_h))
 
     !transform backscattering in linear reflectivity units, 10*log10(back) would be in dBz
     Ze_back = 1.d18* (1.d0/ (K2*pi**5) ) * back * (wavelength)**4 ![mm⁶/m³]
 
+    !take care of path integrated attenuation
+    PIA = 0.d0
+    if (TRIM(radar_attenuation) == "top-down") then
+      if (i_z < atmo_nlyrs(i_x,i_y)) then
+        PIA = 2 * (SUM(out_att_hydro(i_x,i_y,atmo_nlyrs(i_x,i_y):i_z+1:-1,i_f)) + &
+            SUM(out_att_atmo(i_x,i_y,atmo_nlyrs(i_x,i_y):i_z+1:-1,i_f)))
+      end if
+      PIA = PIA + out_att_hydro(i_x,i_y,i_z,i_f) + out_att_atmo(i_x,i_y,i_z,i_f)
+    else if (TRIM(radar_attenuation) == "bottom-up") then
+      if (i_z > 1) then
+        PIA = 2 * (SUM(out_att_hydro(i_x,i_y,1:i_z-1,i_f)) + SUM(out_att_atmo(i_x,i_y,1:i_z-1,i_f)))
+      end if
+      PIA = PIA + out_att_hydro(i_x,i_y,i_z,i_f) + out_att_atmo(i_x,i_y,i_z,i_f)
+    else if (TRIM(radar_attenuation) /= "disabled") then
+      errorstatus = fatal
+      msg = "do not understand radar_attenuation: "//radar_attenuation
+      call report(errorstatus, msg, nameOfRoutine)
+      return
+    end if 
+
+    PIA = 10d0**(0.1d0*PIA) !linearize
+    Ze_back = Ze_back/PIA
+    particle_spectrum_att = particle_spectrum/PIA
+
+
     if (radar_mode == "simple") then
 	if (Ze_back .eq. 0.d0) then
-	  Ze(i_x,i_y,i_z,i_f) = -9999.d0
+	  out_Ze(i_x,i_y,i_z,i_f) = -9999.d0
         else 
-	  Ze(i_x,i_y,i_z,i_f) = 10*log10(Ze_back)
+	  out_Ze(i_x,i_y,i_z,i_f) = 10*log10(Ze_back)
 	end if
-      if (verbose >= 3) print*, "i_x,i_y,i_z,i_f,ze", i_x,i_y,i_z,i_f,Ze(i_x,i_y,i_z,i_f)
+      if (verbose >= 3) print*, "i_x,i_y,i_z,i_f,out_Ze", i_x,i_y,i_z,i_f,out_Ze(i_x,i_y,i_z,i_f)
+
     else if ((radar_mode == "moments") .or. (radar_mode == "spectrum")) then
-
-
         !calculate the noise level depending on range:
-         radar_Pnoise = radar_Pnoise0 + (20 * log10(radar_hgt(i_x,i_y,i_z)))
-         radar_Pnoise = 10**(0.1*radar_Pnoise)
-print*, radar_Pnoise
+        ! did not find any value in the atmo arrays, take the one from namelist file!
+        if (ISNAN(atmo_radar_prop(i_x,i_y,1)) .or. (atmo_radar_prop(i_x,i_y,1) == -9999.)) then
+          radar_Pnoise = 10**(0.1*radar_Pnoise0) * &
+            (out_radar_hgt(i_x,i_y,i_z)/1000.)**2 
+          if (verbose >= 3) print*, "took radar noise from nml file", 10*log10(radar_Pnoise), &
+              radar_Pnoise0
+        else
+          ! take the one from teh atmo files
+          radar_Pnoise = 10**(0.1*atmo_radar_prop(i_x,i_y,1)) * &
+            (out_radar_hgt(i_x,i_y,i_z)/1000.)**2 
+          if (verbose >= 3) print*, "took radar noise from atmo array", 10*log10(radar_Pnoise), &
+                  atmo_radar_prop(i_x,i_y,1)
+        end if
+        call assert_true(err,(radar_Pnoise > 0),&
+            "nan or negative radar_Pnoise") 
+        if (err > 0) then
+          errorstatus = fatal
+          msg = "assertation error"
+          call report(errorstatus, msg, nameOfRoutine)
+          return
+        end if   
+
 
         !get delta velocity
         del_v = (radar_max_V-radar_min_V) / radar_nfft ![m/s]
@@ -162,18 +199,18 @@ print*, radar_Pnoise
 
             turbLen=tt-1
 
-            if (SIZE(particle_spectrum)+turbLen-1 .lt. floor(12.d0/del_v+1)+radar_nfft-1) then
-	      print*, SIZE(particle_spectrum)+turbLen-1,floor(12.d0/del_v+1)+radar_nfft-1
+            if (SIZE(particle_spectrum_att)+turbLen-1 .lt. floor(12.d0/del_v+1)+radar_nfft-1) then
+	      print*, SIZE(particle_spectrum_att)+turbLen-1,floor(12.d0/del_v+1)+radar_nfft-1
 	      errorstatus = fatal
 	      msg =  "vector resulting from convolution to short!"
 	      call report(errorstatus, msg, nameOfRoutine)
 	      return
             end if
 
-            allocate(turb_spectra(SIZE(particle_spectrum)+turbLen-1),stat=alloc_status)
+            allocate(turb_spectra(SIZE(particle_spectrum_att)+turbLen-1),stat=alloc_status)
 
             !convolute spectrum and noise
-            call convolution(err,particle_spectrum,SIZE(particle_spectrum),turb(1:turbLen),turbLen,turb_spectra)
+            call convolution(err,particle_spectrum_att,SIZE(particle_spectrum_att),turb(1:turbLen),turbLen,turb_spectra)
 	    if (err /= 0) then
 		msg = 'error in convolution!'
 		call report(err, msg, nameOfRoutine)
@@ -190,7 +227,7 @@ print*, radar_Pnoise
             ts_imin = 1
             ts_imax = radar_nfft_aliased
             allocate(turb_spectra(radar_nfft_aliased),stat=alloc_status)
-            turb_spectra = particle_spectrum
+            turb_spectra = particle_spectrum_att
         end if
 
 
@@ -198,8 +235,7 @@ print*, radar_Pnoise
         !       print*, "WARNING: radar_aliasing_nyquist_interv too small to handle aliasing effects, increase it!"
         !       stop
         !     end if
-    
-    
+
         quailty_aliasing = 0
         !lets look for aliasing effects. if we calculated radar_aliasing_nyquist_interv for a broader spectrum than necessary, fold it again:
         if (radar_aliasing_nyquist_interv > 0) then
@@ -227,7 +263,20 @@ print*, radar_Pnoise
             end if
         end if
 
-
+        !spetial output for testing the radar simulator
+        if (verbose == -666) then
+          print*, "##########################################"
+          print*, "velocity (m/s)"
+          print*, spectra_velo
+          print*, "##########################################"
+          print*, "particle_spec with turbulence (v) [mm⁶/m³/(m/s)] ", MAXVAL(turb_spectra_aliased)
+          print*, turb_spectra_aliased
+          print*, "##########################################"
+      out_debug_radarvel(:) = spectra_velo(:) 
+      out_debug_radarback_wturb(:) = turb_spectra_aliased
+      
+        end if  
+        
         !get the SNR
         SNR = 10.d0*log10(Ze_back/radar_Pnoise)
         !this here is for scaling, if we have now a wrong Ze due to all the turbulence, rescaling etc...
@@ -236,14 +285,19 @@ print*, radar_Pnoise
         !   snr_turb_spectra =turb_spectra_aliased + radar_Pnoise/(radar_nfft*del_v)
 
 
-
         if (radar_no_Ave .eq. 0) then !0 means infinity-> no noise
             noise_turb_spectra = snr_turb_spectra
         else
 
             !get noise. if jacobian_mode, random number generator is always initiated with the same number
             if (verbose > 2) print*, "get noise"
-            call random(err,radar_no_Ave*radar_nfft,jacobian_mode,x_noise)
+            if (randomseed == -1) then
+              !get it from lat lon
+              seed = INT(ABS((atmo_lat(i_x,i_y) * atmo_lon(i_x,i_y) * 1000)))
+            else
+              seed = randomseed
+	    end if
+	    call random(err,radar_no_Ave*radar_nfft,seed,x_noise)
 	    if (err /= 0) then
 		msg = 'error in random!'
 		call report(err, msg, nameOfRoutine)
@@ -262,13 +316,23 @@ print*, radar_Pnoise
             end if
         end if
 
+        
+        !spetial output for testing the radar simulator
+        if (verbose == -666) then
+          print*, "##########################################"
+          print*, "particle_spec with turbulence and noise (v) [mm⁶/m³/(m/s)] ", MAXVAL(noise_turb_spectra)
+          print*, noise_turb_spectra
+          print*, "##########################################"
+          out_debug_radarback_wturb_wnoise(:) = noise_turb_spectra(:)
+        end if  
+        
         !apply spectral resolution
         noise_turb_spectra = noise_turb_spectra * del_v !now [mm⁶/m³]
 
         if (verbose >= 4) then
             print*,"second K",K
             print*,"TOTAL"," Ze back",10*log10(Ze_back)
-            print*,"TOTAL"," Ze SUM(particle_spectrum)*del_v",10*log10(SUM(particle_spectrum)*del_v)
+            print*,"TOTAL"," Ze SUM(particle_spectrum_att)*del_v",10*log10(SUM(particle_spectrum_att)*del_v)
             print*,"TOTAL"," Ze SUM(turb_spectra)*del_v",10*log10(SUM(turb_spectra)*del_v)
             print*,"TOTAL"," Ze SUM(turb_spectra_aliased)*del_v",10*log10(SUM(turb_spectra_aliased)*del_v)
             print*,"TOTAL"," Ze SUM(snr_turb_spectra)*del_v",10*log10(SUM(snr_turb_spectra)*del_v)
@@ -280,7 +344,7 @@ print*, radar_Pnoise
         !apply a receiver uncertainty:
       if (radar_receiver_uncertainty_std /= 0) then
         !get random
-        call random(err,2,jacobian_mode,rand_number)
+        call random(err,2,seed,rand_number)
         if (err /= 0) then
             msg = 'error in random!'
             call report(err, msg, nameOfRoutine)
@@ -297,7 +361,9 @@ print*, radar_Pnoise
       end if
 
 
-        call radar_calc_moments(err,noise_turb_spectra,radar_Pnoise,noise_removed_turb_spectra,moments,slope,edge,quality_2ndPeak)
+        call radar_calc_moments(err,radar_nfft,radar_nPeaks,&
+          noise_turb_spectra,radar_Pnoise,noise_removed_turb_spectra,&
+          moments,slope,edge,quality_moments,noise_out)
 	if (err /= 0) then
 	  msg = 'error in radar_calc_moments!'
 	  call report(err, msg, nameOfRoutine)
@@ -306,29 +372,30 @@ print*, radar_Pnoise
 	  return
       end if   
         if (verbose >= 4) then
-            print*,"TOTAL"," Ze moments",10*log10(moments(0))
+            print*,"TOTAL"," Ze moments",10*log10(moments(0,1))
             print*,"#####################"
         end if
 
           ! collect results for output
-        !   radar_spectra(i_x,i_y,i_z,fi,:) = 10*log10(particle_spectrum(513:1024))
+        !   out_radar_spectra(i_x,i_y,i_z,fi,:) = 10*log10(particle_spectrum_att(513:1024))
 
         !if wanted, apply the noise correction to the spectrum to be saved.
         if (radar_save_noise_corrected_spectra) noise_turb_spectra = noise_removed_turb_spectra
 
+
+        out_radar_spectra(i_x,i_y,i_z,i_f,:) = 10*log10(noise_turb_spectra)
         WHERE (ISNAN(noise_turb_spectra)) noise_turb_spectra = -9999.d0
 
-        radar_spectra(i_x,i_y,i_z,i_f,:) = 10*log10(noise_turb_spectra)
-        radar_snr(i_x,i_y,i_z,i_f) = SNR
-        radar_vel(:) = spectra_velo(:)
-        radar_moments(i_x,i_y,i_z,i_f,:) = moments(1:4)
-        radar_slopes(i_x,i_y,i_z,i_f,:) = slope(:)
-        radar_edge(i_x,i_y,i_z,i_f,:) = edge(:)
-        radar_quality(i_x,i_y,i_z,i_f) = quailty_aliasing + quality_2ndPeak
+        out_radar_snr(i_x,i_y,i_z,i_f) = SNR
+        out_radar_vel(:) = spectra_velo(:)
+        out_radar_moments(i_x,i_y,i_z,i_f,:) = moments(1:4,1)
+        out_radar_slopes(i_x,i_y,i_z,i_f,:) = slope(:,1)
+        out_radar_edges(i_x,i_y,i_z,i_f,:) = edge(:,1)
+        out_radar_quality(i_x,i_y,i_z,i_f) = quailty_aliasing + quality_moments
 
-        moments(0) = 10*log10(moments(0))
-        IF (ISNAN(moments(0))) moments(0) = -9999.d0
-        Ze(i_x,i_y,i_z,i_f) = moments(0)
+        moments(0,1) = 10*log10(moments(0,1))
+        IF (ISNAN(moments(0,1))) moments(0,1) = -9999.d0
+        out_Ze(i_x,i_y,i_z,i_f) = moments(0,1)
 
         if (allocated(turb_spectra)) deallocate(turb_spectra)
 

@@ -1,35 +1,7 @@
 module scatProperties
 
+
   use kinds
-  use settings, only: nstokes,&
-      nummu,&
-      radar_nfft_aliased, &
-      active, &
-      radar_mode, &
-      maxnleg, &
-      freqs
-  use mie_spheres, only: calc_mie_spheres
-  use tmatrix, only: calc_tmatrix
-  use vars_rt, only: rt_kexttot,&
-      rt_back,&
-      rt_scattermatrix, &
-      rt_extmatrix, &
-      rt_emisvec
-  use report_module
-  use drop_size_dist, only: liq_ice,&
-        nbin,&
-        diameter2scat, &
-        delta_d_ds, &
-        f_ds,&
-        density2scat,&
-        as_ratio, &
-        d_bound_ds, &
-        pressure, &
-        layer_t, &
-        mass_ds, &
-        area_ds
-  use constants, only: pi, Im
-  use vars_index, only: i_z, i_f
 
   implicit none
 
@@ -42,18 +14,21 @@ module scatProperties
 
     !needed by rt3 and rt4
     character(len=15) :: scat_name
-    character(len=15) :: vel_size_mod
+    character(len=30) :: vel_size_mod
     real(kind=dbl), allocatable, dimension(:) :: radar_spec
     
   contains
   
   subroutine allocate_scatProperties()
+    use kinds
+    use settings, only: radar_nfft_aliased
    implicit none
    allocate(radar_spec(radar_nfft_aliased)) 
    return
   end subroutine allocate_scatProperties
 
     subroutine prepare_rt3_scatProperties()
+      use kinds
       implicit none
 
 
@@ -65,6 +40,14 @@ module scatProperties
     end subroutine prepare_rt3_scatProperties
 
     subroutine prepare_rt4_scatProperties()
+    use kinds
+    use vars_rt, only: rt_kexttot,&
+      rt_back,&
+      rt_scattermatrix, &
+      rt_extmatrix, &
+      rt_emisvec
+    use vars_index, only: i_z
+
       implicit none
 
       rt_kexttot(i_z) = 0.d0  
@@ -80,6 +63,44 @@ module scatProperties
     end subroutine prepare_rt4_scatProperties
 
   subroutine calc_scatProperties(errorstatus)
+
+  use kinds
+  use settings, only: nstokes,&
+      nummu,&
+      radar_nfft_aliased, &
+      active, &
+      radar_mode, &
+      maxnleg, &
+      freqs, &
+      hydro_fullSpec
+  use mie_spheres, only: calc_mie_spheres
+  use tmatrix, only: calc_tmatrix
+  use vars_rt, only: rt_kexttot,&
+      rt_back,&
+      rt_scattermatrix, &
+      rt_extmatrix, &
+      rt_emisvec, &
+      rt_hydros_present
+  use report_module
+  use drop_size_dist, only: liq_ice,&
+        nbin,&
+        diameter2scat, &
+        delta_d_ds, &
+        n_ds,&
+        density2scat,&
+        as_ratio, &
+        d_bound_ds, &
+        pressure, &
+        layer_t, &
+        mass_ds, &
+        area_ds, &
+        dsd_canting, &
+        soft_rho_eff, &
+        d_ds
+  use constants, only: pi, Im
+  use vars_index, only: i_x, i_y, i_z, i_f, i_h
+  use vars_hydroFullSpec, only: hydrofs_as_ratio, hydrofs_canting
+
     implicit none
 
     real(kind=dbl) :: freq
@@ -93,7 +114,8 @@ module scatProperties
     real(kind=dbl), dimension(nstokes,nstokes,nummu,2) :: extinct_matrix_hydro
     real(kind=dbl), dimension(nstokes,nummu,2) :: emis_vector_hydro
     real(kind=dbl), dimension(radar_nfft_aliased) :: radar_spec_hydro
-    real(kind=dbl), dimension(nbin+1) :: back_spec_dia
+    real(kind=dbl), dimension(nbin) :: back_spec_dia, particle_density
+    real(kind=dbl), allocatable, dimension(:) :: as_ratio_list, canting_list
     real(kind=dbl) :: kext_hydro
     real(kind=dbl) :: salb_hydro
     real(kind=dbl) :: back_hydro
@@ -112,14 +134,45 @@ module scatProperties
     integer(kind=long) :: err = 0
     character(len=80) :: msg
     character(len=40) :: nameOfRoutine = 'calc_scatProperties'
+  
+    interface
+      subroutine radar_spectrum(&
+          errorstatus, &
+          nbins,&             !in
+          diameter_spec,&     !in
+          back,&              !in
+          back_spec,&         !in
+          temp,&              !in
+          press,&             !in
+          frequency,&         !in
+          rho_particle,&      !in
+          vel_size_mod,&      !in
+          mass,&              !in
+          area,&              !in
+          particle_spec)      !out
+
+          use kinds
+          use settings, only: radar_nfft_aliased
+          implicit none
+
+          integer,intent(in) ::  nbins 
+
+          real(kind=dbl), dimension(nbins),intent(in):: diameter_spec, back_spec
+          real(kind=dbl), dimension(nbins),intent(in):: mass, area, rho_particle
+          character(len=30),intent(in) :: vel_size_mod
+          real(kind=dbl), intent(in):: temp, frequency, press,back
+          real(kind=dbl), intent(out), dimension(radar_nfft_aliased):: particle_spec
+          integer(kind=long), intent(out) :: errorstatus
+      end subroutine radar_spectrum
+    end interface
+
 
   if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
-    if (scat_name == "disabled") then
+    if ((scat_name == "disabled") .or. (.not. rt_hydros_present(i_z))) then
       if (verbose >= 3) print*, "OK, we are done here"
       return
     end if
-
     freq = freqs(i_f)
 
     !initilaize empyt results
@@ -134,7 +187,10 @@ module scatProperties
     legen_coef4_hydro(:)  = 0.d0
     nlegen_coef_hydro     = 0
 
-
+    !normalize particle density
+    particle_density = n_ds / delta_d_ds
+    
+    
     !get the refractive index
      if (liq_ice == 1) then
         call ref_water(0.d0, layer_t-273.15, freq, refre, refim, absind, abscof)
@@ -151,12 +207,24 @@ module scatProperties
 
 
 !!!!modern RT4 routines !!!
-
     if (scat_name == "tmatrix") then
     
       !some fixed settings for Tmatrix
+      allocate(as_ratio_list(nbin))
+      allocate(canting_list(nbin))
+      if (hydro_fullSpec) then
+        as_ratio_list(:) = hydrofs_as_ratio(i_x,i_y,i_z,i_h,:)
+        canting_list(:) = hydrofs_canting(i_x,i_y,i_z,i_h,:)
+      else
+        as_ratio_list(:) =  as_ratio
+        canting_list(:) =  dsd_canting
+      end if
 
-  
+      where (canting_list < 0) canting_list = 0.d0
+      where (isnan(canting_list)) canting_list = 0.d0
+      where (as_ratio_list < 0) as_ratio_list = 0.d0
+      where (isnan(as_ratio_list)) as_ratio_list = 0.d0
+
       call calc_tmatrix(err,&
         freq*1.d9,&
         refIndex,&
@@ -164,15 +232,19 @@ module scatProperties
         nbin,&
         diameter2scat, &
         delta_d_ds, &
-        f_ds,&
+        particle_density,&
         density2scat,&
-        as_ratio,& 
+        as_ratio_list,& 
+        canting_list, &
+        layer_t, &
         scatter_matrix_hydro(:,:,:,:,1:2),&
         extinct_matrix_hydro(:,:,:,1),&
         emis_vector_hydro(:,:,1),&
         back_spec_dia)
 
-        
+      if (allocated(as_ratio_list)) deallocate(as_ratio_list)
+      if (allocated(canting_list)) deallocate(canting_list)
+
       if (err /= 0) then
           msg = 'error in calc_tmatrix!'
           call report(err, msg, nameOfRoutine)
@@ -193,6 +265,7 @@ module scatProperties
 !!!!old style RT3 routines !!!
 
     else if (scat_name == "mie-sphere") then
+
       call calc_mie_spheres(err,&
             freq*1d9,&
             layer_t,&
@@ -200,7 +273,7 @@ module scatProperties
             nbin,&
             diameter2scat,&
             delta_d_ds, &
-            f_ds,&
+            particle_density,&
             density2scat, &
             refre, &
             refim, & !positive(?)
@@ -214,7 +287,8 @@ module scatProperties
             legen_coef3_hydro,&
             legen_coef4_hydro,&
             back_spec_dia)    
-          
+
+
       nlegen_coef = max(nlegen_coef,nlegen_coef_hydro)
       if (err /= 0) then
           msg = 'error in calc_mie_spheres!'
@@ -228,7 +302,6 @@ module scatProperties
       call report(errorstatus, msg, nameOfRoutine)
       return
     end if
-
 
     !sum up
     rt_kexttot(i_z) = rt_kexttot(i_z) + kext_hydro
@@ -259,10 +332,6 @@ module scatProperties
       legen_coef(6,:) = legen_coef(3,:)
     end if
 
-
-
-
-
     !do checks
     if (rt_kexttot(i_z) .lt. 0. .or. isnan(rt_kexttot(i_z))) then
       print*, "rt_kexttot(i_z)",rt_kexttot(i_z)
@@ -288,11 +357,10 @@ module scatProperties
       return
     end if   
 
-
     if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
+      call radar_spectrum(err,nbin,d_ds, rt_back(i_z),  back_spec_dia,layer_t,pressure,freq,&
+        soft_rho_eff,vel_size_mod,mass_ds,area_ds,radar_spec_hydro)
 
-      call radar_spectrum(err,nbin,d_bound_ds, rt_back(i_z),  back_spec_dia,layer_t,pressure,freq,&
-        liq_ice,mass_ds,area_ds,radar_spec_hydro)
       if (err /= 0) then
           msg = 'error in radar_spectrum!'
           call report(err, msg, nameOfRoutine)
@@ -315,6 +383,8 @@ module scatProperties
   end subroutine calc_scatProperties
 
   subroutine finalize_rt3_scatProperties()
+    use vars_index, only: i_x, i_y, i_z, i_f, i_h
+    use vars_rt, only: rt_kexttot
     implicit none
 
 

@@ -1,7 +1,8 @@
 module tmatrix
   use kinds
   use constants, only: pi, c
-  use settings, only: nummu, nstokes, verbose, active, passive
+  use settings, only: nummu, nstokes, verbose, active, passive, &
+    tmatrix_db, tmatrix_db_path
   use rt_utilities, only: lobatto_quadrature
   use report_module
 
@@ -19,6 +20,8 @@ module tmatrix
     ndens,&
     density,&
     as_ratio,&
+    canting,&
+    temp, &
     scatter_matrix,&
     extinct_matrix,&
     emis_vector,&
@@ -37,6 +40,8 @@ module tmatrix
       !       ndens           number density (not normed) [1/m³]
       !       density         dbl (nbins) density of softspheres
       !       as_ratio        double  aspect ratio
+      !       canting        double  canting angle (deg) -> beta in tmatrix code
+      !       temp           double temperature [K]
       !
       !   output:
       !       scatter_matrix  double  scattering matrix []
@@ -47,19 +52,21 @@ module tmatrix
       implicit none
 
       real(kind=dbl), intent(in) :: frequency
-      complex(kind=dbl) :: ref_index
+      complex(kind=dbl), intent(in) :: ref_index
       integer, intent(in) :: phase
       integer, intent(in) :: nbins
-      real(kind=dbl), dimension(nbins+1), intent(in) :: dmax
+      real(kind=dbl), dimension(nbins), intent(in) :: dmax
       real(kind=dbl), dimension(nbins), intent(in) :: del_d
-      real(kind=dbl), dimension(nbins+1), intent(in) :: ndens    
-      real(kind=dbl), dimension(nbins+1), intent(in) :: density
-      real(kind=dbl), intent(in) :: as_ratio
+      real(kind=dbl), dimension(nbins), intent(in) :: ndens    
+      real(kind=dbl), dimension(nbins), intent(in) :: density
+      real(kind=dbl), dimension(nbins), intent(in) :: as_ratio
+      real(kind=dbl), dimension(nbins), intent(in) :: canting
+      real(kind=dbl), intent(in) :: temp
 
       real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
       real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
       real(kind=dbl), intent(out), dimension(nstokes,nummu) :: emis_vector
-      real(kind=dbl), intent(out), dimension(nbins+1) :: back_spec
+      real(kind=dbl), intent(out), dimension(nbins) :: back_spec
 
       complex(kind=dbl) :: mMix
       complex(kind=dbl) :: eps_mix 
@@ -72,12 +79,22 @@ module tmatrix
       integer :: azimuth_num
       integer :: azimuth0_num   
       integer :: ir
+      integer :: n_lines, work1
+      character(len=1)    :: work2
       character(1) :: quad
+      character(12) ::db_file
+      character(600) ::db_path
+      character(5) ::format_str
+      logical ::file_exists, file_OK
   
       real(kind=dbl), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix_part
       real(kind=dbl), dimension(nstokes,nstokes,nummu) :: extinct_matrix_part
       real(kind=dbl), dimension(nstokes,nummu) :: emis_vector_part
   
+      real(kind=dbl), dimension(nstokes*nummu*nstokes*nummu*2) :: scatter_matrix_flat
+      real(kind=dbl), dimension(nstokes*nstokes*nummu) :: extinct_matrix_flat
+      real(kind=dbl), dimension(nstokes*nummu) :: emis_vector_flat
+
       integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0
       character(len=80) :: msg
@@ -86,9 +103,11 @@ module tmatrix
       if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)    
       
       if (verbose >= 4) print*,"frequency,ref_index,phase,nbins,dmax,del_d,ndens,density,as_ratio"
-      if (verbose >= 4) print*,frequency,ref_index,phase,nbins,dmax,del_d,ndens,density,as_ratio
+      if (verbose >= 4) print*,frequency,ref_index,phase,nbins,dmax,del_d,"N ",&
+        ndens,"rho ", density,"AR ",as_ratio
 
-    
+      err = 0
+
       call assert_false(err,(isnan(frequency) .or. frequency < 0.d0),&
 	  "nan or negative frequency")
       call assert_false(err,(isnan(real(ref_index)) .or. isnan(imag(ref_index))),&
@@ -98,96 +117,252 @@ module tmatrix
       call assert_false(err,(any(isnan(dmax)) .or. any(dmax <= 0.d0)),&
 	  "nan or negative dmax")
       call assert_false(err,(any(isnan(del_d)) .or. any(del_d <= 0.d0)),&
-	  "nan ref_index")
-      call assert_false(err,(isnan(real(ref_index)) .or. isnan(imag(ref_index))),&
-	  "nan or negative del_d")
-      call assert_false(err,(any(isnan(ndens)) .or. any(ndens <= 0.d0)),&
+	  "nan del_d")
+      call assert_false(err,(any(isnan(ndens)) .or. any(ndens < 0.d0)),&
 	  "nan or negative ndens")
-      call assert_false(err,(any(isnan(density)) .or. any(density <= 0.d0)),&
+      call assert_true(err,SUM(ndens)>0,&
+          "sum(ndens) must be greater zero")    
+      call assert_false(err,(any(isnan(density)) .or. any(density < 0.d0)),&
 	  "nan or negative density")
-      call assert_false(err,(isnan(as_ratio) .or. as_ratio < 0.d0),&
-	  "nan or negative as_ratio")
+      call assert_false(err,any(isnan(as_ratio)) .or. any(as_ratio < 0.d0),&
+          "nan or negative as_ratio")
+      call assert_false(err,any(isnan(canting)) .or. any(canting < 0.d0),&
+          "nan or negative canting")
       if (err > 0) then
 	  errorstatus = fatal
 	  msg = "assertation error"
 	  call report(errorstatus, msg, nameOfRoutine)
 	  return
       end if   
-       
+
       !T Matrix settings
       alpha = 0.0_dbl    ! orientation of the particle [°]
-      beta = 0.0_dbl!orientation of the particle [°]
       azimuth_num = 30
       azimuth0_num = 1   
       quad ="L" !quadratur
 	
-    do ir = 1, nbins+1
+    !initialize
+      back_spec(:) = 0.d0
+      scatter_matrix = 0.d0
+      extinct_matrix = 0.d0
+      emis_vector = 0.d0
 
-      if (ir == 1) then
-        ndens_eff = ndens(1)/2.d0
-        del_d_eff = del_d(1)
-      else if (ir == nbins+1) then
-        ndens_eff = ndens(nbins+1)/2.d0
-        del_d_eff = del_d(nbins)
-      else
+    do ir = 1, nbins
+
+
         ndens_eff = ndens(ir)
         del_d_eff = del_d(ir)
+
+      beta = canting(ir)
+      !in case we have no hydrometeors, we need no tmatrix calculations!
+      if (ndens_eff == 0.d0) then
+        if (verbose >= 4) print*, "Skipped iteration", ir, "because ndens_eff", ndens_eff
+        CYCLE
       end if
-
-	if (phase == -1 .and. density(ir) /= 917.d0) then
-	    mMix = eps_mix((1.d0,0.d0),ref_index,density(ir))
-	else
-		  mMix = ref_index
-	end if      
-	mindex =conjg(mMix) !different convention
-
-	!we want the volume equivalent radius
-        if (as_ratio <= 1) then
-          axi = 0.5_dbl*dmax(ir)*as_ratio**(1.0_dbl/3.0_dbl)
-        else 
+      call assert_true(err,ndens_eff>0,&
+          "nan or negative ndens_eff")
+      call assert_true(err,del_d_eff>0,&
+          "nan or negative del_d_eff")
+      call assert_true(err,density(ir)>0,&
+          "nan or negative density(ir)")
+      if (err > 0) then
           errorstatus = fatal
-          msg = "please review formular for as_ratio>1"
+          msg = "assertation error"
           call report(errorstatus, msg, nameOfRoutine)
           return
+      end if   
+      if (phase == -1 .and. density(ir) /= 917.d0) then
+          mMix = eps_mix((1.d0,0.d0),ref_index,density(ir))
+      else
+                mMix = ref_index
+      end if      
+      mindex =conjg(mMix) !different convention
+
+      !we want the volume equivalent radius
+      if (as_ratio(ir) <= 1) then
+        !oblate, with axis of rotation vertically
+        axi = 0.5_dbl*dmax(ir)*as_ratio(ir)**(1.0_dbl/3.0_dbl) 
+      else 
+        !prolate, with axis of rotation vertically
+        axi = 0.5_dbl*dmax(ir)/as_ratio(ir)**(2.0_dbl/3.0_dbl) 
+      end if
+
+      if (tmatrix_db == "none") then
+        call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
+            as_ratio(ir), alpha, beta, azimuth_num, azimuth0_num,&
+            scatter_matrix_part,extinct_matrix_part,emis_vector_part)
+        if (err /= 0) then
+            msg = 'error in calc_single_tmatrix!'
+            call report(err, msg, nameOfRoutine)
+            errorstatus = err
+            return
+        end if          
+      else if (tmatrix_db == "file") then
+        
+        db_path =""
+!         write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,E12.6,2(A6,ES36.30),4(A6,ES14.8),A1)'),&
+!                   "/v01","/quad_", quad, &
+!                   "/numu_",nummu,"/azno_",azimuth_num, "/a0no_", azimuth0_num, "/nsto_",nstokes,&
+!                   "/freq_",frequency, &
+!                   "/min1_", REAL(mindex), "/min2_",IMAG(mindex), &
+!                   "/axxi_",axi, "/asra_",as_ratio(ir), "/alph_",alpha, "/beta_",beta,"/"
+
+        write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,ES12.6,A6,SP,I3.2,SS,2(A6,ES10.4),A6,A5,4(A6,ES10.4),A1)'),&
+                  "/v01","/quad_", quad, &
+                  "/numu_",nummu,"/azno_",azimuth_num, "/a0no_", azimuth0_num, "/nsto_",nstokes,&
+                  "/freq_",frequency, &
+                  "/phas_",phase, "/temp_",temp, "/dens_",density(ir), "/meth_","stand",&
+                  "/diam_",axi, "/asra_",as_ratio(ir), "/alph_",alpha, "/beta_",beta,"/"
+
+        db_file = "spheroid.dat"
+        INQUIRE(FILE=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file), EXIST=file_exists)
+
+        !check whether file is not empty
+        if (file_exists) then
+          open(112,file=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file),action="READ")
+          n_lines = 0
+          do
+            read(112,*,IOSTAT=work1)  work2
+            if (work1 /= 0) exit
+            n_lines = n_lines + 1
+          end do
+          rewind(112)
+          if (n_lines == 3) then 
+            file_OK = .true.
+          else
+            file_OK = .false.
+          end if
+
+        end if
+        if (file_exists .and. file_OK) then
+
+          if (verbose > 0) print * , TRIM(db_path)//TRIM(db_file), " exists, opening"
+
+          open(112,file=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file),action="READ")
+
+          write(format_str,"(I5.5)") SHAPE(scatter_matrix_flat)
+          read(112,"("//format_str//"(ES25.17, 2x))")scatter_matrix_flat
+
+          write(format_str,"(I5.5)") SHAPE(extinct_matrix_flat)
+          read(112,"("//format_str//"(ES25.17, 2x))")extinct_matrix_flat
+
+          write(format_str,"(I5.5)") SHAPE(emis_vector_flat)
+          read(112,"("//format_str//"(ES25.17, 2x))")emis_vector_flat
+
+          close(112)
+          if (verbose > 1) print * , TRIM(db_path)//TRIM(db_file), " closed"
+
+          err = 0
+          call assert_true(err,PRODUCT(SHAPE(scatter_matrix_part)) == PRODUCT(SHAPE(scatter_matrix_flat)),&
+              "shape of scatter_matrix_flat does not match")
+          call assert_true(err,PRODUCT(SHAPE(extinct_matrix_part)) == PRODUCT(SHAPE(extinct_matrix_flat)),&
+              "shape of extinct_matrix_flat does not match")
+          call assert_true(err,PRODUCT(SHAPE(emis_vector_part)) == PRODUCT(SHAPE(emis_vector_flat)),&
+              "shape of emis_vector_flat does not match")
+          if (err > 0) then
+              errorstatus = fatal
+              msg = "assertation error"
+              call report(errorstatus, msg, nameOfRoutine)
+              return
+          end if   
+
+          scatter_matrix_part =reshape(scatter_matrix_flat,SHAPE(scatter_matrix_part))
+          extinct_matrix_part =reshape(extinct_matrix_flat,SHAPE(extinct_matrix_part))
+          emis_vector_part =reshape(emis_vector_flat,SHAPE(emis_vector_part))
+
+          ! for debugging only: calculate scatter matrix and compare with file
+          if (verbose .gt. 20) then
+            call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
+                as_ratio(ir), alpha, beta, azimuth_num, azimuth0_num,&
+                scatter_matrix_part,extinct_matrix_part,emis_vector_part)
+            if (err /= 0) then
+                msg = 'error in calc_single_tmatrix!'
+                call report(err, msg, nameOfRoutine)
+                errorstatus = err
+                return
+            end if 
+            print*, MAXVAL((ABS(reshape(emis_vector_flat,SHAPE(emis_vector_part)) &
+                - emis_vector_part) /emis_vector_part))
+            print*, MAXVAL((ABS(reshape(extinct_matrix_flat,SHAPE(extinct_matrix_part)) &
+                - extinct_matrix_part) /extinct_matrix_part))
+            print*, MAXVAL((ABS(reshape(scatter_matrix_flat,SHAPE(scatter_matrix_part)) &
+                - scatter_matrix_part) /scatter_matrix_part))
+
+          end if
+
+        else
+          !file does not exist or is not OK
+          
+          if (file_exists) close(112)
+
+          if (verbose > 0) print * , TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file), " NOT FOUND. calculating..."
+          CALL EXECUTE_COMMAND_LINE("mkdir -p "//TRIM(tmatrix_db_path)//TRIM(db_path))
+
+          call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
+              as_ratio(ir), alpha, beta, azimuth_num, azimuth0_num,&
+              scatter_matrix_part,extinct_matrix_part,emis_vector_part)
+          if (err /= 0) then
+              msg = 'error in calc_single_tmatrix!'
+              call report(err, msg, nameOfRoutine)
+              errorstatus = err
+              return
+          end if 
+
+          scatter_matrix_flat =reshape(scatter_matrix_part,SHAPE(scatter_matrix_flat))
+          extinct_matrix_flat =reshape(extinct_matrix_part,SHAPE(extinct_matrix_flat))
+          emis_vector_flat =reshape(emis_vector_part,SHAPE(emis_vector_flat))
+          if (verbose > 1) print * ,TRIM(db_path)//TRIM(db_file), " open..."
+
+          open(113,file=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file),ACTION="WRITE")
+
+          write(format_str,"(I5.5)") SHAPE(scatter_matrix_flat)
+          write(113,"("//format_str//"(ES25.17, 2x))")scatter_matrix_flat
+
+          write(format_str,"(I5.5)") SHAPE(extinct_matrix_flat)
+          write(113,"("//format_str//"(ES25.17, 2x))")extinct_matrix_flat
+
+          write(format_str,"(I5.5)") SHAPE(emis_vector_flat)
+          write(113,"("//format_str//"(ES25.17, 2x))")emis_vector_flat
+
+          close(113)
+          if (verbose > 1) print * , TRIM(db_path)//TRIM(db_file), " closed"
+
         end if
 
-	call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
-	    as_ratio, alpha, beta, azimuth_num, azimuth0_num,&
-	    scatter_matrix_part,extinct_matrix_part,emis_vector_part)
-	if (err /= 0) then
-	    msg = 'error in calc_single_tmatrix!'
-	    call report(err, msg, nameOfRoutine)
-	    errorstatus = err
-	    return
-	end if          
-      
-	back_spec(ir) = 4*pi*ndens_eff*scatter_matrix_part(1,16,1,16,2)
-      
-	
-	scatter_matrix = scatter_matrix + scatter_matrix_part * ndens_eff * del_d_eff
-	extinct_matrix = extinct_matrix + extinct_matrix_part * ndens_eff * del_d_eff
-	emis_vector = emis_vector + emis_vector_part * ndens_eff * del_d_eff
-      
-      end do !nbins
-	
-      call assert_false(err,any(isnan(scatter_matrix)),&
-	  "nan in scatter matrix")
-      call assert_false(err,any(isnan(extinct_matrix)),&
-	  "nan in extinct_matrix")
-      call assert_false(err,any(isnan(emis_vector)),&
-	  "nan in emis_vector")
-      call assert_false(err,any(isnan(back_spec)),&
-	  "nan in back_spec")	  
-      if (err > 0) then
-	  errorstatus = fatal
-	  msg = "assertation error"
-	  call report(errorstatus, msg, nameOfRoutine)
-	  return
-      end if   	
+      else
+            msg = 'do not understand tmatrix_db: '//tmatrix_db
+            call report(err, msg, nameOfRoutine)
+            errorstatus = err
+            return
+      end if
+      !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, sc
+      back_spec(ir) = 4*pi*ndens_eff*scatter_matrix_part(1,16,1,16,2)
 
-      if (verbose >= 2) call report(info,'End of ', nameOfRoutine) 
-      
-      
+      scatter_matrix = scatter_matrix + scatter_matrix_part * ndens_eff * del_d_eff
+      extinct_matrix = extinct_matrix + extinct_matrix_part * ndens_eff * del_d_eff
+      emis_vector = emis_vector + emis_vector_part * ndens_eff * del_d_eff
+    
+    end do !nbins
+
+    call assert_false(err,any(isnan(scatter_matrix)),&
+        "nan in scatter matrix")
+    call assert_false(err,any(isnan(extinct_matrix)),&
+        "nan in extinct_matrix")
+    call assert_false(err,any(isnan(emis_vector)),&
+        "nan in emis_vector")
+    call assert_false(err,any(isnan(back_spec)),&
+        "nan in back_spec")	  
+    if (err > 0) then
+        errorstatus = fatal
+        msg = "assertation error"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+    end if   	
+
+    errorstatus = err
+    if (verbose >= 2) call report(info,'End of ', nameOfRoutine) 
+    return
+    
       
   end subroutine calc_tmatrix
 
@@ -282,7 +457,9 @@ module tmatrix
 
       wave_num = 2.0_dbl*pi/LAM
       
-      call assert_true(err,axi> 0.d0,"nan or negative in axi")	  
+      err = 0
+      call assert_true(err,as_ratio> 0.d0,"nan or negative in as_ratio")    
+      call assert_true(err,axi> 0.d0,"nan or negative in axi")    
       call assert_true(err,frequency> 0.d0,"nan or negative in frequency")   
       call assert_true(err,(wave_num > 0.d0),"nan or <= 0 in wave-num")
       call assert_true(err,(LAM > 0.d0),"nan or <= 0 in LAM")
@@ -415,10 +592,10 @@ module tmatrix
   1241    continue ! thet0 jj
 
 
-	if (verbose >= 3) call report(info,'End of ', nameOfRoutine) 
-
-
+      errorstatus = err
+      if (verbose >= 3) call report(info,'End of ', nameOfRoutine) 
       return
+
   end subroutine calc_single_tmatrix
 
 end module tmatrix

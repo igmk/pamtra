@@ -1,7 +1,7 @@
-subroutine random(errorstatus, n, pseudo, x_noise)
+subroutine random(errorstatus, n, seedval, x_noise)
   ! Description:
   ! returns n random numbers
-  ! if pseudo is true, always the same numbers are returned
+  ! if seedval is not zero, always the same numbers are returned
   !
   !initiation of random nummer generator taken from
   !taken from http://gcc.gnu.org/onlinedocs/gfortran/RANDOM_005fSEED.html#RANDOM_005fSEED
@@ -18,7 +18,7 @@ subroutine random(errorstatus, n, pseudo, x_noise)
   use kinds
   implicit none
   integer, intent(in) :: n
-  logical, intent(in) :: pseudo
+  integer, intent(in) :: seedval
   real(kind=dbl), intent(out), dimension(n) :: x_noise
   integer :: i, m, clock
   integer, dimension(:), allocatable :: seed
@@ -33,9 +33,9 @@ subroutine random(errorstatus, n, pseudo, x_noise)
     call random_seed(size = m)
 
     allocate(seed(m))
-    if (pseudo) then
+    if (seedval/=0) then
       !if we want always the same random numbers
-      clock=0
+      clock=seedval -1 ! minus one is for historical reasons
     else
       !get real random numbers
       call system_clock(count=clock)

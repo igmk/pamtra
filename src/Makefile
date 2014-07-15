@@ -3,19 +3,19 @@ ARCH=$(shell uname -s)
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
-FC=gfortran
+FC=gfortran 
 CC=gcc
 FCFLAGS=-c -fPIC -Wunused -O2 #-I../include/ uninitialized
 ifeq ($(ARCH),Darwin)
-	FC=/opt/local/bin/gfortran
+	FC=/opt/local/bin/gfortran-mp-4.8
 	NCFLAGS=-I/opt/local/include/ 
 	NCFLAGS_F2PY=-I/opt/local/include/ 
-	LFLAGS=-L/opt/local/lib/ -llapack -ldfftpack
+	LFLAGS= -L../lib -ldfftpack  -L/opt/local/lib/ -llapack
 	LDFLAGS=-lnetcdf -lnetcdff 
 else
 	NCFLAGS :=  $(shell nc-config --fflags)  -O2
 	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
-	LFLAGS := -llapack -ldfftpack
+	LFLAGS := -llapack -L../lib -ldfftpack
 	LDFLAGS := $(shell nc-config --flibs)
 endif
 
@@ -25,9 +25,9 @@ endif
 #-	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm -lsz
 
 OBJECTS=kinds.o \
-	settings.o \
         vars_index.o \
 	report_module.o \
+	settings.o \
 	constants.o \
 	nan.o \
 	mod_fastem4_coef.o \
@@ -39,6 +39,7 @@ OBJECTS=kinds.o \
 	descriptor_file.o \
 	vars_atmosphere.o \
 	vars_rt.o \
+        vars_hydroFullSpec.o \
 	mod_io_strings.o \
 	getopt.o \
 	parse_options.o \
@@ -57,6 +58,7 @@ OBJECTS=kinds.o \
 	mie_spheres.o \
 	dia2vel.o \
 	rescale_spectra.o \
+	radar_moments.o \
 	radar_spectrum.o \
 	radar_simulator.o \
 	vars_jacobian.o \
@@ -109,7 +111,6 @@ OBJECTS=kinds.o \
 	viscosity_air.o\
 	versionNumber.auto.o \
 	smooth_savitzky_golay.o \
-	radar_calc_moments.o \
 	radar_hildebrand_sekhon.o \
 	write_nc_results.o \
 	tmatrix_amplq.lp.o \
@@ -117,8 +118,10 @@ OBJECTS=kinds.o \
 
 BIN=pamtra
 
-all: precompile pamtra py
+all: precompile  dfftpack pamtra py
 
+dfftpack:
+	cd ../tools/dfftpack && $(MAKE) && cp libdfftpack.a ../../lib/libdfftpack.a
 
 pamtra: pamtra.f90 $(OBJECTS)
 	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS) 
@@ -179,7 +182,7 @@ pyprecompile:
 	@echo "Make backup before deleting old signature file, auto creating will most likely fail."
 	@echo "####################################################################################"
 	@echo ""
-	f2py --overwrite-signature -m pyPamtraLib -h pypamtralib.pyf deallocate_everything.f90 vars_output.f90 vars_atmosphere.f90 settings.f90 descriptor_file.f90 pyPamtraLib.f90
+	f2py --overwrite-signature -m pyPamtraLib -h pypamtralib.pyf report_module.f90 deallocate_everything.f90 vars_output.f90 vars_atmosphere.f90 settings.f90 descriptor_file.f90 vars_hydroFullSpec.f90 pyPamtraLib.f90
 
 py: pyPamtraLib.f90 precompile $(OBJECTS)
 	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
@@ -207,6 +210,7 @@ precompile:
 	$(FC) $(FCFLAGS) versionNumber.auto.f90 #otherwise error on first make run!
 clean:
 	rm -rf $(OBJECTS) $(BIN) *.mod *~
+	cd ../tools/dfftpack/ && $(MAKE) clean
 
 test: test1 test2 test3 test4 test5 test6 cleantest
 

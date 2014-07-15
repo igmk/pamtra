@@ -5,6 +5,7 @@ module mie_spheres
   use settings, only: lphase_flag, maxnleg
   use report_module
   use mie_scat_utlities  
+  use vars_index, only: i_x,i_y, i_z, i_h
   implicit none
 
 
@@ -47,10 +48,10 @@ module mie_spheres
     real(kind=dbl), intent(in) :: t    ! temperature [K]
     integer, intent(in) :: liq_ice
     integer, intent(in) :: nbins
-    real(kind=dbl), intent(in), dimension(nbins+1) :: diameter
+    real(kind=dbl), intent(in), dimension(nbins) :: diameter
     real(kind=dbl), intent(in), dimension(nbins) :: del_d    
-    real(kind=dbl), intent(in), dimension(nbins+1) ::  ndens
-    real(kind=dbl), intent(in), dimension(nbins+1) :: density
+    real(kind=dbl), intent(in), dimension(nbins) ::  ndens
+    real(kind=dbl), intent(in), dimension(nbins) :: density
     real(kind=dbl), intent(in) :: refre
     real(kind=dbl), intent(in) :: refim !positive(?)
 
@@ -58,7 +59,7 @@ module mie_spheres
     real(kind=dbl), intent(out) :: albedo
     real(kind=dbl), intent(out) :: back_scatt
     real(kind=dbl), intent(out), dimension(200) :: legen, legen2, legen3, legen4 
-    real(kind=dbl), intent(out), dimension(nbins+1) :: back_spec
+    real(kind=dbl), intent(out), dimension(nbins) :: back_spec
     integer, intent(out) :: nlegen
 
     real(kind=dbl) :: wavelength
@@ -84,8 +85,11 @@ module mie_spheres
     character(len=30) :: nameOfRoutine = 'calc_mie_spheres'
 
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+    err = 0
 
-    if (verbose >= 4) print*, "calc_mie_spheres(",&
+    if (verbose >= 4) print*, "calc_mie_spheres",&
+!     if ((liq_ice == -1) .and. (nbins == 50)) print*, "calc_mie_spheres",&
+      i_x,i_y, i_z, i_h, &
       errorstatus, &
       freq, & ! frequency [Hz]
       t, &
@@ -94,12 +98,13 @@ module mie_spheres
        "diameter", diameter, &
       "ndens", ndens, &
       "density", density
-   
 
       call assert_true(err,all(density>=0),&
           "density must be positive")  
       call assert_true(err,all(ndens>=0),&
-          "ndens must be positive")   
+          "ndens must be positive")
+      call assert_true(err,SUM(ndens)>0,&
+          "sum(ndens) must be greater zero")    
       call assert_true(err,all(diameter>0),&
           "diameter must be positive")   
       call assert_true(err,all(del_d>0),&
@@ -117,17 +122,17 @@ module mie_spheres
           return
       end if    
 
-     
+
       wavelength = c/(freq) !
 
       if (liq_ice == -1 .and. density(1) /= 917.d0) then
           m_ice = refre-Im*refim  ! mimicking a
-          msphere = eps_mix((1.d0,0.d0),m_ice,density(nbins+1))
+          msphere = eps_mix((1.d0,0.d0),m_ice,density(nbins))
       else
                 msphere = refre-im*refim
       end if
      
-      x = pi * diameter(nbins+1) / wavelength
+      x = pi * diameter(nbins) / wavelength
       nterms = 0 
       n_tot = 0.d0
       call miecalc (err,nterms, x, msphere, a, b) 
@@ -159,18 +164,10 @@ module mie_spheres
       sump4 (:) = 0.0d0 
 
 
-    do ir = 1, nbins+1
-
-      if (ir == 1) then
-        ndens_eff = ndens(1)/2.d0
-        del_d_eff = del_d(1)
-      else if (ir == nbins+1) then
-        ndens_eff = ndens(nbins+1)/2.d0
-        del_d_eff = del_d(nbins)
-      else
+    do ir = 1, nbins
         ndens_eff = ndens(ir)
         del_d_eff = del_d(ir)
-      end if
+
 
       n_tot = n_tot + (ndens_eff * del_d_eff)
 
@@ -193,8 +190,8 @@ module mie_spheres
 	  return
       end if         
       
-      if (verbose >= 4) print*, "density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x"
-      if (verbose >= 4) print*, density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x 
+      if (verbose >= 4) print*, "ir, density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x"
+      if (verbose >= 4) print*, ir, density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x 
       
       call miecross (nmie, x, a, b, qext, qscat, qback)
       
@@ -246,8 +243,8 @@ module mie_spheres
     back_scatt = sumqback 
     albedo = scatter / extinction 
 
-      if (verbose >= 4) print*,"ir, extinction, scatter, back_scatt, albedo"
-      if (verbose >= 4) print*,ir, extinction, scatter, back_scatt, albedo
+      if (verbose >= 4) print*, "extinction, scatter, back_scatt, albedo"
+      if (verbose >= 4) print*,  extinction, scatter, back_scatt, albedo
        
     
     ! if the liq_ice function is not desired then leave now           

@@ -1,0 +1,160 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module pyRadarMoments ! in 
+    interface  ! in :pyRadarMoments
+        module report_module ! in :pyRadarMoments:report_module.f90
+            use vars_index, only: i_f,i_h,i_z,i_y,i_x
+            use kinds
+            integer(kind=long_bn), parameter,optional :: info=3
+            integer(kind=long_bn), parameter,optional :: fatal=2
+            integer(kind=long_bn), parameter,optional :: nstatus=3
+            integer(kind=long_bn), optional :: verbose=0
+            integer(kind=long_bn), parameter,optional :: success=0
+            character(len=7), parameter,optional,dimension(4),depend(info,fatal,success,warning) :: status_text=(/'success','warning','fatal','info'/)
+            integer(kind=long_bn), parameter,optional :: warning=1
+            subroutine report(status,message,nameofroutine) ! in :pyRadarMoments:report_module.f90:report_module
+                integer(kind=long_bn) intent(in) :: status
+                character*(*) intent(in) :: message
+                character*(*) intent(in) :: nameofroutine
+            end subroutine report
+            subroutine assert_true(error,logic,message) ! in :pyRadarMoments:report_module.f90:report_module
+                integer intent(inout) :: error
+                logical intent(in) :: logic
+                character*(*) intent(in) :: message
+            end subroutine assert_true
+            subroutine assert_false(error,logic,message) ! in :pyRadarMoments:report_module.f90:report_module
+                integer intent(inout) :: error
+                logical intent(in) :: logic
+                character*(*) intent(in) :: message
+            end subroutine assert_false
+        end module report_module
+        module settings ! in :pyRadarMoments:settings.f90
+            use report_module
+            use kinds
+            logical :: jacobian_mode
+            integer(kind=long_bn) :: radar_nfft
+            character(len=100) :: input_path
+            character(len=8) :: radar_mode
+            integer(kind=long_bn) :: radar_no_ave
+            real(kind=dbl) :: radar_min_spectral_snr
+            character(len=300) :: nc_out_file
+            character(len=9) :: frq_str_s
+            integer, parameter,optional :: maxnleg=200
+            logical :: radar_airmotion
+            character(len=9) :: frq_str_e
+            real(kind=dbl) :: obs_height
+            character(len=1), parameter,optional :: deltam='n'
+            logical :: passive
+            character(len=2) :: outpol
+            integer(kind=long_bn) :: radar_aliasing_nyquist_interv
+            logical :: dump_to_file
+            integer, parameter,optional :: src_code=2
+            logical :: lgas_extinction
+            character(len=100) :: crm_data
+            real(kind=dbl) :: hydro_threshold
+            logical :: lphase_flag
+            character(len=1), parameter,optional :: quad_type='l'
+            real(kind=dbl) :: radar_k2
+            integer(kind=long_bn) :: radar_npeaks
+            logical :: add_obs_height_to_layer
+            real(kind=dbl) :: radar_airmotion_step_vmin
+            character(len=100) :: crm_data2
+            character(len=100) :: crm_constants
+            integer(kind=long_bn) :: radar_nfft_aliased
+            logical :: hydro_limit_density_area
+            real(kind=dbl) :: radar_noise_distance_factor
+            logical :: radar_save_noise_corrected_spectra
+            integer(kind=long_bn) :: randomseed
+            integer(kind=long_bn) :: n_moments
+            real(kind=dbl) dimension(100) :: freqs
+            integer(kind=long_bn) :: radar_maxturbterms
+            real(kind=dbl) :: radar_airmotion_vmax
+            character(len=100) :: output_path
+            integer, parameter,optional :: noutlevels=2
+            integer, parameter,optional :: numazimuths=1
+            character(len=3) :: gas_mod
+            character(len=18) :: freq_str
+            character(len=20) :: file_desc
+            integer(kind=long_bn) :: nfrq
+            character(len=100) :: creator
+            character(len=8) :: radar_airmotion_model
+            real(kind=dbl) :: radar_pnoise0
+            character(len=100) :: data_path
+            integer(kind=long_bn) :: radar_airmotion_linear_steps
+            integer, parameter,optional :: aziorder=0
+            character(len=300) :: namelist_file
+            character(len=1) :: ground_type
+            character(len=10) :: crm_case
+            logical :: write_nc
+            integer, parameter,optional :: nummu=16
+            real(kind=dbl) :: radar_min_v
+            integer, parameter,optional :: maxv=64
+            character(len=100) :: tmp_path
+            character(len=1) :: units
+            real(kind=dbl), parameter,optional :: direct_mu=0._dbl
+            character(len=20) :: moments_file
+            real(kind=dbl) :: radar_receiver_uncertainty_std
+            logical :: save_psd
+            integer, parameter,optional :: nstokes=2
+            character(len=99) :: input_file
+            integer, parameter,optional :: maxfreq=100
+            logical :: radar_use_hildebrand
+            logical :: radar_convolution_fft
+            character(len=300) :: descriptor_file_name
+            logical :: active
+            integer, parameter,optional :: maxlay=600
+            real(kind=dbl) :: radar_max_v
+            character(len=8) dimension(100) :: frqs_str
+            real(kind=dbl), parameter,optional :: direct_flux=0._dbl
+            logical :: in_python
+            logical :: lhyd_extinction
+            real(kind=dbl) :: radar_airmotion_vmin
+            real(kind=dbl) :: salinity
+            logical :: radar_smooth_spectrum
+            character(len=10) :: input_type
+            integer, parameter,optional :: maxleg=200
+            logical :: hydro_fullspec
+            real(kind=dbl) :: emissivity
+            subroutine settings_read(errorstatus) ! in :pyRadarMoments:settings.f90:settings
+                use kinds
+                integer(kind=long_bn) intent(out) :: errorstatus
+            end subroutine settings_read
+            subroutine test_settings(errorstatus) ! in :pyRadarMoments:settings.f90:settings
+                use kinds
+                integer(kind=long_bn) intent(out) :: errorstatus
+            end subroutine test_settings
+            subroutine add_settings(errorstatus) ! in :pyRadarMoments:settings.f90:settings
+                use kinds
+                integer(kind=long_bn) intent(out) :: errorstatus
+            end subroutine add_settings
+            subroutine settings_fill_default ! in :pyRadarMoments:settings.f90:settings
+                use kinds
+            end subroutine settings_fill_default
+            subroutine print_settings ! in :pyRadarMoments:settings.f90:settings
+            end subroutine print_settings
+        end module settings
+        module radar_moments ! in :pyRadarMoments:radar_moments.f90
+            use report_module
+            use kinds
+            use constants
+            use settings, only: radar_min_v,radar_min_spectral_snr,radar_use_hildebrand,radar_smooth_spectrum,radar_no_ave,radar_noise_distance_factor,radar_max_v
+            subroutine radar_calc_moments(errorstatus,radar_nfft,radar_npeaks,radar_spectrum_in,noise_model,radar_spectrum_out,moments,slope,edge,quality,noise) ! in :pyRadarMoments:radar_moments.f90:radar_moments
+                integer(kind=long_bn) intent(out) :: errorstatus
+                integer, optional,intent(in),check(len(radar_spectrum_in)>=radar_nfft),depend(radar_spectrum_in) :: radar_nfft=len(radar_spectrum_in)
+                integer intent(in) :: radar_npeaks
+                real(kind=dbl) dimension(radar_nfft),intent(in) :: radar_spectrum_in
+                real(kind=dbl) intent(in) :: noise_model
+                real(kind=dbl) dimension(radar_nfft),intent(out),depend(radar_nfft) :: radar_spectrum_out
+                real(kind=dbl) dimension(5,radar_npeaks),intent(out),depend(radar_npeaks) :: moments
+                real(kind=dbl) dimension(2,radar_npeaks),intent(out),depend(radar_npeaks) :: slope
+                real(kind=dbl) dimension(2,radar_npeaks),intent(out),depend(radar_npeaks) :: edge
+                integer intent(out) :: quality
+                real(kind=dbl) intent(out) :: noise
+            end subroutine radar_calc_moments
+        end module radar_moments
+    end interface 
+end python module pyRadarMoments
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/

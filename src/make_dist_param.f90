@@ -29,8 +29,8 @@ subroutine make_dist_params(errorstatus)
 
   use constants, only: pi, rho_water, delta_d_mono
 
-  use drop_size_dist, only: dist_name, p_1, p_2, p_3, p_4, a_ms, b_ms, d_1, moment_in, & ! IN
-                            q_h, n_tot, r_eff, layer_t,                                & ! IN
+  use drop_size_dist, only: dist_name, p_1, p_2, p_3, p_4, a_ms, b_ms, d_1, d_2, moment_in, & ! IN
+                            q_h, n_tot, r_eff, layer_t, nbin,                            & ! IN
                             n_0, lambda, mu, gam, n_t, sig, d_ln, d_mono, d_m, n_0_star ! OUT
 
 ! Imported Scalar Variables with intent (in):
@@ -41,7 +41,7 @@ subroutine make_dist_params(errorstatus)
 
 ! Local scalars:
 
-  real(kind=dbl) :: work1, work2, work3
+  real(kind=dbl) :: work1, work2, work3, delta_d_const
   real(kind=dbl) :: ztc, hlp, alf, bet, m2s, m3s
   integer(kind=long) :: nn
 
@@ -174,6 +174,58 @@ subroutine make_dist_params(errorstatus)
   endif
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+! CONSTANT distribution   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  if (trim(dist_name) == 'const' .or. trim(dist_name) == 'const_cosmo_ice') then 
+! Set parameter for the Gamma dist. to get a constant dist.
+    lambda = 0._dbl
+    mu = 0._dbl
+    gam = 0._dbl
+    delta_d_const = (d_2 - d_1)/(nbin-1)
+    if (trim(dist_name) == 'const') then
+! ! fixed radius (via d_1)
+      if (d_1 /= -99. .and. d_2 /= -99. .and. p_1 == -99. .and. p_2 == -99. &
+          .and. p_1 == -99. .and. p_4 == -99.) then
+        if (moment_in == 3)    n_0 = q_h / (delta_d_const * a_ms * d_1**b_ms)
+        if (moment_in == 1)    n_0 = n_tot / delta_d_const
+        n_0 = n_0 /(nbin-1)
+      endif
+    endif
+    if (trim(dist_name) == 'const_cosmo_ice' .and. moment_in == 3 &
+        .and. nbin == 2) then
+! ! Monodisperse size distribution coherent with COSMO-de 1-moment scheme
+! Number_concentration of activated ice ctystal is temperature dependent
+! from COSMO-de code src_gscp.f90 routine: hydci_pp_gr
+! Radius is derived from mass-size relation m=aD^3
+! a=130 kg/m^3 (hexagonal plates with aspect ratio of 0.2 -> thickness=0.2*Diameter)
+      work1 = 1.d2 * exp(0.2_dbl * (273.15_dbl - layer_t)) ! N_tot
+      n_0 = work1 / delta_d_mono
+      d_mono = (q_h / (work1 * a_ms))**(1._dbl / b_ms)
+!  CHECK if dia1 > maxdiam=2.d-4 (maximum diameter for COSMO)
+!  then recalculate the drop mass using 2.d-4 as particle diameter
+      if (d_mono > 2.d-4) then 
+        d_mono = 2.d-4
+        n_0 = q_h / (a_ms * d_mono**b_ms) / delta_d_mono
+      endif
+      d_1 = d_mono - (0.5_dbl* delta_d_mono)
+      d_2 = d_mono + (0.5_dbl* delta_d_mono)
+    endif
+
+! ! Check that the variables have been filled in
+    if (lambda /= 0._dbl .or. mu /= 0._dbl .or. gam /= 0._dbl .or. &
+       n_0 <= 0._dbl .or. ISNAN(n_0) .or. n_0 >= HUGE(n_0)) then
+      msg = 'Monodisperse case: something wrong or this parameters combination is not yet implemented...'
+      errorstatus = fatal
+      call report(errorstatus, msg, nameOfRoutine)
+      return
+    endif
+    errorstatus = err
+    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+    return
+  endif
+
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! EXPONENTIAL distribution   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if (trim(dist_name) == 'exp' .or. trim(dist_name) == 'exp_field_t' .or.       &
@@ -182,6 +234,11 @@ subroutine make_dist_params(errorstatus)
     gam = 1._dbl
     mu = 0._dbl
     if (trim(dist_name) == 'exp') then
+! !  everything fixed 
+      if (p_1 /= -99. .and. p_2 /= -99. .and.moment_in ==0) then
+        lambda = p_1
+        n_0 = p_2
+      end if
 ! ! fixed n_tot (via p_1)
       if (p_1 /= -99. .and. p_2 == -99. .and. p_3 == -99.) then
         if (moment_in == 3)  lambda = (p_1 * a_ms * dgamma(b_ms+1._dbl) / q_h)**(1._dbl / b_ms)
@@ -414,9 +471,11 @@ subroutine make_dist_params(errorstatus)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if (trim(dist_name) == 'norm_mgamma') then
 ! ! The user MUST specify d_m, n_0_star and mu parameters
-    call assert_false(err,(p_1 == -99. .or. p_2 == -99. .or. p_3 == -99.),&
-        'Normalized Modified Gamma case: p_1, p_2, and p_3 parameters must be specified...')
-    call assert_true(err,(moment_in == 0),&
+    call assert_false(err,(p_1 == -99. .or. p_2 == -99.),&
+        'Normalized Modified Gamma case: p_1 and p_2 parameters must be specified')
+    call assert_true(err,(p_3 /= -99. .NEQV. p_4 /= -99.),& ! NEQV = xor
+        'Normalized Modified Gamma case: p_3 xor p_4 parameters must be specified...' )
+   call assert_true(err,(moment_in == 0),&
         'Normalized Modified Gamma case: currently only implemented for moment_in = 0')
     if (err > 0) then
         errorstatus = fatal
@@ -426,7 +485,8 @@ subroutine make_dist_params(errorstatus)
     end if    
     d_m  = p_1
     n_0_star = p_2
-    mu = p_3
+    if (p_3 /= -99.) mu = p_3
+    if (p_4 /= -99.) mu = p_4 -(b_ms+1) !shifted mu value for better numerical handling in optimal estimation!
     errorstatus = err
     if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
     return

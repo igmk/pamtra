@@ -11,6 +11,7 @@ module descriptor_file
   real(kind=dbl), dimension(:,:,:,:),allocatable      :: as_ratio_arr             ! aspect ratio
   integer(kind=long), dimension(:),allocatable  :: liq_ice_arr              ! liquid = 1; ice = -1
   real(kind=dbl), dimension(:,:,:,:),allocatable      :: rho_ms_arr               ! density of the particle [kg/m^3]
+  real(kind=dbl), dimension(:,:,:,:),allocatable      :: descriptor_canting_arr    ! canting angle of the particle [kg/m^3]
   real(kind=dbl), dimension(:,:,:,:),allocatable      :: a_ms_arr, b_ms_arr       ! Mass-size parameter a [kg/m^(1/b)] and b [#] 
   real(kind=dbl), dimension(:,:,:,:),allocatable      :: alpha_as_arr, beta_as_arr! Area-size parameter alpha [m^(2-b)] and beta [#] 
 
@@ -18,7 +19,7 @@ module descriptor_file
   integer(kind=long), dimension(:,:,:,:),allocatable  :: nbin_arr                 ! Number of bins for the drop-size distribution
   character(len=15), dimension(:),allocatable   :: dist_name_arr            ! name of the distribution
   character(len=15), dimension(:),allocatable   :: scat_name_arr            ! name of the scattering model
-  character(len=15), dimension(:),allocatable   :: vel_size_mod_arr         ! name of the velocity-size model to be used
+  character(len=30), dimension(:),allocatable   :: vel_size_mod_arr         ! name of the velocity-size model to be used
   real(kind=dbl), dimension(:,:,:,:),allocatable      :: p_1_arr, p_2_arr         ! Drop-size parameters from hydrometeor descriptor file
   real(kind=dbl), dimension(:,:,:,:),allocatable      :: p_3_arr, p_4_arr         ! Drop-size parameters from hydrometeor descriptor file
   real(kind=dbl), dimension(:,:,:,:),allocatable      :: d_1_arr, d_2_arr         ! Minimum and maximum particle diameters
@@ -133,6 +134,7 @@ subroutine allocate_descriptor_file(errorstatus)
   allocate(as_ratio_arr(1,1,1,n_hydro))
   allocate(liq_ice_arr(n_hydro))
   allocate(rho_ms_arr(1,1,1,n_hydro))
+  allocate(descriptor_canting_arr(1,1,1,n_hydro))
   allocate(a_ms_arr(1,1,1,n_hydro))
   allocate(b_ms_arr(1,1,1,n_hydro))
   allocate(alpha_as_arr(1,1,1,n_hydro))
@@ -148,6 +150,29 @@ subroutine allocate_descriptor_file(errorstatus)
   allocate(d_2_arr(1,1,1,n_hydro))
   allocate(scat_name_arr(n_hydro))
   allocate(vel_size_mod_arr(n_hydro))
+
+  !fill dummy values
+  hydro_name_arr = "-9999"
+  as_ratio_arr = -9999.d0
+  liq_ice_arr = -9999
+  rho_ms_arr = -9999.d0
+  descriptor_canting_arr = -9999.d0
+  a_ms_arr = -9999.d0
+  b_ms_arr = -9999.d0
+  alpha_as_arr = -9999.d0
+  beta_as_arr = -9999.d0
+  moment_in_arr = -9999
+  nbin_arr = -9999.d0
+  dist_name_arr = "-9999"
+  p_1_arr = -9999.d0
+  p_2_arr = -9999.d0
+  p_3_arr = -9999.d0
+  p_4_arr = -9999.d0
+  d_1_arr = -9999.d0
+  d_2_arr = -9999.d0
+  scat_name_arr = "-9999"
+  vel_size_mod_arr = "-9999"
+
 
   errorstatus = err
   if (verbose >= 5) call report(info,'End of ', nameOfRoutine)
@@ -165,6 +190,7 @@ subroutine deallocate_descriptor_file()
   if (allocated(as_ratio_arr)) deallocate(as_ratio_arr)
   if (allocated(liq_ice_arr)) deallocate(liq_ice_arr)
   if (allocated(rho_ms_arr)) deallocate(rho_ms_arr)
+  if (allocated(descriptor_canting_arr)) deallocate(descriptor_canting_arr)
   if (allocated(a_ms_arr)) deallocate(a_ms_arr)
   if (allocated(b_ms_arr)) deallocate(b_ms_arr)
   if (allocated(moment_in_arr)) deallocate(moment_in_arr)
@@ -190,6 +216,7 @@ subroutine printDescriptorVars()
   
   print*, "hydro_name_arr: ", SHAPE(hydro_name_arr), ";  ", hydro_name_arr
   print*, "as_ratio_arr: ", SHAPE(as_ratio_arr), ";  ", as_ratio_arr
+  print*, "descriptor_canting_arr: ", SHAPE(descriptor_canting_arr), ";  ", descriptor_canting_arr
   print*, "liq_ice_arr: ", SHAPE(liq_ice_arr), ";  ", liq_ice_arr
   print*, "rho_ms_arr: ", SHAPE(rho_ms_arr), ";  ", rho_ms_arr
   print*, "a_ms_arr: ", SHAPE(a_ms_arr), ";  ", a_ms_arr

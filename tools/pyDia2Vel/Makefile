@@ -25,7 +25,7 @@ endif
 
 
 
-OBJECTS=kinds.o constants.o settings.o report_module.o file_mod.o dia2vel.o viscosity_air.o rho_air.o
+OBJECTS=kinds.o  report_module.o vars_index.o constants.o settings.o file_mod.o dia2vel.o viscosity_air.o rho_air.o 
 
 
 all:  py
@@ -42,7 +42,7 @@ pyprecompile:
 	@echo "Make backup before deleting old signature file, auto creating will most likely fail."
 	@echo "####################################################################################"
 	@echo ""
-	f2py --overwrite-signature -m pyDia2vel -h pydia2vel.pyf $(OBJECTS) pyDia2vel.f90
+	f2py --overwrite-signature -m pyDia2vel -h pydia2vel.pyf dia2vel.f90 viscosity_air.f90 pyDia2vel.f90
 
 py: $(OBJECTS)
 	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS)  -c --fcompiler=gnu95  pydia2vel.pyf $(OBJECTS) $(pamtraOBJECTS) pyDia2vel.f90 

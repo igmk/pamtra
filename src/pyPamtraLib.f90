@@ -9,7 +9,7 @@
     use double_moments_module !double moments variables are stored here
     use report_module
     use descriptor_file
-    use vars_index, only: i_x, i_y, i_f
+    use vars_index, only: i_x, i_y, i_z, i_f, i_h
 
     implicit none
     character(40) :: gitHash, gitVersion
@@ -64,102 +64,44 @@
         write(frqs_str(fi),"(i4.4,f0.3)") int(freqs(fi)),freqs(fi) -int(freqs(fi))
     end do
 
+      in_python = .true.! we are _in_ python
 
-      !!! read variables from namelist file
-!       call settings_read  !from settings.f90
 
-      in_python = .true.! we are _not_ in python
+    !!! add missing settings and test them
+    call add_settings(err)  !from settings.f90
+    if (err /= 0) then
+        msg = 'error in add_settings!'
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
+        return
+    end if
+    call test_settings(err)  !from settings.f90
+    if (err /= 0) then
+        msg = 'error in test_settings!'
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
+        return
+    end if
 
       if (verbose >= 1) then
-          msg = "input_file: "//input_file(:len_trim(input_file))//&
-          " namelist file: "//trim(namelist_file)//&
-          " freqs: "//trim(frqs_str(1))//" to "//trim(frqs_str(nfrq))
+          msg = "freqs: "//trim(frqs_str(1))//" to "//trim(frqs_str(nfrq))
           call report(info, msg, nameOfRoutine)
       end if
 
 
-
-! 
-! 
-! !!! read the data
-! call get_atmosphere
-! ! 1tmporary: this should go into the call get_atmosphere routine!
-! !python input can have different number of nlayer
-! 
-! 
-! 
-! atmo_max_nlyrs = profiles_nlyr
-! atmo_ngridx = profiles_ngridx
-! atmo_ngridy = profiles_ngridy
-! 
-! call allocate_atmosphere_vars(err)
-! if (err /= 0) then
-!     msg = 'Error in allocate_atmosphere_vars!'
-!     call report(fatal, msg, nameOfRoutine)
-!   errorstatus = err
-!   return
-! end if
-! 
-! atmo_nlyrs(:,:) = profiles_nlyr
-! 
-! !temporary loop to fill atmosphere array:
-! do i_y = 1, profiles_ngridy !i_x_in, i_x_fin
-!   do i_x = 1, profiles_ngridx
-! print*, i_x, i_y
-!       atmo_relhum_lev(i_x,i_y,:) = profiles(i_x,i_y)%relhum_lev
-!       atmo_press_lev(i_x,i_y,:) = profiles(i_x,i_y)%press_lev
-!       atmo_temp_lev(i_x,i_y,:) = profiles(i_x,i_y)%temp_lev
-!       atmo_hgt_lev(i_x,i_y,:) = profiles(i_x,i_y)%hgt_lev
-! 
-!       atmo_hydro_reff(i_x,i_y,:,:) = nan()
-!       atmo_hydro_n(i_x,i_y,:,:) = nan()
-! 
-! 
-!       atmo_hydro_q(i_x,i_y,:,1) = profiles(i_x,i_y)%cloud_water_q
-! !       atmo_hydro_n(i_x,i_y,:,1) = profiles(i_x,i_y)%cloud_water_n
-! 
-!       atmo_hydro_q(i_x,i_y,:,2) = profiles(i_x,i_y)%cloud_ice_q
-! !       atmo_hydro_n(i_x,i_y,:,2) = profiles(i_x,i_y)%cloud_ice_n
-! 
-!       atmo_hydro_q(i_x,i_y,:,3) = profiles(i_x,i_y)%rain_q
-! !       atmo_hydro_n(i_x,i_y,:,3) = profiles(i_x,i_y)%rain_n
-! 
-!       atmo_hydro_q(i_x,i_y,:,4) = profiles(i_x,i_y)%snow_q
-! !       atmo_hydro_n(i_x,i_y,:,4) = profiles(i_x,i_y)%snow_n
-! 
-!       atmo_hydro_q(i_x,i_y,:,5) = profiles(i_x,i_y)%graupel_q
-! !       atmo_hydro_n(i_x,i_y,:,5) = profiles(i_x,i_y)%graupel_n
-! 
-! 
-!     atmo_month(i_x,i_y) = profiles_month
-!     atmo_day(i_x,i_y) = profiles_day
-!     atmo_year(i_x,i_y) = profiles_year
-!     atmo_time(i_x,i_y) =profiles_time
-! 
-!     atmo_date_str(i_x,i_y) = profiles_year//profiles_month//profiles_day//profiles_time
-!     atmo_deltax(i_x,i_y) = profiles_deltax
-!     atmo_deltay(i_x,i_y) = profiles_deltay
-!     atmo_model_i(i_x,i_y) = profiles(i_x,i_y)%isamp
-!     atmo_model_j(i_x,i_y) = profiles(i_x,i_y)%jsamp
-!     atmo_lon(i_x,i_y) = profiles(i_x,i_y)%longitude       
-!     atmo_lat(i_x,i_y) = profiles(i_x,i_y)%latitude       
-!     atmo_lfrac(i_x,i_y) = profiles(i_x,i_y)%land_fraction
-!     atmo_wind10u(i_x,i_y) = profiles(i_x,i_y)%wind_10u
-!     atmo_wind10v(i_x,i_y) = profiles(i_x,i_y)%wind_10v
-! 
-!     atmo_iwv(i_x,i_y) = profiles(i_x,i_y)%iwv
-! 
-!     end do
-! end do
-
-      ! make sure that all the levels and layer variables are present
-      call fillMissing_atmosphere_vars(err)
-      if (err /= 0) then
-          msg = 'Error in fillMissing_atmosphere_vars!'
+      if (add_obs_height_to_layer) then
+          msg = 'add_obs_height_to_layer not implemented yet in python'
           call report(fatal, msg, nameOfRoutine)
-        errorstatus = err
-        return
-      end if
+          errorstatus = err
+          return
+        end if
+!         call add_obs_height(errorstatus)
+!         if (err /= 0) then
+!             msg = 'Error in add_obs_height!'
+!             call report(fatal, msg, nameOfRoutine)
+!           errorstatus = err
+!           return
+!         end if
 
 
       ! now allocate variables
@@ -184,7 +126,6 @@
           end if
           grid_y: do i_y = 1, atmo_ngridy !i_x_in, i_x_fin
               grid_x: do i_x = 1, atmo_ngridx !i_y_in, i_y_fin
-
                   !run the model
                   call run_rt(err)
                   if (err /= 0) then

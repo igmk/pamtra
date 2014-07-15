@@ -122,10 +122,13 @@
           MAXSUM = DMAX1 (MAXSUM, DABS(SUM))
         ENDDO
       ENDDO
+
       IF (MAXSUM .GT. 1.0D-6) THEN
           WRITE (*,*) 'Scattering function not normalized:', MAXSUM
-          if (verbose >= 4) call report(fatal, 'Scattering function not normalized', nameOfRoutine)
+          call report(fatal, 'Scattering function not normalized', nameOfRoutine)
           err = fatal
+      ELSE
+              err = 0
       ENDIF
     errorstatus = err
     if (verbose >= 4) call report(info, 'End of ', nameOfRoutine)

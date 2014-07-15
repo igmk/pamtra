@@ -1,10 +1,11 @@
 import pyPamtraLib
-#import os
+import os
 #import logging
 #import collections
 import numpy as np
 #import random
 #import string
+from copy import deepcopy 
 
 #logging.basicConfig(filename='/tmp/pyPamtraLibWrapper.log',level=logging.WARNING) #change WARNING to INFO or DEBUG if needed
 
@@ -12,9 +13,22 @@ def PamtraFortranWrapper(
   settings,
   nmlSettings,
   descriptorFile,
-  profile
+  descriptorFile4D,
+  descriptorFileFS,
+  profile,
+  returnModule=True
   ):
-    
+  import pyPamtraLib
+
+  pyPamtraLib.report_module.verbose = settings["verbose"]
+   
+  #make sure the shape of the profiles is the same! 
+  for key in profile.keys():
+    if type(profile[key]) == np.ndarray:
+      assert profile[key].shape[0] == profile["lat"].shape[0]
+      assert profile[key].shape[1] == profile["lat"].shape[1]
+  #todo: make shape check for all variables! seg faults can easily be created here! 
+       
   #be sure everything is cleaned up before we start
   error = pyPamtraLib.deallocate_everything.do_deallocate_everything()
   if error > 0: raise RuntimeError("Error in deallocate everything")
@@ -22,7 +36,6 @@ def PamtraFortranWrapper(
   pyPamtraLib.settings.settings_fill_default()    
   
   pyPamtraLib.settings.in_python = True
-  pyPamtraLib.settings.verbose = settings["verbose"]
   pyPamtraLib.settings.nfrq = len(settings["freqs"])
   pyPamtraLib.settings.freqs[:len(settings["freqs"])] = settings["freqs"]
   
@@ -46,7 +59,7 @@ def PamtraFortranWrapper(
     
 
   #deal with the descriptor_file
-  pyPamtraLib.descriptor_file.n_hydro = len(descriptorFile.data)
+  pyPamtraLib.descriptor_file.n_hydro = len(descriptorFile)
   
   #allocation of string array does not work via f2py. Thus we allocate the arrays in Fortran:
   error = pyPamtraLib.descriptor_file.allocate_descriptor_file()    
@@ -55,22 +68,24 @@ def PamtraFortranWrapper(
 
   descFileCharLength=15
   
-  for name in descriptorFile.data.dtype.names:
+  for name in descriptorFile.dtype.names:
     #1D data
     if name in ["moment_in","liq_ice"]:#,
-      if settings["pyVerbose"] > 3: print("pyPamtraLib.descriptor_file."+name +"_arr = descriptorFile.data['"+name+"'].tolist()")
-      exec("pyPamtraLib.descriptor_file."+name +"_arr = descriptorFile.data['"+name+"'].tolist()")
+      if settings["pyVerbose"] > 3: print("pyPamtraLib.descriptor_file."+name +"_arr = descriptorFile['"+name+"'].tolist()")
+      exec("pyPamtraLib.descriptor_file."+name +"_arr = descriptorFile['"+name+"'].tolist()")
     #1d Strings, these are ugly...
     elif name in ["hydro_name","dist_name","scat_name","vel_size_mod"]:
-      if settings["pyVerbose"] > 3: print("setFortranStrList(pyPamtraLib.descriptor_file."+name+"_arr,descriptorFile.data['"+name+"'])")
-      exec("setFortranStrList(pyPamtraLib.descriptor_file."+name+"_arr,descriptorFile.data['"+name+"'])")
+      if settings["pyVerbose"] > 3: print("setFortranStrList(pyPamtraLib.descriptor_file."+name+"_arr,descriptorFile['"+name+"'])")
+      exec("setFortranStrList(pyPamtraLib.descriptor_file."+name+"_arr,descriptorFile['"+name+"'])")
     #potential 4D data
     else:
-      if settings["pyVerbose"] > 3: print("pyPamtraLib.descriptor_file."+name +"_arr = [[[descriptorFile.data['"+name+"'].tolist()]]]")
-      exec("pyPamtraLib.descriptor_file."+name +"_arr = [[[descriptorFile.data['"+name+"'].tolist()]]]")
-  for name4d in descriptorFile.data4D.keys():
-    if settings["pyVerbose"] > 3: print("pyPamtraLib.descriptor_file."+name4d +"_arr = descriptorFile.data4D['"+name4d+"'].tolist()")
-    exec("pyPamtraLib.descriptor_file."+name4d +"_arr = descriptorFile.data4D['"+name4d+"'].tolist()")
+      if settings["pyVerbose"] > 3: print("pyPamtraLib.descriptor_file."+name +"_arr = [[[descriptorFile['"+name+"'].tolist()]]]")
+      exec("pyPamtraLib.descriptor_file."+name +"_arr = [[[descriptorFile['"+name+"'].tolist()]]]")
+  for name4d in descriptorFile4D.keys():
+    assert descriptorFile4D[key].shape[0] == profile["lat"].shape[0]
+    assert descriptorFile4D[key].shape[1] == profile["lat"].shape[1]
+    if settings["pyVerbose"] > 3: print("pyPamtraLib.descriptor_file."+name4d +"_arr = descriptorFile4D['"+name4d+"'].tolist()")
+    exec("pyPamtraLib.descriptor_file."+name4d +"_arr = descriptorFile4D['"+name4d+"'].tolist()")
   
   #see whether it worked:
   if settings["pyVerbose"] > 3:
@@ -97,9 +112,16 @@ def PamtraFortranWrapper(
     elif type(profile[key]) == np.ndarray:
       if settings["pyVerbose"] > 3: print("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
       exec("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
+    elif type(profile[key]) == np.ma.core.MaskedArray:
+      profile[key] = profile[key].filled(np.nan)
+      if settings["pyVerbose"] > 3: print("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
+      exec("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
+    else:
+      raise TypeError("do not understand type of "+ key+": " + str(type(profile[key])))
     #pyPamtraLib.vars_atmosphere.atmo_max_nlyr
   
-  pyPamtraLib.vars_atmosphere.fillmissing_atmosphere_vars()  
+  error = pyPamtraLib.vars_atmosphere.fillmissing_atmosphere_vars()  
+  if error > 0: raise RuntimeError("Error in fillmissing_atmosphere_vars")
   
   #see whether it worked:
   if settings["pyVerbose"] > 3:
@@ -107,28 +129,54 @@ def PamtraFortranWrapper(
     pyPamtraLib.vars_atmosphere.print_vars_atmosphere()
     
     
-  #now, finally rund the model  
+  if nmlSettings["hydro_fullspec"]:
+    assert descriptorFileFS
+    #assert nmlSettings["save_psd"] = False #because there is nothing to save!
+    
+    error = pyPamtraLib.vars_hydrofullspec.allocate_hydrofs_vars(descriptorFileFS["d_ds"].shape[-1])
+    if error > 0: raise RuntimeError("Error in allocate_hydrofs_vars")
+    
+    for key in descriptorFileFS.keys():
+      assert descriptorFileFS[key].shape[0] == profile["lat"].shape[0]
+      assert descriptorFileFS[key].shape[1] == profile["lat"].shape[1]
+      if settings["pyVerbose"] > 3: print("pyPamtraLib.vars_hydrofullspec.hydrofs_"+key +" = descriptorFileFS['"+key+"'].tolist()")
+      exec("pyPamtraLib.vars_hydrofullspec.hydrofs_"+key +" = descriptorFileFS['"+key+"'].tolist()")
+      
+    if settings["pyVerbose"] > 3:
+      print "Fortran view on hydro_fullspec variables"
+      pyPamtraLib.vars_hydrofullspec.print_hydrofs_vars()
+    
+    
+    
+    
+  ##now, finally rund the model  
   error = pyPamtraLib.pypamtralib.run_pamtra() 
-  if error > 0: raise RuntimeError("Error in run_pamtra")
+  #if error > 0: raise RuntimeError("Error in run_pamtra")
   
-  #process the results!
+  ##process the results!
   results = dict()
-  for key in ["tb","Ze","Att_hydro","Att_atmo","radar_hgt","radar_moments","radar_slopes","radar_quality","radar_snr", "radar_spectra","psd_d_bound","psd_f","psd_mass","psd_area"]:
-    if settings["pyVerbose"] > 3: print("allocTest = pyPamtraLib.vars_output."+key.lower()+" == None")
-    exec("allocTest = pyPamtraLib.vars_output."+key.lower()+" == None")
+  for key in ["tb","Ze","Att_hydro","Att_atmo","radar_hgt","radar_moments","radar_edges","radar_slopes","radar_quality","radar_snr", "radar_spectra","radar_vel","psd_d","psd_n","psd_mass","psd_area","angles_deg"]:
+    if settings["pyVerbose"] > 3: print("allocTest = pyPamtraLib.vars_output.out_"+key.lower()+" == None")
+    exec("allocTest = pyPamtraLib.vars_output.out_"+key.lower()+" == None")
     if not allocTest:
-      if settings["pyVerbose"] > 3: print("results['"+key+"'] = pyPamtraLib.vars_output."+key.lower())
-      exec("results['"+key+"'] = pyPamtraLib.vars_output."+key.lower())
+      if settings["pyVerbose"] > 3: print("results['"+key+"'] = deepcopy(pyPamtraLib.vars_output.out_"+key.lower()+")")
+      exec("results['"+key+"'] = deepcopy(pyPamtraLib.vars_output.out_"+key.lower()+")")
     else:
       if settings["pyVerbose"] > 3: print "filling key", key
       if key in ["radar_quality"]: results[key] = -9999
       else: results[key] = -9999.
     
     
-  results["pamtraVersion"] = "".join(list(pyPamtraLib.pypamtralib.gitversion)).strip()      
-  results["pamtraHash"] = "".join(list(pyPamtraLib.pypamtralib.githash)).strip()  
-
-  return results, pyPamtraLib
+  results["pamtraVersion"] = deepcopy("".join(list(pyPamtraLib.pypamtralib.gitversion)).strip())
+  results["pamtraHash"] = deepcopy("".join(list(pyPamtraLib.pypamtralib.githash)).strip()  )
+  
+  if settings["pyVerbose"] > 2: "processed results"
+        
+  if returnModule: 
+    return results, pyPamtraLib
+  else: 
+    del pyPamtraLib
+    return results
 
 def _str_py2f(array,length=None):
   # the byte order of fortran and numpy string arrays is different, this here works sometimes...
@@ -163,6 +211,12 @@ def setFortranStrList(fortranList,pythonList,charLength=None):
     #we have to fill teh rest of the variable with spaces, otherwise it contains only random!
     _str_py2f(fortranList)[pp][len(pythonStr):] = " "
   return
+  
+def parallelPamtraFortranWrapper(indices, *args, **kwargs):
+  if args[0]["pyVerbose"] > 1: print 'starting', __name__, 'parent process:', os.getppid(), 'process id:', os.getpid()
+  results = PamtraFortranWrapper(*args, **kwargs)
+  return indices, results
+  #return indices, dict()
   
   
 #def PamtraFortranWrapper_OLD(nmlSettings,nmlDefaultSettings,nmlFile,*pamtraArgs):

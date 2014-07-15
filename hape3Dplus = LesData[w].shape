@@ -1,0 +1,24 @@
+[0;31mType:       [0minstancemethod
+[0;31mBase Class: [0m<type 'instancemethod'>
+[0;31mString Form:[0m<bound method pyPamtra.createProfile of <pyPamtra.pyPamtra object at 0x7f0dfe302c90>>
+[0;31mNamespace:  [0mInteractive
+[0;31mFile:       [0m/home/mmaahn/lib/python/pyPamtra.py
+[0;31mDefinition: [0m[0mpam[0m[0;34m.[0m[0mcreateProfile[0m[0;34m([0m[0mself[0m[0;34m,[0m [0;34m**[0m[0mkwargs[0m[0;34m)[0m[0;34m[0m[0m
+[0;31mDocstring:[0m
+Function to create Pamtra Profiles.
+
+Variables ending on _lev mean level values, variables without are layer values (height vector one entry shorter!)!
+
+Everything is needed in SI units, relhum is in Pa/PA not %
+
+The following variables are mandatroy:
+hgt_lev, temp_lev, press_lev and (relhum_lev OR q)
+
+The following variables are optional and guessed if not provided:  "timestamp","lat","lon","lfrac","wind10u","wind10v","hgt_lev","cwc_q","iwc_q","rwc_q","swc_q","gwc_q"
+
+The integrated values are skipped if not provided, they have no effect on pamtra!:
+"iwv","cwp","iwp","rwp","swp","gwp"
+
+The following variables are only needed together with the 2 moments scheme!
+"hwc_q","hwp", "cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"
+#

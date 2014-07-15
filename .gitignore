@@ -12,8 +12,9 @@ fort*
 !py/libs/fortran-namelist
 output/
 profiles/
-profile/
-data/
+profile/*
+!profile/example_input*
+data
 playground/
 *~
 .nfs*
@@ -31,6 +32,8 @@ check_moments
 py/codefriedhof.py
 *.png
 *.py
+!py/*.py
+!examples/*py
 snowCRYSTALuli
 cl340d14.dda
 runtestc
@@ -43,3 +46,4 @@ tools/pp_scripts/nodesConfig.sh
 *.sqlite
 gmon.out
 check_moments
+database

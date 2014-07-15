@@ -71,7 +71,7 @@ freq)              ! in
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'get_gasabs'
 
-    if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
+    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
     do nz = 1, atmo_nlyrs(i_x,i_y)
         tc = atmo_temp(i_x,i_y,nz) - t_abs
@@ -105,7 +105,7 @@ freq)              ! in
 
     errorstatus = err
 
-    if (verbose >= 1) call report(info,'End of ', nameOfRoutine)
+    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
 
     return
 
