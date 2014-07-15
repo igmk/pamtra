@@ -136,7 +136,12 @@ subroutine make_dist_params(errorstatus)
       if (p_1 /= -99. .and. d_1 == -99.) then
         n_0 = p_1 / delta_d_mono
         if (moment_in == 3)    d_mono = (q_h / (p_1 * a_ms))**(1._dbl / b_ms)
-        if (moment_in == 2)    d_mono = r_eff / 2._dbl
+        if (moment_in == 2)    d_mono = r_eff * 2._dbl
+      endif
+! ! mass_conc and Reff from input
+      if (moment_in == 23) then
+        d_mono = r_eff * 2._dbl
+        n_0 = q_h / (delta_d_mono * a_ms * d_mono**b_ms)
       endif
     endif
     if (trim(dist_name) == 'mono_cosmo_ice' .and. moment_in == 3) then

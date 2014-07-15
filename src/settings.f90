@@ -186,7 +186,7 @@ contains
     if (verbose >= 2) print*,'Start of ', nameOfRoutine
 
     
-        hydro_threshold = 1.d-10   ! [kg/kg] 
+        hydro_threshold = 1.d-20   ! [kg/kg] 
 
 
         !set namelist defaults!
