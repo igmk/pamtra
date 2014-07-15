@@ -219,9 +219,9 @@ subroutine hydrometeor_extinction(errorstatus)
         n_tot      = q2abs(atmo_hydro_n(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
                   atmo_q_hum(i_x,i_y,i_z),sum(atmo_hydro_q(i_x,i_y,i_z, :)))
       else
-	q_h        = q2abs(atmo_hydro_q(i_x,i_y,i_z, ih),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
+	q_h        = q2abs(atmo_hydro_q(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
                   atmo_q_hum(i_x,i_y,i_z),0._dbl)
-	n_tot      = q2abs(atmo_hydro_n(i_x,i_y,i_z, ih),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
+	n_tot      = q2abs(atmo_hydro_n(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
                   atmo_q_hum(i_x,i_y,i_z),0._dbl)
       end if
         r_eff      = atmo_hydro_reff(i_x,i_y,i_z, i_h)
