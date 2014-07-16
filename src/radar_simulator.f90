@@ -19,7 +19,11 @@ delta_h)
     use settings
     use constants
     use radar_moments, only: radar_calc_moments
-    use vars_atmosphere, only: atmo_airturb, atmo_radar_prop, atmo_lat, atmo_lon, atmo_nlyrs
+    use vars_atmosphere, only: atmo_airturb, &
+      atmo_radar_prop, &
+      atmo_lat, &
+      atmo_lon, &
+      atmo_nlyrs
     use vars_output, only: out_radar_spectra, out_radar_snr, out_radar_vel,out_radar_hgt, &
     out_radar_moments, out_radar_slopes, out_radar_edges, out_radar_quality, out_ze, out_att_hydro, & !output of the radar simulator
       out_att_atmo, &
@@ -98,6 +102,9 @@ delta_h)
       return
     end if   
      
+    if (verbose >= 10)print*, "particle_spectrum"
+    if (verbose >= 10)print*, particle_spectrum
+
     frequency = freqs(i_f)
     ! get |K|**2 and lambda
 
@@ -136,7 +143,8 @@ delta_h)
       PIA = 10d0**(0.1d0*PIA) !linearize
       Ze_back = Ze_back/PIA
       particle_spectrum_att = particle_spectrum(i_p,:)/PIA
-
+      if (verbose >= 10)print*, "particle_spectrum_att"
+      if (verbose >= 2)print*, particle_spectrum_att
 
       if (radar_mode == "simple") then
           if (Ze_back .eq. 0.d0) then
@@ -235,7 +243,9 @@ delta_h)
               allocate(turb_spectra(radar_nfft_aliased),stat=alloc_status)
               turb_spectra = particle_spectrum_att
           end if
-
+          if (verbose >= 10)print*, "turb_spectra"
+          if (verbose >= 10)print*, SHAPE(turb_spectra)
+          if (verbose >= 10)print*, turb_spectra
 
           !     if ((turb_spectra(ts_imin) .ne. 0.d0) .or.(turb_spectra(ts_imax) .ne. 0.d0)) then
           !       print*, "WARNING: radar_aliasing_nyquist_interv too small to handle aliasing effects, increase it!"
@@ -270,12 +280,13 @@ delta_h)
           end if
 
           !spetial output for testing the radar simulator
-          if (verbose == -666) then
+          if (verbose == 666) then
             print*, "##########################################"
             print*, "velocity (m/s)"
             print*, spectra_velo
             print*, "##########################################"
             print*, "particle_spec with turbulence (v) [mm⁶/m³/(m/s)] ", MAXVAL(turb_spectra_aliased)
+            print*, SHAPE(turb_spectra_aliased)
             print*, turb_spectra_aliased
             print*, "##########################################"
         out_debug_radarvel(:) = spectra_velo(:) 
@@ -325,7 +336,7 @@ delta_h)
 
           
           !spetial output for testing the radar simulator
-          if (verbose == -666) then
+          if (verbose == 666) then
             print*, "##########################################"
             print*, "particle_spec with turbulence and noise (v) [mm⁶/m³/(m/s)] ", MAXVAL(noise_turb_spectra)
             print*, noise_turb_spectra
@@ -337,7 +348,7 @@ delta_h)
           noise_turb_spectra = noise_turb_spectra * del_v !now [mm⁶/m³]
 
           if (verbose >= 4) then
-              print*,"second K",K
+              print*,"first K",K
               print*,"TOTAL"," Ze back",10*log10(Ze_back)
               print*,"TOTAL"," Ze SUM(particle_spectrum_att)*del_v",10*log10(SUM(particle_spectrum_att)*del_v)
               print*,"TOTAL"," Ze SUM(turb_spectra)*del_v",10*log10(SUM(turb_spectra)*del_v)
@@ -385,7 +396,7 @@ delta_h)
             return
         end if   
           if (verbose >= 4) then
-              print*,"TOTAL"," Ze moments",10*log10(moments(0,1))
+              print*,"TOTAL"," Ze moments log ",10*log10(moments(0,1)), "lin ", moments(0,1)
               print*,"#####################"
           end if
 
@@ -404,7 +415,12 @@ delta_h)
 
           out_radar_spectra(i_x,i_y,i_z,i_f,i_p,:) = 10*log10(noise_turb_spectra)
           WHERE (ISNAN(noise_turb_spectra)) noise_turb_spectra = -9999.d0
-
+          if (verbose >= 5 ) then
+              print*,"final log spectrum"
+              print*, "i_x,i_y,i_z,i_f,i_p,", i_x,i_y,i_z,i_f,i_p
+              print*,out_radar_spectra(i_x,i_y,i_z,i_f,i_p,:)
+              print*,"#####################"
+          end if
           out_radar_snr(i_x,i_y,i_z,i_f,i_p) = SNR
           out_radar_vel(:) = spectra_velo(:)
           out_radar_moments(i_x,i_y,i_z,i_f,i_p,:) = moments(1:4,1)

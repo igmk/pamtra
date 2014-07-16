@@ -179,7 +179,7 @@ class pyPamtra(object):
   
   def _prepareNmlUnitsDimensions(self):
   
-    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb","radar_prop","groundtemp"]
+    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb","radar_prop","groundtemp","wind_w"]
   
     self.nmlSet = dict() #settings which are required for the nml file. keeping the order is important for fortran
     self.nmlSet["hydro_threshold"]=  1.e-10   # [kg/kg] 
@@ -277,6 +277,7 @@ class pyPamtra(object):
     self.dimensions["lfrac"] = ["ngridx","ngridy"]
     self.dimensions["wind10u"] = ["ngridx","ngridy"]
     self.dimensions["wind10v"] = ["ngridx","ngridy"]
+    self.dimensions["wind_w"] = ["ngridx","ngridy","max_nlyrs"]
     self.dimensions["obs_height"] = ["ngridx","ngridy"]
 
     self.dimensions["iwv"] = ["ngridx","ngridy"]
@@ -314,6 +315,7 @@ class pyPamtra(object):
     self.units["lfrac"] = "-"
     self.units["wind10u"] = "m/s"
     self.units["wind10v"] = "m/s"
+    self.units["wind_w"] = "m/s"
     self.units["obs_height"] = "m"
 
     self.units["iwv"] = "kg/m^2"
@@ -642,6 +644,7 @@ class pyPamtra(object):
 
       
     self.p["airturb"] = np.zeros(self._shape3D)
+    self.p["wind_w"] = np.zeros(self._shape3D) + np.nan
     for key in ["cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"] :
       del self.p[key]
       
@@ -828,6 +831,13 @@ class pyPamtra(object):
         warnings.warn(qValue + " set to 0", Warning)
       else:
         self.p[qValue] = kwargs[qValue].reshape(self._shape3D)
+
+    for qValue in ["wind_w"]:
+      if qValue not in kwargs.keys():
+        self.p[qValue] = np.zeros(self._shape3D) + np.nan
+        warnings.warn(qValue + " set to nan", Warning)
+      else:
+        self.p[qValue] = kwargs[qValue].reshape(self._shape3D)        
         
     if "obs_height" in kwargs.keys():
       self.p["obs_height"] = kwargs["obs_height"].reshape(self._shape2D)
@@ -901,7 +911,7 @@ class pyPamtra(object):
     for key in ["hgt_lev","temp_lev","press_lev","relhum_lev"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3Dplus)
     
-    for key in ["airturb",'temp', 'press', 'relhum','hgt']:
+    for key in ["airturb",'temp', 'press', 'relhum','hgt','wind_w']:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3D)   
       
     if "radar_prop" in self.p.keys(): self.p["radar_prop"] = self.p["radar_prop"][condition].reshape(self._shape2D+tuple([2]))
@@ -965,7 +975,7 @@ class pyPamtra(object):
       self.p[key] = newP
       self.p[key][self.p[key]<-1] = missingNumber
       
-    for key in ["airturb"]:
+    for key in ["airturb","wind_w"]:
       newP = np.ones(self._shape3D) * missingNumber
       for x in xrange(self._shape2D[0]):
         for y in xrange(self._shape2D[1]):
@@ -1181,6 +1191,7 @@ class pyPamtra(object):
     if pp_deltaY==0: pp_deltaY = self.p["ngridy"]
 
     if hasattr(self, "fortObject"): del self.fortObject
+    self.fortError = 0
     
     if pp_local_workers == "auto": pp_local_workers = multiprocessing.cpu_count()
     pool = multiprocessing.Pool(processes=pp_local_workers,maxtasksperchild=100)

@@ -63,6 +63,8 @@ subroutine radar_spectrum(&
       out_debug_radarback_wturb, &
       out_debug_radarback_wturb_wnoise
     use vars_index, only: i_x,i_y, i_z, i_f, i_h, i_p
+    use vars_atmosphere, only:  &
+      atmo_wind_w
 
     implicit none
 
@@ -267,7 +269,11 @@ subroutine radar_spectrum(&
           radar_airmotion_model,nameOfRoutine)
         !constant air motion
         if (radar_airmotion_model .eq. "constant") then
-            vel_spec = vel_spec + radar_airmotion_vmin
+            if ((atmo_wind_w(i_x,i_y,i_z) /= 0.0) .and. (.not. ISNAN(atmo_wind_w(i_x,i_y,i_z)))) then
+              vel_spec = vel_spec + atmo_wind_w(i_x,i_y,i_z)
+            else
+              vel_spec = vel_spec + radar_airmotion_vmin
+            end if
             !interpolate OR average (depending who's bins size is greater) from N(D) bins to radar bins.
             call rescale_spectra(err,nbins,radar_nfft_aliased,.true.,vel_spec,back_vel_spec,out_radar_velo_aliased,particle_spec) ! particle_spec in [mm⁶/m³/m * m/(m/s)]
         !step function

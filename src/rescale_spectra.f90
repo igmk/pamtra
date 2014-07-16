@@ -83,8 +83,9 @@ contains
       end subroutine dsort
     end interface
 
+    err = 0
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
-
+    
     call assert_true(err,nx1>0,&
         "nx1 must be greater 0") 
     call assert_true(err,nx2>1,&

@@ -81,7 +81,8 @@ module vars_atmosphere
        atmo_airturb, &
        atmo_vapor_pressure, &
        atmo_rho_vap, &
-       atmo_q_hum 
+       atmo_q_hum, &
+       atmo_wind_w
 
   real(kind=dbl), allocatable, dimension(:,:,:,:) :: atmo_hydro_q,&
        atmo_hydro_reff, &
@@ -235,6 +236,7 @@ module vars_atmosphere
     allocate(atmo_hgt(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
     allocate(atmo_delta_hgt_lev(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
     allocate(atmo_airturb(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
+    allocate(atmo_wind_w(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
 
     allocate(atmo_hydro_q(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs,n_hydro))
     allocate(atmo_hydro_q_column(atmo_ngridx,atmo_ngridy,n_hydro))
@@ -279,6 +281,7 @@ module vars_atmosphere
     atmo_hgt(:,:,:) = nan()
     atmo_delta_hgt_lev(:,:,:) = nan()
     atmo_airturb(:,:,:) = 0.d0
+    atmo_wind_w(:,:,:) =nan()
 
     atmo_hydro_q(:,:,:,:) = nan()
     atmo_hydro_q_column(:,:,:) = nan()
@@ -317,6 +320,7 @@ module vars_atmosphere
     if (allocated(atmo_hgt)) deallocate(atmo_hgt)
     if (allocated(atmo_delta_hgt_lev)) deallocate(atmo_delta_hgt_lev)
     if (allocated(atmo_airturb)) deallocate(atmo_airturb)
+    if (allocated(atmo_wind_w)) deallocate(atmo_wind_w)
 
     if (allocated(atmo_hydro_q)) deallocate(atmo_hydro_q)
     if (allocated(atmo_hydro_q_column)) deallocate(atmo_hydro_q_column)
@@ -544,6 +548,8 @@ module vars_atmosphere
           atmo_hgt(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1)            = atmo_hgt(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
           atmo_airturb(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1)        = atmo_airturb(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
           atmo_airturb(i,j,lay_use+1)                             = atmo_airturb(i,j,lay_use) ! Keep the same value for the 2 children layer
+          atmo_wind_w(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1)         = atmo_wind_w(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
+          atmo_wind_w(i,j,lay_use+1)                              = atmo_wind_w(i,j,lay_use) ! Keep the same value for the 2 children layer
           atmo_vapor_pressure(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1) = atmo_vapor_pressure(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
           atmo_rho_vap(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1)        = atmo_rho_vap(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
           atmo_q_hum(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1)          = atmo_q_hum(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
@@ -828,6 +834,8 @@ module vars_atmosphere
         "found nan in atmo_delta_hgt_lev")   
     call assert_false(err,ANY(ISNAN(atmo_airturb(nx,ny,1:atmo_nlyrs(nx,ny)))),&
         "found nan in atmo_airturb")
+!     call assert_false(err,ANY(ISNAN(atmo_wind_w(nx,ny,1:atmo_nlyrs(nx,ny)))),&
+!         "found nan in atmo_wind_w")
     call assert_false(err,ANY(ISNAN(atmo_relhum_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1))),&
         "found nan in atmo_relhum_lev")   
     call assert_false(err,ANY(ISNAN(atmo_press_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1))),&
@@ -897,7 +905,7 @@ module vars_atmosphere
     write(6,'(6a12)') 'lay_number','height','pressure','temp.','RH','air_turb'
     do nz=1,atmo_nlyrs(i,j)
       write(6,'(i12,5f12.4)') nz,atmo_hgt(i,j,nz), atmo_press(i,j,nz), &
-                              atmo_temp(i,j,nz), atmo_relhum(i,j,nz), atmo_airturb(i,j,nz)
+                              atmo_temp(i,j,nz), atmo_relhum(i,j,nz), atmo_airturb(i,j,nz), atmo_wind_w(i,j,nz)
     enddo
     write(6,'(8a12)') 'lay_number','height','Q_hydro1','Q_hydro2','Q_hydro3','Q_hydro4','Q_hydro5','Q_hydro6'
     do nz=1,atmo_nlyrs(i,j)
@@ -971,6 +979,7 @@ module vars_atmosphere
     print*, "atmo_hgt", atmo_hgt
     print*, "atmo_delta_hgt_lev", atmo_delta_hgt_lev
     print*, "atmo_airturb", atmo_airturb
+    print*, "atmo_wind_w", atmo_wind_w
 
     print*, "atmo_hydro_q", atmo_hydro_q
     print*, "atmo_hydro_reff", atmo_hydro_reff

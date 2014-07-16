@@ -108,6 +108,7 @@ python module pyPamtraLib ! in
             real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_hydro_reff_column
             real(kind=sgl) :: cwp
             real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_radar_prop
+            real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_wind_w
             real(kind=dbl), allocatable,dimension(:,:) :: atmo_iwv
             integer(kind=long_bn), allocatable,dimension(:,:) :: atmo_model_i
             integer(kind=long_bn), allocatable,dimension(:,:) :: atmo_model_j

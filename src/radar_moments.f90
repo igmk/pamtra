@@ -133,17 +133,17 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
     
     !check whether peak is NOT present:
     if (SUM(radar_spectrum_arr(nn,left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise <radar_min_spectral_snr &
-      .or. (right_edge-left_edge <= 2)) then
+      .or. (right_edge-left_edge <= 2)  .or. (right_edge-left_edge ==  radar_nfft+ 1) ) then
 
-      !no or too thin peak
+      !no or too thin peak or too wide peak
       if (verbose >= 3) print*, "Skipped peak because of:", &
         SUM(radar_spectrum_in(left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise <radar_min_spectral_snr, &
-        (right_edge-left_edge <= 2)
+        (right_edge-left_edge <= 2), (right_edge-left_edge ==  radar_nfft+ 1)
 
       if (nn == 1) then !right now, only primary peak is processed...
-        radar_spectrum_out = -9999
-        moments = -9999
-        edge = -9999
+        radar_spectrum_out(:) = -9999
+        moments(:,nn) = -9999
+        edge(:,nn) = -9999
         quality = quality + 64 !no peak found
       end if
 
@@ -181,6 +181,9 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
       radar_spectrum_4mom(1:left_edge) = 0.d0
       radar_spectrum_4mom(right_edge:radar_nfft) = 0.d0
 
+      if (verbose >= 5) print*, "radar_spectrum_smooth", SHAPE(radar_spectrum_4mom),  radar_spectrum_4mom
+      if (verbose >= 5) print*, "spectra_velo", SHAPE(spectra_velo), spectra_velo
+
 !     calculate the moments
       moments(0,nn) = SUM(radar_spectrum_4mom) ! mm⁶/m³
       moments(1,nn) = SUM(radar_spectrum_4mom*spectra_velo)/moments(0,nn) ! m/s
@@ -197,8 +200,8 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
         radar_spectrum_out(1:left_edge) = 0.d0
         radar_spectrum_out(right_edge:radar_nfft) = 0.d0
         end if
-      end if
-    end do
+      end if !skip peak
+    end do !no peaks
 
     if (additionalPeaks) quality = quality + 2
 
@@ -209,7 +212,7 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
       slope = -9999
       moments = -9999
       edge = -9999
-      quality = quality + 128 !error in oise estiamtion
+      quality = quality + 128 !error in noise estiamtion
     else 
       if (verbose >= 5) print*,MAXVAL(radar_spectrum_only_noise), noise
       !slopes are estimated between max of peak and max of nosise level
@@ -233,23 +236,28 @@ specMax = 10*log10(MAXVAL(radar_spectrum_in)) !without any noise removed!
       slope(:,1) = 0.d0 ! dB/(m/s)
       slope(1,1) = (specMax-noiseMax)/(spectra_velo(spec_max_pp)-spectra_velo(left_edge_pp))
       slope(2,1) = (noiseMax-specMax)/(spectra_velo(right_edge_pp)-spectra_velo(spec_max_pp))
-    end if
+
+      if (verbose >= 5) print*, "left slope",specMax, noiseMax, spectra_velo(spec_max_pp),&
+        spectra_velo(left_edge_pp+1), slope(1,1)
+      if (verbose >= 5) print*, "right slope",noiseMax,specMax, spectra_velo(right_edge_pp-1),&
+        spectra_velo(spec_max_pp), slope(2,1)
+
+    end if !moments(1,1) == -9999
 
 
 
 
-    if (verbose >= 5) print*, "left slope",specMax, noiseMax, spectra_velo(spec_max_pp),&
-      spectra_velo(left_edge_pp+1), slope(1,1)
-    if (verbose >= 5) print*, "right slope",noiseMax,specMax, spectra_velo(right_edge_pp-1),&
-      spectra_velo(spec_max_pp), slope(2,1)
+
 
     if (verbose >= 5) print*, "radar_nfft", radar_nfft
     if (verbose >= 5) print*, "left_edge", left_edge_pp
     if (verbose >= 5) print*, "right_edge", right_edge_pp
     if (verbose >= 5) print*, "spec_max_ii", spec_max_pp
-    if (verbose >= 5) print*, "radar_spectrum_smooth", SHAPE(radar_spectrum_4mom),  radar_spectrum_4mom
-    if (verbose >= 5) print*, "spectra_velo", SHAPE(spectra_velo), spectra_velo
-! 
+    if (verbose >= 5) print*, "quality", quality
+    if (verbose >= 5) print*, "edge", edge
+    if (verbose >= 5) print*, "moments", moments
+    if (verbose >= 5) print*, "radar_spectrum_out", radar_spectrum_out
+
     !noise for the output
     noise = noise * radar_nfft
 
