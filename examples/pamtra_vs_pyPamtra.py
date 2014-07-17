@@ -36,6 +36,7 @@ plt.plot(pam.r["tb"].ravel(),label="pyPamtra level")
 plt.figure(2)
 plt.title("Ze")
 plt.plot(Ze.compressed(),label="pyPamtra level")
+print Ze.compressed()
 
 pam = pyPamtra.pyPamtra()
 pam.df.readFile("../descriptor_file_COSMO.txt")
@@ -51,6 +52,7 @@ plt.figure(1)
 plt.plot(pam.r["tb"].ravel(),label="pyPamtra layer")
 plt.figure(2)
 plt.plot(Ze.compressed(),label="pyPamtra layer")
+print Ze.compressed()
 
 print "##########################"
 os.remove("../output/example_input_035.5000.nc")
@@ -88,7 +90,6 @@ plt.plot(Ze.compressed(),":",lw=4,label="Pamtra layer")
 print Ze.compressed()
 plt.legend()
 ncData.close()
-
 
 #for nx in [0,1]:
   #for ny in [0,1]:

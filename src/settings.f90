@@ -333,7 +333,7 @@ contains
 !        ! sec moments
         n_moments=1
         moments_file='snowCRYSTAL'
-        radar_polarisation = "NN,HH,VV" ! comma spearated list "NN,HV,VH,VV,HH", translated into radar_pol array
+        radar_polarisation = "NN" ! comma spearated list "NN,HV,VH,VV,HH", translated into radar_pol array
         ! radar_simulator
         !number of FFT points in the Doppler spectrum [typically 256 or 512]
         radar_nfft=256
