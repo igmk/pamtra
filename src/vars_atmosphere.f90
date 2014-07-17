@@ -417,7 +417,6 @@ module vars_atmosphere
             atmo_temp(i,j,1:atmo_nlyrs(i,j))   = work_xwc(3,:)       ! layer temperature [K]
             atmo_relhum(i,j,1:atmo_nlyrs(i,j)) = work_xwc(4,:)       ! layer relative humidity [%]
           endif
-
 ! FILL level variables
           if (atmo_input_type == 'lev') then	
             atmo_hgt_lev(i,j,2:atmo_nlyrs(i,j)+1)    = work_xwc(1,:) ! layer height [m]
@@ -425,6 +424,7 @@ module vars_atmosphere
             atmo_temp_lev(i,j,2:atmo_nlyrs(i,j)+1)   = work_xwc(3,:) ! layer temperature [K]
             atmo_relhum_lev(i,j,2:atmo_nlyrs(i,j)+1) = work_xwc(4,:) ! layer relative humidity [%]
           endif
+
 
 ! FILL hydrometeor moments          
           index_hydro = 5
@@ -437,9 +437,11 @@ module vars_atmosphere
               atmo_hydro_reff(i,j,1:atmo_nlyrs(i,j),i_hydro) = work_xwc(index_hydro,:)
               if (i_hydro == 1) atmo_hydro_reff_column(i,j,i_hydro) = work_xwp(index_hydro)
 
+
             elseif (moment_in_arr(i_hydro) == 3) then
               atmo_hydro_q(i,j,1:atmo_nlyrs(i,j),i_hydro)    = work_xwc(index_hydro,:)
               if (i_hydro == 1) atmo_hydro_q_column(i,j,i_hydro) = work_xwp(index_hydro)
+
 
             elseif  (moment_in_arr(i_hydro) == 12) then
               atmo_hydro_n(i,j,1:atmo_nlyrs(i,j),i_hydro)    = work_xwc(index_hydro,:)
@@ -453,6 +455,7 @@ module vars_atmosphere
               if (i_hydro == 1) atmo_hydro_n_column(i,j,i_hydro) = work_xwp(index_hydro)
               if (i_hydro == 1) atmo_hydro_q_column(i,j,i_hydro) = work_xwp(index_hydro+1)
 
+
             elseif (moment_in_arr(i_hydro) == 23) then
               atmo_hydro_reff(i,j,1:atmo_nlyrs(i,j),i_hydro) = work_xwc(index_hydro,:)
               atmo_hydro_q(i,j,1:atmo_nlyrs(i,j),i_hydro)    = work_xwc(index_hydro+1,:)
@@ -460,12 +463,14 @@ module vars_atmosphere
               if (i_hydro == 1) atmo_hydro_q_column(i,j,i_hydro) = work_xwp(index_hydro+1)
             endif
 
+
             if (moment_in_arr(i_hydro) < 5) index_hydro = index_hydro + 1
             if (moment_in_arr(i_hydro) > 5) index_hydro = index_hydro + 2
           enddo
 ! FILL turbulence for radar moments or spectrum mode
           if (radar_mode == "moments" .or. radar_mode == "spectrum") &
           atmo_airturb(i,j,1:atmo_nlyrs(i,j)) = work_xwc(index_hydro,:) 
+
 
           deallocate(work_xwc)
 
@@ -953,6 +958,7 @@ module vars_atmosphere
 !     do nz=1,atmo_nlyrs(i,j)
 !       write(6,'(7f12.4)') atmo_hgt_lev(i,j,nz+1),atmo_hydro_reff(i,j,nz,:)
 !     enddo
+
 
     return
 

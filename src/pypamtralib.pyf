@@ -258,13 +258,14 @@ python module pyPamtraLib ! in
             integer(kind=long_bn) :: att_npol
             character(len=99) :: input_file
             logical :: radar_use_hildebrand
-            logical :: radar_convolution_fft
+            logical :: hydro_includehydroinrhoair
             character(len=300) :: descriptor_file_name
             logical :: active
             integer, parameter,optional :: maxlay=600
             real(kind=dbl) :: radar_max_v
             character(len=8) dimension(100) :: frqs_str
             real(kind=dbl), parameter,optional :: direct_flux=0._dbl
+            logical :: radar_convolution_fft
             logical :: in_python
             logical :: lhyd_extinction
             integer(kind=long_bn) :: nfrq

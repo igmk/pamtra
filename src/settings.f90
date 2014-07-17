@@ -73,6 +73,7 @@ module settings
     radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise0) we can skip that.
     radar_convolution_fft,&!use fft for convolution of spectrum
     save_psd, &
+    hydro_includeHydroInRhoAir, &
     radar_smooth_spectrum, &
     hydro_fullSpec, &
     hydro_limit_density_area, &
@@ -128,7 +129,8 @@ contains
         namelist / surface_params / ground_type,salinity, emissivity
         namelist / gas_abs_mod / lgas_extinction, gas_mod
         namelist / hyd_opts / lhyd_extinction, lphase_flag, hydro_fullSpec, hydro_limit_density_area,&
-                  hydro_softsphere_min_density, hydro_adaptive_grid, tmatrix_db, tmatrix_db_path
+                  hydro_softsphere_min_density, hydro_adaptive_grid, tmatrix_db, tmatrix_db_path, &
+                  hydro_includeHydroInRhoAir, hydro_threshold
 	namelist / moments / n_moments, moments_file
 	namelist / radar_simulator / radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
 		  radar_pnoise0, radar_airmotion, radar_airmotion_model, &
@@ -283,7 +285,7 @@ contains
     if (verbose >= 2) print*,'Start of ', nameOfRoutine
 
     
-        hydro_threshold = 1.d-10   ! [kg/kg] 
+        hydro_threshold = 1.d-20   ! [kg/kg] 
 
 
         !set namelist defaults!
@@ -324,6 +326,7 @@ contains
         ! sec hyd_opts
         lhyd_extinction=.true.
         lphase_flag = .true.
+        hydro_includeHydroInRhoAir = .true.
         hydro_fullSpec = .false.
         hydro_limit_density_area = .true.
         hydro_softsphere_min_density = 10. !kg/m^3
@@ -406,6 +409,7 @@ contains
       print*, 'radar_no_ave: ', radar_no_ave
       print*, 'input_type: ', input_type
       print*, 'dump_to_file: ', dump_to_file
+      print*, 'hydro_includeHydroInRhoAir: ', hydro_includeHydroInRhoAir
       print*, 'passive: ', passive
       print*, 'radar_airmotion_model: ', radar_airmotion_model
       print*, 'tmatrix_db_path: ', tmatrix_db_path

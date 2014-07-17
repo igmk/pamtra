@@ -216,6 +216,7 @@ class pyPamtra(object):
     # sec hyd_opts
     self.nmlSet["lhyd_extinction"]= True
     self.nmlSet["lphase_flag"]=  True
+    self.nmlSet["hydro_includeHydroInRhoAir"] = True
     self.nmlSet["hydro_fullspec"] = False
     self.nmlSet["hydro_limit_density_area"] = True
     self.nmlSet["hydro_softsphere_min_density"] = 10.    
