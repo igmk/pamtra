@@ -303,7 +303,7 @@ python module pyPamtraLib ! in
             real(kind=dbl), allocatable,dimension(:) :: n_tot_arr
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: beta_as_arr
             character(len=15), allocatable,dimension(:) :: hydro_name_arr
-            real(kind=dbl), allocatable,dimension(:,:,:,:) :: descriptor_canting_arr
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_4_arr
             real(kind=dbl), allocatable,dimension(:) :: r_eff_arr
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: b_ms_arr
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: d_1_arr
@@ -311,7 +311,7 @@ python module pyPamtraLib ! in
             integer(kind=long_bn), allocatable,dimension(:) :: liq_ice_arr
             character(len=30), allocatable,dimension(:) :: vel_size_mod_arr
             character(len=15), allocatable,dimension(:) :: dist_name_arr
-            real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_4_arr
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: canting_arr
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_1_arr
             integer(kind=long_bn) :: n_hydro
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_3_arr
