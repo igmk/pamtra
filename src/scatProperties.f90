@@ -209,7 +209,6 @@ module scatProperties
       end if
       refIndex = refre-Im*refim  ! mimicking a
 
-
 !!!!modern RT4 routines !!!
     if (scat_name == "tmatrix") then
     
@@ -265,6 +264,24 @@ module scatProperties
       do i_p= 1, radar_npol
         if (radar_pol(i_p) == "NN") then
           back_hydro(i_p) = scatter_matrix_hydro(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
+        else if (radar_pol(i_p) == "HH") then
+          !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
+          back_hydro(i_p) = + scatter_matrix_hydro(1,16,1,16,2) &
+                            - scatter_matrix_hydro(1,16,2,16,2) & 
+                            - scatter_matrix_hydro(2,16,1,16,2) & 
+                            + scatter_matrix_hydro(2,16,2,16,2) 
+        else if (radar_pol(i_p) == "VV") then
+          !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
+          back_hydro(i_p) = + scatter_matrix_hydro(1,16,1,16,2) &
+                            + scatter_matrix_hydro(1,16,2,16,2) & 
+                            + scatter_matrix_hydro(2,16,1,16,2) & 
+                            + scatter_matrix_hydro(2,16,2,16,2) 
+        else if (radar_pol(i_p) == "HV") then
+          !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
+          back_hydro(i_p) = + scatter_matrix_hydro(1,16,1,16,2) &
+                            - scatter_matrix_hydro(1,16,2,16,2) & 
+                            + scatter_matrix_hydro(2,16,1,16,2) & 
+                            - scatter_matrix_hydro(2,16,2,16,2) 
         else
           msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)
           call report(err, msg, nameOfRoutine)
@@ -272,8 +289,34 @@ module scatProperties
           return
         end if
       end do 
+
+print*, "11",scatter_matrix_hydro(1,16,1,16,2)
+print*, "12",scatter_matrix_hydro(1,16,2,16,2) 
+print*, "21",scatter_matrix_hydro(2,16,1,16,2) 
+print*, "22",scatter_matrix_hydro(2,16,2,16,2) 
+
+
+
       back_hydro(:) = 4*pi*back_hydro(:)!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squard entries!
       kext_hydro = extinct_matrix_hydro(1,1,16,1) !11 of extinction matrix (=not polarized), at 0°, first quadrature. equal to extinct_matrix(1,1,16,2)
+
+!       back_hydro(1) = scatter_matrix_hydro(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
+!       !hh
+!       back_hydro(2) = (scatter_matrix_hydro(1,16,1,16,2) &
+!            - scatter_matrix_hydro(1,16,2,16,2) &
+!            - scatter_matrix_hydro(2,16,1,16,2) &
+!            + scatter_matrix_hydro(2,16,2,16,2) ) /2.d0
+!       !vv
+!       back_hydro(3) = (scatter_matrix_hydro(1,16,1,16,2) &
+!            + scatter_matrix_hydro(1,16,2,16,2) &
+!            + scatter_matrix_hydro(2,16,1,16,2) &
+!            + scatter_matrix_hydro(2,16,2,16,2) ) /2.d0
+!       !vh 
+!       back_hydro(4) = (scatter_matrix_hydro(1,16,1,16,2) &
+!            - scatter_matrix_hydro(1,16,2,16,2) &
+!            + scatter_matrix_hydro(2,16,1,16,2) &
+!            - scatter_matrix_hydro(2,16,2,16,2) ) /2.d0
+
 
 !!!!old style RT3 routines !!!
 

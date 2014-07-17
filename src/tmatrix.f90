@@ -155,6 +155,7 @@ module tmatrix
         del_d_eff = del_d(ir)
 
       beta = canting(ir)
+
       !in case we have no hydrometeors, we need no tmatrix calculations!
       if (ndens_eff == 0.d0) then
         if (verbose >= 4) print*, "Skipped iteration", ir, "because ndens_eff", ndens_eff
@@ -341,7 +342,23 @@ module tmatrix
         if (radar_pol(i_p) == "NN") then
           !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, sc
           back_spec(i_p,ir) = 4*pi*ndens_eff*scatter_matrix_part(1,16,1,16,2)
-        else
+      else if (radar_pol(i_p) == "HH") then
+        !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
+        back_spec(i_p,ir) = + scatter_matrix_part(1,16,1,16,2) &
+                            - scatter_matrix_part(1,16,2,16,2) & 
+                            - scatter_matrix_part(2,16,1,16,2) & 
+                            + scatter_matrix_part(2,16,2,16,2) 
+      else if (radar_pol(i_p) == "VV") then
+        back_spec(i_p,ir) = + scatter_matrix_part(1,16,1,16,2) &
+                            + scatter_matrix_part(1,16,2,16,2) & 
+                            + scatter_matrix_part(2,16,1,16,2) & 
+                            + scatter_matrix_part(2,16,2,16,2) 
+      else if (radar_pol(i_p) == "HV") then
+        back_spec(i_p,ir) = + scatter_matrix_part(1,16,1,16,2) &
+                            - scatter_matrix_part(1,16,2,16,2) & 
+                            + scatter_matrix_part(2,16,1,16,2) & 
+                            - scatter_matrix_part(2,16,2,16,2) 
+      else
           msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)
           err = fatal
           call report(err, msg, nameOfRoutine)
