@@ -234,6 +234,7 @@ python module pyPamtraLib ! in
             character(len=18) :: freq_str
             character(len=20) :: file_desc
             real(kind=dbl) :: radar_airmotion_vmin
+            character(len=3) :: liq_mod
             character(len=100) :: creator
             character(len=8) :: radar_airmotion_model
             logical :: hydro_adaptive_grid

@@ -80,6 +80,7 @@ module settings
     add_obs_height_to_layer
 
     character(3) :: gas_mod
+    character(3) :: liq_mod
     character(20) :: moments_file,file_desc
     character(100) :: input_path, output_path, tmp_path,creator, data_path
     character(18) :: freq_str
@@ -128,7 +129,8 @@ contains
         namelist / surface_params / ground_type,salinity, emissivity
         namelist / gas_abs_mod / lgas_extinction, gas_mod
         namelist / hyd_opts / lhyd_extinction, lphase_flag, hydro_fullSpec, hydro_limit_density_area,&
-                  hydro_softsphere_min_density, hydro_adaptive_grid, tmatrix_db, tmatrix_db_path
+                  hydro_softsphere_min_density, hydro_adaptive_grid, tmatrix_db, tmatrix_db_path, &
+                  liq_mod
 	namelist / moments / n_moments, moments_file
 	namelist / radar_simulator / radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
 		  radar_pnoise0, radar_airmotion, radar_airmotion_model, &
@@ -328,6 +330,7 @@ contains
         hydro_limit_density_area = .true.
         hydro_softsphere_min_density = 10. !kg/m^3
         hydro_adaptive_grid = .true.
+        liq_mod = "Ell"
         tmatrix_db = "none" ! none or file
         tmatrix_db_path = "database/"
 !        ! sec moments
@@ -416,6 +419,7 @@ contains
       print*, 'crm_constants: ', crm_constants
       print*, 'units: ', units
       print*, 'gas_mod: ', gas_mod
+      print*, 'liq_mod: ', liq_mod
       print*, 'moments_file: ', moments_file
       print*, 'radar_receiver_uncertainty_std: ', radar_receiver_uncertainty_std
       print*, 'hydro_threshold: ', hydro_threshold

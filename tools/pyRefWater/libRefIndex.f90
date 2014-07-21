@@ -15,7 +15,7 @@ module libRefIndex
 
   double precision::   absind,&! absind absorptive index (n_i/n_r) []
        abscoef ! abscoef absorption coefficient (4*pi*n_i*f/c) [1/m]
-
+  integer :: err
 
   !input
   !f2py intent(in) :: s,T,f
@@ -23,7 +23,7 @@ module libRefIndex
   !f2py intent(out) :: refre,refim
 
 
-  call ref_water(s,T,f,refre,refim,absind,abscoef)
+  call ref_water(err,s,T,f,refre,refim,absind,abscoef)
 
   end subroutine get_refIndex_water
 

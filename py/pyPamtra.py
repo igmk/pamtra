@@ -215,6 +215,7 @@ class pyPamtra(object):
     self.nmlSet["gas_mod"]= 'R98'
     # sec hyd_opts
     self.nmlSet["lhyd_extinction"]= True
+    self.nmlSet["liq_mod"]= "Ell"
     self.nmlSet["lphase_flag"]=  True
     self.nmlSet["hydro_fullspec"] = False
     self.nmlSet["hydro_limit_density_area"] = True
