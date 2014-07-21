@@ -53,6 +53,7 @@ OBJECTS=kinds.o \
 	scat_utilities.o \
 	dsd_utilities.o \
 	mpm93.o \
+	eps_water.o \
 	get_surface.o \
 	mie_scat_utilities.o \
 	mie_spheres.o \
@@ -64,7 +65,6 @@ OBJECTS=kinds.o \
 	vars_jacobian.o \
 	rosen98_gasabs.o \
 	surface.o \
-	eps_water.o \
 	eps_ice.o \
 	eps_mix.o \
 	equcom.o \

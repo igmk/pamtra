@@ -34,21 +34,23 @@ module eps_water
     character(len=80) :: msg
     character(len=30) :: nameOfRoutine = 'get_eps_water'
 
+    if (verbose >= 4) call report(info,'Start of ', nameOfRoutine)    
+
 
     if (liq_mod .eq. 'Ell') then
-      print*, 'Ellison'
+      if (verbose >= 4) print*, 'Take Ellison model for refractive index'
       eps_water = eps_water_ellison(s,T,f)
 
     else if (liq_mod .eq. 'Lie') then
-      print*, 'Liebe'
+      if (verbose >= 4) print*, 'Take Liebe model for refractive index'
       eps_water = eps_water_liebe(s,T,f)
 
     else if (liq_mod .eq. 'Ray') then
-      print*, 'Ray'  
+      if (verbose >= 4) print*, 'Take Ray model for refractive index'
       eps_water = eps_water_ray(s,T,f)
 
     else if (liq_mod .eq. 'Sto') then
-      print*, 'Stogryn'
+      if (verbose >= 4) print*, 'Take Stogryn model for refractive index'
       eps_water = eps_water_stogryn(s,T,f)
 
     else 
@@ -59,6 +61,7 @@ module eps_water
     endif
 
 
+    if (verbose >= 4) call report(info,'End of ', nameOfRoutine)    
 
   end subroutine get_eps_water
 
@@ -506,8 +509,10 @@ module eps_water
 
       !convert frequency to microns
       wl = 1.e6*2.99792458e8/(f*1.e9)
-      if (wl .lt. wlmin .or. wl .gt. wlmax) goto 405
-      print*,wl
+      if (wl .lt. wlmin .or. wl .gt. wlmax) then
+        print*,wl, wlmin, wlmax, "out of wavelength specifications"
+        stop 
+        end if 
       !0.2 micron to 1000.0 microns - table lookup
       if (wl .gt. cutwat) goto 356
       do i=2, numwat
@@ -515,12 +520,12 @@ module eps_water
          i1 = i-1
          i2 = i
          goto 348
-      343 print*, 'l1'
+      343 CONTINUE
       end do 
 
       i1 = numwat - 2 
       i2 = numwat - 1
-      348 print*,'l2'
+      348 CONTINUE
       fac = (wl-wltabw(i1))/(wltabw(i2)-wltabw(i1))
       rn = rntabw(i1)+fac*(rntabw(i2)-rntabw(i1))
       cn = cntabw(i1)+fac*(cntabw(i2)-cntabw(i1))
@@ -528,7 +533,7 @@ module eps_water
       
       !0.1 cm to 10 cm
       !define temperature terms and wavelength in cm
-      356 print*,'l3'
+      356 CONTINUE
       T1=T+273.0
       T2=T-25.0
       xl=wl/10000.0
@@ -562,7 +567,7 @@ module eps_water
 
       !complex permittivity
       eps_water_ray = dcmplx(eps_r,eps_i)
-      print*,eps_water_ray
+!       print*,eps_water_ray
       n = sqrt(eps_water_ray)
       rn = real(n)
       cn = aimag(n)
@@ -574,10 +579,9 @@ module eps_water
                + 0.41*exp(-abs(log10(wl/62.0)/0.35)**1.7)&
                + 0.25*exp(-abs(log10(wl/300.0)/0.47)**3.0)
 
-      402 print*,'l5'
+      402 CONTINUE
       n = dcmplx(rn,cn)
       eps_water_ray = n**2
-      405 print*, 'done'
       return
 
       end function eps_water_ray
