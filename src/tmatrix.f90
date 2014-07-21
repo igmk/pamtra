@@ -2,7 +2,7 @@ module tmatrix
   use kinds
   use constants, only: pi, c
   use settings, only: nummu, nstokes, verbose, active, passive, &
-    tmatrix_db, tmatrix_db_path, radar_npol, radar_pol
+    tmatrix_db, tmatrix_db_path, radar_npol, radar_pol, liq_mod
   use rt_utilities, only: lobatto_quadrature
   use report_module
 
@@ -208,12 +208,26 @@ module tmatrix
 !                   "/min1_", REAL(mindex), "/min2_",IMAG(mindex), &
 !                   "/axxi_",axi, "/asra_",as_ratio(ir), "/alph_",alpha, "/beta_",beta,"/"
 
-        write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,ES12.6,A6,SP,I3.2,SS,2(A6,ES10.4),A6,A5,4(A6,ES10.4),A1)'),&
+        if (phase == 1) then !ref_index name depends on phase
+          write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,ES12.6,A6,SP,I3.2,SS,2(A6,ES10.4),A6,A3,4(A6,ES10.4),A1)'),&
                   "/v01","/quad_", quad, &
                   "/numu_",nummu,"/azno_",azimuth_num, "/a0no_", azimuth0_num, "/nsto_",nstokes,&
                   "/freq_",frequency, &
-                  "/phas_",phase, "/temp_",temp, "/dens_",density(ir), "/meth_","stand",&
+                  "/phas_",phase, "/temp_",temp, "/dens_",density(ir), "/refi_",liq_mod,&
                   "/diam_",axi, "/asra_",as_ratio(ir), "/alph_",alpha, "/beta_",beta,"/"
+        else if (phase == -1) then
+          write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,ES12.6,A6,SP,I3.2,SS,2(A6,ES10.4),A6,A3,4(A6,ES10.4),A1)'),&
+                  "/v01","/quad_", quad, &
+                  "/numu_",nummu,"/azno_",azimuth_num, "/a0no_", azimuth0_num, "/nsto_",nstokes,&
+                  "/freq_",frequency, &
+                  "/phas_",phase, "/temp_",temp, "/dens_",density(ir), "/refi_","Mae",&
+                  "/diam_",axi, "/asra_",as_ratio(ir), "/alph_",alpha, "/beta_",beta,"/"
+        else
+            errorstatus = fatal
+            msg = "Do not understand phase"
+            call report(errorstatus, msg, nameOfRoutine)
+            return
+        end if  
 
         db_file = "spheroid.dat"
         INQUIRE(FILE=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file), EXIST=file_exists)
