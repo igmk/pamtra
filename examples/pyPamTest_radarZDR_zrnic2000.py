@@ -4,8 +4,8 @@ import pyPamtraImport
 import meteoSI
 from copy import deepcopy
 
-freqs = [3e8/0.05/1e9]
-nD = 20
+freqs = [3e8/0.0545/1e9]
+nD = 31
 temps = [0,10,20,30]
 #temps = [0,300 + meteoSI.Tnull,301 + meteoSI.Tnull]
 styles = ["k:","k-.","k-","k--","r"]
@@ -25,25 +25,26 @@ for tt in xrange(nT):
 pam.p["relhum_lev"][:] = 10
 
 pam.p["airturb"][:] = 0
-pam.set["verbose"] = 4
+pam.set["verbose"] = 0
 pam.set["pyVerbose"] =0
 pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 pam.nmlSet["randomseed"] = 0
 pam.nmlSet["radar_mode"] = "simple"
 pam.nmlSet["tmatrix_db"] = "none"
-#pam.nmlSet["tmatrix_db"] = "file"
+pam.nmlSet["tmatrix_db"] = "file"
 pam.nmlSet["tmatrix_db_path"] = "/ssdwork/mmaahn/tmatrix_db/"
-pam.nmlSet["radar_polarisation"] = "NN,HH,VV"
+pam.nmlSet["radar_polarisation"] = "NN,HH,VV,HV"
+pam.nmlSet["liq_mod"] = "Ray"
 
 
 pam.p["hydro_q"][:] = 0.002
 
 pam.nmlSet["randomseed"] = 0
 
-  pam.nmlSet["hydro_fullspec"] = True
-  pam.df.addFullSpectra()
+pam.nmlSet["hydro_fullspec"] = True
+pam.df.addFullSpectra()
 
-  rho_water = 1000.
+rho_water = 1000.
 
 D_es = np.linspace(0.5,8,nD)*1e-3
 for dd,d_e in enumerate(D_es):
@@ -71,25 +72,34 @@ pam.runPamtra(freqs,checkData=False)
 
 
 
-plt.figure()
-plt.title("NN")
-for tt in xrange(nT):
-  plt.plot(D_es,pam.r["Ze"][:,tt,0,0,0],styles[tt],label=str(temps[tt])+"C")
-plt.plot(D_es, np.log10((D_es*1000)**6)*10,"r")
-plt.ylim(-20,70)  
+#plt.figure()
+#plt.title("NN")
+#for tt in xrange(nT):
+  #plt.plot(D_es,pam.r["Ze"][:,tt,0,0,0],styles[tt],label=str(temps[tt])+"C")
+#plt.plot(D_es, np.log10((D_es*1000)**6)*10,"r")
+#plt.ylim(-20,70)  
+#plt.ylabel("Ze [dBz]")
 
 plt.figure()
 plt.title("HH")
 for tt in xrange(nT):
-  plt.plot(D_es,pam.r["Ze"][:,tt,0,0,1],styles[tt],label=str(temps[tt])+"C")  
+  plt.plot(D_es*1000,pam.r["Ze"][:,tt,0,0,1],styles[tt],label=str(temps[tt])+"C")  
 plt.ylim(-20,70)  
-  
+plt.ylabel("Ze [dBz]")
+
 plt.figure()
 plt.title("ZDR")
 for tt in xrange(nT):
-  plt.plot(D_es,pam.r["Ze"][:,tt,0,0,1]-pam.r["Ze"][:,tt,0,0,2],styles[tt],label=str(temps[tt])+"C")
+  plt.plot(D_es*1000,pam.r["Ze"][:,tt,0,0,1]-pam.r["Ze"][:,tt,0,0,2],styles[tt],label=str(temps[tt])+"C")
 plt.ylim(0,10)  
+plt.ylabel("ZDR [dB]")
 
+plt.figure()
+plt.title("LDR")
+for tt in xrange(nT):
+  plt.plot(D_es*1000,pam.r["Ze"][:,tt,0,0,3]-pam.r["Ze"][:,tt,0,0,1],styles[tt],label=str(temps[tt])+"C")
+#plt.ylim(0,10)  
+plt.ylabel("LDR [dB]")
 
 #plt.plot(pam.r["radar_vel"],pam.r["radar_spectra"][0,0,0,0])
 

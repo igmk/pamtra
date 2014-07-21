@@ -28,7 +28,6 @@ module eps_water
         f   ! frequency [GHz]
 
     complex(kind=dbl), intent(out) :: eps_water
-!     complex(kind=dbl) :: eps_water_ellison, eps_water_liebe, eps_water_ray, eps_water_stogryn 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
     character(len=80) :: msg
