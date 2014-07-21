@@ -197,7 +197,13 @@ module scatProperties
     
     !get the refractive index
      if (liq_ice == 1) then
-        call ref_water(0.d0, layer_t-273.15, freq, refre, refim, absind, abscof)
+        call ref_water(err,0.d0, layer_t-273.15, freq, refre, refim, absind, abscof)
+        if (err > 0) then
+          errorstatus = fatal
+          msg = 'Error in ref_water'
+          call report(errorstatus, msg, nameOfRoutine)
+          return
+        end if
       else if (liq_ice == -1) then
         call ref_ice(layer_t, freq, refre, refim)
       else
