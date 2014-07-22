@@ -9,3 +9,5 @@ install:
 	cp *.py ~/lib/python/
 	cp *.so ~/lib/python/
 
+clean: 
+	rm *.so
