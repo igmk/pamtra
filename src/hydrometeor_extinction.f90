@@ -28,7 +28,8 @@ subroutine hydrometeor_extinction(errorstatus)
       active, &
       nstokes, &
       nummu, &
-      radar_attenuation
+      radar_attenuation, &
+      hydro_includeHydroInRhoAir
   use constants
   use descriptor_file
   use drop_size_dist
@@ -242,10 +243,17 @@ subroutine hydrometeor_extinction(errorstatus)
         end if
 
   ! Convert specific quantities [kg/kg] in absolute ones [kg/m3]
+      if (hydro_includeHydroInRhoAir) then
         q_h        = q2abs(atmo_hydro_q(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
                     atmo_q_hum(i_x,i_y,i_z),sum(atmo_hydro_q(i_x,i_y,i_z, :)))
         n_tot      = q2abs(atmo_hydro_n(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
                   atmo_q_hum(i_x,i_y,i_z),sum(atmo_hydro_q(i_x,i_y,i_z, :)))
+      else
+	q_h        = q2abs(atmo_hydro_q(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
+                  atmo_q_hum(i_x,i_y,i_z),0._dbl)
+	n_tot      = q2abs(atmo_hydro_n(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
+                  atmo_q_hum(i_x,i_y,i_z),0._dbl)
+      end if
         r_eff      = atmo_hydro_reff(i_x,i_y,i_z, i_h)
         layer_t    = atmo_temp(i_x,i_y,i_z)
         pressure   = atmo_press(i_x,i_y,i_z)
