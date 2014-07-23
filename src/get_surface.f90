@@ -30,6 +30,7 @@ subroutine get_surface &
     use settings, only: emissivity, data_path
     use constants, only: t_abs
     use vars_atmosphere, only : atmo_lfrac,atmo_lon,atmo_lat,atmo_month
+    use eps_water, only: get_eps_water
     use mod_io_strings, only: nxstr, nystr
     use vars_index, only: i_x, i_y
     use report_module
@@ -76,8 +77,7 @@ subroutine get_surface &
  
     real(kind=dbl) :: land_emissivity
 
-    complex(kind=dbl) :: eps_water, & ! function to calculate the dielectic properties of (salt)water
-    epsi         ! result of function eps_water
+    complex(kind=dbl) :: epsi         ! result of function get_eps_water
 
     ! Local arrays:
  
@@ -101,6 +101,7 @@ subroutine get_surface &
 
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
 
+      err = 0
       call assert_true(err,(freq>0),&
           "freq must be positive")  
       call assert_true(err,(ground_temp>=0),&
@@ -154,7 +155,13 @@ subroutine get_surface &
         ! computing the refractive index of the sea (Fresnel) surface
         ground_type = 'O'
         ground_albedo = 1.0_dbl
-        epsi = eps_water(salinity, ground_temp - t_abs, freq)
+        call get_eps_water(err, salinity, ground_temp - t_abs, freq, epsi)
+        if (err > 0) then
+          errorstatus = fatal
+          msg = "error in get_eps_water error"
+          call report(errorstatus, msg, nameOfRoutine)
+          return
+        end if    
         ground_index = dconjg(sqrt(epsi))
     else
         ! this is for ground_type specified in run_params.nml

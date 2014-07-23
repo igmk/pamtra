@@ -53,6 +53,7 @@ OBJECTS=kinds.o \
 	scat_utilities.o \
 	dsd_utilities.o \
 	mpm93.o \
+	eps_water.o \
 	get_surface.o \
 	mie_scat_utilities.o \
 	mie_spheres.o \
@@ -64,7 +65,6 @@ OBJECTS=kinds.o \
 	vars_jacobian.o \
 	rosen98_gasabs.o \
 	surface.o \
-	eps_water.o \
 	eps_ice.o \
 	eps_mix.o \
 	equcom.o \
@@ -118,7 +118,7 @@ OBJECTS=kinds.o \
 
 BIN=pamtra
 
-all: precompile  dfftpack pamtra py
+all: precompile dfftpack pamtra py py_usStandard
 
 dfftpack:
 	cd ../tools/dfftpack && $(MAKE) && cp libdfftpack.a ../../lib/libdfftpack.a
@@ -192,10 +192,15 @@ pyNode: pyPamtraLib.f90 $(OBJECTS)
 	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS)  -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ../py/
 
+py_usStandard:
+	cd ../tools/py_usStandard/ && $(MAKE) all
+
+
 pyinstall:
 	cp ../py/*.py ~/lib/python/
 	cp ../py/*.so ~/lib/python/
 	cp ../py/libs/*/*.py ~/lib/python/
+	cd ../tools/py_usStandard/ && $(MAKE) install
 
 
 precompile: 
@@ -211,6 +216,7 @@ precompile:
 clean:
 	rm -rf $(OBJECTS) $(BIN) *.mod *~
 	cd ../tools/dfftpack/ && $(MAKE) clean
+	cd ../tools/py_usStandard/ && $(MAKE) clean
 
 test: test1 test2 test3 test4 test5 test6 cleantest
 

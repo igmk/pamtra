@@ -28,7 +28,8 @@ subroutine hydrometeor_extinction(errorstatus)
       active, &
       nstokes, &
       nummu, &
-      radar_attenuation
+      radar_attenuation, &
+      hydro_includeHydroInRhoAir
   use constants
   use descriptor_file
   use drop_size_dist
@@ -131,12 +132,12 @@ subroutine hydrometeor_extinction(errorstatus)
         pressure = atmo_press(i_x,i_y,i_z)
         layer_t = atmo_temp(i_x,i_y,i_z)
         
-        if (PRODUCT(SHAPE(descriptor_canting_arr)) == n_hydro) then
-          dsd_canting   = descriptor_canting_arr(1,1,1,i_h)
+        if (PRODUCT(SHAPE(canting_arr)) == n_hydro) then
+          dsd_canting   = canting_arr(1,1,1,i_h)
         else
-          dsd_canting   = descriptor_canting_arr(i_x,i_y,i_z,i_h)
+          dsd_canting   = canting_arr(i_x,i_y,i_z,i_h)
         end if         
-        
+
         if (SUM(n_ds) > 0.d0) then
           rt_hydros_present(i_z) = .true.
         else
@@ -229,11 +230,12 @@ subroutine hydrometeor_extinction(errorstatus)
           d_2   = d_2_arr(i_x,i_y,i_z,i_h)
         end if 
 
-        if (PRODUCT(SHAPE(descriptor_canting_arr)) == n_hydro) then
-          dsd_canting   = descriptor_canting_arr(1,1,1,i_h)
+        if (PRODUCT(SHAPE(canting_arr)) == n_hydro) then
+          dsd_canting   = canting_arr(1,1,1,i_h)
         else
-          dsd_canting   = descriptor_canting_arr(i_x,i_y,i_z,i_h)
+          dsd_canting   = canting_arr(i_x,i_y,i_z,i_h)
         end if 
+
         !short cut in case we disabled the particle
         if (dist_name == "disabled") then
           if (verbose >=3) print*, i_x,i_y,i_z,i_h,hydro_name, dist_name, "DISABLED"
@@ -241,10 +243,17 @@ subroutine hydrometeor_extinction(errorstatus)
         end if
 
   ! Convert specific quantities [kg/kg] in absolute ones [kg/m3]
+      if (hydro_includeHydroInRhoAir) then
         q_h        = q2abs(atmo_hydro_q(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
                     atmo_q_hum(i_x,i_y,i_z),sum(atmo_hydro_q(i_x,i_y,i_z, :)))
         n_tot      = q2abs(atmo_hydro_n(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
                   atmo_q_hum(i_x,i_y,i_z),sum(atmo_hydro_q(i_x,i_y,i_z, :)))
+      else
+	q_h        = q2abs(atmo_hydro_q(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
+                  atmo_q_hum(i_x,i_y,i_z),0._dbl)
+	n_tot      = q2abs(atmo_hydro_n(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
+                  atmo_q_hum(i_x,i_y,i_z),0._dbl)
+      end if
         r_eff      = atmo_hydro_reff(i_x,i_y,i_z, i_h)
         layer_t    = atmo_temp(i_x,i_y,i_z)
         pressure   = atmo_press(i_x,i_y,i_z)

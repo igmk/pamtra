@@ -1,15 +1,17 @@
-subroutine refractive_index(type, t, f, particle_size, as_ratio, particle_mass, ref)
+subroutine refractive_index(errorstatus,type, t, f, particle_size, as_ratio, particle_mass, ref)
 
     use kinds
     use constants, only: pi
-
+    use report_module
+    use eps_water, only: get_eps_water
     implicit none
 
     real(kind=dbl) :: t, f,particle_size, as_ratio, volume
     real(kind=dbl) :: particle_mass, min_dim
     real(kind=dbl) ::  sal, mix_de
-    complex(kind=dbl) :: eps_ice, eps_water, eps_mix
+    complex(kind=dbl) :: eps_ice, eps_mix
     complex(kind=ext) ::  ref
+    complex(kind=dbl) ::  ref_dbl
     ! input:
     !  tempr: temperautre, in k
     !  frq: frequency, in hz,
@@ -31,9 +33,23 @@ subroutine refractive_index(type, t, f, particle_size, as_ratio, particle_mass, 
     !        call refwater(sal,frq,tempr,ref)
     !      endif
 
+    integer(kind=long), intent(out) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
+    character(len=30) :: nameOfRoutine = 'refractive_index'
+
+
+    err = 0
     if (type .eq. 'c' .or. type .eq. 'r') then
         sal = 0._dbl
-        ref = sqrt(eps_water(sal,t-273.15_dbl,f))
+         call get_eps_water(err,sal,t-273.15_dbl,f,ref_dbl)
+          if (err > 0) then
+              errorstatus = fatal
+              msg = "error in get_eps_water"
+              call report(errorstatus, msg, nameOfRoutine)
+              return
+          end if   
+         ref = sqrt(ref_dbl)
     else if (type .eq. 'i') then
         ref = sqrt(eps_ice(t,f))
     else if (type .eq. 's' .or. type .eq. 'g' .or. type .eq. 'h') then
@@ -46,8 +62,10 @@ subroutine refractive_index(type, t, f, particle_size, as_ratio, particle_mass, 
         print*, particle_mass, volume, mix_de
         ref = sqrt(eps_mix((1._dbl,0._dbl),eps_ice(t,f),mix_de))
     else
-        print*, 'No appropriate dielectric model found!'
-        stop
+              errorstatus = fatal
+              msg = "No appropriate dielectric model found"
+              call report(errorstatus, msg, nameOfRoutine)
+              return
     end if
 
     return

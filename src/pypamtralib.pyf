@@ -234,6 +234,7 @@ python module pyPamtraLib ! in
             character(len=18) :: freq_str
             character(len=20) :: file_desc
             real(kind=dbl) :: radar_airmotion_vmin
+            character(len=3) :: liq_mod
             character(len=100) :: creator
             character(len=8) :: radar_airmotion_model
             logical :: hydro_adaptive_grid
@@ -258,13 +259,14 @@ python module pyPamtraLib ! in
             integer(kind=long_bn) :: att_npol
             character(len=99) :: input_file
             logical :: radar_use_hildebrand
-            logical :: radar_convolution_fft
+            logical :: hydro_includehydroinrhoair
             character(len=300) :: descriptor_file_name
             logical :: active
             integer, parameter,optional :: maxlay=600
             real(kind=dbl) :: radar_max_v
             character(len=8) dimension(100) :: frqs_str
             real(kind=dbl), parameter,optional :: direct_flux=0._dbl
+            logical :: radar_convolution_fft
             logical :: in_python
             logical :: lhyd_extinction
             integer(kind=long_bn) :: nfrq
@@ -303,7 +305,7 @@ python module pyPamtraLib ! in
             real(kind=dbl), allocatable,dimension(:) :: n_tot_arr
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: beta_as_arr
             character(len=15), allocatable,dimension(:) :: hydro_name_arr
-            real(kind=dbl), allocatable,dimension(:,:,:,:) :: descriptor_canting_arr
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_4_arr
             real(kind=dbl), allocatable,dimension(:) :: r_eff_arr
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: b_ms_arr
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: d_1_arr
@@ -311,7 +313,7 @@ python module pyPamtraLib ! in
             integer(kind=long_bn), allocatable,dimension(:) :: liq_ice_arr
             character(len=30), allocatable,dimension(:) :: vel_size_mod_arr
             character(len=15), allocatable,dimension(:) :: dist_name_arr
-            real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_4_arr
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: canting_arr
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_1_arr
             integer(kind=long_bn) :: n_hydro
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: p_3_arr

@@ -110,7 +110,7 @@ program pamtra
     end if
 
     if (add_obs_height_to_layer) then
-      call add_obs_height(errorstatus)
+      call add_obs_height(err)
       if (err /= 0) then
           msg = 'Error in add_obs_height!'
           call report(fatal, msg, nameOfRoutine)

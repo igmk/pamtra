@@ -182,6 +182,7 @@ class pyPamtra(object):
     self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb","radar_prop","groundtemp","wind_w"]
   
     self.nmlSet = dict() #settings which are required for the nml file. keeping the order is important for fortran
+    #keys MUST be lowercase for f2py!
     self.nmlSet["hydro_threshold"]=  1.e-10   # [kg/kg] 
     #set namelist defaults#
     # sec inoutput_mode
@@ -215,7 +216,9 @@ class pyPamtra(object):
     self.nmlSet["gas_mod"]= 'R98'
     # sec hyd_opts
     self.nmlSet["lhyd_extinction"]= True
+    self.nmlSet["liq_mod"]= "Ell"
     self.nmlSet["lphase_flag"]=  True
+    self.nmlSet["hydro_includehydroinrhoair"] = True
     self.nmlSet["hydro_fullspec"] = False
     self.nmlSet["hydro_limit_density_area"] = True
     self.nmlSet["hydro_softsphere_min_density"] = 10.    

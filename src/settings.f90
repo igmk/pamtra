@@ -73,6 +73,7 @@ module settings
     radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise0) we can skip that.
     radar_convolution_fft,&!use fft for convolution of spectrum
     save_psd, &
+    hydro_includeHydroInRhoAir, &
     radar_smooth_spectrum, &
     hydro_fullSpec, &
     hydro_limit_density_area, &
@@ -80,6 +81,7 @@ module settings
     add_obs_height_to_layer
 
     character(3) :: gas_mod
+    character(3) :: liq_mod
     character(20) :: moments_file,file_desc
     character(100) :: input_path, output_path, tmp_path,creator, data_path
     character(18) :: freq_str
@@ -128,7 +130,8 @@ contains
         namelist / surface_params / ground_type,salinity, emissivity
         namelist / gas_abs_mod / lgas_extinction, gas_mod
         namelist / hyd_opts / lhyd_extinction, lphase_flag, hydro_fullSpec, hydro_limit_density_area,&
-                  hydro_softsphere_min_density, hydro_adaptive_grid, tmatrix_db, tmatrix_db_path
+                  hydro_softsphere_min_density, hydro_adaptive_grid, tmatrix_db, tmatrix_db_path, &
+                  liq_mod, hydro_includeHydroInRhoAir, hydro_threshold
 	namelist / moments / n_moments, moments_file
 	namelist / radar_simulator / radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
 		  radar_pnoise0, radar_airmotion, radar_airmotion_model, &
@@ -283,7 +286,7 @@ contains
     if (verbose >= 2) print*,'Start of ', nameOfRoutine
 
     
-        hydro_threshold = 1.d-10   ! [kg/kg] 
+        hydro_threshold = 1.d-20   ! [kg/kg] 
 
 
         !set namelist defaults!
@@ -324,16 +327,18 @@ contains
         ! sec hyd_opts
         lhyd_extinction=.true.
         lphase_flag = .true.
+        hydro_includeHydroInRhoAir = .true.
         hydro_fullSpec = .false.
         hydro_limit_density_area = .true.
         hydro_softsphere_min_density = 10. !kg/m^3
         hydro_adaptive_grid = .true.
+        liq_mod = "Ell"
         tmatrix_db = "none" ! none or file
         tmatrix_db_path = "database/"
 !        ! sec moments
         n_moments=1
         moments_file='snowCRYSTAL'
-        radar_polarisation = "NN,HH,VV" ! comma spearated list "NN,HV,VH,VV,HH", translated into radar_pol array
+        radar_polarisation = "NN" ! comma spearated list "NN,HV,VH,VV,HH", translated into radar_pol array
         ! radar_simulator
         !number of FFT points in the Doppler spectrum [typically 256 or 512]
         radar_nfft=256
@@ -406,6 +411,7 @@ contains
       print*, 'radar_no_ave: ', radar_no_ave
       print*, 'input_type: ', input_type
       print*, 'dump_to_file: ', dump_to_file
+      print*, 'hydro_includeHydroInRhoAir: ', hydro_includeHydroInRhoAir
       print*, 'passive: ', passive
       print*, 'radar_airmotion_model: ', radar_airmotion_model
       print*, 'tmatrix_db_path: ', tmatrix_db_path
@@ -416,6 +422,7 @@ contains
       print*, 'crm_constants: ', crm_constants
       print*, 'units: ', units
       print*, 'gas_mod: ', gas_mod
+      print*, 'liq_mod: ', liq_mod
       print*, 'moments_file: ', moments_file
       print*, 'radar_receiver_uncertainty_std: ', radar_receiver_uncertainty_std
       print*, 'hydro_threshold: ', hydro_threshold

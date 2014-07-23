@@ -1,4 +1,4 @@
-subroutine ref_water(s,T,f,refre,refim,absind,abscoef)
+subroutine ref_water(errorstatus,s,T,f,refre,refim,absind,abscoef)
 
   ! This function calculates the components (Re,Im) of the complex index of refraction 
   ! for natural water including soluted salt.
@@ -20,7 +20,8 @@ subroutine ref_water(s,T,f,refre,refim,absind,abscoef)
 
   use kinds
   use constants, only: c, pi
-
+  use report_module
+  use eps_water, only: get_eps_water
   implicit none
 
   real(kind=dbl), intent(in) :: s,& ! salinity [0/00]
@@ -33,11 +34,23 @@ subroutine ref_water(s,T,f,refre,refim,absind,abscoef)
        abscoef ! abscoef absorption coefficient (4*pi*n_i*f/c) [1/m]
 
 
-  complex(kind=dbl) :: eps_water, epsw, ref_wat
+  complex(kind=dbl) :: epsw, ref_wat
 
+  integer(kind=long), intent(out) :: errorstatus
+  integer(kind=long) :: err = 0
+  character(len=80) :: msg
+  character(len=30) :: nameOfRoutine = 'ref_water'
+
+
+  err = 0
   !complex permittivity of natural water
-  epsw =  eps_water(s,T,f)
-
+  call  get_eps_water(err, s,T,f, epsw)
+  if (err > 0) then
+      errorstatus = fatal
+      msg = "error in"
+      call report(errorstatus, msg, nameOfRoutine)
+      return
+  end if   
   ref_wat = sqrt(epsw)
   refre = real(ref_wat)
   refim = aimag(ref_wat)
