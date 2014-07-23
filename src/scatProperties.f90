@@ -282,12 +282,12 @@ module scatProperties
                             + scatter_matrix_hydro(1,16,2,16,2) & 
                             + scatter_matrix_hydro(2,16,1,16,2) & 
                             + scatter_matrix_hydro(2,16,2,16,2) 
-        else if (radar_pol(i_p) == "HV") then
-          !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
-          back_hydro(i_p) = + scatter_matrix_hydro(1,16,1,16,2) &
-                            - scatter_matrix_hydro(1,16,2,16,2) & 
-                            + scatter_matrix_hydro(2,16,1,16,2) & 
-                            - scatter_matrix_hydro(2,16,2,16,2) 
+!         else if (radar_pol(i_p) == "HV") then
+!           !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
+!           back_hydro(i_p) = + scatter_matrix_hydro(1,16,1,16,2) &
+!                             - scatter_matrix_hydro(1,16,2,16,2) & 
+!                             + scatter_matrix_hydro(2,16,1,16,2) & 
+!                             - scatter_matrix_hydro(2,16,2,16,2) 
         else
           msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)
           call report(err, msg, nameOfRoutine)
@@ -295,12 +295,12 @@ module scatProperties
           return
         end if
       end do 
-
-print*, "11",scatter_matrix_hydro(1,16,1,16,2)
-print*, "12",scatter_matrix_hydro(1,16,2,16,2) 
-print*, "21",scatter_matrix_hydro(2,16,1,16,2) 
-print*, "22",scatter_matrix_hydro(2,16,2,16,2) 
-
+      if (verbose >= 5) then
+        print*, "S11",scatter_matrix_hydro(1,16,1,16,2)
+        print*, "S12",scatter_matrix_hydro(1,16,2,16,2) 
+        print*, "S21",scatter_matrix_hydro(2,16,1,16,2) 
+        print*, "S22",scatter_matrix_hydro(2,16,2,16,2) 
+      end if
 
 
       back_hydro(:) = 4*pi*back_hydro(:)!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squard entries!

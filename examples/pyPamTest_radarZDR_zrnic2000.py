@@ -33,7 +33,7 @@ pam.nmlSet["radar_mode"] = "simple"
 pam.nmlSet["tmatrix_db"] = "none"
 pam.nmlSet["tmatrix_db"] = "file"
 pam.nmlSet["tmatrix_db_path"] = "/ssdwork/mmaahn/tmatrix_db/"
-pam.nmlSet["radar_polarisation"] = "NN,HH,VV,HV"
+pam.nmlSet["radar_polarisation"] = "NN,HH,VV"#,HV"
 pam.nmlSet["liq_mod"] = "Ray"
 
 
@@ -94,12 +94,12 @@ for tt in xrange(nT):
 plt.ylim(0,10)  
 plt.ylabel("ZDR [dB]")
 
-plt.figure()
-plt.title("LDR")
-for tt in xrange(nT):
-  plt.plot(D_es*1000,pam.r["Ze"][:,tt,0,0,3]-pam.r["Ze"][:,tt,0,0,1],styles[tt],label=str(temps[tt])+"C")
-#plt.ylim(0,10)  
-plt.ylabel("LDR [dB]")
+#plt.figure()
+#plt.title("LDR")
+#for tt in xrange(nT):
+  #plt.plot(D_es*1000,pam.r["Ze"][:,tt,0,0,3]-pam.r["Ze"][:,tt,0,0,1],styles[tt],label=str(temps[tt])+"C")
+##plt.ylim(0,10)  
+#plt.ylabel("LDR [dB]")
 
 #plt.plot(pam.r["radar_vel"],pam.r["radar_spectra"][0,0,0,0])
 
