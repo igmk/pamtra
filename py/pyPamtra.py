@@ -1541,12 +1541,13 @@ class pyPamtra(object):
       nc_height[:] = np.array(self.r["radar_hgt"],dtype="f")
       if not pyNc: nc_height._FillValue =missingNumber
       
-      nc_act_pol = cdfFile.createVariable('radar_polarisation', "S1",("radar_polarisation","lenstr",),**fillVDict)
+      nc_act_pol = cdfFile.createVariable('radar_polarisation', str,("radar_polarisation",))
       nc_act_pol.units = "-"
-      dataTmp = np.zeros((self.set["radar_npol"],2),dtype="S1")
-      for dd in xrange(self.set["radar_npol"]):
-        dataTmp[dd] = list(self.set["radar_pol"][dd])
-      nc_act_pol[:] = dataTmp
+      #dataTmp = np.empty(self.set["radar_npol"],dtype="O")
+      #import pdb;pdb.set_trace()
+      #for dd in xrange(self.set["radar_npol"]):
+        #dataTmp[dd] = self.set["radar_pol"][dd]
+      nc_act_pol[:] = np.array(self.set["radar_pol"],dtype="O")
 
       nc_att_pol = cdfFile.createVariable('attenuation_polarisation', 'S1',("attenuation_polarisation"),**fillVDict)
       nc_att_pol.units = "-"
