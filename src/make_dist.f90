@@ -106,7 +106,7 @@ subroutine make_dist(errorstatus)
     if (ibig == 1 .and. hydro_adaptive_grid) then 
       d_1_work = 1.d-8
       d_2_work = 2.d-2
-      nbin_work = 1.d2
+      nbin_work = 5.d2
     endif
     if (ibig == 2) then 
       d_1_work = d_1_new
