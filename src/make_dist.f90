@@ -91,7 +91,11 @@ subroutine make_dist(errorstatus)
     skip = .true.
   endif
 
-  bigloop: do ibig=1,2 ! 2 is done only if hydro_adaptive_grid = .true.
+! Fisrt loop:
+! -uses a very large number of bin and wide range of diameters to found where f_ds_work(D) is smaller than thres_n
+! Second loop:
+! -uses the user defined nbin BUT the nre defined diameter range
+  bigloop: do ibig=1,2 ! Loop 2 is done only if hydro_adaptive_grid = .true.
     if (skip) exit bigloop
     if (ibig == 1 .and. .not.hydro_adaptive_grid) then 
       d_1_work = d_1
@@ -102,7 +106,7 @@ subroutine make_dist(errorstatus)
     if (ibig == 1 .and. hydro_adaptive_grid) then 
       d_1_work = 1.d-8
       d_2_work = 2.d-2
-      nbin_work = 5.d2
+      nbin_work = 1.d2
     endif
     if (ibig == 2) then 
       d_1_work = d_1_new
@@ -122,9 +126,6 @@ subroutine make_dist(errorstatus)
     if (allocated(d_bound_ds_log)) deallocate(d_bound_ds_log,STAT=erroalloc)
     allocate(d_bound_ds_lin(nbin_lin+1),STAT=erroalloc)
     allocate(d_bound_ds_log(nbin_log+1),STAT=erroalloc)
-! print*,'shape(d_bound_ds_work)',shape(d_bound_ds_work)
-! print*,'shape(d_bound_ds_lin)',shape(d_bound_ds_lin)
-! print*,'shape(d_bound_ds_log)',shape(d_bound_ds_log)
 
 !   ! Create particle diameter array
     work1 = (d_2_work - d_1_work) / (nbin_lin + 1)      ! Delta diameter, +1 is to avoid having twice the first and last values
@@ -137,17 +138,10 @@ subroutine make_dist(errorstatus)
       d_bound_ds_log(i) = exp(work1 * (i-1)  + dlog(d_1_work)) ! this have the smallest diameter defined (d_1_work)
     enddo
 
-! print*,'d_1_work',d_1_work
-! do i=1,nbin_lin+1
-! print*,d_bound_ds_log(i),d_bound_ds_lin(i)
-! enddo
-! print*,'d_2_work',d_2_work
-
 ! Put linear and log bin together and sort them
     do i=1,nbin_work+1
       min_lin = minval(d_bound_ds_lin)
       min_log = minval(d_bound_ds_log)
-! print*,i,'min_log',min_log,'min_lin',min_lin
       if (min_log <= min_lin) then
         d_bound_ds_work(i) = min_log
         d_bound_ds_log(minloc(d_bound_ds_log)) = 1.e30
@@ -157,10 +151,6 @@ subroutine make_dist(errorstatus)
         d_bound_ds_lin(minloc(d_bound_ds_lin)) = 1.e30
       endif
     enddo
-
-! do i=1,nbin_work+1
-! print*,i,d_bound_ds_work(i)
-! enddo
 
   ! calculate the particle number concentration
   ! ! LOG-NORMAL distribution
@@ -197,13 +187,8 @@ subroutine make_dist(errorstatus)
       call report(errorstatus, msg, nameOfRoutine)
       return
     endif
-    
-    
-!      do i=1,nbin_work+1
-!      print*,'...' ,i,'.',f_ds_work(i),'.',d_bound_ds_work(i)
-!      enddo
 
-!  Find the d_1 and d_2 where f_ds_work(d) = 0.1
+!  Find the d_1 and d_2 where f_ds_work(d) = thres_n
 ! STEP INTO this cycle ONLY if first loop (ibig == 1) and ONLY if adaptive grid
    if (hydro_adaptive_grid .and. ibig == 1) then
      d_1_new = -1._dbl
@@ -234,29 +219,27 @@ subroutine make_dist(errorstatus)
      endif
    endif
 
+!Fill f_ds and d_bound_ds only at the last cycle
+  if (skip) then 
     f_ds(:) = f_ds_work(:)
     d_bound_ds(:) = d_bound_ds_work(:)
+  endif
 
 enddo bigloop
     
   do i = 1, nbin
       d_ds(i) = (d_bound_ds(i) + d_bound_ds(i+1)) * .5_dbl
   enddo
-
     
   do i=1,nbin
     delta_d_ds(i) =  d_bound_ds(i+1) - d_bound_ds(i)
     n_ds(i) = (f_ds(i) + f_ds(i+1)) / 2._dbl * delta_d_ds(i)  ! Trapezoidal approximation of the integral
-!     print*,'***',i,'*',d_ds(i),'*',(f_ds(i) + f_ds(i+1)) / 2._dbl,'*',n_ds(i)
   enddo
 
-  n_tot = SUM(n_ds)
-!   print*,'NTOT = ',n_tot
-  
+  n_tot = SUM(n_ds)  
   
   do i=1,nbin
     am_b = am_b + a_ms * (f_ds(i) + f_ds(i+1)) / 2._dbl * (d_bound_ds(i+1) - d_bound_ds(i)) * d_ds(i)**b_ms
-    print*,am_b, a_ms * (f_ds(i) + f_ds(i+1)) / 2._dbl * (d_bound_ds(i+1) - d_bound_ds(i)) * d_ds(i)**b_ms
   enddo
   
   
