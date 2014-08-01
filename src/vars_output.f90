@@ -163,7 +163,8 @@ module vars_output
     if (save_psd) then
         !how much space do we need?
         max_nbin = MAXVAL(nbin_arr) 
-    
+        if (max_nbin <=1) max_nbin = 2 !we must have two nbin minimum, also for const.
+
         allocate(&
           out_psd_d(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin),&
           out_psd_n(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin),&

@@ -91,17 +91,27 @@ subroutine deallocateVars_drop_size_dist
 
   implicit none
 
+print*, "deallocateVars_drop_size_dist"
+
   if (allocated(d_ds)) deallocate(d_ds)
   if (allocated(n_ds)) deallocate(n_ds)
+print*, 1
   if (allocated(density2scat)) deallocate(density2scat)
+print*, 1
   if (allocated(diameter2scat)) deallocate(diameter2scat)
+print*, 1
   if (allocated(d_bound_ds)) deallocate(d_bound_ds)
+print*, 2
   if (allocated(delta_d_ds)) deallocate(delta_d_ds)  
   if (allocated(f_ds)) deallocate(f_ds)
   if (allocated(soft_d_eff)) deallocate(soft_d_eff)
+print*, 3
   if (allocated(soft_rho_eff)) deallocate(soft_rho_eff)
   if (allocated(area_ds)) deallocate(area_ds)
   if (allocated(mass_ds)) deallocate(mass_ds)
+
+print*, "EXIT deallocateVars_drop_size_dist"
+
 
 end subroutine deallocateVars_drop_size_dist
 

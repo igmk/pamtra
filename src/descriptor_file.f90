@@ -104,12 +104,6 @@ subroutine read_descriptor_file(errorstatus)
   end do
 
   close(unit=111)
-
-!   Force nbin = 2 when monodisperse distribution is used. Needed by radar simulator.
-  do i = 1, n_hydro
-    if ( trim(dist_name_arr(i)) == 'mono' .or. trim(dist_name_arr(i)) == 'mono_cosmo_ice') &
-      nbin_arr(1,1,1,i) = 2
-  enddo
   
   errorstatus = err
   if (verbose >= 2) call report(info,'End of ', nameOfRoutine)

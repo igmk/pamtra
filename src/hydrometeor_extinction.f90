@@ -194,6 +194,11 @@ subroutine hydrometeor_extinction(errorstatus)
           nbin   = nbin_arr(i_x,i_y,i_z,i_h)
         end if 
 
+!   Force nbin = 2 when monodisperse distribution is used. Needed by radar simulator.
+        if ( trim(dist_name) == 'mono' .or. trim(dist_name) == 'mono_cosmo_ice') &
+          nbin = 2
+
+
         if (PRODUCT(SHAPE(p_1_arr)) == n_hydro) then
           p_1   = p_1_arr(1,1,1,i_h)
         else
