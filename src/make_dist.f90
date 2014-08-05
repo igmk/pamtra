@@ -256,7 +256,7 @@ enddo bigloop
   
   do i=1,nbin
     am_b = am_b + a_ms * (f_ds(i) + f_ds(i+1)) / 2._dbl * (d_bound_ds(i+1) - d_bound_ds(i)) * d_ds(i)**b_ms
-    print*,am_b, a_ms * (f_ds(i) + f_ds(i+1)) / 2._dbl * (d_bound_ds(i+1) - d_bound_ds(i)) * d_ds(i)**b_ms
+!     print*,am_b, a_ms * (f_ds(i) + f_ds(i+1)) / 2._dbl * (d_bound_ds(i+1) - d_bound_ds(i)) * d_ds(i)**b_ms
   enddo
   
   
