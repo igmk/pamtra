@@ -312,7 +312,6 @@ module scatProperties
     rt_extmatrix(i_z,:,:,:,:) = rt_extmatrix(i_z,:,:,:,:) + extinct_matrix_hydro
     rt_emisvec(i_z,:,:,:) = rt_emisvec(i_z,:,:,:) + emis_vector_hydro
 
-
     !sum up rt3 style
     if (rt_kexttot(i_z) == 0.d0) then 
       salbedo = 0.d0

@@ -49,10 +49,12 @@ python module pyPamtraLib ! in
             use kinds
             use settings, only: radar_nfft
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_edges
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_scatter_matrix
             real(kind=dbl), allocatable,dimension(:) :: out_debug_radarvel
             real(kind=dbl), allocatable,dimension(:) :: out_radar_vel
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_att_hydro
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_slopes
+            real(kind=dbl), allocatable,dimension(:) :: out_kextatmo
+            integer, allocatable,dimension(:,:,:,:) :: out_radar_quality
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_moments
             real(kind=dbl), allocatable,dimension(:) :: out_debug_radarback_wturb_wnoise
             real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_tb
@@ -64,10 +66,12 @@ python module pyPamtraLib ! in
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_area
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_radar_snr
             real(kind=dbl) dimension(300) :: out_debug_diameter
-            integer, allocatable,dimension(:,:,:,:) :: out_radar_quality
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_emis_vector
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_mass
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_d
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_spectra
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_extinct_matrix
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_slopes
             real(kind=dbl), allocatable,dimension(:) :: out_debug_radarback
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_att_atmo
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_n
@@ -256,6 +260,7 @@ python module pyPamtraLib ! in
             logical :: active
             integer, parameter,optional :: maxlay=600
             real(kind=dbl) :: radar_max_v
+            logical :: save_ssp
             character(len=8) dimension(100) :: frqs_str
             real(kind=dbl), parameter,optional :: direct_flux=0._dbl
             logical :: in_python

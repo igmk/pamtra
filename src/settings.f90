@@ -73,6 +73,7 @@ module settings
     radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise0) we can skip that.
     radar_convolution_fft,&!use fft for convolution of spectrum
     save_psd, &
+    save_ssp, &
     radar_smooth_spectrum, &
     hydro_fullSpec, &
     hydro_limit_density_area, &
@@ -116,7 +117,7 @@ contains
         namelist / inoutput_mode / input_path, output_path,&
         tmp_path, dump_to_file, write_nc, data_path,&
         input_type, crm_case, crm_data, crm_data2, crm_constants, &
-        jacobian_mode, save_psd
+        jacobian_mode, save_psd, save_ssp
         namelist / output / obs_height,units,outpol,freq_str,file_desc,creator, add_obs_height_to_layer
         namelist / run_mode / active, passive,radar_mode, randomseed
         namelist / surface_params / ground_type,salinity, emissivity
@@ -269,6 +270,7 @@ contains
         crm_constants=''
         jacobian_mode=.false. !profile 1,1 is reference, for all other colums only layers with different values are calculated
         save_psd=.false.
+        save_ssp=.false.
         ! sec output
         obs_height=833000.
         units='T'
@@ -411,6 +413,7 @@ contains
       print*, 'radar_airmotion_vmin: ', radar_airmotion_vmin
       print*, 'emissivity: ', emissivity
       print*, 'save_psd: ', save_psd
+      print*, 'save_ssp: ', save_ssp
       print*, "randomseed", randomseed
 
     end subroutine print_settings

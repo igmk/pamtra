@@ -8,7 +8,8 @@ subroutine run_rt(errorstatus)
     use settings !all settings go here
     use vars_atmosphere !input variables and reading routine
     use vars_output !output variables
-    use vars_rt, only: rt_kextatmo, allocate_rt_vars, deallocate_rt_vars
+    use vars_rt, only: rt_kextatmo, allocate_rt_vars, deallocate_rt_vars, &
+      rt_scattermatrix, rt_extmatrix, rt_emisvec
     use double_moments_module
     use mod_io_strings, only: xstr, nxstr, ystr, nystr, frq_str
     use report_module
@@ -143,6 +144,15 @@ subroutine run_rt(errorstatus)
       end if
 
     !
+    
+    if (save_ssp) out_kextatmo = rt_kextatmo
+    
+  if (save_ssp) then
+    out_scatter_matrix = rt_scattermatrix
+    out_extinct_matrix = rt_extmatrix
+    out_emis_vector = rt_emisvec
+  end if
+
     if (dump_to_file) call dump_profile()
 
     !&&&&&&&&   I/O FILE NAMES   &&&&&&&&&&&&&&&&&&

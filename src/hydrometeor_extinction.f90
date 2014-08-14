@@ -23,6 +23,7 @@ subroutine hydrometeor_extinction(errorstatus)
       verbose, &
       hydro_threshold, &
       save_psd, &
+      save_ssp, &
       hydro_fullSpec, &
       passive, &
       active, &
@@ -33,7 +34,8 @@ subroutine hydrometeor_extinction(errorstatus)
   use drop_size_dist
   use report_module
   use scatProperties
-  use vars_output, only: out_psd_area, out_psd_d, out_psd_n, out_psd_mass
+  use vars_output, only: out_psd_area, out_psd_d, out_psd_n, out_psd_mass,&
+    out_scatter_matrix, out_extinct_matrix, out_emis_vector
   use vars_index, only: i_x,i_y, i_z, i_h
 
   implicit none
