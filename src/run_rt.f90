@@ -90,18 +90,18 @@ subroutine run_rt(errorstatus)
     ! make layer averages
 
     if (verbose >= 2) call report(info,nxstr//' '//nystr//'type to local variables done',nameOfRoutine)
-
-    call get_surface(err,freq, atmo_groundtemp(i_x,i_y), salinity, ground_albedo,ground_index,ground_type)
-    if (err /= 0) then
-        msg = 'error in get_surface'
-        call report(err,msg, nameOfRoutine)
-        errorstatus = err
-        return
+    
+    if (passive .eqv. .true.) then
+      call get_surface(err,freq, atmo_groundtemp(i_x,i_y), salinity, ground_albedo,ground_index,ground_type)
+      if (err /= 0) then
+          msg = 'error in get_surface'
+          call report(err,msg, nameOfRoutine)
+          errorstatus = err
+          return
+      end if
     end if
-
-    ! Determine surface properties
-    if (verbose >= 2) call report(info,'surface emissivity calculated:', nameOfRoutine)
-
+      
+  
     ! gaseous absorption
     !
     ! rt_kextatmo   extinction by moist air [Np/m]

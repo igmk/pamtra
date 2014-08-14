@@ -1435,7 +1435,7 @@ class pyPamtra(object):
 
   
   
-  def writeResultsToNetCDF(self,fname,profileVars="all",ncForm="NETCDF3_CLASSIC"):
+  def writeResultsToNetCDF(self,fname,profileVars="all",ncForm="NETCDF4"):
     '''
     write the results to a netcdf file
     
@@ -1467,7 +1467,7 @@ class pyPamtra(object):
     except:
       raise IOError ("run runPamtra first!")
 
-    if pyNc: cdfFile = nc.Dataset(fname,"w",ncForm)
+    if pyNc: cdfFile = nc.Dataset(fname,"w",format= ncForm)
     else: cdfFile = nc.NetCDFFile(fname,"w")
     
     #write meta data
@@ -1492,7 +1492,6 @@ class pyPamtra(object):
       cdfFile.createDimension('heightbins',int(self.p["max_nlyrs"]))
       cdfFile.createDimension('radar_polarisation',int(self.set["radar_npol"]))
       cdfFile.createDimension('attenuation_polarisation',int(self.set["att_npol"]))
-      cdfFile.createDimension('lenstr',2)
       
     dim2d = ("grid_x","grid_y",)
     dim3d = ("grid_x","grid_y","heightbins",)
@@ -1515,17 +1514,17 @@ class pyPamtra(object):
     nc_frequency = cdfFile.createVariable('frequency','f',('frequency',),**fillVDict)
     nc_frequency.units = 'GHz'
     nc_frequency[:] = self.set["freqs"]
-    if not pyNc: nc_frequency._FillValue =missingNumber
+    if not pyNc: nc_frequency._fillValue =missingNumber
     
     nc_gridx = cdfFile.createVariable('grid_x','f',('grid_x',),**fillVDict)#= missingNumber)
     nc_gridx.units = '-'
     nc_gridx[:] = np.arange(self.p["ngridx"],dtype="f")
-    if not pyNc: nc_gridx._FillValue =missingNumber
+    if not pyNc: nc_gridx._fillValue =missingNumber
     
     nc_gridy = cdfFile.createVariable('grid_y','f',('grid_y',),**fillVDict)
     nc_gridy.units = '-'
     nc_gridy[:] = np.arange(self.p["ngridy"],dtype="f")
-    if not pyNc: nc_gridy._FillValue =missingNumber
+    if not pyNc: nc_gridy._fillValue =missingNumber
     
     
     
@@ -1534,30 +1533,30 @@ class pyPamtra(object):
       nc_heightbins = cdfFile.createVariable('heightbins', 'i',("heightbins",),**fillVDict)
       nc_heightbins.units = "-"
       nc_heightbins[:] = np.arange(0,self.p["max_nlyrs"],dtype="i")
-      if not pyNc: nc_heightbins._FillValue =int(missingNumber)
+      if not pyNc: nc_heightbins._fillValue =int(missingNumber)
 
       nc_height = cdfFile.createVariable('height', 'f',dim3d,**fillVDict)
       nc_height.units = "m"
       nc_height[:] = np.array(self.r["radar_hgt"],dtype="f")
-      if not pyNc: nc_height._FillValue =missingNumber
+      if not pyNc: nc_height._fillValue =missingNumber
       
-      nc_act_pol = cdfFile.createVariable('radar_polarisation', str,("radar_polarisation",))
-      nc_act_pol.units = "-"
-      #dataTmp = np.empty(self.set["radar_npol"],dtype="O")
-      #import pdb;pdb.set_trace()
-      #for dd in xrange(self.set["radar_npol"]):
-        #dataTmp[dd] = self.set["radar_pol"][dd]
-      nc_act_pol[:] = np.array(self.set["radar_pol"],dtype="O")
+      #nc_act_pol = cdfFile.createVariable('radar_polarisation', str,("radar_polarisation",))
+      #nc_act_pol.units = "-"
+      ##dataTmp = np.empty(self.set["radar_npol"],dtype="O")
+      ##import pdb;pdb.set_trace()
+      ##for dd in xrange(self.set["radar_npol"]):
+        ##dataTmp[dd] = self.set["radar_pol"][dd]
+      #nc_act_pol[:] = np.array(self.set["radar_pol"],dtype="O")
 
-      nc_att_pol = cdfFile.createVariable('attenuation_polarisation', 'S1',("attenuation_polarisation"),**fillVDict)
-      nc_att_pol.units = "-"
-      nc_att_pol[:] = np.array(self.set["att_pol"],dtype="S1")
+      #nc_att_pol = cdfFile.createVariable('attenuation_polarisation', 'char',("attenuation_polarisation"),**fillVDict)
+      #nc_att_pol.units = "-"
+      #nc_att_pol[:] = np.array(self.set["att_pol"],dtype="S1")
       
     if (self.r["nmlSettings"]["passive"]):
       nc_angle = cdfFile.createVariable('angles','f',('angles',),**fillVDict)
       nc_angle.units = 'deg'
       nc_angle[:] = np.array(self.r["angles_deg"],dtype="f")
-      if not pyNc: nc_angle._FillValue =missingNumber
+      if not pyNc: nc_angle._fillValue =missingNumber
       
       nc_stokes = cdfFile.createVariable('passive_polarisation', 'S1',("passive_polarisation",),**fillVDict)
       nc_stokes.units = "-"
@@ -1566,44 +1565,44 @@ class pyPamtra(object):
       nc_out = cdfFile.createVariable('outlevels', 'f',("outlevels",),**fillVDict)
       nc_out.units = "m over sea level (top of atmosphere value) OR m over ground (ground value)"
       nc_out[:] = np.array([self.r["nmlSettings"]["obs_height"],0],dtype="f")
-      if not pyNc: nc_out._FillValue =missingNumber
+      if not pyNc: nc_out._fillValue =missingNumber
       
     #create and write variables
     
     nc_model_i = cdfFile.createVariable('model_i', 'i',dim2d,**fillVDict)
     nc_model_i.units = "-"
     nc_model_i[:] = np.array(self.p["model_i"],dtype="i")
-    if not pyNc: nc_model_i._FillValue =int(missingNumber)
+    if not pyNc: nc_model_i._fillValue =int(missingNumber)
     
     nc_model_j = cdfFile.createVariable('model_j', 'i',dim2d,**fillVDict)
     nc_model_j.units = "-"
     nc_model_j[:] = np.array(self.p["model_j"],dtype="i")
-    if not pyNc: nc_model_j._FillValue =int(missingNumber)
+    if not pyNc: nc_model_j._fillValue =int(missingNumber)
       
     nc_nlyrs = cdfFile.createVariable('nlyr', 'i',dim2d,**fillVDict)
     nc_nlyrs.units = "-"
     nc_nlyrs[:] = np.array(self.p["nlyrs"],dtype="i")
-    if not pyNc: nc_nlyrs._FillValue =int(missingNumber)
+    if not pyNc: nc_nlyrs._fillValue =int(missingNumber)
     
     nc_time = cdfFile.createVariable('datatime', 'i',dim2d,**fillVDict)
     nc_time.units = "seconds since 1970-01-01 00:00:00"
     nc_time[:] = np.array(self.p["unixtime"],dtype="i")
-    if not pyNc: nc_time._FillValue =int(missingNumber)
+    if not pyNc: nc_time._fillValue =int(missingNumber)
     
     nc_longitude = cdfFile.createVariable('longitude', 'f',dim2d,**fillVDict)
     nc_longitude.units = "deg.dec"
     nc_longitude[:] = np.array(self.p["lon"],dtype="f")
-    if not pyNc: nc_longitude._FillValue =missingNumber
+    if not pyNc: nc_longitude._fillValue =missingNumber
     
     nc_latitude = cdfFile.createVariable('latitude', 'f',dim2d,**fillVDict)
     nc_latitude.units = "deg.dec"
     nc_latitude[:] = np.array(self.p["lat"],dtype="f")
-    if not pyNc: nc_latitude._FillValue =missingNumber
+    if not pyNc: nc_latitude._fillValue =missingNumber
       
     nc_lfrac = cdfFile.createVariable('lfrac', 'f',dim2d,**fillVDict)
     nc_lfrac.units = "-"
     nc_lfrac[:] = np.array(self.p["lfrac"],dtype="f")
-    if not pyNc: nc_lfrac._FillValue =missingNumber
+    if not pyNc: nc_lfrac._fillValue =missingNumber
     
     
     if (self.r["nmlSettings"]["active"]):
@@ -1611,75 +1610,75 @@ class pyPamtra(object):
       nc_Ze = cdfFile.createVariable('Ze', 'f',dim5d_rad,**fillVDict)
       nc_Ze.units = zeUnit
       nc_Ze[:] = np.array(self.r["Ze"],dtype='f')
-      if not pyNc: nc_Ze._FillValue =missingNumber
+      if not pyNc: nc_Ze._fillValue =missingNumber
 
       nc_Attenuation_Hydrometeors = cdfFile.createVariable('Attenuation_Hydrometeors', 'f',dim5d_att,**fillVDict)
       nc_Attenuation_Hydrometeors.units = attUnit
       nc_Attenuation_Hydrometeors[:] = np.array(self.r["Att_hydro"],dtype='f')
-      if not pyNc: nc_Attenuation_Hydrometeors._FillValue =missingNumber
+      if not pyNc: nc_Attenuation_Hydrometeors._fillValue =missingNumber
         
       nc_Attenuation_Atmosphere = cdfFile.createVariable('Attenuation_Atmosphere', 'f',dim4d,**fillVDict)
       nc_Attenuation_Atmosphere.units = attUnit
       nc_Attenuation_Atmosphere[:] = np.array(self.r["Att_atmo"],dtype='f')
-      if not pyNc: nc_Attenuation_Atmosphere._FillValue =missingNumber
+      if not pyNc: nc_Attenuation_Atmosphere._fillValue =missingNumber
       
       if ((self.r["nmlSettings"]["radar_mode"] == "spectrum") or (self.r["nmlSettings"]["radar_mode"] == "moments")):
 	nc_snr=cdfFile.createVariable('Radar_SNR', 'f',dim5d_rad,**fillVDict)
 	nc_snr.units="dB"
 	nc_snr[:] = np.array(self.r["radar_snr"],dtype='f')
-	if not pyNc: nc_snr._FillValue =missingNumber
+	if not pyNc: nc_snr._fillValue =missingNumber
 
 	nc_fvel=cdfFile.createVariable('Radar_FallVelocity', 'f',dim5d_rad,**fillVDict)
 	nc_fvel.units="m/s"
 	nc_fvel[:] = np.array(self.r["radar_moments"][...,0],dtype='f')
-	if not pyNc: nc_fvel._FillValue =missingNumber
+	if not pyNc: nc_fvel._fillValue =missingNumber
 	
 	nc_specw=cdfFile.createVariable('Radar_SpectralWidth', 'f',dim5d_rad,**fillVDict)
 	nc_specw.units="m/s"
 	nc_specw[:] = np.array(self.r["radar_moments"][...,1],dtype='f')
-	if not pyNc: nc_specw._FillValue =missingNumber
+	if not pyNc: nc_specw._fillValue =missingNumber
 	
 	nc_skew=cdfFile.createVariable('Radar_Skewness', 'f',dim5d_rad,**fillVDict)
 	nc_skew.units="-"
 	nc_skew[:] = np.array(self.r["radar_moments"][...,2],dtype='f')
-	if not pyNc: nc_skew._FillValue =missingNumber
+	if not pyNc: nc_skew._fillValue =missingNumber
 	
 	nc_kurt=cdfFile.createVariable('Radar_Kurtosis', 'f',dim5d_rad,**fillVDict)
 	nc_kurt.units="-"
 	nc_kurt[:] = np.array(self.r["radar_moments"][...,3],dtype='f')
-	if not pyNc: nc_kurt._FillValue =missingNumber
+	if not pyNc: nc_kurt._fillValue =missingNumber
 	
 	nc_lslop=cdfFile.createVariable('Radar_LeftSlope', 'f',dim5d_rad,**fillVDict)
 	nc_lslop.units="dB/(m/s)"
 	nc_lslop[:] = np.array(self.r["radar_slopes"][...,0],dtype='f')
-	if not pyNc: nc_lslop._FillValue =missingNumber
+	if not pyNc: nc_lslop._fillValue =missingNumber
 	
 	nc_rslop=cdfFile.createVariable('Radar_RightSlope', 'f',dim5d_rad,**fillVDict)
 	nc_rslop.units="dB/(m/s)"
 	nc_rslop[:] = np.array(self.r["radar_slopes"][...,1],dtype='f')
-	if not pyNc: nc_rslop._FillValue =missingNumber
+	if not pyNc: nc_rslop._fillValue =missingNumber
 
         nc_lslop=cdfFile.createVariable('Radar_LeftEdge', 'f',dim5d_rad,**fillVDict)
         nc_lslop.units="m/s"
         nc_lslop[:] = np.array(self.r["radar_edges"][...,0],dtype='f')
-        if not pyNc: nc_lslop._FillValue =missingNumber
+        if not pyNc: nc_lslop._fillValue =missingNumber
         
         nc_rslop=cdfFile.createVariable('Radar_RightEdge', 'f',dim5d_rad,**fillVDict)
         nc_rslop.units="m/s"
         nc_rslop[:] = np.array(self.r["radar_edges"][...,1],dtype='f')
-        if not pyNc: nc_rslop._FillValue =missingNumber	
+        if not pyNc: nc_rslop._fillValue =missingNumber	
 	
 	nc_qual=cdfFile.createVariable('Radar_Quality', 'i',dim5d_rad,**fillVDict)
 	nc_qual.units="bytes"
 	nc_qual.description="1st byte: aliasing; 2nd byte: 2nd peak present; 7th: no peak found"
 	nc_qual[:] = np.array(self.r["radar_quality"],dtype='i')
-	if not pyNc: nc_qual._FillValue =missingNumber
+	if not pyNc: nc_qual._fillValue =missingNumber
 	
         #nc_qual=cdfFile.createVariable('Radar_Polarisation', 'i',dim5d_rad,**fillVDict)
         #nc_qual.units="bytes"
         #nc_qual.description="1st byte: aliasing; 2nd byte: 2nd peak present; 7th: no peak found"
         #nc_qual[:] = np.array(self.r["radar_quality"],dtype='i')
-        #if not pyNc: nc_qual._FillValue =missingNumber	
+        #if not pyNc: nc_qual._fillValue =missingNumber	
 	
 	
 	if ((self.r["nmlSettings"]["radar_mode"] == "spectrum")): 
@@ -1687,18 +1686,18 @@ class pyPamtra(object):
 	  nc_vel=cdfFile.createVariable('Radar_Velocity', 'f',("nfft",),**fillVDict)
 	  nc_vel.units="m/s"
 	  nc_vel[:] = np.array(self.r["radar_vel"],dtype='f')
-	  if not pyNc: nc_vel._FillValue =missingNumber
+	  if not pyNc: nc_vel._fillValue =missingNumber
 	  
 	  nc_spec=cdfFile.createVariable('Radar_Spectrum', 'f',dim6d_rad,**fillVDict)
 	  nc_spec.units="dBz"
 	  nc_spec[:] = np.array(self.r["radar_spectra"],dtype='f')
-	  if not pyNc: nc_spec._FillValue =missingNumber
+	  if not pyNc: nc_spec._fillValue =missingNumber
 	     
     if (self.r["nmlSettings"]["passive"]):
       nc_tb = cdfFile.createVariable('tb', 'f',dim6d_pas,**fillVDict)
       nc_tb.units = "K"
       nc_tb[:] = np.array(self.r["tb"],dtype='f')
-      if not pyNc: nc_tb._FillValue =missingNumber
+      if not pyNc: nc_tb._fillValue =missingNumber
         
     #profile data
     
@@ -1706,55 +1705,55 @@ class pyPamtra(object):
       nc_iwv = cdfFile.createVariable('iwv', 'f',dim2d,**fillVDict)
       nc_iwv.units = "kg/m^2"
       nc_iwv[:] = np.array(self.p["iwv"],dtype="f")
-      if not pyNc: nc_iwv._FillValue =missingNumber
+      if not pyNc: nc_iwv._fillValue =missingNumber
 
     if ("cwp" in profileVars or profileVars =="all") and ("cwp" in self.p.keys()):
       nc_cwp= cdfFile.createVariable('cwp', 'f',dim2d,**fillVDict)
       nc_cwp.units = "kg/m^2"
       nc_cwp[:] = np.array(self.p["cwp"],dtype="f")
-      if not pyNc: nc_cwp._FillValue =missingNumber
+      if not pyNc: nc_cwp._fillValue =missingNumber
   
     if ("iwp" in profileVars or profileVars =="all") and ("iwp" in self.p.keys()):
       nc_iwp = cdfFile.createVariable('iwp', 'f',dim2d,**fillVDict)
       nc_iwp.units = "kg/m^2"
       nc_iwp[:] = np.array(self.p["iwp"],dtype="f")
-      if not pyNc: nc_iwp._FillValue =missingNumber
+      if not pyNc: nc_iwp._fillValue =missingNumber
 
     if ("rwp" in profileVars or profileVars =="all") and ("rwp" in self.p.keys()):
       nc_rwp = cdfFile.createVariable('rwp', 'f',dim2d,**fillVDict)
       nc_rwp.units = "kg/m^2"
       nc_rwp[:] = np.array(self.p["rwp"],dtype="f")
-      if not pyNc: nc_rwp._FillValue =missingNumber
+      if not pyNc: nc_rwp._fillValue =missingNumber
 
     if ("swp" in profileVars or profileVars =="all") and ("swp" in self.p.keys()):
       nc_swp = cdfFile.createVariable('swp', 'f',dim2d,**fillVDict)
       nc_swp.units = "kg/m^2"
       nc_swp[:] = np.array(self.p["swp"],dtype="f")
-      if not pyNc: nc_swp._FillValue =missingNumber
+      if not pyNc: nc_swp._fillValue =missingNumber
 
     if ("gwp" in profileVars or profileVars =="all") and ("gwp" in self.p.keys()):
       nc_gwp = cdfFile.createVariable('gwp', 'f',dim2d,**fillVDict)
       nc_gwp.units = "kg/m^2"
       nc_gwp[:] = np.array(self.p["gwp"],dtype="f")
-      if not pyNc: nc_gwp._FillValue =missingNumber
+      if not pyNc: nc_gwp._fillValue =missingNumber
 
     if ("hwp" in profileVars or profileVars =="all") and ("hwp" in self.p.keys()):
       nc_hwp = cdfFile.createVariable('hwp', 'f',dim2d,**fillVDict)
       nc_hwp.units = "kg/m^2"
       nc_hwp[:] = np.array(self.p["hwp"],dtype="f")
-      if not pyNc: nc_hwp._FillValue =missingNumber
+      if not pyNc: nc_hwp._fillValue =missingNumber
 
     if ("cloudBase" in profileVars or profileVars =="all") and ("cloudBase" in self.p.keys()):
       nc_cb = cdfFile.createVariable('cloudBase', 'f',dim2d,**fillVDict)
       nc_cb.units = "m"
       nc_cb[:] = np.array(self.p["cloudBase"],dtype="f")
-      if not pyNc: nc_cb._FillValue =missingNumber
+      if not pyNc: nc_cb._fillValue =missingNumber
 
     if ("cloudTop" in profileVars or profileVars =="all") and ("cloudTop" in self.p.keys()):
       nc_ct = cdfFile.createVariable('cloudTop', 'f',dim2d,**fillVDict)
       nc_ct.units = "m"
       nc_ct[:] = np.array(self.p["cloudTop"],dtype="f")
-      if not pyNc: nc_ct._FillValue =missingNumber
+      if not pyNc: nc_ct._fillValue =missingNumber
 
     cdfFile.close()
     if self.set["pyVerbose"] > 0: print fname,"written"

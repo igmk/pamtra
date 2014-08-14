@@ -200,7 +200,7 @@ module tmatrix
             return
         end if          
       else if (tmatrix_db == "file") then
-        
+        STOP "BUG FOR PASSIVE!"
         db_path =""
 !         write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,E12.6,2(A6,ES36.30),4(A6,ES14.8),A1)'),&
 !                   "/v01","/quad_", quad, &
@@ -519,7 +519,7 @@ module tmatrix
       mri = abs(IMAG(ref_index))
 
 
-      if (active .eqv. .true. .and. passive .eqv. .false.) then
+      if ((active .eqv. .true.) .and. (passive .eqv. .false.)) then
         qua_start = 16
       else
         qua_start = 1
