@@ -77,27 +77,27 @@ subroutine make_mass_size(errorstatus)
      errorstatus = fatal
      call report(errorstatus, msg, nameOfRoutine)
      return
-  elseif (liq_ice == -1 .and. rho_ms > 917.0) then
+  elseif ((liq_ice == -1) .and. (rho_ms > 917.0)) then
      msg = 'Density of ice cannot exceed 917.0 kg/m3!'
      errorstatus = fatal
      call report(errorstatus, msg, nameOfRoutine)
      return
-  elseif (liq_ice == 1 .and. (a_ms > 0.0 .or. b_ms > 0.0 .or. rho_ms > 0.0 .or. &
-                             (as_ratio /= 1. .and. as_ratio > 0.) )) then
+  elseif ((liq_ice == 1) .and. ((a_ms > 0.0) .or. (b_ms > 0.0) .or. (rho_ms > 0.0) .or. &
+                             ((as_ratio /= 1.) .and. (as_ratio > 0.)) )) then
      msg = 'Water droplet: a, b, as_ratio replaced with pi/6 * 1000 kg/m3, 3, and 1!'
      err = warning
      call report(err, msg, nameOfRoutine)
-  elseif (liq_ice == -1 .and. a_ms < 0.0 .and. b_ms < 0.0 .and. rho_ms < 0.0) then
+  elseif ((liq_ice == -1) .and. (a_ms < 0.0) .and. (b_ms < 0.0) .and. (rho_ms < 0.0)) then
      msg = 'Need to specify a & b and/or rho to calculate the mass-size relation parameters!'
      errorstatus = fatal
      call report(errorstatus, msg, nameOfRoutine)
      return
-  elseif (liq_ice == -1 .and. a_ms < 0.0 .and. b_ms < 0.0 .and. rho_ms < 0.0) then
+  elseif ((liq_ice == -1) .and. (a_ms < 0.0) .and. (b_ms < 0.0) .and. (rho_ms < 0.0)) then
      msg = 'Need to specify a & b or rho to calculate the mass-size relation parameters!'
      errorstatus = fatal
      call report(errorstatus, msg, nameOfRoutine)
      return
-  elseif ((a_ms < 0. .and. b_ms >= 0.0) .or. (a_ms > 0.0 .and. b_ms < 0.0)) then
+  elseif (((a_ms < 0.) .and. (b_ms >= 0.0)) .or. ((a_ms > 0.0) .and. (b_ms < 0.0))) then
      msg = 'When a is specified then also b need to be specified and vice versa'
      errorstatus = fatal
      call report(errorstatus, msg, nameOfRoutine)
@@ -116,7 +116,7 @@ subroutine make_mass_size(errorstatus)
   endif
 
 ! a_ms and b_ms are specified --> nothing to do, exit the subroutine
-  if (a_ms > 0.0 .and. b_ms >= 0 .and. liq_ice == -1) then
+  if ((a_ms > 0.0) .and. (b_ms >= 0) .and. (liq_ice == -1)) then
      errorstatus = err
      if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
      return
@@ -124,21 +124,21 @@ subroutine make_mass_size(errorstatus)
 
 ! Fixed density --> calculate a_ms, b_ms
 ! !  aspect ratio not defined or equal to 1 --> use spheres
-  if (liq_ice == -1 .and. (as_ratio < 0.0 .or. as_ratio == 1.0)) then
+  if ((liq_ice == -1) .and. ((as_ratio < 0.0) .or. (as_ratio == 1.0))) then
      b_ms = 3._dbl
      a_ms = pi / 6._dbl * rho_ms
      errorstatus = err
      if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
      return
 ! ! as_ratio < 1.0 --> oblate spheroid
-  elseif (liq_ice == -1 .and. as_ratio > 0.0 .and. as_ratio < 1.0) then
+  elseif ((liq_ice == -1) .and. (as_ratio > 0.0) .and. (as_ratio < 1.0)) then
      b_ms = 3._dbl
      a_ms = pi / 6._dbl * rho_ms * (1._dbl / as_ratio) ** 2._dbl
      errorstatus = err
      if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
      return
 ! ! as_ratio > 1.0 --> prolate spheroid
-  elseif (liq_ice == -1 .and. as_ratio > 1.0) then
+  elseif ((liq_ice == -1) .and. (as_ratio > 1.0)) then
      b_ms = 3._dbl
      a_ms = pi / 6._dbl * rho_ms * as_ratio
      errorstatus = err

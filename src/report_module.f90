@@ -81,7 +81,7 @@ contains
         !  endif
 
 
-        If ( status > 0 .And. status < nstatus ) Then
+        If ( (status > 0) .and. (status < nstatus) ) Then
             if (verbose >= 0) then
                 ! Display message for warning and fatal
                 Write(Error_Unit,"(1X,a4,'/',a2,'/',a2,2x,2(a2,':'),a2,2x,a,a,a)") &

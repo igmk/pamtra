@@ -190,7 +190,7 @@ delta_h)
           spectra_velo_aliased = (/(((ii*del_v)+min_V_aliased),ii=0,radar_nfft_aliased)/) ! [m/s]
 
           !get turbulence (no turbulence in clear sky...)
-          if (atmo_airturb(i_x,i_y,i_z) > 0.d0 .and. back(i_p) > 0) then
+          if ((atmo_airturb(i_x,i_y,i_z) > 0.d0) .and. (back(i_p) > 0)) then
               ss = atmo_airturb(i_x,i_y,i_z)/del_v;            !in array indices!
 
               turb(:) = 0.d0

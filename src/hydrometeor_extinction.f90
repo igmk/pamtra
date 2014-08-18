@@ -195,7 +195,7 @@ subroutine hydrometeor_extinction(errorstatus)
         end if 
 
 !   Force nbin = 2 when monodisperse distribution is used. Needed by radar simulator.
-        if ( trim(dist_name) == 'mono' .or. trim(dist_name) == 'mono_cosmo_ice') &
+        if ( (trim(dist_name) == 'mono') .or. (trim(dist_name) == 'mono_cosmo_ice')) &
           nbin = 2
 
 

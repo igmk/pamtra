@@ -53,7 +53,7 @@ subroutine calc_moment(errorstatus)
   if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
 ! check for "reasonable" input values
-  if (maxval(d_ds) <= 0. .or. maxval(d_bound_ds) <= 0.) then
+  if ((maxval(d_ds) <= 0.) .or. (maxval(d_bound_ds) <= 0.)) then
     msg = 'maximum particle diameter <= 0!!'
     errorstatus = fatal
     call report(errorstatus, msg, nameOfRoutine)

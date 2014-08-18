@@ -125,7 +125,7 @@ module mie_spheres
 
       wavelength = c/(freq) !
 
-      if (liq_ice == -1 .and. density(1) /= 917.d0) then
+      if ((liq_ice == -1) .and. (density(1) /= 917.d0)) then
           m_ice = refre-Im*refim  ! mimicking a
           msphere = eps_mix((1.d0,0.d0),m_ice,density(nbins))
       else
@@ -171,7 +171,7 @@ module mie_spheres
 
       n_tot = n_tot + (ndens_eff * del_d_eff)
 
-      if (liq_ice == -1 .and. density(ir) /= 917.d0) then
+      if ((liq_ice == -1) .and. (density(ir) /= 917.d0)) then
 	  m_ice = refre-Im*refim  ! mimicking a
 	  msphere = eps_mix((1.d0,0.d0),m_ice,density(ir))
       else

@@ -40,7 +40,7 @@ subroutine refractive_index(errorstatus,type, t, f, particle_size, as_ratio, par
 
 
     err = 0
-    if (type .eq. 'c' .or. type .eq. 'r') then
+    if ((type .eq. 'c') .or. (type .eq. 'r')) then
         sal = 0._dbl
          call get_eps_water(err,sal,t-273.15_dbl,f,ref_dbl)
           if (err > 0) then
@@ -52,7 +52,7 @@ subroutine refractive_index(errorstatus,type, t, f, particle_size, as_ratio, par
          ref = sqrt(ref_dbl)
     else if (type .eq. 'i') then
         ref = sqrt(eps_ice(t,f))
-    else if (type .eq. 's' .or. type .eq. 'g' .or. type .eq. 'h') then
+    else if ((type .eq. 's') .or. (type .eq. 'g') .or. (type .eq. 'h')) then
         ! the minimum dimension of oblates, particle_size in meter
         min_dim = particle_size*as_ratio
         ! particle volume,
@@ -95,9 +95,9 @@ as_ratio, particle_mass, axi, ref)
     !  axi: equivalent volume sphere radius, in meter
     !  ref: refractive index of snow/ice
 
-    if(phase.eq.'S'.or.phase.eq.'s')then
+    if((phase.eq.'S').or.(phase.eq.'s'))then
         call refsnow(tempr, frq, particle_size,as_ratio, particle_mass, axi, ref)
-    else if(phase.eq.'L'.or. phase.eq.'l'.or.phase .eq. 'r') then
+    else if((phase.eq.'L').or. (phase.eq.'l').or.(phase .eq. 'r')) then
         sal = 0._dbl
         call refwater(sal,frq,tempr,ref)
         axi = particle_size/2._dbl

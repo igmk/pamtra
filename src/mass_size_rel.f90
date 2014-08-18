@@ -30,11 +30,11 @@ subroutine mass_size_rel(phase,ms_re_flag, p_size,particle_mass,as_ratio)
     ! or liquid water droplets
 
     particle_size = p_size*1.0d6
-    if (phase(1:1) .eq. 's' .or. phase(1:1) .eq. 'S') then
+    if ((phase(1:1) .eq. 's') .or. (phase(1:1) .eq. 'S')) then
         if (ms_re_flag .eq. 1) then
-            if (particle_size .ge. 0.005d4 .and. particle_size .le. 0.2d4) then ! 50um~200um
+            if ((particle_size .ge. 0.005d4) .and. (particle_size .le. 0.2d4)) then ! 50um~200um
                 particle_mass = 0.003d0*(particle_size/1.0d4)**2.0d0
-            else if (particle_size .gt. 0.2d4 .and. particle_size .le. 2.0d4) then ! 200um~2cm
+            else if ((particle_size .gt. 0.2d4) .and. (particle_size .le. 2.0d4)) then ! 200um~2cm
                 particle_mass = 0.0067d0*(particle_size/1.0d4)**2.5d0
             else if (particle_size .gt. 2.0d4) then ! >2cm
                 particle_mass = 0.0047d0*(particle_size/1.0d4)**3.0d0
@@ -58,7 +58,7 @@ subroutine mass_size_rel(phase,ms_re_flag, p_size,particle_mass,as_ratio)
         end if
     !     if the phase is liquid, use the water density instead of ice density
     !     for water dropltets, mass size relationship is useless
-    else if (phase(1:1) .eq. 'l' .or. phase(1:1) .eq. 'L') then
+    else if ((phase(1:1) .eq. 'l') .or. (phase(1:1) .eq. 'L')) then
         particle_mass = 1.d6*4.d0/3.d0*pi*(p_size/2.d0)**3.d0
     end if
 

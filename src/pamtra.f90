@@ -95,7 +95,7 @@ program pamtra
       go to 666
     end if
 
-    if (atmo_input_type == 'lev' .or. atmo_input_type == 'lay') &
+    if ((atmo_input_type == 'lev') .or. (atmo_input_type == 'lay')) &
         call read_new_fill_variables(err)
     if (atmo_input_type == 'cla') &
         call read_classic_fill_variables(err)
@@ -182,7 +182,7 @@ program pamtra
         errorstatus = err
     end if
 
-    if (verbose >= 1 .and. errorstatus == 0) then
+    if ((verbose >= 1) .and. (errorstatus == 0)) then
         msg = 'Progam finished successfully'
         call report(info, msg, nameOfRoutine)
     end if

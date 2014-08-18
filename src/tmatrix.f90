@@ -173,7 +173,7 @@ module tmatrix
           call report(errorstatus, msg, nameOfRoutine)
           return
       end if   
-      if (phase == -1 .and. density(ir) /= 917.d0) then
+      if ((phase == -1) .and. (density(ir) /= 917.d0)) then
           mMix = eps_mix((1.d0,0.d0),ref_index,density(ir))
       else
                 mMix = ref_index
@@ -605,7 +605,7 @@ module tmatrix
 			  scatt_matrix_tmp1_22 = scatt_matrix_tmp1_22 + (fact_sca*&
 			      (s11*dconjg(s11)-s12*dconjg(s12)-s21*dconjg(s21)+s22*dconjg(s22)))*phi_weights
 
-			  if (phi0 .eq. phi .and. thet0 .eq. thet) then
+			  if ((phi0 .eq. phi) .and. (thet0 .eq. thet)) then
 			      extinct_matrix(1,1,jj) = extinct_matrix(1,1,jj)+phi0_weights*(-real((s11 + s22)*fact_ext))
 			      extinct_matrix(1,2,jj) = extinct_matrix(1,2,jj)+phi0_weights*(-real((s11 - s22)*fact_ext))
 			      extinct_matrix(2,1,jj) = extinct_matrix(2,1,jj)+phi0_weights*(-real((s11 - s22)*fact_ext))

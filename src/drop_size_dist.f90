@@ -158,12 +158,12 @@ subroutine run_drop_size_dist(errorstatus)
 
 ! Calculate particle AREA at bin boundaries
   area_ds(:) = -99.
-  if (alpha_as > 0. .and. beta_as > 0.) then
+  if ((alpha_as > 0.) .and. (beta_as > 0.)) then
     do ibin=1,nbin
       area_ds(ibin) = alpha_as * d_ds(ibin)**beta_as
       !if area is larger than a square:
       if ((liq_ice == -1) .and. &
-          hydro_limit_density_area .and. &
+          (hydro_limit_density_area) .and. &
           (area_ds(ibin) > d_ds(ibin)**2)) then
           Write( msg, '("area too large:", e10.2, e10.2)' )  area_ds(ibin), d_ds(ibin)**2
         if (verbose >= 1)  call report(warning, msg, nameOfRoutine)

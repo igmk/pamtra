@@ -75,32 +75,32 @@ subroutine make_dist_params(errorstatus)
   n_0_star = -99.
 
 ! check for "reasonable" input values
-  if (moment_in == 3 .and. q_h <= 0.) then      
+  if ((moment_in == 3) .and. (q_h <= 0.)) then      
     msg = 'if moment_in eq 3 then input moment q_h must be greater than 0!'
     errorstatus = fatal
     call report(errorstatus, msg, nameOfRoutine)
     return
-  elseif (moment_in == 1 .and. n_tot <= 0.) then      
+  elseif ((moment_in == 1) .and. (n_tot <= 0.)) then      
     msg = 'if moment_in eq 2 then input moment n_tot must be greater than 0!'
     errorstatus = fatal
     call report(errorstatus, msg, nameOfRoutine)
     return
-  elseif (moment_in == 2 .and. r_eff <= 0.) then      
+  elseif ((moment_in == 2) .and. (r_eff <= 0.)) then      
     msg = 'if moment_in eq 3 then input moment r_eff must be greater than 0!'
     errorstatus = fatal
     call report(errorstatus, msg, nameOfRoutine)
     return
-  elseif (moment_in == 13 .and. (q_h <= 0. .or. n_tot <= 0.)) then      
+  elseif ((moment_in == 13) .and. ((q_h <= 0.) .or. (n_tot <= 0.))) then      
     msg = 'if moment_in eq 12 then input moment q_h and n_tot must be greater than 0!'
     errorstatus = fatal
     call report(errorstatus, msg, nameOfRoutine)
     return
-  elseif (moment_in == 23 .and. (q_h <= 0. .or. r_eff <= 0.)) then      
+  elseif ((moment_in == 23) .and. ((q_h <= 0.) .or. (r_eff <= 0.))) then      
     msg = 'if moment_in eq 13 then input moment q_h and r_eff must be greater than 0!'
     errorstatus = fatal
     call report(errorstatus, msg, nameOfRoutine)
     return
-  elseif (moment_in == 12 .and. (n_tot <= 0. .or. r_eff <= 0.)) then      
+  elseif ((moment_in == 12) .and. ((n_tot <= 0.) .or. (r_eff <= 0.))) then      
     msg = 'if moment_in eq 23 then input moment n_tot and r_eff must be greater than 0!'
     errorstatus = fatal
     call report(errorstatus, msg, nameOfRoutine)
@@ -120,20 +120,20 @@ subroutine make_dist_params(errorstatus)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! MONODISPERSE distribution   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if (trim(dist_name) == 'mono' .or. trim(dist_name) == 'mono_cosmo_ice') then 
+  if ((trim(dist_name) == 'mono') .or. (trim(dist_name) == 'mono_cosmo_ice')) then 
 ! Set parameter for the Gamma dist. to get a monodisperse dist.
     lambda = 0._dbl
     mu = 0._dbl
     gam = 0._dbl
     if (trim(dist_name) == 'mono') then
 ! ! fixed radius (via d_1)
-      if (d_1 /= -99. .and. p_1 == -99.) then
+      if ((d_1 /= -99.) .and. (p_1 == -99.)) then
         d_mono = d_1
         if (moment_in == 3)    n_0 = q_h / (delta_d_mono * a_ms * d_1**b_ms)
         if (moment_in == 1)    n_0 = n_tot / delta_d_mono
       endif
 ! ! fixed n_tot (via p_1)
-      if (p_1 /= -99. .and. d_1 == -99.) then
+      if ((p_1 /= -99.) .and. (d_1 == -99.)) then
         n_0 = p_1 / delta_d_mono
         if (moment_in == 3)    d_mono = (q_h / (p_1 * a_ms))**(1._dbl / b_ms)
         if (moment_in == 2)    d_mono = r_eff * 2._dbl
@@ -144,7 +144,7 @@ subroutine make_dist_params(errorstatus)
         n_0 = q_h / (delta_d_mono * a_ms * d_mono**b_ms)
       endif
     endif
-    if (trim(dist_name) == 'mono_cosmo_ice' .and. moment_in == 3) then
+    if ((trim(dist_name) == 'mono_cosmo_ice') .and. (moment_in == 3)) then
 ! ! Monodisperse size distribution coherent with COSMO-de 1-moment scheme
 ! Number_concentration of activated ice ctystal is temperature dependent
 ! from COSMO-de code src_gscp.f90 routine: hydci_pp_gr
@@ -161,8 +161,8 @@ subroutine make_dist_params(errorstatus)
       endif
     endif
 ! ! Check that the variables have been filled in
-    if (lambda /= 0._dbl .or. mu /= 0._dbl .or. gam /= 0._dbl .or. &
-       n_0 <= 0._dbl .or. d_mono <= 0._dbl ) then
+    if ((lambda /= 0._dbl) .or. (mu /= 0._dbl) .or. (gam /= 0._dbl) .or. &
+       (n_0 <= 0._dbl) .or. (d_mono <= 0._dbl) ) then
       msg = 'Monodisperse case: something wrong or this parameters combination is not yet implemented...'
       errorstatus = fatal
       call report(errorstatus, msg, nameOfRoutine)
@@ -176,7 +176,7 @@ subroutine make_dist_params(errorstatus)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! CONSTANT distribution   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if (trim(dist_name) == 'const' .or. trim(dist_name) == 'const_cosmo_ice') then 
+  if ((trim(dist_name) == 'const') .or. (trim(dist_name) == 'const_cosmo_ice')) then 
 ! Set parameter for the Gamma dist. to get a constant dist.
     lambda = 0._dbl
     mu = 0._dbl
@@ -184,15 +184,15 @@ subroutine make_dist_params(errorstatus)
     delta_d_const = (d_2 - d_1)/(nbin-1)
     if (trim(dist_name) == 'const') then
 ! ! fixed radius (via d_1)
-      if (d_1 /= -99. .and. d_2 /= -99. .and. p_1 == -99. .and. p_2 == -99. &
-          .and. p_1 == -99. .and. p_4 == -99.) then
+      if ((d_1 /= -99.) .and. (d_2 /= -99.) .and. (p_1 == -99.) .and. (p_2 == -99.) &
+          .and. (p_1 == -99.) .and. (p_4 == -99.)) then
         if (moment_in == 3)    n_0 = q_h / (delta_d_const * a_ms * d_1**b_ms)
         if (moment_in == 1)    n_0 = n_tot / delta_d_const
         n_0 = n_0 /(nbin-1)
       endif
     endif
-    if (trim(dist_name) == 'const_cosmo_ice' .and. moment_in == 3 &
-        .and. nbin == 2) then
+    if ((trim(dist_name) == 'const_cosmo_ice') .and. (moment_in == 3) &
+        .and. (nbin == 2)) then
 ! ! Monodisperse size distribution coherent with COSMO-de 1-moment scheme
 ! Number_concentration of activated ice ctystal is temperature dependent
 ! from COSMO-de code src_gscp.f90 routine: hydci_pp_gr
@@ -212,8 +212,8 @@ subroutine make_dist_params(errorstatus)
     endif
 
 ! ! Check that the variables have been filled in
-    if (lambda /= 0._dbl .or. mu /= 0._dbl .or. gam /= 0._dbl .or. &
-       n_0 <= 0._dbl .or. ISNAN(n_0) .or. n_0 >= HUGE(n_0)) then
+    if ((lambda /= 0._dbl) .or. (mu /= 0._dbl) .or. (gam /= 0._dbl) .or. &
+       (n_0 <= 0._dbl) .or. ISNAN(n_0) .or. (n_0 >= HUGE(n_0))) then
       msg = 'Monodisperse case: something wrong or this parameters combination is not yet implemented...'
       errorstatus = fatal
       call report(errorstatus, msg, nameOfRoutine)
@@ -228,38 +228,38 @@ subroutine make_dist_params(errorstatus)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! EXPONENTIAL distribution   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if (trim(dist_name) == 'exp' .or. trim(dist_name) == 'exp_field_t' .or.       &
-      trim(dist_name) == 'exp_cosmo_snow' .or. trim(dist_name) == 'exp_ryan')     then 
+  if ((trim(dist_name) == 'exp') .or. (trim(dist_name) == 'exp_field_t') .or.       &
+      (trim(dist_name) == 'exp_cosmo_snow') .or. (trim(dist_name) == 'exp_ryan'))     then 
 ! Set parameter for the Gamma dist. to get an exponential dist.
     gam = 1._dbl
     mu = 0._dbl
     if (trim(dist_name) == 'exp') then
 ! !  everything fixed 
-      if (p_1 /= -99. .and. p_2 /= -99. .and.moment_in ==0) then
+      if ((p_1 /= -99.) .and. (p_2 /= -99.) .and. (moment_in ==0)) then
         lambda = p_1
         n_0 = p_2
       end if
 ! ! fixed n_tot (via p_1)
-      if (p_1 /= -99. .and. p_2 == -99. .and. p_3 == -99.) then
+      if ((p_1 /= -99.) .and. (p_2 == -99.) .and. (p_3 == -99.)) then
         if (moment_in == 3)  lambda = (p_1 * a_ms * dgamma(b_ms+1._dbl) / q_h)**(1._dbl / b_ms)
         if (moment_in == 2)  lambda = 3._dbl / r_eff
         n_0    = p_1 * lambda
       endif
 ! ! fixed r_eff (via p_2)
-      if (p_1 == -99. .and. p_2 /= -99. .and. p_3 == -99.) then
+      if ((p_1 == -99.) .and. (p_2 /= -99.) .and. (p_3 == -99.)) then
         lambda = 3._dbl / p_2
         if (moment_in == 3)  n_0 = (q_h * lambda**(b_ms+1._dbl)) / (a_ms * dgamma(b_ms+1._dbl))
         if (moment_in == 1)  n_0 = n_tot * lambda
       endif
 ! ! fixed N_0 (via p_3)
-      if (p_1 == -99. .and. p_2 == -99. .and. p_3 /= -99.) then
+      if ((p_1 == -99.) .and. (p_2 == -99.) .and. (p_3 /= -99.)) then
         n_0 = p_3
         if (moment_in == 3)  lambda = (n_0 * a_ms * dgamma(b_ms+1._dbl) / q_h)**(1._dbl / (b_ms+1._dbl))
         if (moment_in == 1)  lambda = n_0 / n_tot
         if (moment_in == 2)  lambda = 3._dbl / r_eff
       endif
 ! ! both moments from input file
-      if (p_1 == -99. .and. p_2 == -99.) then
+      if ((p_1 == -99.) .and. (p_2 == -99.)) then
         if (moment_in == 13)  then
           lambda = (n_tot * a_ms * dgamma(b_ms+1._dbl) / q_h)**(1._dbl / b_ms)
           n_0    = n_tot * lambda
@@ -288,7 +288,7 @@ subroutine make_dist_params(errorstatus)
     endif
 ! ! Field et al. (2005 QJRM, page 2007) n_0 = n_0(T,q_h)
 ! ! AS IMPLEMENTED IN cosmo 2-MOMENT scheme
-    if (trim(dist_name) == 'exp_cosmo_snow' .and. moment_in == 3) then
+    if ((trim(dist_name) == 'exp_cosmo_snow') .and. (moment_in == 3)) then
 ! taken from COSMO-de routine hydci_pp_gr in src_gscp.f90
       mma = (/   5.065339, -0.062659, -3.032362, 0.029469, -0.000285, &
              0.312550,  0.000204,  0.003199, 0.000000, -0.015952 /)
@@ -315,7 +315,7 @@ subroutine make_dist_params(errorstatus)
       lambda = (a_ms * n_0 * dgamma(b_ms+1._dbl) / q_h)**(1._dbl /(b_ms+1._dbl))
     endif
 ! ! Check that the variables have been filled in
-    if (gam /= 1._dbl .or. mu /= 0._dbl .or. n_0 <= 0._dbl .or. lambda <= 0._dbl) then
+    if ((gam /= 1._dbl) .or. (mu /= 0._dbl) .or. (n_0 <= 0._dbl) .or. (lambda <= 0._dbl)) then
       print*, gam, mu, n_0, lambda
       msg = 'Exponential case: something wrong or this parameters combination is not yet implemented...'
       errorstatus = fatal
@@ -332,14 +332,14 @@ subroutine make_dist_params(errorstatus)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if (trim(dist_name) == 'logn') then
 ! ! fixed n_tot (via p_1) and sigma (via p_3)
-    if (p_1 /= -99. .and. p_3 /= -99.) then
+    if ((p_1 /= -99.) .and. (p_3 /= -99.)) then
       n_t = p_1
       sig = p_3
       if (moment_in == 3) d_ln = (1._dbl/b_ms) * (log(q_h / (a_ms * n_t)) - (0.5_dbl * (b_ms * sig)**2._dbl))
       if (moment_in == 2) d_ln = log(2._dbl * r_eff) - 2.5_dbl * sig**2._dbl
     endif
 ! ! fixed n_tot (via p_1) and r_eff (via p_2)
-    if (p_1 /= -99. .and. p_2 /= -99. .and. p_3 == -99. .and. moment_in == 3) then
+    if ((p_1 /= -99.) .and. (p_2 /= -99.) .and. (p_3 == -99.) .and. (moment_in == 3)) then
       n_t = p_1
       work1 = q_h / (a_ms * n_t * (2._dbl * p_2)**2._dbl)
       work2 = 2._dbl / (b_ms*(b_ms-5._dbl))
@@ -347,14 +347,14 @@ subroutine make_dist_params(errorstatus)
       d_ln = log(2._dbl * p_2) - 2.5_dbl * sig**2._dbl
     endif
 ! ! fixed r_eff (via p_2) and sigma (via p_3)
-    if (p_1 == -99. .and. p_2 /= -99. .and. p_3 /= -99.) then
+    if ((p_1 == -99.) .and. (p_2 /= -99.) .and. (p_3 /= -99.)) then
       sig = p_3
       d_ln = log(2._dbl * p_2) - 2.5_dbl * sig**2._dbl
       if (moment_in == 3) n_t = q_h / a_ms * exp(-1._dbl*((b_ms * d_ln) + (0.5_dbl *(b_ms * sig)**2._dbl)))
       if (moment_in == 1) n_t = n_tot
     endif
 ! ! fixed sigma (via p_3)
-    if (p_1 == -99. .and. p_2 == -99. .and. p_3 /= -99.) then
+    if ((p_1 == -99.) .and. (p_2 == -99.) .and. (p_3 /= -99.)) then
       sig = p_3
       if (moment_in == 13) then
         n_t  = n_tot
@@ -370,7 +370,7 @@ subroutine make_dist_params(errorstatus)
       endif
     endif
 ! ! Check that the variables have been filled in
-    if (n_t <= 0._dbl .or. isnan(d_ln) .or. sig <= 0._dbl) then
+    if ((n_t <= 0._dbl) .or. isnan(d_ln) .or. (sig <= 0._dbl)) then
       msg = 'Log-normal case: something wrong or this parameters combination is not yet implemented...'
       errorstatus = fatal
       call report(errorstatus, msg, nameOfRoutine)
@@ -386,7 +386,7 @@ subroutine make_dist_params(errorstatus)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if (trim(dist_name) == 'mgamma') then
 ! ! The user MUST specify mu and gam parameters
-    if (p_3 == -99. .or. p_4 == -99.) then 
+    if ((p_3 == -99.) .or. (p_4 == -99.)) then 
       msg = 'Modified Gamma case: p_3 and p_4 parameters must be specified...'
       errorstatus = fatal
       call report(errorstatus, msg, nameOfRoutine)
@@ -395,7 +395,7 @@ subroutine make_dist_params(errorstatus)
     mu  = p_3
     gam = p_4
 ! ! fixed n_tot (via p_1)
-    if (p_1 /= -99. .and. p_2 == -99.) then
+    if ((p_1 /= -99.) .and. (p_2 == -99.)) then
       if (moment_in == 3)  then
         work1 = a_ms * gam**(b_ms-1._dbl) * p_1**(b_ms) / q_h
         work2 = dgamma((mu + b_ms + 1._dbl) / gam)
@@ -412,7 +412,7 @@ subroutine make_dist_params(errorstatus)
       endif
     endif
 ! ! fixed r_eff (via p_2)
-    if (p_1 == -99. .and. p_2 /= -99.) then
+    if ((p_1 == -99.) .and. (p_2 /= -99.)) then
       if (moment_in == 3)  then
         work1 = dgamma((mu + 4._dbl) / gam)
         work2 = dgamma((mu + 3._dbl) / gam) * p_2 * 2._dbl
@@ -430,7 +430,7 @@ subroutine make_dist_params(errorstatus)
       endif
     endif
 ! ! 2 moments from the input file
-    if (p_1 == -99. .and. p_2 == -99.) then
+    if ((p_1 == -99.) .and. (p_2 == -99.)) then
       if (moment_in == 13)  then
         work1 = a_ms * gam**(b_ms-1._dbl) * n_tot**(b_ms) / q_h
         work2 = dgamma((mu + b_ms + 1._dbl) / gam)
@@ -455,7 +455,7 @@ subroutine make_dist_params(errorstatus)
       endif
     endif
 ! ! Check that the variables have been filled in
-    if (lambda <= 0._dbl .or. n_0 <= 0._dbl .or. isnan(mu) .or. isnan(gam)) then
+    if ((lambda <= 0._dbl) .or. (n_0 <= 0._dbl) .or. isnan(mu) .or. isnan(gam)) then
       msg = 'Modified-gamma case: something wrong or this parameters combination is not yet implemented...'
       errorstatus = fatal
       call report(errorstatus, msg, nameOfRoutine)
@@ -471,9 +471,9 @@ subroutine make_dist_params(errorstatus)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if (trim(dist_name) == 'norm_mgamma') then
 ! ! The user MUST specify d_m, n_0_star and mu parameters
-    call assert_false(err,(p_1 == -99. .or. p_2 == -99.),&
+    call assert_false(err,((p_1 == -99.) .or. (p_2 == -99.)),&
         'Normalized Modified Gamma case: p_1 and p_2 parameters must be specified')
-    call assert_true(err,(p_3 /= -99. .NEQV. p_4 /= -99.),& ! NEQV = xor
+    call assert_true(err,((p_3 /= -99.) .NEQV. (p_4 /= -99.)),& ! NEQV = xor
         'Normalized Modified Gamma case: p_3 xor p_4 parameters must be specified...' )
    call assert_true(err,(moment_in == 0),&
         'Normalized Modified Gamma case: currently only implemented for moment_in = 0')

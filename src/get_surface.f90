@@ -116,13 +116,13 @@ subroutine get_surface &
           return
       end if    
 
-    if (atmo_lfrac(i_x,i_y) >= 0.5_dbl .and. atmo_lfrac(i_x,i_y) <= 1.0_dbl) then
+    if ((atmo_lfrac(i_x,i_y) >= 0.5_dbl) .and. (atmo_lfrac(i_x,i_y) <= 1.0_dbl)) then
         ground_type = 'S' ! changed to specular after advice of cathrine prigent
         ise=13
         read(atmo_month(i_x,i_y),'(i2)') imonth
-        if (imonth .ge. 7 .and. imonth .le. 12) then
+        if ((imonth .ge. 7) .and. (imonth .le. 12)) then
             femis = data_path(:len_trim(data_path))//'/emissivity/ssmi_mean_emis_92'//atmo_month(i_x,i_y)//'_direct'
-        else if (imonth .ge. 1 .and. imonth .lt. 7) then
+        else if ((imonth .ge. 1 ).and. (imonth .lt. 7)) then
             femis = data_path(:len_trim(data_path))//'/emissivity/ssmi_mean_emis_93'//atmo_month(i_x,i_y)//'_direct'
         else
             msg = "Warning: No emissivity data found for "//nxstr//" and "//nystr
@@ -151,7 +151,7 @@ subroutine get_surface &
         end if
         ground_albedo = 1._dbl - land_emissivity
 
-    else if (atmo_lfrac(i_x,i_y) >= 0._dbl .and. atmo_lfrac(i_x,i_y) < 0.5_dbl) then
+    else if ((atmo_lfrac(i_x,i_y) >= 0._dbl) .and. (atmo_lfrac(i_x,i_y) < 0.5_dbl)) then
         ! computing the refractive index of the sea (Fresnel) surface
         ground_type = 'O'
         ground_albedo = 1.0_dbl

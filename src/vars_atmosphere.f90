@@ -117,7 +117,7 @@ module vars_atmosphere
 
     atmo_input_type = trim(input_file(len_trim(input_file)-2:len_trim(input_file))) 
 
-    if (atmo_input_type .ne. 'cla' .and. atmo_input_type .ne. 'lev' .and. atmo_input_type .ne. 'lay')  then
+    if ((atmo_input_type .ne. 'cla') .and. (atmo_input_type .ne. 'lev') .and. (atmo_input_type .ne. 'lay'))  then
         msg = "Unknown ascii input file type"//trim(atmo_input_type)
         call report(err,msg,nameOfRoutine)
         errorstatus = fatal
@@ -135,7 +135,7 @@ module vars_atmosphere
     end if
 
 ! Screen NEW input file format
-    if (atmo_input_type == 'lev' .or. atmo_input_type == 'lay') then
+    if ((atmo_input_type == 'lev') .or. (atmo_input_type == 'lay')) then
 ! READ atmo_ngridx, atmo_ngridy, atmo_max_nlyrs
       read(14,*) atmo_ngridx, atmo_ngridy, atmo_max_nlyrs
 ! add one layer/level to be able to insert the observation height as a new layer/level
@@ -398,10 +398,10 @@ module vars_atmosphere
 ! READ column integrated water vapor and hydrometeors properties
           read(14,*) work_xwp
           atmo_iwv(i,j) = work_xwp(1)
-          if ((.not. active) .or. radar_mode == "simple") &
+          if ((.not. active) .or. (radar_mode == "simple")) &
               allocate(work_xwc(n_tot_moment+4,atmo_nlyrs(i,j)))
 ! For radar moments or spectrum mode then atmospheric turbulence should be provided in the last column of the input file
-          if (active .and. (radar_mode == "moments" .or. radar_mode == "spectrum")) &
+          if (active .and. ((radar_mode == "moments") .or. (radar_mode == "spectrum"))) &
               allocate(work_xwc(n_tot_moment+5,atmo_nlyrs(i,j)))
 ! READ lowest level variable (ONLY for "lev" input type)
           if (atmo_input_type == 'lev') read(14,*) atmo_hgt_lev(i,j,1),&
@@ -468,7 +468,7 @@ module vars_atmosphere
             if (moment_in_arr(i_hydro) > 5) index_hydro = index_hydro + 2
           enddo
 ! FILL turbulence for radar moments or spectrum mode
-          if (radar_mode == "moments" .or. radar_mode == "spectrum") &
+          if ((radar_mode == "moments") .or. (radar_mode == "spectrum")) &
           atmo_airturb(i,j,1:atmo_nlyrs(i,j)) = work_xwc(index_hydro,:) 
 
 
@@ -849,13 +849,13 @@ module vars_atmosphere
         "found negative value in moment_in_arr") 
 
     do i_hydro = 1,n_hydro
-      if (moment_in_arr(i_hydro) == 1 .or. moment_in_arr(i_hydro) == 12 .or. moment_in_arr(i_hydro) == 13) &
+      if ((moment_in_arr(i_hydro) == 1) .or. (moment_in_arr(i_hydro) == 12) .or. (moment_in_arr(i_hydro) == 13)) &
        call assert_false(err,ANY(ISNAN(atmo_hydro_n(nx,ny,1:atmo_nlyrs(nx,ny),i_hydro))),&
           "found nan in atmo_hydro_n")
-      if (moment_in_arr(i_hydro) == 2 .or. moment_in_arr(i_hydro) == 12 .or. moment_in_arr(i_hydro) == 23) &
+      if ((moment_in_arr(i_hydro) == 2) .or. (moment_in_arr(i_hydro) == 12 ).or. (moment_in_arr(i_hydro) == 23)) &
        call assert_false(err,ANY(ISNAN(atmo_hydro_reff(nx,ny,1:atmo_nlyrs(nx,ny),i_hydro))),&
           "found nan in atmo_hydro_reff")
-      if (moment_in_arr(i_hydro) == 3 .or. moment_in_arr(i_hydro) == 13 .or. moment_in_arr(i_hydro) == 23) &
+      if ((moment_in_arr(i_hydro) == 3) .or. (moment_in_arr(i_hydro) == 13) .or. (moment_in_arr(i_hydro) == 23)) &
        call assert_false(err,ANY(ISNAN(atmo_hydro_q(nx,ny,1:atmo_nlyrs(nx,ny),i_hydro))),&
           "found nan in atmo_hydro_q")
     enddo

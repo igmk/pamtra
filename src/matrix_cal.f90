@@ -84,11 +84,11 @@ as_ratio, alpha, beta, azimuth_num, azimuth0_num
 
     ! calculate the quadrature angle, number and weight according to quadrature method
     ! subroutine lobatto_quadrature and gauss_legendre_quadrature in the file named 'refractive_index.f'
-    if (quad(1:1).eq.'l'.or.quad(1:1).eq.'L') then
+    if ((quad(1:1).eq.'l').or.(quad(1:1).eq.'L')) then
         call lobatto_quadrature(qua_num,qua_angle(1:qua_num),&
         qua_weights(1:qua_num))
     endif
-    if (quad(1:1).eq.'g'.or.quad(1:1).eq.'g') then
+    if ((quad(1:1).eq.'g').or.(quad(1:1).eq.'g')) then
         call gauss_legendre_quadrature(qua_num,qua_angle(1:qua_num),&
         qua_weights(1:qua_num))
     endif
@@ -201,7 +201,7 @@ as_ratio, alpha, beta, azimuth_num, azimuth0_num
                         !                            scatt_matrix_tmp1_44 = scatt_matrix_tmp1_44 + (fact_sca*&
                         !                                real(s11*dconjg(s22)-s12*dconjg(s21)))*phi_weights
 
-                        if (phi0 .eq. phi .and. thet0 .eq. thet) then
+                        if ((phi0 .eq. phi) .and. (thet0 .eq. thet)) then
                             !			  write(*,*)phi0,phi,thet0,thet, wave_num
                             !			  write(*,*)'matrix_cal.f',s11,s22
                             extinct_matrix(1,1,jj,:) = extinct_matrix(1,1,jj,:)+phi0_weights*(-real((s11 + s22)*fact_ext))

@@ -310,7 +310,7 @@ source)
 
         IF( abs(Rel_Azimuth) <= 360.0_fp ) THEN
             Fre_C = ZERO
-            IF( Frequency >= min_f .or. Frequency <= max_f ) THEN
+            IF( (Frequency >= min_f) .or. (Frequency <= max_f) ) THEN
                 DO i = 1, 8
                     IF( Frequency >= x(i) .and. Frequency < x(i+1) ) THEN
                         Fre_C = y(i) + (y(i+1)-y(i))/(x(i+1)-x(i))*(Frequency-x(i))

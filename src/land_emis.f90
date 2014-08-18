@@ -187,11 +187,11 @@ emissivity)  ! out
         emiv=emis(1)
         emih=emis(2)
     end if
-    if (freq .ge. 19.35 .and. freq .lt. 37.) then
+    if ((freq .ge. 19.35) .and. (freq .lt. 37.)) then
         emiv=emis(1)+(freq-19.35)*(emis(1)-emis(4))/(19.35-37.)
         emih=emis(2)+(freq-19.35)*(emis(2)-emis(5))/(19.35-37.)
     end if
-    if (freq .ge. 37. .and. freq .lt. 85.5) then
+    if ((freq .ge. 37. ).and. (freq .lt. 85.5)) then
         emiv=emis(4)+(freq-37.)*(emis(4)-emis(6))/(37.-85.5)
         emih=emis(5)+(freq-37.)*(emis(5)-emis(7))/(37.-85.5)
     end if

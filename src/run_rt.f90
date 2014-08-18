@@ -162,9 +162,11 @@ subroutine run_rt(errorstatus)
     end if
 
     ! find the output level
-    if (atmo_obs_height(i_x,i_y) > 99999._dbl .or. atmo_obs_height(i_x,i_y) > atmo_hgt_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1)) then
+    if ((atmo_obs_height(i_x,i_y) > 99999._dbl) .or. & 
+          (atmo_obs_height(i_x,i_y) > atmo_hgt_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1))) then
         outlevels(1) = 1
-    else if (atmo_obs_height(i_x,i_y) .lt. 0.1 .or. atmo_obs_height(i_x,i_y) .lt. atmo_hgt_lev(i_x,i_y,2)) then
+    else if ((atmo_obs_height(i_x,i_y) .lt. 0.1) .or. &
+          (atmo_obs_height(i_x,i_y) .lt. atmo_hgt_lev(i_x,i_y,2))) then
         outlevels(1) = atmo_nlyrs(i_x,i_y) + 1
     else
         out_search: do nz = 1, atmo_nlyrs(i_x,i_y)

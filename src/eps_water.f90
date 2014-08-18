@@ -508,7 +508,7 @@ module eps_water
 
       !convert frequency to microns
       wl = 1.e6*2.99792458e8/(f*1.e9)
-      if (wl .lt. wlmin .or. wl .gt. wlmax) then
+      if ((wl .lt. wlmin) .or. (wl .gt. wlmax)) then
         print*,wl, wlmin, wlmax, "out of wavelength specifications"
         stop 
         end if 

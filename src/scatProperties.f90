@@ -399,7 +399,7 @@ module scatProperties
     end if
 
     !do checks
-    if (rt_kexttot(i_z) .lt. 0.d0 .or. isnan(rt_kexttot(i_z))) then
+    if ((rt_kexttot(i_z) .lt. 0.d0) .or. isnan(rt_kexttot(i_z))) then
       print*, "rt_kexttot(i_z)",rt_kexttot(i_z)
       msg = 'rt_kexttot(i_z) smaller than zero or nan!'
       errorstatus = fatal

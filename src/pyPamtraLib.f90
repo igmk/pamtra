@@ -143,7 +143,7 @@
           end if
       end do grid_f
 
-      if (verbose >= 1 .and. errorstatus == 0) then
+      if ((verbose >= 1) .and. (errorstatus == 0)) then
           msg = 'Progam finished successfully'
           call report(info, msg, nameOfRoutine)
       end if

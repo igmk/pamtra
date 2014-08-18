@@ -72,7 +72,7 @@ contains
         rho_w = 1000.               !density of water
 
         ! IF BELOW CLOUD then use the mu-D_m relation
-        IF (present(cwc) .and. cwc .lt. 3.d-7) THEN
+        IF ((present(cwc)) .and. (cwc .lt. 3.d-7)) THEN
             x_r = rohydro / ntot                           !MEAN mass in SI
             D_m = ( 6. / (rho_w*pi) * x_r )**(1./3.)      !corresponding mean diameter assuming a spherical shape
             IF (D_m.LE.rain_cmu3) THEN

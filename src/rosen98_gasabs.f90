@@ -100,7 +100,7 @@ subroutine rosen98_gasabs &
   ! check for "reasonable" input values
 
 !  print*, freq
-  if (freq <= 0.0_dbl .or. freq > 800.0_dbl) then
+  if ((freq <= 0.0_dbl) .or. (freq > 800.0_dbl)) then
      errorstatus = fatal
      msg = 'Frequency not between 0 and 800 GHz in rosen98_gasabs!'
      call report(errorstatus, msg, nameOfRoutine)
@@ -110,7 +110,7 @@ subroutine rosen98_gasabs &
      msg = 'Temperature lower than 100 K in rosen98_gasabs!'
      call report(errorstatus, msg, nameOfRoutine)
      return
-  elseif (pres < 10.0_dbl .or. pres > 1.2d5) then
+  elseif ((pres < 10.0_dbl) .or. (pres > 1.2d5)) then
      print*, pres
      errorstatus = fatal
      msg = 'Pressure not between 10 and 1.2d5 Pa in rosen98_gasabs!'

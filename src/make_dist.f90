@@ -81,7 +81,7 @@ subroutine make_dist(errorstatus)
   thres_n = .1
     
   ! Monodisperse distribution
-  if (trim(dist_name) == 'mono'  .or. trim(dist_name) == 'mono_cosmo_ice') then
+  if ((trim(dist_name) == 'mono')  .or. (trim(dist_name) == 'mono_cosmo_ice')) then
     d_bound_ds(1) = d_mono - delta_d_mono*.5_dbl
     d_bound_ds(2) = d_mono
     d_bound_ds(3) = d_mono + delta_d_mono*.5_dbl
@@ -97,13 +97,13 @@ subroutine make_dist(errorstatus)
 ! -uses the user defined nbin BUT the nre defined diameter range
   bigloop: do ibig=1,2 ! Loop 2 is done only if hydro_adaptive_grid = .true.
     if (skip) exit bigloop
-    if (ibig == 1 .and. .not.hydro_adaptive_grid) then 
+    if ((ibig == 1) .and. (.not.hydro_adaptive_grid)) then 
       d_1_work = d_1
       d_2_work = d_2
       nbin_work = nbin
       skip = .true.
     endif
-    if (ibig == 1 .and. hydro_adaptive_grid) then 
+    if ((ibig == 1) .and. hydro_adaptive_grid) then 
       d_1_work = 1.d-8
       d_2_work = 2.d-2
       nbin_work = 5.d2
@@ -173,15 +173,15 @@ subroutine make_dist(errorstatus)
 	f_ds_work(i) = n_0_star * tmp1 * tmpX**mu * tmp2
       enddo
 
-    else if (trim(dist_name) == 'mgamma'     .or. trim(dist_name) == 'exp' .or. &
-             trim(dist_name) =='exp_field_t' .or. trim(dist_name) == 'exp_cosmo_snow' .or. &
-             trim(dist_name) == 'exp_ryan') then
+    else if ((trim(dist_name) == 'mgamma')     .or. (trim(dist_name) == 'exp') .or. &
+             (trim(dist_name) =='exp_field_t') .or. (trim(dist_name) == 'exp_cosmo_snow') .or. &
+             (trim(dist_name) == 'exp_ryan')) then
       do i=1,nbin_work+1
 	f_ds_work(i) = n_0 * d_bound_ds_work(i)**mu * EXP(-lambda * d_bound_ds_work(i)**gam)
       enddo
       
-    else if (trim(dist_name) /= 'mono'  .and. trim(dist_name) /= 'mono_cosmo_ice' .and. &
-             trim(dist_name) /= 'const' .and. trim(dist_name) /= 'const_cosmo_ice') then 
+    else if ((trim(dist_name) /= 'mono')  .and. (trim(dist_name) /= 'mono_cosmo_ice') .and. &
+             (trim(dist_name) /= 'const') .and. (trim(dist_name) /= 'const_cosmo_ice')) then 
       msg = 'did not undestand drop size name'
       errorstatus = fatal
       call report(errorstatus, msg, nameOfRoutine)
@@ -190,7 +190,7 @@ subroutine make_dist(errorstatus)
 
 !  Find the d_1 and d_2 where f_ds_work(d) = thres_n
 ! STEP INTO this cycle ONLY if first loop (ibig == 1) and ONLY if adaptive grid
-   if (hydro_adaptive_grid .and. ibig == 1) then
+   if (hydro_adaptive_grid .and. (ibig == 1)) then
      d_1_new = -1._dbl
      d_2_new = -1._dbl
      
@@ -200,18 +200,18 @@ subroutine make_dist(errorstatus)
          d_2_new = d_bound_ds_work(nbin_work+1)
          exit search_loop1
        endif
-       if (f_ds_work(i) >= thres_n .and. f_ds_work(i+1) < thres_n) then
+       if ((f_ds_work(i) >= thres_n) .and. (f_ds_work(i+1) < thres_n)) then
          exit search_loop1
        endif
      enddo search_loop1
      search_loop2: do i=1,nbin_work
        d_1_new = d_bound_ds_work(i)           ! largest possible d_1 =  d_bound_ds_work(nbin_work)
-       if ((f_ds_work(i) < thres_n .and. f_ds_work(i+1) >= thres_n) .or. f_ds_work(i) > f_ds_work(i+1)) then
+       if (((f_ds_work(i) < thres_n) .and. (f_ds_work(i+1) >= thres_n)) .or. (f_ds_work(i) > f_ds_work(i+1))) then
          exit search_loop2
        endif
      enddo search_loop2
 
-     if (d_1_new < -1.d-30 .or. d_2_new < -1.d-30 .or. d_1_new > d_2_new) then
+     if ((d_1_new < -1.d-30) .or. (d_2_new < -1.d-30) .or. (d_1_new > d_2_new)) then
       msg = 'something went wrong with the adaptive grid'
       errorstatus = fatal
       call report(errorstatus, msg, nameOfRoutine)

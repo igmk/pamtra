@@ -133,7 +133,7 @@ subroutine make_soft_spheroid(errorstatus)
     end do
   end if
 
-  if (minval(soft_rho_eff) <= 0. .or. minval(soft_d_eff) <= 0.) then
+  if ((minval(soft_rho_eff) <= 0.) .or. (minval(soft_d_eff) <= 0.)) then
     msg = 'something wrong in make_soft_spheroid!'
     errorstatus = fatal
     call report(errorstatus, msg, nameOfRoutine)
