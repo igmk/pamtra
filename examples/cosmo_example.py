@@ -19,4 +19,5 @@ pam.nmlSet["data_path"] = '/net/marin//mmaahn/pamtra_data/'
 
 pam.runPamtra(35)
 
+plt.figure()
 pyPamtraPlotter.plotTB(pam,levels=[1,400])

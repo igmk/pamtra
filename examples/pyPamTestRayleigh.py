@@ -24,4 +24,5 @@ pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 
 
 pam.runPamtra(freqs,checkData=False)
+plt.figure()
 plt.plot(pam.r["Ze"].ravel())

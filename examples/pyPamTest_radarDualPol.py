@@ -29,7 +29,8 @@ pam.runPamtra(freqs,checkData=False)
 #plot(pam.r["Ze"].ravel())
 #plt.plot(pam.r["radar_vel"],pam.r["radar_spectra"][0,0,0,2])
 
-plt.figure(1)
+plt.figure(11)
+plt.clf()
 for i_p in range(pam.set["radar_npol"]):
   plt.plot(pam.r["radar_vel"],pam.r["radar_spectra"][0,0,0,0,i_p],label=pam.set["radar_pol"][i_p] + " " + str(pam.r["Ze"][...,i_p]))
   

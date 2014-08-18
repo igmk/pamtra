@@ -18,7 +18,7 @@ pam.nmlSet["radar_save_noise_corrected_spectra"]=  False
 
 
 pam.runPamtra(35)
-
+plt.figure()
 plt.plot(pam.r["radar_vel"],pam.r["radar_spectra"][0,0,1,0,0])
 print pam.r["Ze"][0,0,1,0,0], pam.r["radar_moments"][0,0,1,0,0], pam.r["radar_slopes"][0,0,1,0,0]
 
