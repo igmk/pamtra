@@ -187,8 +187,8 @@ module vars_output
       allocate(&
 	out_kextatmo(no_allocated_lyrs),&
 	out_scatter_matrix(no_allocated_lyrs,nstokes,nummu,nstokes,nummu,4),&
-	out_extinct_matrix(no_allocated_lyrs,nstokes,nstokes,nummu,4),&
-	out_emis_vector(no_allocated_lyrs,nstokes,nummu,4)&
+	out_extinct_matrix(no_allocated_lyrs,nstokes,nstokes,nummu,2),&
+	out_emis_vector(no_allocated_lyrs,nstokes,nummu,2)&
 	)
     end if
     

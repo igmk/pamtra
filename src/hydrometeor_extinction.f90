@@ -52,8 +52,6 @@ subroutine hydrometeor_extinction(errorstatus)
   real(kind=dbl) ::    scatter_matrix_scatcnv(nstokes,nummu,nstokes,nummu,4)
   real(kind=dbl) ::    extinct_matrix_scatcnv(nstokes,nstokes,nummu,2)
   real(kind=dbl) ::    emis_vector_scatcnv(nstokes,nummu,2)
-
-  CHARACTER(len=64), dimension(atmo_nlyrs(i_x,i_y)) :: scatfiles
   
   integer(kind=long), intent(out) :: errorstatus
   integer(kind=long) :: err = 0
@@ -267,7 +265,7 @@ subroutine hydrometeor_extinction(errorstatus)
 
     !convert rt3 to rt4 input
     if (nlegen_coef>0) then
-      call scatcnv(err,scatfiles(i_z),nlegen_coef,legen_coef,rt_kexttot(i_z),salbedo,&
+      call scatcnv(err,nlegen_coef,legen_coef,rt_kexttot(i_z),salbedo,&
 	scatter_matrix_scatcnv,extinct_matrix_scatcnv,emis_vector_scatcnv)
       if (err /= 0) then
 	  msg = 'error in scatcnv!'

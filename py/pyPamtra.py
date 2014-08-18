@@ -164,7 +164,7 @@ class pyPamtra(object):
   
     self._nstokes = 2
     self._noutlevels = 2
-    self._nangles = 32
+    self._nangles = 16
     
     self.df = pamDescriptorFile(self)
     
@@ -186,8 +186,6 @@ class pyPamtra(object):
     #set namelist defaults#
     # sec inoutput_mode
     self.nmlSet["write_nc"]= True
-    self.nmlSet["dump_to_file"]= False
-    self.nmlSet["tmp_path"]= '/tmp/'
     self.nmlSet["data_path"]= 'data/'
     self.nmlSet["crm_case"]= ''
     self.nmlSet["crm_data"]= ''
@@ -195,6 +193,7 @@ class pyPamtra(object):
     self.nmlSet["crm_constants"]= ''
     self.nmlSet["jacobian_mode"]= False #profile 1,1 is reference, for all other colums only layers with different values are calculated
     self.nmlSet["save_psd"]= False #also saves the PSDs used for radiative transfer
+    self.nmlSet["save_ssp"]= False #also saves the single scattering properties used for radiative transfer
     # sec output
     self.nmlSet["obs_height"]= 833000.
     self.nmlSet["units"]= 'T'
@@ -1285,7 +1284,7 @@ class pyPamtra(object):
     self.r["radar_slopes"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],2,))*missingNumber
     self.r["radar_edges"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],2,))*missingNumber
     self.r["radar_quality"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],),dtype=int)*missingNumber
-    self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles,self.set["nfreqs"],self._nstokes))*missingNumber
+    self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles*2.,self.set["nfreqs"],self._nstokes))*missingNumber
     if self.nmlSet["save_psd"]:
       self.r["psd_area"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
       self.r["psd_n"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
@@ -1296,6 +1295,16 @@ class pyPamtra(object):
       self.r["psd_n"] = np.array([missingNumber])
       self.r["psd_d"] = np.array([missingNumber])
       self.r["psd_mass"] =np.array([missingNumber])
+    if self.nmlSet["save_ssp"]:
+      self.r["kextatmo"] = np.ones((self.p["max_nlyrs"]))*missingNumber
+      self.r["scatter_matrix"] = np.ones((self.p["max_nlyrs"],self._nstokes,self._nangles,self._nstokes,self._nangles,4))*missingNumber
+      self.r["extinct_matrix"] = np.ones((self.p["max_nlyrs"],self._nstokes,self._nstokes,self._nangles,2))*missingNumber
+      self.r["emission_vector"] = np.ones((self.p["max_nlyrs"],self._nstokes,self._nangles,2))*missingNumber
+    else: #save memory
+      self.r["kextatmo"] = np.array([missingNumber])
+      self.r["scatter_matrix"] = np.array([missingNumber])
+      self.r["extinct_matrix"] = np.array([missingNumber])
+      self.r["emission_vector"] = np.array([missingNumber])
 
     
     return 
@@ -1331,6 +1340,9 @@ class pyPamtra(object):
     if self.nmlSet["save_psd"]:
       for key in ["psd_d","psd_n","psd_mass","psd_area"]:
         self.r[key][pp_startX:pp_endX,pp_startY:pp_endY] = results[key]
+    if self.nmlSet["save_ssp"]:
+      for key in ["kextatmo","scatter_matrix","extinct_matrix","emission_vector"]:
+        self.r[key] = results[key]
     
     return
     

@@ -12,15 +12,13 @@ module vars_rt
 
   logical, allocatable, dimension(:) :: rt_hydros_present, rt_hydros_present_reverse
 
-  character(64), allocatable, dimension(:) :: rt_file_ph
-
 
   contains
 
   subroutine allocate_rt_vars(errorstatus)
     
 
-    use settings, only: nstokes,nummu, verbose, dump_to_file
+    use settings, only: nstokes,nummu, verbose
     use vars_atmosphere, only: atmo_nlyrs
     use vars_index, only: i_x, i_y
 
@@ -56,16 +54,12 @@ module vars_rt
     allocate(rt_back(nlyr), stat=alloc_status)
     allocate(rt_scattermatrix_reverse(nlyr,nstokes,nummu,nstokes,nummu,4),stat=alloc_status)
     allocate(rt_scattermatrix(nlyr,nstokes,nummu,nstokes,nummu,4),stat=alloc_status)
-    allocate(rt_extmatrix_reverse(nlyr,nstokes,nstokes,nummu,4),stat=alloc_status)
-    allocate(rt_extmatrix(nlyr,nstokes,nstokes,nummu,4),stat=alloc_status)
-    allocate(rt_emisvec_reverse(nlyr,nstokes,nummu,4),stat=alloc_status)
-    allocate(rt_emisvec(nlyr,nstokes,nummu,4),stat=alloc_status)
+    allocate(rt_extmatrix_reverse(nlyr,nstokes,nstokes,nummu,2),stat=alloc_status)
+    allocate(rt_extmatrix(nlyr,nstokes,nstokes,nummu,2),stat=alloc_status)
+    allocate(rt_emisvec_reverse(nlyr,nstokes,nummu,2),stat=alloc_status)
+    allocate(rt_emisvec(nlyr,nstokes,nummu,2),stat=alloc_status)
     allocate(rt_hydros_present(nlyr),stat=alloc_status)
     allocate(rt_hydros_present_reverse(nlyr),stat=alloc_status)
-
-    if (dump_to_file) then
-        allocate(rt_file_ph(nlyr))
-    end if
 
     ! set them to zero, just in case they are not calculated but used for Ze/PIA calculation
     rt_kexttot(:) = 0d0
@@ -92,9 +86,6 @@ module vars_rt
 
     if (allocated(rt_hydros_present_reverse)) deallocate(rt_hydros_present_reverse)
     if (allocated(rt_hydros_present)) deallocate(rt_hydros_present)
-
-    if (allocated(rt_file_ph)) deallocate(rt_file_ph)
-
 
   end subroutine deallocate_rt_vars
 

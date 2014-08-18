@@ -147,13 +147,11 @@ subroutine run_rt(errorstatus)
     
     if (save_ssp) out_kextatmo = rt_kextatmo
     
-  if (save_ssp) then
-    out_scatter_matrix = rt_scattermatrix
-    out_extinct_matrix = rt_extmatrix
-    out_emis_vector = rt_emisvec
-  end if
-
-    if (dump_to_file) call dump_profile()
+    if (save_ssp) then
+      out_scatter_matrix = rt_scattermatrix
+      out_extinct_matrix = rt_extmatrix
+      out_emis_vector = rt_emisvec
+    end if
 
     !&&&&&&&&   I/O FILE NAMES   &&&&&&&&&&&&&&&&&&
 

@@ -253,10 +253,10 @@ def rh_to_iwv(relhum_lev,temp_lev,press_lev,hgt_lev):
 	press = -1.*press_lev[...,0:-1]/xp*(exp(-xp*dz)-1.)/dz
 
 	q = meteoSI.rh2q(relhum,temp,press)
-	rho_moist = meteoSI.moist_rho2q(press,temp,q)
+	rho_moist = meteoSI.moist_rho_q(press,temp,q)
 
 	return np.sum(q*rho_moist*dz)
-
+		
 def detect_liq_cloud(z, t, rh):#, rh_thres, t_thres):
    
    #UL NOV 2007

@@ -60,8 +60,7 @@ module settings
   
     logical :: in_python !are we in python
 
-    logical :: dump_to_file, &   ! flag for profile and ssp dump
-    lphase_flag, &        ! flag for phase function calculation
+    logical :: lphase_flag, &        ! flag for phase function calculation
     lgas_extinction, &    ! gas extinction desired
     lhyd_extinction, &    ! hydrometeor extinction desired
     write_nc, &  ! write netcdf or ascii output
@@ -82,7 +81,7 @@ module settings
 
     character(3) :: gas_mod
     character(20) :: moments_file,file_desc
-    character(100) :: input_path, output_path, tmp_path,creator, data_path
+    character(100) :: input_path, output_path, creator, data_path
     character(18) :: freq_str
     character(2) :: OUTPOL
     character(1) :: GROUND_TYPE, UNITS
@@ -115,7 +114,7 @@ contains
 
         ! name list declarations
         namelist / inoutput_mode / input_path, output_path,&
-        tmp_path, dump_to_file, write_nc, data_path,&
+        write_nc, data_path,&
         input_type, crm_case, crm_data, crm_data2, crm_constants, &
         jacobian_mode, save_psd, save_ssp
         namelist / output / obs_height,units,outpol,freq_str,file_desc,creator, add_obs_height_to_layer
@@ -258,11 +257,9 @@ contains
         !set namelist defaults!
         ! sec inoutput_mode
         write_nc=.true.
-        dump_to_file=.false.
         input_path='profile/'
         output_path='output/'
         input_type='profile'
-        tmp_path='/tmp/'
         data_path='data/'
         crm_case=''
         crm_data=''
@@ -373,13 +370,11 @@ contains
       print*, 'outpol: ', outpol
       print*, 'radar_no_ave: ', radar_no_ave
       print*, 'input_type: ', input_type
-      print*, 'dump_to_file: ', dump_to_file
       print*, 'passive: ', passive
       print*, 'radar_airmotion_model: ', radar_airmotion_model
       print*, 'tmatrix_db_path: ', tmatrix_db_path
       print*, 'tmatrix_db: ', tmatrix_db
       print*, 'crm_data: ', crm_data
-      print*, 'tmp_path: ', tmp_path
       print*, 'lgas_extinction: ', lgas_extinction
       print*, 'crm_constants: ', crm_constants
       print*, 'units: ', units

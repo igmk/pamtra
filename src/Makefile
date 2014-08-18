@@ -83,7 +83,6 @@ OBJECTS=kinds.o \
 	save_active.o \
 	fastem4.o \
 	specular_surface.o \
-	dump_profile.o \
 	collect_boundary_output.o \
 	random.o \
 	rt4.o \
