@@ -230,7 +230,13 @@ module tmatrix
             return
         end if  
 
-        db_file = "spheroid.dat"
+        !make sure that active-only results are saved separately
+        if ((active .eqv. .true.) .and. (passive .eqv. .false.)) then
+          db_file = "spheroid.active.dat"
+        else
+          db_file = "spheroid.dat" !can be used for active and passive
+        end if
+
         INQUIRE(FILE=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file), EXIST=file_exists)
 
         !check whether file is not empty
