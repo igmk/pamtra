@@ -155,7 +155,7 @@ def PamtraFortranWrapper(
   
   ##process the results!
   results = dict()
-  for key in ["tb","Ze","Att_hydro","Att_atmo","radar_hgt","radar_moments","radar_edges","radar_slopes","radar_quality","radar_snr", "radar_spectra","radar_vel","psd_d","psd_n","psd_mass","psd_area","angles_deg"]:
+  for key in ["tb","Ze","Att_hydro","Att_atmo","radar_hgt","radar_moments","radar_edges","radar_slopes","radar_quality","radar_snr", "radar_spectra","radar_vel","psd_d","psd_n","psd_mass","psd_area","kextatmo","scatter_matrix","extinct_matrix","emis_vector","angles_deg"]:
     if settings["pyVerbose"] > 3: print("allocTest = pyPamtraLib.vars_output.out_"+key.lower()+" == None")
     exec("allocTest = pyPamtraLib.vars_output.out_"+key.lower()+" == None")
     if not allocTest:
@@ -240,7 +240,6 @@ def parallelPamtraFortranWrapper(indices, *args, **kwargs):
     #Write OrderedDict nmlSettings to nmlFile. Type is taken from nmlDefaultSettings
     #"""
     ##create random name
-    #nmlFileName = nmlSettings["inoutput_mode"]["tmp_path"] +"/pyPamtra_namelist_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nml.tmp"
     #logging.debug("opening: "+ nmlFileName)
     #f = open(nmlFileName,"w")
     #for keygr in nmlSettings.keys():

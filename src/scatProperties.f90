@@ -302,7 +302,6 @@ module scatProperties
         print*, "S22",scatter_matrix_hydro(2,16,2,16,2) 
       end if
 
-
       back_hydro(:) = 4*pi*back_hydro(:)!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squard entries!
       kext_hydro = extinct_matrix_hydro(1,1,16,1) !11 of extinction matrix (=not polarized), at 0°, first quadrature. equal to extinct_matrix(1,1,16,2)
 
@@ -377,7 +376,6 @@ module scatProperties
     rt_scattermatrix(i_z,:,:,:,:,:) = rt_scattermatrix(i_z,:,:,:,:,:) + scatter_matrix_hydro
     rt_extmatrix(i_z,:,:,:,:) = rt_extmatrix(i_z,:,:,:,:) + extinct_matrix_hydro
     rt_emisvec(i_z,:,:,:) = rt_emisvec(i_z,:,:,:) + emis_vector_hydro
-
 
     !sum up rt3 style
     if (rt_kexttot(i_z) == 0.d0) then 

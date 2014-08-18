@@ -523,7 +523,6 @@ module tmatrix
       mrr = REAL(ref_index)
       mri = abs(IMAG(ref_index))
 
-
       if ((active .eqv. .true.) .and. (passive .eqv. .false.)) then
         qua_start = 16
       else
@@ -637,7 +636,7 @@ module tmatrix
 	  emis_vector(2,jj) = extinct_matrix(1,2,jj) - sum(emis_vector_tmp1_12)
 
   1241    continue ! thet0 jj
-
+      
 
       errorstatus = err
       if (verbose >= 3) call report(info,'End of ', nameOfRoutine) 

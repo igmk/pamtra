@@ -38,6 +38,11 @@ module vars_output
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_mass
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_area
 
+  real(kind=dbl), allocatable, dimension(:) :: out_kextatmo
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: out_scatter_matrix
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_extinct_matrix
+  real(kind=dbl), allocatable, dimension(:,:,:,:) :: out_emis_vector
+  
   real(kind=dbl), dimension(300) :: out_debug_diameter
   real(kind=dbl), dimension(300) :: out_debug_back_of_d
   real(kind=dbl), allocatable, dimension(:) :: out_debug_radarvel
@@ -57,6 +62,7 @@ module vars_output
       passive,&
       radar_mode,&
       save_psd,&
+      save_ssp,&
 !       in_python,&
       nstokes,&
       nfrq,&
@@ -178,6 +184,15 @@ module vars_output
 
     end if
 
+    if (save_ssp) then
+      allocate(&
+	out_kextatmo(no_allocated_lyrs),&
+	out_scatter_matrix(no_allocated_lyrs,nstokes,nummu,nstokes,nummu,4),&
+	out_extinct_matrix(no_allocated_lyrs,nstokes,nstokes,nummu,2),&
+	out_emis_vector(no_allocated_lyrs,nstokes,nummu,2)&
+	)
+    end if
+    
     !debuging stuff, only deallocated if necessary:
     if (allocated(out_debug_radarvel)) deallocate(out_debug_radarvel)
     if (allocated(out_debug_radarback)) deallocate(out_debug_radarback)
@@ -237,7 +252,11 @@ module vars_output
     if (allocated(out_psd_n)) deallocate(out_psd_n)
     if (allocated(out_psd_mass)) deallocate(out_psd_mass)
     if (allocated(out_psd_area)) deallocate(out_psd_area)
-
+    if (allocated(out_kextatmo)) deallocate(out_kextatmo)
+    if (allocated(out_scatter_matrix)) deallocate(out_scatter_matrix)
+    if (allocated(out_extinct_matrix)) deallocate(out_extinct_matrix)
+    if (allocated(out_emis_vector)) deallocate(out_emis_vector)
+    
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
 
 
