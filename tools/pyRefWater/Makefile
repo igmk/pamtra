@@ -25,7 +25,12 @@ endif
 
 
 
-OBJECTS=kinds.o constants.o eps_water.o ref_water.o dielec_water.o
+OBJECTS=kinds.o \
+        vars_index.o \
+	report_module.o \
+	settings.o \
+	constants.o \
+	eps_water.o ref_water.o dielec_water.o
 
 
 all:  py

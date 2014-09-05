@@ -2,13 +2,14 @@ module libRefIndex
 
   contains
   
-  subroutine get_refIndex_water(s,T,f,refre,refim)
-
+  subroutine get_refIndex_water(s,T,f,model,refre,refim)
+  use settings, only: liq_mod
   implicit none
 
   double precision, intent(in) :: s,& ! salinity [0/00]
        T,& ! temperature [°C]
        f   ! frequency [GHz]
+  character(3), intent(in) :: model
 
   double precision, intent(out) :: refre,& ! real part of complex index of refraction n_r []
        refim ! imaginary part of complex index of refraction n_i []
@@ -18,11 +19,11 @@ module libRefIndex
   integer :: err
 
   !input
-  !f2py intent(in) :: s,T,f
+  !f2py intent(in) :: s,T,f, model
   !meta out
   !f2py intent(out) :: refre,refim
 
-
+  liq_mod = model
   call ref_water(err,s,T,f,refre,refim,absind,abscoef)
 
   end subroutine get_refIndex_water
