@@ -47,7 +47,12 @@ python module pyPamtraLib ! in
         module vars_output ! in :pyPamtraLib:vars_output.f90
             use report_module
             use kinds
+
             use settings, only: att_npol,radar_nfft,radar_npol
+            real(kind=dbl), allocatable,dimension(:) :: out_kextatmo
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_scatter_matrix
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_extinct_matrix
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_emis_vector
             real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_radar_edges
             real(kind=dbl), allocatable,dimension(:) :: out_debug_radarvel
             real(kind=dbl), allocatable,dimension(:) :: out_radar_vel
@@ -75,7 +80,7 @@ python module pyPamtraLib ! in
                 use vars_atmosphere
                 use descriptor_file, only: nbin_arr,n_hydro
                 use mod_io_strings
-                use settings, only: ,write_nc,radar_mode,passive,active,save_psd
+                use settings, only: ,write_nc,radar_mode,passive,active,save_ssp,save_psd
                 integer(kind=long_bn) intent(out) :: errorstatus
                 integer intent(in) :: no_allocated_lyrs
             end subroutine allocate_output_vars
@@ -199,7 +204,6 @@ python module pyPamtraLib ! in
             logical :: lgas_extinction
             character(len=2) :: outpol
             integer(kind=long_bn) :: radar_npol
-            logical :: dump_to_file
             integer, parameter,optional :: src_code=2
             logical :: passive
             character(len=100) :: crm_data
@@ -249,7 +253,6 @@ python module pyPamtraLib ! in
             integer, parameter,optional :: nummu=16
             real(kind=dbl) :: radar_min_v
             integer, parameter,optional :: maxv=64
-            character(len=100) :: tmp_path
             character(len=1) :: units
             character(len=3) :: gas_mod
             character(len=20) :: moments_file
@@ -264,6 +267,7 @@ python module pyPamtraLib ! in
             logical :: active
             integer, parameter,optional :: maxlay=600
             real(kind=dbl) :: radar_max_v
+            logical :: save_ssp
             character(len=8) dimension(100) :: frqs_str
             real(kind=dbl), parameter,optional :: direct_flux=0._dbl
             logical :: radar_convolution_fft

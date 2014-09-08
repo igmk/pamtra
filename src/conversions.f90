@@ -2,13 +2,14 @@ module conversions
 
 contains
 
-    real(kind=dbl) function q2abs(spec_var,t,p,qv,q_all_hydro)
+    function q2abs(spec_var,t,p,qv,q_all_hydro)
 
         use kinds
         use constants, only: r_d, r_v
 
         implicit none
 
+        real(kind=dbl) :: q2abs
         real(kind=dbl), intent(in) :: t,&
         p
 
@@ -22,13 +23,14 @@ contains
 
     end function q2abs
 
-    real(kind=dbl) function abs2spec(abs_var,t,p,qv,q_all_hydro)
+    function abs2spec(abs_var,t,p,qv,q_all_hydro)
 
         use kinds
         use constants, only: r_d, r_v
 
         implicit none
-
+	
+	real(kind=dbl) :: abs2spec
         real(kind=dbl), intent(in) :: t,&
         p
 
@@ -43,7 +45,7 @@ contains
     end function abs2spec
 
 
-    real(kind=dbl) function vapor2rh(temp_p,pres_p,hum_massmix)
+    function vapor2rh(temp_p,pres_p,hum_massmix)
 
         use kinds, only: dbl
         use constants, only: tpt, estpt, r_v, r_d, mmv, mmd,vapor_hc, sublim_hc
@@ -53,6 +55,7 @@ contains
         !     ZTEMP air temperature in K
         !     XRM water vapor mass mixing ratio kg/kg
 
+	real(kind=dbl) :: vapor2rh
         real, intent(in) :: temp_p,pres_p,hum_massmix
 
         REAL(kind=dbl) :: XCPV               ! Cpv (vapor)

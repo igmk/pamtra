@@ -31,8 +31,12 @@ module constants
     real(kind=dbl), parameter :: vapor_hc  = 2.5008d+6          ! vaporization heat constant
     real(kind=dbl), parameter :: sublim_hc  = 2.8345d+6         ! sublimation heat constant
 
+    real(kind=dbl), parameter, public :: mu0 = pi * 4.0e-07_dbl           ! permeability of vacuum [N/A^2]
+    real(kind=dbl), parameter, public :: eps0 = 1._dbl/(mu0*c**2) ! Permittivity of vacuum [F/m]
+    
     real(kind=dbl), parameter :: delta_d_mono  = 1.d-8          ! delta diameter used for monodisperse drop-size distribution
 
+    real(kind=dbl), parameter :: deg2rad = pi/180.0_dbl
     complex(kind=dbl), parameter :: im = (0.0_dbl, 1.0_dbl)
 
 end module constants

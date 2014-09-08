@@ -4,10 +4,12 @@
 python module libRefIndex ! in 
     interface  ! in :libRefIndex
         module librefindex ! in :libRefIndex:libRefIndex.f90
-            subroutine get_refindex_water(s,t,f,refre,refim) ! in :libRefIndex:libRefIndex.f90:librefindex
+            subroutine get_refindex_water(s,t,f,model,refre,refim) ! in :libRefIndex:libRefIndex.f90:librefindex
+                use settings, only: liq_mod
                 double precision intent(in) :: s
                 double precision intent(in) :: t
                 double precision intent(in) :: f
+                character*3 intent(in) :: model
                 double precision intent(out) :: refre
                 double precision intent(out) :: refim
             end subroutine get_refindex_water

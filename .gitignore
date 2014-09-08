@@ -47,3 +47,5 @@ tools/pp_scripts/nodesConfig.sh
 gmon.out
 check_moments
 database
+mm_notes.txt
+scripts/
