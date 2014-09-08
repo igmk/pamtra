@@ -47,6 +47,7 @@ def PamtraFortranWrapper(
     exec("foo = pyPamtraLib.settings."+key)
     if type(nmlSettings[key]) == str:
       if settings["pyVerbose"] > 3: print("pyPamtraLib.settings."+key +"[:] = '" + str(nmlSettings[key])+"'") 
+      #we have to do it the ugly way with exec, using __dict__ instead does not work...
       exec("pyPamtraLib.settings."+key +"[:] = '" + nmlSettings[key]+"'")
     else:
       if settings["pyVerbose"] > 3: print("pyPamtraLib.settings."+key +" = " + str(nmlSettings[key]))

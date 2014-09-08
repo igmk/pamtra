@@ -209,15 +209,15 @@ module tmatrix
 !                   "/axxi_",axi, "/asra_",as_ratio(ir), "/alph_",alpha, "/beta_",beta,"/"
 
         if (phase == 1) then !ref_index name depends on phase
-          write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,ES12.6,A6,SP,I3.2,SS,2(A6,ES10.4),A6,A3,4(A6,ES10.4),A1)'),&
-                  "/v01","/quad_", quad, &
+          write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,ES12.6,A6,SP,I3.2,SS,2(A6,ES9.3),A6,A3,4(A6,ES9.3),A1)'),&
+                  "/v02","/quad_", quad, &
                   "/numu_",nummu,"/azno_",azimuth_num, "/a0no_", azimuth0_num, "/nsto_",nstokes,&
                   "/freq_",frequency, &
                   "/phas_",phase, "/temp_",temp, "/dens_",density(ir), "/refi_",liq_mod,&
                   "/diam_",axi, "/asra_",as_ratio(ir), "/alph_",alpha, "/beta_",beta,"/"
         else if (phase == -1) then
-          write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,ES12.6,A6,SP,I3.2,SS,2(A6,ES10.4),A6,A3,4(A6,ES10.4),A1)'),&
-                  "/v01","/quad_", quad, &
+          write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,ES12.6,A6,SP,I3.2,SS,2(A6,ES9.3),A6,A3,4(A6,ES9.3),A1)'),&
+                  "/v02","/quad_", quad, &
                   "/numu_",nummu,"/azno_",azimuth_num, "/a0no_", azimuth0_num, "/nsto_",nstokes,&
                   "/freq_",frequency, &
                   "/phas_",phase, "/temp_",temp, "/dens_",density(ir), "/refi_","Mae",&
@@ -231,7 +231,7 @@ module tmatrix
 
         !make sure that active-only results are saved separately
         if ((active .eqv. .true.) .and. (passive .eqv. .false.)) then
-          db_file = "spheroid.active.dat"
+          db_file = "spheroid.act"
         else
           db_file = "spheroid.dat" !can be used for active and passive
         end if

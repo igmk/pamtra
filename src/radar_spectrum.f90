@@ -150,10 +150,9 @@ subroutine radar_spectrum(&
       k_factor = 0.5d0
       call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,nu,&
             mass,area,k_factor,vel_spec)
-!     equations need to be rearanged:
-!     else if (radar_fallVel_ice .eq. "khvorostyanov01_particles") then
-!         call dia2vel_khvorostyanov01_particles(err,nbins,diameter_spec_cp,rho,nu,&
-!             mass_size_a,mass_size_b,area_size_a,area_size_b,vel_spec)
+    else if (vel_size_mod == "khvorostyanov01_particles") then
+        call dia2vel_khvorostyanov01_particles(err,nbins,diameter_spec_cp,rho,nu,&
+            mass,area,vel_spec)
     else if (vel_size_mod .eq. "rogers_graupel") then
       call dia2vel_rogers_graupel(err,nbins,diameter_spec_cp,vel_spec)
     else
