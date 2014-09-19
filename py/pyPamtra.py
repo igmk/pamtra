@@ -1221,7 +1221,7 @@ class pyPamtra(object):
             if pp_endY > self.p["ngridy"]: pp_endY = self.p["ngridy"]
             pp_ngridy = pp_endY - pp_startY
       
-            print "submitting job ", pp_i, pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY
+            if self.set["pyVerbose"] > 0: print "submitting job ", pp_i, pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY
       
             indices = [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY]       
             profilePart, dfPart,dfPart4D,dfPartFS, settings = self._sliceProfile(*indices)
@@ -1232,7 +1232,7 @@ class pyPamtra(object):
            
             
             pp_i += 1
-            print "submitted job: ", pp_i
+            if self.set["pyVerbose"] > 0: print "submitted job: ", pp_i
 
             
       #pool.close()
@@ -1242,7 +1242,7 @@ class pyPamtra(object):
       pool.join()
       print "TERMINATED: KeyboardInterrupt"
 
-    print "waiting for all jobs to finish"
+    if self.set["pyVerbose"] > 0: print "waiting for all jobs to finish"
     for jj,job in enumerate(jobs):
       #import pdb;pdb.set_trace()
       try: self._joinResults(job.get(timeout=timeout))
