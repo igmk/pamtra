@@ -117,12 +117,12 @@ OBJECTS=kinds.o \
 
 BIN=pamtra
 
-all: precompile dfftpack pamtra py py_usStandard
+all: dfftpack pamtra py py_usStandard
 
 dfftpack:
 	cd ../tools/dfftpack && $(MAKE) && cp libdfftpack.a ../../lib/libdfftpack.a
 
-pamtra: pamtra.f90 $(OBJECTS)
+pamtra: pamtra.f90 precompile $(OBJECTS)
 	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS) 
 	mv $(BIN) ../
 
