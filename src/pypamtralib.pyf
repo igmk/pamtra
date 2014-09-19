@@ -47,17 +47,14 @@ python module pyPamtraLib ! in
         module vars_output ! in :pyPamtraLib:vars_output.f90
             use report_module
             use kinds
-
             use settings, only: att_npol,radar_nfft,radar_npol
-            real(kind=dbl), allocatable,dimension(:) :: out_kextatmo
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_scatter_matrix
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_extinct_matrix
-            real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_emis_vector
             real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_radar_edges
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_scatter_matrix
             real(kind=dbl), allocatable,dimension(:) :: out_debug_radarvel
             real(kind=dbl), allocatable,dimension(:) :: out_radar_vel
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_att_hydro
-            real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_radar_slopes
+            real(kind=dbl), allocatable,dimension(:) :: out_kextatmo
+            integer, allocatable,dimension(:,:,:,:,:) :: out_radar_quality
             real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_radar_moments
             real(kind=dbl), allocatable,dimension(:) :: out_debug_radarback_wturb_wnoise
             real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_tb
@@ -69,10 +66,12 @@ python module pyPamtraLib ! in
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_area
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_radar_snr
             real(kind=dbl) dimension(300) :: out_debug_diameter
-            integer, allocatable,dimension(:,:,:,:,:) :: out_radar_quality
+            real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_emis_vector
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_mass
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_d
             real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_radar_spectra
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_extinct_matrix
+            real(kind=dbl), allocatable,dimension(:,:,:,:,:,:) :: out_radar_slopes
             real(kind=dbl), allocatable,dimension(:) :: out_debug_radarback
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_att_atmo
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_n
@@ -247,6 +246,8 @@ python module pyPamtraLib ! in
             character(len=300) :: tmatrix_db_path
             integer, parameter,optional :: aziorder=0
             character(len=300) :: namelist_file
+            real(kind=dbl) :: radar_fallvel_b
+            real(kind=dbl) :: radar_fallvel_a
             character(len=1) :: ground_type
             character(len=10) :: crm_case
             logical :: write_nc

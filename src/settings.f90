@@ -53,6 +53,8 @@ module settings
     real(kind=dbl) :: radar_K2
     real(kind=dbl) :: radar_receiver_uncertainty_std
     real(kind=dbl) :: hydro_softsphere_min_density !tmatrix method numerically unstable for extremely low density
+    real(kind=dbl) :: radar_fallvel_A
+    real(kind=dbl) :: radar_fallvel_B
 
     real(kind=dbl) :: hydro_threshold, radar_noise_distance_factor
 
@@ -139,7 +141,8 @@ contains
 		  radar_airmotion_step_vmin, radar_aliasing_nyquist_interv, &
 		  radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr, radar_convolution_fft, &
                   radar_K2, radar_noise_distance_factor, radar_receiver_uncertainty_std,&
-                  radar_nPeaks, radar_smooth_spectrum, radar_attenuation, radar_polarisation
+                  radar_nPeaks, radar_smooth_spectrum, radar_attenuation, radar_polarisation, &
+                  radar_fallvel_A, radar_fallvel_B
 
     if (verbose >= 3) print*,'Start of ', nameOfRoutine
 
@@ -368,6 +371,8 @@ contains
         radar_nPeaks = 1 !number of peaks the radar simulator is looking for
         radar_smooth_spectrum = .true.
         radar_attenuation = "disabled" ! "bottom-up" or "top-down"
+        radar_fallvel_A = 0.5
+        radar_fallvel_B = 0.5
         ! create frequency string if not set in pamtra
         if (freq_str == "") then
              ! get integer and character frequencies
