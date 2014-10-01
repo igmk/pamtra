@@ -3,9 +3,9 @@ ARCH=$(shell uname -s)
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
-FC=gfortran 
+FC=gfortran
 CC=gcc
-FCFLAGS=-c -fPIC -Wunused -O2 #-I../include/ uninitialized
+FCFLAGS=-c -fPIC -Wunused -O2 -cpp #-I../include/ uninitialized
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran-mp-4.8
 	NCFLAGS=-I/opt/local/include/ 
@@ -30,6 +30,7 @@ OBJECTS=kinds.o \
 	settings.o \
 	constants.o \
 	nan.o \
+	zlib_stuff.o \
 	mod_fastem4_coef.o \
 	gasabs_module.o \
 	conversions.o \
