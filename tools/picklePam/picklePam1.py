@@ -13,7 +13,8 @@ import glob
 import os
 import argparse
 import sys, signal, time
-
+from functools import wraps
+import errno
 
 parser = argparse.ArgumentParser(description='run pam\'s pickles')
 parser.add_argument("pickel_path", help="path to pam pickles")
@@ -27,14 +28,48 @@ args = parser.parse_args()
 print args.pickel_path
 
 maxAge = args.max_age
-timeOut = args.timeout
+timeOutSec = args.timeout
 sleepTime = args.sleep
 resetStartTime = True
 host = os.uname()[1]
 keepRunning = True #variable to handle termination
 
 
+
+def cleanUp(*args,**kwargs):
+  global keepRunning
+  keepRunning = False
+  print "I WAS KILLED. Please be patient and wait for the last job to exit:", args
+  return
+
+
+
+for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
+    signal.signal(sig, cleanUp)
+
+class TimeoutError(Exception):
+    pass
+
+def timeout(seconds=10, error_message=os.strerror(errno.ETIME)):
+    def decorator(func):
+        def _handle_timeout(signum, frame):
+            raise TimeoutError(error_message)
+
+        def wrapper(*args, **kwargs):
+            signal.signal(signal.SIGALRM, _handle_timeout)
+            signal.alarm(seconds)
+            try:
+                result = func(*args, **kwargs)
+            finally:
+                signal.alarm(0)
+            return result
+
+        return wraps(func)(wrapper)
+    return decorator
+
+
 #for server in $(ls /net); do echo $server && ssh -n -f $server "sh -c 'cd /home/mmaahn/projects/pamtra/py/; nohup ./picklePam.py path >> $server.log 2>&1 &'"; done
+@timeout(timeOutSec)
 def processData(fname):
     global keepRunning
     if keepRunning: 
@@ -67,15 +102,10 @@ startTime = time.time()
 
 #allFiles   = []
 
-def cleanUp(*args,**kwargs):
-  global keepRunning
-  keepRunning = False
-  print "I WAS KILLED. Please be patient and wait for the last job to exit:", args
-  return
 
+    
+    
 
-for sig in [signal.SIGTERM, signal.SIGINT, signal.SIGHUP, signal.SIGQUIT]:
-    signal.signal(sig, cleanUp)
 
 
     
