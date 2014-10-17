@@ -273,11 +273,14 @@ C   VALUES FOR WHICH RESULTS ARE COMPUTED ACCURATELY. FOR THIS REASON,
 C   THE AUTHORS AND THEIR ORGANIZATION DISCLAIM ALL LIABILITY FOR
 C   ANY DAMAGES THAT MAY RESULT FROM THE USE OF THE PROGRAM. 
 
-      SUBROUTINE tmatrix_amplq(LAM, mrr,mri, AXI, AS_RATIO, RAT,
-     *        NP,nmax)
+      SUBROUTINE tmatrix_amplq(errorstatus, LAM, mrr,mri, AXI, AS_RATIO, 
+     *        RAT,NP,nmax)
+
+      use report_module
 
       IMPLICIT REAL*8 (A-H,O-Z)
       INCLUDE 'tmatrix_amplq.par.f'
+
       REAL*16 LAM,MRR,MRI,X(NPNG2),W(NPNG2),S(NPNG2),SS(NPNG2),
      *        AN(NPN1),R(NPNG2),DR(NPNG2),PPI,PIR,PII,P,EPS,A,
      *        DDR(NPNG2),DRR(NPNG2),DRI(NPNG2),ANN(NPN1,NPN1)
@@ -294,7 +297,12 @@ C   ANY DAMAGES THAT MAY RESULT FROM THE USE OF THE PROGRAM.
       COMMON /TMAT/ RT11,RT12,RT21,RT22,IT11,IT12,IT21,IT22
       COMMON /CHOICE/ ICHOICE
  
+      integer(kind=long), intent(out) :: errorstatus
+      integer(kind=long) :: err = 0
+      character(len=80) :: msg
+      character(len=14) :: nameOfRoutine = 'tmatrix_amplq'
 
+      err = 0
 C  OPEN FILES *******************************************************
  
 C      OPEN (6,FILE='test')
@@ -354,7 +362,13 @@ C     PRINT 8000, RAT
       IXXX=XEV+4.05D0*XEV**0.333333D0
       INM1=MAX0(4,IXXX)
       IF (INM1.GE.NPN1) PRINT 7333, NPN1
-      IF (INM1.GE.NPN1) STOP
+      IF (INM1.GE.NPN1) THEN
+!        STOP
+        errorstatus = fatal
+        msg = "CONVERGENCE IS NOT OBTAINED FOR NPN1"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+      END IF
  7333 FORMAT('CONVERGENCE IS NOT OBTAINED FOR NPN1=',I3,  
      &       '.  EXECUTION TERMINATED')
       QEXT1=0D0
@@ -364,7 +378,12 @@ C     PRINT 8000, RAT
          MMAX=1
          NGAUSS=NMAX*NDGS
          IF (NGAUSS.GT.NPNG1) PRINT 7340, NGAUSS
-         IF (NGAUSS.GT.NPNG1) STOP
+         IF (NGAUSS.GT.NPNG1) THEN
+           errorstatus = fatal
+           msg = "NGAUSS IS GREATER THAN NPNG1"
+           call report(errorstatus, msg, nameOfRoutine)
+           return
+         END IF
  7340    FORMAT('NGAUSS =',I3,' I.E. IS GREATER THAN NPNG1.',
      &          '  EXECUTION TERMINATED')
  7334    FORMAT(' NMAX =', I3,'  DC2=',D8.2,'   DC1=',D8.2)
@@ -393,7 +412,12 @@ C     PRINT 8000, RAT
 C        PRINT 7334, NMAX,DSCA,DEXT
          IF(DSCA.LE.DDELT.AND.DEXT.LE.DDELT) GO TO 55
          IF (NMA.EQ.NPN1) PRINT 7333, NPN1
-         IF (NMA.EQ.NPN1) STOP      
+         IF (NMA.EQ.NPN1) THEN
+           errorstatus = fatal
+           msg = "CONVERGENCE IS NOT OBTAINED FOR NPN1"
+           call report(errorstatus, msg, nameOfRoutine)
+           return
+         END IF   
    50 CONTINUE
    55 NNNGGG=NGAUSS+1
       MMAX=NMAX
