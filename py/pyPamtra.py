@@ -2,7 +2,6 @@
 
 from __future__ import division
 import numpy as np
-import datetime
 import csv
 import pickle
 
@@ -17,7 +16,8 @@ import itertools
 from copy import deepcopy
 from matplotlib import mlab
 import multiprocessing
-
+import logging
+import glob
 import namelist #parser for fortran namelist files
 
 import meteoSI
@@ -1168,8 +1168,7 @@ class pyPamtra(object):
 
     if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
     return
-
-    
+ 
   def runParallelPamtra(self,freqs,pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto",checkData=True,timeout=None):
     '''
     run Pamtra from python
@@ -1225,7 +1224,6 @@ class pyPamtra(object):
       
             indices = [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY]       
             profilePart, dfPart,dfPart4D,dfPartFS, settings = self._sliceProfile(*indices)
-
             jobs.append(pool.apply_async(pyPamtraLibWrapper.parallelPamtraFortranWrapper,(
             indices,
             settings,self.nmlSet,dfPart,dfPart4D,dfPartFS,profilePart),{"returnModule":False}))#),callback=self.pp_resultData.append)
@@ -1256,7 +1254,119 @@ class pyPamtra(object):
     if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
     del pool, jobs
     return    
+ 
+  def runPicklePamtra(self,freqs,picklePath="pyPamJobs",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto",checkData=True,timeout=None,maxWait =3600):
+    '''
+    run Pamtra from python
+    '''
+    import hashlib
     
+    os.system("mkdir -p %s"%picklePath)
+    
+    if type(freqs) in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
+
+    self.set["freqs"] = freqs
+    self.set["nfreqs"] = len(freqs)
+    self.set["radar_pol"] = self.nmlSet["radar_polarisation"].split(",")
+    self.set["radar_npol"] = len(self.set["radar_pol"])
+    self.set["att_pol"] = ["N"]
+    self.set["att_npol"] = len(self.set["att_pol"])
+
+    assert self.set["nfreqs"] > 0
+    assert self.set["radar_npol"] > 0
+    assert self.set["att_npol"] > 0
+    
+    if pp_deltaF==0: pp_deltaF = self.set["nfreqs"]
+    if pp_deltaX==0: pp_deltaX = self.p["ngridx"]
+    if pp_deltaY==0: pp_deltaY = self.p["ngridy"]
+
+    if hasattr(self, "fortObject"): del self.fortObject
+    self.fortError = 0
+    
+    tttt = time.time()
+
+    assert self.set["nfreqs"] > 0
+    assert np.prod(self._shape2D)>0
+    
+    if checkData: self._checkData()
+
+    jobs = list()
+    self.pp_resultData = list()
+    pp_i = 0
+    self._prepareResults()
+    try: 
+      for pp_startF in np.arange(0,self.set["nfreqs"],pp_deltaF):
+        pp_endF = pp_startF + pp_deltaF
+        if pp_endF > self.set["nfreqs"]: pp_endF = self.set["nfreqs"]
+        for pp_startX in np.arange(0,self.p["ngridx"],pp_deltaX):
+          pp_endX = pp_startX + pp_deltaX
+          if pp_endX > self.p["ngridx"]: pp_endX = self.p["ngridx"]
+          pp_ngridx = pp_endX - pp_startX
+          for pp_startY in np.arange(0,self.p["ngridy"],pp_deltaY):
+            pp_endY = pp_startY + pp_deltaY
+            if pp_endY > self.p["ngridy"]: pp_endY = self.p["ngridy"]
+            pp_ngridy = pp_endY - pp_startY
+      
+            if self.set["pyVerbose"] > 0: print "submitting job ", pp_i, pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY
+      
+            indices = [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY]       
+            profilePart, dfPart,dfPart4D,dfPartFS, settings = self._sliceProfile(*indices)
+            #import pdb;pdb.set_trace()
+            inputPickle = pickle.dumps((indices,settings,self.nmlSet,dfPart,dfPart4D,dfPartFS,profilePart))
+            md5 = hashlib.md5(inputPickle).hexdigest()
+            jobs.append(md5)
+            fname = picklePath+"/"+str(pp_i).zfill(3)+"_"+md5+".job"
+            with open(fname+".tmp", 'w') as f:
+              f.write(inputPickle)
+            os.rename(fname+".tmp",fname)
+            pp_i += 1
+            if self.set["pyVerbose"] > 0: print "wrote job: ", pp_i
+
+        startTime = time.time()
+        
+        for mm, md5 in enumerate(jobs):
+          fname = picklePath+"/"+str(mm).zfill(3)+"_"+md5+".result"
+          while True:
+            if ((time.time() - startTime) > maxWait):
+              print("\rWaiting too long for job %d: %s"%(mm,fname))
+              break
+            try:
+              with open(fname, 'r') as f:
+                resultPickle = pickle.load(f)
+              os.remove(fname)
+              if resultPickle[0] is not None: 
+                self._joinResults(resultPickle)
+                sys.stdout.write("\rgot job %d: %s from %s"%(mm,fname,resultPickle[-1]) +" "*3 )  
+                sys.stdout.flush()
+              else:
+                sys.stdout.write("\rjob broken %d: %s from %s"%(mm,fname,resultPickle[-1]))
+                sys.stdout.flush()
+              break
+            except EOFError:
+              sys.stdout.write("\rjob broken %d: %s from %s"%(mm,fname,resultPickle[-1]))
+              sys.stdout.flush()
+              break
+            except (OSError, IOError):
+              time.sleep(1)
+              sys.stdout.write("\rwaiting for job %d: %s"%(mm,fname) +" "*3  )
+              sys.stdout.flush()
+      print(" ")
+    except KeyboardInterrupt:
+      print "clean up"
+      for mm, md5 in enumerate(jobs):
+        for fname in glob.glob(picklePath+"/"+str(mm).zfill(3)+"_"+md5+"*"):
+          try: 
+            os.remove(fname)
+            print fname, "removed."
+          except OSError: continue
+    #pool.terminate()
+    if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
+    #del pool, jobs
+    return    
+ 
+ 
+ 
+ 
   def _sliceProfile(self,pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY):
     
    
@@ -1344,10 +1454,10 @@ class pyPamtra(object):
     #logging.debug(str(pp_ii)+": callback started ")
     #print "toll", results[0][0][1]
     #print "toller", np.shape(self.r["radar_snr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF])    
-    if self.set["pyVerbose"] > 2: print "Callback started:", 
     
-    [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY], results, fortError = resultList
-       
+    [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY], results, fortError, host = resultList
+    if self.set["pyVerbose"] > 2: print "Callback started %s:"%host
+
     self.fortError += fortError   
        
     self.r["pamtraVersion"] = results["pamtraVersion"]
