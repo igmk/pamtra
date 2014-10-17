@@ -575,7 +575,13 @@ call close_port(port, ios)
       if (verbose >= 5) print*,"lam, mrr,mri, AXI, AS_RATIO, RAT, NP"
       if (verbose >= 5) print*,lam, mrr,mri, AXI, AS_RATIO, RAT, NP
   ! call the tmatrix routine amplq -> fills common block /TMAT/
-      call tmatrix_amplq(lam, mrr,mri, AXI, AS_RATIO, RAT, NP,nmax)
+      call tmatrix_amplq(err,lam, mrr,mri, AXI, AS_RATIO, RAT, NP,nmax)
+      if (err /= 0) then
+          msg = 'error in tmatrix_amplq!'
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+      end if          
 
       extinct_matrix = 0.d0
       scatter_matrix = 0.d0
