@@ -2,10 +2,10 @@ import pyPamtraLib
 import os
 #import logging
 #import collections
-import numpy as np
+import numpy# as np
 #import random
 #import string
-from copy import deepcopy 
+import copy
 
 #logging.basicConfig(filename='/tmp/pyPamtraLibWrapper.log',level=logging.WARNING) #change WARNING to INFO or DEBUG if needed
 
@@ -24,7 +24,7 @@ def PamtraFortranWrapper(
    
   #make sure the shape of the profiles is the same! 
   for key in profile.keys():
-    if type(profile[key]) == np.ndarray:
+    if type(profile[key]) == numpy.ndarray:
       assert profile[key].shape[0] == profile["lat"].shape[0]
       assert profile[key].shape[1] == profile["lat"].shape[1]
   #todo: make shape check for all variables! seg faults can easily be created here! 
@@ -105,7 +105,7 @@ def PamtraFortranWrapper(
   #deal with the atmospheric input_file
   for key in profile.keys():
     
-    assert type(profile[key]) != np.ma.core.MaskedArray
+    assert type(profile[key]) != numpy.ma.core.MaskedArray
     
     if key in ["ngridx","ngridy","max_nlyrs"]:
       continue
@@ -114,7 +114,7 @@ def PamtraFortranWrapper(
     elif type(profile[key]) in [int, float, str]:
       if settings["pyVerbose"] > 3: print("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
       exec("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"']")
-    elif type(profile[key]) == np.ndarray:
+    elif type(profile[key]) == numpy.ndarray:
       if settings["pyVerbose"] > 3: print("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
       exec("pyPamtraLib.vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
     else:
@@ -157,19 +157,19 @@ def PamtraFortranWrapper(
   ##process the results!
   results = dict()
   for key in ["tb","Ze","Att_hydro","Att_atmo","radar_hgt","radar_moments","radar_edges","radar_slopes","radar_quality","radar_snr", "radar_spectra","radar_vel","psd_d","psd_n","psd_mass","psd_area","kextatmo","scatter_matrix","extinct_matrix","emis_vector","angles_deg"]:
-    if settings["pyVerbose"] > 3: print("allocTest = pyPamtraLib.vars_output.out_"+key.lower()+" == None")
-    exec("allocTest = pyPamtraLib.vars_output.out_"+key.lower()+" == None")
+    if settings["pyVerbose"] > 3: print("allocTest = pyPamtraLib.vars_output.out_"+key.lower()+" is None")
+    exec("allocTest = pyPamtraLib.vars_output.out_"+key.lower()+" is None")
     if not allocTest:
-      if settings["pyVerbose"] > 3: print("results['"+key+"'] = deepcopy(pyPamtraLib.vars_output.out_"+key.lower()+")")
-      exec("results['"+key+"'] = deepcopy(pyPamtraLib.vars_output.out_"+key.lower()+")")
+      if settings["pyVerbose"] > 3: print("results['"+key+"'] = copy.deepcopy(pyPamtraLib.vars_output.out_"+key.lower()+")")
+      exec("results['"+key+"'] = copy.deepcopy(pyPamtraLib.vars_output.out_"+key.lower()+")")
     else:
       if settings["pyVerbose"] > 3: print "filling key", key
       if key in ["radar_quality"]: results[key] = -9999
       else: results[key] = -9999.
     
     
-  results["pamtraVersion"] = deepcopy("".join(list(pyPamtraLib.pypamtralib.gitversion)).strip())
-  results["pamtraHash"] = deepcopy("".join(list(pyPamtraLib.pypamtralib.githash)).strip()  )
+  results["pamtraVersion"] = copy.deepcopy("".join(list(pyPamtraLib.pypamtralib.gitversion)).strip())
+  results["pamtraHash"] = copy.deepcopy("".join(list(pyPamtraLib.pypamtralib.githash)).strip()  )
   
   if settings["pyVerbose"] > 2: "processed results"
         
@@ -182,8 +182,8 @@ def PamtraFortranWrapper(
 def _str_py2f(array,length=None):
   # the byte order of fortran and numpy string arrays is different, this here works sometimes...
   #if len(array.shape) > 2: raise NotImplemented("Can only handle 1D lists of strings")
-  if length==None: length = array.shape[1]
-  return np.lib.stride_tricks.as_strided(array,strides=(length,1))
+  if length is None: length = array.shape[1]
+  return numpy.lib.stride_tricks.as_strided(array,strides=(length,1))
   
 def _strList2charArray(strList,charLength=None,arrayLength=None):
   #makes from list strList an aray of type "s1" that Fortran can handle it.
@@ -194,8 +194,8 @@ def _strList2charArray(strList,charLength=None,arrayLength=None):
   if charLength:
     dim2 = charLength
   else:
-    dim2 = np.max(map(len,strList))
-  charArray = np.zeros((dim1,dim2),dtype="S1")
+    dim2 = numpy.max(map(len,strList))
+  charArray = numpy.zeros((dim1,dim2),dtype="S1")
   for ss,string in enumerate(strList):
     charArray[ss,:len(string)] = list(string)
     charArray[ss,len(string):]= " "
@@ -216,7 +216,8 @@ def setFortranStrList(fortranList,pythonList,charLength=None):
 def parallelPamtraFortranWrapper(indices, *args, **kwargs):
   if args[0]["pyVerbose"] > 1: print 'starting', __name__, 'parent process:', os.getppid(), 'process id:', os.getpid()
   results, pamError = PamtraFortranWrapper(*args, **kwargs)
-  return indices, results, pamError
+  host = os.uname()[1]
+  return indices, results, pamError, host
   #return indices, dict()
   
   
