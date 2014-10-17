@@ -47,6 +47,7 @@
       integer(kind=long) :: err = 0
       character(len=200) :: msg
       character(len=14) :: nameOfRoutine = 'run_pamtra'
+      character(len=8) :: frq_str
 
      if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
      
@@ -61,8 +62,10 @@
 
 !fill frqs_str array!
     do fi = 1, nfrq
-        write(frqs_str(fi),"(i4.4,f0.3)") int(freqs(fi)),freqs(fi) -int(freqs(fi))
+        write (frq_str, '(f8.3)') freqs(fi)
+    frqs_str(fi) = repeat('0', 8-len_trim(adjustl(frq_str)))//adjustl(frq_str)
     end do
+
 
       in_python = .true.! we are _in_ python
 
