@@ -3,7 +3,7 @@
 from __future__ import division
 import pyPamtraLibWrapper 
 import pyPamtraLib
-import pickle
+import cPickle as pickle
 import numpy as np
 import time
 import datetime
@@ -53,6 +53,9 @@ class TimeoutError(Exception):
 def timeout(seconds=10, error_message=os.strerror(errno.ETIME)):
     def decorator(func):
         def _handle_timeout(signum, frame):
+            global keepRunning
+            keepRunning = False
+            print("TIMEOUT")
             raise TimeoutError(error_message)
 
         def wrapper(*args, **kwargs):
@@ -66,7 +69,6 @@ def timeout(seconds=10, error_message=os.strerror(errno.ETIME)):
 
         return wraps(func)(wrapper)
     return decorator
-
 
 #for server in $(ls /net); do echo $server && ssh -n -f $server "sh -c 'cd /home/mmaahn/projects/pamtra/py/; nohup ./picklePam.py path >> $server.log 2>&1 &'"; done
 @timeout(timeOutSec)

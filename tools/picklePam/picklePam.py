@@ -3,7 +3,7 @@
 from __future__ import division
 import pyPamtraLibWrapper 
 import pyPamtraLib
-import pickle
+import cPickle as pickle
 import numpy as np
 import time
 import datetime
