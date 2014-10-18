@@ -196,6 +196,7 @@ lobatto_quadrature
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'radtran4'
 
+    err = 0
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 !  if (verbose .gt. 1) print*, "Entered radtran ...."
       SYMMETRIC = .TRUE.
