@@ -397,11 +397,10 @@ subroutine make_dist_params(errorstatus)
 ! ! fixed n_tot (via p_1)
     if ((p_1 /= -99.) .and. (p_2 == -99.)) then
       if (moment_in == 3)  then
-        work1 = a_ms * gam**(b_ms-1._dbl) * p_1**(b_ms) / q_h
         work2 = dgamma((mu + b_ms + 1._dbl) / gam)
         work3 = dgamma((mu + 1._dbl) / gam)
-        n_0 = (work1 * work2 / work3**(b_ms))**(1._dbl / (b_ms - 1._dbl))
-        lambda = (n_0 * work3 / (gam * p_1))**(gam / (mu + 1._dbl))
+        lambda = (a_ms / q_h * p_1 * work2 / work3)**(gam / b_ms)
+        n_0 = gam * p_1 / work3 * lambda**((mu + 1._dbl) / gam)
       endif
       if (moment_in == 2)  then
         work1 = dgamma((mu + 4._dbl) / gam)
@@ -432,11 +431,10 @@ subroutine make_dist_params(errorstatus)
 ! ! 2 moments from the input file
     if ((p_1 == -99.) .and. (p_2 == -99.)) then
       if (moment_in == 13)  then
-        work1 = a_ms * gam**(b_ms-1._dbl) * n_tot**(b_ms) / q_h
         work2 = dgamma((mu + b_ms + 1._dbl) / gam)
         work3 = dgamma((mu + 1._dbl) / gam)
-        n_0 = (work1 * work2 / work3**(b_ms))**(1._dbl / (b_ms - 1._dbl))
-        lambda = (n_0 * work3 / (gam * n_tot))**(gam / (mu + 1._dbl))
+        lambda = (a_ms / q_h * n_tot * work2 / work3)**(gam / b_ms)
+        n_0 = gam * n_tot / work3 * lambda**((mu + 1._dbl) / gam)
       endif
       if (moment_in == 23)  then
         work1 = dgamma((mu + 4._dbl) / gam)
