@@ -63,7 +63,8 @@ def processData(fname):
       with open(fname2+".tmp", 'w') as f:
         pickle.dump(result, f)
       os.rename(fname2+".tmp",fname2)
-      os.remove(fname+"."+host)
+      try: os.remove(fname+"."+host)
+      except OSError: pass #whoe removed teh file??
     return
 
 startTime = time.time()

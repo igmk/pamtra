@@ -85,6 +85,8 @@ def processData(fname):
         #print "cannot open %s"%fname
         #continue
       print "running ", fname, inputAr[0]
+      #import pdb;pdb.set_trace()
+      #inputAr[1]["verbose"] = 10
       try: result = pyPamtraLibWrapper.parallelPamtraFortranWrapper(*inputAr,returnModule=False)
       except:
         print "FAILED", fname, inputAr[0]
@@ -94,7 +96,8 @@ def processData(fname):
       with open(fname2+".tmp", 'w') as f:
         pickle.dump(result, f)
       os.rename(fname2+".tmp",fname2)
-      os.remove(fname+"."+host)
+      try: os.remove(fname+"."+host)
+      except OSError: pass # ok somebody removed teh file...
     return
 
 startTime = time.time()
