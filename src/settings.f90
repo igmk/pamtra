@@ -314,7 +314,7 @@ contains
         ! sec run_mode
         active=.true.
         passive=.true.
-        radar_mode="simple" !"splitted"|"moments"|"spectrum"
+        radar_mode="simple" !|"moments"|"spectrum"
         randomseed = 0
         ! sec surface params
         ground_type='L'

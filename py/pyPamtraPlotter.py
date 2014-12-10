@@ -10,7 +10,7 @@ try:
   import netCDF4 as nc
   pyNc = True
 except:
-  warn.warning("not tested for other netcdf implementations!")
+  warnings.warn("not tested for other netcdf implementations!")
   try:
     import Scientific.IO.NetCDF as nc
     pyNc = False 

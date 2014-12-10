@@ -20,8 +20,8 @@ parser = argparse.ArgumentParser(description='run pam\'s pickles')
 parser.add_argument("pickel_path", help="path to pam pickles")
 #parser.add_argument("-v", "--verbosity", action="count", default=0)
 parser.add_argument("-m", "--max_age", type=int, default=300, help="maximum idle runtime of service in s (default 300)")
-parser.add_argument("-t", "--timeout", type=int, default=60, help="maximum runtime per job in s (default 60)")
-parser.add_argument("-s", "--sleep", type=int, default=10, help="sleep time before checking directory again (default 10)")
+parser.add_argument("-t", "--timeout", type=int, default=60,  help="maximum runtime per job in s (default 60)")
+parser.add_argument("-s", "--sleep",   type=int, default=10,  help="sleep time before checking directory again (default 10)")
 args = parser.parse_args()
 
 
@@ -53,8 +53,6 @@ class TimeoutError(Exception):
 def timeout(seconds=10, error_message=os.strerror(errno.ETIME)):
     def decorator(func):
         def _handle_timeout(signum, frame):
-            global keepRunning
-            keepRunning = False
             print("TIMEOUT")
             raise TimeoutError(error_message)
 
