@@ -1315,18 +1315,18 @@ class pyPamtra(object):
             #import pdb;pdb.set_trace()
             inputPickle = pickle.dumps((indices,settings,self.nmlSet,dfPart,dfPart4D,dfPartFS,profilePart))
             md5 = hashlib.md5(inputPickle).hexdigest()
-            jobs.append(md5)
-            fname = picklePath+"/"+str(pp_i).zfill(3)+"_"+md5+".job"
-            with open(fname+".tmp", 'w') as f:
+            fname = "%s/%d_%04d_%s"%(picklePath, time.time(), pp_i, md5)
+            jobs.append(fname)
+            with open(fname+".job.tmp", 'w') as f:
               f.write(inputPickle)
-            os.rename(fname+".tmp",fname)
+            os.rename(fname+".job.tmp",fname+".job")
             pp_i += 1
             if self.set["pyVerbose"] > 0: print "wrote job: ", pp_i
 
         startTime = time.time()
         
         for mm, md5 in enumerate(jobs):
-          fname = picklePath+"/"+str(mm).zfill(3)+"_"+md5+".result"
+          fname = "%s.result"%(md5)
           while True:
             if ((time.time() - startTime) > maxWait):
               print("\rWaiting too long for job %d: %s"%(mm,fname))
@@ -1351,18 +1351,19 @@ class pyPamtra(object):
               time.sleep(1)
               sys.stdout.write("\rwaiting for job %d: %s"%(mm,fname) +" "*3  )
               sys.stdout.flush()
-      print(" ")
     except KeyboardInterrupt:
       print "clean up"
       for mm, md5 in enumerate(jobs):
-        for fname in glob.glob(picklePath+"/"+str(mm).zfill(3)+"_"+md5+"*"):
+        for fname in glob.glob("%s.*"%(md5)):      
           try: 
             os.remove(fname)
             print fname, "removed."
           except OSError: continue
+      raise KeyboardInterrupt
     #pool.terminate()
     if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
     #del pool, jobs
+    print(" ")
     return    
  
  
