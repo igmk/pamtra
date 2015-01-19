@@ -1,6 +1,8 @@
 import pyPamtra
 import os
 import netCDF4
+from matplotlib import pylab as plt
+import numpy as np
 
 reload(pyPamtra)
 
