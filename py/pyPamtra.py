@@ -731,7 +731,7 @@ class pyPamtra(object):
     allVars = self.default_p_vars  
       
     for key in kwargs.keys():
-      if key not in allVars and key.split("+")[0] not in allVars:
+      if (key not in allVars and key.split("+")[0] not in allVars) or (key == "model_i") or (key == "model_j"):
         raise TypeError("Could not parse "+key)
     
     
@@ -951,6 +951,25 @@ class pyPamtra(object):
       
     return
 
+  def addProfile(self,profile, axis=0):
+    """
+    Add additional dictionary "profiles" with profile information to axis "axis". Number of height bins must be equal.
+    """
+    for key in self.p.keys():
+      if len(np.shape(self.p[key])) >= 2:
+        self.p[key] = np.concatenate((self.p[key], profile[key]),axis=axis)
+          
+    self.p["ngridx"] = np.shape(self.p["hgt_lev"])[0]
+    self.p["ngridy"] = np.shape(self.p["hgt_lev"])[1]
+
+    self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
+    self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
+    self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
+    self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
+    self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
+    self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
+    
+    
   def rescaleHeights(self,new_hgt_lev, new_hgt=[]):
     # sort height vectors
     old_hgt_lev = self.p["hgt_lev"]

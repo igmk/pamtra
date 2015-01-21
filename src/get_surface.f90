@@ -168,8 +168,8 @@ subroutine get_surface &
         ground_albedo = 1.d0 - emissivity
     end if
 
-      call assert_true(err,(ground_albedo>0),&
-          "freq must be positive")  
+      call assert_true(err,(ground_albedo>=0),&
+          "ground_albedo must be positive")  
        if (err > 0) then
           errorstatus = fatal
           msg = "assertation error"

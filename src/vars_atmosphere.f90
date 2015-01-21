@@ -714,7 +714,7 @@ module vars_atmosphere
 
           call assert_true(err,(all(atmo_hgt_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1)>-370) & 
               .or. all(atmo_hgt(nx,ny,1:atmo_nlyrs(nx,ny))>-370)),&
-              "hgt_lev or hgt_lev_lev must be greater -370 (depth of Tagebau Hambach :-))")  
+              "hgt or hgt_lev must be greater -370 (depth of Tagebau Hambach :-))")  
           if (err > 0) then
               errorstatus = fatal
               msg = "assertation error"
