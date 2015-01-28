@@ -1109,18 +1109,37 @@ class pyPamtra(object):
 
     return
 
-  #def addPIA(self)
-  #todo: make pia for all hydrometeortypes!
-    #assert self.r["nmlSettings"]["output"]["activeLogScale"]
+  def addPIA(self,direction,applyAtmo=True, applyHydros=True):
+    """
+    adds two-way path integrated attenuation to result dictionary
     
-    #Att_atmo = pam.r["Att_atmo"]
-    #Att_atmo[Att_atmo==missingNumber] = 0
-    #Att_hydro = pam.r["Att_hydro"]
-    #Att_hydro[Att_hydro==missingNumber] = 0    
-    #self.r["PIA"] = np.zeros(np.shape(Att_atmo))
-    #for hh in range(self.p["max_nlyrs"]):
-      #self.r["PIA"][:,:,hh,:] = Att_atmo[:,:,hh,:] +Att_hydro[:,:,hh,:] + 2*np.sum(Att_atmo[:,:,:hh,:] +Att_hydro[:,:,:hh,:],axis=2)#only half for the current layer
-    #return
+    Input:
+      direction(str) : "bottom-up" or "top-down"
+    
+    """
+        
+    shapePIA = np.shape(self.r["Att_hydro"])
+    if applyAtmo:
+      Att_atmo = np.zeros(shapePIA)
+      Att_atmo.T[:] = self.r["Att_atmo"].T
+      Att_atmo[Att_atmo==missingNumber] = 0
+    else: 
+      Att_atmo = np.zeros(shapePIA)
+    if applyHydros:
+      Att_hydro = self.r["Att_hydro"]
+      Att_hydro[Att_hydro==missingNumber] = 0    
+    else:
+      Att_hydro = np.zeros(shapePIA)
+      
+    self.r["PIA"] = np.zeros(shapePIA) - missingNumber
+    if direction == "bottom-up":
+      for hh in range(self.p["max_nlyrs"]):
+        self.r["PIA"][:,:,hh,:] = Att_atmo[:,:,hh,:] +Att_hydro[:,:,hh,:] + 2*np.sum(Att_atmo[:,:,:hh,:] +Att_hydro[:,:,:hh,:],axis=2)#only half for the current layer
+    elif direction == "top-down":
+      for hh in range(self.p["max_nlyrs"]-1,-1,-1):
+        self.r["PIA"][:,:,hh,:] = Att_atmo[:,:,hh,:] +Att_hydro[:,:,hh,:] + 2*np.sum(Att_atmo[:,:,hh+1:,:] +Att_hydro[:,:,hh+1:,:],axis=2)#only half for the current layer
+    
+    return
 
    
   def createFullProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
@@ -1793,6 +1812,13 @@ class pyPamtra(object):
       nc_Attenuation_Atmosphere.units = attUnit
       nc_Attenuation_Atmosphere[:] = np.array(self.r["Att_atmo"],dtype='f')
       if not pyNc: nc_Attenuation_Atmosphere._fillValue =missingNumber
+      
+      if "PIA" in self.r.keys():
+        nc_PIA = cdfFile.createVariable('Path_Integrated_Attenuation', 'f',dim4d,**fillVDict)
+        nc_PIA.units = "dB"
+        nc_PIA[:] = np.array(self.r["PIA"],dtype='f')
+        if not pyNc: nc_PIA._fillValue =missingNumber
+
       
       if ((self.r["nmlSettings"]["radar_mode"] == "spectrum") or (self.r["nmlSettings"]["radar_mode"] == "moments")):
 	nc_snr=cdfFile.createVariable('Radar_SNR', 'f',dim5d_rad,**fillVDict)

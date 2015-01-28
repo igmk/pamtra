@@ -249,7 +249,7 @@ def rh_to_iwv(relhum_lev,temp_lev,press_lev,hgt_lev):
 	relhum = (relhum_lev[...,0:-1] + relhum_lev[...,1:])/2.
 	temp = (temp_lev[...,0:-1] + temp_lev[...,1:])/2.
 
-	xp = -1.*log(press_lev[...,1:]/press_lev[...,0:-1])/dz
+	xp = -1.*np.log(press_lev[...,1:]/press_lev[...,0:-1])/dz
 	press = -1.*press_lev[...,0:-1]/xp*(exp(-xp*dz)-1.)/dz
 
 	q = meteoSI.rh2q(relhum,temp,press)
