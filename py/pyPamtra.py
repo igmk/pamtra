@@ -18,6 +18,7 @@ import multiprocessing
 import logging
 import glob
 import namelist #parser for fortran namelist files
+import paramiko
 
 import meteoSI
 try: 
@@ -1003,6 +1004,27 @@ class pyPamtra(object):
 
     return
     
+  def addSpectralBroadening(self,EDR,wind_uv,beamwidth_deg,integration_time,frequency,kolmogorov = 0.5):
+    """
+    beamwidth_deg full width half radiated one way
+    frequency GHz
+    """
+    
+    if "hgt" not in self.p.keys():
+      self.p["hgt"] = (self.p["hgt_lev"][...,:-1] + self.p["hgt_lev"][...,1:])/2.
+    
+    
+    heightVec = self.p["hgt"]
+    lamb = 3e8/(frequency * 1e9)
+    beamWidth=beamwidth_deg/2./180.*np.pi #half width half radiated http://www.wmo.int/pages/prog/gcos/documents/gruanmanuals/Z_instruments/mmcr_handbook.pdf
+    L_s = (wind_uv * integration_time) + 2*heightVec*np.sin(beamWidth)#RIGHT, formular of shupe or oconnor is for full width beam width
+    L_lambda = lamb / 2.
+    sig_B = np.sqrt(wind_uv**2*beamWidth**2/2.76)
+    sig_T = np.sqrt(3*kolmogorov/2. * (EDR/(2.*np.pi))**(2./3.) * (L_s**(2./3.) - L_lambda**(2./3.)))
+    self.p["airturb"][:] = np.sqrt(sig_B**2 + sig_T**2)
+
+    
+    
   def addIntegratedValues(self):
     raise NotImplementedError("not yet avaiable in pamtra v 1.0")
     #for pDict,qValue,intValue in [[self._helperP,"q","iwv"],[self.p,"cwc_q","cwp"],[self.p,"iwc_q","iwp"],[self.p,"rwc_q","rwp"],[self.p,"swc_q","swp"],[self.p,"gwc_q","gwp"],[self.p,"hwc_q","hwp"]]:
@@ -1137,6 +1159,7 @@ class pyPamtra(object):
     self.p["radar_prop"] = radar_prop.reshape(self._shape2D)    
     return   
     
+
   def runPamtra(self,freqs,checkData=True):
     '''
     run Pamtra from python
@@ -1366,7 +1389,123 @@ class pyPamtra(object):
     print(" ")
     return    
  
- 
+  def runPicklePamtraSFTP(self,freqs,host,user,localPicklePath="pyPamJobs",remotePicklePath="pyPamJobs",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto",checkData=True,timeout=None,maxWait =3600):
+    '''
+    run Pamtra from python
+    '''
+    import hashlib
+    
+    os.system("mkdir -p %s"%localPicklePath)
+    
+    cluster = sftp2Cluster(host,user)
+    
+    if type(freqs) in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
+
+    self.set["freqs"] = freqs
+    self.set["nfreqs"] = len(freqs)
+    self.set["radar_pol"] = self.nmlSet["radar_polarisation"].split(",")
+    self.set["radar_npol"] = len(self.set["radar_pol"])
+    self.set["att_pol"] = ["N"]
+    self.set["att_npol"] = len(self.set["att_pol"])
+
+    assert self.set["nfreqs"] > 0
+    assert self.set["radar_npol"] > 0
+    assert self.set["att_npol"] > 0
+    
+    if pp_deltaF==0: pp_deltaF = self.set["nfreqs"]
+    if pp_deltaX==0: pp_deltaX = self.p["ngridx"]
+    if pp_deltaY==0: pp_deltaY = self.p["ngridy"]
+
+    if hasattr(self, "fortObject"): del self.fortObject
+    self.fortError = 0
+    
+    tttt = time.time()
+
+    assert self.set["nfreqs"] > 0
+    assert np.prod(self._shape2D)>0
+    
+    if checkData: self._checkData()
+
+    jobs = list()
+    self.pp_resultData = list()
+    pp_i = 0
+    self._prepareResults()
+    try: 
+      for pp_startF in np.arange(0,self.set["nfreqs"],pp_deltaF):
+        pp_endF = pp_startF + pp_deltaF
+        if pp_endF > self.set["nfreqs"]: pp_endF = self.set["nfreqs"]
+        for pp_startX in np.arange(0,self.p["ngridx"],pp_deltaX):
+          pp_endX = pp_startX + pp_deltaX
+          if pp_endX > self.p["ngridx"]: pp_endX = self.p["ngridx"]
+          pp_ngridx = pp_endX - pp_startX
+          for pp_startY in np.arange(0,self.p["ngridy"],pp_deltaY):
+            pp_endY = pp_startY + pp_deltaY
+            if pp_endY > self.p["ngridy"]: pp_endY = self.p["ngridy"]
+            pp_ngridy = pp_endY - pp_startY
+      
+            if self.set["pyVerbose"] > 0: print "submitting job ", pp_i, pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY
+      
+            indices = [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY]       
+            profilePart, dfPart,dfPart4D,dfPartFS, settings = self._sliceProfile(*indices)
+            #import pdb;pdb.set_trace()
+            inputPickle = pickle.dumps((indices,settings,self.nmlSet,dfPart,dfPart4D,dfPartFS,profilePart))
+            md5 = hashlib.md5(inputPickle).hexdigest()
+            fname = "%d_%04d_%s"%(time.time(), pp_i, md5)
+            jobs.append(fname)
+            cluster.put(remotePicklePath+"/"+fname+".job.tmp",inputPickle)
+            cluster.mv(remotePicklePath+"/"+fname+".job.tmp",remotePicklePath+"/"+fname+".job")
+            pp_i += 1
+            if self.set["pyVerbose"] > 0: print "wrote job: ", pp_i
+
+            
+      del cluster
+          
+      startTime = time.time()
+      
+      for mm, md5 in enumerate(jobs):
+        fname = "%s/%s.result"%(localPicklePath,md5)
+        while True:
+          if ((time.time() - startTime) > maxWait):
+            print("\rWaiting too long for job %d: %s"%(mm,fname))
+            break
+          try:
+            with open(fname, 'r') as f:
+              resultPickle = pickle.load(f)
+            os.remove(fname)
+            if resultPickle[0] is not None: 
+              self._joinResults(resultPickle)
+              sys.stdout.write("\rgot job %d: %s from %s"%(mm,fname,resultPickle[-1]) +" "*3 )  
+              sys.stdout.flush()
+            else:
+              sys.stdout.write("\rjob broken %d: %s from %s"%(mm,fname,resultPickle[-1]))
+              sys.stdout.flush()
+            break
+          except EOFError:
+            sys.stdout.write("\rjob broken %d: %s from %s"%(mm,fname,resultPickle[-1]))
+            sys.stdout.flush()
+            break
+          except (OSError, IOError):
+            time.sleep(1)
+            sys.stdout.write("\rwaiting for job %d: %s"%(mm,fname) +" "*3  )
+            sys.stdout.flush()
+    except KeyboardInterrupt:
+      print "clean up"
+      cluster = sftp2Cluster(host,user)
+      for mm, md5 in enumerate(jobs):
+          cluster.rm(remotePicklePath+"/"+md5+".job")
+          cluster.rm(remotePicklePath+"/"+md5+".job.tmp")
+          os.remove(localPicklePath+"/"+md5+".result")
+      del cluster
+      raise KeyboardInterrupt
+      
+    #pool.terminate()
+    if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
+    #del pool, jobs
+    print(" ")
+    
+    
+    return    
+
  
  
   def _sliceProfile(self,pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY):
@@ -1896,4 +2035,36 @@ def formatExceptionInfo(maxTBlevel=5):
   return (excName, excArgs, excTb)
 
     
+
+class sftp2Cluster(object):
+
+  def __init__(self,machinename, username):
+    self.ssh = paramiko.SSHClient()
+    self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+    self.ssh.connect(machinename, username=username)
+    self.sftp = self.ssh.open_sftp()
     
+  def __del__(self):
+    self.ssh.close()
+  
+  def put(self, filename, data):
+    try:
+        self.sftp.mkdir(os.path.dirname(filename))
+    except IOError:
+        pass
+    f = self.sftp.open(filename, 'w')
+    f.write(data)
+    f.close()
+
+  def rm(self, filename,silent=True):
+    try: 
+      self.sftp.remove(filename)
+      print "removed %s"%(filename)
+    except IOError:
+      if silent:
+        pass
+      else:
+        raise IOError
+
+  def mv(self, oldFile, newFile):
+    self.sftp.rename(oldFile, newFile)
