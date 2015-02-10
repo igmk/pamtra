@@ -719,45 +719,55 @@ class pyPamtra(object):
       
       
     #make sure that an descriptor file exists already!
-    assert self.df.data.shape[0] > 0
+    if not self.df.data.shape[0] > 0:
+      warnings.warn("No descriptor file defined. Assuming dry profile without hydrometeors")
     if "hydro_q" in kwargs.keys():
+      assert self.df.data.shape[0] > 0
       assert self.df.nhydro == kwargs["hydro_q"].shape[-1]
     elif "hydro_n" in kwargs.keys():
+      assert self.df.data.shape[0] > 0
       assert  self.df.nhydro == kwargs["hydro_n"].shape[-1]
     elif "hydro_reff" in kwargs.keys():
+      assert self.df.data.shape[0] > 0
       assert self.df.nhydro == kwargs["hydro_reff"].shape[-1]
  
     allVars = self.default_p_vars  
       
     for key in kwargs.keys():
-      if key not in allVars and key.split("+")[0] not in allVars:
+      if (key not in allVars and key.split("+")[0] not in allVars) or (key == "model_i") or (key == "model_j"):
         raise TypeError("Could not parse "+key)
     
     
-    if not (("hgt_lev" in kwargs.keys()) and 
+    if not (("hgt_lev" in kwargs.keys() or "hgt" in kwargs.keys()) and 
         ("temp_lev" in kwargs.keys() or "temp" in kwargs.keys()) and 
         ("press_lev" in kwargs.keys() or "press" in kwargs.keys()) and 
         ("relhum_lev" in kwargs.keys() or  "relhum" in kwargs.keys())):#"q" in kwargs.keys()
       raise TypeError("I need hgt_lev and temp_lev and press_lev and (relhum_lev or relhum)!")
     
+    if "hgt" not in kwargs.keys():
+      kwargs["hgt"] = (kwargs["hgt_lev"][...,1:] + kwargs["hgt_lev"][...,:-1])/2.
+    
+    
     #assert self.df.nhydro > 0
-    
-    noDims = len(np.shape(kwargs["hgt_lev"]))
-    
+  
+    noDims = len(np.shape(kwargs["hgt"]))
     if noDims == 1:
       self.p["ngridx"] = 1
       self.p["ngridy"] = 1
     elif noDims == 2:
-      self.p["ngridx"] = np.shape(kwargs["hgt_lev"])[0]
+      self.p["ngridx"] = np.shape(kwargs["hgt"])[0]
       self.p["ngridy"] = 1
     elif noDims == 3:
-      self.p["ngridx"] = np.shape(kwargs["hgt_lev"])[0]
-      self.p["ngridy"] = np.shape(kwargs["hgt_lev"])[1]
+      self.p["ngridx"] = np.shape(kwargs["hgt"])[0]
+      self.p["ngridy"] = np.shape(kwargs["hgt"])[1]
     else:
       print "Too many dimensions!"
       raise IOError
     
-    self.p["max_nlyrs"] = np.shape(kwargs["hgt_lev"])[-1] -1
+    self.p["max_nlyrs"] = np.shape(kwargs["hgt"])[-1] 
+    self.p["nlyrs"] = np.array(np.sum(kwargs["hgt"]!=missingNumber,axis=-1))
+    hgtVar = "hgt"
+
     
     if self.p["max_nlyrs"] > 200:
       warnings.warn("Too many layers for pamtra (max:200): " + str(self.p["max_nlyrs"]),Warning)
@@ -775,8 +785,7 @@ class pyPamtra(object):
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
-
-    self.p["nlyrs"] = np.array(np.sum(kwargs["hgt_lev"]!=missingNumber,axis=-1) -1)
+    
     self.p["nlyrs"] = self.p["nlyrs"].reshape(self._shape2D)
 
     for key in ["hgt_lev","temp_lev","press_lev","relhum_lev"]:
@@ -787,10 +796,15 @@ class pyPamtra(object):
       if key in kwargs.keys():
         self.p[key]= kwargs[key].reshape(self._shape3D)
 
+    if "hgt_lev" not in kwargs.keys():
+      self.p["hgt_lev"] = np.empty(self._shape3Dplus)
+      self.p["hgt_lev"][...,0] = self.p["hgt"][...,0] - (self.p["hgt"][...,1] - self.p["hgt"][...,0])*0.5
+      self.p["hgt_lev"][...,1:-1] = 0.5 * (self.p["hgt"][...,:-1] + self.p["hgt"][...,1:])
+      self.p["hgt_lev"][...,-1] = self.p["hgt"][...,-1] + (self.p["hgt"][...,-1] - self.p["hgt"][...,-2])*0.5
 
 
-    self.p["model_i"] = np.array(np.where(np.logical_not(np.isnan(self.p["hgt_lev"][:,:,0])))[0]).reshape(self._shape2D) +1
-    self.p["model_j"] = np.array(np.where(np.logical_not(np.isnan(self.p["hgt_lev"][:,:,0])))[1]).reshape(self._shape2D) +1
+    self.p["model_i"] = np.array(np.where(np.logical_not(np.isnan(self.p[hgtVar][:,:,0])))[0]).reshape(self._shape2D) +1
+    self.p["model_j"] = np.array(np.where(np.logical_not(np.isnan(self.p[hgtVar][:,:,0])))[1]).reshape(self._shape2D) +1
 
     if "timestamp" not in kwargs.keys():
       self.p["unixtime"] = np.ones(self._shape2D)* int(time.time())
@@ -940,12 +954,33 @@ class pyPamtra(object):
       
     return
 
-  def rescaleHeights(self,new_hgt_lev):
-    sys.exit("not adapted yet to new layer option")
+  def addProfile(self,profile, axis=0):
+    """
+    Add additional dictionary "profiles" with profile information to axis "axis". Number of height bins must be equal.
+    """
+    for key in self.p.keys():
+      if len(np.shape(self.p[key])) >= 2:
+        self.p[key] = np.concatenate((self.p[key], profile[key]),axis=axis)
+          
+    self.p["ngridx"] = np.shape(self.p["hgt_lev"])[0]
+    self.p["ngridy"] = np.shape(self.p["hgt_lev"])[1]
+
+    self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
+    self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
+    self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
+    self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
+    self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
+    self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
+    
+    
+  def rescaleHeights(self,new_hgt_lev, new_hgt=[]):
     # sort height vectors
     old_hgt_lev = self.p["hgt_lev"]
-    new_hgt = (new_hgt_lev[...,1:] + new_hgt_lev[...,:-1])/2.
-    old_hgt = (old_hgt_lev[...,1:] + old_hgt_lev[...,:-1])/2.
+    old_hgt = self.p["hgt"]
+    if len(new_hgt) == 0: new_hgt = (new_hgt_lev[...,1:] + new_hgt_lev[...,:-1])/2.
+    
+
+
     
     self.p["max_nlyrs"] = len(new_hgt_lev) -1
     
@@ -955,47 +990,62 @@ class pyPamtra(object):
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
-    assert len(df.data4D.keys() == 0) 
-    assert len(df.dataFullSpec.keys() == 0) 
+    assert len(self.df.data4D.keys())  == 0
+    assert len(self.df.dataFullSpec.keys()) == 0
 
     for key in ["hydro_q","hydro_n","hydro_reff",]:
-      #make new array
-      newP = np.ones(self._shape3D) * missingNumber
-      for x in xrange(self._shape2D[0]):
-        for y in xrange(self._shape2D[1]):
-          for h in xrange(self.df.nhydro):
-          #interpolate!
-            newP[x,y,:,h] = np.interp(new_hgt,old_hgt[x,y,:,h],self.p[key][x,y,:,h])
-      #save new array
-      self.p[key] = newP
-      #and mark all entries below -1 as missing Number!
-      self.p[key][self.p[key]<-1] = missingNumber
+      if key in self.p.keys():
+        #make new array
+        newP = np.ones(self._shape4D) * missingNumber
+        for x in xrange(self._shape2D[0]):
+          for y in xrange(self._shape2D[1]):
+            for h in xrange(self.df.nhydro):
+            #interpolate!
+              newP[x,y,:,h] = np.interp(new_hgt,old_hgt[x,y,:],self.p[key][x,y,:,h])
+        #save new array
+        self.p[key] = newP
+        #and mark all entries below -1 as missing Number!
+        self.p[key][self.p[key]<-1] = missingNumber
       
     for key in ["hgt_lev","temp_lev","relhum_lev"]:
-      newP = np.ones(self._shape3Dplus) * missingNumber
-      for x in xrange(self._shape2D[0]):
-        for y in xrange(self._shape2D[1]):
-          newP[x,y] = np.interp(new_hgt_lev,old_hgt_lev[x,y],self.p[key][x,y])
-      self.p[key] = newP
-      self.p[key][self.p[key]<-1] = missingNumber
+      if key in self.p.keys():
+        newP = np.ones(self._shape3Dplus) * missingNumber
+        for x in xrange(self._shape2D[0]):
+          for y in xrange(self._shape2D[1]):
+            newP[x,y] = np.interp(new_hgt_lev,old_hgt_lev[x,y],self.p[key][x,y])
+        self.p[key] = newP
+        self.p[key][self.p[key]<-1] = missingNumber
       
-    for key in ["airturb","wind_w"]:
-      newP = np.ones(self._shape3D) * missingNumber
-      for x in xrange(self._shape2D[0]):
-        for y in xrange(self._shape2D[1]):
-          newP[x,y] = np.interp(new_hgt,old_hgt[x,y],self.p[key][x,y])
-      self.p[key] = newP
-      self.p[key][self.p[key]<-1] = missingNumber
+    for key in ["airturb","wind_w","hgt","temp","relhum"]:
+      if key in self.p.keys():
+        newP = np.ones(self._shape3D) * missingNumber
+        for x in xrange(self._shape2D[0]):
+          for y in xrange(self._shape2D[1]):
+            newP[x,y] = np.interp(new_hgt,old_hgt[x,y],self.p[key][x,y])
+        self.p[key] = newP
+        self.p[key][self.p[key]<-1] = missingNumber
       
       
     for key in ["press_lev"]:
-      newP = np.ones(self._shape3Dplus) * missingNumber
-      for x in xrange(self._shape2D[0]):
-        for y in xrange(self._shape2D[1]):
-          newP[x,y] = np.exp(np.interp(new_hgt_lev,old_hgt_lev[x,y],np.log(self.p[key][x,y])))
-      self.p[key] = newP
-      self.p[key][self.p[key]<-1] = missingNumber
+      if key in self.p.keys():
+        newP = np.ones(self._shape3Dplus) * missingNumber
+        for x in xrange(self._shape2D[0]):
+          for y in xrange(self._shape2D[1]):
+            newP[x,y] = np.exp(np.interp(new_hgt_lev,old_hgt_lev[x,y],np.log(self.p[key][x,y])))
+        self.p[key] = newP
+        self.p[key][self.p[key]<-1] = missingNumber
+        
+    for key in ["press"]:
+      if key in self.p.keys():
+        newP = np.ones(self._shape3D) * missingNumber
+        for x in xrange(self._shape2D[0]):
+          for y in xrange(self._shape2D[1]):
+            newP[x,y] = np.exp(np.interp(new_hgt,old_hgt[x,y],np.log(self.p[key][x,y])))
+        self.p[key] = newP
+        self.p[key][self.p[key]<-1] = missingNumber
 
+        
+        
     self.p["nlyrs"] = np.sum(self.p["hgt_lev"] != missingNumber,axis=-1) -1
     
     if self.p["max_nlyrs"] > 200:
@@ -1083,18 +1133,37 @@ class pyPamtra(object):
 
     return
 
-  #def addPIA(self)
-  #todo: make pia for all hydrometeortypes!
-    #assert self.r["nmlSettings"]["output"]["activeLogScale"]
+  def addPIA(self,direction,applyAtmo=True, applyHydros=True):
+    """
+    adds two-way path integrated attenuation to result dictionary
     
-    #Att_atmo = pam.r["Att_atmo"]
-    #Att_atmo[Att_atmo==missingNumber] = 0
-    #Att_hydro = pam.r["Att_hydro"]
-    #Att_hydro[Att_hydro==missingNumber] = 0    
-    #self.r["PIA"] = np.zeros(np.shape(Att_atmo))
-    #for hh in range(self.p["max_nlyrs"]):
-      #self.r["PIA"][:,:,hh,:] = Att_atmo[:,:,hh,:] +Att_hydro[:,:,hh,:] + 2*np.sum(Att_atmo[:,:,:hh,:] +Att_hydro[:,:,:hh,:],axis=2)#only half for the current layer
-    #return
+    Input:
+      direction(str) : "bottom-up" or "top-down"
+    
+    """
+        
+    shapePIA = np.shape(self.r["Att_hydro"])
+    if applyAtmo:
+      Att_atmo = np.zeros(shapePIA)
+      Att_atmo.T[:] = self.r["Att_atmo"].T
+      Att_atmo[Att_atmo==missingNumber] = 0
+    else: 
+      Att_atmo = np.zeros(shapePIA)
+    if applyHydros:
+      Att_hydro = self.r["Att_hydro"]
+      Att_hydro[Att_hydro==missingNumber] = 0    
+    else:
+      Att_hydro = np.zeros(shapePIA)
+      
+    self.r["PIA"] = np.zeros(shapePIA) - missingNumber
+    if direction == "bottom-up":
+      for hh in range(self.p["max_nlyrs"]):
+        self.r["PIA"][:,:,hh,:] = Att_atmo[:,:,hh,:] +Att_hydro[:,:,hh,:] + 2*np.sum(Att_atmo[:,:,:hh,:] +Att_hydro[:,:,:hh,:],axis=2)#only half for the current layer
+    elif direction == "top-down":
+      for hh in range(self.p["max_nlyrs"]-1,-1,-1):
+        self.r["PIA"][:,:,hh,:] = Att_atmo[:,:,hh,:] +Att_hydro[:,:,hh,:] + 2*np.sum(Att_atmo[:,:,hh+1:,:] +Att_hydro[:,:,hh+1:,:],axis=2)#only half for the current layer
+    
+    return
 
    
   def createFullProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
@@ -1884,6 +1953,13 @@ class pyPamtra(object):
       nc_Attenuation_Atmosphere.units = attUnit
       nc_Attenuation_Atmosphere[:] = np.array(self.r["Att_atmo"],dtype='f')
       if not pyNc: nc_Attenuation_Atmosphere._fillValue =missingNumber
+      
+      if "PIA" in self.r.keys():
+        nc_PIA = cdfFile.createVariable('Path_Integrated_Attenuation', 'f',dim4d,**fillVDict)
+        nc_PIA.units = "dB"
+        nc_PIA[:] = np.array(self.r["PIA"],dtype='f')
+        if not pyNc: nc_PIA._fillValue =missingNumber
+
       
       if ((self.r["nmlSettings"]["radar_mode"] == "spectrum") or (self.r["nmlSettings"]["radar_mode"] == "moments")):
 	nc_snr=cdfFile.createVariable('Radar_SNR', 'f',dim5d_rad,**fillVDict)
