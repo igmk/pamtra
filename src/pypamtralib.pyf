@@ -246,8 +246,6 @@ python module pyPamtraLib ! in
             character(len=300) :: tmatrix_db_path
             integer, parameter,optional :: aziorder=0
             character(len=300) :: namelist_file
-            real(kind=dbl) :: radar_fallvel_b
-            real(kind=dbl) :: radar_fallvel_a
             character(len=1) :: ground_type
             character(len=10) :: crm_case
             logical :: write_nc

@@ -254,8 +254,6 @@ class pyPamtra(object):
     self.nmlSet["radar_receiver_uncertainty_std"]=  0.e0 #dB
     self.nmlSet["radar_attenuation"]=  "disabled" #! "bottom-up" or "top-down"
     self.nmlSet["radar_polarisation"]=  "NN" #! comma separated
-    self.nmlSet["radar_fallvel_a"]=  0.5
-    self.nmlSet["radar_fallvel_b"]=  0.5
     #all settings which do not go into the nml file go here:
     self.set = dict()
     self.set["pyVerbose"] = 0
@@ -1056,8 +1054,17 @@ class pyPamtra(object):
     
   def addSpectralBroadening(self,EDR,wind_uv,beamwidth_deg,integration_time,frequency,kolmogorov = 0.5):
     """
-    beamwidth_deg full width half radiated one way
-    frequency GHz
+    Fills array self.p["airturb"] according to input data. Array are broadcasted to self._shape3D
+    Only broadening by horizontal wind and turbuilence is considered as of now.
+    
+    Input:
+      EDR(array) : Eddy dissipation rate (SI units)
+      wind_uv(array) : horizontal wind field (SI units)
+      beamwidth_deg(float) : full-width half-radiated one-way (deg)
+      integration_time(float) : radar integration time
+      frequency(float) : frequency used to determien lower integration bound
+      kolmogorov(float,optional) : Kolmogorov constant, default 0.5
+
     """
     
     if "hgt" not in self.p.keys():
