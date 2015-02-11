@@ -1382,7 +1382,8 @@ class pyPamtra(object):
     assert np.prod(self._shape2D)>0
     
     if checkData: self._checkData()
-
+    
+    
     jobs = list()
     self.pp_resultData = list()
     pp_i = 0
@@ -1415,34 +1416,34 @@ class pyPamtra(object):
             pp_i += 1
             if self.set["pyVerbose"] > 0: print "wrote job: ", pp_i
 
-        startTime = time.time()
-        
-        for mm, md5 in enumerate(jobs):
-          fname = "%s.result"%(md5)
-          while True:
-            if ((time.time() - startTime) > maxWait):
-              print("\rWaiting too long for job %d: %s"%(mm,fname))
-              break
-            try:
-              with open(fname, 'r') as f:
-                resultPickle = pickle.load(f)
-              os.remove(fname)
-              if resultPickle[0] is not None: 
-                self._joinResults(resultPickle)
-                sys.stdout.write("\rgot job %d: %s from %s"%(mm,fname,resultPickle[-1]) +" "*3 )  
-                sys.stdout.flush()
-              else:
-                sys.stdout.write("\rjob broken %d: %s from %s"%(mm,fname,resultPickle[-1]))
-                sys.stdout.flush()
-              break
-            except EOFError:
+      startTime = time.time()
+      
+      for mm, md5 in enumerate(jobs):
+        fname = "%s.result"%(md5)
+        while True:
+          if ((time.time() - startTime) > maxWait):
+            print("\rWaiting too long for job %d: %s"%(mm,fname))
+            break
+          try:
+            with open(fname, 'r') as f:
+              resultPickle = pickle.load(f)
+            os.remove(fname)
+            if resultPickle[0] is not None: 
+              self._joinResults(resultPickle)
+              sys.stdout.write("\rgot job %d: %s from %s"%(mm,fname,resultPickle[-1]) +" "*3 )  
+              sys.stdout.flush()
+            else:
               sys.stdout.write("\rjob broken %d: %s from %s"%(mm,fname,resultPickle[-1]))
               sys.stdout.flush()
-              break
-            except (OSError, IOError):
-              time.sleep(1)
-              sys.stdout.write("\rwaiting for job %d: %s"%(mm,fname) +" "*3  )
-              sys.stdout.flush()
+            break
+          except EOFError:
+            sys.stdout.write("\rjob broken %d: %s from %s"%(mm,fname,resultPickle[-1]))
+            sys.stdout.flush()
+            break
+          except (OSError, IOError):
+            time.sleep(1)
+            sys.stdout.write("\rwaiting for job %d: %s"%(mm,fname) +" "*3  )
+            sys.stdout.flush()
     except KeyboardInterrupt:
       print "clean up"
       for mm, md5 in enumerate(jobs):
