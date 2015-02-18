@@ -1775,7 +1775,7 @@ class pyPamtra(object):
 
   
   
-  def writeResultsToNetCDF(self,fname,profileVars="all",ncForm="NETCDF4"):
+  def writeResultsToNetCDF(self,fname,profileVars="all",ncForm="NETCDF3_CLASSIC"):
     '''
     write the results to a netcdf file
     
@@ -1800,6 +1800,9 @@ class pyPamtra(object):
         pyNc = True
     else:
       raise ValueError("Unknown nc form "+ncForm)
+            
+    if ncForm in ["NETCDF4_CLASSIC", "NETCDF4"]:  
+      warnings.warn("NETCDF4 is buggy, use NETCDF3_CLASSIC if possible", Warning)
       
     try: 
       self.r
