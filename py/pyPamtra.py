@@ -1975,12 +1975,12 @@ class pyPamtra(object):
 	nc_snr[:] = np.array(self.r["radar_snr"],dtype='f')
 	if not pyNc: nc_snr._fillValue =missingNumber
 
-	nc_fvel=cdfFile.createVariable('Radar_FallVelocity', 'f',dim5d_rad,**fillVDict)
+	nc_fvel=cdfFile.createVariable('Radar_MeanDopplerVel', 'f',dim5d_rad,**fillVDict)
 	nc_fvel.units="m/s"
 	nc_fvel[:] = np.array(self.r["radar_moments"][...,0],dtype='f')
 	if not pyNc: nc_fvel._fillValue =missingNumber
 	
-	nc_specw=cdfFile.createVariable('Radar_SpectralWidth', 'f',dim5d_rad,**fillVDict)
+	nc_specw=cdfFile.createVariable('Radar_SpectrumWidth', 'f',dim5d_rad,**fillVDict)
 	nc_specw.units="m/s"
 	nc_specw[:] = np.array(self.r["radar_moments"][...,1],dtype='f')
 	if not pyNc: nc_specw._fillValue =missingNumber
