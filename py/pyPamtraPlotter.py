@@ -5,6 +5,7 @@ import numpy as np
 import datetime
 import matplotlib.pyplot as plt
 import matplotlib.font_manager as font_manager 
+from copy import deepcopy
 
 try:
   import netCDF4 as nc
@@ -175,7 +176,7 @@ def plotTB(data,polarisation="H",angle=180.,outlevel="space",frequency=0,xgrid="
   return fig
   
   
-def plotTBLine(data,polarisation="H",angle=180.,outlevel="space",frequency=0,cmap=None,title="",fig =None,xIndex = "all",yIndex =0,xVar = None,freqIndices="all",legendLoc="auto"):
+def plotTBLine(data,polarisation="H",angle=180.,outlevel="space",frequency=0,cmap=None,title="",fig =None,xIndex = "all",yIndex =slice(0,1),xVar = None,freqIndices="all",legendLoc="auto",relative=False):
   """
   plot brightness temperatures from pamtra
   
@@ -186,6 +187,7 @@ def plotTBLine(data,polarisation="H",angle=180.,outlevel="space",frequency=0,cma
     frequency: if real number frequency, if int, index of frequency
     xgrid: index or?
     ygrid index or? 
+    relative: relative to 0,0?
   """
   #first parse options for both netcdf and pyPamtra
   if polarisation=="H":
@@ -210,9 +212,9 @@ def plotTBLine(data,polarisation="H",angle=180.,outlevel="space",frequency=0,cma
 
     
   if xIndex == "all":
-    xIndex = range(0,data._shape2D[0])
+    xIndex = slice(0,data._shape2D[0])
   if yIndex == "all":
-    yIndex = range(0,data._shape2D[1])
+    yIndex = slice(0,data._shape2D[1])
   #no get the data
   TB = data.r["tb"][xIndex,yIndex,levelIndex,angleIndex,:,stokesIndex]
   if fig == None:
@@ -228,10 +230,14 @@ def plotTBLine(data,polarisation="H",angle=180.,outlevel="space",frequency=0,cma
   
   cols = niceColors(len(freqIndices),cmap='hsv_r')
   
+  rel = deepcopy(TB[0,0,:])
+  if relative == False:
+    rel[:] = 0.
+
   for fn, ff in enumerate(freqIndices):
-    sp.plot(xData,TB[...,ff].ravel(),color=cols[fn],label="%.2f GHz"%data.set["freqs"][ff])
+    sp.plot(xData,TB[...,ff].ravel()-rel[ff],color=cols[fn],label="%.2f GHz"%data.set["freqs"][ff])
   
-  sp.set_ylim(np.min(TB),np.max(TB))
+  sp.set_ylim(np.min(TB-rel),np.max(TB-rel))
   sp.set_xlim(np.min(xData),np.max(xData))
   
   if xVar == None:
