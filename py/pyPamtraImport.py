@@ -21,13 +21,6 @@ except:
 
 import pyPamtra
 import meteoSI
-
-#import csv
-#import pickle
-#import time,calendar,datetime
-#import warnings
-#import sys
-#import os
 from copy import deepcopy
 
 missingNumber =-9999.
@@ -264,13 +257,14 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
     varPairs = [["time1h","timestamp"],["latitude","lat"],["longitude","lon"],["fr_land","lfrac"],["u_10m","wind10u"],["v_10m","wind10v"],["hhl","hgt_lev"],["p","press"],["temperature","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["t_s","groundtemp"],["temp_lev","temp_lev"],["press_lev","press_lev"]]
   
   elif kind == "gop_fields_SynSatMic":
-
+    assert constantFields
     forecastIndex = 0
     variables3D = ["U_10M","V_10M","T_G","surface_air_pressure"]
     variables4D = ["T","P","QV","QC","QI","QI","QR","QS","QG"]
    
     nHydro = 5
     
+
     conFields = ncToDict(constantFields)
     data = dict()
     if maxLevel  == 0: maxLevel = conFields["HHL"].shape[1] - 1

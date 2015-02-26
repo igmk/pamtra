@@ -18,8 +18,11 @@ import multiprocessing
 import logging
 import glob
 import namelist #parser for fortran namelist files
-import paramiko
-
+try: 
+  import paramiko 
+except: 
+  warnings.warn("paramiko not available", Warning)
+  
 import meteoSI
 try: 
   import pyPamtraLibWrapper 
