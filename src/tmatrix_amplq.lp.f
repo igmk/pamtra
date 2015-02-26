@@ -273,11 +273,15 @@ C   VALUES FOR WHICH RESULTS ARE COMPUTED ACCURATELY. FOR THIS REASON,
 C   THE AUTHORS AND THEIR ORGANIZATION DISCLAIM ALL LIABILITY FOR
 C   ANY DAMAGES THAT MAY RESULT FROM THE USE OF THE PROGRAM. 
 
-      SUBROUTINE tmatrix_amplq(LAM, mrr,mri, AXI, AS_RATIO, RAT,
-     *        NP,nmax)
+      SUBROUTINE tmatrix_amplq(errorstatus, LAM, mrr,mri, AXI,  
+     *        AS_RATIO,RAT,NP,nmax)
+
+      use kinds
+      use report_module
 
       IMPLICIT REAL*8 (A-H,O-Z)
       INCLUDE 'tmatrix_amplq.par.f'
+
       REAL*16 LAM,MRR,MRI,X(NPNG2),W(NPNG2),S(NPNG2),SS(NPNG2),
      *        AN(NPN1),R(NPNG2),DR(NPNG2),PPI,PIR,PII,P,EPS,A,
      *        DDR(NPNG2),DRR(NPNG2),DRI(NPNG2),ANN(NPN1,NPN1)
@@ -294,7 +298,13 @@ C   ANY DAMAGES THAT MAY RESULT FROM THE USE OF THE PROGRAM.
       COMMON /TMAT/ RT11,RT12,RT21,RT22,IT11,IT12,IT21,IT22
       COMMON /CHOICE/ ICHOICE
  
-
+      integer(kind=long), intent(out) :: errorstatus
+      integer(kind=long) :: err = 0
+      character(len=80) :: msg
+      character(len=14) :: nameOfRoutine = 'tmatrix_amplq'
+      
+      if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)    
+      err = 0
 C  OPEN FILES *******************************************************
  
 C      OPEN (6,FILE='test')
@@ -354,7 +364,13 @@ C     PRINT 8000, RAT
       IXXX=XEV+4.05D0*XEV**0.333333D0
       INM1=MAX0(4,IXXX)
       IF (INM1.GE.NPN1) PRINT 7333, NPN1
-      IF (INM1.GE.NPN1) STOP
+      IF (INM1.GE.NPN1) THEN
+!        STOP
+        errorstatus = fatal
+        msg = "CONVERGENCE IS NOT OBTAINED FOR NPN1"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+      END IF
  7333 FORMAT('CONVERGENCE IS NOT OBTAINED FOR NPN1=',I3,  
      &       '.  EXECUTION TERMINATED')
       QEXT1=0D0
@@ -364,13 +380,24 @@ C     PRINT 8000, RAT
          MMAX=1
          NGAUSS=NMAX*NDGS
          IF (NGAUSS.GT.NPNG1) PRINT 7340, NGAUSS
-         IF (NGAUSS.GT.NPNG1) STOP
+         IF (NGAUSS.GT.NPNG1) THEN
+           errorstatus = fatal
+           msg = "NGAUSS IS GREATER THAN NPNG1"
+           call report(errorstatus, msg, nameOfRoutine)
+           return
+         END IF
  7340    FORMAT('NGAUSS =',I3,' I.E. IS GREATER THAN NPNG1.',
      &          '  EXECUTION TERMINATED')
  7334    FORMAT(' NMAX =', I3,'  DC2=',D8.2,'   DC1=',D8.2)
          CALL CONST(NGAUSS,NMAX,MMAX,P,X,W,AN,ANN,S,SS,NP,EPS)
-         CALL VARY(LAM,MRR,MRI,A,EPS,NP,NGAUSS,X,P,PPI,PIR,PII,R,
+         CALL VARY(err,LAM,MRR,MRI,A,EPS,NP,NGAUSS,X,P,PPI,PIR,PII,R,
      &              DR,DDR,DRR,DRI,NMAX)
+         if (err /= 0) then
+            msg = 'error in VARY!'
+            call report(err, msg, nameOfRoutine)
+            errorstatus = err
+            return
+         end if      
          CALL TMATR0 (NGAUSS,X,W,AN,ANN,S,SS,PPI,PIR,PII,R,DR,
      &                 DDR,DRR,DRI,NMAX,NCHECK)
          QEXT=0D0
@@ -393,7 +420,12 @@ C     PRINT 8000, RAT
 C        PRINT 7334, NMAX,DSCA,DEXT
          IF(DSCA.LE.DDELT.AND.DEXT.LE.DDELT) GO TO 55
          IF (NMA.EQ.NPN1) PRINT 7333, NPN1
-         IF (NMA.EQ.NPN1) STOP      
+         IF (NMA.EQ.NPN1) THEN
+           errorstatus = fatal
+           msg = "CONVERGENCE IS NOT OBTAINED FOR NPN1"
+           call report(errorstatus, msg, nameOfRoutine)
+           return
+         END IF   
    50 CONTINUE
    55 NNNGGG=NGAUSS+1
       MMAX=NMAX
@@ -405,8 +437,14 @@ C        PRINT 7334, NMAX,DSCA,DEXT
  7336    FORMAT('WARNING: NGAUSS=NPNG1')
  7337    FORMAT(' NG=',I3,'  DC2=',D8.2,'   DC1=',D8.2)
          CALL CONST(NGAUSS,NMAX,MMAX,P,X,W,AN,ANN,S,SS,NP,EPS)
-         CALL VARY(LAM,MRR,MRI,A,EPS,NP,NGAUSS,X,P,PPI,PIR,PII,R,
+         CALL VARY(err,LAM,MRR,MRI,A,EPS,NP,NGAUSS,X,P,PPI,PIR,PII,R,
      &              DR,DDR,DRR,DRI,NMAX)
+         if (err /= 0) then
+            msg = 'error in VARY!'
+            call report(err, msg, nameOfRoutine)
+            errorstatus = err
+            return
+         end if      
          CALL TMATR0 (NGAUSS,X,W,AN,ANN,S,SS,PPI,PIR,PII,R,DR,
      &                 DDR,DRR,DRI,NMAX,NCHECK)
          QEXT=0D0
@@ -553,7 +591,9 @@ C  COMPUTATION OF THE AMPLITUDE AND PHASE MATRICES
 !      PRINT 1001,TIME
 ! 1001 FORMAT (' time =',F8.2,' min')
 !C      STOP
-
+      errorstatus = err
+      if (verbose >= 3) call report(info,'End of ', nameOfRoutine) 
+      RETURN
       END
  
 C********************************************************************
@@ -1072,8 +1112,10 @@ C         COMMON /CBESS/ - see subroutine BESS                        *
 C                                                                     *
 C**********************************************************************
  
-      SUBROUTINE VARY (LAM,MRR,MRI,A,EPS,NP,NGAUSS,X,P,PPI,PIR,PII,
-     *                 R,DR,DDR,DRR,DRI,NMAX)
+      SUBROUTINE VARY (errorstatus,LAM,MRR,MRI,A,EPS,NP,NGAUSS,X,P,
+     *                 PPI,PIR,PII,R,DR,DDR,DRR,DRI,NMAX)
+        use kinds
+      use report_module
       INCLUDE 'tmatrix_amplq.par.f'
       IMPLICIT REAL*16 (A-H,O-Z)
       REAL*16 X(NPNG2),R(NPNG2),DR(NPNG2),MRR,MRI,LAM,
@@ -1084,6 +1126,12 @@ C**********************************************************************
      *        DRR(NPNG2),DRI(NPNG2),
      *        DY(NPNG2,NPN1)
       COMMON /CBESS/ J,Y,JR,JI,DJ,DY,DJR,DJI
+      integer(kind=long), intent(out) :: errorstatus
+      integer(kind=long) :: err = 0
+      character(len=80) :: msg
+      character(len=14) :: nameOfRoutine = 'TMATRIX:VARY'
+      if (verbose >= 5) call report(info,'Start of ', nameOfRoutine)    
+      err = 0
       NG=NGAUSS*2
       IF (NP.EQ.-1) CALL RSP1(X,NG,NGAUSS,A,EPS,NP,R,DR)
       IF (NP.GE.0) CALL RSP2(X,NG,A,EPS,NP,R,DR)
@@ -1119,7 +1167,16 @@ C**********************************************************************
       NNMAX1=8.0Q0*sqrt(max(TA,float(NMAX)))+3Q0
       NNMAX2=(TB+4Q0*(TB**0.33333Q0)+8.0Q0*sqrt(TB))
       NNMAX2=NNMAX2-NMAX+5
+      IF ((NMAX+NNMAX2)>=1200) THEN
+        errorstatus = fatal
+        msg = "NMAX+NNMAX2 is too large "//
+     *  "(would cause a seg fault in CJB routine otherwise)"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+      END IF
       CALL BESS(Z,ZR,ZI,NG,NMAX,NNMAX1,NNMAX2)
+      if (verbose >= 5) call report(info,'End of ', nameOfRoutine)    
+      errorstatus = err
       RETURN
       END
  

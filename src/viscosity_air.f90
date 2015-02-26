@@ -19,3 +19,21 @@ subroutine viscosity_air(T,eta)
 
   return 
 end subroutine viscosity_air
+
+subroutine kinematic_viscosity_air(temp,press,mu)
+ 
+! This function returns the kineamtic viscosity_air
+  use kinds
+  use report_module
+  implicit none
+
+  real(kind=dbl), intent (in) :: temp, press
+  real(kind=dbl), intent (out) :: mu      
+  real(kind=dbl) :: viscosity, rho, rho_air
+   
+
+
+  rho = rho_air(temp,press)
+  call viscosity_air(temp,viscosity)
+  mu = viscosity/rho
+end subroutine kinematic_viscosity_air

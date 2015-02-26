@@ -135,8 +135,6 @@ module dia2vel
      
       velSpec = eta * Re /(rho_air_SI*diaSpec_SI)
 
-      if (verbose .gt. 1) print*, 'Exiting dia2vel_khvorostyanov01_particles in dia2vel.f90'
-
       errorstatus = err
       if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
 
@@ -151,10 +149,8 @@ module dia2vel
     diaSpec_SI,&	!in
     rho_air_SI,&	!in
     nu_SI,&		!in
-    mass_size_a_SI,&	!in
-    mass_size_b,&	!in
-    area_size_a_SI,&	!in
-    area_size_b,&	!in
+    mass_SI,&	!in
+    area_SI,&	!in
     velSpec)		!out
 
       !in
@@ -181,14 +177,13 @@ module dia2vel
       implicit none
 
       integer, intent(in) :: nDia
-      real(kind=dbl), intent(in), dimension(ndia)::diaSpec_SI
-      real(kind=dbl), intent(in) :: rho_air_SI, nu_SI,mass_size_a_SI,mass_size_b,&
-      area_size_a_SI,area_size_b
+      real(kind=dbl), intent(in), dimension(ndia)::diaSpec_SI, mass_SI, area_SI
+      real(kind=dbl), intent(in) :: rho_air_SI, nu_SI
       real(kind=dbl), dimension(ndia), intent(out) :: velSpec
       real(kind=dbl) :: rho_air, g_cp, my
-      real(kind=dbl) :: c1, delta0, mass_size_a, area_size_a
+      real(kind=dbl) :: c1, delta0
       real(kind=dbl), dimension(ndia):: X, bRe, aRe, Av, Bv
-      real(kind=dbl), dimension(ndia)::diaSpec
+      real(kind=dbl), dimension(ndia)::diaSpec, mass, area
 
       integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0
@@ -198,12 +193,12 @@ module dia2vel
 
       if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
-      ! no check for baundaries due to different possible particle types
+      ! no check for boundaries due to different possible particle types
       err = success
 
       !variables to cgs...
-      mass_size_a = mass_size_a_SI * 10d0**(3.d0 - 2.d0*mass_size_b)
-      area_size_a = area_size_a_SI * 10d0**(4.d0 - 2.d0*area_size_b)
+      mass = mass_SI * 1000.d0
+      area = area_SI * 100.d0**2
 
       g_cp = g*100.d0 !cm/s
       rho_air = rho_air_SI/1000.d0 !g/cm³
@@ -212,8 +207,10 @@ module dia2vel
       c1 = 0.0902d0
       delta0 = 9.06d0
 
-      X = 2*mass_size_a*g_cp*diaSpec**(mass_size_b + 2.d0 - area_size_b)/&
-      (area_size_a*rho_air*my**2) !eq. 17 of Mitchell et al 1996
+!       X = 2*mass_size_a*g_cp*diaSpec**(mass_size_b + 2.d0 - area_size_b)/&
+!       (area_size_a*rho_air*my**2) !eq. 17 of Mitchell et al 1996
+      X = 2 * mass * g_cp  * diaSpec**2 /(area * rho_air* my**2)!eq. 3 of Mitchell et al 1996
+
 
       bRe = 0.5d0*c1*X**0.5d0*((1.d0+c1*X**0.5d0)**0.5d0 - 1.d0)**(-1) * &
       (1 + c1*X**0.5d0)**(-0.5d0) !2.12
@@ -221,14 +218,15 @@ module dia2vel
       aRe = (delta0**2/4.d0)*((1.d0+c1*X**0.5d0)**0.5d0 - 1.d0)**2 / X**bRe !2.13
 
 
-      Av = aRe * my**(1.d0-2.d0*bRe) * ((2.d0*mass_size_a*g_cp)/(rho_air*area_size_a))**bRe
-      Bv = (bRe * (mass_size_b-area_size_b+2.d0)) - 1.d0
+!       Av = aRe * my**(1.d0-2.d0*bRe) * ((2.d0*mass_size_a*g_cp)/(rho_air*area_size_a))**bRe !2.24
+!       Bv = (bRe * (mass_size_b-area_size_b+2.d0)) - 1.d0 !2.25
+! 
+!       velSpec = Av * diaSpec**Bv !2.23
 
-      velSpec = Av * diaSpec**Bv
+      velSpec = aRe *  my**(1.d0-2.d0*bRe) * ( (2.d0 * mass * g_cp) / (area * rho_air) )**bRe * &
+                    diaSpec**(2d0*bRe - 1d0)!2.20a
 
       velSpec = velSpec/100.d0 !CGS to SI, now m/s
-
-      if (verbose .gt. 1) print*, 'Exiting dia2vel_khvorostyanov01_particles in dia2vel.f90'
 
       errorstatus = err
       if (verbose >= 2) call report(info,'End of ', nameOfRoutine)

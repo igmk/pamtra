@@ -120,6 +120,8 @@ subroutine allocate_descriptor_file(errorstatus)
   character(len=30) :: nameOfRoutine = 'allocate_descriptor_file'
 
   if (verbose >= 5) call report(info,'Start of ', nameOfRoutine)
+  err = 0
+
   call assert_true(err,n_hydro>0,&
       "n_hydro must be greater zero")  
   if (err > 0) then

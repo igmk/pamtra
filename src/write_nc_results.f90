@@ -173,11 +173,11 @@ subroutine write_nc_results
             call check(nf90_put_att(ncid, RadarSNRID, "units", "dB"))
             call check(nf90_put_att(ncid, RadarSNRID, "missing_value", -9999))
 
-            call check(nf90_def_var(ncid,'Radar_FallVelocity', nf90_double,dim5d_rad, velVarID))
+            call check(nf90_def_var(ncid,'Radar_MeanDopplerVel', nf90_double,dim5d_rad, velVarID))
             call check(nf90_put_att(ncid, velVarID, "units", "m/s"))
             call check(nf90_put_att(ncid, velVarID, "missing_value", -9999))
 
-            call check(nf90_def_var(ncid,'Radar_SpectralWidth', nf90_double,dim5d_rad, swVarID))
+            call check(nf90_def_var(ncid,'Radar_SpectrumWidth', nf90_double,dim5d_rad, swVarID))
             call check(nf90_put_att(ncid, swVarID, "units", "m/s"))
             call check(nf90_put_att(ncid, swVarID, "missing_value", -9999))
 

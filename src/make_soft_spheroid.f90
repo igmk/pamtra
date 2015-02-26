@@ -114,9 +114,9 @@ subroutine make_soft_spheroid(errorstatus)
     do i=1,nbin
       if ((soft_rho_eff(i) > rho_ice) .or. (soft_rho_eff(i) < hydro_softsphere_min_density)) then
         if (soft_rho_eff(i) > rho_ice) then
-          soft_rho_eff(i) = rho_ice
           Write( msg, '("density too high:", f10.2)' )  soft_rho_eff(i)   
           if (verbose >= 1) call report(warning, msg, nameOfRoutine)
+          soft_rho_eff(i) = rho_ice
         else
           Write( msg, '("density too low:", f10.2)' )  soft_rho_eff(i)   
           if (verbose >= 1) call report(warning, msg, nameOfRoutine)

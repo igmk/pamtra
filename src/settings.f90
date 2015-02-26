@@ -140,7 +140,6 @@ contains
 		  radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr, radar_convolution_fft, &
                   radar_K2, radar_noise_distance_factor, radar_receiver_uncertainty_std,&
                   radar_nPeaks, radar_smooth_spectrum, radar_attenuation, radar_polarisation
-
     if (verbose >= 3) print*,'Start of ', nameOfRoutine
 
       ! first put default values
@@ -314,7 +313,7 @@ contains
         ! sec run_mode
         active=.true.
         passive=.true.
-        radar_mode="simple" !"splitted"|"moments"|"spectrum"
+        radar_mode="simple" !|"moments"|"spectrum"
         randomseed = 0
         ! sec surface params
         ground_type='L'
@@ -368,6 +367,7 @@ contains
         radar_nPeaks = 1 !number of peaks the radar simulator is looking for
         radar_smooth_spectrum = .true.
         radar_attenuation = "disabled" ! "bottom-up" or "top-down"
+
         ! create frequency string if not set in pamtra
         if (freq_str == "") then
              ! get integer and character frequencies

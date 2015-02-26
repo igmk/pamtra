@@ -92,7 +92,8 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
   import wrf Dataset with fname of kind 
   
   fnames = str , fileNames, wildCards allowed! can be either nc file, nc,gz file or nc.gz file of name fnameInTar within tar file
-  kind = kind of Cosmo file, right now only collum netcdf files are implemented.
+  kind = kind of Cosmo file, right now only collum and synsat netcdf files are implemented.
+  descriptorFile = Pamtra descriptor file
   forecastIndex = 1 #take the forecast being between 3 and 5.75 hours old.
   colIndex: which collum should be taken? list allowed!
   fnameInTar = if nc.gz file in tar file, name of nc.gz file (wildcards allowed!)
@@ -383,7 +384,12 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
    
   pam = pyPamtra.pyPamtra()
   pam.set["pyVerbose"]= verbosity
-  pam.df.readFile(descriptorFile)
+  if type(descriptorFile) == str:
+    pam.df.readFile(descriptorFile)
+  else:
+    for df in descriptorFile:
+      pam.df.addHydrometeor(df)
+
   pam.createProfile(**pamData)
   del data
 

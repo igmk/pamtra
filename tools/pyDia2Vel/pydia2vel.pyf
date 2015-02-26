@@ -35,7 +35,7 @@ python module pyDia2vel ! in
                 real(kind=dbl) intent(in) :: k
                 real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
             end subroutine dia2vel_heymsfield10_particles
-            subroutine dia2vel_khvorostyanov01_particles(errorstatus,ndia,diaspec_si,rho_air_si,nu_si,mass_size_a_si,mass_size_b,area_size_a_si,area_size_b,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+            subroutine dia2vel_khvorostyanov01_particles(errorstatus,ndia,diaspec_si,rho_air_si,nu_si,mass_si,area_si,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
                 use report_module
                 use kinds
                 use constants
@@ -45,10 +45,8 @@ python module pyDia2vel ! in
                 real(kind=dbl) dimension(ndia),intent(in) :: diaspec_si
                 real(kind=dbl) intent(in) :: rho_air_si
                 real(kind=dbl) intent(in) :: nu_si
-                real(kind=dbl) intent(in) :: mass_size_a_si
-                real(kind=dbl) intent(in) :: mass_size_b
-                real(kind=dbl) intent(in) :: area_size_a_si
-                real(kind=dbl) intent(in) :: area_size_b
+                real(kind=dbl) dimension(ndia),intent(in),depend(ndia) :: mass_si
+                real(kind=dbl) dimension(ndia),intent(in),depend(ndia) :: area_si
                 real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
             end subroutine dia2vel_khvorostyanov01_particles
             subroutine dia2vel_khvorostyanov01_spheres(errorstatus,ndia,diaspec,rho_air,my,rho_particle,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
@@ -138,16 +136,13 @@ python module pyDia2vel ! in
             real(kind=dbl) intent(in) :: t
             real(kind=dbl) intent(out) :: eta
         end subroutine viscosity_air
-        subroutine pydia2vel(model,nbins,diameter_spec,velspec) ! in :pyDia2vel:pyDia2vel.f90
+        subroutine kinematic_viscosity_air(temp,press,mu) ! in :pyDia2vel:viscosity_air.f90
+            use report_module
             use kinds
-            use dia2vel
-            use constants
-            use settings, only: verbose
-            character*100 intent(in) :: model
-            integer, optional,intent(in),check(len(diameter_spec)>=nbins),depend(diameter_spec) :: nbins=len(diameter_spec)
-            real dimension(nbins),intent(in) :: diameter_spec
-            real dimension(nbins),intent(out),depend(nbins) :: velspec
-        end subroutine pydia2vel
+            real(kind=dbl) intent(in) :: temp
+            real(kind=dbl) intent(in) :: press
+            real(kind=dbl) intent(out) :: mu
+        end subroutine kinematic_viscosity_air
     end interface 
 end python module pyDia2vel
 

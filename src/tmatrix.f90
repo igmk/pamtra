@@ -50,6 +50,7 @@ module tmatrix
       !       back_spec       double  backscattering spectrum [nbins]
 
       use vars_index, only: i_p
+use fileio
       implicit none
 
       real(kind=dbl), intent(in) :: frequency
@@ -81,9 +82,11 @@ module tmatrix
       integer :: azimuth0_num   
       integer :: ir
       integer :: n_lines, work1
-      character(len=1)    :: work2
+integer :: ios
+type (ioport) :: port
+      character(len=60000)    :: work2
       character(1) :: quad
-      character(12) ::db_file
+      character(15) ::db_file
       character(600) ::db_path
       character(5) ::format_str
       logical ::file_exists, file_OK
@@ -95,6 +98,10 @@ module tmatrix
       real(kind=dbl), dimension(nstokes*nummu*nstokes*nummu*2) :: scatter_matrix_flat
       real(kind=dbl), dimension(nstokes*nstokes*nummu) :: extinct_matrix_flat
       real(kind=dbl), dimension(nstokes*nummu) :: emis_vector_flat
+
+character(len=nstokes*nummu*nstokes*nummu*2*28) :: scatter_matrix_str
+character(len=nstokes*nstokes*nummu*28) :: extinct_matrix_str
+character(len=nstokes*nummu*28) :: emis_vector_str
 
       integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0
@@ -209,15 +216,15 @@ module tmatrix
 !                   "/axxi_",axi, "/asra_",as_ratio(ir), "/alph_",alpha, "/beta_",beta,"/"
 
         if (phase == 1) then !ref_index name depends on phase
-          write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,ES12.6,A6,SP,I3.2,SS,2(A6,ES10.4),A6,A3,4(A6,ES10.4),A1)'),&
-                  "/v01","/quad_", quad, &
+          write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,ES12.6,A6,SP,I3.2,SS,2(A6,ES9.3),A6,A3,4(A6,ES9.3),A1)'),&
+                  "/v02","/quad_", quad, &
                   "/numu_",nummu,"/azno_",azimuth_num, "/a0no_", azimuth0_num, "/nsto_",nstokes,&
                   "/freq_",frequency, &
                   "/phas_",phase, "/temp_",temp, "/dens_",density(ir), "/refi_",liq_mod,&
                   "/diam_",axi, "/asra_",as_ratio(ir), "/alph_",alpha, "/beta_",beta,"/"
         else if (phase == -1) then
-          write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,ES12.6,A6,SP,I3.2,SS,2(A6,ES10.4),A6,A3,4(A6,ES10.4),A1)'),&
-                  "/v01","/quad_", quad, &
+          write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,ES12.6,A6,SP,I3.2,SS,2(A6,ES9.3),A6,A3,4(A6,ES9.3),A1)'),&
+                  "/v02","/quad_", quad, &
                   "/numu_",nummu,"/azno_",azimuth_num, "/a0no_", azimuth0_num, "/nsto_",nstokes,&
                   "/freq_",frequency, &
                   "/phas_",phase, "/temp_",temp, "/dens_",density(ir), "/refi_","Mae",&
@@ -231,46 +238,70 @@ module tmatrix
 
         !make sure that active-only results are saved separately
         if ((active .eqv. .true.) .and. (passive .eqv. .false.)) then
-          db_file = "spheroid.active.dat"
+          db_file = "spheroid.act.gz"
         else
-          db_file = "spheroid.dat" !can be used for active and passive
+          db_file = "spheroid.dat.gz" !can be used for active and passive
         end if
 
         INQUIRE(FILE=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file), EXIST=file_exists)
+file_OK = .true.
 
-        !check whether file is not empty
+!         !check whether file is not empty
         if (file_exists) then
-          open(112,file=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file),action="READ")
-          n_lines = 0
-          do
-            read(112,*,IOSTAT=work1)  work2
-            if (work1 /= 0) exit
-            n_lines = n_lines + 1
-          end do
-          rewind(112)
-          if (n_lines == 3) then 
-            file_OK = .true.
-          else
-            file_OK = .false.
-          end if
-
-        end if
-        if (file_exists .and. file_OK) then
+! !           open(112,file=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file),action="READ")
+call open_port(TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file), port, "r", ios)
+! print*, "IOS1", ios
+! 
+!           n_lines = 0
+!           do
+! !             read(112,*,IOSTAT=work1)  work2
+! call readline(port, work2, "yes", work1)
+! print*, "IOS2", work1, LEN(TRIM(work2))
+!             if (work1 /= 0) exit
+!             n_lines = n_lines + 1
+!           end do
+! !           rewind(112)
+! call rewind_port(port, ios)
+! print*, "IOS3", ios
+!           if (n_lines == 3) then 
+            
+!           else
+!             file_OK = .false.
+!           end if
 
           if (verbose > 0) print * , TRIM(db_path)//TRIM(db_file), " exists, opening"
 
-          open(112,file=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file),action="READ")
+do while (file_OK)
 
+!           open(112,file=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file),action="READ")
+
+call readline(port, scatter_matrix_str, "yes", ios)
+if (ios /= 0) file_OK = .false.
           write(format_str,"(I5.5)") SHAPE(scatter_matrix_flat)
-          read(112,"("//format_str//"(ES25.17, 2x))")scatter_matrix_flat
+!           read(112,"("//format_str//"(ES25.17, 2x))")scatter_matrix_flat
+read(scatter_matrix_str,"("//format_str//"(ES25.17, 2x))")scatter_matrix_flat
 
+call readline(port, extinct_matrix_str, "yes", ios)
+if (ios /= 0) file_OK = .false.
           write(format_str,"(I5.5)") SHAPE(extinct_matrix_flat)
-          read(112,"("//format_str//"(ES25.17, 2x))")extinct_matrix_flat
+!           read(112,"("//format_str//"(ES25.17, 2x))")extinct_matrix_flat
+read(extinct_matrix_str,"("//format_str//"(ES25.17, 2x))")extinct_matrix_flat
 
+call readline(port, emis_vector_str, "yes", ios)
+if (ios /= 0) file_OK = .false.
           write(format_str,"(I5.5)") SHAPE(emis_vector_flat)
-          read(112,"("//format_str//"(ES25.17, 2x))")emis_vector_flat
+!           read(112,"("//format_str//"(ES25.17, 2x))")emis_vector_flat
+read(emis_vector_str,"("//format_str//"(ES25.17, 2x))")emis_vector_flat
 
-          close(112)
+!           close(112)
+exit
+end do
+
+call close_port(port, ios)
+if (ios /= 0) file_OK = .false.
+
+if  (file_OK) then
+
           if (verbose > 1) print * , TRIM(db_path)//TRIM(db_file), " closed"
 
           err = 0
@@ -311,10 +342,15 @@ module tmatrix
 
           end if
 
-        else
-          !file does not exist or is not OK
+          else
+            if (verbose >= 0) print*, "FILE PROBLEM, recalculating..."
+            if (verbose >= 0) print * , TRIM(db_path)//TRIM(db_file)
+          end if !file ok
+        end if !file exists
+
+
+if ((.not. file_exists) .or. (.not. file_OK)) then          !file does not exist or is not OK
           
-          if (file_exists) close(112)
 
           if (verbose > 0) print * , TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file), " NOT FOUND. calculating..."
           CALL EXECUTE_COMMAND_LINE("mkdir -p "//TRIM(tmatrix_db_path)//TRIM(db_path))
@@ -334,18 +370,25 @@ module tmatrix
           emis_vector_flat =reshape(emis_vector_part,SHAPE(emis_vector_flat))
           if (verbose > 1) print * ,TRIM(db_path)//TRIM(db_file), " open..."
 
-          open(113,file=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file),ACTION="WRITE")
-
+!           open(113,file=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file),ACTION="WRITE")
+call open_port(TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file), port, "w", ios)
           write(format_str,"(I5.5)") SHAPE(scatter_matrix_flat)
-          write(113,"("//format_str//"(ES25.17, 2x))")scatter_matrix_flat
-
+!           write(113,"("//format_str//"(ES25.17, 2x))")scatter_matrix_flat
+write(scatter_matrix_str,"("//format_str//"(ES25.17, 2x))")scatter_matrix_flat
+call writeline(port, trim(scatter_matrix_str), "yes", ios)
           write(format_str,"(I5.5)") SHAPE(extinct_matrix_flat)
-          write(113,"("//format_str//"(ES25.17, 2x))")extinct_matrix_flat
+!           write(113,"("//format_str//"(ES25.17, 2x))")extinct_matrix_flat
+write(extinct_matrix_str,"("//format_str//"(ES25.17, 2x))")extinct_matrix_flat
+call writeline(port, trim(extinct_matrix_str), "yes", ios)
 
           write(format_str,"(I5.5)") SHAPE(emis_vector_flat)
-          write(113,"("//format_str//"(ES25.17, 2x))")emis_vector_flat
+!           write(113,"("//format_str//"(ES25.17, 2x))")emis_vector_flat
+write(emis_vector_str,"("//format_str//"(ES25.17, 2x))")emis_vector_flat
+call writeline(port, trim(emis_vector_str), "yes", ios)
 
-          close(113)
+!           close(113)
+call close_port(port, ios)
+
           if (verbose > 1) print * , TRIM(db_path)//TRIM(db_file), " closed"
 
         end if
@@ -532,7 +575,13 @@ module tmatrix
       if (verbose >= 5) print*,"lam, mrr,mri, AXI, AS_RATIO, RAT, NP"
       if (verbose >= 5) print*,lam, mrr,mri, AXI, AS_RATIO, RAT, NP
   ! call the tmatrix routine amplq -> fills common block /TMAT/
-      call tmatrix_amplq(lam, mrr,mri, AXI, AS_RATIO, RAT, NP,nmax)
+      call tmatrix_amplq(err,lam, mrr,mri, AXI, AS_RATIO, RAT, NP,nmax)
+      if (err /= 0) then
+          msg = 'error in tmatrix_amplq!'
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+      end if          
 
       extinct_matrix = 0.d0
       scatter_matrix = 0.d0
