@@ -10,7 +10,6 @@ subroutine run_rt(errorstatus)
     use vars_output !output variables
     use vars_rt, only: rt_kextatmo, allocate_rt_vars, deallocate_rt_vars, &
       rt_scattermatrix, rt_extmatrix, rt_emisvec
-    use double_moments_module
     use mod_io_strings, only: xstr, nxstr, ystr, nystr, frq_str
     use report_module
     use vars_index, only: i_x, i_y, i_f

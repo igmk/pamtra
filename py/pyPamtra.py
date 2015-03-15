@@ -185,35 +185,23 @@ class pyPamtra(object):
     #keys MUST be lowercase for f2py!
     self.nmlSet["hydro_threshold"]=  1.e-10   # [kg/kg] 
     #set namelist defaults#
-    # sec inoutput_mode
     self.nmlSet["write_nc"]= True
     self.nmlSet["data_path"]= 'data/'
-    self.nmlSet["crm_case"]= ''
-    self.nmlSet["crm_data"]= ''
-    self.nmlSet["crm_data2"]= ''
-    self.nmlSet["crm_constants"]= ''
-    self.nmlSet["jacobian_mode"]= False #profile 1,1 is reference, for all other colums only layers with different values are calculated
     self.nmlSet["save_psd"]= False #also saves the PSDs used for radiative transfer
     self.nmlSet["save_ssp"]= False #also saves the single scattering properties used for radiative transfer
-    # sec output
     self.nmlSet["obs_height"]= 833000.
-    self.nmlSet["units"]= 'T'
     self.nmlSet["outpol"]= 'VH'
     self.nmlSet["file_desc"]= ''
     self.nmlSet["creator"]= 'Pamtrauser'
-    # sec run_mode
     self.nmlSet["active"]= True
     self.nmlSet["passive"]= True
     self.nmlSet["radar_mode"]= "simple" #"splitted"|"moments"|"spectrum"
     self.nmlSet["randomseed"] = 0 #0 is real noise, other value gives always the same random numbers
-    # sec surface params
     self.nmlSet["ground_type"]= 'L'
     self.nmlSet["salinity"]= 33.0
     self.nmlSet["emissivity"]= 0.6
-    # sec gas_abs_mod
     self.nmlSet["lgas_extinction"]= True
     self.nmlSet["gas_mod"]= 'R98'
-    # sec hyd_opts
     self.nmlSet["lhyd_extinction"]= True
     self.nmlSet["liq_mod"]= "Ell"
     self.nmlSet["lphase_flag"]=  True
@@ -224,7 +212,6 @@ class pyPamtra(object):
     self.nmlSet["hydro_adaptive_grid"] = True
     self.nmlSet["tmatrix_db"] = "none" 
     self.nmlSet["tmatrix_db_path"] = "database/" 
-    # radar_simulator
     #number of FFT points in the Doppler spectrum [typically 256 or 512]
     self.nmlSet["radar_nfft"]= 256
     #number of average spectra for noise variance reduction, typical range [1 150]

@@ -89,49 +89,6 @@ subroutine convolution_slow(X,M,A,N,Y)
     return
 end subroutine convolution_slow
 
-! convolutionFFT 
-! requires FFTPACK
-
-! subroutine convolution_fast(Xin,M,Ain,N,Yout)
-! ! in
-! ! X input vector
-! ! M size of X
-! ! A convolutionFFT filter
-! ! N size of convolutionFFT filter
-! ! Y result, length M+N-1
-! 
-! !FFT works best for arrays of length 2**x , this function extends the arrays to the needed length
-! 
-!   use kinds
-!   implicit none
-!    INTEGER, intent(in) :: M  ! Size of input vector X
-!    INTEGER, intent(in) :: N   ! Size of convolutionFFT filter A
-! 
-!    REAL(kind=dbl), intent(in), DIMENSION(M) :: Xin
-!    REAL(kind=dbl), intent(in), DIMENSION(N) :: Ain
-!    REAL(kind=dbl), intent(out), DIMENSION(M+N-1) :: Yout
-! 
-!    INTEGER:: MN, MNext, Mext, Next
-!    REAL(kind=dbl), dimension(:), allocatable :: Xext, Aext, Yext
-! 
-!   MN = M+N-1
-!   MNext  = 2**CEILING(log(DBLE(MN))/log(2.d0))
-! 
-! 
-!   allocate(Xext(MNext),Aext(MNext),Yext(MNext))
-! 
-!   Xext = 0.d0
-!   Aext = 0.d0
-!   Xext(1:M) = Xin
-!   Aext(1:N) = Ain
-! 
-!   call convolutionFFT(Xext,Mext,Aext,Next,Yext)
-! 
-!   Yout(1:MN) = Yext
-! 
-!   deallocate(Xext,Aext,Yext)
-! 
-! end subroutine convolution_fast
 
 subroutine convolutionFFT(Xin,M,Ain,N,Yout)
     ! in

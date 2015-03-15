@@ -307,7 +307,7 @@ delta_h)
               noise_turb_spectra = snr_turb_spectra
           else
 
-              !get noise. if jacobian_mode, random number generator is always initiated with the same number
+              !get noise. 
               if (verbose > 2) print*, "get noise"
               if (randomseed == -1) then
                 !get it from lat lon

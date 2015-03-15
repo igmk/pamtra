@@ -26,11 +26,11 @@ module settings
     character(1), parameter :: QUAD_TYPE = 'L',&
     DELTAM = 'N'
 
+    character(1), parameter :: units='T'
+
+    
     ! set by command line options
     integer(kind=long) :: nfrq
-
-    !!Set by namelist file
-    integer(kind=long):: n_moments
 
     real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
     real(kind=dbl) :: emissivity
@@ -57,16 +57,15 @@ module settings
     real(kind=dbl) :: hydro_threshold, radar_noise_distance_factor
 
   integer, parameter :: maxnleg = 200 !max legnth of legendre series
-  
+  logical, parameter :: lphase_flag = .true.
+
     logical :: in_python !are we in python
 
-    logical :: lphase_flag, &        ! flag for phase function calculation
-    lgas_extinction, &    ! gas extinction desired
+    logical :: lgas_extinction, &    ! gas extinction desired
     lhyd_extinction, &    ! hydrometeor extinction desired
     write_nc, &  ! write netcdf or ascii output
     active, &  	   ! calculate active stuff
     passive, &     ! calculate passive stuff (with RT4)
-    jacobian_mode, &  ! special jacobian mode which does not calculate the whole scattering properties each time. only rt4!
     radar_airmotion, &   ! apply vertical air motion
     radar_save_noise_corrected_spectra, & !remove the noise from the calculated spectrum again (for testing)
     radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise0) we can skip that.
@@ -86,9 +85,7 @@ module settings
     character(100) :: input_path, output_path, creator, data_path
     character(18) :: freq_str
     character(2) :: OUTPOL
-    character(1) :: GROUND_TYPE, UNITS
-    character(10) :: input_type, crm_case
-    character(100) :: crm_data, crm_data2, crm_constants
+    character(1) :: GROUND_TYPE
     character(8) :: radar_airmotion_model, radar_mode
     character(10) :: radar_attenuation
     character(15) :: radar_polarisation
@@ -121,25 +118,62 @@ contains
     character(len=14) :: nameOfRoutine = 'settings_read'
 
         ! name list declarations
-        namelist / inoutput_mode / input_path, output_path,&
-        write_nc, data_path,&
-        input_type, crm_case, crm_data, crm_data2, crm_constants, &
-        jacobian_mode, save_psd, save_ssp
-        namelist / output / obs_height,units,outpol,freq_str,file_desc,creator, add_obs_height_to_layer
-        namelist / run_mode / active, passive,radar_mode, randomseed
-        namelist / surface_params / ground_type,salinity, emissivity
-        namelist / gas_abs_mod / lgas_extinction, gas_mod
-        namelist / hyd_opts / lhyd_extinction, lphase_flag, hydro_fullSpec, hydro_limit_density_area,&
-                  hydro_softsphere_min_density, hydro_adaptive_grid, tmatrix_db, tmatrix_db_path, &
-                  liq_mod, hydro_includeHydroInRhoAir, hydro_threshold
-	namelist / moments / n_moments, moments_file
-	namelist / radar_simulator / radar_nfft,radar_no_Ave, radar_max_V, radar_min_V, &
-		  radar_pnoise0, radar_airmotion, radar_airmotion_model, &
-		  radar_airmotion_vmin, radar_airmotion_vmax, radar_airmotion_linear_steps, &
-		  radar_airmotion_step_vmin, radar_aliasing_nyquist_interv, &
-		  radar_save_noise_corrected_spectra, radar_use_hildebrand, radar_min_spectral_snr, radar_convolution_fft, &
-                  radar_K2, radar_noise_distance_factor, radar_receiver_uncertainty_std,&
-                  radar_nPeaks, radar_smooth_spectrum, radar_attenuation, radar_polarisation
+        namelist / settings / &
+        input_path, &
+        output_path,&
+        write_nc, &
+        data_path,&
+        save_psd, &
+        save_ssp, &
+        obs_height, &
+        outpol, &
+        freq_str,&
+        file_desc,&
+        creator, &
+        add_obs_height_to_layer, &
+        active, &
+        passive,&
+        radar_mode, &
+        randomseed, &
+        ground_type, &
+        salinity, &
+        emissivity, &
+        lgas_extinction, &
+        gas_mod, &
+        lhyd_extinction, &
+        hydro_fullSpec, &
+        hydro_limit_density_area,&
+        hydro_softsphere_min_density, &
+        hydro_adaptive_grid, &
+        tmatrix_db, &
+        tmatrix_db_path, &
+        liq_mod, &
+        hydro_includeHydroInRhoAir,&
+        hydro_threshold, &
+	radar_nfft, &
+	radar_no_Ave, &
+	radar_max_V, &
+	radar_min_V, &
+        radar_pnoise0, &
+        radar_airmotion,&
+        radar_airmotion_model,&
+        radar_airmotion_vmin,&
+        radar_airmotion_vmax,&
+        radar_airmotion_linear_steps,&
+        radar_airmotion_step_vmin,&
+        radar_aliasing_nyquist_interv,&
+        radar_save_noise_corrected_spectra,&
+        radar_use_hildebrand,&
+        radar_min_spectral_snr,&
+        radar_convolution_fft,&
+        radar_K2,&
+        radar_noise_distance_factor,&
+        radar_receiver_uncertainty_std,&
+        radar_nPeaks,&
+        radar_smooth_spectrum,&
+        radar_attenuation,&
+        radar_polarisation
+        
     if (verbose >= 3) print*,'Start of ', nameOfRoutine
 
       ! first put default values
@@ -150,15 +184,7 @@ contains
         if (verbose >= 3) print*,'Open namelist file: ', namelist_file
         ! read name list parameter file
         open(7, file=namelist_file,delim='APOSTROPHE')
-        read(7,nml=inoutput_mode)
-        read(7,nml=output)
-        read(7,nml=run_mode)
-        read(7,nml=surface_params)
-        read(7,nml=gas_abs_mod)
-        read(7,nml=hyd_opts)
-        read(7,nml=moments)
-        read(7,nml=radar_simulator)
-
+        read(7,nml=settings)
         close(7)
 
       else
@@ -204,10 +230,7 @@ contains
       call assert_true(err,in_python,&
           "hydro_fullSpec works only in python!") 
     end if
-    if (jacobian_mode) then
-      call assert_true(err,randomseed/=0,&
-          "randomniness not allowed in jacobian mode") 
-    end if
+
 
     call assert_true(err,(radar_nPeaks == 1),&
         "radar_nPeaks higher than one not implemented yet!") 
@@ -284,47 +307,30 @@ contains
     
     if (verbose >= 2) print*,'Start of ', nameOfRoutine
 
-    
-        hydro_threshold = 1.d-20   ! [kg/kg] 
-
-
         !set namelist defaults!
-        ! sec inoutput_mode
+        hydro_threshold = 1.d-20   ! [kg/kg] 
         write_nc=.true.
         input_path='profile/'
         output_path='output/'
-        input_type='profile'
         data_path='data/'
-        crm_case=''
-        crm_data=''
-        crm_data2=''
-        crm_constants=''
-        jacobian_mode=.false. !profile 1,1 is reference, for all other colums only layers with different values are calculated
         save_psd=.false.
         save_ssp=.false.
-        ! sec output
         obs_height=833000.
-        units='T'
         outpol='VH'
         freq_str=''
         file_desc=''
         creator='Pamtrauser'
         add_obs_height_to_layer = .false.
-        ! sec run_mode
         active=.true.
         passive=.true.
         radar_mode="simple" !|"moments"|"spectrum"
         randomseed = 0
-        ! sec surface params
         ground_type='L'
         salinity=33.0
         emissivity=0.6
-        ! sec gas_abs_mod
         lgas_extinction=.true.
         gas_mod='R98'
-        ! sec hyd_opts
         lhyd_extinction=.true.
-        lphase_flag = .true.
         hydro_includeHydroInRhoAir = .true.
         hydro_fullSpec = .false.
         hydro_limit_density_area = .true.
@@ -333,11 +339,7 @@ contains
         liq_mod = "Ell"
         tmatrix_db = "none" ! none or file
         tmatrix_db_path = "database/"
-!        ! sec moments
-        n_moments=1
-        moments_file='snowCRYSTAL'
         radar_polarisation = "NN" ! comma spearated list "NN,HV,VH,VV,HH", translated into radar_pol array
-        ! radar_simulator
         !number of FFT points in the Doppler spectrum [typically 256 or 512]
         radar_nfft=256
         !number of average spectra for noise variance reduction, typical range [1 150]
@@ -389,13 +391,11 @@ contains
     subroutine print_settings()
 
       print*, 'add_obs_height_to_layer: ', add_obs_height_to_layer
-      print*, 'jacobian_mode: ', jacobian_mode
       print*, 'radar_nfft: ', radar_nfft
       print*, 'radar_polarisation: ', radar_polarisation
       print*, 'input_path: ', input_path
       print*, 'creator: ', creator
       print*, 'radar_mode: ', radar_mode
-      print*, 'lphase_flag: ', lphase_flag
       print*, 'radar_pnoise0: ', radar_pnoise0
       print*, 'data_path: ', data_path
       print*, 'radar_min_spectral_snr: ', radar_min_spectral_snr
@@ -404,20 +404,15 @@ contains
       print*, 'radar_airmotion: ', radar_airmotion
       print*, 'ground_type: ', ground_type
       print*, 'obs_height: ', obs_height
-      print*, 'crm_case: ', crm_case
       print*, 'write_nc: ', write_nc
       print*, 'outpol: ', outpol
       print*, 'radar_no_ave: ', radar_no_ave
-      print*, 'input_type: ', input_type
       print*, 'hydro_includeHydroInRhoAir: ', hydro_includeHydroInRhoAir
       print*, 'passive: ', passive
       print*, 'radar_airmotion_model: ', radar_airmotion_model
       print*, 'tmatrix_db_path: ', tmatrix_db_path
       print*, 'tmatrix_db: ', tmatrix_db
-      print*, 'crm_data: ', crm_data
       print*, 'lgas_extinction: ', lgas_extinction
-      print*, 'crm_constants: ', crm_constants
-      print*, 'units: ', units
       print*, 'gas_mod: ', gas_mod
       print*, 'liq_mod: ', liq_mod
       print*, 'moments_file: ', moments_file
@@ -429,7 +424,6 @@ contains
       print*, 'hydro_adaptive_grid: ', hydro_adaptive_grid
       print*, 'radar_noise_distance_factor: ', radar_noise_distance_factor
       print*, 'radar_airmotion_step_vmin: ', radar_airmotion_step_vmin
-      print*, 'crm_data2: ', crm_data2
       print*, 'radar_use_hildebrand: ', radar_use_hildebrand
       print*, 'radar_convolution_fft: ', radar_convolution_fft
       print*, 'radar_smooth_spectrum', radar_smooth_spectrum
@@ -437,7 +431,6 @@ contains
       print*, 'active: ', active
       print*, 'radar_max_v: ', radar_max_v
       print*, 'radar_save_noise_corrected_spectra: ', radar_save_noise_corrected_spectra
-      print*, 'n_moments: ', n_moments
       print*, 'lhyd_extinction: ', lhyd_extinction
       print*, 'radar_k2: ', radar_k2
       print*, 'radar_nPeaks', radar_nPeaks

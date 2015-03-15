@@ -4,7 +4,7 @@ subroutine parse_options(gitVersion,gitHash)
     use getopt_m
     use settings, only: maxfreq, nfrq, freqs,frqs_str,namelist_file,&
       input_file,verbose, descriptor_file_name
-    use vars_profile, only: coords
+!     use vars_profile, only: coords
     use mod_io_strings, only: formatted_frqstr
 
     implicit none
@@ -15,14 +15,14 @@ subroutine parse_options(gitVersion,gitHash)
     opts(1) = option_s( "namelist", .true.,  'n' )
     opts(2) = option_s( "profile", .true.,  'p' )
     opts(3) = option_s( "descriptor", .true.,  'd' )    
-    opts(4) = option_s( "grid", .true.,  'g' )
+!     opts(4) = option_s( "grid", .true.,  'g' )
     opts(5) = option_s( "freqs", .true., 'f' )
     opts(6) = option_s( "verbose", .true., 'v' )
     opts(7) = option_s( "help", .false., 'h' )
 
     namelist_file = 'None'
     input_file = 'standard.dat'
-    coords = (/1,1,1,1/)
+!     coords = (/1,1,1,1/)
     frqs_str = ''
     frqs_str(1) = '89.0'
     nfrq = 1
@@ -38,10 +38,10 @@ subroutine parse_options(gitVersion,gitHash)
                 input_file = trim(optarg)
             case( 'd' )
                 descriptor_file_name = trim(optarg)                
-            case( 'g' )
-                if (optarg(len_trim(optarg):) .ne. ',') &
-                optarg = trim(optarg)//','
-                call process_grid(optarg,coords)
+!             case( 'g' )
+!                 if (optarg(len_trim(optarg):) .ne. ',') &
+!                 optarg = trim(optarg)//','
+!                 call process_grid(optarg,coords)
             case( 'f' )
                 if (optarg(len_trim(optarg):) .ne. ',') &
                 optarg = trim(optarg)//','
@@ -60,7 +60,7 @@ subroutine parse_options(gitVersion,gitHash)
                 print*,'   -n|--namelist     namelist file (default None)'
                 print*,'   -p|--profile      profile file  (default standard.dat)'
                 print*,'   -d|--descriptor   descriptor file  (default descriptor_file.txt)'
-                print*,'   -g|--grid         start_lon,end_lon,start_lat,end_lat (number of grid point)'
+!                 print*,'   -g|--grid         start_lon,end_lon,start_lat,end_lat (number of grid point)'
                 print*,'   -f|--freqs        comma seperated list of frequencies (no blanks) (default 89.0)'
                 print*,'   -v|--verbose      integer specifying verbose level between -1 (required by parallel python)'
                 print*,'                     and 4 (default 0)'
@@ -114,28 +114,28 @@ contains
 
     end subroutine process_freq
 
-    subroutine process_grid(arg,coords)
+!     subroutine process_grid(arg,coords)
+! 
+!         use kinds, only: long
+! 
+!         implicit none
+! 
+!         integer(kind=long) :: cc, ind
+!         character(len=*), intent(in) :: arg
+!         character(150) :: arg_loc
+! 
+!         integer(kind=long), dimension(4), intent(out) :: coords
+! 
+!         cc = 1
+!         arg_loc = arg
+!         do while (arg_loc .ne. "")
+!             ind = index(arg_loc,",")
+!             read(arg_loc(1:ind-1),*) coords(cc)
+!             cc = cc+1
+!             arg_loc = trim(arg_loc(ind+1:))
+!         end do
+! 
+!         return
 
-        use kinds, only: long
-
-        implicit none
-
-        integer(kind=long) :: cc, ind
-        character(len=*), intent(in) :: arg
-        character(150) :: arg_loc
-
-        integer(kind=long), dimension(4), intent(out) :: coords
-
-        cc = 1
-        arg_loc = arg
-        do while (arg_loc .ne. "")
-            ind = index(arg_loc,",")
-            read(arg_loc(1:ind-1),*) coords(cc)
-            cc = cc+1
-            arg_loc = trim(arg_loc(ind+1:))
-        end do
-
-        return
-
-    end subroutine process_grid
+!     end subroutine process_grid
 end subroutine parse_options

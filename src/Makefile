@@ -13,16 +13,18 @@ ifeq ($(ARCH),Darwin)
 	LFLAGS= -L../lib -ldfftpack  -L/opt/local/lib/ -llapack
 	LDFLAGS=-lnetcdf -lnetcdff 
 else
-	NCFLAGS :=  $(shell nc-config --fflags)  -O2
-	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
-	LFLAGS := -llapack -L../lib -ldfftpack
-	LDFLAGS := $(shell nc-config --flibs)
+# 	NCFLAGS :=  $(shell nc-config --fflags)  -O2
+# 	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
+# 	LFLAGS := -llapack -L../lib -ldfftpack
+# 	LDFLAGS := $(shell nc-config --flibs)
+	NCFLAGS=-I$(HOME)/include -I/usr/include
+	LFLAGS=-L$(HOME)/lib -L/usr/local/lib
+	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm
+	NCFLAGS_F2PY=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm -lsz	
 endif
 
 
-#-	NCFLAGS=-I$(HOME)/include
-#-	LFLAGS=-L$(HOME)/lib -L/usr/local/lib
-#-	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm -lsz
+
 
 OBJECTS=kinds.o \
         vars_index.o \
@@ -34,8 +36,6 @@ OBJECTS=kinds.o \
 	mod_fastem4_coef.o \
 	gasabs_module.o \
 	conversions.o \
-	double_moments_module.o \
-	cosmo_netcdf.o \
 	vars_profile.o \
 	descriptor_file.o \
 	vars_atmosphere.o \
@@ -48,11 +48,9 @@ OBJECTS=kinds.o \
 	radmat.o \
 	convolution.o \
 	get_gasabs.o\
-	get_atmosphere.o \
 	vars_output.o \
 	run_rt.o \
 	scat_utilities.o \
-	dsd_utilities.o \
 	mpm93.o \
 	eps_water.o \
 	get_surface.o \
@@ -63,7 +61,6 @@ OBJECTS=kinds.o \
 	radar_moments.o \
 	radar_spectrum.o \
 	radar_simulator.o \
-	vars_jacobian.o \
 	rosen98_gasabs.o \
 	surface.o \
 	eps_ice.o \
@@ -72,19 +69,14 @@ OBJECTS=kinds.o \
 	land_emis.o \
 	equare.o \
 	scatdb.o \
-	dda_db_liu.o \
-	dielec_water.o \
 	ref_water.o \
 	ref_ice.o \
 	e_sat_gg_water.o \
-	spec2abs.o \
 	interpolation.o \
-	legendre2phasefunction.o \
 	collect_output.o \
 	save_active.o \
 	fastem4.o \
 	specular_surface.o \
-	collect_boundary_output.o \
 	random.o \
 	rt4.o \
 	radtran4.o \
@@ -103,9 +95,7 @@ OBJECTS=kinds.o \
 	scatcnv.o \
 	tmatrix_lpq.o \
 	get_scat_mat.o \
-	mass_size_rel.o \
 	refractive_index.o \
-	avint.o \
 	dsort.o \
 	rho_air.o \
 	viscosity_air.o\

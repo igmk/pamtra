@@ -6,8 +6,6 @@ program pamtra
     use vars_atmosphere !input variables and reading routine
     use vars_output !output variables
     use vars_profile
-    use vars_jacobian, only: allocate_jacobian_vars, deallocate_jacobian_vars
-    use double_moments_module !double moments variables are stored here
     use report_module
     use descriptor_file
     use deallocate_everything, only : do_deallocate_everything
@@ -66,10 +64,6 @@ program pamtra
         " freqs: "//trim(frqs_str(1))//" to "//trim(frqs_str(nfrq))
         call report(info, msg, nameOfRoutine)
     end if
-
-    !!! read n-moments file
-!     if (n_moments == 2) call double_moments_module_read(moments_file) !from double_moments_module.f90
-
 
     call read_descriptor_file(err)
     if (err /= 0) then
@@ -143,10 +137,6 @@ program pamtra
     if (verbose >= 2)  call report(info, msg, nameOfRoutine)
 
     grid_f: do i_f =1, nfrq
-        if (jacobian_mode) then
-            !for jacobian mode. non disturbed profile is expected in grid 1,1!
-            call allocate_jacobian_vars(atmo_nlyrs(i_x,i_y))
-        end if
           grid_y: do i_y = 1, atmo_ngridy !i_x_in, i_x_fin
               grid_x: do i_x = 1, atmo_ngridx !i_y_in, i_y_fin
 
@@ -161,10 +151,6 @@ program pamtra
 
             end do grid_x
         end do grid_y
-        if (jacobian_mode) then
-                  !for jacobian mode
-            call deallocate_jacobian_vars
-        end if
     end do grid_f
 
 

@@ -6,7 +6,7 @@ subroutine write_nc_results
       atmo_model_j, atmo_lfrac, atmo_lon, atmo_lat, atmo_iwv
     use netcdf
     use settings, only: active, passive, creator, radar_mode, &
-    n_moments, radar_nfft, radar_mode, nfrq, freqs, nc_out_file, &
+    radar_nfft, radar_mode, nfrq, freqs, nc_out_file, &
     nummu, nstokes, noutlevels, radar_npol, radar_pol, att_npol, att_pol
     use report_module
 
