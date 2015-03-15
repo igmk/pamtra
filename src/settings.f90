@@ -82,7 +82,8 @@ module settings
     character(3) :: gas_mod
     character(3) :: liq_mod
     character(20) :: moments_file,file_desc
-    character(100) :: input_path, output_path, creator, data_path
+    character(300) :: output_path, data_path
+    character(100) :: creator
     character(18) :: freq_str
     character(2) :: OUTPOL
     character(1) :: GROUND_TYPE
@@ -94,7 +95,7 @@ module settings
     integer(kind=long):: radar_npol, att_npol
 
 
-    character(99)  :: input_file        ! name of profile
+    character(300)  :: input_file        ! name of profile
     character(300) :: namelist_file     ! name of nml_file
     character(300) :: nc_out_file       ! name of netcdf output file
     character(9) :: frq_str_s,frq_str_e
@@ -119,8 +120,6 @@ contains
 
         ! name list declarations
         namelist / settings / &
-        input_path, &
-        output_path,&
         write_nc, &
         data_path,&
         save_psd, &
@@ -310,8 +309,6 @@ contains
         !set namelist defaults!
         hydro_threshold = 1.d-20   ! [kg/kg] 
         write_nc=.true.
-        input_path='profile/'
-        output_path='output/'
         data_path='data/'
         save_psd=.false.
         save_ssp=.false.
@@ -393,7 +390,6 @@ contains
       print*, 'add_obs_height_to_layer: ', add_obs_height_to_layer
       print*, 'radar_nfft: ', radar_nfft
       print*, 'radar_polarisation: ', radar_polarisation
-      print*, 'input_path: ', input_path
       print*, 'creator: ', creator
       print*, 'radar_mode: ', radar_mode
       print*, 'radar_pnoise0: ', radar_pnoise0
@@ -436,7 +432,6 @@ contains
       print*, 'radar_nPeaks', radar_nPeaks
       print*, 'salinity: ', salinity
       print*, 'radar_airmotion_vmax: ', radar_airmotion_vmax
-      print*, 'output_path: ', output_path
       print*, 'radar_min_v: ', radar_min_v
       print*, 'freq_str: ', freq_str
       print*, 'file_desc: ', file_desc

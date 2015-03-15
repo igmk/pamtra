@@ -53,7 +53,7 @@ module vars_atmosphere
 !##################################################################################################################################
   subroutine screen_input(errorstatus)
 
-    use settings, only: verbose, input_path, input_file, obs_height,&
+    use settings, only: verbose, input_file, obs_height,&
       output_path, nc_out_file, file_desc, freq_str
     use descriptor_file, only: moment_in_arr, n_hydro
 
@@ -80,10 +80,10 @@ module vars_atmosphere
     end if
 
 ! OPEN input file
-    open(UNIT=14, FILE=input_path(:len_trim(input_path))//"/"//input_file(:len_trim(input_file)),&
+    open(UNIT=14, FILE=TRIM(input_file),&
     STATUS='OLD', iostat=err)
     if (err /= 0) then
-        msg = "Read error: Cannot open file "//input_path(:len_trim(input_path))//"/"//input_file(:len_trim(input_file))
+        msg = "Read error: Cannot open file "//TRIM(input_file)
         call report(err,msg,nameOfRoutine)
         errorstatus = fatal
         return
@@ -307,7 +307,7 @@ module vars_atmosphere
 !##################################################################################################################################
   subroutine read_new_fill_variables(errorstatus)
 
-    use settings, only: verbose, input_path, input_file, radar_mode, active
+    use settings, only: verbose, input_file, radar_mode, active
     use descriptor_file, only: moment_in_arr, n_hydro
 
     implicit none
@@ -333,7 +333,7 @@ module vars_atmosphere
 
 
 ! OPEN input file
-    open(UNIT=14, FILE=input_path(:len_trim(input_path))//"/"//input_file(:len_trim(input_file)),&
+    open(UNIT=14, FILE=TRIM(input_file),&
     STATUS='OLD', iostat=err)
     read(14,*)
       do i = 1, atmo_ngridx
@@ -548,7 +548,7 @@ module vars_atmosphere
 !##################################################################################################################################
   subroutine read_classic_fill_variables(errorstatus)
 
-    use settings, only: verbose, input_path, input_file, obs_height
+    use settings, only: verbose, input_file, obs_height
     use descriptor_file, only: moment_in_arr, n_hydro
 
     implicit none
@@ -566,7 +566,7 @@ module vars_atmosphere
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
 ! OPEN input file
-    open(UNIT=14, FILE=input_path(:len_trim(input_path))//"/"//input_file(:len_trim(input_file)),&
+    open(UNIT=14, FILE=TRIM(input_file),&
     STATUS='OLD', iostat=err)
     read(14,*) atmo_year(1,1), atmo_month(1,1), atmo_day(1,1), atmo_time(1,1),dum,dum,atmo_nlyrs(1,1)
     atmo_year(:,:)  = atmo_year(1,1)

@@ -3,7 +3,7 @@ subroutine parse_options(gitVersion,gitHash)
     use kinds, only: long
     use getopt_m
     use settings, only: maxfreq, nfrq, freqs,frqs_str,namelist_file,&
-      input_file,verbose, descriptor_file_name
+      input_file,verbose, descriptor_file_name, output_path
 !     use vars_profile, only: coords
     use mod_io_strings, only: formatted_frqstr
 
@@ -21,7 +21,7 @@ subroutine parse_options(gitVersion,gitHash)
     opts(7) = option_s( "help", .false., 'h' )
 
     namelist_file = 'None'
-    input_file = 'standard.dat'
+    input_file = 'profile/standard.dat'
 !     coords = (/1,1,1,1/)
     frqs_str = ''
     frqs_str(1) = '89.0'
@@ -36,6 +36,8 @@ subroutine parse_options(gitVersion,gitHash)
                 namelist_file = trim(optarg)
             case( 'p' )
                 input_file = trim(optarg)
+            case( 'o' )
+                output_path = trim(optarg)
             case( 'd' )
                 descriptor_file_name = trim(optarg)                
 !             case( 'g' )
@@ -58,7 +60,8 @@ subroutine parse_options(gitVersion,gitHash)
                 print*,''
                 print*,'Available options:'
                 print*,'   -n|--namelist     namelist file (default None)'
-                print*,'   -p|--profile      profile file  (default standard.dat)'
+                print*,'   -p|--profile      profile file  (default profile/standard.dat)'
+                print*,'   -o|--output       profile directory  (default output)'
                 print*,'   -d|--descriptor   descriptor file  (default descriptor_file.txt)'
 !                 print*,'   -g|--grid         start_lon,end_lon,start_lat,end_lat (number of grid point)'
                 print*,'   -f|--freqs        comma seperated list of frequencies (no blanks) (default 89.0)'
