@@ -13,7 +13,6 @@ crm_case=''
 crm_data=''
 crm_data2=''
 crm_constants=''
-jacobian_mode=.false.
 /
 &output
 obs_height=833000.

@@ -249,25 +249,9 @@ file_OK = .true.
 !         !check whether file is not empty
         if (file_exists) then
 ! !           open(112,file=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file),action="READ")
-call open_port(TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file), port, "r", ios)
-! print*, "IOS1", ios
-! 
-!           n_lines = 0
-!           do
-! !             read(112,*,IOSTAT=work1)  work2
-! call readline(port, work2, "yes", work1)
-! print*, "IOS2", work1, LEN(TRIM(work2))
-!             if (work1 /= 0) exit
-!             n_lines = n_lines + 1
-!           end do
-! !           rewind(112)
-! call rewind_port(port, ios)
-! print*, "IOS3", ios
-!           if (n_lines == 3) then 
-            
-!           else
-!             file_OK = .false.
-!           end if
+              call open_port(TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file), port, "r", ios)
+
+
 
           if (verbose > 0) print * , TRIM(db_path)//TRIM(db_file), " exists, opening"
 

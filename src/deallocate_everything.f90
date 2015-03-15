@@ -27,7 +27,6 @@ module deallocate_everything
         use descriptor_file, only: deallocate_descriptor_file
         use drop_size_dist, only: deallocateVars_drop_size_dist
         use scatProperties, only: deallocate_scatProperties
-        use vars_jacobian, only: deallocate_jacobian_vars
         use vars_output, only: deallocate_output_vars
         use vars_rt, only: deallocate_rt_vars
         use vars_atmosphere, only: deallocate_atmosphere_vars
@@ -41,7 +40,6 @@ module deallocate_everything
 
         call deallocate_descriptor_file()
         call deallocate_output_vars()
-        call deallocate_jacobian_vars()
         call deallocateVars_drop_size_dist()
         call deallocate_scatProperties()
         call deallocate_rt_vars()

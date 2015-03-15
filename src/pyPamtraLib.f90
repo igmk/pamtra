@@ -5,8 +5,6 @@
     use settings !all settings go here
     use vars_atmosphere !input variables 
     use vars_output !output variables
-    use vars_jacobian, only: allocate_jacobian_vars, deallocate_jacobian_vars
-    use double_moments_module !double moments variables are stored here
     use report_module
     use descriptor_file
     use vars_index, only: i_x, i_y, i_z, i_f, i_h
@@ -123,10 +121,6 @@
 
 
       grid_f: do i_f =1, nfrq
-          if (jacobian_mode) then
-              !for jacobian mode. non disturbed profile is expected in grid 1,1!
-            call allocate_jacobian_vars(atmo_nlyrs(i_x,i_y))
-          end if
           grid_y: do i_y = 1, atmo_ngridy !i_x_in, i_x_fin
               grid_x: do i_x = 1, atmo_ngridx !i_y_in, i_y_fin
                   !run the model
@@ -140,10 +134,6 @@
 
               end do grid_x
           end do grid_y
-          if (jacobian_mode) then
-                    !for jacobian mode
-              call deallocate_jacobian_vars
-          end if
       end do grid_f
 
       if ((verbose >= 1) .and. (errorstatus == 0)) then

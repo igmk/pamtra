@@ -51,3 +51,4 @@ mm_notes.txt
 scripts/
 !tools/picklePam/*.py
 tools/lapack-3.5.0
+snowCRYSTAL

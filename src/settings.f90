@@ -66,7 +66,6 @@ module settings
     write_nc, &  ! write netcdf or ascii output
     active, &  	   ! calculate active stuff
     passive, &     ! calculate passive stuff (with RT4)
-    jacobian_mode, &  ! special jacobian mode which does not calculate the whole scattering properties each time. only rt4!
     radar_airmotion, &   ! apply vertical air motion
     radar_save_noise_corrected_spectra, & !remove the noise from the calculated spectrum again (for testing)
     radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise0) we can skip that.
@@ -124,7 +123,7 @@ contains
         namelist / inoutput_mode / input_path, output_path,&
         write_nc, data_path,&
         input_type, crm_case, crm_data, crm_data2, crm_constants, &
-        jacobian_mode, save_psd, save_ssp
+        save_psd, save_ssp
         namelist / output / obs_height,units,outpol,freq_str,file_desc,creator, add_obs_height_to_layer
         namelist / run_mode / active, passive,radar_mode, randomseed
         namelist / surface_params / ground_type,salinity, emissivity
@@ -204,10 +203,7 @@ contains
       call assert_true(err,in_python,&
           "hydro_fullSpec works only in python!") 
     end if
-    if (jacobian_mode) then
-      call assert_true(err,randomseed/=0,&
-          "randomniness not allowed in jacobian mode") 
-    end if
+
 
     call assert_true(err,(radar_nPeaks == 1),&
         "radar_nPeaks higher than one not implemented yet!") 
@@ -299,7 +295,6 @@ contains
         crm_data=''
         crm_data2=''
         crm_constants=''
-        jacobian_mode=.false. !profile 1,1 is reference, for all other colums only layers with different values are calculated
         save_psd=.false.
         save_ssp=.false.
         ! sec output
@@ -389,7 +384,6 @@ contains
     subroutine print_settings()
 
       print*, 'add_obs_height_to_layer: ', add_obs_height_to_layer
-      print*, 'jacobian_mode: ', jacobian_mode
       print*, 'radar_nfft: ', radar_nfft
       print*, 'radar_polarisation: ', radar_polarisation
       print*, 'input_path: ', input_path

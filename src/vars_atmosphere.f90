@@ -7,51 +7,6 @@ module vars_atmosphere
   implicit none
   save
 
-!   integer(kind=long) :: nlyr
-
-
-  !is allocated in pamtra.f90!
-
-!   real(kind=dbl), allocatable, dimension(:) :: relhum_lev,&
-!        press_lev, &
-!        temp_lev, &
-!        hgt_lev
-
-!   real(kind=dbl), allocatable, dimension(:) :: hgt
-! press, &
-!        temp,&
-!        relhum,&
-!        vapor_pressure, &
-!        rho_vap, &
-!        q_hum,&
-       
-
-!   real(kind=dbl), allocatable, dimension(:) :: cwc_q, &
-!        iwc_q, &
-!        rwc_q, &
-!        swc_q, &
-!        gwc_q, &
-!        hwc_q
-! 
-!   real(kind=dbl), allocatable, dimension(:) :: cwc_n, &
-!        iwc_n, &
-!        rwc_n, &
-!        swc_n, &
-!        gwc_n, &
-!        hwc_n
-
-!   real(kind=dbl), allocatable, dimension(:) :: delta_hgt_lev
-
-
-
-!   integer(kind=long) :: ngridx, ngridy
-!   character(2) :: month, day
-!   character(4) :: year, time
-!   real(kind=sgl) :: deltax, deltay
-!   integer(kind=long) :: model_i, model_j
-!   real(kind=sgl) :: lon,lat,lfrac,wind10u,wind10v
-
-
   real(kind=sgl) :: cwp,iwp,rwp,swp,gwp,hwp
 
   character(len=3) :: atmo_input_type
