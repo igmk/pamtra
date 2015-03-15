@@ -18,14 +18,16 @@ import multiprocessing
 import logging
 import glob
 import namelist #parser for fortran namelist files
-import paramiko
 
 import meteoSI
 try: 
   import pyPamtraLibWrapper 
 except: 
   warnings.warn("pyPamtraLib not available", Warning)
-
+try: 
+  import paramiko 
+except: 
+  warnings.warn("paramiko not available", Warning)
 
 
 missingNumber=-9999.
@@ -374,6 +376,10 @@ class pyPamtra(object):
           if nmlFile[key]["par"][0][subkey][0] == ".true.": value = True
           elif nmlFile[key]["par"][0][subkey][0] == ".false.": value = False
           else: value = nmlFile[key]["par"][0][subkey][0]
+          try: value = int(value)
+          except: 
+            try: value = float(value.replace("d","e").replace("D","e"))
+            except: pass
           self.nmlSet[subkey.lower()] = value
           if self.set["pyVerbose"] > 1: print subkey.lower(), ":", value
         elif self.set["pyVerbose"] > 0:
