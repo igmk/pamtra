@@ -32,7 +32,6 @@ python module pyPamtraLib ! in
         module deallocate_everything ! in :pyPamtraLib:deallocate_everything.f90
             subroutine do_deallocate_everything(errorstatus) ! in :pyPamtraLib:deallocate_everything.f90:deallocate_everything
                 use kinds
-                use vars_jacobian, only: deallocate_jacobian_vars
                 use vars_output, only: deallocate_output_vars
                 use vars_atmosphere, only: deallocate_atmosphere_vars
                 use descriptor_file, only: deallocate_descriptor_file
@@ -191,7 +190,6 @@ python module pyPamtraLib ! in
             character(len=8) :: radar_mode
             integer(kind=long_bn) :: radar_no_ave
             real(kind=dbl) :: radar_min_spectral_snr
-            logical :: jacobian_mode
             character(len=9) :: frq_str_s
             integer, parameter,optional :: maxnleg=200
             logical :: radar_airmotion
@@ -363,14 +361,12 @@ python module pyPamtraLib ! in
         end module vars_hydrofullspec
         module pypamtralib ! in :pyPamtraLib:pyPamtraLib.f90
             use vars_index, only: i_f,i_h,i_z,i_y,i_x
-            use descriptor_file
             use kinds, only: long
-            use vars_jacobian, only: deallocate_jacobian_vars,allocate_jacobian_vars
+            use settings
             use vars_output
             use vars_atmosphere
-            use settings
+            use descriptor_file
             use report_module
-            use double_moments_module
             character(len=40) :: gitversion
             character(len=40) :: githash
             subroutine run_pamtra(errorstatus) ! in :pyPamtraLib:pyPamtraLib.f90:pypamtralib

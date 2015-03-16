@@ -11,16 +11,12 @@ ifeq ($(ARCH),Darwin)
 	NCFLAGS=-I/opt/local/include/ 
 	NCFLAGS_F2PY=-I/opt/local/include/ 
 	LFLAGS= -L../lib -ldfftpack  -L/opt/local/lib/ -llapack
-	LDFLAGS=-lnetcdf -lnetcdff 
+	LDFLAGS=-lnetcdf -lnetcdff  -lz
 else
-# 	NCFLAGS :=  $(shell nc-config --fflags)  -O2
-# 	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
-# 	LFLAGS := -llapack -L../lib -ldfftpack
-# 	LDFLAGS := $(shell nc-config --flibs)
-	NCFLAGS=-I$(HOME)/include -I/usr/include
-	LFLAGS=-L$(HOME)/lib -L/usr/local/lib
-	LDFLAGS=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm
-	NCFLAGS_F2PY=-lnetcdf -static -lhdf5_hl -lhdf5 -lz -lm -lsz	
+	NCFLAGS :=  $(shell nc-config --fflags)  -O2
+	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
+	LFLAGS := -llapack -L../lib -ldfftpack
+	LDFLAGS := $(shell nc-config --flibs) -lz
 endif
 
 
