@@ -172,8 +172,7 @@ contains
         radar_smooth_spectrum,&
         radar_attenuation,&
         radar_polarisation
-        
-    if (verbose >= 3) print*,'Start of ', nameOfRoutine
+     if (verbose >= 3) print*,'Start of ', nameOfRoutine
 
       ! first put default values
       call settings_fill_default()

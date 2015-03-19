@@ -5,7 +5,6 @@ program pamtra
     use settings !all settings go here
     use vars_atmosphere !input variables and reading routine
     use vars_output !output variables
-    use vars_profile
     use report_module
     use descriptor_file
     use deallocate_everything, only : do_deallocate_everything

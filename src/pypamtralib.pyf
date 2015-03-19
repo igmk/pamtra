@@ -32,7 +32,6 @@ python module pyPamtraLib ! in
         module deallocate_everything ! in :pyPamtraLib:deallocate_everything.f90
             subroutine do_deallocate_everything(errorstatus) ! in :pyPamtraLib:deallocate_everything.f90:deallocate_everything
                 use kinds
-                use vars_jacobian, only: deallocate_jacobian_vars
                 use vars_output, only: deallocate_output_vars
                 use vars_atmosphere, only: deallocate_atmosphere_vars
                 use descriptor_file, only: deallocate_descriptor_file
@@ -140,7 +139,7 @@ python module pyPamtraLib ! in
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: atmo_hydro_q
             subroutine screen_input(errorstatus) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
                 use descriptor_file, only: n_hydro,moment_in_arr
-                use settings, only: nc_out_file,input_path,verbose,input_file,output_path,obs_height,file_desc,freq_str
+                use settings, only: nc_out_file,verbose,input_file,output_path,obs_height,file_desc,freq_str
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine screen_input
             subroutine allocate_atmosphere_vars(errorstatus) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
@@ -151,7 +150,7 @@ python module pyPamtraLib ! in
             end subroutine deallocate_atmosphere_vars
             subroutine read_new_fill_variables(errorstatus) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
                 use descriptor_file, only: n_hydro,moment_in_arr
-                use settings, only: radar_mode,active,input_path,verbose,input_file
+                use settings, only: radar_mode,active,verbose,input_file
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine read_new_fill_variables
             subroutine add_obs_height(errorstatus) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
@@ -161,7 +160,7 @@ python module pyPamtraLib ! in
             end subroutine add_obs_height
             subroutine read_classic_fill_variables(errorstatus) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
                 use descriptor_file, only: n_hydro,moment_in_arr
-                use settings, only: obs_height,input_path,verbose,input_file
+                use settings, only: obs_height,verbose,input_file
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine read_classic_fill_variables
             subroutine fillmissing_atmosphere_vars(errorstatus) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
@@ -186,26 +185,23 @@ python module pyPamtraLib ! in
             use kinds
             character(len=300) :: nc_out_file
             integer(kind=long_bn) :: radar_nfft
-            character(len=100) :: input_path
             character(len=10) :: tmatrix_db
             character(len=8) :: radar_mode
             integer(kind=long_bn) :: radar_no_ave
             real(kind=dbl) :: radar_min_spectral_snr
-            logical :: jacobian_mode
             character(len=9) :: frq_str_s
             integer, parameter,optional :: maxnleg=200
             logical :: radar_airmotion
             real(kind=dbl) :: hydro_softsphere_min_density
             character(len=9) :: frq_str_e
             real(kind=dbl) :: obs_height
-            logical :: lphase_flag
+            logical, parameter,optional :: lphase_flag=.true.
             character(len=1), parameter,optional :: deltam='n'
-            logical :: lgas_extinction
+            character(len=10) :: radar_attenuation
             character(len=2) :: outpol
             integer(kind=long_bn) :: radar_npol
             integer, parameter,optional :: src_code=2
             logical :: passive
-            character(len=100) :: crm_data
             real(kind=dbl) :: hydro_threshold
             integer(kind=long_bn) :: radar_aliasing_nyquist_interv
             character(len=1), parameter,optional :: quad_type='l'
@@ -215,9 +211,7 @@ python module pyPamtraLib ! in
             logical :: add_obs_height_to_layer
             real(kind=dbl) :: radar_airmotion_step_vmin
             character(len=2) dimension(5) :: radar_pol
-            character(len=100) :: crm_data2
-            character(len=100) :: crm_constants
-            character(len=10) :: input_type
+            integer(kind=long_bn) :: att_npol
             integer(kind=long_bn) :: radar_nfft_aliased
             character(len=1) dimension(5) :: att_pol
             character(len=15) :: radar_polarisation
@@ -225,13 +219,11 @@ python module pyPamtraLib ! in
             real(kind=dbl) :: radar_noise_distance_factor
             integer(kind=long_bn) :: randomseed
             logical :: radar_save_noise_corrected_spectra
-            integer(kind=long_bn) :: n_moments
             integer(kind=long_bn) :: radar_airmotion_linear_steps
             real(kind=dbl) dimension(100) :: freqs
             integer(kind=long_bn) :: radar_maxturbterms
-            character(len=10) :: radar_attenuation
             real(kind=dbl) :: radar_airmotion_vmax
-            character(len=100) :: output_path
+            character(len=300) :: output_path
             integer, parameter,optional :: noutlevels=2
             integer, parameter,optional :: numazimuths=1
             character(len=18) :: freq_str
@@ -242,24 +234,23 @@ python module pyPamtraLib ! in
             character(len=8) :: radar_airmotion_model
             logical :: hydro_adaptive_grid
             real(kind=dbl) :: radar_pnoise0
-            character(len=100) :: data_path
+            character(len=300) :: data_path
             character(len=300) :: tmatrix_db_path
             integer, parameter,optional :: aziorder=0
             character(len=300) :: namelist_file
             character(len=1) :: ground_type
-            character(len=10) :: crm_case
+            real(kind=dbl) :: salinity
             logical :: write_nc
             integer, parameter,optional :: nummu=16
             real(kind=dbl) :: radar_min_v
             integer, parameter,optional :: maxv=64
-            character(len=1) :: units
+            character(len=1), parameter,optional :: units='t'
             character(len=3) :: gas_mod
             character(len=20) :: moments_file
             real(kind=dbl) :: radar_receiver_uncertainty_std
             logical :: save_psd
             integer, parameter,optional :: nstokes=2
-            integer(kind=long_bn) :: att_npol
-            character(len=99) :: input_file
+            character(len=300) :: input_file
             logical :: radar_use_hildebrand
             logical :: hydro_includehydroinrhoair
             character(len=300) :: descriptor_file_name
@@ -273,7 +264,7 @@ python module pyPamtraLib ! in
             logical :: in_python
             logical :: lhyd_extinction
             integer(kind=long_bn) :: nfrq
-            real(kind=dbl) :: salinity
+            logical :: lgas_extinction
             logical :: radar_smooth_spectrum
             integer, parameter,optional :: maxfreq=100
             integer, parameter,optional :: maxleg=200
@@ -363,14 +354,12 @@ python module pyPamtraLib ! in
         end module vars_hydrofullspec
         module pypamtralib ! in :pyPamtraLib:pyPamtraLib.f90
             use vars_index, only: i_f,i_h,i_z,i_y,i_x
-            use descriptor_file
             use kinds, only: long
-            use vars_jacobian, only: deallocate_jacobian_vars,allocate_jacobian_vars
+            use settings
             use vars_output
             use vars_atmosphere
-            use settings
+            use descriptor_file
             use report_module
-            use double_moments_module
             character(len=40) :: gitversion
             character(len=40) :: githash
             subroutine run_pamtra(errorstatus) ! in :pyPamtraLib:pyPamtraLib.f90:pypamtralib
