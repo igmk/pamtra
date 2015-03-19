@@ -17,7 +17,7 @@ plt.figure(2)
 plt.clf()
 
 pam = pyPamtra.pyPamtra()
-pam.df.readFile("../descriptor_file_COSMO.txt")
+pam.df.readFile("../descriptorfiles/descriptor_file_COSMO_1mom.txt")
 pam.readPamtraProfile("../profile/example_input.lev")
 pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 
@@ -25,7 +25,8 @@ print "##########################"
 
 
 
-#pam.set["pyVerbose"] = 10
+pam.set["pyVerbose"] = 10
+pam.set["verbose"] = 10
 pam.runPamtra(35.5)
 
 

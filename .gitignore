@@ -33,6 +33,7 @@ py/codefriedhof.py
 *.png
 *.py
 !py/*.py
+!pyPamtra/*.py
 !examples/*py
 snowCRYSTALuli
 cl340d14.dda
