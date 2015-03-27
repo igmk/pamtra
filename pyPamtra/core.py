@@ -16,7 +16,6 @@ import multiprocessing
 import logging
 import glob
 
-
 from .libWrapper import PamtraFortranWrapper, parallelPamtraFortranWrapper
 from .descriptorFile import pamDescriptorFile
 from .tools import sftp2Cluster, formatExceptionInfo
