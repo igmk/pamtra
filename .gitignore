@@ -9,7 +9,6 @@ pamtra
 *.nml
 !test/nmls/*nml
 fort*
-!py/libs/fortran-namelist
 output/
 profiles/
 profile/*
@@ -29,11 +28,10 @@ check_moments
 *.pyc
 *.so
 *.tmp
-py/codefriedhof.py
 *.png
 *.py
-!py/*.py
 !pyPamtra/*.py
+!pyPamtra/fortranNamelist/*.py
 !examples/*py
 snowCRYSTALuli
 cl340d14.dda
