@@ -150,6 +150,7 @@ pyDebug: 	py
 scatdb.o:
 	$(CC) -O  -fPIC -c scatdb.c 
 
+	
 %.o: %.f90
 	$(FC) $(FCFLAGS) $<
 
@@ -171,20 +172,14 @@ pyprecompile:
 
 py: pyPamtraLib.f90 precompile $(OBJECTS)
 	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
-	cp pyPamtraLib.so ../py/
-
-pyNode: pyPamtraLib.f90 $(OBJECTS) 
-	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS)  -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
-	cp pyPamtraLib.so ../py/
+	cp pyPamtraLib.so ../pyPamtra/
 
 py_usStandard:
 	cd ../tools/py_usStandard/ && $(MAKE) all
 
 
 pyinstall:
-	cp ../py/*.py ~/lib/python/
-	cp ../py/*.so ~/lib/python/
-	cp ../py/libs/*/*.py ~/lib/python/
+	cp -r ../pyPamtra ~/lib/python/
 	cd ../tools/py_usStandard/ && $(MAKE) install
 
 

@@ -95,6 +95,7 @@ module settings
     integer(kind=long):: radar_npol, att_npol
 
 
+    character(300)  :: input_pathfile        ! name and path of profile
     character(300)  :: input_file        ! name of profile
     character(300) :: namelist_file     ! name of nml_file
     character(300) :: nc_out_file       ! name of netcdf output file
@@ -113,13 +114,14 @@ contains
 
     use kinds
     implicit none
+    logical :: file_exists
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'settings_read'
 
         ! name list declarations
-        namelist / settings / &
+        namelist /SETTINGS/ &
         write_nc, &
         data_path,&
         save_psd, &
@@ -172,6 +174,7 @@ contains
         radar_smooth_spectrum,&
         radar_attenuation,&
         radar_polarisation
+        
      if (verbose >= 3) print*,'Start of ', nameOfRoutine
 
       ! first put default values
@@ -179,10 +182,21 @@ contains
   
       if (namelist_file /= "None") then
 
+        INQUIRE(FILE=namelist_file, EXIST=file_exists)   ! file_exists will be TRUE if the file
+        call assert_true(err,file_exists,&
+            "file "//TRIM(namelist_file)//" does not exist") 
+        if (err /= 0) then
+          msg = 'value in settings not allowed'
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+        end if
+      
+      
         if (verbose >= 3) print*,'Open namelist file: ', namelist_file
         ! read name list parameter file
         open(7, file=namelist_file,delim='APOSTROPHE')
-        read(7,nml=settings)
+        read(7,nml=SETTINGS)
         close(7)
 
       else

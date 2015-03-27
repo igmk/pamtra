@@ -3,12 +3,13 @@ subroutine parse_options(gitVersion,gitHash)
     use kinds, only: long
     use getopt_m
     use settings, only: maxfreq, nfrq, freqs,frqs_str,namelist_file,&
-      input_file,verbose, descriptor_file_name, output_path
+      input_pathfile,input_file,verbose, descriptor_file_name, output_path
 !     use vars_profile, only: coords
     use mod_io_strings, only: formatted_frqstr
 
     implicit none
 
+    integer(kind=long) :: pos1, pos2, n, i
     integer(kind=long) :: ff
     character(40) :: gitHash, gitVersion
     type(option_s):: opts(7)
@@ -21,7 +22,8 @@ subroutine parse_options(gitVersion,gitHash)
     opts(7) = option_s( "help", .false., 'h' )
 
     namelist_file = 'None'
-    input_file = 'profile/standard.dat'
+    input_pathfile = 'profile/standard.dat'
+    output_path = "output"
 !     coords = (/1,1,1,1/)
     frqs_str = ''
     frqs_str(1) = '89.0'
@@ -35,7 +37,7 @@ subroutine parse_options(gitVersion,gitHash)
             case( 'n' )
                 namelist_file = trim(optarg)
             case( 'p' )
-                input_file = trim(optarg)
+                input_pathfile = trim(optarg)
             case( 'o' )
                 output_path = trim(optarg)
             case( 'd' )
@@ -86,6 +88,23 @@ subroutine parse_options(gitVersion,gitHash)
         read(frqs_str(ff),*) freqs(ff)
         frqs_str(ff) = formatted_frqstr(frqs_str(ff))
     end do
+    
+ 
+    !get filename
+    pos1 = 1
+    n = 0
+    DO
+      pos2 = INDEX(input_pathfile(pos1:), "/")
+      IF (pos2 == 0) THEN
+        n = n + 1
+        input_file = input_pathfile(pos1:)
+        EXIT
+      END IF
+      n = n + 1
+      input_file = input_pathfile(pos1:pos1+pos2-2)
+      pos1 = pos2+pos1
+  END DO
+
 contains
 
     subroutine process_freq(arg)

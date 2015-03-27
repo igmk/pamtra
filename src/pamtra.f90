@@ -58,7 +58,7 @@ program pamtra
     in_python = .false.! we are _not_ in python
 
     if (verbose >= 1) then
-        msg = "input_file: "//input_file(:len_trim(input_file))//&
+        msg = "input_pathfile: "//input_pathfile(:len_trim(input_pathfile))//&
         " namelist file: "//trim(namelist_file)//&
         " freqs: "//trim(frqs_str(1))//" to "//trim(frqs_str(nfrq))
         call report(info, msg, nameOfRoutine)

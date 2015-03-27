@@ -159,7 +159,7 @@ def PamtraFortranWrapper(
     
     
   ##now, finally rund the model  
-  pamError = run_pamtra() 
+  pamError = pypamtralib.run_pamtra() 
   #if error > 0: raise RuntimeError("Error in run_pamtra")
   
   ##process the results!
@@ -176,8 +176,8 @@ def PamtraFortranWrapper(
       else: results[key] = -9999.
     
     
-  results["pamtraVersion"] = copy.deepcopy("".join(list(gitversion)).strip())
-  results["pamtraHash"] = copy.deepcopy("".join(list(githash)).strip()  )
+  results["pamtraVersion"] = copy.deepcopy("".join(list(pypamtralib.gitversion)).strip())
+  results["pamtraHash"] = copy.deepcopy("".join(list(pypamtralib.githash)).strip()  )
   
   if sets["pyVerbose"] > 2: "processed results"
         

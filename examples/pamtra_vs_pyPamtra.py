@@ -42,7 +42,7 @@ plt.plot(Ze.compressed(),label="pyPamtra level")
 print Ze.compressed()
 
 pam = pyPamtra.pyPamtra()
-pam.df.readFile("../descriptor_file_COSMO.txt")
+pam.df.readFile("../descriptorfiles/descriptor_file_COSMO_1mom.txt")
 pam.readPamtraProfile("../profile/example_input.lay")
 print "##########################"
 pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
@@ -58,10 +58,10 @@ plt.plot(Ze.compressed(),label="pyPamtra layer")
 print Ze.compressed()
 
 print "##########################"
-os.remove("../output/example_input_035.5000.nc")
+try:os.remove("../output/example_input_035.5000.nc")
+except: pass
 
-
-os.system("cd .. && ./pamtra -f 35.5 -d descriptor_file_COSMO.txt -p example_input.lev")
+os.system("cd .. && ./pamtra -f 35.5 -d descriptorfiles/descriptor_file_COSMO_1mom.txt -p profile/example_input.lev -n examples/pamtra_vs_pyPamtra.nml")
 
 ncData = netCDF4.Dataset("../output/example_input_035.5000.nc")
 Ze = np.ma.masked_equal(ncData.variables["Ze"],-9999).ravel()
@@ -78,7 +78,7 @@ ncData.close()
 
 print "##########################"
 
-os.system("cd .. && ./pamtra -f 35.5 -d descriptor_file_COSMO.txt -p example_input.lay")
+os.system("cd .. && ./pamtra -f 35.5 -d descriptorfiles/descriptor_file_COSMO_1mom.txt -p profile/example_input.lay -n examples/pamtra_vs_pyPamtra.nml")
 ncData = netCDF4.Dataset("../output/example_input_035.5000.nc")
 Ze = np.ma.masked_equal(ncData.variables["Ze"],-9999).ravel()
 
