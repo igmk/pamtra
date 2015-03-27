@@ -154,11 +154,11 @@ subroutine run_rt(errorstatus)
 
     !&&&&&&&&   I/O FILE NAMES   &&&&&&&&&&&&&&&&&&
 
-    OUT_FILE_PAS = output_path(:len_trim(output_path))//"/"//&
+    OUT_FILE_PAS = trim(output_path)//"/"//&
       atmo_year(i_x, i_y)//atmo_month(i_x, i_y)//atmo_day(i_x, i_y)//atmo_time(i_x, i_y)//&
       'x'//xstr//'y'//ystr//'f'//trim(frq_str)//"_passive"
 
-    OUT_FILE_ACT = output_path(:len_trim(output_path))//"/"//&
+    OUT_FILE_ACT = trim(output_path)//"/"//&
       atmo_year(i_x, i_y)//atmo_month(i_x, i_y)//atmo_day(i_x, i_y)//atmo_time(i_x, i_y)//&
       'x'//xstr//'y'//ystr//'f'//trim(frq_str)//"_active"
 
