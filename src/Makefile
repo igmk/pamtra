@@ -165,8 +165,8 @@ cosmo_netcdf.o: cosmo_netcdf.f90
 
 
 pyprecompile: 
-	@echo "Make backup before deleting old signature file, auto creating will most likely fail."
-	@echo "####################################################################################"
+	@echo "Make backup before deleting old signature file, auto creating can fail."
+	@echo "#######################################################################"
 	@echo ""
 	f2py --overwrite-signature -m pyPamtraLib -h pypamtralib.pyf report_module.f90 deallocate_everything.f90 vars_output.f90 vars_atmosphere.f90 settings.f90 descriptor_file.f90 vars_hydroFullSpec.f90 pyPamtraLib.f90
 
@@ -197,92 +197,4 @@ clean:
 	rm -rf $(OBJECTS) $(BIN) *.mod *~
 	cd ../tools/dfftpack/ && $(MAKE) clean
 	cd ../tools/py_usStandard/ && $(MAKE) clean
-
-test: test1 test2 test3 test4 test5 test6 cleantest
-
-alltest: test pytest
-
-cleantest:
-	@echo "=== Clean up tmp ==="
-	rm -fr ../test/tmp/*
-
-test1:
-	@echo "=== TEST 1: no hydrometeors & Rosenkranz ==="
-	rm -fr ../test/tmp/*
-	../pamtra -p usStandard.dat -n ../test/nmls/test1.nml -f 35,90,150
-	../test/compareAscii.sh 1
-	@echo "TEST 1 OK"
-
-test2:
-	@echo "=== TEST 2: no hydrometeors & Liebe === "
-	rm -fr ../test/tmp/*
-	../pamtra -p usStandard.dat -n ../test/nmls/test2.nml -f 35,90,150
-	../test/compareAscii.sh 2
-	@echo "TEST 2 OK"
-
-test3:
-	@echo "=== TEST 3 passive only === "
-	rm -fr ../test/tmp/*
-	../pamtra -p hydrometeors.dat -n ../test/nmls/test3.nml -f 35,90,150
-	../test/compareAscii.sh 3
-	@echo "TEST 3 OK"
-
-test4:
-	@echo "=== TEST 4 active only, simple radar=== "
-	rm -fr ../test/tmp/*
-	../pamtra -p hydrometeors.dat -n ../test/nmls/test4.nml -f 35,90,150
-	../test/compareAscii.sh 4
-	@echo "TEST 4 OK"
-
-test5:
-	@echo "=== TEST 5 active only, moments === "
-	rm -fr ../test/tmp/*
-	../pamtra -p hydrometeors.dat -n ../test/nmls/test5.nml -f 35,90,150
-	../test/compareAscii.sh 5
-	@echo "TEST 5 OK"
-
-test6:
-	@echo "=== TEST 6 everything, netcdf === "
-	rm -fr ../test/tmp/*
-	../pamtra -p hydrometeors.dat -n ../test/nmls/test6.nml -f 35,90,150
-	../test/compareNetcdf.sh 6
-	@echo "TEST 6 OK"
-
-pytest: pyinstall pytest1 pytest2 pytest3 pytest4 pytest5 pytest6 cleantest
-pytest123: pytest1 pytest2 pytest3 cleantest
-pytest234: pytest2 pytest3 pytest4 cleantest
-
-pytest1:
-	@echo "=== Python TEST 1 ==="
-	rm -fr ../test/tmp/*
-	python ../test/runPythonTest.py 1
-	@echo "TEST 1 OK"
-
-pytest2:
-	@echo "=== Python TEST 2 active only === "
-	rm -fr ../test/tmp/*
-	python ../test/runPythonTest.py 2
-	@echo "TEST 2 OK"
-
-pytest3:
-	@echo "=== Python TEST 3 passive only === "
-	rm -fr ../test/tmp/*
-	python ../test/runPythonTest.py 3
-	@echo "TEST 3 OK"
-pytest4:
-	@echo "=== Python TEST 4 active only, simple radar === "
-	rm -fr ../test/tmp/*
-	python ../test/runPythonTest.py 4
-	@echo "TEST 4 OK"
-pytest5:
-	@echo "=== Python TEST 5 active only, moments === "
-	rm -fr ../test/tmp/*
-	python ../test/runPythonTest.py 5
-	@echo "TEST 5 OK"
-pytest6:
-	@echo "=== Python TEST 6 everything, netcdf  === "
-	rm -fr ../test/tmp/*
-	python ../test/runPythonTest.py 6
-	../test/compareNetcdf.sh 6
-	@echo "TEST 6 OK"
 
