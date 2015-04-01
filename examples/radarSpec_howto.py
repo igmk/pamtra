@@ -1,6 +1,4 @@
 import pyPamtra
-import pyPamtraLibWrapper
-import pyPamtraImport
 import numpy as np 
 import matplotlib
 import matplotlib.pyplot as plt
@@ -9,7 +7,7 @@ import sys
 pam = pyPamtra.pyPamtra()
 pam.df.addHydrometeor(('ice', -99.0, -1, 917,917 *  np.pi / 6., 3, np.pi/4., 2, 0, 100, 'exp', 3000, 3e9, -99.0, -99.0, 100e-6,  1.2e-3, 'mie-sphere', 'heymsfield10_particles',0.0))
 
-pam = pyPamtraImport.createUsStandardProfile(pam,hgt_lev=np.arange(1000,1300,200))
+pam = pyPamtra.importer.createUsStandardProfile(pam,hgt_lev=np.arange(1000,1300,200))
 pam.p["airturb"][:] = 0.2
 freqs = [35.5]#,80,150]
 
@@ -33,7 +31,7 @@ pam.runPamtra(freqs,checkData=False)
     ##allocate(out_debug_radarback_wturb_wnoise(radar_nfft))
     ##out_debug_diameter(:) = 0.d0
     ##out_debug_back_of_d(:) = 0.d0
-sys.exit()
+
 diameter = pam.fortObject.vars_output.out_debug_diameter
 sigma_D = pam.fortObject.vars_output.out_debug_back_of_d
 eta_wo_turb = pam.fortObject.vars_output.out_debug_radarback

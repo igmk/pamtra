@@ -1,13 +1,12 @@
 import pyPamtra
-import pyPamtraLibWrapper
-import pyPamtraImport
-import meteoSI
 from copy import deepcopy
+import numpy as np
+import matplotlib.pyplot as plt
 
 freqs = [3e8/0.0545/1e9]
 nD = 31
 temps = [0,10,20,30]
-#temps = [0,300 + meteoSI.Tnull,301 + meteoSI.Tnull]
+#temps = [0,300 + pyPamtra.meteoSI.Tnull,301 + pyPamtra.meteoSI.Tnull]
 styles = ["k:","k-.","k-","k--","r"]
 
 nT = len(temps)
@@ -17,10 +16,10 @@ pam = pyPamtra.pyPamtra()
 pam.df.addHydrometeor(("rain", -99., 1, -99., -99., -99., -99., -99., 0, 1, "fullSpec", -99., -99., -99., -99., -99., -99., "tmatrix", "khvorostyanov01_drops",90.0))
 #pam.df.addHydrometeor(("rain", -99., 1, -99., -99., -99., -99., -99., 0, 1, "fullSpec", -99., -99., -99., -99., -99., -99., "mie-sphere", "khvorostyanov01_drops",90.0))
 
-pam = pyPamtraImport.createUsStandardProfile(pam,hgt_lev=np.array([[np.arange(1000,1300,200).tolist()]*nT]*nD))
+pam = pyPamtra.importer.createUsStandardProfile(pam,hgt_lev=np.array([[np.arange(1000,1300,200).tolist()]*nT]*nD))
 
 for tt in xrange(nT):
-  pam.p["temp_lev"][:,tt,:] = temps[tt] - meteoSI.Tnull
+  pam.p["temp_lev"][:,tt,:] = temps[tt] - pyPamtra.meteoSI.Tnull
 
 pam.p["relhum_lev"][:] = 10
 
@@ -31,8 +30,8 @@ pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 pam.nmlSet["randomseed"] = 0
 pam.nmlSet["radar_mode"] = "simple"
 pam.nmlSet["tmatrix_db"] = "none"
-pam.nmlSet["tmatrix_db"] = "file"
-pam.nmlSet["tmatrix_db_path"] = "/ssdwork/mmaahn/tmatrix_db/"
+#pam.nmlSet["tmatrix_db"] = "file"
+#pam.nmlSet["tmatrix_db_path"] = "/ssdwork/mmaahn/tmatrix_db/"
 pam.nmlSet["radar_polarisation"] = "NN,HH,VV"#,HV"
 pam.nmlSet["liq_mod"] = "Ray"
 
@@ -60,8 +59,8 @@ for dd,d_e in enumerate(D_es):
 
   pam.df.dataFullSpec["rho_ds"][dd,:,0,0,:] =rho_water
   pam.df.dataFullSpec["n_ds"][dd,:,0,0,:] = 1.
-  pam.df.dataFullSpec["area_ds"][dd,:,0,0,:] = pi/4. *  pam.df.dataFullSpec["d_ds"][dd,:,0,0,:] ** 2
-  pam.df.dataFullSpec["mass_ds"][dd,:,0,0,:] =pi / 6. *rho_water *  pam.df.dataFullSpec["d_ds"][dd,:,0,0,:] ** 3 * AR
+  pam.df.dataFullSpec["area_ds"][dd,:,0,0,:] = np.pi/4. *  pam.df.dataFullSpec["d_ds"][dd,:,0,0,:] ** 2
+  pam.df.dataFullSpec["mass_ds"][dd,:,0,0,:] =np.pi / 6. *rho_water *  pam.df.dataFullSpec["d_ds"][dd,:,0,0,:] ** 3 * AR
 
   pam.df.dataFullSpec["as_ratio"][dd,:,0,0,:] = AR
 

@@ -1,6 +1,4 @@
 import pyPamtra
-import pyPamtraLibWrapper
-import pyPamtraImport
 from copy import deepcopy
 
 pam = pyPamtra.pyPamtra()
@@ -10,7 +8,7 @@ pam.df.addHydrometeor(('rain2', -99., 1,  -99., -99., -99.,  -99.,  -99., 1, 1, 
 pam.df.addHydrometeor(('ice1', -99., -1,  -99., 0.0121, 1.9,  -99.,  -99., 1, 1, 'mono', -99.0, -99.0, -99.0, -99.0, 0.001,  -99.0, 'mie-sphere', 'heymsfield10_particles',0.0))
 pam.df.addHydrometeor(('ice2', -99., -1,  -99., 0.0121, 1.9,  -99.,  -99., 1, 1, 'mono', -99.0, -99.0, -99.0, -99.0, 0.0001,  -99.0, 'mie-sphere', 'heymsfield10_particles',0.0))
 
-pam = pyPamtraImport.createUsStandardProfile(pam,hgt_lev=np.array([np.arange(1000,1300,200)]*4))
+pam = pyPamtra.importer.createUsStandardProfile(pam,hgt_lev=np.array([np.arange(1000,1300,200)]*4))
 
 pam.p["hydro_n"][0,0,0,0] = 1
 pam.p["hydro_n"][1,0,0,1] = 1e6

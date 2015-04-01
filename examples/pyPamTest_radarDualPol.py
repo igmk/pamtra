@@ -1,6 +1,4 @@
 import pyPamtra
-import pyPamtraLibWrapper
-import pyPamtraImport
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -8,14 +6,13 @@ import matplotlib.pyplot as plt
 pam = pyPamtra.pyPamtra()
 pam.df.addHydrometeor(('ice', 0.5, -1, 917,917 *  np.pi / 6., 3, np.pi/4., 2, 0, 10, 'exp', 3000, 3e8, -99.0, -99.0, 100e-6,  1000e-6, 'tmatrix', 'heymsfield10_particles', 90.0))
 
-pam = pyPamtraImport.createUsStandardProfile(pam,hgt_lev=np.arange(1000,1300,200))
+pam = pyPamtra.importer.createUsStandardProfile(pam,hgt_lev=np.arange(1000,1300,200))
 
 freqs = [9.5]
 
 pam.set["verbose"] = 0
 pam.set["pyVerbose"] =0
 
-pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 pam.nmlSet["passive"] = False
 pam.nmlSet["radar_mode"] = "spectrum"
 pam.nmlSet["randomseed"] = 10

@@ -173,6 +173,8 @@ module scatProperties
 
   if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
+  err = 0
+
     if ((scat_name == "disabled") .or. (.not. rt_hydros_present(i_z))) then
       if (verbose >= 3) print*, "OK, we are done here"
       return
@@ -282,16 +284,16 @@ module scatProperties
                             + scatter_matrix_hydro(1,16,2,16,2) & 
                             + scatter_matrix_hydro(2,16,1,16,2) & 
                             + scatter_matrix_hydro(2,16,2,16,2) 
-!         else if (radar_pol(i_p) == "HV") then
-!           !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
-!           back_hydro(i_p) = + scatter_matrix_hydro(1,16,1,16,2) &
-!                             - scatter_matrix_hydro(1,16,2,16,2) & 
-!                             + scatter_matrix_hydro(2,16,1,16,2) & 
-!                             - scatter_matrix_hydro(2,16,2,16,2) 
+        else if (radar_pol(i_p) == "HV") then
+          !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
+          back_hydro(i_p) = + scatter_matrix_hydro(1,16,1,16,2) &
+                            - scatter_matrix_hydro(1,16,2,16,2) & 
+                            + scatter_matrix_hydro(2,16,1,16,2) & 
+                            - scatter_matrix_hydro(2,16,2,16,2) 
         else
-          msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)
-          call report(err, msg, nameOfRoutine)
           errorstatus = fatal
+          msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)
+          call report(errorstatus, msg, nameOfRoutine)
           return
         end if
       end do 

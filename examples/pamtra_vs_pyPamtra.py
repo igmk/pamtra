@@ -7,7 +7,7 @@ import numpy as np
 reload(pyPamtra)
 
 
-
+descriptorFile = "../descriptorfiles/descriptor_file_COSMO_1mom.txt"
 
 
 plt.figure(1)
@@ -17,7 +17,7 @@ plt.figure(2)
 plt.clf()
 
 pam = pyPamtra.pyPamtra()
-pam.df.readFile("../descriptorfiles/descriptor_file_COSMO_1mom.txt")
+pam.df.readFile(descriptorFile)
 pam.readPamtraProfile("../profile/example_input.lev")
 pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 
@@ -42,7 +42,7 @@ plt.plot(Ze.compressed(),label="pyPamtra level")
 print Ze.compressed()
 
 pam = pyPamtra.pyPamtra()
-pam.df.readFile("../descriptorfiles/descriptor_file_COSMO_1mom.txt")
+pam.df.readFile(descriptorFile)
 pam.readPamtraProfile("../profile/example_input.lay")
 print "##########################"
 pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"

@@ -15,6 +15,7 @@ from matplotlib import mlab
 import multiprocessing
 import logging
 import glob
+import warnings
 
 from .libWrapper import PamtraFortranWrapper, parallelPamtraFortranWrapper
 from .descriptorFile import pamDescriptorFile

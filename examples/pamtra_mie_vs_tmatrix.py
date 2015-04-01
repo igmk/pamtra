@@ -6,6 +6,7 @@ reload(pyPamtra)
 
 
 
+descriptorFile = "../descriptorfiles/descriptor_file_COSMO_1mom.txt"
 
 
 plt.figure(1)
@@ -15,7 +16,7 @@ plt.figure(2)
 plt.clf()
 
 pam = pyPamtra.pyPamtra()
-pam.df.readFile("../descriptor_file_COSMO.txt")
+pam.df.readFile(descriptorFile)
 pam.readPamtraProfile("../profile/example_input.lev")
 pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 
@@ -35,7 +36,7 @@ plt.plot(Ze.compressed(),label="Mie")
 
 
 pam = pyPamtra.pyPamtra()
-pam.df.readFile("../descriptor_file_COSMO.txt")
+pam.df.readFile(descriptorFile)
 pam.readPamtraProfile("../profile/example_input.lev")
 pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 
@@ -57,7 +58,7 @@ plt.plot(Ze.compressed(),label="tmatrix 1.0")
 
 
 pam = pyPamtra.pyPamtra()
-pam.df.readFile("../descriptor_file_COSMO.txt")
+pam.df.readFile(descriptorFile)
 pam.readPamtraProfile("../profile/example_input.lev")
 pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 

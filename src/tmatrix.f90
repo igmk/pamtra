@@ -399,11 +399,11 @@ call close_port(port, ios)
                             + scatter_matrix_part(1,16,2,16,2) & 
                             + scatter_matrix_part(2,16,1,16,2) & 
                             + scatter_matrix_part(2,16,2,16,2) 
-!       else if (radar_pol(i_p) == "HV") then
-!         back_spec(i_p,ir) = + scatter_matrix_part(1,16,1,16,2) &
-!                             - scatter_matrix_part(1,16,2,16,2) & 
-!                             + scatter_matrix_part(2,16,1,16,2) & 
-!                             - scatter_matrix_part(2,16,2,16,2) 
+      else if (radar_pol(i_p) == "HV") then
+        back_spec(i_p,ir) = + scatter_matrix_part(1,16,1,16,2) &
+                            - scatter_matrix_part(1,16,2,16,2) & 
+                            + scatter_matrix_part(2,16,1,16,2) & 
+                            - scatter_matrix_part(2,16,2,16,2) 
       else
           msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)
           err = fatal
