@@ -29,10 +29,6 @@ check_moments
 *.so
 *.tmp
 *.png
-*.py
-!pyPamtra/*.py
-!pyPamtra/fortranNamelist/*.py
-!examples/*py
 snowCRYSTALuli
 cl340d14.dda
 runtestc
@@ -40,7 +36,6 @@ testc.lay
 testc.out
 testc.out.check
 src/scatcnv
-!tools/py_usStandard/*py
 tools/pp_scripts/nodesConfig.sh
 *.sqlite
 gmon.out
@@ -48,5 +43,4 @@ check_moments
 database
 mm_notes.txt
 scripts/
-!tools/picklePam/*.py
 tools/lapack-3.5.0
