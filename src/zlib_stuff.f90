@@ -491,17 +491,17 @@ module rngs
 ! ix,iy,iz should be "randomly" initialised to 1-30000
 ! eg via time
 !  
-  function random()
+  function rrandom()
     use rndseed
-    real :: random
+    real :: rrandom
     ix=171*mod(ix,177)-2*(ix/177)
     iy=172*mod(iy,176)-35*(iy/176)
     iz=170*mod(iz,178)-63*(iz/178)
     if (ix < 0) ix=ix+30269
     if (iy < 0) iy=iy+30307
     if (iz < 0) iz=iz+30323
-    random=amod(float(ix)/30269.0+float(iy)/30307.0 + float(iz)/30323.0,1.0)
-  end function random
+    rrandom=amod(float(ix)/30269.0+float(iy)/30307.0 + float(iz)/30323.0,1.0)
+  end function rrandom
 !  
 ! Return a pseudo-random integer from integer U(lo..hi)
 !  
@@ -509,7 +509,7 @@ module rngs
     integer, intent(in) :: lo
     integer, intent(in) :: hi
     real :: x
-    x=random()
+    x=rrandom()
     irandom=lo+int(float(hi-lo+1)*x)
     if (irandom > hi) irandom=hi
   end function irandom

@@ -84,8 +84,7 @@ contains
 
         use kinds, only: dbl
 
-        !     absn2 = ABSORPTION COEFFICIENT DUE TO NITROGEN IN AIR
-        !             (NEPER/KM)
+        !     absn2 = ABSORPTION COEFFICIENT DUE TO NITROGEN IN AIR (NEPER/KM)
         !     tempK = TEMPERATURE (K)
         !     pres = PRESSURE (MB)
         !     freq = FREQUENCY (GHZ)
@@ -117,8 +116,7 @@ contains
         !
         !     tempK   KELVIN   TEMPERATURE        (UNCERTAIN)
         !     pres    MILLIBARS PRESSURE           (3 TO 1000)
-        !     vapden  G/M**3   WATER VAPOR DENSITY  (ENTERS LINEWIDTH CALCULATION
-        !                      DUE TO GREATER BROADENING EFFICIENCY OF H2O)
+        !     vapden  G/M^3   WATER VAPOR DENSITY  (ENTERS LINEWIDTH CALCULATION DUE TO GREATER BROADENING EFFICIENCY OF H2O)
         !     freq    GHZ      FREQUENCY          (0 TO 900)
         !
         !     REFERENCE FOR EQUATIONS AND COEFFICIENTS:
@@ -224,7 +222,7 @@ contains
         !      NAME    UNITS    I/O  DESCRIPTON            VALID RANGE
         !      tempK   KELVIN    I   TEMPERATURE
         !      pres    MILLIBAR  I   PRESSURE              .1 TO 1000
-        !      rho     G/M**3    I   WATER VAPOR DENSITY
+        !      rho     G/M^3    I   WATER VAPOR DENSITY
         !      freq    GHZ       I   FREQUENCY             0 TO 800
         !      abh2o   NEPERS/KM O   ABSORPTION COEFFICIENT
         !
@@ -338,7 +336,7 @@ contains
         !     COMPUTES ABSORPTION IN NEPERS/KM BY SUSPENDED WATER DROPLETS
         !     FROM EQUATIONS OF LIEBE, HUFFORD AND MANABE
         !     (INT. J. IR & MM WAVES V.12(17) JULY 1991
-        !     water IN G/M**3
+        !     water IN G/M^3
         !     freq  IN GHZ     (VALID FROM 0 TO 1000 GHZ)
         !     tempK IN KELVIN
         !        PWR 8/3/92
