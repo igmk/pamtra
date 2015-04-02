@@ -220,3 +220,5 @@ clean:
 	cd tools/dfftpack/ && $(MAKE) clean
 	cd tools/py_usStandard/ && $(MAKE) clean
 
+htmldoc:
+	cd doc && $(MAKE) html
