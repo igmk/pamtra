@@ -1,21 +1,29 @@
 ARCH=$(shell uname -s)
+OBJDIR := build/
+SRCDIR := src/
+BINDIR := bin/
+LIBDIR := lib/
+PYTDIR := pyPamtra/
 
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
+
+
+
 FC=gfortran
 CC=gcc
-FCFLAGS=-c -fPIC -Wunused -O2 -cpp #-I../include/ uninitialized
+FCFLAGS=-c -fPIC -Wunused -O2 -cpp -J$(OBJDIR) -I$(OBJDIR) #-I../include/ uninitialized
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran-mp-4.8
 	NCFLAGS=-I/opt/local/include/ 
 	NCFLAGS_F2PY=-I/opt/local/include/ 
-	LFLAGS= -L../lib -ldfftpack  -L/opt/local/lib/ -llapack
+	LFLAGS= -L$(LIBDIR) -ldfftpack  -L/opt/local/lib/ -llapack
 	LDFLAGS=-lnetcdf -lnetcdff  -lz
 else
 	NCFLAGS :=  $(shell nc-config --fflags)  -O2
 	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
-	LFLAGS := -llapack -L../lib -ldfftpack
+	LFLAGS := -llapack -L$(LIBDIR) -ldfftpack
 	LDFLAGS := $(shell nc-config --flibs) -lz
 endif
 
@@ -100,17 +108,53 @@ OBJECTS=kinds.o \
 	write_nc_results.o \
 	tmatrix_amplq.lp.o \
 	deallocate_everything.o
+FOBJECTS=$(addprefix $(OBJDIR),$(OBJECTS))
 
 BIN=pamtra
 
-all: dfftpack pamtra py py_usStandard
+all: mkdir dfftpack pamtra py py_usStandard
 
-dfftpack:
-	cd ../tools/dfftpack && $(MAKE) && cp libdfftpack.a ../../lib/libdfftpack.a
+dfftpack: mkdir
+	cd tools/dfftpack && $(MAKE)
+	cp tools/dfftpack/libdfftpack.a $(LIBDIR)
 
-pamtra: pamtra.f90 precompile $(OBJECTS)
-	$(FC) -o $(BIN) pamtra.f90 $(OBJECTS) $(LFLAGS) $(LDFLAGS) 
-	mv $(BIN) ../
+pamtra: mkdir precompile $(FOBJECTS) $(BINDIR)$(BIN) 
+
+
+precompile: 
+	echo "!edit in makefile only!" > $(SRCDIR)versionNumber.auto.f90
+	echo "subroutine versionNumber(gitVersion,gitHash)" >> $(SRCDIR)versionNumber.auto.f90
+	echo "implicit none" >> $(SRCDIR)versionNumber.auto.f90
+	echo "character(40), intent(out) ::gitVersion,gitHash" >> $(SRCDIR)versionNumber.auto.f90
+	echo "gitVersion = '$(gitVersion)'" >> $(SRCDIR)versionNumber.auto.f90
+	echo "gitHash = '$(gitHash)'" >> $(SRCDIR)versionNumber.auto.f90
+	echo "return" >> $(SRCDIR)versionNumber.auto.f90
+	echo "end subroutine versionNumber" >> $(SRCDIR)versionNumber.auto.f90
+	$(FC) $(FCFLAGS) $(SRCDIR)versionNumber.auto.f90 -o $(OBJDIR)versionNumber.auto.o #otherwise error on first make run!
+
+mkdir:
+	mkdir -p $(OBJDIR)
+	mkdir -p $(LIBDIR)
+	mkdir -p $(BINDIR)
+
+
+$(BINDIR)$(BIN): 
+	$(FC) -I$(OBJDIR) -o $(BINDIR)$(BIN) $(SRCDIR)pamtra.f90 $(FOBJECTS) $(LFLAGS) $(LDFLAGS) 
+
+
+$(OBJDIR)scatdb.o:  $(SRCDIR)scatdb.c
+	$(CC) -O  -fPIC -c $< -o $@
+
+	
+$(OBJDIR)%.o:  $(SRCDIR)%.f90
+	$(FC) $(FCFLAGS) $< -o $@
+
+$(OBJDIR)%.o:  $(SRCDIR)%.f
+	$(FC) $(FCFLAGS) $< -o $@
+
+$(OBJDIR)write_nc_results.o:  $(SRCDIR)write_nc_results.f90
+	$(FC) $(FCFLAGS) $(NCFLAGS) $< -o $@
+
 
 
 pamtraDebug: FCFLAGS += -g
@@ -147,54 +191,32 @@ pyDebug: 	py
 	@echo "####################################################################################"
 
 
-scatdb.o:
-	$(CC) -O  -fPIC -c scatdb.c 
-
-	
-%.o: %.f90
-	$(FC) $(FCFLAGS) $<
-
-%.o: %.f
-	$(FC) $(FCFLAGS) $<
-
-write_nc_results.o: write_nc_results.f90
-	$(FC) $(FCFLAGS) $(NCFLAGS) write_nc_results.f90
-
-cosmo_netcdf.o: cosmo_netcdf.f90
-	$(FC) $(FCFLAGS) $(NCFLAGS) cosmo_netcdf.f90
-
 
 pyprecompile: 
 	@echo "Make backup before deleting old signature file, auto creating can fail."
 	@echo "#######################################################################"
 	@echo ""
-	f2py --overwrite-signature -m pyPamtraLib -h pypamtralib.pyf report_module.f90 deallocate_everything.f90 vars_output.f90 vars_atmosphere.f90 settings.f90 descriptor_file.f90 vars_hydroFullSpec.f90 pyPamtraLib.f90
+	f2py --overwrite-signature -m pyPamtraLib -h $(SRCDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)pyPamtraLib.f90
 
-py: pyPamtraLib.f90 precompile $(OBJECTS)
-	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
-	cp pyPamtraLib.so ../pyPamtra/
+py: $(SRCDIR)pyPamtraLib.f90 precompile $(FOBJECTS)
+	f2py -I$(OBJDIR) $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) -c --fcompiler=gnu95  $(SRCDIR)pypamtralib.pyf $(FOBJECTS) $(SRCDIR)pyPamtraLib.f90 
+	mv pyPamtraLib.so $(PYTDIR)
+	cp $(PYTDIR)/pamtra.py $(BINDIR)
 
 py_usStandard:
-	cd ../tools/py_usStandard/ && $(MAKE) all
+	cd tools/py_usStandard/ && $(MAKE) all
 
 
 pyinstall:
 	cp -r ../pyPamtra ~/lib/python/
-	cd ../tools/py_usStandard/ && $(MAKE) install
+	cd tools/py_usStandard/ && $(MAKE) install
 
 
-precompile: 
-	echo "!edit in makefile only!" > versionNumber.auto.f90
-	echo "subroutine versionNumber(gitVersion,gitHash)" >> versionNumber.auto.f90
-	echo "implicit none" >> versionNumber.auto.f90
-	echo "character(40), intent(out) ::gitVersion,gitHash" >> versionNumber.auto.f90
-	echo "gitVersion = '$(gitVersion)'" >> versionNumber.auto.f90
-	echo "gitHash = '$(gitHash)'" >> versionNumber.auto.f90
-	echo "return" >> versionNumber.auto.f90
-	echo "end subroutine versionNumber" >> versionNumber.auto.f90
-	$(FC) $(FCFLAGS) versionNumber.auto.f90 #otherwise error on first make run!
+
 clean:
-	rm -rf $(OBJECTS) $(BIN) *.mod *~
-	cd ../tools/dfftpack/ && $(MAKE) clean
-	cd ../tools/py_usStandard/ && $(MAKE) clean
+	-rm -f $(OBJDIR)/*.o
+	-rm -f $(OBJDIR)/*.mod
+	-rm -f $(BINDIR)/*
+	cd tools/dfftpack/ && $(MAKE) clean
+	cd tools/py_usStandard/ && $(MAKE) clean
 

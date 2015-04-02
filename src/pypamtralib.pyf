@@ -3,7 +3,7 @@
 
 python module pyPamtraLib ! in 
     interface  ! in :pyPamtraLib
-        module report_module ! in :pyPamtraLib:report_module.f90
+        module report_module ! in :pyPamtraLib:src/report_module.f90
             use vars_index, only: i_f,i_h,i_z,i_y,i_x
             use kinds
             integer(kind=long_bn), parameter,optional :: info=3
@@ -13,24 +13,24 @@ python module pyPamtraLib ! in
             integer(kind=long_bn), parameter,optional :: success=0
             character(len=7), parameter,optional,dimension(4),depend(info,fatal,success,warning) :: status_text=(/'success','warning','fatal','info'/)
             integer(kind=long_bn), parameter,optional :: warning=1
-            subroutine report(status,message,nameofroutine) ! in :pyPamtraLib:report_module.f90:report_module
+            subroutine report(status,message,nameofroutine) ! in :pyPamtraLib:src/report_module.f90:report_module
                 integer(kind=long_bn) intent(in) :: status
                 character*(*) intent(in) :: message
                 character*(*) intent(in) :: nameofroutine
             end subroutine report
-            subroutine assert_true(error,logic,message) ! in :pyPamtraLib:report_module.f90:report_module
+            subroutine assert_true(error,logic,message) ! in :pyPamtraLib:src/report_module.f90:report_module
                 integer intent(inout) :: error
                 logical intent(in) :: logic
                 character*(*) intent(in) :: message
             end subroutine assert_true
-            subroutine assert_false(error,logic,message) ! in :pyPamtraLib:report_module.f90:report_module
+            subroutine assert_false(error,logic,message) ! in :pyPamtraLib:src/report_module.f90:report_module
                 integer intent(inout) :: error
                 logical intent(in) :: logic
                 character*(*) intent(in) :: message
             end subroutine assert_false
         end module report_module
-        module deallocate_everything ! in :pyPamtraLib:deallocate_everything.f90
-            subroutine do_deallocate_everything(errorstatus) ! in :pyPamtraLib:deallocate_everything.f90:deallocate_everything
+        module deallocate_everything ! in :pyPamtraLib:src/deallocate_everything.f90
+            subroutine do_deallocate_everything(errorstatus) ! in :pyPamtraLib:src/deallocate_everything.f90:deallocate_everything
                 use kinds
                 use vars_output, only: deallocate_output_vars
                 use vars_atmosphere, only: deallocate_atmosphere_vars
@@ -43,7 +43,7 @@ python module pyPamtraLib ! in
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine do_deallocate_everything
         end module deallocate_everything
-        module vars_output ! in :pyPamtraLib:vars_output.f90
+        module vars_output ! in :pyPamtraLib:src/vars_output.f90
             use report_module
             use kinds
             use settings, only: att_npol,radar_nfft,radar_npol
@@ -74,7 +74,7 @@ python module pyPamtraLib ! in
             real(kind=dbl), allocatable,dimension(:) :: out_debug_radarback
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: out_att_atmo
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: out_psd_n
-            subroutine allocate_output_vars(errorstatus,no_allocated_lyrs) ! in :pyPamtraLib:vars_output.f90:vars_output
+            subroutine allocate_output_vars(errorstatus,no_allocated_lyrs) ! in :pyPamtraLib:src/vars_output.f90:vars_output
                 use vars_atmosphere
                 use descriptor_file, only: nbin_arr,n_hydro
                 use mod_io_strings
@@ -82,11 +82,11 @@ python module pyPamtraLib ! in
                 integer(kind=long_bn) intent(out) :: errorstatus
                 integer intent(in) :: no_allocated_lyrs
             end subroutine allocate_output_vars
-            subroutine deallocate_output_vars ! in :pyPamtraLib:vars_output.f90:vars_output
+            subroutine deallocate_output_vars ! in :pyPamtraLib:src/vars_output.f90:vars_output
                 use vars_atmosphere
             end subroutine deallocate_output_vars
         end module vars_output
-        module vars_atmosphere ! in :pyPamtraLib:vars_atmosphere.f90
+        module vars_atmosphere ! in :pyPamtraLib:src/vars_atmosphere.f90
             use report_module
             use kinds
             use settings, only: maxfreq
@@ -137,50 +137,50 @@ python module pyPamtraLib ! in
             real(kind=dbl), allocatable,dimension(:,:,:) :: atmo_press
             real(kind=sgl), allocatable,dimension(:,:) :: atmo_lat
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: atmo_hydro_q
-            subroutine screen_input(errorstatus) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
+            subroutine screen_input(errorstatus) ! in :pyPamtraLib:src/vars_atmosphere.f90:vars_atmosphere
                 use descriptor_file, only: n_hydro,moment_in_arr
-                use settings, only: nc_out_file,verbose,input_file,output_path,obs_height,file_desc,freq_str
+                use settings, only: nc_out_file,verbose,input_file,input_pathfile,output_path,obs_height,file_desc,freq_str
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine screen_input
-            subroutine allocate_atmosphere_vars(errorstatus) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
+            subroutine allocate_atmosphere_vars(errorstatus) ! in :pyPamtraLib:src/vars_atmosphere.f90:vars_atmosphere
                 use descriptor_file, only: n_hydro
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine allocate_atmosphere_vars
-            subroutine deallocate_atmosphere_vars ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
+            subroutine deallocate_atmosphere_vars ! in :pyPamtraLib:src/vars_atmosphere.f90:vars_atmosphere
             end subroutine deallocate_atmosphere_vars
-            subroutine read_new_fill_variables(errorstatus) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
+            subroutine read_new_fill_variables(errorstatus) ! in :pyPamtraLib:src/vars_atmosphere.f90:vars_atmosphere
                 use descriptor_file, only: n_hydro,moment_in_arr
-                use settings, only: radar_mode,active,verbose,input_file
+                use settings, only: radar_mode,active,input_pathfile,verbose
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine read_new_fill_variables
-            subroutine add_obs_height(errorstatus) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
+            subroutine add_obs_height(errorstatus) ! in :pyPamtraLib:src/vars_atmosphere.f90:vars_atmosphere
                 use descriptor_file, only: n_hydro,moment_in_arr
                 use constants, only: r_d,r_v
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine add_obs_height
-            subroutine read_classic_fill_variables(errorstatus) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
+            subroutine read_classic_fill_variables(errorstatus) ! in :pyPamtraLib:src/vars_atmosphere.f90:vars_atmosphere
                 use descriptor_file, only: n_hydro,moment_in_arr
-                use settings, only: obs_height,verbose,input_file
+                use settings, only: input_pathfile,verbose,obs_height
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine read_classic_fill_variables
-            subroutine fillmissing_atmosphere_vars(errorstatus) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
+            subroutine fillmissing_atmosphere_vars(errorstatus) ! in :pyPamtraLib:src/vars_atmosphere.f90:vars_atmosphere
                 use descriptor_file, only: n_hydro,moment_in_arr
                 use constants, only: r_d,r_v
                 use settings, only: obs_height
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine fillmissing_atmosphere_vars
-            subroutine print_out_layer(i,j) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
+            subroutine print_out_layer(i,j) ! in :pyPamtraLib:src/vars_atmosphere.f90:vars_atmosphere
                 integer(kind=long_bn) :: i
                 integer(kind=long_bn) :: j
             end subroutine print_out_layer
-            subroutine print_out_level(i,j) ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
+            subroutine print_out_level(i,j) ! in :pyPamtraLib:src/vars_atmosphere.f90:vars_atmosphere
                 integer(kind=long_bn) :: i
                 integer(kind=long_bn) :: j
             end subroutine print_out_level
-            subroutine print_vars_atmosphere ! in :pyPamtraLib:vars_atmosphere.f90:vars_atmosphere
+            subroutine print_vars_atmosphere ! in :pyPamtraLib:src/vars_atmosphere.f90:vars_atmosphere
             end subroutine print_vars_atmosphere
         end module vars_atmosphere
-        module settings ! in :pyPamtraLib:settings.f90
+        module settings ! in :pyPamtraLib:src/settings.f90
             use report_module
             use kinds
             character(len=300) :: nc_out_file
@@ -203,6 +203,7 @@ python module pyPamtraLib ! in
             integer, parameter,optional :: src_code=2
             logical :: passive
             real(kind=dbl) :: hydro_threshold
+            real(kind=dbl) :: radar_pnoise0
             integer(kind=long_bn) :: radar_aliasing_nyquist_interv
             character(len=1), parameter,optional :: quad_type='l'
             real(kind=dbl) :: radar_k2
@@ -233,7 +234,7 @@ python module pyPamtraLib ! in
             character(len=100) :: creator
             character(len=8) :: radar_airmotion_model
             logical :: hydro_adaptive_grid
-            real(kind=dbl) :: radar_pnoise0
+            character(len=300) :: input_pathfile
             character(len=300) :: data_path
             character(len=300) :: tmatrix_db_path
             integer, parameter,optional :: aziorder=0
@@ -270,25 +271,25 @@ python module pyPamtraLib ! in
             integer, parameter,optional :: maxleg=200
             logical :: hydro_fullspec
             real(kind=dbl) :: emissivity
-            subroutine settings_read(errorstatus) ! in :pyPamtraLib:settings.f90:settings
+            subroutine settings_read(errorstatus) ! in :pyPamtraLib:src/settings.f90:settings
                 use kinds
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine settings_read
-            subroutine test_settings(errorstatus) ! in :pyPamtraLib:settings.f90:settings
+            subroutine test_settings(errorstatus) ! in :pyPamtraLib:src/settings.f90:settings
                 use kinds
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine test_settings
-            subroutine add_settings(errorstatus) ! in :pyPamtraLib:settings.f90:settings
+            subroutine add_settings(errorstatus) ! in :pyPamtraLib:src/settings.f90:settings
                 use kinds
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine add_settings
-            subroutine settings_fill_default ! in :pyPamtraLib:settings.f90:settings
+            subroutine settings_fill_default ! in :pyPamtraLib:src/settings.f90:settings
                 use kinds
             end subroutine settings_fill_default
-            subroutine print_settings ! in :pyPamtraLib:settings.f90:settings
+            subroutine print_settings ! in :pyPamtraLib:src/settings.f90:settings
             end subroutine print_settings
         end module settings
-        module descriptor_file ! in :pyPamtraLib:descriptor_file.f90
+        module descriptor_file ! in :pyPamtraLib:src/descriptor_file.f90
             use report_module
             use kinds, only: dbl,long
             use settings, only: descriptor_file_name
@@ -316,18 +317,18 @@ python module pyPamtraLib ! in
             character(len=15), allocatable,dimension(:) :: scat_name_arr
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: d_2_arr
             real(kind=dbl), allocatable,dimension(:,:,:,:) :: alpha_as_arr
-            subroutine read_descriptor_file(errorstatus) ! in :pyPamtraLib:descriptor_file.f90:descriptor_file
+            subroutine read_descriptor_file(errorstatus) ! in :pyPamtraLib:src/descriptor_file.f90:descriptor_file
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine read_descriptor_file
-            subroutine allocate_descriptor_file(errorstatus) ! in :pyPamtraLib:descriptor_file.f90:descriptor_file
+            subroutine allocate_descriptor_file(errorstatus) ! in :pyPamtraLib:src/descriptor_file.f90:descriptor_file
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine allocate_descriptor_file
-            subroutine deallocate_descriptor_file ! in :pyPamtraLib:descriptor_file.f90:descriptor_file
+            subroutine deallocate_descriptor_file ! in :pyPamtraLib:src/descriptor_file.f90:descriptor_file
             end subroutine deallocate_descriptor_file
-            subroutine printdescriptorvars ! in :pyPamtraLib:descriptor_file.f90:descriptor_file
+            subroutine printdescriptorvars ! in :pyPamtraLib:src/descriptor_file.f90:descriptor_file
             end subroutine printdescriptorvars
         end module descriptor_file
-        module vars_hydrofullspec ! in :pyPamtraLib:vars_hydroFullSpec.f90
+        module vars_hydrofullspec ! in :pyPamtraLib:src/vars_hydroFullSpec.f90
             use report_module
             use kinds
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_area_ds
@@ -339,20 +340,20 @@ python module pyPamtraLib ! in
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_as_ratio
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_rho_ds
             real(kind=dbl), allocatable,dimension(:,:,:,:,:) :: hydrofs_d_ds
-            subroutine allocate_hydrofs_vars(errorstatus,nbins) ! in :pyPamtraLib:vars_hydroFullSpec.f90:vars_hydrofullspec
+            subroutine allocate_hydrofs_vars(errorstatus,nbins) ! in :pyPamtraLib:src/vars_hydroFullSpec.f90:vars_hydrofullspec
                 use vars_atmosphere, only: atmo_ngridy,atmo_ngridx,atmo_max_nlyrs
                 use descriptor_file, only: n_hydro
                 integer(kind=long_bn) intent(out) :: errorstatus
                 integer intent(in) :: nbins
             end subroutine allocate_hydrofs_vars
-            subroutine deallocate_hydrofs_vars ! in :pyPamtraLib:vars_hydroFullSpec.f90:vars_hydrofullspec
+            subroutine deallocate_hydrofs_vars ! in :pyPamtraLib:src/vars_hydroFullSpec.f90:vars_hydrofullspec
             end subroutine deallocate_hydrofs_vars
-            subroutine print_hydrofs_vars ! in :pyPamtraLib:vars_hydroFullSpec.f90:vars_hydrofullspec
+            subroutine print_hydrofs_vars ! in :pyPamtraLib:src/vars_hydroFullSpec.f90:vars_hydrofullspec
                 use vars_atmosphere, only: atmo_ngridy,atmo_ngridx,atmo_max_nlyrs
                 use descriptor_file, only: n_hydro
             end subroutine print_hydrofs_vars
         end module vars_hydrofullspec
-        module pypamtralib ! in :pyPamtraLib:pyPamtraLib.f90
+        module pypamtralib ! in :pyPamtraLib:src/pyPamtraLib.f90
             use vars_index, only: i_f,i_h,i_z,i_y,i_x
             use kinds, only: long
             use settings
@@ -362,7 +363,7 @@ python module pyPamtraLib ! in
             use report_module
             character(len=40) :: gitversion
             character(len=40) :: githash
-            subroutine run_pamtra(errorstatus) ! in :pyPamtraLib:pyPamtraLib.f90:pypamtralib
+            subroutine run_pamtra(errorstatus) ! in :pyPamtraLib:src/pyPamtraLib.f90:pypamtralib
                 use mod_io_strings, only: formatted_frqstr
                 integer(kind=long_bn) intent(out) :: errorstatus
             end subroutine run_pamtra

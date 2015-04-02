@@ -44,3 +44,5 @@ database
 mm_notes.txt
 scripts/
 tools/lapack-3.5.0
+build
+lib
