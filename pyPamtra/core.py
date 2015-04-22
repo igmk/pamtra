@@ -37,32 +37,15 @@ class pyPamtra(object):
   also fills 'dimensions' and 'units'
   
   '''
+   
+  
   def __init__(self):
-    #set setting default values
-  
-  
-    self._prepareNmlUnitsDimensions()
-  
-    self._nstokes = 2
-    self._noutlevels = 2
-    self._nangles = 16
+    """
+    set setting default values
+    """
     
-    self.df = pamDescriptorFile(self)
-    
-    self.p = dict()
-    self.r = dict()
-    
-    self.p["ngridx"] = 0
-    self.p["ngridy"] = 0
-    self.p["max_nlyrs"] = 0
-    
-    return
-  
-  def _prepareNmlUnitsDimensions(self):
-  
     self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb","radar_prop","groundtemp","wind_w"]
-  
-    self.nmlSet = dict() #settings which are required for the nml file. keeping the order is important for fortran
+    self.nmlSet = dict() #:settings which are required for the nml file. keeping the order is important for fortran
     #keys MUST be lowercase for f2py!
     self.nmlSet["hydro_threshold"]=  1.e-10   # [kg/kg] 
     #set namelist defaults#
@@ -92,18 +75,18 @@ class pyPamtra(object):
     self.nmlSet["hydro_adaptive_grid"] = True
     self.nmlSet["tmatrix_db"] = "none" 
     self.nmlSet["tmatrix_db_path"] = "database/" 
-    #number of FFT points in the Doppler spectrum [typically 256 or 512]
+    #: number of FFT points in the Doppler spectrum [typically 256 or 512]
     self.nmlSet["radar_nfft"]= 256
-    #number of average spectra for noise variance reduction, typical range [1 150]
+    #: number of average spectra for noise variance reduction, typical range [1 150]
     self.nmlSet["radar_no_ave"]= 150
-    #MinimumNyquistVelocity in m/sec
+    #: MinimumNyquistVelocity in m/sec
     self.nmlSet["radar_max_v"]= 7.885
-    #MaximumNyquistVelocity in m/sec
+    #: MaximumNyquistVelocity in m/sec
     self.nmlSet["radar_min_v"]= -7.885
-    #radar noise in 1km in same unit as Ze 10*log10(mm⁶/m³). noise is calculated with noise"]=  radar_pnoise0 + 20*log10(range/1000)
+    #: radar noise in 1km in same unit as Ze 10*log10(mm⁶/m³). noise is calculated with noise"]=  radar_pnoise0 + 20*log10(range/1000)
     self.nmlSet["radar_pnoise0"]= -32.23 # mean value for BArrow MMCR during iSDAC
     self.nmlSet["radar_airmotion"]=  False
-    self.nmlSet["radar_airmotion_model"]=  "step" #"constant","linear","step"
+    self.nmlSet["radar_airmotion_model"]=  "step" #: "constant","linear","step"
     self.nmlSet["radar_airmotion_vmin"]=  -4.e0
     self.nmlSet["radar_airmotion_vmax"]=  +4.e0
     self.nmlSet["radar_airmotion_linear_steps"]=  30
@@ -204,6 +187,20 @@ class pyPamtra(object):
     self.units["Att_hydros"] = "dB"
     self.units["Att_atmo"] = "dB"
     self.units["tb"] = "K"  
+  
+    
+    self._nstokes = 2
+    self._noutlevels = 2
+    self._nangles = 16
+    
+    self.df = pamDescriptorFile(self)
+    
+    self.p = dict() #:  test
+    self.r = dict()
+    
+    self.p["ngridx"] = 0
+    self.p["ngridy"] = 0
+    self.p["max_nlyrs"] = 0  
   
     return
   
@@ -1015,9 +1012,18 @@ class pyPamtra(object):
     """
     adds two-way path integrated attenuation to result dictionary
     
-    Input:
-      direction(str) : "bottom-up" or "top-down"
-    
+    Parameters
+    ----------    
+    direction :{'bottom-up', 'top-down'}
+      Assumed direction
+    applyAtmo : bool, optional
+      use attenuation of the atmosphere (default: true)
+    applyHydros : bool, optional
+      use attenuation of the hydrometeors (default: true)
+      
+    Notes
+    -----
+    Adds "PIA" to `self.r`
     """
         
     shapePIA = np.shape(self.r["Att_hydro"])

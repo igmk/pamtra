@@ -198,7 +198,7 @@ pyprecompile:
 	@echo ""
 	f2py --overwrite-signature -m pyPamtraLib -h $(SRCDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)pyPamtraLib.f90
 
-py: $(SRCDIR)pyPamtraLib.f90 precompile $(FOBJECTS)
+py: mkdir $(SRCDIR)pyPamtraLib.f90 precompile $(FOBJECTS)
 	f2py -I$(OBJDIR) $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) -c --fcompiler=gnu95  $(SRCDIR)pypamtralib.pyf $(FOBJECTS) $(SRCDIR)pyPamtraLib.f90 
 	mv pyPamtraLib.so $(PYTDIR)
 	cp $(PYTDIR)/pamtra.py $(BINDIR)
@@ -208,7 +208,7 @@ py_usStandard:
 
 
 pyinstall:
-	cp -r ../pyPamtra ~/lib/python/
+	cp -r pyPamtra ~/lib/python/
 	cd tools/py_usStandard/ && $(MAKE) install
 
 

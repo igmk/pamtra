@@ -18,11 +18,15 @@ Several package have to be installed to be able to build the documentation. The 
     sudo apt-get install python-sphinx
 
 In addition, the numpydoc is required::
+
     sudo apt-get python-numpydoc
+
 If not available try::
-    easy_install numpydoc
+
+    sudo easy_install numpydoc
 
 In addition, the sphinx-fortran-extension is required::
+
     cd /tmp
     git clone https://github.com/paulromano/sphinx-fortran-extension
     cd /tmp/sphinx-fortran-extension

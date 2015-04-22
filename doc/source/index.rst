@@ -18,8 +18,9 @@ Contents:
    installation
    physicalBasis
    descriptorFile
+   settings
    pamtra
-pyPamtra
+   pyPamtra
 
 
 Indices and tables

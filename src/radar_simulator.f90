@@ -1,16 +1,9 @@
-subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,&
-delta_h)
+subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
     ! This routine takes the backscattering spectrum depending on Doppler velocity,
     ! adds noise and turbulence and simulates temporal averaging
     !
     ! based on Spectra_simulator by P. Kollias
     ! converted from Matlab to Fortran by M. Maahn (2012)
-
-    ! in
-    ! particle_spectrum: backscattering particle spectrum per Doppler velocity [mm⁶/m³/(m/s)] NON-SI
-    ! back: volumetric backscattering crossection in m²/m³
-    ! kexthydro: hydrometeor absorption coefficient [Np/m]
-    ! delta_h: heigth of layer in m
     !
     ! out is saved directly to vars_output module
 
@@ -39,9 +32,11 @@ delta_h)
     implicit none
   
 
-    real(kind=dbl), dimension(radar_npol),intent(in) ::  back
-    real(kind=dbl),intent(in) ::  delta_h,kexthydro
-    real(kind=dbl), dimension(radar_npol,radar_nfft_aliased),intent(in):: particle_spectrum
+    real(kind=dbl), dimension(radar_npol),intent(in) ::  back !volumetric backscattering crossection in m²/m³
+    real(kind=dbl),intent(in) ::  delta_h !heigth of layer in m
+    real(kind=dbl),intent(in) ::  kexthydro !hydrometeor absorption coefficient [Np/m]
+    real(kind=dbl), dimension(radar_npol,radar_nfft_aliased),intent(in):: particle_spectrum !backscattering particle spectrum per Doppler velocity [mm⁶/m³/(m/s)] NON-SI
+    
     real(kind=dbl), dimension(radar_nfft_aliased) :: particle_spectrum_att
     real(kind=dbl), dimension(radar_nfft_aliased) :: spectra_velo_aliased
     real(kind=dbl), dimension(radar_maxTurbTerms):: turb
