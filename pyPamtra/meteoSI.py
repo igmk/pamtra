@@ -29,6 +29,7 @@ Lv = 2.5e6  # J/kg  bei 0C Lv heat of vaporization
 Mwml = 0.622	# dimlos, Molmassenverhaeltnis
 Tnull = -273.15 # K Absoluter Nullpunkt
 Kadiab = Rair/Cp # dimlos  Adiabatenexponent
+g = 9.80665  # gravitational acceleration
 
 missingNumber = -9999
 
@@ -49,7 +50,7 @@ def moist_rho_rh(p,T,rh,*qm):
 
 	
 	'''
-	if np.any(rh > 1.5): raise TypeError("rh must not be in %")
+	if np.any(rh > 5): raise TypeError("rh must not be in %")
 	
 	q = rh2q(rh,T,p)
 	
@@ -105,7 +106,7 @@ def T_virt_rh(T,rh,p):
 	Output:
 	T_virt in K
 	'''
-	if np.any(rh > 1.5): raise TypeError("rh must not be in %")
+	if np.any(rh > 5): raise TypeError("rh must not be in %")
 	return T_virt_q(T,rh2q(rh,T,p))
 
 def T_virt_q(T,q):
@@ -162,7 +163,7 @@ def rh2q(rh,T,p):
 	Output
 	q in kg/kg
 	'''
-	if np.any(rh > 1.5): raise TypeError("rh must not be in %")
+	if np.any(rh > 5): raise TypeError("rh must not be in %")
 	
 	eStar = e_sat_gg_water(T)
 	e = rh*eStar
@@ -185,7 +186,7 @@ def rh2a(rh,T):
 	Source: Kraus: Chapter 8.1.2
 	'''
 	
-	if np.any(rh > 1.5): raise TypeError("rh must not be in %")
+	if np.any(rh > 5): raise TypeError("rh must not be in %")
 
 	e = rh*e_sat_gg_water(T)
 	a = e/(Rvapor*T)

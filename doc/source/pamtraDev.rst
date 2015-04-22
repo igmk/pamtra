@@ -12,7 +12,7 @@ Pamtra
 
 pyPamtra
 ------
-.. .. f:automodule::  pyPamtraLib
+.. f:automodule::  pypamtralib
 
 
 Modules
@@ -25,7 +25,7 @@ vars_index
 .. f:automodule::  vars_index
 report_module
 ^^^^^^^^^^^^^^^^^^^^
-.. .. f:automodule::  report_module
+.. f:automodule::  report_module
 vars_output
 ^^^^^^^^^^^^^^^^^^^^
 .. f:automodule::  vars_output
@@ -52,23 +52,31 @@ scatproperties
 .. f:automodule::  scatproperties
 drop_size_dist
 ^^^^^^^^^^^^^^^^^^^^
-.. .. f:automodule::  drop_size_dist
+.. f:automodule::  drop_size_dist
 constants
 ^^^^^^^^^^^^^^^^^^^^
 .. f:automodule::  constants
 mie_spheres
 ^^^^^^^^^^^^^^^^^^^^
-.. .. f:automodule::  mie_spheres
+.. f:automodule::  mie_spheres
 tmatrix
 ^^^^^^^^^^^^^^^^^^^^
-.. .. f:automodule::  tmatrix
+.. f:automodule::  tmatrix
 radar_moments
 ^^^^^^^^^^^^^^^^^^^^
 .. f:automodule::  radar_moments
 dia2vel
 ^^^^^^^^^^^^^^^^^^^^
 .. f:automodule::  dia2vel
-
+rescale_spec
+^^^^^^^^^^^^^^^^^^^^
+.. f:automodule::  rescale_spec
+mie_scat_utlities
+^^^^^^^^^^^^^^^^^^^^
+.. f:automodule::  mie_scat_utlities
+rt_utilities
+^^^^^^^^^^^^^^^^^^^^
+.. f:automodule::  rt_utilities
 
 Subroutines
 -----------
@@ -91,7 +99,18 @@ radar_simulator
 ^^^^^^^^^^^^^^^^^^^^
 .. f:autosubroutine::  radar_simulator
 radar_hildebrand_sekhon
-^^^^^^^^^^^^^^^^^^^^
+^^^^^^^^^^^^^^^^^^^^^^^^
 .. f:autosubroutine::  radar_hildebrand_sekhon
-
+versionnumber
+^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  versionnumber
+viscosity_air
+^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  viscosity_air
+rho_air
+^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  rho_air
+kinematic_viscosity_air
+^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  kinematic_viscosity_air
 
