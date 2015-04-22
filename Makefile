@@ -3,7 +3,7 @@ OBJDIR := build/
 SRCDIR := src/
 BINDIR := bin/
 LIBDIR := lib/
-PYTDIR := pyPamtra/
+PYTDIR := python/pyPamtra/
 
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
@@ -206,12 +206,9 @@ py: mkdir $(SRCDIR)pyPamtraLib.f90 precompile $(FOBJECTS)
 py_usStandard:
 	cd tools/py_usStandard/ && $(MAKE) all
 
-
 pyinstall:
-	cp -r pyPamtra ~/lib/python/
+	cp -r $(PYTDIR) ~/lib/python/
 	cd tools/py_usStandard/ && $(MAKE) install
-
-
 
 clean:
 	-rm -f $(OBJDIR)/*.o
