@@ -5,18 +5,19 @@ gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 FC=gfortran
 CC=gcc
+PC=f2py2.7
 FCFLAGS=-c -fPIC -Wunused -O2 -cpp #-I../include/ uninitialized
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran-mp-4.8
 	NCFLAGS=-I/opt/local/include/ 
 	NCFLAGS_F2PY=-I/opt/local/include/ 
 	LFLAGS= -L../lib -ldfftpack  -L/opt/local/lib/ -llapack
-	LDFLAGS=-lnetcdf -lnetcdff 
+	LDFLAGS=-lnetcdf -lnetcdff -lz
 else
 	NCFLAGS :=  $(shell nc-config --fflags)  -O2
 	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
 	LFLAGS := -llapack -L../lib -ldfftpack
-	LDFLAGS := $(shell nc-config --flibs)
+	LDFLAGS := $(shell nc-config --flibs) -lz
 endif
 
 
@@ -182,14 +183,14 @@ pyprecompile:
 	@echo "Make backup before deleting old signature file, auto creating will most likely fail."
 	@echo "####################################################################################"
 	@echo ""
-	f2py --overwrite-signature -m pyPamtraLib -h pypamtralib.pyf report_module.f90 deallocate_everything.f90 vars_output.f90 vars_atmosphere.f90 settings.f90 descriptor_file.f90 vars_hydroFullSpec.f90 pyPamtraLib.f90
+	$(PC) --overwrite-signature -m pyPamtraLib -h pypamtralib.pyf report_module.f90 deallocate_everything.f90 vars_output.f90 vars_atmosphere.f90 settings.f90 descriptor_file.f90 vars_hydroFullSpec.f90 pyPamtraLib.f90
 
 py: pyPamtraLib.f90 precompile $(OBJECTS)
-	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
+	$(PC) $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ../py/
 
 pyNode: pyPamtraLib.f90 $(OBJECTS) 
-	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS)  -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
+	$(PC) $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS)  -c --fcompiler=gnu95  pypamtralib.pyf $(OBJECTS) pyPamtraLib.f90 
 	cp pyPamtraLib.so ../py/
 
 py_usStandard:
