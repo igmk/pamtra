@@ -94,4 +94,4 @@ test: test.o
 	time ./a.out
 
 clean: 
-	 rm -f -r *.o *.a *.so
+	 -rm -f -r *.o *.a *.so

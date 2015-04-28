@@ -1,7 +1,7 @@
 
-all: compile
+all: usStandardAtmosphere.so
 
-compile: 
+usStandardAtmosphere.so: usStandard.f90 
 	f2py2.7 -c --fcompiler=gnu95  usStandardAtmosphere.pyf usStandard.f90 
 
 
@@ -10,4 +10,4 @@ install:
 	cp *.so ~/lib/python/
 
 clean: 
-	rm *.so
+	-rm *.so

@@ -9,6 +9,7 @@ pamtra
 *.nml
 !test/nmls/*nml
 fort*
+!python/pyPamtra/fort*
 output/
 profiles/
 profile/*
@@ -47,3 +48,4 @@ tools/lapack-3.5.0
 build
 lib
 doc/build
+*.pyf

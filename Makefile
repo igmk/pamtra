@@ -1,5 +1,7 @@
 ARCH=$(shell uname -s)
-OBJDIR := build/
+
+#for some strange reasons, python modules compiled with f2py do not work when using a separate build directory
+OBJDIR := src/
 SRCDIR := src/
 BINDIR := bin/
 LIBDIR := lib/
@@ -10,10 +12,9 @@ gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 
 
-
 FC=gfortran
 CC=gcc
-FCFLAGS=-c -fPIC -Wunused -O2 -cpp -J$(OBJDIR) -I$(OBJDIR) #-I../include/ uninitialized
+FCFLAGS=-c -fPIC -Wunused -O2 -cpp -J$(OBJDIR) -I$(OBJDIR) 
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran-mp-4.8
 	NCFLAGS=-I/opt/local/include/ 
@@ -112,16 +113,15 @@ FOBJECTS=$(addprefix $(OBJDIR),$(OBJECTS))
 
 BIN=pamtra
 
-all: mkdir dfftpack pamtra py py_usStandard
+all: dfftpack pamtra py py_usStandard
 
-dfftpack: mkdir
+dfftpack: | $(LIBDIR)
 	cd tools/dfftpack && $(MAKE)
 	cp tools/dfftpack/libdfftpack.a $(LIBDIR)
 
-pamtra: mkdir precompile $(FOBJECTS) $(BINDIR)$(BIN) 
+pamtra: $(FOBJECTS) $(BINDIR)$(BIN) | $(BINDIR)
 
-
-precompile: 
+$(OBJDIR)versionNumber.auto.o: .git/HEAD .git/index
 	echo "!edit in makefile only!" > $(SRCDIR)versionNumber.auto.f90
 	echo "subroutine versionNumber(gitVersion,gitHash)" >> $(SRCDIR)versionNumber.auto.f90
 	echo "implicit none" >> $(SRCDIR)versionNumber.auto.f90
@@ -132,27 +132,26 @@ precompile:
 	echo "end subroutine versionNumber" >> $(SRCDIR)versionNumber.auto.f90
 	$(FC) $(FCFLAGS) $(SRCDIR)versionNumber.auto.f90 -o $(OBJDIR)versionNumber.auto.o #otherwise error on first make run!
 
-mkdir:
+$(OBJDIR):
 	mkdir -p $(OBJDIR)
+$(LIBDIR):
 	mkdir -p $(LIBDIR)
+$(BINDIR):
 	mkdir -p $(BINDIR)
 
-
-$(BINDIR)$(BIN): 
+$(BINDIR)$(BIN): $(FOBJECTS) | $(BINDIR)
 	$(FC) -I$(OBJDIR) -o $(BINDIR)$(BIN) $(SRCDIR)pamtra.f90 $(FOBJECTS) $(LFLAGS) $(LDFLAGS) 
 
-
-$(OBJDIR)scatdb.o:  $(SRCDIR)scatdb.c
+$(OBJDIR)scatdb.o:  $(SRCDIR)scatdb.c  | $(OBJDIR)
 	$(CC) -O  -fPIC -c $< -o $@
-
 	
-$(OBJDIR)%.o:  $(SRCDIR)%.f90
+$(OBJDIR)%.o:  $(SRCDIR)%.f90 | $(OBJDIR)
 	$(FC) $(FCFLAGS) $< -o $@
 
-$(OBJDIR)%.o:  $(SRCDIR)%.f
+$(OBJDIR)%.o:  $(SRCDIR)%.f | $(OBJDIR)
 	$(FC) $(FCFLAGS) $< -o $@
 
-$(OBJDIR)write_nc_results.o:  $(SRCDIR)write_nc_results.f90
+$(OBJDIR)write_nc_results.o:  $(SRCDIR)write_nc_results.f90 | $(OBJDIR)
 	$(FC) $(FCFLAGS) $(NCFLAGS) $< -o $@
 
 
@@ -192,28 +191,29 @@ pyDebug: 	py
 
 
 
-pyprecompile: 
-	@echo "Make backup before deleting old signature file, auto creating can fail."
-	@echo "#######################################################################"
-	@echo ""
-	f2py2.7 --overwrite-signature -m pyPamtraLib -h $(SRCDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)pyPamtraLib.f90
+$(OBJDIR)pypamtralib.pyf:  $(FOBJECTS)
+	f2py2.7 --overwrite-signature -m pyPamtraLib -h $(OBJDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)pyPamtraLib.f90
 
-py: mkdir $(SRCDIR)pyPamtraLib.f90 precompile $(FOBJECTS)
-	f2py2.7 -I$(OBJDIR) $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) -c --fcompiler=gnu95  $(SRCDIR)pypamtralib.pyf $(FOBJECTS) $(SRCDIR)pyPamtraLib.f90 
-	mv pyPamtraLib.so $(PYTDIR)
+
+py: $(PYTDIR)pyPamtraLib.so
+
+$(PYTDIR)pyPamtraLib.so:  $(SRCDIR)pyPamtraLib.f90 $(OBJDIR)pypamtralib.pyf $(FOBJECTS) | $(BINDIR)
+	cd $(OBJDIR) && f2py2.7 $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) -c --fcompiler=gnu95  ../$(OBJDIR)pypamtralib.pyf $(OBJECTS) ../$(SRCDIR)pyPamtraLib.f90 
+	mv $(OBJDIR)/pyPamtraLib.so $(PYTDIR)
 	cp $(PYTDIR)/pamtra.py $(BINDIR)
+
 
 py_usStandard:
 	cd tools/py_usStandard/ && $(MAKE) all
 
-pyinstall:
+pyinstall: py py_usStandard 
 	cp -r $(PYTDIR) ~/lib/python/
 	cd tools/py_usStandard/ && $(MAKE) install
 
 clean:
-	-rm -f $(OBJDIR)/*.o
-	-rm -f $(OBJDIR)/*.mod
-	-rm -f $(BINDIR)/*
+	-rm -f $(OBJDIR)*.o
+	-rm -f $(OBJDIR)*.mod
+	-rm -f $(BINDIR)pamtra*
 	cd tools/dfftpack/ && $(MAKE) clean
 	cd tools/py_usStandard/ && $(MAKE) clean
 
