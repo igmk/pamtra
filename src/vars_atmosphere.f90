@@ -252,6 +252,7 @@ module vars_atmosphere
   
     errorstatus = err
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
+
     return
 
   end subroutine allocate_atmosphere_vars
@@ -635,7 +636,8 @@ module vars_atmosphere
     character(len=30) :: nameOfRoutine = 'fillMissing_atmosphere_vars' 
 
     integer(kind=long) :: i_hydro
-
+print*, atmo_hgt_lev
+print*, shape(atmo_hgt_lev)
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
     err = 0
     call assert_true(err,(atmo_ngridx>0),&
@@ -650,11 +652,13 @@ module vars_atmosphere
         call report(errorstatus, msg, nameOfRoutine)
         return
     end if  
-
+print*, atmo_hgt_lev
+print*, shape(atmo_hgt_lev)
     do nx = 1, atmo_ngridx
       do ny = 1, atmo_ngridy
-          if (verbose >= 5) print*,  "processing", nx, ny, nz
-
+          if (verbose >= 5) print*,  "processing", nx, ny
+print*, atmo_hgt_lev
+print*, shape(atmo_hgt_lev)
           !these one depend not on z:
           if (atmo_unixtime(nx,ny) /= -9999) then
                 call GMTIME(atmo_unixtime(nx,ny),timestamp)

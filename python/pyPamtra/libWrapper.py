@@ -108,6 +108,10 @@ def PamtraFortranWrapper(
   
   error = vars_atmosphere.allocate_atmosphere_vars()  
   if error > 0: raise RuntimeError("Error in allocate_vars_atmosphere")
+
+  if sets["pyVerbose"] > 8:    
+    for key in profile.keys():
+      exec("print key, vars_atmosphere.atmo_"+key +", profile['"+key+"']")
   
   #return  dict(),pyPamtraLib    
   #deal with the atmospheric input_file
@@ -128,7 +132,16 @@ def PamtraFortranWrapper(
     else:
       raise TypeError("do not understand type of "+ key+": " + str(type(profile[key])))
     #vars_atmosphere.atmo_max_nlyr
-  
+
+  if sets["pyVerbose"] > 8:    
+    for key in profile.keys():
+      exec("print key, vars_atmosphere.atmo_"+key +", profile['"+key+"']")
+  #see whether it worked:
+  if sets["pyVerbose"] > 3:
+    print "Fortran view on vars_atmosphere variables"
+    vars_atmosphere.print_vars_atmosphere()
+    
+    
   error = vars_atmosphere.fillmissing_atmosphere_vars()  
   if error > 0: raise RuntimeError("Error in fillmissing_atmosphere_vars")
   
