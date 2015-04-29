@@ -19,12 +19,12 @@ ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran-mp-4.8
 	NCFLAGS=-I/opt/local/include/ 
 	NCFLAGS_F2PY=-I/opt/local/include/ 
-	LFLAGS= -L$(LIBDIR) -ldfftpack  -L/opt/local/lib/ -llapack
+	LFLAGS= -L$(LIBDIR) -L../$(LIBDIR) -ldfftpack  -L/opt/local/lib/ -llapack
 	LDFLAGS=-lnetcdf -lnetcdff  -lz
 else
 	NCFLAGS :=  $(shell nc-config --fflags)  -O2
 	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
-	LFLAGS := -llapack -L$(LIBDIR) -ldfftpack
+	LFLAGS := -llapack -L$(LIBDIR) -L../$(LIBDIR) -ldfftpack
 	LDFLAGS := $(shell nc-config --flibs) -lz
 endif
 
