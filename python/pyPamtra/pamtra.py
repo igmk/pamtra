@@ -6,7 +6,6 @@ python implementation of pamtra.
 
 from optparse import OptionParser
 import pyPamtra
-import pyPamtraImport
 
 if __name__ == "__main__":
   
@@ -43,7 +42,7 @@ if __name__ == "__main__":
     forecastIndex = int(profType.split("_")[2])
     colIndex = int(profType.split("_")[3])
     #read descriptorFile
-    pam = pyPamtraImport.readCosmoDe1MomDataset(profFile,"collum",descriptorFile, forecastIndex = forecastIndex,colIndex=colIndex,tmpDir="/tmp/",fnameInTar="*%s*"%loc,concatenateAxis=1,debug=False,verbosity=verbosity)
+    pam = pyPamtra.importer.readCosmoDe1MomDataset(profFile,"collum",descriptorFile, forecastIndex = forecastIndex,colIndex=colIndex,tmpDir="/tmp/",fnameInTar="*%s*"%loc,concatenateAxis=1,debug=False,verbosity=verbosity)
     
   else:
     raise ValueError("I don't know type="+profType)
