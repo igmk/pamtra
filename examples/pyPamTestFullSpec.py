@@ -3,6 +3,7 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np
 
+
 plt.figure()
 
 pam = pyPamtra.pyPamtra()
@@ -49,6 +50,7 @@ pamFS.df.dataFullSpec["rho_ds"][0,0,0,0,:] = 917
 pamFS.df.dataFullSpec["n_ds"][0,0,0,0,:] = 3e8 * np.exp(-3000 * pamFS.df.dataFullSpec["d_ds"][0,0,0,0,:]) *np.diff(pamFS.df.dataFullSpec["d_bound_ds"][0,0,0,0,:])
 pamFS.df.dataFullSpec["area_ds"][0,0,0,0,:] = np.pi/4. *  pamFS.df.dataFullSpec["d_ds"][0,0,0,0,:] ** 2
 pamFS.df.dataFullSpec["mass_ds"][0,0,0,0,:] =np.pi / 6. *917 *  pamFS.df.dataFullSpec["d_ds"][0,0,0,0,:] ** 3
+
 
 pamFS.df.dataFullSpec["as_ratio"][0,0,0,0,:] = 1.0
 
