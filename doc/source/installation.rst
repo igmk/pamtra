@@ -1,3 +1,5 @@
+..  _installation:
+
 
 Installation
 ============
@@ -6,7 +8,7 @@ Installation
 Dependencies
 ************
 
-On Ubuntu, install the following packages in advance in order to copmpile the Fortran Pamtra version::
+On Ubuntu, install the following packages in advance in order to compile the Fortran Pamtra version::
 
     sudo apt-get install gcc gfortran libnetcdff5 netcdf-bin libnetcdf-dev liblapack-dev git gitk
 
@@ -16,7 +18,7 @@ To get the Python version, the following packages are additionally required::
 
     sudo apt-get install python-pandas python-numpy python-matplotlib python-scipy python-netcdf python-pip
 
-The Netcdf4 python package is not in the repositiries, install with::
+The Netcdf4 python package is not in the repositories, install with::
 
     sudo pip install netcdf4
 
@@ -34,7 +36,7 @@ Simply type ::
 
   make
 
-to build pamtra and pyPamtra. You can build them also sperately with ::
+to build :ref:`pamtra` and :ref:`pyPamtra`. You can build them also separately with ::
 
   make pamtra
 
@@ -42,11 +44,21 @@ and ::
 
   make py
 
-The python routines have to be installed with::
+Usually superuser permission are required to install python routines. To avoid that, a local python library folder has to be created ::
+  
+  mkdir -p ~/lib/python/
+
+and this path has to be added to the $PYTHONPATH variable of your shell (assuming you are using Ubuntu and bash) ::
+
+  echo 'export PYTHONPATH=$PYTHONPATH:$HOME/lib/python' >> ~/.bashrc
+
+Then, the python routines can be installed with::
 
   make pyinstall
 
-.. note:: Add python path etc
+and you can start using pyPamtra in python with ::
+
+  import pyPamtra
 
 Build documentation
 *******************

@@ -1,3 +1,5 @@
+..  _pamtraDev:
+
 Pamtra Developer Documentation
 ==============================
 
@@ -13,6 +15,7 @@ Pamtra
 pyPamtra
 ------
 .. f:automodule::  pypamtralib
+
 
 
 Modules

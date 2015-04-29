@@ -23,7 +23,7 @@ subroutine parse_options(gitVersion,gitHash)
 
     namelist_file = 'None'
     input_pathfile = 'profile/standard.dat'
-    output_path = "output"
+    output_path = "."
 !     coords = (/1,1,1,1/)
     frqs_str = ''
     frqs_str(1) = '89.0'
@@ -63,7 +63,7 @@ subroutine parse_options(gitVersion,gitHash)
                 print*,'Available options:'
                 print*,'   -n|--namelist     namelist file (default None)'
                 print*,'   -p|--profile      profile file  (default profile/standard.dat)'
-                print*,'   -o|--output       profile directory  (default output)'
+                print*,'   -o|--output       output directory  (default .)'
                 print*,'   -d|--descriptor   descriptor file  (default descriptor_file.txt)'
 !                 print*,'   -g|--grid         start_lon,end_lon,start_lat,end_lat (number of grid point)'
                 print*,'   -f|--freqs        comma seperated list of frequencies (no blanks) (default 89.0)'
