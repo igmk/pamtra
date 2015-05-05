@@ -4,6 +4,9 @@ from __future__ import division
 import numpy as np
 import csv
 
+missingNumber=-9999.
+missingIntNumber=int(missingNumber)
+
 class pamDescriptorFile(object):
   #class with the descriptor file content in data. In case you want to use 4D data, use data4D instead, the coreesponding column in data is automatically removed.
   
