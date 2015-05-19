@@ -19,7 +19,7 @@ module mie_spheres
       nbins, &
       diameter, &
       del_d, &
-      ndens, & !ndens NOT NORMED PER del_d!
+      ndens, & !normed
       density, &
       refre, &
       refim, &
@@ -165,9 +165,12 @@ module mie_spheres
 
 
     do ir = 1, nbins
-        ndens_eff = ndens(ir)
-        del_d_eff = del_d(ir)
+      !Do not process if no particles present
+      if (ndens(ir) <= 0) CYCLE
 
+
+      ndens_eff = ndens(ir)
+      del_d_eff = del_d(ir)
 
       n_tot = n_tot + (ndens_eff * del_d_eff)
 

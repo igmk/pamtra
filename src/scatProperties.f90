@@ -13,7 +13,7 @@ module scatProperties
     !rt4 style
 
     !needed by rt3 and rt4
-    character(len=15) :: scat_name
+    character(len=30) :: scat_name
     character(len=30) :: vel_size_mod
     real(kind=dbl), allocatable, dimension(:,:) :: radar_spec
     
@@ -77,6 +77,9 @@ module scatProperties
       radar_npol
   use mie_spheres, only: calc_mie_spheres
   use tmatrix, only: calc_tmatrix
+  use rayleigh_gans, only: calc_self_similar_rayleigh_gans, &
+      calc_rayleigh_gans, &
+      calc_rayleigh
   use vars_rt, only: rt_kexttot,&
       rt_back,&
       rt_scattermatrix, &
@@ -116,19 +119,28 @@ module scatProperties
     real(kind=dbl), dimension(nstokes,nstokes,nummu,2) :: extinct_matrix_hydro
     real(kind=dbl), dimension(nstokes,nummu,2) :: emis_vector_hydro
     real(kind=dbl), dimension(radar_nfft_aliased) :: radar_spec_hydro
-    real(kind=dbl), dimension(nbin) :: particle_density
+    real(kind=dbl), dimension(nbin) :: num_density
     real(kind=dbl), dimension(radar_npol) :: back_hydro
     real(kind=dbl), dimension(radar_npol,radar_nfft_aliased) :: back_spec_dia
     real(kind=dbl), dimension(radar_nfft_aliased) :: back_spec_mie
+    real(kind=dbl), dimension(radar_nfft_aliased) :: back_spec_rg
     real(kind=dbl), allocatable, dimension(:) :: as_ratio_list, canting_list
     real(kind=dbl) :: kext_hydro
     real(kind=dbl) :: salb_hydro
     real(kind=dbl) :: back_hydro_mie
+    real(kind=dbl) :: back_hydro_rg
     real(kind=dbl) :: refre
     real(kind=dbl) :: refim
     real(kind=dbl) :: absind
     real(kind=dbl) :: abscof
-      
+    real(kind=dbl) :: rg_kappa
+    real(kind=dbl) :: rg_beta
+    real(kind=dbl) :: rg_gamma
+
+    character(30) :: tokenized(3)
+
+    integer(kind=long) :: pos1, pos2, nn 
+
     complex(kind=dbl) :: refIndex  
 
     integer :: nlegen_coef_hydro
@@ -194,7 +206,7 @@ module scatProperties
     nlegen_coef_hydro     = 0
 
     !normalize particle density
-    particle_density = n_ds / delta_d_ds
+    num_density = n_ds / delta_d_ds
     
     
     !get the refractive index
@@ -217,10 +229,8 @@ module scatProperties
       end if
       refIndex = refre-Im*refim  ! mimicking a
 
-!!!!modern RT4 routines !!!
-    if (scat_name == "tmatrix") then
-    
-      !some fixed settings for Tmatrix
+
+      !some fixed settings for Tmatrix and rg
       allocate(as_ratio_list(nbin))
       allocate(canting_list(nbin))
       if (hydro_fullSpec) then
@@ -235,7 +245,9 @@ module scatProperties
       where (isnan(canting_list)) canting_list = 0.d0
       where (as_ratio_list < 0) as_ratio_list = 0.d0
       where (isnan(as_ratio_list)) as_ratio_list = 0.d0
-
+!!!!modern RT4 routines !!!
+    if (TRIM(scat_name) == "tmatrix") then
+    
       call calc_tmatrix(err,&
         freq*1.d9,&
         refIndex,&
@@ -243,7 +255,7 @@ module scatProperties
         nbin,&
         diameter2scat, &
         delta_d_ds, &
-        particle_density,&
+        num_density,&
         density2scat,&
         as_ratio_list,& 
         canting_list, &
@@ -324,10 +336,151 @@ module scatProperties
 !            + scatter_matrix_hydro(2,16,1,16,2) &
 !            - scatter_matrix_hydro(2,16,2,16,2) ) /2.d0
 
+! rayleigh gans only for active!
+    else if (scat_name(:16) == "ss-rayleigh-gans") then
+
+
+      if (len(TRIM(scat_name)) > 16) then
+        pos1 = 1
+        nn = 0
+        DO
+          pos2 = INDEX(scat_name(pos1:), "_")
+          IF (pos2 == 0) THEN
+            nn = nn + 1
+            tokenized(nn) = scat_name(pos1:)
+            EXIT
+          END IF
+          nn = nn + 1
+          tokenized(nn) = scat_name(pos1:pos1+pos2-2)
+          pos1 = pos2+pos1
+        END DO
+        read(tokenized(2),*) rg_kappa
+        read(tokenized(3),*) rg_beta
+      else
+        !take default values for aggregates of bullet rosettes or columns from Hogan and Westbrook 2014
+        rg_kappa = 0.19d0
+        rg_beta = 0.23d0
+      end if
+      rg_gamma = 5.d0/3.d0 
+
+      if (verbose >= 5) print*,scat_name,  rg_gamma, rg_kappa, rg_beta
+
+      call calc_self_similar_rayleigh_gans(err,&
+            freq*1d9,&
+            liq_ice, &
+            nbin,&
+            diameter2scat,&
+            delta_d_ds, &
+            num_density,&
+            mass_ds, &
+            as_ratio_list, &
+            canting_list, &
+            refre, &
+            refim, & !positive(?)
+      rg_kappa, &
+      rg_beta, &
+      rg_gamma, &
+!OUT
+      back_spec_rg, &
+      back_hydro_rg )
+
+      kext_hydro = 0.d0
+      salb_hydro = 0.d0
+
+      if (allocated(as_ratio_list)) deallocate(as_ratio_list)
+      if (allocated(canting_list)) deallocate(canting_list)
+
+      ! for mie polarisatuion does not matter
+      do i_p=1, radar_npol
+        back_spec_dia(i_p,:) = back_spec_rg(:)
+        back_hydro(i_p) = back_hydro_rg
+      end do
+
+      if (err /= 0) then
+          msg = 'error in calc_self_similar_rayleigh_gans!'
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+      end if        
+
+! rayleigh gans only for active!
+    else if (TRIM(scat_name) == "rayleigh-gans") then
+
+      call calc_rayleigh_gans(err,&
+            freq*1d9,&
+            liq_ice, &
+            nbin,&
+            diameter2scat,&
+            delta_d_ds, &
+            num_density,&
+            density2scat, &
+            as_ratio_list, &
+            canting_list, &
+            refre, &
+            refim, & !positive(?)
+!OUT
+      back_spec_rg, &
+      back_hydro_rg )
+
+      kext_hydro = 0.d0
+      salb_hydro = 0.d0
+
+      if (allocated(as_ratio_list)) deallocate(as_ratio_list)
+      if (allocated(canting_list)) deallocate(canting_list)
+
+      ! for mie polarisatuion does not matter
+      do i_p=1, radar_npol
+        back_spec_dia(i_p,:) = back_spec_rg(:)
+        back_hydro(i_p) = back_hydro_rg
+      end do
+
+      if (err /= 0) then
+          msg = 'error in calc_rayleigh_gans!'
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+      end if        
+
+! pure rayleigh d**6 only for active!
+    else if (TRIM(scat_name) == "rayleigh") then
+
+      call calc_rayleigh(err,&
+            freq*1d9,&
+            liq_ice, &
+            nbin,&
+            diameter2scat,&
+            delta_d_ds, &
+            num_density,&
+            density2scat, &
+            refre, &
+            refim, & !positive(?)
+!OUT
+      back_spec_rg, &
+      back_hydro_rg )
+      
+      kext_hydro = 0.d0
+      salb_hydro = 0.d0
+
+      if (allocated(as_ratio_list)) deallocate(as_ratio_list)
+      if (allocated(canting_list)) deallocate(canting_list)
+
+      ! for mie polarisatuion does not matter
+      do i_p=1, radar_npol
+        back_spec_dia(i_p,:) = back_spec_rg(:)
+        back_hydro(i_p) = back_hydro_rg
+      end do
+
+      if (err /= 0) then
+          msg = 'error in calc_rayleigh!'
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+      end if    
+
 
 !!!!old style RT3 routines !!!
 
-    else if (scat_name == "mie-sphere") then
+    else if (TRIM(scat_name) == "mie-sphere") then
 
       call calc_mie_spheres(err,&
             freq*1d9,&
@@ -336,7 +489,7 @@ module scatProperties
             nbin,&
             diameter2scat,&
             delta_d_ds, &
-            particle_density,&
+            num_density,&
             density2scat, &
             refre, &
             refim, & !positive(?)

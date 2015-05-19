@@ -94,6 +94,7 @@ OBJECTS=kinds.o \
 	make_soft_spheroid.o \
 	check_print.o \
 	tmatrix.o \
+	rayleigh_gans.o \
 	scatProperties.o \
 	hydrometeor_extinction.o \
 	scatcnv.o \

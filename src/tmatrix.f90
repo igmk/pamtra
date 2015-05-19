@@ -37,7 +37,7 @@ module tmatrix
       !       nbins           integer no of bins
       !       dmax            dbl (nbins)  dmax [m]
       !       del_d           width of dmax bins [m]    
-      !       ndens           number density (not normed) [1/m³]
+      !       ndens           number density (normed) [1/m4]
       !       density         dbl (nbins) density of softspheres
       !       as_ratio        double  aspect ratio
       !       canting        double  canting angle (deg) -> beta in tmatrix code
@@ -132,7 +132,7 @@ character(len=nstokes*nummu*28) :: emis_vector_str
           "sum(ndens) must be greater zero")    
       call assert_false(err,(any(isnan(density)) .or. any(density < 0.d0)),&
 	  "nan or negative density")
-      call assert_false(err,any(isnan(as_ratio)) .or. any(as_ratio < 0.d0),&
+      call assert_false(err,any(isnan(as_ratio)) .or. any(as_ratio <= 0.d0),&
           "nan or negative as_ratio")
       call assert_false(err,any(isnan(canting)) .or. any(canting < 0.d0),&
           "nan or negative canting")
