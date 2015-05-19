@@ -304,7 +304,7 @@ subroutine make_dist_params(errorstatus)
       alf = 10.0d0**hlp
       bet = mmb(1)      +mmb(2)*ztc      +mmb(3)*nn       +mmb(4)*ztc*nn+mmb(5)*ztc**2 &
           + mmb(6)*nn**2+mmb(7)*ztc**2*nn+mmb(8)*ztc*nn**2+mmb(9)*ztc**3+mmb(10)*nn**3
-      m2s = q_h / 0.038d0 ! 0.038 = Formfactor in the mass-size relation of snow particles [kg/m^2]
+      m2s = q_h / a_ms ! Formfactor in the mass-size relation of snow particles [kg/m^2] (COSMO value =0.038)
       m3s = alf*EXP(bet*LOG(m2s))
       hlp  =  7.628d6 * EXP(-0.107d0*ztc) ! N0snow as a function of solely T
       n_0 = 13.5 * m2s**4 / m3s**3       ! N0snow as a function of T and snow mixing ratio
