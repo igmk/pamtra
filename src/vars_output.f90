@@ -22,15 +22,15 @@ module vars_output
 
   !for active 
   real(kind=dbl), allocatable, dimension(:,:,:) :: out_radar_hgt
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_Ze
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: out_Ze
   real(kind=dbl), allocatable, dimension(:,:,:,:) :: out_att_atmo
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_att_hydro
   real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: out_radar_spectra
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:) ::    out_radar_snr
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) ::    out_radar_moments
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) ::    out_radar_slopes
-  real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) ::    out_radar_edges
-  integer, allocatable, dimension(:,:,:,:,:) ::    out_radar_quality
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) ::    out_radar_snr
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:,:,:) ::    out_radar_moments
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:,:,:) ::    out_radar_slopes
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:,:,:) ::    out_radar_edges
+  integer, allocatable, dimension(:,:,:,:,:,:) ::    out_radar_quality
   real(kind=dbl), allocatable, dimension(:) :: out_radar_vel
 
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_d
@@ -68,7 +68,8 @@ module vars_output
       nfrq,&
       nummu,&
       noutlevels, &
-      radar_nfft
+      radar_nfft, &
+      radar_nPeaks
 
     use mod_io_strings
     use descriptor_file, only: n_hydro, nbin_arr
@@ -136,7 +137,7 @@ module vars_output
     end if
 
     if (active) then
-        allocate(out_Ze(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,radar_npol))
+        allocate(out_Ze(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,radar_npol,radar_nPeaks))
         allocate(out_att_hydro(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,att_npol))
         allocate(out_att_atmo(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq))
         allocate(out_radar_hgt(atmo_ngridx,atmo_ngridy,no_allocated_lyrs))
@@ -150,11 +151,11 @@ module vars_output
     if((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments")))  then
         allocate(&
         out_radar_spectra(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,radar_npol,radar_nfft),&
-        out_radar_snr(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,radar_npol),&
-        out_radar_moments(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,radar_npol,4),&
-        out_radar_slopes(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,radar_npol,2),&
-        out_radar_edges(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,radar_npol,2),&
-        out_radar_quality(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,radar_npol),&
+        out_radar_snr(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,radar_npol,radar_nPeaks),&
+        out_radar_moments(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,radar_npol,radar_nPeaks,4),&
+        out_radar_slopes(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,radar_npol,radar_nPeaks,2),&
+        out_radar_edges(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,radar_npol,radar_nPeaks,2),&
+        out_radar_quality(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,radar_npol,radar_nPeaks),&
         out_radar_vel(radar_nfft))
         !set to -9999, because height of profiles can vary!
         out_radar_spectra = -9999.d0

@@ -17,6 +17,7 @@ subroutine parse_options(gitVersion,gitHash)
     opts(2) = option_s( "profile", .true.,  'p' )
     opts(3) = option_s( "descriptor", .true.,  'd' )    
 !     opts(4) = option_s( "grid", .true.,  'g' )
+    opts(4) = option_s( "output", .true., 'o' )
     opts(5) = option_s( "freqs", .true., 'f' )
     opts(6) = option_s( "verbose", .true., 'v' )
     opts(7) = option_s( "help", .false., 'h' )
@@ -31,7 +32,7 @@ subroutine parse_options(gitVersion,gitHash)
     descriptor_file_name = "descriptor_file.txt"
     
     do
-        select case( getopt( "n:cp:cd:cg:cf:cv:ch", opts ))
+        select case( getopt( "n:cp:cd:co:cf:cv:ch", opts ))
             case( char(0))
                 exit
             case( 'n' )

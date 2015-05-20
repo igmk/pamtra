@@ -61,8 +61,7 @@ print "##########################"
 try:os.remove("../output/example_input_035.5000.nc")
 except: pass
 
-os.system("cd .. && ./pamtra -f 35.5 -d descriptorfiles/descriptor_file_COSMO_1mom.txt -p profile/example_input.lev -n examples/pamtra_vs_pyPamtra.nml")
-
+os.system("cd ../bin && ./pamtra -f 35.5 -d ../descriptorfiles/descriptor_file_COSMO_1mom.txt -p ../profile/example_input.lev -n ../examples/pamtra_vs_pyPamtra.nml -o ../output")
 ncData = netCDF4.Dataset("../output/example_input_035.5000.nc")
 Ze = np.ma.masked_equal(ncData.variables["Ze"],-9999).ravel()
 
@@ -78,7 +77,7 @@ ncData.close()
 
 print "##########################"
 
-os.system("cd .. && ./pamtra -f 35.5 -d descriptorfiles/descriptor_file_COSMO_1mom.txt -p profile/example_input.lay -n examples/pamtra_vs_pyPamtra.nml")
+os.system("cd ../bin && ./pamtra -f 35.5 -d ../descriptorfiles/descriptor_file_COSMO_1mom.txt -p ../profile/example_input.lay -n ../examples/pamtra_vs_pyPamtra.nml -o ../output")
 ncData = netCDF4.Dataset("../output/example_input_035.5000.nc")
 Ze = np.ma.masked_equal(ncData.variables["Ze"],-9999).ravel()
 

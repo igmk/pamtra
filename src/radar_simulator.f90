@@ -27,7 +27,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
       out_debug_radarback_wturb, &
       out_debug_radarback_wturb_wnoise
     use report_module
-    use vars_index, only: i_x,i_y, i_z, i_f, i_p
+    use vars_index, only: i_x,i_y, i_z, i_f, i_p, i_n
 
     implicit none
   
@@ -85,7 +85,9 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
 
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
     err = 0
-    
+
+    call assert_true(err,(radar_nPeaks == 1),&
+        "only radar_nPeaks=1 allowed as of today")    
     call assert_false(err,(ANY(ISNAN(particle_spectrum))),&
         "got nan in values in backscattering spectrum")
     call assert_false(err,(ANY(ISNAN(back)) .or. ANY(back < 0.d0)),&
@@ -96,6 +98,8 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
       call report(errorstatus, msg, nameOfRoutine)
       return
     end if   
+     
+    i_n = 1 ! only radar_nPeaks=1 implemented as of today
      
     if (verbose >= 10)print*, "particle_spectrum"
     if (verbose >= 10)print*, particle_spectrum
@@ -143,11 +147,11 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
 
       if (radar_mode == "simple") then
           if (Ze_back .eq. 0.d0) then
-            out_Ze(i_x,i_y,i_z,i_f,i_p) = -9999.d0
+            out_Ze(i_x,i_y,i_z,i_f,i_p,i_n) = -9999.d0
           else 
-            out_Ze(i_x,i_y,i_z,i_f,i_p) = 10*log10(Ze_back)
+            out_Ze(i_x,i_y,i_z,i_f,i_p,i_n) = 10*log10(Ze_back)
           end if
-        if (verbose >= 3) print*, "i_x,i_y,i_z,i_f,out_Ze", i_x,i_y,i_z,i_f,out_Ze(i_x,i_y,i_z,i_f,i_p)
+        if (verbose >= 3) print*, "i_x,i_y,i_z,i_f,out_Ze", i_x,i_y,i_z,i_f,out_Ze(i_x,i_y,i_z,i_f,i_p,i_n)
 
       else if ((radar_mode == "moments") .or. (radar_mode == "spectrum")) then
           !calculate the noise level depending on range:
@@ -158,7 +162,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
             if (verbose >= 3) print*, "took radar noise from nml file", 10*log10(radar_Pnoise), &
                 radar_Pnoise0, out_radar_hgt(i_x,i_y,i_z)
           else
-            ! take the one from teh atmo files
+            ! take the one from the atmo files
             radar_Pnoise = 10**(0.1*atmo_radar_prop(i_x,i_y,1)) * &
               (out_radar_hgt(i_x,i_y,i_z)/1000.)**2 
             if (verbose >= 3) print*, "took radar noise from atmo array", 10*log10(radar_Pnoise), &
@@ -391,7 +395,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
             return
         end if   
           if (verbose >= 4) then
-              print*,"TOTAL"," Ze moments log ",10*log10(moments(0,1)), "lin ", moments(0,1)
+              print*,"TOTAL"," Ze moments log ",10*log10(moments(0,i_n)), "lin ", moments(0,i_n)
               print*,"#####################"
           end if
 
@@ -416,16 +420,16 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
               print*,out_radar_spectra(i_x,i_y,i_z,i_f,i_p,:)
               print*,"#####################"
           end if
-          out_radar_snr(i_x,i_y,i_z,i_f,i_p) = SNR
+          out_radar_snr(i_x,i_y,i_z,i_f,i_p,i_n) = SNR
           out_radar_vel(:) = spectra_velo(:)
-          out_radar_moments(i_x,i_y,i_z,i_f,i_p,:) = moments(1:4,1)
-          out_radar_slopes(i_x,i_y,i_z,i_f,i_p,:) = slope(:,1)
-          out_radar_edges(i_x,i_y,i_z,i_f,i_p,:) = edge(:,1)
-          out_radar_quality(i_x,i_y,i_z,i_f,i_p) = quailty_aliasing + quality_moments
+          out_radar_moments(i_x,i_y,i_z,i_f,i_p,i_n,:) = moments(1:4,i_n)
+          out_radar_slopes(i_x,i_y,i_z,i_f,i_p,i_n,:) = slope(:,i_n)
+          out_radar_edges(i_x,i_y,i_z,i_f,i_p,i_n,:) = edge(:,i_n)
+          out_radar_quality(i_x,i_y,i_z,i_f,i_p,i_n) = quailty_aliasing + quality_moments
 
-          moments(0,1) = 10*log10(moments(0,1))
-          IF (ISNAN(moments(0,1))) moments(0,1) = -9999.d0
-          out_Ze(i_x,i_y,i_z,i_f,i_p) = moments(0,1)
+          moments(0,i_n) = 10*log10(moments(0,i_n))
+          IF (ISNAN(moments(0,i_n))) moments(0,i_n) = -9999.d0
+          out_Ze(i_x,i_y,i_z,i_f,i_p,i_n) = moments(0,i_n)
 
           if (allocated(turb_spectra)) deallocate(turb_spectra)
       else

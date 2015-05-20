@@ -67,3 +67,4 @@ radar_nPeaks = 1
 radar_smooth_spectrum = .true.
 ! "bottom-up" or "top-down"
 radar_attenuation = "disabled" 
+/
