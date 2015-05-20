@@ -16,7 +16,7 @@ Contents:
    :maxdepth: 2
 
    installation
-   physicalBasis
+   physicalBasics
    descriptorFile
    settings
    pamtra
