@@ -13,7 +13,7 @@ class pamDescriptorFile(object):
          
   def __init__(self,parent):
     self.names = np.array(["hydro_name", "as_ratio", "liq_ice", "rho_ms", "a_ms", "b_ms", "alpha_as", "beta_as", "moment_in", "nbin", "dist_name", "p_1", "p_2", "p_3", "p_4", "d_1", "d_2", "scat_name", "vel_size_mod","canting"])
-    self.types = ["S15",float,int,float,float,float,float,float,int,int,"S15",float,float,float,float,float,float, "S15", "S30",float]  
+    self.types = ["S15",float,int,float,float,float,float,float,int,int,"S15",float,float,float,float,float,float, "S30", "S30",float]  
     self.data = np.recarray((0,),dtype=zip(self.names, self.types))
     self.data4D = dict()
     self.nhydro = 0

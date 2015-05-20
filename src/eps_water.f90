@@ -59,9 +59,10 @@ module eps_water
       return
     endif
 
-
+    if (verbose >= 10) print*, "K2, s,T,f", abs((eps_water-1)/(eps_water+2))**2, liq_mod, s,T,f
     if (verbose >= 4) call report(info,'End of ', nameOfRoutine)    
-
+    
+    return
   end subroutine get_eps_water
 
   !! refractive index

@@ -116,8 +116,8 @@ subroutine hydrometeor_extinction(errorstatus)
       !these ones are fore sure 1D
       hydro_name = hydro_name_arr(i_h)
       liq_ice    = liq_ice_arr(i_h)
-      scat_name  = scat_name_arr(i_h)
-      vel_size_mod  = vel_size_mod_arr(i_h)
+      scat_name  = TRIM(scat_name_arr(i_h))
+      vel_size_mod  = TRIM(vel_size_mod_arr(i_h))
       !shortcut if the full spectrum is provided
       if (hydro_fullSpec) then
 

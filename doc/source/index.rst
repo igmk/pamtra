@@ -18,6 +18,7 @@ Contents:
    installation
    physicalBasics
    descriptorFile
+   inputFile
    settings
    pamtra
    pyPamtra
