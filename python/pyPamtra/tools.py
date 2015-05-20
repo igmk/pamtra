@@ -4,6 +4,7 @@ from __future__ import division
 import numpy as np
 import traceback
 import warnings
+import sys
 
 try: 
   import paramiko 

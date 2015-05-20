@@ -2,7 +2,7 @@ module mie_spheres
 
   use kinds
   use constants, only: pi,c, Im
-  use settings, only: lphase_flag, maxnleg
+  use settings, only: lphase_flag, maxnleg, lhyd_absorption
   use report_module
   use mie_scat_utlities  
   use vars_index, only: i_x,i_y, i_z, i_h
@@ -240,8 +240,13 @@ module mie_spheres
 
     if (verbose >= 4) print*, "ntot", n_tot
 
-
-    extinction = sumqe 
+        
+        
+    if (lhyd_absorption) then
+        extinction = sumqe 
+    else
+        extinction = sumqe - sumqs !remove scattering from extinction
+    end if
     scatter = sumqs 
     back_scatt = sumqback 
     albedo = scatter / extinction 
@@ -260,11 +265,6 @@ module mie_spheres
       sump3 (i) = tmp * sump3 (i) * wts (i) 
       sump4 (i) = tmp * sump4 (i) * wts (i) 
     end do
-
-
-
-
-
 
     !           integrate the angular scattering functions times legendre   
     !             polynomials to find the legendre coefficients             

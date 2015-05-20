@@ -30,7 +30,10 @@ subroutine hydrometeor_extinction(errorstatus)
       nstokes, &
       nummu, &
       radar_attenuation, &
-      hydro_includeHydroInRhoAir
+      hydro_includeHydroInRhoAir, &
+      lhyd_scattering, &
+      lhyd_emission, &
+      lhyd_absorption
   use constants
   use descriptor_file
   use drop_size_dist
@@ -331,6 +334,10 @@ subroutine hydrometeor_extinction(errorstatus)
       rt_emisvec(i_z,:,:,:) = rt_emisvec(i_z,:,:,:) + emis_vector_scatcnv
     end if
 
+    if (.not. lhyd_scattering) rt_scattermatrix(i_z,:,:,:,:,:) = 0.d0
+    if (.not. lhyd_emission) rt_emisvec(i_z,:,:,:) = 0.d0
+    
+    
     if (active .and. rt_hydros_present(i_z)) then
       call radar_simulator(err,radar_spec, rt_back(i_z,:), rt_kexttot(i_z),&
 	atmo_delta_hgt_lev(i_x,i_y,i_z))

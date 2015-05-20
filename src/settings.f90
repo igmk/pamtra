@@ -62,7 +62,9 @@ module settings
     logical :: in_python !are we in python
 
     logical :: lgas_extinction, &    ! gas extinction desired
-    lhyd_extinction, &    ! hydrometeor extinction desired
+    lhyd_absorption, &    ! hydrometeor extinction desired
+    lhyd_scattering, &    ! hydrometeor scattering desired
+    lhyd_emission, &    ! hydrometeor emission desired
     write_nc, &  ! write netcdf or ascii output
     active, &  	   ! calculate active stuff
     passive, &     ! calculate passive stuff (with RT4)
@@ -78,6 +80,7 @@ module settings
     hydro_limit_density_area, &
     hydro_adaptive_grid, & ! apply an adaptive grid to the psd. good to reduce mass overestimations for small amounts. works only for modified gamma
     add_obs_height_to_layer
+    
 
     character(3) :: gas_mod
     character(3) :: liq_mod
@@ -140,8 +143,10 @@ contains
         salinity, &
         emissivity, &
         lgas_extinction, &
+        lhyd_absorption, &
+        lhyd_scattering, &   
+        lhyd_emission, &    
         gas_mod, &
-        lhyd_extinction, &
         hydro_fullSpec, &
         hydro_limit_density_area,&
         hydro_softsphere_min_density, &
@@ -340,7 +345,9 @@ contains
         emissivity=0.6
         lgas_extinction=.true.
         gas_mod='R98'
-        lhyd_extinction=.true.
+        lhyd_absorption=.true.
+        lhyd_scattering=.true.
+        lhyd_emission=.true.
         hydro_includeHydroInRhoAir = .true.
         hydro_fullSpec = .false.
         hydro_limit_density_area = .true.
@@ -440,7 +447,9 @@ contains
       print*, 'active: ', active
       print*, 'radar_max_v: ', radar_max_v
       print*, 'radar_save_noise_corrected_spectra: ', radar_save_noise_corrected_spectra
-      print*, 'lhyd_extinction: ', lhyd_extinction
+      print*, 'lhyd_absorption: ', lhyd_absorption
+      print*, 'lhyd_emission: ', lhyd_emission
+      print*, 'lhyd_scattering: ', lhyd_scattering
       print*, 'radar_k2: ', radar_k2
       print*, 'radar_nPeaks', radar_nPeaks
       print*, 'salinity: ', salinity

@@ -2,7 +2,8 @@ module tmatrix
   use kinds
   use constants, only: pi, c
   use settings, only: nummu, nstokes, verbose, active, passive, &
-    tmatrix_db, tmatrix_db_path, radar_npol, radar_pol, liq_mod
+    tmatrix_db, tmatrix_db_path, radar_npol, radar_pol, liq_mod, &
+    lhyd_absorption
   use rt_utilities, only: lobatto_quadrature
   use report_module
 
@@ -122,6 +123,8 @@ character(len=nstokes*nummu*28) :: emis_vector_str
 	  "nan ref_index")
       call assert_true(err,(nbins>0),&
 	  "nbins>0")
+      call assert_true(err,(lhyd_absorption),&
+	  "lhyd_absorption must be true for tmatrix, false has yet to be implemented")
       call assert_false(err,(any(isnan(dmax)) .or. any(dmax <= 0.d0)),&
 	  "nan or negative dmax")
       call assert_false(err,(any(isnan(del_d)) .or. any(del_d <= 0.d0)),&

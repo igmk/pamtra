@@ -127,14 +127,8 @@ subroutine run_rt(errorstatus)
 
     if (verbose >= 2) print*, i_x,i_y, 'Gas absorption calculated'
 
-    ! hydrometeor extinction desired
-    if (lhyd_extinction) then
-    
-!       call hydrometeor_extinction_rt4(err,freq,i_x,i_y,i_f)!hier i_x, i_y
-            call hydrometeor_extinction(err)!hier i_x, i_y
+    call hydrometeor_extinction(err)!hier i_x, i_y
 
-    end if    
-    
       if (err == 2) then
 	msg = 'Error in run_drop_size_dist'
 	call report(err, msg, nameOfRoutine)

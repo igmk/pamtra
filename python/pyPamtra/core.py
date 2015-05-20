@@ -66,7 +66,9 @@ class pyPamtra(object):
     self.nmlSet["emissivity"]= 0.6
     self.nmlSet["lgas_extinction"]= True
     self.nmlSet["gas_mod"]= 'R98'
-    self.nmlSet["lhyd_extinction"]= True
+    self.nmlSet["lhyd_absorption"]= True
+    self.nmlSet["lhyd_scattering"]= True
+    self.nmlSet["lhyd_emission"]= True
     self.nmlSet["liq_mod"]= "Ell"
     self.nmlSet["hydro_includehydroinrhoair"] = True
     self.nmlSet["hydro_fullspec"] = False
