@@ -1,196 +1,196 @@
-SUBROUTINE LAMBERT_SURFACE (NSTOKES, NUMMU, MODE, MU_VALUES,      &
-     QUAD_WEIGHTS, GROUND_ALBEDO, REFLECT, TRANS, SOURCE)              
-  !      LAMBERT_SURFACE makes the reflection matrix for a Lambertian  
-  !      surface with albedo (GROUND_ALBEDO).  Also makes the diagonal    
+subroutine lambert_surface (nstokes, nummu, mode, mu_values,      &
+     quad_weights, ground_albedo, reflect, trans, source)              
+  !      lambert_surface makes the reflection matrix for a lambertian  
+  !      surface with albedo (ground_albedo).  also makes the diagonal    
   !      transmission and zero source function.                           
-  !     Input:
-  !         NSTOKES         number of Stokes components 
-  !         NUMU            number of zenith angles
-  !         MODE            Order of Fourier azimuth series:     
+  !     input:
+  !         nstokes         number of stokes components 
+  !         numu            number of zenith angles
+  !         mode            order of fourier azimuth series:     
   !                          0 is azimuthially symmetric case. 
-  !         MU_VALUES       zenith angles
-  !         QUAD_WEIGHTS    Weights of the selected quadrature
-  !         GROUND_ALBEDO   surface albedo
+  !         mu_values       zenith angles
+  !         quad_weights    weights of the selected quadrature
+  !         ground_albedo   surface albedo
   !
-  !     Output:
-  !         REFLECT         reflection matrix
-  !         TRANS           diagonal transmission matrix
-  !         SOURCE          zero source function
+  !     output:
+  !         reflect         reflection matrix
+  !         trans           diagonal transmission matrix
+  !         source          zero source function
 
   use kinds
-  INTEGER NSTOKES, NUMMU, MODE 
-  REAL(kind=dbl) MU_VALUES (NUMMU), QUAD_WEIGHTS (NUMMU) 
-  REAL(kind=dbl) GROUND_ALBEDO 
-  REAL(kind=dbl) REFLECT (NSTOKES, NUMMU, NSTOKES, NUMMU, 2) 
-  REAL(kind=dbl) TRANS (NSTOKES, NUMMU, NSTOKES, NUMMU, 2) 
-  REAL(kind=dbl) SOURCE (NSTOKES, NUMMU, 2) 
-  INTEGER J1, J2, N 
+  integer nstokes, nummu, mode 
+  real(kind=dbl) mu_values (nummu), quad_weights (nummu) 
+  real(kind=dbl) ground_albedo 
+  real(kind=dbl) reflect (nstokes, nummu, nstokes, nummu, 2) 
+  real(kind=dbl) trans (nstokes, nummu, nstokes, nummu, 2) 
+  real(kind=dbl) source (nstokes, nummu, 2) 
+  integer j1, j2, n 
 
 
-  N = NSTOKES * NUMMU 
-  CALL MZERO (2 * N, N, REFLECT) 
-  CALL MZERO (2 * N, 1, SOURCE) 
-  CALL MIDENTITY (N, TRANS (1, 1, 1, 1, 1) ) 
-  CALL MIDENTITY (N, TRANS (1, 1, 1, 1, 2) ) 
-  !           The Lambertian ground reflects the flux equally in all directions
+  n = nstokes * nummu 
+  call mzero (2 * n, n, reflect) 
+  call mzero (2 * n, 1, source) 
+  call midentity (n, trans (1, 1, 1, 1, 1) ) 
+  call midentity (n, trans (1, 1, 1, 1, 2) ) 
+  !           the lambertian ground reflects the flux equally in all directions
   !             and completely unpolarizes the radiation                  
-  IF (MODE.EQ.0) THEN 
-     DO J1 = 1, NUMMU 
-        DO J2 = 1, NUMMU 
-           REFLECT (1, J1, 1, J2, 2) = 2.0 * GROUND_ALBEDO * MU_VALUES (  &
-                J2) * QUAD_WEIGHTS (J2)                                        
-        ENDDO
-     ENDDO
-  ENDIF
+  if (mode.eq.0) then 
+     do j1 = 1, nummu 
+        do j2 = 1, nummu 
+           reflect (1, j1, 1, j2, 2) = 2.0 * ground_albedo * mu_values (  &
+                j2) * quad_weights (j2)                                        
+        enddo
+     enddo
+  endif
 
-  RETURN 
-END SUBROUTINE LAMBERT_SURFACE
+  return 
+end subroutine lambert_surface
 
 
-SUBROUTINE LAMBERT_RADIANCE (NSTOKES, NUMMU, MODE, &
-     GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH,RADIANCE)
-  !        LAMBERT_RADIANCE calculates the ground radiance of a Lambertian
-  !      surface.  The radiance is due to thermal radiation.
+subroutine lambert_radiance (nstokes, nummu, mode, &
+     ground_albedo, ground_temp, wavelength,radiance)
+  !        lambert_radiance calculates the ground radiance of a lambertian
+  !      surface.  the radiance is due to thermal radiation.
   use kinds
   use rt_utilities, only: planck_function
-  INTEGER NSTOKES, NUMMU, MODE
-  REAL(kind=dbl) GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH 
-  REAL(kind=dbl) RADIANCE (NSTOKES, NUMMU) 
-  INTEGER J, N 
-  REAL(kind=dbl) :: THERMAL, PLANCK, PI
-  PARAMETER (PI = 3.1415926535897932384D0) 
+  integer nstokes, nummu, mode
+  real(kind=dbl) ground_albedo, ground_temp, wavelength 
+  real(kind=dbl) radiance (nstokes, nummu) 
+  integer j, n 
+  real(kind=dbl) :: thermal, planck, pi
+  parameter (pi = 3.1415926535897932384d0) 
 
-  N = NSTOKES * NUMMU 
-  CALL MZERO (N, 1, RADIANCE) 
-  IF (MODE.EQ.0) THEN 
-     !           Thermal radiation going up                                  
-    CALL PLANCK_FUNCTION (GROUND_TEMP, 'R', WAVELENGTH, PLANCK)
-    THERMAL = (1.0 - GROUND_ALBEDO) * PLANCK
-    DO J = 1, NUMMU
-       RADIANCE (1, J) = THERMAL
-    ENDDO
-  ENDIF
+  n = nstokes * nummu 
+  call mzero (n, 1, radiance) 
+  if (mode.eq.0) then 
+     !           thermal radiation going up                                  
+    call planck_function (ground_temp, 'r', wavelength, planck)
+    thermal = (1.0 - ground_albedo) * planck
+    do j = 1, nummu
+       radiance (1, j) = thermal
+    enddo
+  endif
 
-  RETURN 
-END SUBROUTINE LAMBERT_RADIANCE
+  return 
+end subroutine lambert_radiance
 
 
-SUBROUTINE FRESNEL_SURFACE (NSTOKES, NUMMU, MU_VALUES, INDEX,REFLECT, TRANS, SOURCE)
-  !         FRESNEL_REFLECT makes the reflection matrix for a             
-  !      plane surface with index of refraction (INDEX) using             
-  !      the Fresnel reflection formulae.  Also makes the diagonal        
+subroutine fresnel_surface (nstokes, nummu, mu_values, index,reflect, trans, source)
+  !         fresnel_reflect makes the reflection matrix for a             
+  !      plane surface with index of refraction (index) using             
+  !      the fresnel reflection formulae.  also makes the diagonal        
   !      transmission and zero source function.
 
   use kinds
-  INTEGER NSTOKES, NUMMU 
-  REAL(kind=dbl) MU_VALUES (NUMMU) 
-  REAL(kind=dbl) REFLECT (NSTOKES, NUMMU, NSTOKES, NUMMU, 2) 
-  REAL(kind=dbl) TRANS (NSTOKES, NUMMU, NSTOKES, NUMMU, 2) 
-  REAL(kind=dbl) SOURCE (NSTOKES, NUMMU, 2) 
-  COMPLEX(kind=dbl) INDEX 
-  INTEGER J, N 
-  REAL(kind=dbl) COSI, R1, R2, R3, R4 
-  COMPLEX(kind=dbl) EPSILON, D, RH, RV
+  integer nstokes, nummu 
+  real(kind=dbl) mu_values (nummu) 
+  real(kind=dbl) reflect (nstokes, nummu, nstokes, nummu, 2) 
+  real(kind=dbl) trans (nstokes, nummu, nstokes, nummu, 2) 
+  real(kind=dbl) source (nstokes, nummu, 2) 
+  complex(kind=dbl) index 
+  integer j, n 
+  real(kind=dbl) cosi, r1, r2, r3, r4 
+  complex(kind=dbl) epsilon, d, rh, rv
 
-  N = NSTOKES * NUMMU 
-  CALL MZERO (2 * N, N, REFLECT) 
-  CALL MZERO (2 * N, 1, SOURCE) 
-  CALL MIDENTITY (N, TRANS (1, 1, 1, 1, 1) ) 
-  CALL MIDENTITY (N, TRANS (1, 1, 1, 1, 2) ) 
-  EPSILON = INDEX**2
-  DO J = 1, NUMMU 
-     COSI = MU_VALUES (J) 
-     D = CDSQRT (EPSILON - 1.0D0 + COSI**2) 
-     RH = (COSI - D) / (COSI + D) 
-     RV = (EPSILON * COSI - D) / (EPSILON * COSI + D)
-     R1 = (cdABS(RV)**2+cdABS(RH)**2)/2.0D0
-     R2 = (cdABS(RV)**2-cdABS(RH)**2)/2.0D0
-     R3 = DREAL (RV * CONJG (RH) ) 
-     R4 = DIMAG (RV * CONJG (RH) )
-     REFLECT (1, J, 1, J, 2) = R1 
-     IF (NSTOKES.GT.1) THEN 
-        REFLECT (1, J, 2, J, 2) = R2 
-        REFLECT (2, J, 1, J, 2) = R2 
-        REFLECT (2, J, 2, J, 2) = R1 
-     ENDIF
-     IF (NSTOKES.GT.2) THEN 
-        REFLECT (3, J, 3, J, 2) = R3 
-     ENDIF
-     IF (NSTOKES.GT.3) THEN 
-        REFLECT (3, J, 4, J, 2) = - R4 
-        REFLECT (4, J, 3, J, 2) = R4 
-        REFLECT (4, J, 4, J, 2) = R3 
-     ENDIF
-     !         print*, cosi,R1,R2
-  ENDDO
+  n = nstokes * nummu 
+  call mzero (2 * n, n, reflect) 
+  call mzero (2 * n, 1, source) 
+  call midentity (n, trans (1, 1, 1, 1, 1) ) 
+  call midentity (n, trans (1, 1, 1, 1, 2) ) 
+  epsilon = index**2
+  do j = 1, nummu 
+     cosi = mu_values (j) 
+     d = cdsqrt (epsilon - 1.0d0 + cosi**2) 
+     rh = (cosi - d) / (cosi + d) 
+     rv = (epsilon * cosi - d) / (epsilon * cosi + d)
+     r1 = (cdabs(rv)**2+cdabs(rh)**2)/2.0d0
+     r2 = (cdabs(rv)**2-cdabs(rh)**2)/2.0d0
+     r3 = dreal (rv * conjg (rh) ) 
+     r4 = dimag (rv * conjg (rh) )
+     reflect (1, j, 1, j, 2) = r1 
+     if (nstokes.gt.1) then 
+        reflect (1, j, 2, j, 2) = r2 
+        reflect (2, j, 1, j, 2) = r2 
+        reflect (2, j, 2, j, 2) = r1 
+     endif
+     if (nstokes.gt.2) then 
+        reflect (3, j, 3, j, 2) = r3 
+     endif
+     if (nstokes.gt.3) then 
+        reflect (3, j, 4, j, 2) = - r4 
+        reflect (4, j, 3, j, 2) = r4 
+        reflect (4, j, 4, j, 2) = r3 
+     endif
+     !         print*, cosi,r1,r2
+  enddo
 
-  RETURN 
-END SUBROUTINE FRESNEL_SURFACE
+  return 
+end subroutine fresnel_surface
 
 
-SUBROUTINE FRESNEL_RADIANCE (NSTOKES, NUMMU, MODE, MU_VALUES,     &
-     INDEX, GROUND_TEMP, WAVELENGTH, RADIANCE)
-  !        FRESNEL_RADIANCE calculates the ground radiance of a plane     
-  !      surface using the Fresnel formulae.  The radiance is due only to 
+subroutine fresnel_radiance (nstokes, nummu, mode, mu_values,     &
+     index, ground_temp, wavelength, radiance)
+  !        fresnel_radiance calculates the ground radiance of a plane     
+  !      surface using the fresnel formulae.  the radiance is due only to 
   !      thermal radiation (this subroutine cannot do specular reflection)
   use kinds
   use rt_utilities, only: planck_function
-  INTEGER NSTOKES, NUMMU, MODE 
-  REAL(kind=dbl) GROUND_TEMP, WAVELENGTH, MU_VALUES (NUMMU) 
-  REAL(kind=dbl) RADIANCE (NSTOKES, NUMMU) 
-  COMPLEX(kind=dbl) INDEX 
-  INTEGER J, N 
-  REAL(kind=dbl) ZERO, PLANCK, COSI, R1, R2 
-  COMPLEX(kind=dbl) EPSILON, D, RH, RV 
-  PARAMETER (ZERO = 0.0D0) 
+  integer nstokes, nummu, mode 
+  real(kind=dbl) ground_temp, wavelength, mu_values (nummu) 
+  real(kind=dbl) radiance (nstokes, nummu) 
+  complex(kind=dbl) index 
+  integer j, n 
+  real(kind=dbl) zero, planck, cosi, r1, r2 
+  complex(kind=dbl) epsilon, d, rh, rv 
+  parameter (zero = 0.0d0) 
 
-  ! Thermal radiation going up                                  
-  N = NSTOKES * NUMMU 
-  CALL MZERO (N, 1, RADIANCE) 
-  IF (MODE.EQ.0) THEN 
-     CALL PLANCK_FUNCTION (GROUND_TEMP, 'R', WAVELENGTH, PLANCK) 
-     EPSILON = INDEX**2 
-     DO J = 1, NUMMU 
-        COSI = MU_VALUES (J) 
-        D = CDSQRT (EPSILON - 1.0D0 + COSI**2) 
-        RH = (COSI - D) / (COSI + D) 
-        RV = (EPSILON * COSI - D) / (EPSILON * COSI + D)
-        R1 = (cdABS(RV)**2+cdABS(RH)**2)/ 2.0D0
-        R2 = (cdABS(RV)**2-cdABS(RH)**2)/ 2.0D0
-        RADIANCE (1, J) = (1.0 - R1) * PLANCK 
-        IF (NSTOKES.GT.1) RADIANCE (2, J) = - R2 * PLANCK 
-     ENDDO
-  ENDIF
+  ! thermal radiation going up                                  
+  n = nstokes * nummu 
+  call mzero (n, 1, radiance) 
+  if (mode.eq.0) then 
+     call planck_function (ground_temp, 'r', wavelength, planck) 
+     epsilon = index**2 
+     do j = 1, nummu 
+        cosi = mu_values (j) 
+        d = cdsqrt (epsilon - 1.0d0 + cosi**2) 
+        rh = (cosi - d) / (cosi + d) 
+        rv = (epsilon * cosi - d) / (epsilon * cosi + d)
+        r1 = (cdabs(rv)**2+cdabs(rh)**2)/ 2.0d0
+        r2 = (cdabs(rv)**2-cdabs(rh)**2)/ 2.0d0
+        radiance (1, j) = (1.0 - r1) * planck 
+        if (nstokes.gt.1) radiance (2, j) = - r2 * planck 
+     enddo
+  endif
 
-  RETURN 
-END SUBROUTINE FRESNEL_RADIANCE
+  return 
+end subroutine fresnel_radiance
 
 
-SUBROUTINE THERMAL_RADIANCE(NSTOKES, NUMMU, MODE, TEMPERATURE,   &
-     ALBEDO, WAVELENGTH, RADIANCE)                                     
-  !        THERMAL_RADIANCE returns a polarized radiance vector for       
-  !      thermal emission at WAVELENGTH (microns) for a body with         
-  !      ALBEDO and with a TEMPERATURE (Kelvins).  The radiance is in     
-  !      the units:  Watts / (meter^2 ster micron).  The emission is      
-  !      isotropic and unpolarized: only the first term in azimuth Fourier
-  !      series is nonzero, and all MU terms are the same.                
+subroutine thermal_radiance(nstokes, nummu, mode, temperature,   &
+     albedo, wavelength, radiance)                                     
+  !        thermal_radiance returns a polarized radiance vector for       
+  !      thermal emission at wavelength (microns) for a body with         
+  !      albedo and with a temperature (kelvins).  the radiance is in     
+  !      the units:  watts / (meter^2 ster micron).  the emission is      
+  !      isotropic and unpolarized: only the first term in azimuth fourier
+  !      series is nonzero, and all mu terms are the same.                
   use kinds
   use rt_utilities, only: planck_function
-  INTEGER NSTOKES, NUMMU, MODE 
-  REAL(kind=dbl) TEMPERATURE, WAVELENGTH, ALBEDO 
-  REAL(kind=dbl) RADIANCE (NSTOKES, NUMMU, 2) 
-  INTEGER J, N 
-  REAL(kind=dbl) PLANCK, THERMAL 
+  integer nstokes, nummu, mode 
+  real(kind=dbl) temperature, wavelength, albedo 
+  real(kind=dbl) radiance (nstokes, nummu, 2) 
+  integer j, n 
+  real(kind=dbl) planck, thermal 
 
-  N = NSTOKES * NUMMU 
-  CALL MZERO (2 * N, 1, RADIANCE) 
-  IF (MODE.EQ.0) THEN 
-     CALL PLANCK_FUNCTION (TEMPERATURE, 'R', WAVELENGTH, PLANCK) 
-     THERMAL = (1.0 - ALBEDO) * PLANCK 
-     DO J = 1, NUMMU 
-        RADIANCE (1, J, 1) = THERMAL 
-        RADIANCE (1, J, 2) = THERMAL 
-     ENDDO
-  ENDIF
-  RETURN 
-END SUBROUTINE THERMAL_RADIANCE
+  n = nstokes * nummu 
+  call mzero (2 * n, 1, radiance) 
+  if (mode.eq.0) then 
+     call planck_function (temperature, 'r', wavelength, planck) 
+     thermal = (1.0 - albedo) * planck 
+     do j = 1, nummu 
+        radiance (1, j, 1) = thermal 
+        radiance (1, j, 2) = thermal 
+     enddo
+  endif
+  return 
+end subroutine thermal_radiance

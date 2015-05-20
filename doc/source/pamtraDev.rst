@@ -122,6 +122,9 @@ Subroutines
 parse_options
 ^^^^^^^^^^^^^^^^^^^^
 .. f:autosubroutine::  parse_options
+get_surface
+^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  get_surface
 run_rt
 ^^^^^^^^^^^^^^^^^^^^
 .. f:autosubroutine::  run_rt

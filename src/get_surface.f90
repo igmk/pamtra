@@ -1,11 +1,9 @@
 !+ <A one line description of this subroutine> 
 ! 
-subroutine get_surface &
-! 
-(errorstatus,freq, ground_temp, salinity, ground_albedo,ground_index,ground_type)
- 
+subroutine get_surface(errorstatus,freq, ground_temp, salinity, ground_albedo,ground_index,ground_type) 
     ! Description:
-    !   <Say what this routine does>
+    !   The routine retrieves the surface emissivity for a geographic location and a month from SSMI 
+    !   derived databases. 
     !
     ! Method:
     !   <Say how it does it: include references to external documentation>
@@ -57,12 +55,15 @@ subroutine get_surface &
  
     ! Subroutine arguments
     ! Scalar arguments with intent(in):
-    real(kind=dbl), intent(in) :: freq,ground_temp, salinity
+    real(kind=dbl), intent(in) :: freq ! frequency [GHz]
+    real(kind=dbl), intent(in) :: ground_temp ! surface temperature [K]
+    real(kind=dbl), intent(in) :: salinity ! salinity [ppt]
+    
     ! Array  arguments with intent(in):
  
     ! Scalar arguments with intent(inout):
-    real(kind=dbl), intent(out) :: ground_albedo
-    complex(kind=dbl), intent(out) :: ground_index
+    real(kind=dbl), intent(out) :: ground_albedo ! albedo of the surface
+    complex(kind=dbl), intent(out) :: ground_index ! complex index of refraction
     character(1) :: ground_type
     ! Array  arguments with intent(inout):
  
@@ -86,8 +87,7 @@ subroutine get_surface &
 
     character(80) :: femis ! filename for the emissivity databases
 
-    ! i/o-length test for the emissivity file
-    integer(kind=long) :: iolsgl
+    integer(kind=long) :: iolsgl ! i/o-length test for the emissivity file
 
     ! Error handling
 
