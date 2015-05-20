@@ -18,6 +18,7 @@ pyPamtra
 
 
 
+
 Modules
 -------
 kinds
@@ -80,6 +81,16 @@ mie_scat_utlities
 rt_utilities
 ^^^^^^^^^^^^^^^^^^^^
 .. f:automodule::  rt_utilities
+eps_water
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:automodule::  eps_water
+gasabs_module
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:automodule::  gasabs_module
+mod_io_strings
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:automodule::  mod_io_strings
+
 
 Subroutines
 -----------
@@ -119,4 +130,88 @@ rho_air
 kinematic_viscosity_air
 ^^^^^^^^^^^^^^^^^^^^
 .. f:autosubroutine::  kinematic_viscosity_air
+make_soft_spheroid
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  make_soft_spheroid
+
+check_norm4
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  check_norm4
+make_soft_spheroid
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  random
+random
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  make_soft_spheroid
+radtran4
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  radtran4
+
+get_surface
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  get_surface
+rt4
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  rt4
+mpm93
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  mpm93
+scatcnv
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  scatcnv
+convolution
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  convolution
+get_gasabs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  get_gasabs
+make_dist
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  make_dist
+dsort
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  dsort
+calc_moment
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  calc_moment
+make_dist
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  make_dist
+make_dist_params
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  make_dist_params
+get_scat_file
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  get_scat_file
+make_dist
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  make_dist
+make_mass_size
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  make_mass_size
+rosen98_gasabs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  rosen98_gasabs
+ref_water
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  ref_water
+refractive_index
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  refractive_index
+eps_ice
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  eps_ice
+eps_mix
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  eps_mix
+ref_ice
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  ref_ice
+get_atmosg
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  get_atmosg
+getopt
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:autosubroutine::  getopt
+
 

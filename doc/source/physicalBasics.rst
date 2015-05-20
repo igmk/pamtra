@@ -1,6 +1,6 @@
 ..  _physicalBasics:
 
-Physical Basis
+Physical Basics
 ==============
 
 (Copy-paste Pamtra paper)

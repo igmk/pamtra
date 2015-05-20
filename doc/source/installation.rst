@@ -82,9 +82,13 @@ If not available try ::
 In addition, the sphinx-fortran-extension is required ::
 
     cd /tmp
-    git clone https://github.com/paulromano/sphinx-fortran-extension
+    git clone https://github.com/maahn/sphinx-fortran-extension
     cd /tmp/sphinx-fortran-extension
     sudo python setup.py install
+    
+if you do not have root permissions you can also use instead of the last line::
+
+    python setup.py install --user
 
 Eventually, you can build the documentation by using the Makefile in the pamtra main directory with ::
 
