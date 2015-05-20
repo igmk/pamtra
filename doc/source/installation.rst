@@ -52,36 +52,40 @@ and this path has to be added to the $PYTHONPATH variable of your shell (assumin
 
   echo 'export PYTHONPATH=$PYTHONPATH:$HOME/lib/python' >> ~/.bashrc
 
-Then, the python routines can be installed with::
+Then, the python routines can be installed with ::
 
   make pyinstall
 
-and you can start using pyPamtra in python with ::
+To start using pyPamtra, you have to open a new bash session or source the ~/.bashrc ::
+
+  source ~/.bashrc
+
+You can start using pyPamtra in python with ::
 
   import pyPamtra
 
 Build documentation
 *******************
 
-Several package have to be installed to be able to build the documentation. The documentation is build using sphinx::
+Several package have to be installed to be able to build the documentation. The documentation is build using sphinx ::
 
     sudo apt-get install python-sphinx
 
-In addition, the numpydoc is required::
+In addition, the numpydoc is required ::
 
     sudo apt-get install python-numpydoc
 
-If not available try::
+If not available try ::
 
     sudo easy_install numpydoc
 
-In addition, the sphinx-fortran-extension is required::
+In addition, the sphinx-fortran-extension is required ::
 
     cd /tmp
     git clone https://github.com/paulromano/sphinx-fortran-extension
     cd /tmp/sphinx-fortran-extension
     sudo python setup.py install
 
-Eventually, you can build the documentation with::
+Eventually, you can build the documentation by using the Makefile in the pamtra main directory with ::
 
   make htmldoc
