@@ -1,26 +1,19 @@
 subroutine convolution(errorstatus,X,M,A,N,Y)
-    ! in
-    ! X input vector
-    ! M size of X
-    ! A convolution filter
-    ! N size of convolution filter
-    ! Y result, length M+N-1
-
-    !uses either standard approach or fft method
+    ! convolve X with filter A
+    ! uses either standard approach or fft method
 
     use kinds
     use settings, only: radar_convolution_fft
     use report_module
     implicit none
 
-    INTEGER, intent(in) :: M  ! Size of input vector X
-    INTEGER, intent(in) :: N   ! Size of convolution filter A
+    integer, intent(in) :: M  ! Size of input vector X
+    integer, intent(in) :: N ! Size of convolution filter A
+    real(kind=dbl), intent(in), dimension(M) :: X ! X input vector
+    real(kind=dbl), intent(in), dimension(N) :: A ! A convolution filter
+    real(kind=dbl), intent(out), dimension(M+N-1) :: Y ! Y result, length M+N-1
 
-    REAL(kind=dbl), intent(in), DIMENSION(M) :: X
-    REAL(kind=dbl), intent(in), DIMENSION(N) :: A
-    REAL(kind=dbl), intent(out), DIMENSION(M+N-1) :: Y
-
-    integer(kind=long), intent(out) :: errorstatus
+    integer(kind=long), intent(out) :: errorstatus ! error reported to report module
     integer(kind=long) :: err = 0
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'convolution' 

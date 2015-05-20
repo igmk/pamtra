@@ -24,20 +24,6 @@ contains
         !   Write out fatal and warning error messages to unit 6.
         !   Execution is stopped in the event of a fatal error.
         !
-        ! Copyright:
-        !
-        !    This software was developed within the context of
-        !    the EUMETSAT Satellite Application Facility on
-        !    Numerical Weather Prediction (NWP SAF), under the
-        !    Cooperation Agreement dated 25 November 1998, between
-        !    EUMETSAT and the Met Office, UK, by one or more partners
-        !    within the NWP SAF. The partners in the NWP SAF are
-        !    the Met Office, ECMWF, KNMI and MeteoFrance.
-        !
-        !    Copyright 2002, EUMETSAT, All Rights Reserved.
-        !
-        !
-        !
         ! Current Code Owner: IGMK
         !
         ! History:
@@ -74,12 +60,6 @@ contains
         !- End of header --------------------------------------------------------
 
         Call DATE_AND_Time(date, time)
-
-        !  ! If globlal variables not defined then use default values
-        !  if( .not. err_init ) then
-        !     call rttov_errorhandling ( -1_jpim , -1_jpim)
-        !  endif
-
 
         If ( (status > 0) .and. (status < nstatus) ) Then
             if (verbose >= 0) then

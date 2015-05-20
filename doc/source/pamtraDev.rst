@@ -90,6 +90,31 @@ gasabs_module
 mod_io_strings
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. f:automodule::  mod_io_strings
+fileio
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:automodule::  fileio
+f95zlib
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:automodule::  f95zlib
+iocodes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:automodule::  iocodes
+ioports
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:automodule::  ioports
+outstream
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:automodule::  outstream
+f95pipes
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:automodule::  f95pipes
+
+rndseed
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:automodule::  rndseed
+rngs
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+.. f:automodule::  rngs
 
 
 Subroutines

@@ -59,14 +59,15 @@ module iocodes
   character (len=11), parameter :: stream_form = 'unformatted'
 #endif
 end module iocodes
-!
-! Definition of a port
-!   slots: associated file name
-!          1=uncompressed 2=gzipped 3=unzipped copy 4=pipe
-!          Fortran style logical unit number
-!          gzip C-style file handle
-!
+
 module ioports
+    !
+    ! Definition of a port
+    !   slots: associated file name
+    !          1=uncompressed 2=gzipped 3=unzipped copy 4=pipe
+    !          Fortran style logical unit number
+    !          gzip C-style file handle
+    !
 #if !OPEN64
   use, intrinsic :: iso_c_binding
 #endif
@@ -82,14 +83,13 @@ module ioports
 #endif
   end type ioport
 end module ioports
-!
+
+#if ZLIB
+module f95zlib
 ! Fortran interface to zlib 
 !   based on looking at fgzlib, fgsl and Janus Weil's example
 !   on comp.lang.fortran May 2009
 !   currently enough functionality to read gzipped text files
-!
-#if ZLIB
-module f95zlib
   use, intrinsic :: iso_c_binding
   use ioports
 ! buffer for gzread
@@ -150,11 +150,11 @@ module f95zlib
     end function
   end interface
 contains
-!
-! Wrapper for gzopen
-!   also reinitializes gzread's buffer
-!
+
   subroutine fgz_open(path, mode, fd, ios)
+    ! Wrapper for gzopen
+    !   also reinitializes gzread's buffer
+    !
     use, intrinsic :: iso_c_binding
     character(kind=c_char, len=*), intent(in) :: path, mode
     type (ioport) :: fd
@@ -182,10 +182,9 @@ contains
     if (.not.c_associated(fd%handle)) ios=-1
     zbufpos=0
   end subroutine fgz_open
-!
-! Wrapper for gzrewind
-!
+
   subroutine fgz_rewind(fd, ios)
+    ! Wrapper for gzrewind
     use, intrinsic :: iso_c_binding
     type(ioport) :: fd
     integer :: ios
@@ -195,11 +194,12 @@ contains
     if (ir /= 0) ios=ir
     zbufpos=0
   end subroutine fgz_rewind
-!
-! Wrapper for gzread
-!   read one line of text from buffer
-!
+
   subroutine fgz_read(fd, lin, advance, ios)
+    !
+    ! Wrapper for gzread
+    !   read one line of text from buffer
+    !
     use, intrinsic :: iso_c_binding
     use iocodes
     type(ioport) :: fd
@@ -283,10 +283,11 @@ contains
     end do
     if (.not.advancing .and. eol) ios=eolcode
   end subroutine fgz_read
-!
-! write one line of text to a gzipped textfile
-!
+
   subroutine fgz_write(fd, lin, advance, ios)
+    !
+    ! write one line of text to a gzipped textfile
+    !
     use, intrinsic :: iso_c_binding
     use iocodes
     type(ioport) :: fd
@@ -328,10 +329,11 @@ contains
     end do
     if (ioerr == 0) ios=-1
   end subroutine fgz_write
-!
-! Wrapper for gzclose
-!
+
   subroutine fgz_close(fd, ios)
+    !
+    ! Wrapper for gzclose
+    !
     use, intrinsic :: iso_c_binding
     type(ioport) :: fd
     integer :: ios
@@ -342,11 +344,12 @@ contains
   end subroutine fgz_close
 end module f95zlib
 #endif
-!
-! Fortran interface to popen
-!
+
 #if POPEN
 module f95pipes
+    !
+    ! Fortran interface to popen
+    !
   use, intrinsic :: iso_c_binding
   use ioports
 ! popen  
@@ -385,9 +388,10 @@ module f95pipes
     end function
   end interface
 contains
-! wrapper for popen
-!   fd%stat gives mode
+
   subroutine pipe_open(command, fd, ios)
+    ! wrapper for popen
+    ! fd%stat gives mode
     use, intrinsic :: iso_c_binding
     character(*), intent(in) :: command
     type (ioport) :: fd
@@ -399,18 +403,18 @@ contains
     fd%handle =  popen(trim(command) // C_NULL_CHAR, fd%stat // C_NULL_CHAR)
     if (.not.c_associated(fd%handle)) ios=-1
   end subroutine pipe_open
-!
-! rewind pipe
+
   subroutine pipe_rewind(fd, ios)
+    ! rewind pipe
     use, intrinsic :: iso_c_binding
     type (ioport) :: fd
     integer :: ios
     call pipe_close(fd, ios)
     if (ios == 0) call pipe_open(fd%filnam, fd, ios)
   end subroutine pipe_rewind
-!
-! wrapper for fgets
+
   subroutine pipe_read(fd, lin, advance, ios)
+    ! wrapper for fgets  
     use, intrinsic :: iso_c_binding
     type(ioport) :: fd
     character(len=*) :: lin
@@ -435,9 +439,9 @@ contains
     end do
     lin=lin(1:eos)
   end subroutine pipe_read
-!
-! wrapper for fputs
+
   subroutine pipe_write(fd, lin, advance, ios)
+    ! wrapper for fputs  
     use, intrinsic :: iso_c_binding
     type(ioport) :: fd
     character(len=*) :: lin
@@ -458,9 +462,9 @@ contains
       ios=ioerr
     end if
   end subroutine pipe_write
-!
-! wrapper for pclose
+
   subroutine pipe_close(fd, ios)
+  ! wrapper for pclose
     use, intrinsic :: iso_c_binding
     type(ioport) :: fd
     integer :: ios
@@ -472,26 +476,25 @@ contains
 end module f95pipes
 #endif
 #if !(ZLIB)
-!
-! time/random number generator seeds
-!
+
 module rndseed
+  ! time/random number generator seeds
   integer :: ix = 1, iy = 2, iz = 3
   integer :: initix = 1, initiy = 2, initiz = 3
 end module rndseed
-!
-! random number generators
-!
+
 module rngs 
+    ! random number generators
   contains
-!  
-! Algorithm AS 183 Appl Stat 1982; 31:188
-! Returns a pseudo-random number from U(0,1)
-!  
-! ix,iy,iz should be "randomly" initialised to 1-30000
-! eg via time
-!  
+
   function rrandom()
+    !  
+    ! Algorithm AS 183 Appl Stat 1982; 31:188
+    ! Returns a pseudo-random number from U(0,1)
+    !  
+    ! ix,iy,iz should be "randomly" initialised to 1-30000
+    ! eg via time
+    !  
     use rndseed
     real :: rrandom
     ix=171*mod(ix,177)-2*(ix/177)
@@ -502,10 +505,11 @@ module rngs
     if (iz < 0) iz=iz+30323
     rrandom=amod(float(ix)/30269.0+float(iy)/30307.0 + float(iz)/30323.0,1.0)
   end function rrandom
-!  
-! Return a pseudo-random integer from integer U(lo..hi)
-!  
+
   integer function irandom(lo,hi)
+    !  
+    ! Return a pseudo-random integer from integer U(lo..hi)
+    !  
     integer, intent(in) :: lo
     integer, intent(in) :: hi
     real :: x
@@ -527,19 +531,21 @@ module rngs
   end subroutine uniqnam
 end module rngs
 #endif
+
+module outstream
 !
 ! Output stream, formatting
 !
-module outstream
   integer :: outstr       ! stream
   integer :: logstr       ! logging stream
   character (len=1) :: tabsep = ' ' ! character to separate output words
 
 contains
+
+  subroutine newlin(sol, eol, pos, newpos)
 !  
 ! format free output, adding newline if line exceeding specified length
 !
-  subroutine newlin(sol, eol, pos, newpos)
     integer, intent(in) :: sol, eol
     integer, intent(inout) :: pos
     integer, intent(in) :: newpos
@@ -552,10 +558,15 @@ contains
     return
   end subroutine newlin
 end module outstream
+
+module fileio
+!
+! Fortran interfaces for zlib and for POSIX pipes (popen and friends)
+! Author:  David L Duffy 2009-2014
 !
 ! Readline subroutine for either plain or gzipped files -- 
 !
-module fileio
+
   use iocodes
   use ioports
 #if ZLIB
@@ -567,10 +578,11 @@ module fileio
   use outstream
   public :: close_port, newlun, open_port, readline, rewind_port
 contains
+
+  subroutine newlun(strm)
 !
 ! Find a free Fortran style unit
 !
-  subroutine newlun(strm)
     integer, intent(out) :: strm
     integer, parameter :: MAXUNITS = 99
     integer :: iport
@@ -585,10 +597,11 @@ contains
     write(*,'(a)') 'No available i/o streams!'
     stop
   end subroutine newlun 
+
+  function isgzipped(filnam)
 !
 ! Test if gzipped file, reading magic number 31,139
 !
-  function isgzipped(filnam)
     logical :: isgzipped
     character (len=*), intent(in) :: filnam
     integer :: s
@@ -611,10 +624,11 @@ contains
     close(s, status='keep')
     return
   end function isgzipped
+
+  subroutine open_port(filnam, port, mode, ios)
 !
 ! Open a (plain or gzipped) file or pipe for reading or writing
-!
-  subroutine open_port(filnam, port, mode, ios)
+!  
 #if !ZLIB
     use rngs
 #endif
@@ -683,10 +697,11 @@ contains
       port%fstream=strm
     end if
   end subroutine open_port
+
+  subroutine rewind_port(port, ios)
 !
 ! Reopen a file for reading or writing
 !
-  subroutine rewind_port(port, ios)
     type(ioport), intent(inout) :: port
     integer, intent(out) :: ios
 
@@ -704,9 +719,8 @@ contains
     end if
   end subroutine rewind_port
 !
-! Read one record from file
-!
   subroutine readline(port, lin, advance, ios)
+    ! Read one record from file  
     type (ioport), intent(in) :: port
     character(len=*) :: lin
     character(len=*), optional :: advance
@@ -729,10 +743,9 @@ contains
 #endif
     end if
   end subroutine readline
-!
-! Write one record to file
-!
+
   subroutine writeline(port, lin, advance, ios)
+    ! Write one record to file
     type (ioport), intent(in) :: port
     character(len=*) :: lin
     character(len=*), optional :: advance
@@ -755,11 +768,10 @@ contains
 #endif
     end if
   end subroutine writeline
-!
-! Close file for reading -  
-!   if gzipped but ZLIB not available, then delete temporary file
-!
+
   subroutine close_port(port, ios)
+    ! Close file for reading -  
+    !   if gzipped but ZLIB not available, then delete temporary file
     type (ioport), intent(in) :: port
     integer, intent(out) :: ios
     ios=0
@@ -783,10 +795,9 @@ contains
 #endif
     end if
   end subroutine close_port
-!
-! Delete a file
-!
+
   subroutine delfile(filnam, plevel)
+    ! Delete a file
     use outstream
     character (len=*), intent(in) :: filnam
     integer, intent(in) :: plevel
