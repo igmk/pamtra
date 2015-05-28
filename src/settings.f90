@@ -13,7 +13,7 @@ module settings
     MAXLAY = 600, &
     maxleg = 200, &
     maxfreq = 100, &
-    nummu = 16, & ! no. of observation angles
+    nummu = 16, &  ! no. of observation and quadrature angles
     NSTOKES = 2, &
     NOUTLEVELS = 2
     integer, parameter :: SRC_CODE = 2,&
@@ -37,6 +37,8 @@ module settings
     real(kind=dbl) :: salinity         ! sea surface salinity
 !     double precision, dimension(maxfreq) :: freqs
     real(kind=dbl), dimension(maxfreq) :: freqs
+
+    real(kind=dbl), dimension(nummu) :: mu_values, quad_weights
 
     integer(kind=long) :: radar_nfft !number of FFT points in the Doppler spectrum [typically 256 or 512]
     integer(kind=long):: radar_no_Ave !number of average spectra for noise variance reduction, typical range [1 40]
@@ -266,18 +268,46 @@ contains
   end subroutine test_settings
 
   subroutine add_settings(errorstatus)
+
     use kinds
+    use rt_utilities, &
+      only: double_gauss_quadrature,&
+        lobatto_quadrature,&
+        gauss_legendre_quadrature 
+
     implicit none
-    integer(kind=long) :: pos1, pos2, ii
+    
+    integer(kind=long) :: i, j, pos1, pos2
 
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
     character(len=80) :: msg
     character(len=15) :: nameOfRoutine = 'add_settings'
+    
     !additional variables derived from others go here
 
     if (verbose >= 4) print*,'Start of ', nameOfRoutine
+    
+    ! calculate the quadrature angles and weights used in scattering calculations and radiative transfer
+    
+    if (quad_type(1:1) .eq. 'D') then
+      call double_gauss_quadrature(nummu, mu_values, quad_weights)
+    else if (quad_type(1:1) .eq. 'L') then
+      call lobatto_quadrature(nummu, mu_values, quad_weights)
+    else if (quad_type(1:1) .eq. 'E') then
+      j = nummu
+      do i = nummu, 1, -1
+        if (mu_values(i) .ne. 0.0) then
+          quad_weights(i) = 0.0
+          j = i - 1
+        endif
+      enddo
+      call gauss_legendre_quadrature(j, mu_values, quad_weights)
+    else
+      call gauss_legendre_quadrature(nummu, mu_values, quad_weights)
+    endif
+
     !mix some variables to make new ones:
     radar_nfft_aliased = radar_nfft *(1+2*radar_aliasing_nyquist_interv)
     radar_maxTurbTerms = radar_nfft_aliased * 12
@@ -399,9 +429,7 @@ contains
             freq_str = frq_str_s//frq_str_e
             
         end if 
-    
-    
-    
+         
     end subroutine settings_fill_default
     
     !for debuging

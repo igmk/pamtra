@@ -5,6 +5,7 @@ module vars_rt
   use settings, only : radar_npol
   implicit none
 
+  real(kind=dbl), allocatable, dimension(:,:) :: rt_sfc_emissivity, rt_sfc_reflectivity
   real(kind=dbl), allocatable, dimension(:) :: rt_kextatmo, &
        rt_kexttot
   real(kind=dbl), allocatable, dimension(:,:) :: rt_back
@@ -51,6 +52,9 @@ module vars_rt
         return
     end if  
 
+    
+    allocate(rt_sfc_emissivity(nstokes,nummu), stat=alloc_status)
+    allocate(rt_sfc_reflectivity(nstokes,nummu), stat=alloc_status)
     allocate(rt_kextatmo(nlyr), stat=alloc_status)
     allocate(rt_kexttot(nlyr), stat=alloc_status)
     allocate(rt_back(nlyr, radar_npol), stat=alloc_status)
@@ -63,6 +67,9 @@ module vars_rt
     allocate(rt_hydros_present(nlyr),stat=alloc_status)
     allocate(rt_hydros_present_reverse(nlyr),stat=alloc_status)
 
+    rt_sfc_emissivity(:,:) = 0._dbl
+    rt_sfc_reflectivity(:,:) = 0._dbl
+    
     ! set them to zero, just in case they are not calculated but used for Ze/PIA calculation
     rt_kexttot(:) = 0d0
     rt_kextatmo(:) = 0d0
@@ -75,6 +82,8 @@ module vars_rt
   end subroutine allocate_rt_vars
 
   subroutine deallocate_rt_vars()
+    if (allocated(rt_sfc_emissivity)) deallocate(rt_sfc_emissivity)
+    if (allocated(rt_sfc_reflectivity)) deallocate(rt_sfc_reflectivity)  
     if (allocated(rt_kextatmo)) deallocate(rt_kextatmo)
     if (allocated(rt_kexttot)) deallocate(rt_kexttot)
     if (allocated(rt_back)) deallocate(rt_back)

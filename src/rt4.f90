@@ -181,7 +181,7 @@
 !                       MIDENTITY, MTRANSPOSE, MMULT, MINVERT
 !
 !
-subroutine RT4(errorstatus,mu_values,out_file,&
+subroutine RT4(errorstatus,out_file,&
 ground_type,ground_albedo,ground_index,sky_temp,&
 wavelength,outlevels)
 
@@ -205,6 +205,8 @@ wavelength,outlevels)
         verbose,&
         nstokes,&
         nummu,&
+        mu_values,&
+        quad_weights,&
         quad_type,&
         noutlevels,&
         outpol,&
@@ -218,7 +220,7 @@ wavelength,outlevels)
     parameter (maxv=64)
     parameter (maxlay=200)
 
-    real(kind=dbl), intent(in) ::  mu_values(maxv)
+!    real(kind=dbl), intent(in) ::  mu_values(maxv)
     character*64, intent(in) :: out_file
     character, intent(in) ::  ground_type*1
     real(kind=dbl), intent(in) ::  ground_albedo
@@ -296,14 +298,14 @@ wavelength,outlevels)
 
     !  if (verbose .gt. 0) print*, ".... read_layers done!"
 
-    CALL RADTRAN4(err,NSTOKES, NUMMU, MAX_DELTA_TAU,&
-    QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&
+    CALL RADTRAN4(err,MAX_DELTA_TAU,&
+    GROUND_TEMP, GROUND_TYPE,&
     GROUND_ALBEDO, GROUND_INDEX,&
     SKY_TEMP, WAVELENGTH,&
     NUM_LAYERS, HEIGHT, TEMPERATURES,&
     GAS_EXTINCT,&
     NOUTLEVELS, OUTLEVELS,&
-    MU_VALUES, UP_FLUX, DOWN_FLUX,&
+    UP_FLUX, DOWN_FLUX,&
     UP_RAD, DOWN_RAD)
     if (err /= 0) then
         msg = 'error in RADTRAN4'

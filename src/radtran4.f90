@@ -119,14 +119,14 @@
 
 
 
-      SUBROUTINE RADTRAN4(errorstatus, NSTOKES, NUMMU, MAX_DELTA_TAU,&
-                    QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&
+      SUBROUTINE RADTRAN4(errorstatus, MAX_DELTA_TAU,&
+                    GROUND_TEMP, GROUND_TYPE,&
                     GROUND_ALBEDO, GROUND_INDEX,&
                     SKY_TEMP, WAVELENGTH,&
                     NUM_LAYERS, HEIGHT, TEMPERATURES,&
                     GAS_EXTINCT,&
                     NOUTLEVELS, OUTLEVELS,&
-                    MU_VALUES, UP_FLUX, DOWN_FLUX,&
+                    UP_FLUX, DOWN_FLUX,&
                     UP_RAD, DOWN_RAD)
 
       use kinds
@@ -134,15 +134,17 @@
       use vars_index, only: i_x, i_y
     use vars_rt, only : &
         rt_hydros_present_reverse
-     use settings, only: verbose
+     use settings, only: verbose, nstokes, nummu, mu_values, quad_weights
         use report_module
-use rt_utilities, only: planck_function,&
-gauss_legendre_quadrature,&
-double_gauss_quadrature,&
-lobatto_quadrature
+use rt_utilities, only: planck_function!,&
+!gauss_legendre_quadrature,&
+!double_gauss_quadrature,&
+!lobatto_quadrature
+      use sfc_matrices, only: get_sfc_matrices
+      
       implicit none
 
-      INTEGER   NSTOKES, NUMMU, NUM_LAYERS
+      INTEGER   NUM_LAYERS
       INTEGER   NOUTLEVELS, OUTLEVELS(*)
       REAL*8    GROUND_TEMP, GROUND_ALBEDO
       COMPLEX*16  GROUND_INDEX
@@ -150,10 +152,10 @@ lobatto_quadrature
       REAL*8    WAVELENGTH, MAX_DELTA_TAU
       REAL*8    HEIGHT(*), TEMPERATURES(*)
       REAL*8    GAS_EXTINCT(*)
-      REAL*8    MU_VALUES(*)
+!      REAL*8    MU_VALUES(*)
       REAL*8    UP_FLUX(*), DOWN_FLUX(*)
       REAL*8    UP_RAD(*), DOWN_RAD(*)
-      CHARACTER*1  QUAD_TYPE, GROUND_TYPE
+      CHARACTER*1  GROUND_TYPE
 
       INTEGER   MAXV, MAXM, MAXLAY, MAXLM
       PARAMETER (MAXV=64, MAXM=4096, MAXLAY=200, maxlm=201 * (maxv)**2)!MAXLM=201*256)
@@ -168,7 +170,7 @@ lobatto_quadrature
       REAL*8    LINFACTOR
       REAL*8    PLANCK0, PLANCK1
       REAL*8    ZDIFF, DELTA_Z, F, NUM_SUB_LAYERS, EXTINCT
-      REAL*8    QUAD_WEIGHTS(MAXV)
+!      REAL*8    QUAD_WEIGHTS(MAXV)
       REAL*8    SCATTER_MATRIX(4*MAXM)
       REAL*8    LIN_SOURCE(2*MAXV)
       REAL*8    EXTINCT_MATRIX(16*2*MAXV), EMIS_VECTOR(4*2*MAXV)
@@ -234,27 +236,27 @@ lobatto_quadrature
             return
       ENDIF
 
-!           Make the desired quadrature abscissas and weights
-      IF (QUAD_TYPE(1:1) .EQ. 'D') THEN
-        CALL DOUBLE_GAUSS_QUADRATURE&
-                            (NUMMU, MU_VALUES, QUAD_WEIGHTS)
-      ELSE IF (QUAD_TYPE(1:1) .EQ. 'L') THEN
-        CALL LOBATTO_QUADRATURE&
-                            (NUMMU, MU_VALUES, QUAD_WEIGHTS)
-      ELSE IF (QUAD_TYPE(1:1) .EQ. 'E') THEN
-        J = NUMMU
-        DO I = NUMMU, 1, -1
-          IF (MU_VALUES(I) .NE. 0.0) THEN
-            QUAD_WEIGHTS(I) = 0.0
-            J = I - 1
-          ENDIF
-        ENDDO
-        CALL GAUSS_LEGENDRE_QUADRATURE&
-                            (J, MU_VALUES, QUAD_WEIGHTS)
-      ELSE
-        CALL GAUSS_LEGENDRE_QUADRATURE&
-                            (NUMMU, MU_VALUES, QUAD_WEIGHTS)
-      ENDIF
+! !           Make the desired quadrature abscissas and weights
+!       IF (QUAD_TYPE(1:1) .EQ. 'D') THEN
+!         CALL DOUBLE_GAUSS_QUADRATURE&
+!                             (NUMMU, MU_VALUES, QUAD_WEIGHTS)
+!       ELSE IF (QUAD_TYPE(1:1) .EQ. 'L') THEN
+!         CALL LOBATTO_QUADRATURE&
+!                             (NUMMU, MU_VALUES, QUAD_WEIGHTS)
+!       ELSE IF (QUAD_TYPE(1:1) .EQ. 'E') THEN
+!         J = NUMMU
+!         DO I = NUMMU, 1, -1
+!           IF (MU_VALUES(I) .NE. 0.0) THEN
+!             QUAD_WEIGHTS(I) = 0.0
+!             J = I - 1
+!           ENDIF
+!         ENDDO
+!         CALL GAUSS_LEGENDRE_QUADRATURE&
+!                             (J, MU_VALUES, QUAD_WEIGHTS)
+!       ELSE
+!         CALL GAUSS_LEGENDRE_QUADRATURE&
+!                             (NUMMU, MU_VALUES, QUAD_WEIGHTS)
+!       ENDIF
 
       SCAT_FILE = '&&&'
 !     ------------------------------------------------------
@@ -353,75 +355,11 @@ lobatto_quadrature
       KRT = 1 + 2*N*N*(NUM_LAYERS)
       KS = 1 + 2*N*(NUM_LAYERS)
 
-     if (verbose .gt. 1) print*, "Calculating surface emissivity ...."
+     if (verbose > 4) print*, "Calculating surface emissivity ...."
 
-      IF (GROUND_TYPE .EQ. 'F') THEN
-!               For a Fresnel surface
-        CALL FRESNEL_SURFACE (NSTOKES, NUMMU, &
-                             MU_VALUES, GROUND_INDEX,&
-                             REFLECT(KRT), TRANS(KRT), SOURCE(KS))
-!                The radiance from the ground is thermal
-        CALL FRESNEL_RADIANCE (NSTOKES, NUMMU,0,&
-                       MU_VALUES, GROUND_INDEX, GROUND_TEMP,&
-                       WAVELENGTH, GND_RADIANCE)
-     ELSEIF (GROUND_TYPE.EQ.'S') THEN
-        ! For a specular surface
-        CALL specular_surface(NSTOKES, NUMMU, GROUND_ALBEDO, &
-             REFLECT (KRT), TRANS (KRT), SOURCE (KS) )
-        ! The radiance from the ground is thermal
-        CALL specular_radiance(NSTOKES, NUMMU, 0,       &
-             GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH, GND_RADIANCE)
-     ELSEIF(GROUND_TYPE .EQ. 'O') THEN
-    ! call fastem4 ocean emissivity model. the correction due to transmittance is not necessary in
-    ! our multi-stream model (?!)
-        wind10 = sqrt(atmo_wind10u(i_x,i_y)**2+atmo_wind10v(i_x,i_y)**2)
-        IF (atmo_wind10u(i_x,i_y) >= 0.0 .AND. atmo_wind10v(i_x,i_y) >= 0.0 ) iquadrant = 1
-        IF (atmo_wind10u(i_x,i_y) >= 0.0 .AND. atmo_wind10v(i_x,i_y) <  0.0 ) iquadrant = 2
-        IF (atmo_wind10u(i_x,i_y) <  0.0 .AND. atmo_wind10v(i_x,i_y) >= 0.0 ) iquadrant = 4
-        IF (atmo_wind10u(i_x,i_y) <  0.0 .AND. atmo_wind10v(i_x,i_y) <  0.0 ) iquadrant = 3
-        IF (abs(atmo_wind10v(i_x,i_y)) >= 0.0001) THEN
-           windratio = atmo_wind10u(i_x,i_y) / atmo_wind10v(i_x,i_y)
-        ELSE
-           windratio = 0.0
-           IF (abs(atmo_wind10u(i_x,i_y)) > 0.0001) THEN
-              windratio = 999999.0 * atmo_wind10u(i_x,i_y)
-           ENDIF
-        ENDIF
-        windangle        = atan(abs(windratio))
-        rel_azimuth = (quadcof(iquadrant, 1) * pi + windangle * quadcof(iquadrant, 2))*180./pi
+     call get_sfc_matrices(err,REFLECT(KRT), TRANS(KRT), GND_RADIANCE)
 
-        ! azimuthal component
-        !
-        ! the azimuthal component is ignored (rel_azimuth > 360°) when doing simulations for COSMO runs
-        ! since we do not know what direction does the satellite have in advance
-        !
-        rel_azimuth = 400.
-        transmittance(:) = 1.
-        salinity = 33.
-        call fastem4(wavelength   , &  ! Input
-             mu_values, &  ! Input
-             nummu, &
-             ground_temp , &  ! Input
-             Salinity    , &  ! Input
-             wind10  ,&
-             transmittance,&  ! Input, may not be used
-             Rel_Azimuth, &  ! Input
-             ground_index,&
-             GND_RADIANCE, &  ! Output
-             REFLECT(KRT), &  ! Output
-             trans(krt),&
-             source(ks))
-     ELSE
-!               For a Lambertian surface
-        CALL LAMBERT_SURFACE (NSTOKES, NUMMU, 0,&
-                            MU_VALUES, QUAD_WEIGHTS, GROUND_ALBEDO,&
-                            REFLECT(KRT), TRANS(KRT), SOURCE(KS))
-!                The radiance from the ground is thermal and reflected direct
-        CALL LAMBERT_RADIANCE (NSTOKES, NUMMU,0, &
-              GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH, GND_RADIANCE)
-      ENDIF
-
-     if (verbose .gt. 1) print*, ".... done!"
+     if (verbose > 4) print*, ".... done!"
 
 !           Assume the radiation coming from above is blackbody radiation
 ! 0 stands for mode = 0. this is required, since we use the routine from the former

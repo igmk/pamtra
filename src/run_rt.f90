@@ -8,6 +8,7 @@ subroutine run_rt(errorstatus)
     use settings !all settings go here
     use vars_atmosphere !input variables and reading routine
     use vars_output !output variables
+    use sfc_optics, only: set_sfc_optics ! lower boundary for the rt
     use vars_rt, only: rt_kextatmo, allocate_rt_vars, deallocate_rt_vars, &
       rt_scattermatrix, rt_extmatrix, rt_emisvec
     use mod_io_strings, only: xstr, nxstr, ystr, nystr, frq_str
@@ -21,7 +22,6 @@ subroutine run_rt(errorstatus)
     integer(kind=long), dimension(maxlay) :: OUTLEVELS
     integer(kind=long) :: nz
 
-    real(kind=dbl), dimension(maxv) :: MU_VALUES
     real(kind=dbl) :: wavelength       ! microns
     real(kind=dbl) :: ground_albedo
 
@@ -37,7 +37,7 @@ subroutine run_rt(errorstatus)
     character(len=14) :: nameOfRoutine = 'run_rt'
 
     interface
-      subroutine RT4(errorstatus,mu_values,out_file,&
+      subroutine RT4(errorstatus,out_file,&
       ground_type,ground_albedo,ground_index,sky_temp,&
       wavelength,outlevels)
         use kinds
@@ -45,7 +45,6 @@ subroutine run_rt(errorstatus)
     integer   maxv, maxlay
     parameter (maxv=64)
     parameter (maxlay=200)
-        real(kind=dbl), intent(in) ::  mu_values(maxv)
         character*64, intent(in) :: out_file
         character, intent(in) ::  ground_type*1
         real(kind=dbl), intent(in) ::  ground_albedo
@@ -92,15 +91,14 @@ subroutine run_rt(errorstatus)
     if (verbose >= 2) call report(info,nxstr//' '//nystr//'type to local variables done',nameOfRoutine)
     
     if (passive .eqv. .true.) then
-      call get_surface(err,freq, atmo_groundtemp(i_x,i_y), salinity, ground_albedo,ground_index,ground_type)
+      call set_sfc_optics(err,freq)
       if (err /= 0) then
-          msg = 'error in get_surface'
+          msg = 'error in set_sfc_optics'
           call report(err,msg, nameOfRoutine)
           errorstatus = err
           return
       end if
-    end if
-      
+    end if      
   
     ! gaseous absorption
     !
@@ -189,14 +187,14 @@ subroutine run_rt(errorstatus)
 
         if (verbose >= 2) print*, i_x,i_y, "Entering rt4 ...."
 
-        call rt4(err, mu_values,out_file_pas,&
+        call rt4(err, out_file_pas,&
         ground_type,ground_albedo,ground_index,sky_temp,&
         wavelength,outlevels)
 
         if (verbose >= 2) print*, i_x,i_y, "....rt4 finished"
-        !calculate human readable angles!
-        out_angles_deg(1:NUMMU) = 180-(180.*acos(MU_VALUES(NUMMU:1:-1))/pi)
-        out_angles_deg(1+NUMMU:2*NUMMU) = (180.*acos(MU_VALUES(1:NUMMU))/pi)
+	!calculate human readable angles!
+	out_angles_deg(1:NUMMU) = 180-(180.*acos(MU_VALUES(NUMMU:1:-1))/pi)
+	out_angles_deg(1+NUMMU:2*NUMMU) = (180.*acos(MU_VALUES(1:NUMMU))/pi)
 
     end if
 

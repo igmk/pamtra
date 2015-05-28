@@ -39,8 +39,8 @@ subroutine write_nc_results
     integer :: today(3), now(3)
 
     character(300) :: timestring
-    character(40) ::gitVersion,gitHash
-    character(10) ::attUnit,zeUnit
+    character(40) :: gitVersion,gitHash
+    character(10) :: attUnit,zeUnit
 
     integer(kind=long) :: errorstatus
     integer(kind=long) :: err = 0
@@ -242,7 +242,6 @@ subroutine write_nc_results
     if (passive) then
         call check(nf90_put_var(ncid, anglesVarID, out_angles_deg))
         call check(nf90_put_var(ncid, passive_polID, "HV"))
-
     end if
 !     call check(nf90_put_var(ncid, isVarID, &
 !       RESHAPE( atmo_model_i, (/ atmo_ngridy, atmo_ngridx/), ORDER = (/2,1/))))
