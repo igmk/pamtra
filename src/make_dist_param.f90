@@ -384,7 +384,7 @@ subroutine make_dist_params(errorstatus)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! MODIFIED GAMMA distribution   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if (trim(dist_name) == 'mgamma') then
+  if (trim(dist_name) == 'mgamma' .or. trim(dist_name) == 'mgamma_MNH') then
 ! ! The user MUST specify mu and gam parameters
     if ((p_3 == -99.) .or. (p_4 == -99.)) then 
       msg = 'Modified Gamma case: p_3 and p_4 parameters must be specified...'
@@ -427,6 +427,21 @@ subroutine make_dist_params(errorstatus)
         work1 = (mu + 1._dbl) / gam
         n_0 = n_tot * gam * lambda**work1 / dgamma(work1)
       endif
+    endif
+! ! MESO-NH distribution
+! Ntot = C * lambda^x
+! C = p_1 and x = p_2
+    if (trim(dist_name) == 'mgamma_MNH') then
+      if ((p_1 < 0.) .or. (p_2 == -99.)) then
+        msg = 'Modified-gamma case: something wrong or this parameters combination is not yet implemented...'
+        errorstatus = fatal
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+      endif
+      work2 = dgamma((mu + b_ms + 1._dbl) / gam)
+      work3 = dgamma((mu + 1._dbl) / gam)
+      lambda = (a_ms * p_1 / q_h * work2 / work3)**(gam / (b_ms - p_2))
+      n_0 = gam * p_1 / work3 * lambda**((mu + 1._dbl + p_2) / gam)
     endif
 ! ! 2 moments from the input file
     if ((p_1 == -99.) .and. (p_2 == -99.)) then
