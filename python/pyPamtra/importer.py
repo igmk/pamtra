@@ -264,7 +264,6 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
     variables4D = ["T","P","QV","QC","QI","QI","QR","QS","QG"]
    
     nHydro = 5
-    
 
     conFields = ncToDict(constantFields)
     data = dict()

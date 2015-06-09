@@ -6,8 +6,7 @@ module vars_rt
   implicit none
 
   real(kind=dbl), allocatable, dimension(:,:) :: rt_sfc_emissivity, rt_sfc_reflectivity
-  real(kind=dbl), allocatable, dimension(:) :: rt_kextatmo, &
-       rt_kexttot
+  real(kind=dbl), allocatable, dimension(:) :: rt_kextatmo, rt_kexttot
   real(kind=dbl), allocatable, dimension(:,:) :: rt_back
   real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: rt_scattermatrix_reverse,rt_scattermatrix
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: rt_extmatrix_reverse,rt_extmatrix
@@ -15,13 +14,12 @@ module vars_rt
 
   logical, allocatable, dimension(:) :: rt_hydros_present, rt_hydros_present_reverse
 
-
   contains
 
   subroutine allocate_rt_vars(errorstatus)
     
 
-    use settings, only: nstokes,nummu, verbose
+    use settings, only: nstokes, nummu, verbose
     use vars_atmosphere, only: atmo_nlyrs
     use vars_index, only: i_x, i_y
 
@@ -34,8 +32,6 @@ module vars_rt
     character(len=30) :: nameOfRoutine = 'allocate_rt_vars'
 
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
-
-
 
     nlyr = atmo_nlyrs(i_x,i_y)
 

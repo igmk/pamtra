@@ -41,7 +41,9 @@ subroutine make_soft_spheroid(errorstatus)
 
   use drop_size_dist, only: rho_ms, as_ratio, a_ms, b_ms, d_ds,nbin, mass_ds,  &    ! IN
 		     soft_rho_eff, soft_d_eff,liq_ice                                     ! OUT
-  use settings, only: hydro_limit_density_area, hydro_softsphere_min_density
+  use settings, only: hydro_limit_density_area, hydro_softsphere_min_density, freqs
+  use vars_index, only: i_f
+
   implicit none
 
 !- End of header ---------------------------------------------------------------
@@ -94,9 +96,14 @@ subroutine make_soft_spheroid(errorstatus)
     ! oblate spheroid or sphere
     if (as_ratio <= 1.) then
       do i=1,nbin
-        if (as_ratio < 0.) soft_rho_eff(i) = (6._dbl * mass(i)) / (pi *  d_ds(i)**3._dbl)
+!         if (as_ratio < 0.) soft_rho_eff(i) = (6._dbl * mass(i)) / (pi *  d_ds(i)**3._dbl)
+        if (as_ratio == -10.) soft_rho_eff(i) = 917._dbl !CLOUD ICE 
+        if (as_ratio == -20.) soft_rho_eff(i) = 0.863_dbl * freqs(i_f) + 115._dbl !SNOW
+        if (as_ratio == -30.) soft_rho_eff(i) = 0.815_dbl * freqs(i_f) + 11.2_dbl !GRAUPEL
         if (as_ratio > 0.) soft_rho_eff(i) = (6._dbl * mass(i)) / (pi *  d_ds(i)**3._dbl * as_ratio)
         if (soft_rho_eff(i) < 5._dbl) soft_rho_eff(i) = 5._dbl
+        if (as_ratio == -10. .or. as_ratio == -20. .or. as_ratio == -30.) &
+             soft_d_eff(i) = ((6._dbl * mass(i)) / (pi *  soft_rho_eff(i) ))**(1._dbl/3._dbl)
       enddo
     endif
     ! prolate spheroid

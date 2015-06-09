@@ -53,16 +53,16 @@ OBJECTS=kinds.o \
 	convolution.o \
 	get_gasabs.o\
 	vars_output.o \
-	Azimuth_Emissivity_Module.o \
-	Hyperbolic_Step.o \
-	Slope_Variance.o \
-	Reflection_Correction_Module.o \
-	Large_Scale_Correction_Module.o \
-	Small_Scale_Correction_Module.o \
-	Foam_Utility_Module.o \
-	Liu.o \
-	Fresnel.o \
-	CRTM_FastemX.o \
+	azimuth_emissivity_module.o \
+	hyperbolic_step.o \
+	slope_variance.o \
+	reflection_correction_module.o \
+	large_scale_correction_module.o \
+	small_scale_correction_module.o \
+	foam_utility_module.o \
+	liu.o \
+	fresnel.o \
+	fastemx.o \
 	ocean_sfc_optics.o \
 	land_sfc_optics.o \
 	sfc_optics.o \
