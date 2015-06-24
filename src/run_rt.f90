@@ -57,10 +57,12 @@ subroutine run_rt(errorstatus)
 
     end interface
 
-
+    
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
     if (verbose >= 1) print*, "running...", i_f, i_x, i_y
 
+    err = 0
+    
     call allocate_rt_vars(err)
     if (err /= 0) then
         msg = 'Error in allocate_rt_vars!'
@@ -128,7 +130,8 @@ subroutine run_rt(errorstatus)
     call hydrometeor_extinction(err)!hier i_x, i_y
 
       if (err == 2) then
-	msg = 'Error in run_drop_size_dist'
+!	msg = 'Error in run_drop_size_dist'
+        write(msg,'(A30,I3,A1,I3)') 'error in run_drop_size_dist!', atmo_model_i(i_x,i_y),' ',atmo_model_j(i_x,i_y)
 	call report(err, msg, nameOfRoutine)
 	errorstatus = err
 	return

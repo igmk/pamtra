@@ -579,7 +579,7 @@ class pyPamtra(object):
     #'''
       
       
-    #we don't wnat any masked arrays here:
+    #we don't want any masked arrays here:
         
     for key in kwargs.keys():
       if type(kwargs[key]) == np.ma.core.MaskedArray:

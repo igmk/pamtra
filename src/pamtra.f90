@@ -142,7 +142,8 @@ program pamtra
                 !run the model
                 call run_rt(err)
                 if (err /= 0) then
-                    msg = 'Error in run_rt!'
+!                    msg = 'Error in run_rt!'
+        write(msg,'(A30,I3,A1,I3)') 'error in run_rt!', i_x,' ',i_y
                     call report(fatal, msg, nameOfRoutine)
                     errorstatus = err
                     go to 666

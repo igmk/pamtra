@@ -15,6 +15,7 @@ gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 FC=gfortran
 CC=gcc
 FCFLAGS=-c -fPIC -Wunused -O2 -cpp -J$(OBJDIR) -I$(OBJDIR) 
+#FCFLAGS=-g -c -fPIC -Wunused -O0 -cpp -J$(OBJDIR) -I$(OBJDIR) 
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran-mp-4.8
 	NCFLAGS=-I/opt/local/include/ 
