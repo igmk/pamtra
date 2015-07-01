@@ -735,12 +735,147 @@ def readCosmoReAn2km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
   
   return pam
 
+def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDir="/tmp/",fnameInTar="",debug=False,verbosity=0,df_kind="default",maxLevel=41,subGrid=None):
+
+  import pygrib
+  import os
+  import time
+  import datetime
+  
+  variables2DC = ['rlat','rlon','fr_land']
+  variables3DC = ['hhl']
+
+  variables2D = ['t_g','sp','10u','10v']
+  variables3D = ['t','pp','q']
+  variables4D = ['qc','qi','qr','qs']
+
+  nhydro = len(variables4D)
+  
+  data = dict()
+  
+  try:
+    # determine dimensions 
+    constantFile = constantFields+'cosmo_cordex_lon'
+    grbsC = pygrib.open(constantFile)
+    nLon = grbsC.select(shortName='rlon')[0]['Ni']
+    nLat = grbsC.select(shortName='rlon')[0]['Nj']
+    data['rlon'] = grbsC.select(shortName='rlon')[0].values
+    grbsC.close()
+
+    constantFile = constantFields+'cosmo_cordex_lat'
+    grbsC = pygrib.open(constantFile)
+    data['rlat'] = grbsC.select(shortName='rlat')[0].values
+    grbsC.close()
+
+    constantFile = constantFields+'fr_land_cordex'
+    grbsC = pygrib.open(constantFile)
+    data['fr_land'] = grbsC.select(shortName='fr_land')[0].values
+    grbsC.close()
+
+    constantFile = constantFields+'cosmo_cordex_HHL'
+    grbsC = pygrib.open(constantFile)
+    selected_grbs = grbsC(shortName='hhl')
+    nLev = len(selected_grbs)
+    shape2D = (nLat,nLon)
+    shape3D = (nLat,nLon,nLev-1)
+    shape3Dplus = (nLat,nLon,nLev)
+    shape4D = (nLat,nLon,nLev-1,nhydro)
+    
+    data['hhl'] = np.zeros(shape3Dplus) + np.nan
+    for i in range(nLev-maxLevel,nLev):
+	data['hhl'][...,nLev-1-i] = selected_grbs[i].values
+    grbsC.close()
+	
+    
+    grbs = pygrib.open(fname)
+
+    
+    for var in variables3D:
+      if verbosity>1: print var
+      data[var] = np.zeros(shape3D) + np.nan
+      selected_grbs = grbs(shortName=var)
+      for i in range(nLev-maxLevel,nLev-1):
+	data[selected_grbs[i].shortName][...,nLev-2-i] = selected_grbs[i].values
+
+    data['hydro_q'] = np.zeros(shape4D) + np.nan
+    
+    for j,var in enumerate(variables4D):
+      if verbosity>1: print var
+      selected_grbs = grbs(shortName=var)
+      for i in range(nLev-maxLevel,nLev-1):
+	data['hydro_q'][...,nLev-2-i,j] = selected_grbs[i].values
+    
+      
+    grbs.close()
+
+    grbs = pygrib.open(fname+'00')
+
+    selected_grbs = grbs(shortName=variables2D)  
+    for var in selected_grbs:
+      if verbosity>1: print var.shortName
+      data[var.shortName] = var.values
+      
+    
+    grbs.close()
+
+  except Exception as inst:
+    if fname.split(".")[-1]!="nc":
+      if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+      os.system("rm -f "+tmpFile+"*")
+    print "ERROR:", fname      
+    print type(inst)     # the exception instance
+    print inst.args      # arguments stored in .args
+    print inst
+    if debug: import pdb;pdb.set_trace()
+
+  def calc_p0(height):
+
+    # parameters taken from COSMO documentation
+    psl = 100000 #Pa
+    tsl = 288.15 #K
+    beta = 42    #K
+    g = 9.80665  #m s-2
+    rd = 287.05  #J kg-1 K-1
+
+    # calculate reference pressure (equation 4 in documentation for beta != 0)
+    p0 = psl * np.exp(-tsl/beta*(1-np.sqrt(1-2*beta*g*height/(rd*tsl**2))))
+    
+    return p0
+
+  # some conversions and filling of needed variables
+  
+  data['hfl'] = (data['hhl'][...,1:]+data['hhl'][...,:-1])/2.
+  pref = calc_p0(data['hfl'])
+  data['press'] = pref + data['pp']*100.
+  data['relhum'] = q2rh(data['q']/(1+data['q']),data['t'],data['press'])
+
+  data['timestamp'] = np.zeros(shape2D)
+  data['timestamp'][:,:] = time.mktime(datetime.datetime.strptime(os.path.basename(fname), "laf%Y%m%d%H%M").timetuple())
+  
+  pam = pyPamtra()
+  pam.df.readFile(descriptorFile)
+  varPairs = [["timestamp","timestamp"],["rlat","lat"],["rlon","lon"],["fr_land","lfrac"],["10u","wind10u"],["10v","wind10v"],
+	      ["press","press"],["t","temp"],["relhum","relhum"],["t_g","groundtemp"],['hhl','hgt_lev'],['hydro_q','hydro_q']]    
+
+  pamData = dict()
+
+
+  for dataVar,pamVar in varPairs:
+    pamData[pamVar] = data[dataVar]
+
+  del data
+  
+  pam.createProfile(**pamData)
+  
+  return pam
+
+
 def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,dimY=160,dimZ=25,subGrid=None):
 
   variables = ['ALTITUDE','CLOUD','GEO','GRAUPEL','ICE','PRESSURE','RAIN','RHO','SEAPRES',
 	      'SEATEMP','SNOW','SURFPRES','TEMP','TEMP2M','TEMPGRD','VAPOR','VAPOR2M','WINDLVLKB','ZSBIS']
   def vapor2rh(rv,t,p):
-    rh = pyPamtra.meteoSI.q2rh(rv/(1+rv),t,p)
+    rh = q2rh(rv/(1+rv),t,p)
     
     return rh
 
@@ -805,7 +940,7 @@ def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,d
   
   #data['hydro_wp'] = np.zeros(shape3DH) + np.nan
 
-  pam = pyPamtra.pyPamtra()
+  pam = pyPamtra()
   pam.df.readFile("../descriptorfiles/descriptor_file_meso-nh.txt")
   #pam.df.readFile("../descriptorfiles/descriptor_file_COSMO_1mom.txt")
   varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],["lfrac","lfrac"],["wind10u","wind10u"],["wind10v","wind10v"],

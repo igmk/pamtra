@@ -87,6 +87,16 @@ module mie_spheres
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
     err = 0
 
+    ! initialize intent(out) variables with 0
+    extinction = 0.0d0
+    albedo = 0.0d0
+    back_scatt = 0.0d0
+    legen(:) = 0.0d0
+    legen2(:) = 0.0d0
+    legen3(:) = 0.0d0
+    legen4(:) = 0.0d0
+    back_spec(:) = 0.0d0
+    nlegen = 0
     if (verbose >= 4) print*, "calc_mie_spheres",&
 !     if ((liq_ice == -1) .and. (nbins == 50)) print*, "calc_mie_spheres",&
       i_x,i_y, i_z, i_h, &
@@ -220,8 +230,7 @@ module mie_spheres
 
       if (verbose >= 4) print*, "NEW: sumqback, sumqs, sumqe"
       if (verbose >= 4) print*,  sumqback , sumqs, sumqe
-
-      back_spec(ir) =  qback   ! volumetric backscattering corss section for radar simulator in backscat per volume per del_d[m²/m⁴]
+      back_spec(ir) =  qback   ! volumetric backscattering cross section for radar simulator in backscat per volume per del_d[m²/m⁴]
 
       if (lphase_flag) then 
 	  nmie = min0(nmie, nterms) 
@@ -315,6 +324,7 @@ module mie_spheres
           "scatter must be positive") 
       call assert_true(err,(back_scatt>0),&
           "back_scatt must be positive") 
+
       if (err > 0) then
           errorstatus = fatal
           msg = "assertation error"
