@@ -349,6 +349,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
           if (verbose >= 4) then
               print*,"first K",K
               print*,"TOTAL"," Ze back",10*log10(Ze_back)
+              print*,"TOTAL"," Ze SUM(particle_spectrum)*del_v",10*log10(SUM(particle_spectrum)*del_v)
               print*,"TOTAL"," Ze SUM(particle_spectrum_att)*del_v",10*log10(SUM(particle_spectrum_att)*del_v)
               print*,"TOTAL"," Ze SUM(turb_spectra)*del_v",10*log10(SUM(turb_spectra)*del_v)
               print*,"TOTAL"," Ze SUM(turb_spectra_aliased)*del_v",10*log10(SUM(turb_spectra_aliased)*del_v)

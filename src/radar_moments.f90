@@ -75,6 +75,9 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
 
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
     
+    if (verbose >= 10) print*, "radar_nfft,radar_nPeaks,noise_model,radar_spectrum_in"
+    if (verbose >= 10) print*, radar_nfft,radar_nPeaks,noise_model,"spec:",radar_spectrum_in
+ 
     err = 0
     del_v = (radar_max_V-radar_min_V) / radar_nfft
     spectra_velo = (/(((ii*del_v)+radar_min_V),ii=0,radar_nfft-1)/) ! [m/s]
@@ -181,7 +184,7 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
       radar_spectrum_4mom(1:left_edge) = 0.d0
       radar_spectrum_4mom(right_edge:radar_nfft) = 0.d0
 
-      if (verbose >= 5) print*, "radar_spectrum_smooth", SHAPE(radar_spectrum_4mom),  radar_spectrum_4mom
+      if (verbose >= 5) print*, "radar_spectrum_smooth, peak only", SHAPE(radar_spectrum_4mom),  radar_spectrum_4mom
       if (verbose >= 5) print*, "spectra_velo", SHAPE(spectra_velo), spectra_velo
 
 !     calculate the moments

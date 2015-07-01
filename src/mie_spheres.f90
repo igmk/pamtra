@@ -122,6 +122,8 @@ module mie_spheres
           return
       end if    
 
+      !initialize
+      back_spec(:) = 0.d0
 
       wavelength = c/(freq) !
 
