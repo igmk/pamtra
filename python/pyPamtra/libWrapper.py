@@ -54,12 +54,12 @@ def PamtraFortranWrapper(
   for key in nmlSets.keys():
     exec("foo = settings."+key)
     if type(nmlSets[key]) == str:
-      if sets["pyVerbose"] > 3: print("settings."+key +"[:] = '" + str(nmlSets[key])+"'") 
+      if sets["pyVerbose"] > 3: print("settings."+key.lower() +"[:] = '" + str(nmlSets[key])+"'") 
       #we have to do it the ugly way with exec, using __dict__ instead does not work...
-      exec("settings."+key +"[:] = '" + nmlSets[key]+"'")
+      exec("settings."+key.lower() +"[:] = '" + nmlSets[key]+"'")
     else:
-      if sets["pyVerbose"] > 3: print("settings."+key +" = " + str(nmlSets[key]))
-      exec("settings."+key +" = " + str(nmlSets[key]))
+      if sets["pyVerbose"] > 3: print("settings."+key.lower() +" = " + str(nmlSets[key]))
+      exec("settings."+key.lower() +" = " + str(nmlSets[key]))
     
   #see whether it worked:
   if sets["pyVerbose"] > 3:

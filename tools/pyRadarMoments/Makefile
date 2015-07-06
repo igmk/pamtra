@@ -38,7 +38,7 @@ OBJECTS=kinds.o \
 
 BIN=pamtra
 
-all: precompile pamtra py
+all: pyprecompile py
 
 
 pamtra: pamtra.f90 $(OBJECTS)
@@ -90,12 +90,15 @@ pyprecompile:
 	@echo "Make backup before deleting old signature file, auto creating will most likely fail."
 	@echo "####################################################################################"
 	@echo ""
-	f2py --overwrite-signature -m pyRadarMoments -h pyradarmoments.pyf report_module.f90 settings.f90 radar_moments.f90
+	f2py2.7 --overwrite-signature -m pyRadarMoments -h pyradarmoments.pyf report_module.f90 settings.f90 radar_moments.f90
 
 py: $(OBJECTS)
-	f2py $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) -c --fcompiler=gnu95  pyradarmoments.pyf $(OBJECTS) 
+	f2py2.7 $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) -c --fcompiler=gnu95  pyradarmoments.pyf $(OBJECTS) 
 
 pyinstall:
 	cp *.py ~/lib/python/
 	cp *.so ~/lib/python/
 
+clean:
+	-rm -f *.o
+	-rm -f *.mod

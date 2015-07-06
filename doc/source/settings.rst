@@ -44,14 +44,15 @@ radar_min_spectral_snr             positive float                 1.2         Mi
 radar\_mode                        simple, spectrum, moments      simple      Use "simple" radar simulator provides only Z_e by integrating Eq. \label{eq:etaD} over  D. The advanced "spectrum" simulator simulates the complete radar Doppler spectrum and estimates all moments from the spectrum. "moments" is identical to "spectrum" but the full Doppler spectrum is discarded to save memory. 
 radar\_nfft ( N_fft )              positive integer               256         Number of FFT points in the Doppler spectrum 
 radar\_no\_Ave ( Nave )            positive integer               150         Number of spectral averages
-radar_noise_distance_factor        positive float                 2.0         Required distance of the peak edge to the noise level.
+radar_noise_distance_factor        positive float                 2.0         Required distance of the peak edge to the noise level. If radar_noise_distance_factor<0 and radar\_use\_hildebrand, then noise_max from Hildebrand is used for peak edge determination. Sometimes, lower SNR values can be achieved with radar_noise_distance_factor instead of noise_max
 radar_npeaks                       1                              1           Number of detected peaks in the Doppler spectrum. As of today fixed to 1.
 radar\_pnoise0 ( N_1000 )          float                          -32.23 dBz  Radar noise at 1km in same unit as reflectivity Z_e (Eq.~\ref{eq:radarnoise})
 radar\_polarisation                NN, HV, VH, VV, HH             NN          Radar polarisation. NN: no polarisation, HV: horizontal transmit, vertical receive, etc.. Can be a comma separated list.
 radar_receiver_uncertainty_std     positive float                 0.0         Add Gaussian noise to radar noise level to simulate unstable receivers
 radar_save_noise_corrected_spectra boolean                        False       For debugging purposes: Save radar Doppler spectrum after noise is removed
 radar_smooth_spectrum              boolean                        True        smooth spectrum before estimating moments
-radar\_use\_hildebrand             boolean                        False       Derive  N_P  not from radar\_pnoise0 but using the method of \citet{hildebrand:1974a}.                                                                                                          
+radar\_use\_hildebrand             boolean                        False       Derive  N_P  not from radar\_pnoise0 but using the method of \citet{hildebrand:1974a}. Set  radar_noise_distance_factor<0 to use also noise_max from hildebrand for determination od the peak edge. Sometimes, lower SNR values can be achieved with radar_noise_distance_factor instead of noise_max
+radar_use_wider_peak               boolean                        False       Include the found peak edge (if peak edge is still larger than mean noise) into the peak which is used for moment estimation.
 randomseed                         integer                        0           0 is real noise, -1 means that the seed is created from latitude and longitude, other value gives always the same random numbers
 salinity                           float                          33.0        sea surface salinity
 save_psd                           boolean                        False       also saves the PSDs used for radiative transfer
