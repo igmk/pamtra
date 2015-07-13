@@ -79,8 +79,8 @@ module settings
     hydro_fullSpec, &
     hydro_limit_density_area, &
     hydro_adaptive_grid, & ! apply an adaptive grid to the psd. good to reduce mass overestimations for small amounts. works only for modified gamma
-    add_obs_height_to_layer
-    
+    add_obs_height_to_layer, &
+    radar_use_wider_peak ! use wider peak inlcuding the found noise/peak border
 
     character(3) :: gas_mod
     character(3) :: liq_mod
@@ -247,10 +247,10 @@ contains
       call assert_true(err,in_python,&
           "hydro_fullSpec works only in python!") 
     end if
-
-
-    call assert_true(err,(radar_nPeaks == 1),&
-        "radar_nPeaks higher than one not implemented yet!") 
+    if (.not. radar_use_hildebrand) then
+      call assert_true(err,(radar_noise_distance_factor>0),&
+          "radar_noise_distance_factor must be larger when not using Hildebrand!") 
+    end if
 
     if (err /= 0) then
       msg = 'value in settings not allowed'
@@ -386,6 +386,7 @@ contains
         radar_nPeaks = 1 !number of peaks the radar simulator is looking for
         radar_smooth_spectrum = .true.
         radar_attenuation = "disabled" ! "bottom-up" or "top-down"
+        radar_use_wider_peak = .false.
 
         ! create frequency string if not set in pamtra
         if (freq_str == "") then
@@ -444,6 +445,7 @@ contains
       print*, 'radar_convolution_fft: ', radar_convolution_fft
       print*, 'radar_smooth_spectrum', radar_smooth_spectrum
       print*, 'radar_attenuation', radar_attenuation
+      print*, 'radar_use_wider_peak', radar_use_wider_peak
       print*, 'active: ', active
       print*, 'radar_max_v: ', radar_max_v
       print*, 'radar_save_noise_corrected_spectra: ', radar_save_noise_corrected_spectra

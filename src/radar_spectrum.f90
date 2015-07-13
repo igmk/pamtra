@@ -126,6 +126,10 @@ subroutine radar_spectrum(&
       return
     end if   
     
+    !initialize
+    back_vel_spec_ext(:) = 0.d0
+    vel_spec_ext(:) = 0.d0
+
     ! get |K|**2 and lambda
 
 !     K2 = dielec_water(0.D0,radar_K2_temp-t_abs,frequency)
@@ -349,9 +353,12 @@ subroutine radar_spectrum(&
       return
     end if
     
+    if (verbose >= 4) print*,"i_h",i_h
+    if (verbose >= 4) print*,"Ze",10*log10(Ze)
     if (verbose >= 4) print*,"K",K
     if (verbose >= 4) print*," Ze SUM(back_vel_spec)*del_v_model",10*log10(SUM(back_vel_spec*del_v_model))
-    if (verbose >= 4) print*," Ze SUM(back_vel_spec_ext)*del_v_model",10*log10(SUM(back_vel_spec_ext*del_v_model))
+    if (verbose >= 4) print*," Ze SUM(back_vel_spec_ext)*del_v_model",10*log10(SUM(back_vel_spec_ext*del_v_model)),&
+      "has value only when using vertical air motion)"
     if (verbose >= 4) print*," Ze SUM(particle_spec)*del_v_radar",10*log10(SUM(particle_spec)*del_v_radar)
 
     !spetial output for testing the radar simulator

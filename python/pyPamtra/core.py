@@ -106,6 +106,7 @@ class pyPamtra(object):
     self.nmlSet["radar_receiver_uncertainty_std"]=  0.e0 #dB
     self.nmlSet["radar_attenuation"]=  "disabled" #! "bottom-up" or "top-down"
     self.nmlSet["radar_polarisation"]=  "NN" #! comma separated
+    self.nmlSet["radar_use_wider_peak"]=  False #! comma separated
     #all settings which do not go into the nml file go here:
     self.set = dict()
     self.set["pyVerbose"] = 0
@@ -1546,11 +1547,7 @@ class pyPamtra(object):
   def _joinResults(self,resultList):
     '''
     Collect the data of parallel pyPamtra    
-    '''
-    #if pp_ii == 1: import pdb;pdb.set_trace()
-    #logging.debug(str(pp_ii)+": callback started ")
-    #print "toll", results[0][0][1]
-    #print "toller", np.shape(self.r["radar_snr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF])    
+    '''  
     
     [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY], results, fortError, host = resultList
     if self.set["pyVerbose"] > 2: print "Callback started %s:"%host

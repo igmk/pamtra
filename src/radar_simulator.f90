@@ -58,7 +58,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
     character(len=80) :: msg
-    character(len=14) :: nameOfRoutine = 'radar_simulator'    
+    character(len=15) :: nameOfRoutine = 'radar_simulator'    
     
     interface
         subroutine convolution(errorstatus,X,M,A,N,Y)
@@ -86,8 +86,8 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
     err = 0
 
-    call assert_true(err,(radar_nPeaks == 1),&
-        "only radar_nPeaks=1 allowed as of today")    
+!     call assert_true(err,(radar_nPeaks == 1),&
+!         "only radar_nPeaks=1 allowed as of today")    
     call assert_false(err,(ANY(ISNAN(particle_spectrum))),&
         "got nan in values in backscattering spectrum")
     call assert_false(err,(ANY(ISNAN(back)) .or. ANY(back < 0.d0)),&
@@ -146,12 +146,20 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
       if (verbose >= 2)print*, particle_spectrum_att
 
       if (radar_mode == "simple") then
+        call assert_true(err,(radar_nPeaks == 1),&
+            "radar_nPeaks=1 required for 'simple' radar_mode") 
+        if (err > 0) then
+          errorstatus = fatal
+          msg = "assertation error"
+          call report(errorstatus, msg, nameOfRoutine)
+          return
+        end if   
           if (Ze_back .eq. 0.d0) then
-            out_Ze(i_x,i_y,i_z,i_f,i_p,i_n) = -9999.d0
+            out_Ze(i_x,i_y,i_z,i_f,i_p,1) = -9999.d0
           else 
-            out_Ze(i_x,i_y,i_z,i_f,i_p,i_n) = 10*log10(Ze_back)
+            out_Ze(i_x,i_y,i_z,i_f,i_p,1) = 10*log10(Ze_back)
           end if
-        if (verbose >= 3) print*, "i_x,i_y,i_z,i_f,out_Ze", i_x,i_y,i_z,i_f,out_Ze(i_x,i_y,i_z,i_f,i_p,i_n)
+        if (verbose >= 3) print*, "i_x,i_y,i_z,i_f,out_Ze", i_x,i_y,i_z,i_f,out_Ze(i_x,i_y,i_z,i_f,i_p,1)
 
       else if ((radar_mode == "moments") .or. (radar_mode == "spectrum")) then
           !calculate the noise level depending on range:
@@ -349,6 +357,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
           if (verbose >= 4) then
               print*,"first K",K
               print*,"TOTAL"," Ze back",10*log10(Ze_back)
+              print*,"TOTAL"," Ze SUM(particle_spectrum)*del_v",10*log10(SUM(particle_spectrum)*del_v)
               print*,"TOTAL"," Ze SUM(particle_spectrum_att)*del_v",10*log10(SUM(particle_spectrum_att)*del_v)
               print*,"TOTAL"," Ze SUM(turb_spectra)*del_v",10*log10(SUM(turb_spectra)*del_v)
               print*,"TOTAL"," Ze SUM(turb_spectra_aliased)*del_v",10*log10(SUM(turb_spectra_aliased)*del_v)
@@ -395,8 +404,10 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
             return
         end if   
           if (verbose >= 4) then
-              print*,"TOTAL"," Ze moments log ",10*log10(moments(0,i_n)), "lin ", moments(0,i_n)
+            do i_n = 1  , radar_nPeaks
+              print*,"TOTAL#",i_n," Ze moments log ",10*log10(moments(0,i_n)), "lin ", moments(0,i_n)
               print*,"#####################"
+            end do
           end if
 
             ! collect results for output
@@ -420,17 +431,27 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
               print*,out_radar_spectra(i_x,i_y,i_z,i_f,i_p,:)
               print*,"#####################"
           end if
-          out_radar_snr(i_x,i_y,i_z,i_f,i_p,i_n) = SNR
-          out_radar_vel(:) = spectra_velo(:)
-          out_radar_moments(i_x,i_y,i_z,i_f,i_p,i_n,:) = moments(1:4,i_n)
-          out_radar_slopes(i_x,i_y,i_z,i_f,i_p,i_n,:) = slope(:,i_n)
-          out_radar_edges(i_x,i_y,i_z,i_f,i_p,i_n,:) = edge(:,i_n)
-          out_radar_quality(i_x,i_y,i_z,i_f,i_p,i_n) = quailty_aliasing + quality_moments
+          do i_n = 1  , radar_nPeaks
+            out_radar_snr(i_x,i_y,i_z,i_f,i_p,i_n) = SNR !same SNR for all values as of now...
+            out_radar_vel(:) = spectra_velo(:)
+            out_radar_moments(i_x,i_y,i_z,i_f,i_p,i_n,:) = moments(1:4,i_n)
+            out_radar_slopes(i_x,i_y,i_z,i_f,i_p,i_n,:) = slope(:,i_n)
+            out_radar_edges(i_x,i_y,i_z,i_f,i_p,i_n,:) = edge(:,i_n)
+            out_radar_quality(i_x,i_y,i_z,i_f,i_p,i_n) = quailty_aliasing + quality_moments !same quailty for all values as of now...
 
-          moments(0,i_n) = 10*log10(moments(0,i_n))
-          IF (ISNAN(moments(0,i_n))) moments(0,i_n) = -9999.d0
-          out_Ze(i_x,i_y,i_z,i_f,i_p,i_n) = moments(0,i_n)
-
+            moments(0,i_n) = 10*log10(moments(0,i_n))
+            IF (ISNAN(moments(0,i_n))) moments(0,i_n) = -9999.d0
+            out_Ze(i_x,i_y,i_z,i_f,i_p,i_n) = moments(0,i_n)
+            if (verbose >= 5 ) then
+              print*, "i_x,i_y,i_z,i_f,i_p,i_n ",i_x,i_y,i_z,i_f,i_p,i_n 
+              print*, "out_radar_snr",out_radar_snr(i_x,i_y,i_z,i_f,i_p,i_n) 
+              print*, "out_radar_moments",out_radar_moments(i_x,i_y,i_z,i_f,i_p,i_n,:)
+              print*, "out_radar_slopes",out_radar_slopes(i_x,i_y,i_z,i_f,i_p,i_n,:)
+              print*, "out_radar_edges",out_radar_edges(i_x,i_y,i_z,i_f,i_p,i_n,:)
+              print*, "out_radar_quality",out_radar_quality(i_x,i_y,i_z,i_f,i_p,i_n)
+              print*, "out_Ze",out_Ze(i_x,i_y,i_z,i_f,i_p,i_n)
+            end if
+          end do
           if (allocated(turb_spectra)) deallocate(turb_spectra)
       else
         errorstatus = fatal

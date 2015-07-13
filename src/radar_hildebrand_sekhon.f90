@@ -20,7 +20,13 @@
 ! 
 ! 
 
-subroutine radar_hildebrand_sekhon(errorstatus,spectrum,n_ave,n_ffts,noise_mean)
+subroutine radar_hildebrand_sekhon(&
+  errorstatus,&
+  spectrum,&
+  n_ave,&
+  n_ffts,&
+  noise_mean,&
+  noise_max)
 
 ! written by P. Kollias, tranlated to Fortran by M. Maahn (12.2012)
 ! 
@@ -42,6 +48,7 @@ subroutine radar_hildebrand_sekhon(errorstatus,spectrum,n_ave,n_ffts,noise_mean)
   integer, intent(in) :: n_ave, n_ffts
   real(kind=dbl), dimension(n_ffts), intent(in) :: spectrum
   real(kind=dbl), intent(out) :: noise_mean
+  real(kind=dbl), intent(out) :: noise_max
 
   real(kind=dbl), dimension(n_ffts) :: dummy, a1, a3,spectrum_sorted
   real(kind=dbl) :: sumLi, sumSq, sumNs, maxNs
@@ -99,8 +106,11 @@ subroutine radar_hildebrand_sekhon(errorstatus,spectrum,n_ave,n_ffts,noise_mean)
   end do
 
   noise_mean   = sumNs/numNs
-!   N_max    = maxNs
+  noise_max    = maxNs
 !   N_points = numNs
+
+  if (verbose >= 5) print*, "hildebrand found",  noise_mean, noise_max
+
 
   errorstatus = err
   if (verbose >= 2) call report(info,'End of ', nameOfRoutine)

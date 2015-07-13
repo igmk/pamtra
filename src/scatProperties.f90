@@ -579,7 +579,7 @@ module scatProperties
     if ((active) .and. ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments"))) then
 
       do  i_p= 1, radar_npol
-        call radar_spectrum(err,nbin,d_ds, rt_back(i_z,i_p),  back_spec_dia(i_p,:),layer_t,pressure,freq,&
+        call radar_spectrum(err,nbin,d_ds, back_hydro(i_p),  back_spec_dia(i_p,:),layer_t,pressure,freq,&
           soft_rho_eff,vel_size_mod,mass_ds,area_ds,radar_spec_hydro)
         if (err /= 0) then
             msg = 'error in radar_spectrum!'
