@@ -15,6 +15,7 @@ gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 FC=gfortran
 CC=gcc
 FCFLAGS=-c -fPIC -Wunused -O2 -cpp -J$(OBJDIR) -I$(OBJDIR) 
+#FCFLAGS=-g -c -fPIC -Wunused -O0 -cpp -J$(OBJDIR) -I$(OBJDIR) 
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran-mp-4.8
 	NCFLAGS=-I/opt/local/include/ 
@@ -34,6 +35,7 @@ endif
 OBJECTS=kinds.o \
         vars_index.o \
 	report_module.o \
+	rt_utilities.o \
 	settings.o \
 	constants.o \
 	nan.o \
@@ -48,16 +50,28 @@ OBJECTS=kinds.o \
 	mod_io_strings.o \
 	getopt.o \
 	parse_options.o \
-	rt_utilities.o \
 	radmat.o \
 	convolution.o \
 	get_gasabs.o\
 	vars_output.o \
+	azimuth_emissivity_module.o \
+	hyperbolic_step.o \
+	slope_variance.o \
+	reflection_correction_module.o \
+	large_scale_correction_module.o \
+	small_scale_correction_module.o \
+	foam_utility_module.o \
+	liu.o \
+	fresnel.o \
+	fastemx.o \
+	ocean_sfc_optics.o \
+	land_sfc_optics.o \
+	sfc_optics.o \
+	sfc_matrices.o \
 	run_rt.o \
 	scat_utilities.o \
 	mpm93.o \
 	eps_water.o \
-	get_surface.o \
 	mie_scat_utilities.o \
 	mie_spheres.o \
 	dia2vel.o \
@@ -79,8 +93,6 @@ OBJECTS=kinds.o \
 	interpolation.o \
 	collect_output.o \
 	save_active.o \
-	fastem4.o \
-	specular_surface.o \
 	random.o \
 	rt4.o \
 	radtran4.o \

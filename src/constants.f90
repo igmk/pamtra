@@ -37,6 +37,7 @@ module constants
     real(kind=dbl), parameter :: delta_d_mono  = 1.d-8          ! delta diameter used for monodisperse drop-size distribution
 
     real(kind=dbl), parameter :: deg2rad = pi/180.0_dbl
+    real(kind=dbl), parameter :: rad2deg = 180.0_dbl/pi
     complex(kind=dbl), parameter :: im = (0.0_dbl, 1.0_dbl)
 
 end module constants

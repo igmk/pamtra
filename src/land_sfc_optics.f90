@@ -59,6 +59,8 @@ subroutine get_land_sfc_optics(errorstatus, freq)
   rt_sfc_emissivity(:,:) = land_emissivity
   rt_sfc_reflectivity(:,:) = 1._dbl - land_emissivity
 
+  errorstatus = err
+
   if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
   
 end subroutine get_land_sfc_optics
