@@ -181,374 +181,373 @@
 !                       MIDENTITY, MTRANSPOSE, MMULT, MINVERT
 !
 !
-subroutine RT4(errorstatus,out_file,&
-ground_type,ground_albedo,ground_index,sky_temp,&
-wavelength,outlevels)
+subroutine rt4(errorstatus,out_file,&
+     ground_type,ground_albedo,ground_index,sky_temp,&
+     wavelength,outlevels)
 
-    use kinds
-    use vars_atmosphere
-    use vars_rt, only : &
-        rt_kextatmo,&
-        rt_hydros_present, &
-        rt_scattermatrix, &
-        rt_extmatrix, &
-        rt_emisvec, &
-        rt_hydros_present_reverse, &
-        rt_scattermatrix_reverse, &
-        rt_extmatrix_reverse, &
-        rt_emisvec_reverse
-    use vars_index, only: i_x,i_y,i_f
-        
-    use settings, only: write_nc,&
-        in_python,&
-        numazimuths,&
-        verbose,&
-        nstokes,&
-        nummu,&
-        mu_values,&
-        quad_weights,&
-        quad_type,&
-        noutlevels,&
-        outpol,&
-        units
+  use kinds
+  use vars_atmosphere
+  use vars_rt, only : &
+       rt_kextatmo,&
+       rt_hydros_present, &
+       rt_scattermatrix, &
+       rt_extmatrix, &
+       rt_emisvec, &
+       rt_hydros_present_reverse, &
+       rt_scattermatrix_reverse, &
+       rt_extmatrix_reverse, &
+       rt_emisvec_reverse
+  use vars_index, only: i_x,i_y,i_f
 
-    use report_module
+  use settings, only: write_nc,&
+       in_python,&
+       numazimuths,&
+       verbose,&
+       nstokes,&
+       nummu,&
+       mu_values,&
+       quad_weights,&
+       quad_type,&
+       noutlevels,&
+       outpol,&
+       units
 
-    implicit none
+  use report_module
 
-    integer   maxv, maxlay
-    parameter (maxv=64)
-    parameter (maxlay=200)
+  implicit none
 
-!    real(kind=dbl), intent(in) ::  mu_values(maxv)
-    character*64, intent(in) :: out_file
-    character, intent(in) ::  ground_type*1
-    real(kind=dbl), intent(in) ::  ground_albedo
-    complex*16, intent(in) ::   ground_index
-    real(kind=dbl), intent(in) ::  sky_temp
-    real(kind=dbl), intent(in) ::   wavelength
-    integer, intent(in) ::  outlevels(maxlay)
+  integer, parameter :: maxv=64, maxlay=200
 
-    integer   num_layers
+  !    real(kind=dbl), intent(in) ::  mu_values(maxv)
+  character*64, intent(in) :: out_file
+  character, intent(in) ::  ground_type*1
+  real(kind=dbl), intent(in) ::  ground_albedo
+  complex*16, intent(in) ::   ground_index
+  real(kind=dbl), intent(in) ::  sky_temp
+  real(kind=dbl), intent(in) ::   wavelength
+  integer, intent(in), dimension(maxlay) ::  outlevels
 
-    real(kind=dbl)    ground_temp
-    real(kind=dbl)    max_delta_tau
-    real(kind=dbl)    height(maxlay), temperatures(maxlay)
-    real(kind=dbl)    gas_extinct(maxlay)
-    real(kind=dbl)    up_rad(maxv*(maxlay+1)), down_rad(maxv*(maxlay+1))
-    real(kind=dbl)    up_flux(4*(maxlay+1)), down_flux(4*(maxlay+1))
+  integer :: num_layers
 
-    character*64 layer_file
+  real(kind=dbl) :: ground_temp
+  real(kind=dbl) :: max_delta_tau
+  real(kind=dbl), dimension(maxlay) :: height, temperatures
+  real(kind=dbl), dimension(maxlay) :: gas_extinct
+  real(kind=dbl), dimension(maxv*(maxlay+1)) :: up_rad, down_rad
+  real(kind=dbl), dimension(4*(maxlay+1)) :: up_flux, down_flux
+
+  character(len=64) :: layer_file
 
 
-    ! Error handling
+  ! error handling
 
-    integer(kind=long), intent(out) :: errorstatus
-    integer(kind=long) :: err = 0
-    character(len=80) :: msg
-    character(len=14) :: nameOfRoutine = 'rt4'
-    
-    if (verbose >= 1) call report(info, 'Start of ', nameOfRoutine)
+  integer(kind=long), intent(out) :: errorstatus
+  integer(kind=long) :: err = 0
+  character(len=80) :: msg
+  character(len=14) :: nameOfRoutine = 'rt4'
 
-    err = success
-    
-    height = 0.
-    temperatures = 0.
-    gas_extinct = 0.
-    MAX_DELTA_TAU = 1.0d-6
+  if (verbose >= 1) call report(info, 'start of ', nameOfRoutine)
 
-    LAYER_FILE=""
+  err = success
 
-    !scat_files = ''
-    !scat_files(atmo_nlyrs(i_x,i_y)) = '1.txt'
+  height = 0.
+  temperatures = 0.
+  gas_extinct = 0.
+  max_delta_tau = 1.0d-6
 
+  layer_file=""
 
-    ground_temp = atmo_groundtemp(i_x,i_y)
-    num_layers = atmo_nlyrs(i_x,i_y)
-    height(1:atmo_nlyrs(i_x,i_y)+1) = atmo_hgt_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1:1:-1)             ! [m]
-    temperatures(1:atmo_nlyrs(i_x,i_y)+1) = atmo_temp_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1:1:-1)      ! [K]
-    gas_extinct(1:atmo_nlyrs(i_x,i_y)) = rt_kextatmo(atmo_nlyrs(i_x,i_y):1:-1)         ! [Np/m]
-
-    !do some tests
-    call assert_true(err,(maxlay>=num_layers),&
-        "maxlay>=num_layers")  
-    call assert_true(err,(ground_temp>1),&
-        "ground_temp must be greater 1")  
-    call assert_true(err,(num_layers>0),&
-        "num_layers must be greater 0")   
-    call assert_true(err,all(height(1:atmo_nlyrs(i_x,i_y)+1)>=-370),&
-        "height must be greater -370 (depth of Tagebau Hambach :-))")  
-    call assert_true(err,all(temperatures(1:atmo_nlyrs(i_x,i_y)+1)>1),&
-        "temperatures must be greater 1")   
-    call assert_false(err,all(isnan(gas_extinct(1:atmo_nlyrs(i_x,i_y)+1))),&
-        "gas_extinct must be non nan zero")       
-    if (err > 0) then
-        errorstatus = fatal
-        msg = "assertation error"
-        call report(errorstatus, msg, nameOfRoutine)
-        return
-    end if    
+  !scat_files = ''
+  !scat_files(atmo_nlyrs(i_x,i_y)) = '1.txt'
 
 
-    rt_hydros_present_reverse(1:atmo_nlyrs(i_x,i_y)) = rt_hydros_present(atmo_nlyrs(i_x,i_y):1:-1)
+  ground_temp = atmo_groundtemp(i_x,i_y)
+  num_layers = atmo_nlyrs(i_x,i_y)
+  height(1:atmo_nlyrs(i_x,i_y)+1) = atmo_hgt_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1:1:-1)             ! [m]
+  temperatures(1:atmo_nlyrs(i_x,i_y)+1) = atmo_temp_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1:1:-1)      ! [k]
+  gas_extinct(1:atmo_nlyrs(i_x,i_y)) = rt_kextatmo(atmo_nlyrs(i_x,i_y):1:-1)         ! [np/m]
 
-    rt_scattermatrix_reverse(1:atmo_nlyrs(i_x,i_y),:,:,:,:,:) = rt_scattermatrix(atmo_nlyrs(i_x,i_y):1:-1,:,:,:,:,:)
-    rt_extmatrix_reverse(1:atmo_nlyrs(i_x,i_y),:,:,:,:) = rt_extmatrix(atmo_nlyrs(i_x,i_y):1:-1,:,:,:,:)
-    rt_emisvec_reverse(1:atmo_nlyrs(i_x,i_y),:,:,:) = rt_emisvec(atmo_nlyrs(i_x,i_y):1:-1,:,:,:)
-
-    !  if (verbose .gt. 0) print*, ".... read_layers done!"
-
-    CALL RADTRAN4(err,MAX_DELTA_TAU,&
-    GROUND_TEMP, GROUND_TYPE,&
-    GROUND_ALBEDO, GROUND_INDEX,&
-    SKY_TEMP, WAVELENGTH,&
-    NUM_LAYERS, HEIGHT, TEMPERATURES,&
-    GAS_EXTINCT,&
-    NOUTLEVELS, OUTLEVELS,&
-    UP_FLUX, DOWN_FLUX,&
-    UP_RAD, DOWN_RAD)
-    if (err /= 0) then
-        msg = 'error in RADTRAN4'
-        call report(err,msg, nameOfRoutine)
-        errorstatus = err
-        return
-    end if
-
-    !  if (verbose .gt. 0) print*, ".... radtran done!"
-
-    if (write_nc .or. in_python) then
-        call collect_output(NSTOKES, NUMMU, 0, &
-        WAVELENGTH,   &
-        UNITS, OUTPOL,NOUTLEVELS, OUTLEVELS,         &
-        NUMAZIMUTHS,UP_RAD, DOWN_RAD,     &
-        i_x,i_y,i_f)
-    else
-        CALL OUTPUT_FILE4(NSTOKES, NUMMU,&
-        LAYER_FILE, OUT_FILE,&
-        QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&
-        GROUND_ALBEDO, GROUND_INDEX,&
-        SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,&
-        NUM_LAYERS, HEIGHT,&
-        NOUTLEVELS, OUTLEVELS, &
-        MU_VALUES, UP_FLUX, DOWN_FLUX,&
-        UP_RAD, DOWN_RAD)
-    end if
-
-    errorstatus = err
-
-    if (verbose >= 1) call report(info, 'End of ', nameOfRoutine)
-    return
-
-END subroutine rt4
+  !do some tests
+  call assert_true(err,(maxlay>=num_layers),&
+       "maxlay>=num_layers")  
+  call assert_true(err,(ground_temp>1),&
+       "ground_temp must be greater 1")  
+  call assert_true(err,(num_layers>0),&
+       "num_layers must be greater 0")   
+  call assert_true(err,all(height(1:atmo_nlyrs(i_x,i_y)+1)>=-370),&
+       "height must be greater -370 (depth of tagebau hambach :-))")  
+  call assert_true(err,all(temperatures(1:atmo_nlyrs(i_x,i_y)+1)>1),&
+       "temperatures must be greater 1")   
+  call assert_false(err,all(isnan(gas_extinct(1:atmo_nlyrs(i_x,i_y)+1))),&
+       "gas_extinct must be non nan zero")       
+  if (err > 0) then
+     errorstatus = fatal
+     msg = "assertation error"
+     call report(errorstatus, msg, nameOfRoutine)
+     return
+  end if
 
 
-SUBROUTINE READ_LAYERS (LAYER_FILE, MAXLAY, NUM_LAYERS,&
-HEIGHT, TEMPERATURES,&
-GAS_EXTINCT, SCAT_FILES)
-    use kinds
+  rt_hydros_present_reverse(1:atmo_nlyrs(i_x,i_y)) = rt_hydros_present(atmo_nlyrs(i_x,i_y):1:-1)
 
-    implicit none
+  rt_scattermatrix_reverse(1:atmo_nlyrs(i_x,i_y),:,:,:,:,:) = rt_scattermatrix(atmo_nlyrs(i_x,i_y):1:-1,:,:,:,:,:)
+  rt_extmatrix_reverse(1:atmo_nlyrs(i_x,i_y),:,:,:,:) = rt_extmatrix(atmo_nlyrs(i_x,i_y):1:-1,:,:,:,:)
+  rt_emisvec_reverse(1:atmo_nlyrs(i_x,i_y),:,:,:) = rt_emisvec(atmo_nlyrs(i_x,i_y):1:-1,:,:,:)
 
-    INTEGER  MAXLAY, NUM_LAYERS
-    real(kind=dbl)   HEIGHT(*), TEMPERATURES(*)
-    real(kind=dbl)   GAS_EXTINCT(*)
-    CHARACTER*(*)  LAYER_FILE, SCAT_FILES(*)
-    INTEGER   I
+  !  if (verbose .gt. 0) print*, ".... read_layers done!"
 
-    !           Read in height, temperature, gaseous extinction, and
-    !                 scattering file for the layers
-    OPEN (UNIT=1, FILE=LAYER_FILE, STATUS='OLD')
-    I = 1
-100 CONTINUE
-    READ (1,*,ERR=990,END=110) HEIGHT(I), TEMPERATURES(I),&
-    GAS_EXTINCT(I), SCAT_FILES(I)
-    I = I + 1
-    IF (I .EQ. MAXLAY) THEN
-        WRITE (*,*) 'Too many layers'
-        STOP
-    ENDIF
-    GOTO 100
-110 CONTINUE
-    CLOSE(1)
-    NUM_LAYERS = I - 2
-    RETURN
+  call radtran4(err,max_delta_tau,&
+       ground_temp, ground_type,&
+       ground_albedo, ground_index,&
+       sky_temp, wavelength,&
+       num_layers, height, temperatures,&
+       gas_extinct,&
+       noutlevels, outlevels,&
+       up_flux, down_flux,&
+       up_rad, down_rad)
+       
+  if (err /= 0) then
+     msg = 'error in radtran4'
+     call report(err,msg, nameOfRoutine)
+     errorstatus = err
+     return
+  end if
 
-990 CONTINUE
-    WRITE (*,*) 'Error reading layers data file'
+  !  if (verbose .gt. 0) print*, ".... radtran done!"
 
-    RETURN
-END
+  if (write_nc .or. in_python) then
+     call collect_output(nstokes, nummu, 0, &
+          wavelength,   &
+          units, outpol,noutlevels, outlevels,         &
+          numazimuths,up_rad, down_rad,     &
+          i_x,i_y,i_f)
+  else
+     call output_file4(nstokes, nummu,&
+          layer_file, out_file,&
+          quad_type, ground_temp, ground_type,&
+          ground_albedo, ground_index,&
+          sky_temp, wavelength, units, outpol,&
+          num_layers, height,&
+          noutlevels, outlevels, &
+          mu_values, up_flux, down_flux,&
+          up_rad, down_rad)
+  end if
 
-SUBROUTINE OUTPUT_FILE4(NSTOKES, NUMMU, &
-LAYER_FILE, OUT_FILE,&
-QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&
-GROUND_ALBEDO, GROUND_INDEX,&
-SKY_TEMP, WAVELENGTH, UNITS, OUTPOL,&
-NUM_LAYERS, HEIGHT,&
-NOUTLEVELS, OUTLEVELS, &
-MU_VALUES, UP_FLUX, DOWN_FLUX,&
-UP_RAD, DOWN_RAD)
+  errorstatus = err
 
-    use kinds
+  if (verbose >= 1) call report(info, 'end of ', nameOfRoutine)
+  return
 
-    implicit none
-
-    INTEGER  NSTOKES, NUMMU, NUM_LAYERS
-    INTEGER  NOUTLEVELS, OUTLEVELS(*)
-    real(kind=dbl)   GROUND_TEMP, GROUND_ALBEDO
-    real(kind=dbl)   SKY_TEMP, WAVELENGTH
-    real(kind=dbl)   MU_VALUES(NUMMU)
-    real(kind=dbl)   HEIGHT(NUM_LAYERS+1)
-    real(kind=dbl)   UP_FLUX(NSTOKES,NOUTLEVELS)
-    real(kind=dbl)   DOWN_FLUX(NSTOKES,NOUTLEVELS)
-    real(kind=dbl)   UP_RAD(NSTOKES,NUMMU,NOUTLEVELS)
-    real(kind=dbl)   DOWN_RAD(NSTOKES,NUMMU,NOUTLEVELS)
-    COMPLEX*16  GROUND_INDEX
-    CHARACTER*(*) LAYER_FILE, OUT_FILE
-    CHARACTER  QUAD_TYPE*1, UNITS*1, OUTPOL*2, GROUND_TYPE*1
-    CHARACTER*32 QUAD_NAME, UNITS_NAME, GROUND_NAME
-    CHARACTER*64 FORM1
-    INTEGER  I, J, L, LI
+end subroutine rt4
 
 
-    CALL CONVERT_OUTPUT4(UNITS, OUTPOL, NSTOKES, NUMMU*NOUTLEVELS, &
-    WAVELENGTH, 0, UP_RAD)
-    CALL CONVERT_OUTPUT4(UNITS, OUTPOL, NSTOKES, NUMMU*NOUTLEVELS, &
-    WAVELENGTH, 0, DOWN_RAD)
-    CALL CONVERT_OUTPUT4(UNITS, OUTPOL, NSTOKES, NOUTLEVELS, &
-    WAVELENGTH, 1, UP_FLUX)
-    CALL CONVERT_OUTPUT4(UNITS, OUTPOL, NSTOKES, NOUTLEVELS, &
-    WAVELENGTH, 1, DOWN_FLUX)
+subroutine read_layers (layer_file, maxlay, num_layers,&
+     height, temperatures,&
+     gas_extinct, scat_files)
+  use kinds
 
-    QUAD_NAME = 'GAUSSIAN'
-    IF (QUAD_TYPE .EQ. 'D')  QUAD_NAME = 'DOUBLEGAUSS'
-    IF (QUAD_TYPE .EQ. 'L')  QUAD_NAME = 'LOBATTO'
-    IF (QUAD_TYPE .EQ. 'E')  QUAD_NAME = 'EXTRA-ANGLES'
-    UNITS_NAME = 'WATTS/(M^2 MICRON STER)'
-    IF (UNITS .EQ. 'T') UNITS_NAME = 'KELVINS - EBB'
-    IF (UNITS .EQ. 'R') UNITS_NAME = 'KELVINS - RJ'
-    GROUND_NAME = 'LAMBERTIAN'
-    IF (GROUND_TYPE .EQ. 'F')  GROUND_NAME = 'FRESNEL'
+  implicit none
 
-    OPEN (UNIT=3, FILE=OUT_FILE, STATUS='UNKNOWN')
+  integer  maxlay, num_layers
+  real(kind=dbl)   height(*), temperatures(*)
+  real(kind=dbl)   gas_extinct(*)
+  character*(*)  layer_file, scat_files(*)
+  integer   i
 
-    !           Output the parameters
-    WRITE (3,'(A,I3,A,I3,A,I3,A,I1)')&
-    'C  NUMMU=', NUMMU,  '  NUMAZI=',1,&
-    '  AZIORDER=',0, '  NSTOKES=',NSTOKES
-    WRITE (3,'(A,A32)')&
-    'C  LAYER_FILE=',    LAYER_FILE
-    WRITE (3,'(A,I1,A,A16)')&
-    'C  SRC_CODE=',      2,&
-    '   QUAD_TYPE=',     QUAD_NAME
-    WRITE (3,'(A,F8.2,A,A16)')&
-    'C  GROUND_TEMP=',   GROUND_TEMP,&
-    '   GROUND_TYPE=',   GROUND_NAME
-    IF (GROUND_TYPE(1:1) .EQ. 'F') THEN
-        WRITE (3,'(A,2F9.4,A,F8.2)')&
-        'C  GROUND_INDEX=',  GROUND_INDEX,&
-        '   SKY_TEMP=',      SKY_TEMP
-    ELSE
-        WRITE (3,'(A,F8.5,A,F8.2)')&
-        'C  GROUND_ALBEDO=', GROUND_ALBEDO,&
-        '   SKY_TEMP=',      SKY_TEMP
-    ENDIF
-    WRITE (3,'(A,E12.6)') 'C  WAVELENGTH=',    WAVELENGTH
-    WRITE (3,'(A,A25,A,A2)') 'C  UNITS='     ,    UNITS_NAME,&
-    '   OUTPUT_POLARIZATION=', OUTPOL
+  !           read in height, temperature, gaseous extinction, and
+  !                 scattering file for the layers
+  open (unit=1, file=layer_file, status='old')
+  i = 1
+100 continue
+  read (1,*,err=990,end=110) height(i), temperatures(i),&
+       gas_extinct(i), scat_files(i)
+  i = i + 1
+  if (i .eq. maxlay) then
+     write (*,*) 'too many layers'
+     stop
+  endif
+  goto 100
+110 continue
+  close(1)
+  num_layers = i - 2
+  return
+
+990 continue
+  write (*,*) 'error reading layers data file'
+
+  return
+end subroutine read_layers
+
+subroutine output_file4(nstokes, nummu, &
+     layer_file, out_file,&
+     quad_type, ground_temp, ground_type,&
+     ground_albedo, ground_index,&
+     sky_temp, wavelength, units, outpol,&
+     num_layers, height,&
+     noutlevels, outlevels, &
+     mu_values, up_flux, down_flux,&
+     up_rad, down_rad)
+
+  use kinds
+
+  implicit none
+
+  integer  nstokes, nummu, num_layers
+  integer  noutlevels, outlevels(*)
+  real(kind=dbl)   ground_temp, ground_albedo
+  real(kind=dbl)   sky_temp, wavelength
+  real(kind=dbl)   mu_values(nummu)
+  real(kind=dbl)   height(num_layers+1)
+  real(kind=dbl)   up_flux(nstokes,noutlevels)
+  real(kind=dbl)   down_flux(nstokes,noutlevels)
+  real(kind=dbl)   up_rad(nstokes,nummu,noutlevels)
+  real(kind=dbl)   down_rad(nstokes,nummu,noutlevels)
+  complex*16  ground_index
+  character*(*) layer_file, out_file
+  character  quad_type*1, units*1, outpol*2, ground_type*1
+  character*32 quad_name, units_name, ground_name
+  character*64 form1
+  integer  i, j, l, li
 
 
-    IF (UNITS(1:1) .EQ. 'T') THEN
-        FORM1 = '(F8.1,1X,F8.5,2(1X,F7.2),:)'
-    ELSE
-        FORM1 = '(F8.1,1X,F8.5,2(1X,E13.6),:)'
-    ENDIF
- 
-    IF (OUTPOL .EQ. 'VH') THEN
-        WRITE (3,'(A,A)') 'C    Z       MU    FLUX/RADIANCE (V,H)'
-    ELSE
-        WRITE (3,'(A,A)') 'C    Z       MU    FLUX/RADIANCE (I,Q)'
-    ENDIF
- 
-    DO L = 1, NOUTLEVELS
-        LI = OUTLEVELS(L)
-        !               Output fluxes at this level
-        WRITE (3,FORM1) HEIGHT(LI), -2.0,&
-        (SNGL(UP_FLUX(I,L)),I=1,NSTOKES)
-        WRITE (3,FORM1) HEIGHT(LI), +2.0,&
-        (SNGL(DOWN_FLUX(I,L)),I=1,NSTOKES)
- 
-        !           For each zenith at this level output the Stokes parameters.
-        !             Output upwelling radiance: -1 < mu < 0
-        DO J = NUMMU, 1, -1
-            WRITE (3,FORM1) HEIGHT(LI), -MU_VALUES(J),&
-            (SNGL(UP_RAD(I,J,L)),I=1,NSTOKES)
-        ENDDO
-        !             Output downwelling radiance: 0 < mu < 1
-        DO J = 1, NUMMU
-            WRITE (3,FORM1) HEIGHT(LI), MU_VALUES(J),&
-            (SNGL(DOWN_RAD(I,J,L)),I=1,NSTOKES)
-        ENDDO
-    ENDDO
+  call convert_output4(units, outpol, nstokes, nummu*noutlevels, &
+       wavelength, 0, up_rad)
+  call convert_output4(units, outpol, nstokes, nummu*noutlevels, &
+       wavelength, 0, down_rad)
+  call convert_output4(units, outpol, nstokes, noutlevels, &
+       wavelength, 1, up_flux)
+  call convert_output4(units, outpol, nstokes, noutlevels, &
+       wavelength, 1, down_flux)
 
-    CLOSE (3)
+  quad_name = 'gaussian'
+  if (quad_type .eq. 'd')  quad_name = 'doublegauss'
+  if (quad_type .eq. 'l')  quad_name = 'lobatto'
+  if (quad_type .eq. 'e')  quad_name = 'extra-angles'
+  units_name = 'watts/(m^2 micron ster)'
+  if (units .eq. 't') units_name = 'kelvins - ebb'
+  if (units .eq. 'r') units_name = 'kelvins - rj'
+  ground_name = 'lambertian'
+  if (ground_type .eq. 'f')  ground_name = 'fresnel'
 
-    RETURN
-END
+  open (unit=3, file=out_file, status='unknown')
 
-SUBROUTINE CONVERT_OUTPUT4(UNITS, OUTPOL, NSTOKES, NOUT,&
-WAVELEN, FLUXCODE, OUTPUT)
-    !       Converts the output radiance or flux arrays to VH polarization
-    !     and effective blackbody temperature if desired.  OUTPOL='VH'
-    !     converts the polarization basis of the first two Stokes parameters
-    !     to vertical/horizontal polarization.  If UNITS='T' the radiance is
-    !     converted to effective blackbody brightness temperature, and if
-    !     UNITS='R' the radiance is converted to Rayleigh-Jeans brightness
-    !     temperature.  If the output is flux then FLUXCODE=1, and the flux
-    !     is divided by pi before converting to brightness temperature.
-    use kinds
+  !           output the parameters
+  write (3,'(a,i3,a,i3,a,i3,a,i1)')&
+       'c  nummu=', nummu,  '  numazi=',1,&
+       '  aziorder=',0, '  nstokes=',nstokes
+  write (3,'(a,a32)')&
+       'c  layer_file=',    layer_file
+  write (3,'(a,i1,a,a16)')&
+       'c  src_code=',      2,&
+       '   quad_type=',     quad_name
+  write (3,'(a,f8.2,a,a16)')&
+       'c  ground_temp=',   ground_temp,&
+       '   ground_type=',   ground_name
+  if (ground_type(1:1) .eq. 'f') then
+     write (3,'(a,2f9.4,a,f8.2)')&
+          'c  ground_index=',  ground_index,&
+          '   sky_temp=',      sky_temp
+  else
+     write (3,'(a,f8.5,a,f8.2)')&
+          'c  ground_albedo=', ground_albedo,&
+          '   sky_temp=',      sky_temp
+  endif
+  write (3,'(a,e12.6)') 'c  wavelength=',    wavelength
+  write (3,'(a,a25,a,a2)') 'c  units='     ,    units_name,&
+       '   output_polarization=', outpol
 
-    implicit none
 
-    INTEGER NSTOKES, NOUT, FLUXCODE
-    real(kind=dbl)  WAVELEN, OUTPUT(NSTOKES,NOUT)
-    CHARACTER UNITS*1, OUTPOL*2
-    INTEGER I, J
-    real(kind=dbl)  IV, IH, RAD, TEMP
+  if (units(1:1) .eq. 't') then
+     form1 = '(f8.1,1x,f8.5,2(1x,f7.2),:)'
+  else
+     form1 = '(f8.1,1x,f8.5,2(1x,e13.6),:)'
+  endif
 
-    DO J = 1, NOUT
-        !           Convert to Vertical and Horizontal polarization if desired
-        IF (OUTPOL .EQ. 'VH') THEN
-            IV = 0.5*(OUTPUT(1,J) + OUTPUT(2,J))
-            IH = 0.5*(OUTPUT(1,J) - OUTPUT(2,J))
-            OUTPUT(1,J) = IV
-            OUTPUT(2,J) = IH
-        ENDIF
-        !           Convert to brightness temperature
-        IF (UNITS .EQ. 'T' .OR. UNITS .EQ. 'R') THEN
-            DO I = 1, NSTOKES
-                RAD = OUTPUT(I,J)
-                IF (OUTPOL .EQ. 'VH' .AND. I .LE. 2)  RAD = 2.0*RAD
-                IF (FLUXCODE .EQ. 1)  RAD = RAD/ACOS(-1.0)
-                IF (UNITS .EQ. 'R') THEN
-                    TEMP = RAD * WAVELEN**4 * 1.4388D4/1.1911D8
-                ELSE
-                    IF (RAD .GT. 0.0) THEN
-                        TEMP = 1.4388D4 /&
-                        (WAVELEN*DLOG(1.0+ 1.1911D8/(RAD*WAVELEN**5)))
-                    ELSE IF (RAD .EQ. 0.0) THEN
-                        TEMP = 0.0D0
-                    ELSE
-                        TEMP = -1.4388D4 /&
-                        (WAVELEN*DLOG(1.0+ 1.1911D8/(-RAD*WAVELEN**5)))
-                    ENDIF
-                ENDIF
-                OUTPUT(I,J) = TEMP
-            ENDDO
-        ENDIF
-    ENDDO
-    RETURN
-END
+  if (outpol .eq. 'vh') then
+     write (3,'(a,a)') 'c    z       mu    flux/radiance (v,h)'
+  else
+     write (3,'(a,a)') 'c    z       mu    flux/radiance (i,q)'
+  endif
+
+  do l = 1, noutlevels
+     li = outlevels(l)
+     !               output fluxes at this level
+     write (3,form1) height(li), -2.0,&
+          (sngl(up_flux(i,l)),i=1,nstokes)
+     write (3,form1) height(li), +2.0,&
+          (sngl(down_flux(i,l)),i=1,nstokes)
+
+     !           for each zenith at this level output the stokes parameters.
+     !             output upwelling radiance: -1 < mu < 0
+     do j = nummu, 1, -1
+        write (3,form1) height(li), -mu_values(j),&
+             (sngl(up_rad(i,j,l)),i=1,nstokes)
+     enddo
+     !             output downwelling radiance: 0 < mu < 1
+     do j = 1, nummu
+        write (3,form1) height(li), mu_values(j),&
+             (sngl(down_rad(i,j,l)),i=1,nstokes)
+     enddo
+  enddo
+
+  close (3)
+
+  return
+end subroutine output_file4
+
+subroutine convert_output4(units, outpol, nstokes, nout,&
+     wavelen, fluxcode, output)
+  !       converts the output radiance or flux arrays to vh polarization
+  !     and effective blackbody temperature if desired.  outpol='vh'
+  !     converts the polarization basis of the first two stokes parameters
+  !     to vertical/horizontal polarization.  if units='t' the radiance is
+  !     converted to effective blackbody brightness temperature, and if
+  !     units='r' the radiance is converted to rayleigh-jeans brightness
+  !     temperature.  if the output is flux then fluxcode=1, and the flux
+  !     is divided by pi before converting to brightness temperature.
+  use kinds
+
+  implicit none
+
+  integer nstokes, nout, fluxcode
+  real(kind=dbl)  wavelen, output(nstokes,nout)
+  character units*1, outpol*2
+  integer i, j
+  real(kind=dbl)  iv, ih, rad, temp
+
+  do j = 1, nout
+     !           convert to vertical and horizontal polarization if desired
+     if (outpol .eq. 'vh') then
+        iv = 0.5*(output(1,j) + output(2,j))
+        ih = 0.5*(output(1,j) - output(2,j))
+        output(1,j) = iv
+        output(2,j) = ih
+     endif
+     !           convert to brightness temperature
+     if (units .eq. 't' .or. units .eq. 'r') then
+        do i = 1, nstokes
+           rad = output(i,j)
+           if (outpol .eq. 'vh' .and. i .le. 2)  rad = 2.0*rad
+           if (fluxcode .eq. 1)  rad = rad/acos(-1.0)
+           if (units .eq. 'r') then
+              temp = rad * wavelen**4 * 1.4388d4/1.1911d8
+           else
+              if (rad .gt. 0.0) then
+                 temp = 1.4388d4 /&
+                      (wavelen*dlog(1.0+ 1.1911d8/(rad*wavelen**5)))
+              else if (rad .eq. 0.0) then
+                 temp = 0.0d0
+              else
+                 temp = -1.4388d4 /&
+                      (wavelen*dlog(1.0+ 1.1911d8/(-rad*wavelen**5)))
+              endif
+           endif
+           output(i,j) = temp
+        enddo
+     endif
+  enddo
+  return
+end subroutine convert_output4
 
 
 
