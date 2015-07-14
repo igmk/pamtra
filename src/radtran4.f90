@@ -122,7 +122,7 @@ subroutine radtran4(errorstatus, max_delta_tau,&
      sky_temp, wavelength,&
      num_layers, height, temperatures,&
      gas_extinct,&
-     noutlevels, outlevels,&
+     outlevels,&
      up_flux, down_flux,&
      up_rad, down_rad)
 
@@ -131,7 +131,7 @@ subroutine radtran4(errorstatus, max_delta_tau,&
   use vars_index, only: i_x, i_y
   use vars_rt, only : &
        rt_hydros_present_reverse
-  use settings, only: verbose, nstokes, nummu, mu_values, quad_weights
+  use settings, only: verbose, nstokes, nummu, mu_values, quad_weights, noutlevels
   use report_module
   use rt_utilities, only: planck_function!,&
   !gauss_legendre_quadrature,&
@@ -142,7 +142,7 @@ subroutine radtran4(errorstatus, max_delta_tau,&
   implicit none
 
   integer   num_layers
-  integer   noutlevels, outlevels(*)
+  integer   outlevels(*)
   real*8    ground_temp, ground_albedo
   complex*16  ground_index
   real*8    sky_temp
@@ -155,7 +155,7 @@ subroutine radtran4(errorstatus, max_delta_tau,&
   character*1  ground_type
 
   integer   maxv, maxm, maxlay, maxlm
-  parameter (maxv=64, maxm=4096, maxlay=200, maxlm=201 * (maxv)**2)!maxlm=201*256)
+  parameter (maxv=64, maxm=4096, maxlay=300, maxlm=301 * (maxv)**2)!maxlm=201*256)
 
   real*8    pi, twopi, zero
   parameter (pi = 3.1415926535897932384d0, twopi=2.0d0*pi)

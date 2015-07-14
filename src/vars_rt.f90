@@ -67,9 +67,9 @@ module vars_rt
     rt_sfc_reflectivity(:,:) = 0._dbl
     
     ! set them to zero, just in case they are not calculated but used for Ze/PIA calculation
-    rt_kexttot(:) = 0d0
-    rt_kextatmo(:) = 0d0
-    rt_back(:,:) = 0d0  
+    rt_kexttot(:) = 0._dbl
+    rt_kextatmo(:) = 0._dbl
+    rt_back(:,:) = 0._dbl  
 
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
 

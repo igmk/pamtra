@@ -5,17 +5,17 @@ module settings
 
   use kinds
   use report_module
+
   implicit none
   save
 
   !!Global Stettings
   integer, parameter :: maxv = 64,   &
-       maxlay = 600, &
+       maxlay = 300, &
        maxleg = 200, &
        maxfreq = 1000, &
        nummu = 16, &  ! no. of observation and quadrature angles
-       nstokes = 2, &
-       noutlevels = 2
+       nstokes = 2
   integer, parameter :: src_code = 2,&
        numazimuths = 1,&
        aziorder = 0
@@ -32,7 +32,6 @@ module settings
   ! set by command line options
   integer(kind=long) :: nfrq
 
-  real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
   real(kind=dbl) :: emissivity
   real(kind=dbl) :: salinity         ! sea surface salinity
   !     double precision, dimension(maxfreq) :: freqs
@@ -110,7 +109,8 @@ module settings
   character(10) :: tmatrix_db
   character(300) :: tmatrix_db_path
 
-  integer(kind=long):: radar_nfft_aliased, radar_maxTurbTerms !are gained from radar_aliasing_nyquist_interv and radar_nfft
+  integer(kind=long) :: noutlevels ! number of output levels per profile
+  integer(kind=long) :: radar_nfft_aliased, radar_maxTurbTerms !are gained from radar_aliasing_nyquist_interv and radar_nfft
 
   integer(kind=long) :: randomseed !random seed, 0 means time dependence
 contains
@@ -118,10 +118,12 @@ contains
   subroutine settings_read(errorstatus)
 
     use kinds
+
     implicit none
+
     logical :: file_exists
     integer(kind=long), intent(out) :: errorstatus
-    integer(kind=long) :: err = 0
+    integer(kind=long) :: err
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'settings_read'
 
@@ -131,11 +133,11 @@ contains
          data_path,&
          save_psd, &
          save_ssp, &
-         obs_height, &
          outpol, &
          freq_str,&
          file_desc,&
          creator, &
+         noutlevels, &
          add_obs_height_to_layer, &
          active, &
          passive,&
@@ -181,6 +183,8 @@ contains
          radar_smooth_spectrum,&
          radar_attenuation,&
          radar_polarisation
+
+    err = 0
 
     if (verbose >= 3) print*,'Start of ', nameOfRoutine
 
@@ -239,8 +243,11 @@ contains
     character(len=80) :: msg
     character(len=15) :: nameOfRoutine = 'test_settings'
     !test for settings go here
-    if (verbose >= 4) print*,'Start of ', nameOfRoutine
+    
     err = 0
+
+    if (verbose >= 4) print*,'Start of ', nameOfRoutine
+    call assert_true(err, noutlevels > 0, 'Number of output levels has to be larger than 0')
     call assert_false(err,MOD(radar_nfft, 2) == 1,&
          "radar_nfft has to be even") 
     call assert_true(err,(gas_mod == "L93") .or. (gas_mod == "R98"),&
@@ -279,7 +286,6 @@ contains
 
     integer(kind=long) :: i, j, pos1, pos2
 
-
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
     character(len=80) :: msg
@@ -312,7 +318,7 @@ contains
     radar_nfft_aliased = radar_nfft *(1+2*radar_aliasing_nyquist_interv)
     radar_maxTurbTerms = radar_nfft_aliased * 12
 
-    !in python some options are missing:
+    !in python some options are missing. The output levels have already been added by reScaleHeights module of pyPamtra
     if (in_python) add_obs_height_to_layer = .false.
 
     !process radar_polarisation
@@ -347,7 +353,9 @@ contains
   end subroutine add_settings
 
   subroutine settings_fill_default
+
     use kinds
+
     implicit none
 
     character(len=14) :: nameOfRoutine = 'settings_fill_default'
@@ -360,7 +368,7 @@ contains
     data_path='data/'
     save_psd=.false.
     save_ssp=.false.
-    obs_height=833000.
+    noutlevels=2 ! number of output levels
     outpol='VH'
     freq_str=''
     file_desc=''
@@ -436,6 +444,7 @@ contains
   !for debuging
   subroutine print_settings()
 
+    print*, 'noutlevels: ', noutlevels
     print*, 'add_obs_height_to_layer: ', add_obs_height_to_layer
     print*, 'radar_nfft: ', radar_nfft
     print*, 'radar_polarisation: ', radar_polarisation
@@ -448,7 +457,6 @@ contains
     print*, 'radar_airmotion_linear_steps: ', radar_airmotion_linear_steps
     print*, 'radar_airmotion: ', radar_airmotion
     print*, 'ground_type: ', ground_type
-    print*, 'obs_height: ', obs_height
     print*, 'write_nc: ', write_nc
     print*, 'outpol: ', outpol
     print*, 'radar_no_ave: ', radar_no_ave
