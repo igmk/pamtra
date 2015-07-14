@@ -206,7 +206,6 @@ subroutine rt4(errorstatus,out_file,&
        nstokes,&
        nummu,&
        mu_values,&
-       quad_weights,&
        quad_type,&
        noutlevels,&
        outpol,&
@@ -216,7 +215,7 @@ subroutine rt4(errorstatus,out_file,&
 
   implicit none
 
-  integer, parameter :: maxv=64, maxlay=200
+  integer, parameter :: maxv=64, maxlay=300
 
   !    real(kind=dbl), intent(in) ::  mu_values(maxv)
   character*64, intent(in) :: out_file
@@ -246,9 +245,9 @@ subroutine rt4(errorstatus,out_file,&
   character(len=80) :: msg
   character(len=14) :: nameOfRoutine = 'rt4'
 
-  if (verbose >= 1) call report(info, 'start of ', nameOfRoutine)
+  err = 0
 
-  err = success
+  if (verbose >= 1) call report(info, 'start of ', nameOfRoutine)
 
   height = 0.
   temperatures = 0.
@@ -302,7 +301,7 @@ subroutine rt4(errorstatus,out_file,&
        sky_temp, wavelength,&
        num_layers, height, temperatures,&
        gas_extinct,&
-       noutlevels, outlevels,&
+       outlevels,&
        up_flux, down_flux,&
        up_rad, down_rad)
        
