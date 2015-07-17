@@ -391,7 +391,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
 
   return pam
   
-def createUsStandardProfile(pam,**kwargs):
+def createUsStandardProfile(pam=pyPamtra(),**kwargs):
   '''
   Function to create clear sky US Standard Atmosphere.
   

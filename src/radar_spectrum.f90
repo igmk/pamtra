@@ -231,7 +231,7 @@ subroutine radar_spectrum(&
     dD_dU(nbins) = dD_dU(nbins-1)
 
     call assert_false(err,any(isnan(dD_dU) .or. all(dD_dU <= 0.d0)),&
-        "nan dD_dU")   
+        "nan or negative  dD_dU")   
     call assert_false(err,any(vel_spec<0) .or. any(isnan(vel_spec)),&
         "nan or negative vel_spec")   
     if (err /= 0) then

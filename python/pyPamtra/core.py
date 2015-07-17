@@ -823,6 +823,56 @@ class pyPamtra(object):
       
     return
 
+
+  def tileProfiles(self,rep2D):
+    '''
+    repeat the profiles of Pamtra rep2D times. E.g. rep2D=(1,100) changes a Pamtra shape from (10,2) to (10,200).
+    '''
+    
+    assert len(rep2D) == 2
+    
+    
+    #create a new shape!
+    self.p["ngridx"] = self.p["ngridx"] * rep2D[0]
+    self.p["ngridy"] = self.p["ngridy"] * rep2D[1]
+    
+    try: self.df.fs_nbin =  self.df.dataFullSpec["d_ds"].shape[-1]
+    except: self.df.fs_nbin = 0
+    
+    self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
+    self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
+    self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
+    self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
+    self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
+    self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
+        
+    rep3D =  rep2D + (1,)
+    rep4D =  rep2D + (1,1,)
+    rep5D =  rep2D + (1,1,1,)
+        
+    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","obs_height","groundtemp"]:
+      if key in self.p.keys(): self.p[key] = np.tile(self.p[key], rep2D)
+
+    for key in ["hydro_q","hydro_n","hydro_reff"]:
+      if key in self.p.keys(): self.p[key] = np.tile(self.p[key], rep4D)
+      
+    for key in ["hgt_lev","temp_lev","press_lev","relhum_lev","airturb",'temp', 'press', 'relhum','hgt','wind_w',"radar_prop"]:
+      if key in self.p.keys(): self.p[key] = np.tile(self.p[key], rep3D)
+             
+ 
+    for key in self.df.data4D.keys():
+      self.df.data4D[key] = np.tile(self.df.data4D[key],rep4D)
+      
+    for key in self.df.dataFullSpec.keys():
+      self.df.dataFullSpec[key] = np.tile(self.df.dataFullSpec[key],rep5D)
+      
+
+      
+    return
+
+
+
+
   def addProfile(self,profile, axis=0):
     """
     Add additional dictionary "profiles" with profile information to axis "axis". Number of height bins must be equal.
