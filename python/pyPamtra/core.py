@@ -287,7 +287,11 @@ class pyPamtra(object):
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
+<<<<<<< HEAD
     self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
+=======
+    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.nmlSet["noutlevels"],)
+>>>>>>> d21b6debc13412b1407e8b959b61a286c5c7e37e
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,0)
