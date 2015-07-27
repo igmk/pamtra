@@ -104,6 +104,7 @@ class pyPamtra(object):
     self.nmlSet["radar_npeaks"] = 1
     self.nmlSet["radar_noise_distance_factor"]=  2.0
     self.nmlSet["radar_receiver_uncertainty_std"]=  0.e0 #dB
+    self.nmlSet["radar_receiver_miscalibration"]=  0.e0 #dB
     self.nmlSet["radar_attenuation"]=  "disabled" #! "bottom-up" or "top-down"
     self.nmlSet["radar_polarisation"]=  "NN" #! comma separated
     self.nmlSet["radar_use_wider_peak"]=  False #! comma separated

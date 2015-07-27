@@ -120,7 +120,7 @@ dfftpack: | $(LIBDIR)
 	cd tools/dfftpack && $(MAKE)
 	cp tools/dfftpack/libdfftpack.a $(LIBDIR)
 
-pamtra: $(FOBJECTS) $(BINDIR)$(BIN) | $(BINDIR)
+pamtra: dfftpack $(FOBJECTS) $(BINDIR)$(BIN) | $(BINDIR)
 
 $(OBJDIR)versionNumber.auto.o: .git/HEAD .git/index
 	echo "!edit in makefile only!" > $(SRCDIR)versionNumber.auto.f90
@@ -207,7 +207,7 @@ $(PYTDIR)pyPamtraLib.so:  $(SRCDIR)pyPamtraLib.f90 $(OBJDIR)pypamtralib.pyf $(FO
 py_usStandard:
 	cd tools/py_usStandard/ && $(MAKE) all
 
-pyinstall: py py_usStandard 
+pyinstall: dfftpack py py_usStandard
 	cp -r $(PYTDIR) ~/lib/python/
 	cd tools/py_usStandard/ && $(MAKE) install
 

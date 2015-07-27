@@ -53,7 +53,7 @@ module settings
     real(kind=dbl) :: radar_K2
     real(kind=dbl) :: radar_receiver_uncertainty_std
     real(kind=dbl) :: hydro_softsphere_min_density !tmatrix method numerically unstable for extremely low density
-
+    real(kind=dbl) :: radar_receiver_miscalibration !radar calibration offset in dB
     real(kind=dbl) :: hydro_threshold, radar_noise_distance_factor
 
   integer, parameter :: maxnleg = 200 !max legnth of legendre series
@@ -175,6 +175,7 @@ contains
         radar_K2,&
         radar_noise_distance_factor,&
         radar_receiver_uncertainty_std,&
+        radar_receiver_miscalibration, &
         radar_nPeaks,&
         radar_smooth_spectrum,&
         radar_attenuation,&
@@ -383,6 +384,7 @@ contains
         radar_K2 = 0.93 ! dielectric constant |K|² (always for liquid water by convention) for the radar equation
         radar_noise_distance_factor = 1.25
         radar_receiver_uncertainty_std = 0.d0 !dB
+        radar_receiver_miscalibration =  0.d0 !dB
         radar_nPeaks = 1 !number of peaks the radar simulator is looking for
         radar_smooth_spectrum = .true.
         radar_attenuation = "disabled" ! "bottom-up" or "top-down"
@@ -434,6 +436,7 @@ contains
       print*, 'liq_mod: ', liq_mod
       print*, 'moments_file: ', moments_file
       print*, 'radar_receiver_uncertainty_std: ', radar_receiver_uncertainty_std
+      print*, 'radar_receiver_miscalibration: ', radar_receiver_miscalibration
       print*, 'hydro_threshold: ', hydro_threshold
       print*, 'hydro_fullSpec: ', hydro_fullSpec
       print*, 'hydro_limit_density_area: ', hydro_limit_density_area
