@@ -390,12 +390,12 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
             receiver_uncertainty = 10**(0.1*receiver_uncertainty)
             !apply to spectrum
             noise_turb_spectra = noise_turb_spectra * receiver_uncertainty
+            radar_Pnoise = radar_Pnoise * receiver_uncertainty
           end if
 
           !apply a receiver miscalibration:
           noise_turb_spectra = noise_turb_spectra * 10**(0.1*radar_receiver_miscalibration)
-
-
+          radar_Pnoise = radar_Pnoise * 10**(0.1*radar_receiver_miscalibration)
 
           call radar_calc_moments(err,radar_nfft,radar_nPeaks,&
             noise_turb_spectra,radar_Pnoise,noise_removed_turb_spectra,&
