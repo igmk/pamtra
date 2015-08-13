@@ -1,179 +1,180 @@
-      SUBROUTINE INITIALIZE4(NSTOKES, NUMMU,&
-                            DELTA_Z, MU_VALUES, QUAD_WEIGHTS,&
-                            GAS_EXTINCT, EXTINCT_MATRIX,&
-                            SCATTER_MATRIX,  REFLECT, TRANS)
-      INTEGER NSTOKES, NUMMU
-      REAL*8  DELTA_Z, GAS_EXTINCT
-      REAL*8  MU_VALUES(NUMMU), QUAD_WEIGHTS(NUMMU)
-      REAL*8  EXTINCT_MATRIX(nstokes,nstokes,NUMMU,2)
-      REAL*8  SCATTER_MATRIX(NSTOKES,NUMMU,NSTOKES,NUMMU,4)
-      REAL*8  REFLECT(NSTOKES,NUMMU,NSTOKES,NUMMU,2)
-      REAL*8  TRANS(NSTOKES,NUMMU,NSTOKES,NUMMU,2)
-      INTEGER  I1, J1, I2, J2
-      REAL*8   C, TMP, GEXT, EXT, DIAG
+SUBROUTINE INITIALIZE4(NSTOKES, NUMMU,&
+     DELTA_Z, MU_VALUES, QUAD_WEIGHTS,&
+     GAS_EXTINCT, EXTINCT_MATRIX,&
+     SCATTER_MATRIX,  REFLECT, TRANS)
+  INTEGER NSTOKES, NUMMU
+  REAL*8  DELTA_Z, GAS_EXTINCT
+  REAL*8  MU_VALUES(NUMMU), QUAD_WEIGHTS(NUMMU)
+  REAL*8  EXTINCT_MATRIX(nstokes,nstokes,NUMMU,2)
+  REAL*8  SCATTER_MATRIX(NSTOKES,NUMMU,NSTOKES,NUMMU,4)
+  REAL*8  REFLECT(NSTOKES,NUMMU,NSTOKES,NUMMU,2)
+  REAL*8  TRANS(NSTOKES,NUMMU,NSTOKES,NUMMU,2)
+  INTEGER  I1, J1, I2, J2
+  REAL*8   C, TMP, GEXT, EXT, DIAG
 
-      C = 2.0D0 *3.1415926535897932384D0
+  C = 2.0D0 *3.1415926535897932384D0
 
-      DO I2 = 1, NSTOKES
-        DO J2 = 1, NUMMU
-          TMP = DELTA_Z/MU_VALUES(J2)
-          DO I1 = 1, NSTOKES
-            GEXT = 0.0
-            IF (I1 .EQ. I2)  GEXT = GAS_EXTINCT
-            DO J1 = 1, NUMMU
+  DO I2 = 1, NSTOKES
+     DO J2 = 1, NUMMU
+        TMP = DELTA_Z/MU_VALUES(J2)
+        DO I1 = 1, NSTOKES
+           GEXT = 0.0
+           IF (I1 .EQ. I2)  GEXT = GAS_EXTINCT
+           DO J1 = 1, NUMMU
               REFLECT(I2,J2,I1,J1,1) = C*TMP*QUAD_WEIGHTS(J1)&
-                                *SCATTER_MATRIX(I2,J2,I1,J1,2)
+                   *SCATTER_MATRIX(I2,J2,I1,J1,2)
               REFLECT(I2,J2,I1,J1,2) = C*TMP*QUAD_WEIGHTS(J1)&
-                                *SCATTER_MATRIX(I2,J2,I1,J1,3)
+                   *SCATTER_MATRIX(I2,J2,I1,J1,3)
               DIAG = 0.0D0
               IF (I1 .EQ. I2 .AND. J1 .EQ. J2)  DIAG = 1.0D0
               EXT = 0.0D0
               IF (J1 .EQ. J2) EXT = EXTINCT_MATRIX(I2,I1,J2,1)+GEXT
               TRANS(I2,J2,I1,J1,1) = DIAG&
-                          - TMP*( EXT - C*QUAD_WEIGHTS(J1)&
-                               *SCATTER_MATRIX(I2,J2,I1,J1,1) )
+                   - TMP*( EXT - C*QUAD_WEIGHTS(J1)&
+                   *SCATTER_MATRIX(I2,J2,I1,J1,1) )
               IF (J1 .EQ. J2) EXT = EXTINCT_MATRIX(I2,I1,J2,2)+GEXT
               TRANS(I2,J2,I1,J1,2) = DIAG&
-                          - TMP*( EXT - C*QUAD_WEIGHTS(J1)&
-                               *SCATTER_MATRIX(I2,J2,I1,J1,4) )
-            ENDDO
-          ENDDO
+                   - TMP*( EXT - C*QUAD_WEIGHTS(J1)&
+                   *SCATTER_MATRIX(I2,J2,I1,J1,4) )
+           ENDDO
         ENDDO
-      ENDDO
+     ENDDO
+  ENDDO
 
-      RETURN
-      END
-
-
-
-
-
-      SUBROUTINE INITIAL_SOURCE4(NSTOKES, NUMMU,&
-                                DELTA_Z, MU_VALUES,&
-                                PLANCK, EMIS_VECTOR, GAS_EXTINCT,&
-                                SOURCE)
-      INTEGER NSTOKES, NUMMU
-      REAL*8  MU_VALUES(NUMMU), DELTA_Z, PLANCK, GAS_EXTINCT
-      REAL*8  EMIS_VECTOR(nstokes,NUMMU,2)
-      REAL*8  SOURCE(NSTOKES,NUMMU,2)
-      INTEGER  I, J, N
-      REAL*8   TMP, EXT
-
-      N = NSTOKES*NUMMU
-      CALL MZERO (2*N, 1, SOURCE)
-
-      DO I = 1, NSTOKES
-        DO J = 1, NUMMU
-          EXT = 0.0D0
-          IF (I .EQ. 1)  EXT = GAS_EXTINCT
-          TMP = PLANCK*DELTA_Z/MU_VALUES(J)
-          SOURCE(I,J,1) = TMP*(EMIS_VECTOR(I,J,1) + EXT)
-          SOURCE(I,J,2) = TMP*(EMIS_VECTOR(I,J,2) + EXT)
-        ENDDO
-      ENDDO
-      RETURN
-      END
+  RETURN
+END SUBROUTINE INITIALIZE4
 
 
 
 
 
-      SUBROUTINE NONSCATTER_LAYER4(NSTOKES, NUMMU,&
-                                 DELTATAU, MU_VALUES,&
-                                 PLANCK0, PLANCK1,&
-                                 REFLECT, TRANS, SOURCE)
-!        NONSCATTER_LAYER calculates the reflection and transmission
-!      matrices and the source vectors for a purely absorbing layer.
-!      The source function, which is the Planck function, is assumed
-!      to vary linearly with optical depth across the layer.
-      INTEGER  NSTOKES, NUMMU
-      REAL*8   DELTATAU, MU_VALUES(NUMMU), PLANCK0, PLANCK1
-      REAL*8   REFLECT(NSTOKES,NUMMU,NSTOKES,NUMMU,2)
-      REAL*8   TRANS(NSTOKES,NUMMU,NSTOKES,NUMMU,2)
-      REAL*8   SOURCE(NSTOKES,NUMMU,2)
-      INTEGER  N, I, J
-      REAL*8   FACTOR, SLOPE, PATH
+SUBROUTINE INITIAL_SOURCE4(NSTOKES, NUMMU,&
+     DELTA_Z, MU_VALUES,&
+     PLANCK, EMIS_VECTOR, GAS_EXTINCT,&
+     SOURCE)
+  INTEGER NSTOKES, NUMMU
+  REAL*8  MU_VALUES(NUMMU), DELTA_Z, PLANCK, GAS_EXTINCT
+  REAL*8  EMIS_VECTOR(nstokes,NUMMU,2)
+  REAL*8  SOURCE(NSTOKES,NUMMU,2)
+  INTEGER  I, J, N
+  REAL*8   TMP, EXT
 
-      N = NSTOKES*NUMMU
-      CALL MZERO (2*N, N, REFLECT)
+  N = NSTOKES*NUMMU
+  CALL MZERO (2*N, 1, SOURCE)
 
-      CALL MZERO (2*N, N, TRANS)
-      DO J = 1, NUMMU
-        FACTOR = DEXP(-DELTATAU/MU_VALUES(J))
-        DO I = 1, NSTOKES
-          TRANS(I,J,I,J,1) = FACTOR
-          TRANS(I,J,I,J,2) = FACTOR
-        ENDDO
-      ENDDO
-
-      CALL MZERO (2*N, 1, SOURCE)
-      IF (DELTATAU .GT. 0.0) THEN
-        DO J = 1, NUMMU
-          PATH = DELTATAU/MU_VALUES(J)
-          SLOPE = (PLANCK1-PLANCK0)/PATH
-          SOURCE(1,J,1) = PLANCK1 - SLOPE&
-                       - ( PLANCK1 - SLOPE*(1.0+PATH) )*DEXP(-PATH)
-          SOURCE(1,J,2) = PLANCK0 + SLOPE&
-                       - ( PLANCK0 + SLOPE*(1.0+PATH) )*DEXP(-PATH)
-        ENDDO
-      ENDIF
-      RETURN
-      END
-
-      SUBROUTINE INTERNAL_RADIANCE4(N, UPREFLECT, UPTRANS, UPSOURCE,&
-                                DOWNREFLECT, DOWNTRANS, DOWNSOURCE, &
-                                INTOPRAD, INBOTTOMRAD,&
-                                UPRAD, DOWNRAD)
-!        INTERNAL_RADIANCE calculates the internal radiance at a level.
-!      The reflection and transmission matrices and source vector are
-!      given for the atmosphere above (UP) and below (DOWN) the level.
-!      The upwelling and downwelling radiance are computed from the
-!      two layer properties and the radiance incident on the top and bottom.
-      INTEGER   N
-      REAL*8    UPREFLECT(N,N,2), DOWNREFLECT(N,N,2)
-      REAL*8    UPTRANS(N,N,2), DOWNTRANS(N,N,2)
-      REAL*8    UPSOURCE(N,2), DOWNSOURCE(N,2)
-      REAL*8    INTOPRAD(N), INBOTTOMRAD(N)
-      REAL*8    UPRAD(N), DOWNRAD(N)
-      INTEGER   MAXV, MAXM
-      PARAMETER (MAXV=64, MAXM=4096)
-      REAL*8    S(MAXV), V(MAXV)
-      REAL*8    X(MAXM), Y(MAXM)
-      COMMON /SCRATCH1/ X, Y
+  DO I = 1, NSTOKES
+     DO J = 1, NUMMU
+        EXT = 0.0D0
+        IF (I .EQ. 1)  EXT = GAS_EXTINCT
+        TMP = PLANCK*DELTA_Z/MU_VALUES(J)
+        SOURCE(I,J,1) = TMP*(EMIS_VECTOR(I,J,1) + EXT)
+        SOURCE(I,J,2) = TMP*(EMIS_VECTOR(I,J,2) + EXT)
+     ENDDO
+  ENDDO
+  RETURN
+END SUBROUTINE INITIAL_SOURCE4
 
 
-!               Compute gamma plus
-      CALL MMULT (N,N,N, UPREFLECT(1,1,1), DOWNREFLECT(1,1,2), X)
-      CALL MIDENTITY (N, Y)
-      CALL MSUB (N,N, Y, X, Y)
-      CALL MINVERT (N, Y, X)
-!               Calculate the internal downwelling (plus) radiance vector
-      CALL MMULT (N,N,1, DOWNTRANS(1,1,2), INBOTTOMRAD, V)
-      CALL MMULT (N,N,1, UPREFLECT(1,1,1), V, S)
-      CALL MMULT (N,N,1, UPTRANS(1,1,1), INTOPRAD, V)
-      CALL MADD (N, 1, V, S, S)
-      CALL MMULT (N,N,1, UPREFLECT(1,1,1), DOWNSOURCE(1,2), V)
-      CALL MADD (N, 1, V, S, S)
-      CALL MADD (N, 1, UPSOURCE(1,1), S, S)
-      CALL MMULT (N,N,1, X, S, DOWNRAD)
 
-!               Compute gamma minus
-      CALL MMULT (N,N,N, DOWNREFLECT(1,1,2), UPREFLECT(1,1,1), X)
-      CALL MIDENTITY (N, Y)
-      CALL MSUB (N,N, Y, X, Y)
-      CALL MINVERT (N, Y, X)
-!               Calculate the internal upwelling (minus) radiance vector
-      CALL MMULT (N,N,1, UPTRANS(1,1,1), INTOPRAD, V)
-      CALL MMULT (N,N,1, DOWNREFLECT(1,1,2), V, S)
-      CALL MMULT (N,N,1, DOWNTRANS(1,1,2), INBOTTOMRAD, V)
-      CALL MADD (N, 1, V, S, S)
-      CALL MMULT (N,N,1, DOWNREFLECT(1,1,2), UPSOURCE(1,1), V)
-      CALL MADD (N, 1, V, S, S)
-      CALL MADD (N, 1, DOWNSOURCE(1,2), S, S)
-      CALL MMULT (N,N,1, X, S, UPRAD)
 
-      RETURN
-      END
+
+SUBROUTINE NONSCATTER_LAYER4(NSTOKES, NUMMU,&
+     DELTATAU, MU_VALUES,&
+     PLANCK0, PLANCK1,&
+     REFLECT, TRANS, SOURCE)
+  !        NONSCATTER_LAYER calculates the reflection and transmission
+  !      matrices and the source vectors for a purely absorbing layer.
+  !      The source function, which is the Planck function, is assumed
+  !      to vary linearly with optical depth across the layer.
+  INTEGER  NSTOKES, NUMMU
+  REAL*8   DELTATAU, MU_VALUES(NUMMU), PLANCK0, PLANCK1
+  REAL*8   REFLECT(NSTOKES,NUMMU,NSTOKES,NUMMU,2)
+  REAL*8   TRANS(NSTOKES,NUMMU,NSTOKES,NUMMU,2)
+  REAL*8   SOURCE(NSTOKES,NUMMU,2)
+  INTEGER  N, I, J
+  REAL*8   FACTOR, SLOPE, PATH
+
+  N = NSTOKES*NUMMU
+  CALL MZERO (2*N, N, REFLECT)
+
+  CALL MZERO (2*N, N, TRANS)
+  DO J = 1, NUMMU
+     FACTOR = DEXP(-DELTATAU/MU_VALUES(J))
+     DO I = 1, NSTOKES
+        TRANS(I,J,I,J,1) = FACTOR
+        TRANS(I,J,I,J,2) = FACTOR
+     ENDDO
+  ENDDO
+
+  CALL MZERO (2*N, 1, SOURCE)
+  IF (DELTATAU .GT. 0.0) THEN
+     DO J = 1, NUMMU
+        PATH = DELTATAU/MU_VALUES(J)
+        SLOPE = (PLANCK1-PLANCK0)/PATH
+        SOURCE(1,J,1) = PLANCK1 - SLOPE&
+             - ( PLANCK1 - SLOPE*(1.0+PATH) )*DEXP(-PATH)
+        SOURCE(1,J,2) = PLANCK0 + SLOPE&
+             - ( PLANCK0 + SLOPE*(1.0+PATH) )*DEXP(-PATH)
+     ENDDO
+  ENDIF
+  RETURN
+END SUBROUTINE NONSCATTER_LAYER4
+
+SUBROUTINE INTERNAL_RADIANCE4(N, UPREFLECT, UPTRANS, UPSOURCE,&
+     DOWNREFLECT, DOWNTRANS, DOWNSOURCE, &
+     INTOPRAD, INBOTTOMRAD,&
+     UPRAD, DOWNRAD)
+  !        INTERNAL_RADIANCE calculates the internal radiance at a level.
+  !      The reflection and transmission matrices and source vector are
+  !      given for the atmosphere above (UP) and below (DOWN) the level.
+  !      The upwelling and downwelling radiance are computed from the
+  !      two layer properties and the radiance incident on the top and bottom.
+  INTEGER   N
+  REAL*8    UPREFLECT(N,N,2), DOWNREFLECT(N,N,2)
+  REAL*8    UPTRANS(N,N,2), DOWNTRANS(N,N,2)
+  REAL*8    UPSOURCE(N,2), DOWNSOURCE(N,2)
+  REAL*8    INTOPRAD(N), INBOTTOMRAD(N)
+  REAL*8    UPRAD(N), DOWNRAD(N)
+  INTEGER   MAXV, MAXM
+  PARAMETER (MAXV=64, MAXM=4096)
+  REAL*8    S(MAXV), V(MAXV)
+  REAL*8    X(MAXM), Y(MAXM)
+  COMMON /SCRATCH1/ X, Y
+
+
+  !               Compute gamma plus
+  CALL MMULT (N,N,N, UPREFLECT(1,1,1), DOWNREFLECT(1,1,2), X)
+  CALL MIDENTITY (N, Y)
+  CALL MSUB (N,N, Y, X, Y)
+  CALL MINVERT (N, Y, X)
+  !               Calculate the internal downwelling (plus) radiance vector
+  CALL MMULT (N,N,1, DOWNTRANS(1,1,2), INBOTTOMRAD, V)
+  CALL MMULT (N,N,1, UPREFLECT(1,1,1), V, S)
+  CALL MMULT (N,N,1, UPTRANS(1,1,1), INTOPRAD, V)
+  CALL MADD (N, 1, V, S, S)
+  CALL MMULT (N,N,1, UPREFLECT(1,1,1), DOWNSOURCE(1,2), V)
+  CALL MADD (N, 1, V, S, S)
+  CALL MADD (N, 1, UPSOURCE(1,1), S, S)
+  CALL MMULT (N,N,1, X, S, DOWNRAD)
+
+  !               Compute gamma minus
+  CALL MMULT (N,N,N, DOWNREFLECT(1,1,2), UPREFLECT(1,1,1), X)
+  CALL MIDENTITY (N, Y)
+  CALL MSUB (N,N, Y, X, Y)
+  CALL MINVERT (N, Y, X)
+  !               Calculate the internal upwelling (minus) radiance vector
+  CALL MMULT (N,N,1, UPTRANS(1,1,1), INTOPRAD, V)
+  CALL MMULT (N,N,1, DOWNREFLECT(1,1,2), V, S)
+  CALL MMULT (N,N,1, DOWNTRANS(1,1,2), INBOTTOMRAD, V)
+  CALL MADD (N, 1, V, S, S)
+  CALL MMULT (N,N,1, DOWNREFLECT(1,1,2), UPSOURCE(1,1), V)
+  CALL MADD (N, 1, V, S, S)
+  CALL MADD (N, 1, DOWNSOURCE(1,2), S, S)
+  CALL MMULT (N,N,1, X, S, UPRAD)
+
+  RETURN
+END SUBROUTINE INTERNAL_RADIANCE4
+
 SUBROUTINE DOUBLING_INTEGRATION4 (N, NUM_DOUBLES,      &
      SYMMETRIC, REFLECT, TRANS, LIN_SOURCE,     &
      LINFACTOR, T_REFLECT, T_TRANS, T_SOURCE)
@@ -224,30 +225,30 @@ SUBROUTINE DOUBLING_INTEGRATION4 (N, NUM_DOUBLES,      &
      X_NN=MATMUL(REFLECT (:, :, 1), TRANS (:, :, 2))
      Y_NN=MATMUL(G_NN, X_NN)
      X_NN=MATMUL(TRANS (:, :, 1), Y_NN)
-    T_REFLECT (:, :, 1)=REFLECT (:, :, 1) + X_NN
+     T_REFLECT (:, :, 1)=REFLECT (:, :, 1) + X_NN
 
      !           Tp(2N) = Tp * GAMMA * Tp
      X_NN=MATMUL(G_NN, TRANS (:, :, 1))
      T_TRANS (:, :, 1)=MATMUL(TRANS (:, :, 1), X_NN)
 
-        !             Sp(2N) = (Sp+f*Cp) + Tp * GAMMA * (Sp + Rp * (Sm+f*Cm))
-        X_N1(:,1)=LINFAC * CONST (1+N:2*N)
-        Y_N1(:,1)=LIN_SOURCE (:, 2) + X_N1(:,1)
-        X_N1=MATMUL(REFLECT (:, :, 1), Y_N1)
-        Y_N1(:,1)=LIN_SOURCE (:, 1) + X_N1(:,1)
-        X_N1=MATMUL(G_NN, Y_N1)
-        Y_N1=MATMUL(TRANS (:, :, 1), X_N1)
-        X_N1(:,1)=LIN_SOURCE (:, 1) + Y_N1(:,1)
-        Y_N1(:,1)=LINFAC * CONST(1:N)
-        T_LIN (1:N)=X_N1(:,1) + Y_N1(:,1)
+     !             Sp(2N) = (Sp+f*Cp) + Tp * GAMMA * (Sp + Rp * (Sm+f*Cm))
+     X_N1(:,1)=LINFAC * CONST (1+N:2*N)
+     Y_N1(:,1)=LIN_SOURCE (:, 2) + X_N1(:,1)
+     X_N1=MATMUL(REFLECT (:, :, 1), Y_N1)
+     Y_N1(:,1)=LIN_SOURCE (:, 1) + X_N1(:,1)
+     X_N1=MATMUL(G_NN, Y_N1)
+     Y_N1=MATMUL(TRANS (:, :, 1), X_N1)
+     X_N1(:,1)=LIN_SOURCE (:, 1) + Y_N1(:,1)
+     Y_N1(:,1)=LINFAC * CONST(1:N)
+     T_LIN (1:N)=X_N1(:,1) + Y_N1(:,1)
 
-        !             Cp(2N) = Cp + Tp * GAMMA * (Cp + Rp * Cm)
-        Y_N1(:,1)=CONST (1+N:2*N)
-        X_N1=MATMUL(REFLECT (:, :, 1),Y_N1)
-        Y_N1(:,1)=CONST (1:N) + X_N1(:,1)
-        X_N1=MATMUL(G_NN, Y_N1)
-        Y_N1=MATMUL(TRANS (:, :, 1), X_N1)
-        T_CONST (1:N)=CONST (1:N) + Y_N1(:,1)
+     !             Cp(2N) = Cp + Tp * GAMMA * (Cp + Rp * Cm)
+     Y_N1(:,1)=CONST (1+N:2*N)
+     X_N1=MATMUL(REFLECT (:, :, 1),Y_N1)
+     Y_N1(:,1)=CONST (1:N) + X_N1(:,1)
+     X_N1=MATMUL(G_NN, Y_N1)
+     Y_N1=MATMUL(TRANS (:, :, 1), X_N1)
+     T_CONST (1:N)=CONST (1:N) + Y_N1(:,1)
 
 
      IF (SYMMETRIC) THEN
@@ -273,28 +274,28 @@ SUBROUTINE DOUBLING_INTEGRATION4 (N, NUM_DOUBLES,      &
      ENDIF
 
      !           Linear source doubling
-        !             Sm(2N) = Sm + Tm * GAMMA * (Sm+f*Cm + Rm * Sp)
-        X_N1(:,1)=LINFAC * CONST (1+N:2*N)
-        Y_N1(:,1)=LIN_SOURCE (:, 2) + X_N1(:,1)
-        X_N1(:,1)=LIN_SOURCE (:, 1)
-        X_N1=MATMUL(REFLECT (:, :, 2), X_N1)
-        Y_N1(:,1)=Y_N1(:,1) + X_N1(:,1)
-        X_N1=MATMUL(G_NN, Y_N1)
-        Y_N1=MATMUL(TRANS (:, :, 2), X_N1)
-        T_LIN (1+N:2*N)=LIN_SOURCE (:, 2) + Y_N1(:,1)
+     !             Sm(2N) = Sm + Tm * GAMMA * (Sm+f*Cm + Rm * Sp)
+     X_N1(:,1)=LINFAC * CONST (1+N:2*N)
+     Y_N1(:,1)=LIN_SOURCE (:, 2) + X_N1(:,1)
+     X_N1(:,1)=LIN_SOURCE (:, 1)
+     X_N1=MATMUL(REFLECT (:, :, 2), X_N1)
+     Y_N1(:,1)=Y_N1(:,1) + X_N1(:,1)
+     X_N1=MATMUL(G_NN, Y_N1)
+     Y_N1=MATMUL(TRANS (:, :, 2), X_N1)
+     T_LIN (1+N:2*N)=LIN_SOURCE (:, 2) + Y_N1(:,1)
 
-        !             Cm(2N) = Cm + Tm * GAMMA * (Cm + Rm * Cp)
-        X_N1(:,1)=CONST (1:N)
-        X_N1=MATMUL(REFLECT (:, :, 2), X_N1)
-        Y_N1(:,1)=CONST (1+N:2*N) + X_N1(:,1)
-        X_N1=MATMUL(G_NN, Y_N1)
-        Y_N1=MATMUL(TRANS (:, :, 2), X_N1)
-        T_CONST (1+N:2*N)=CONST (1+N:2*n) + Y_N1(:,1)
+     !             Cm(2N) = Cm + Tm * GAMMA * (Cm + Rm * Cp)
+     X_N1(:,1)=CONST (1:N)
+     X_N1=MATMUL(REFLECT (:, :, 2), X_N1)
+     Y_N1(:,1)=CONST (1+N:2*N) + X_N1(:,1)
+     X_N1=MATMUL(G_NN, Y_N1)
+     Y_N1=MATMUL(TRANS (:, :, 2), X_N1)
+     T_CONST (1+N:2*N)=CONST (1+N:2*n) + Y_N1(:,1)
 
-        LIN_SOURCE (:, 1) = T_LIN (1:N)
-        LIN_SOURCE (:, 2) = T_LIN (N+1:2*N)
-        CONST = T_CONST
-        LINFAC = 2.0 * LINFAC
+     LIN_SOURCE (:, 1) = T_LIN (1:N)
+     LIN_SOURCE (:, 2) = T_LIN (N+1:2*N)
+     CONST = T_CONST
+     LINFAC = 2.0 * LINFAC
 
      REFLECT = T_REFLECT
      TRANS = T_TRANS
@@ -306,7 +307,7 @@ SUBROUTINE DOUBLING_INTEGRATION4 (N, NUM_DOUBLES,      &
      T_TRANS = TRANS
   ENDIF
 
-     T_SOURCE = LIN_SOURCE
+  T_SOURCE = LIN_SOURCE
 
   RETURN
 END SUBROUTINE DOUBLING_INTEGRATION4

@@ -563,7 +563,6 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,forecastIndex = 1,tmpDir="/tmp
     for df in descriptorFile:
       pam.df.addHydrometeor(df)
 
-  print pamData.keys()
   pam.createProfile(**pamData)
   del data
 
@@ -879,7 +878,7 @@ def readCosmoReAn2km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
   data['hfl'] = (data['hhl'][...,1:]+data['hhl'][...,:-1])/2.
   pref = calc_p0(data['hfl'])
   data['press'] = pref + data['pp']*100.
-  data['relhum'] = q2rh(data['q']/(1+data['q']),data['t'],data['press'])
+  data['relhum'] = q2rh(data['q']/(1+data['q']),data['t'],data['press'])*100.
 
   data['timestamp'] = np.zeros(shape2D)
   data['timestamp'][:,:] = time.mktime(datetime.datetime.strptime(os.path.basename(fname), "laf%Y%m%d%H%M0000").timetuple())
@@ -984,9 +983,9 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
     grbs.close()
 
   except Exception as inst:
-    if fname.split(".")[-1]!="nc":
-      if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
-      os.system("rm -f "+tmpFile+"*")
+    #if fname.split(".")[-1]!="nc":
+      #if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+      #os.system("rm -f "+tmpFile+"*")
     print "ERROR:", fname      
     print type(inst)     # the exception instance
     print inst.args      # arguments stored in .args
@@ -1012,7 +1011,7 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
   data['hfl'] = (data['hhl'][...,1:]+data['hhl'][...,:-1])/2.
   pref = calc_p0(data['hfl'])
   data['press'] = pref + data['pp']*100.
-  data['relhum'] = q2rh(data['q']/(1+data['q']),data['t'],data['press'])
+  data['relhum'] = q2rh(data['q']/(1+data['q']),data['t'],data['press'])*100.
 
   data['timestamp'] = np.zeros(shape2D)
   data['timestamp'][:,:] = time.mktime(datetime.datetime.strptime(os.path.basename(fname), "laf%Y%m%d%H%M").timetuple())

@@ -20,7 +20,7 @@ import warnings
 from .libWrapper import PamtraFortranWrapper, parallelPamtraFortranWrapper
 from .descriptorFile import pamDescriptorFile
 from .tools import sftp2Cluster, formatExceptionInfo
-from .meteoSI import detect_liq_cloud, mod_ad
+from .meteoSI import detect_liq_cloud, mod_ad, moist_rho_rh,rh2q
 from .fortranNamelist import Namelist
 
 missingNumber=-9999.
@@ -287,11 +287,7 @@ class pyPamtra(object):
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
-<<<<<<< HEAD
-    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
-=======
     self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.nmlSet["noutlevels"],)
->>>>>>> d21b6debc13412b1407e8b959b61a286c5c7e37e
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,0)
@@ -536,43 +532,63 @@ class pyPamtra(object):
       
     return
     
-  def writePamtraProfile(self,filename):
+  def writePamtraProfile(self,profileFile):
+  
+    levLay = profileFile.split(".")[-1]
     
-    #the ASCII format has no support for changing dates, thus tkae the first one for all!
-    raise NotImplementedError("not yet implemented again in v1.0")
+    firstTime = datetime.datetime.utcfromtimestamp(self.p["unixtime"][0,0])
+    year=str(firstTime.year)
+    mon=str(firstTime.month).zfill(2)
+    day=str(firstTime.day).zfill(2)
+    hhmm=datetime.datetime.strftime(firstTime,"%H%M")
     
-    
-    #firstTime = datetime.datetime.utcfromtimestamp(self.p["unixtime"][0,0])
-    #year=str(firstTime.year)
-    #mon=str(firstTime.month).zfill(2)
-    #day=str(firstTime.day).zfill(2)
-    #hhmm=datetime.datetime.strftime(firstTime,"%H%M")
-    
-    #if "iwv" not in self.p.keys():
+    if "iwv" not in self.p.keys():
+      self.p['iwv'] = np.ones((self._shape2D[0],self._shape2D[1]))*-9999.
+      self.p['hydro_wp'] = np.ones((self._shape2D[0],self._shape2D[1],self.df.nhydro))*-9999.
+      self.p['hydro_tn'] = np.ones((self._shape2D[0],self._shape2D[1],self.df.nhydro))*-9999.
       #self.addIntegratedValues()
 
-    #s = ""
-    #s += year+" "+mon+" "+day+" "+hhmm+" "+str(self._shape2D[0])+" "+str(self._shape2D[1])+" "+str(self._shape3D[2])+" "+str(self.p["deltax"])+" "+str(self.p["deltay"])+"\n"
+    s = str(self._shape2D[0])+" "+str(self._shape2D[1])+" "+str(self._shape3D[2])+" "+str(self._shape3Dout[2])+"\n"
     
-    #for xx in range(self._shape2D[0]):
-      #for yy in range(self._shape2D[1]):
-	#s += str(xx+1)+" "+str(yy+1)+"\n"
-	#s += '%3.2f'%self.p["lat"][xx,yy]+" "+'%3.2f'%self.p["lon"][xx,yy]+" "+str(self.p["lfrac"][xx,yy])+" "+str(self.p["wind10u"][xx,yy])+" "+str(self.p["wind10v"][xx,yy])+"\n"
-	#s += str(self.p["iwv"][xx,yy])+" "+str(self.p["cwp"][xx,yy])+" "+str(self.p["iwp"][xx,yy])+" "+str(self.p["rwp"][xx,yy])+" "+str(self.p["swp"][xx,yy])+" "+str(self.p["gwp"][xx,yy])
-	#if (self.nmlSet["n_moments"]) == 2: s += " "+str(self.p["hwp"][xx,yy])
-	#s += "\n"
-	#s += '%6.1f'%self.p["hgt_lev"][xx,yy,0]+" "+'%6.1f'%self.p["press_lev"][xx,yy,0]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,0]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,0]*100)+"\n"
-	#for zz in range(1,self._shape3D[2]+1):
-	  #s += '%6.1f'%self.p["hgt_lev"][xx,yy,zz]+" "+'%6.1f'%self.p["press_lev"][xx,yy,zz]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,zz]*100)+\
-	  #" "+'%9e'%self.p["cwc_q"][xx,yy,zz-1]+" "+'%9e'%self.p["iwc_q"][xx,yy,zz-1]+" "+'%9e'%self.p["rwc_q"][xx,yy,zz-1]+" "+'%9e'%self.p["swc_q"][xx,yy,zz-1]+" "+'%9e'%self.p["gwc_q"][xx,yy,zz-1]
-	  #if (self.nmlSet["n_moments"]) == 2: s += " "+'%9e'%self.p["hwc_q"][xx,yy,zz-1]
-	  #s += "\n"
+    for xx in range(self._shape2D[0]):
+      for yy in range(self._shape2D[1]):
+	s += year+" "+mon+" "+day+" "+hhmm+" "+str(self._shape3D[2])+" "+str(xx+1)+" "+str(yy+1)+"\n"
+	s += ' '.join(['%9e'%height for height in self.p['obs_height'][xx,yy,:]])+"\n"
+	s += '%3.2f'%self.p["lat"][xx,yy]+" "+'%3.2f'%self.p["lon"][xx,yy]+" "+str(self.p["lfrac"][xx,yy])+" "+str(self.p["wind10u"][xx,yy])+" "+str(self.p["wind10v"][xx,yy])+" "+str(self.p['groundtemp'][xx,yy])+" "+str(self.p['hgt_lev'][xx,yy,0])+"\n"
+	s += str(self.p["iwv"][xx,yy])
+	for ihyd in range(self.df.nhydro):
+	  if self.df.data['moment_in'][ihyd] == 1:
+	    s +=" "+'%9e'%self.p["hydro_wp"][xx,yy,ihyd]
+	  if self.df.data['moment_in'][ihyd] == 13:
+	    s +=" "+'%9e'%self.p["hydro_wp"][xx,yy,ihyd]+" "+'%9e'%self.p["hydro_tn"][xx,yy,ihyd]
+	s += "\n"
+	if levLay == 'lev':
+	  s += '%6.1f'%self.p["hgt_lev"][xx,yy,0]+" "+'%6.1f'%self.p["press_lev"][xx,yy,0]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,0]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,0]*100)+"\n"
+	  for zz in range(1,self._shape3D[2]+1):
+	    s += '%6.1f'%self.p["hgt_lev"][xx,yy,zz]+" "+'%6.1f'%self.p["press_lev"][xx,yy,zz]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,zz]*100)+" "
+	    for ihyd in range(self.df.nhydro):
+	      if self.df.data['moment_in'][ihyd] == 1:
+		s +=str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
+	      if self.df.data['moment_in'][ihyd] == 13:
+		s +=str('%9e'%self.p["hydro_n"][xx,yy,zz,ihyd])+" "+str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
+	    s += "\n"
+	elif levLay == 'lay':
+	  for zz in range(0,self._shape3D[2]):
+	    s += '%6.1f'%self.p["hgt"][xx,yy,zz]+" "+'%6.1f'%self.p["press"][xx,yy,zz]+" "+'%3.2f'%self.p["temp"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum"][xx,yy,zz]*100)+" "
+	    for ihyd in range(self.df.nhydro):
+	      if self.df.data['moment_in'][ihyd] == 1:
+		s +=str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
+	      if self.df.data['moment_in'][ihyd] == 13:
+		s +=str('%9e'%self.p["hydro_n"][xx,yy,zz,ihyd])+" "+str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
+	    s += "\n"
+	else:
+	  raise IOError("Did not understand lay/lev: "+layLev)
 
     
-    ## write stuff to file
-    #f = open(filename, 'w')
-    #f.write(s)
-    #f.close()
+    # write stuff to file
+    f = open(profileFile, 'w')
+    f.write(s)
+    f.close()
     return
 
   def createProfile(self,**kwargs):
@@ -925,7 +941,7 @@ class pyPamtra(object):
 #            newP[x,y] = np.interp(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
             newP[x,y] = extrap(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
         self.p[key] = newP
-        self.p[key][self.p[key]<-1] = missingNumber
+        if key != "hgt_lev": self.p[key][self.p[key]<-1] = missingNumber
       
     for key in ["airturb","wind_w","hgt","temp","relhum"]:
       if key in self.p.keys():
@@ -936,7 +952,7 @@ class pyPamtra(object):
 #            newP[x,y] = np.interp(new_hgt[x,y],old_hgt[x,y],self.p[key][x,y])
             newP[x,y] = extrap(new_hgt[x,y],old_hgt[x,y],self.p[key][x,y])
         self.p[key] = newP
-        self.p[key][self.p[key]<-1] = missingNumber
+        if key != "hgt": self.p[key][self.p[key]<-1] = missingNumber
       
       
     for key in ["press_lev"]:
@@ -999,21 +1015,32 @@ class pyPamtra(object):
     sig_T = np.sqrt(3*kolmogorov/2. * (EDR/(2.*np.pi))**(2./3.) * (L_s**(2./3.) - L_lambda**(2./3.)))
     self.p["airturb"][:] = np.sqrt(sig_B**2 + sig_T**2)
 
-    
-    
+    return
+  
   def addIntegratedValues(self):
-    raise NotImplementedError("not yet avaiable in pamtra v 1.0")
-    #for pDict,qValue,intValue in [[self._helperP,"q","iwv"],[self.p,"cwc_q","cwp"],[self.p,"iwc_q","iwp"],[self.p,"rwc_q","rwp"],[self.p,"swc_q","swp"],[self.p,"gwc_q","gwp"],[self.p,"hwc_q","hwp"]]:
-      ##now we need q!
-      #self._calcQ()
-      ##nothing to do without hydrometeors:
-      #if np.all(pDict[qValue]==0):
-        #self.p[intValue] = np.zeros(self._shape2D)
-      #else:
-        #self._calcMoistRho() #provides also temp,press,dz and q!
-        #self.p[intValue] =  np.sum(pDict[qValue]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
+    
+    self._shape3Dhyd = (self.p["ngridx"],self.p["ngridy"],self.df.nhydro)
+    self.p['hydro_wp'] = np.zeros(self._shape3Dhyd)
+    self._calcMoistRho() # provies as well dz, sum_hydro_q, and q within dict() self._helperP
+    self.p['iwv'] =  np.sum(self._helperP['vapor']*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
+    #nothing to do without hydrometeors:
+    if np.all(self.p['hydro_q']==0):
+      self.p['hydro_wp'] = np.zeros(self._shape2D)
+    else:
+      for i in range(self.df.nhydro):
+	self.p['hydro_wp'][...,i] = np.sum(self.p['hydro_q'][...,i]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
+
     return
 
+  def _calcMoistRho(self):
+    self._helperP = dict()
+    self._helperP['dz'] = self.p['hgt_lev'][...,1::]-self.p['hgt_lev'][...,0:-1]
+    self._helperP['vapor'] = rh2q(self.p['relhum']/100.,self.p['temp'],self.p['press'])
+    self._helperP['sum_hydro_q'] = np.sum(self.p['hydro_q'],axis=-1)
+    self._helperP['rho_moist'] = moist_rho_rh(self.p['press'],self.p['temp'],self.p['relhum']/100.,self._helperP['sum_hydro_q'])
+
+    return
+    
   def addCloudShape(self):
     """
     adds cloud base and cloud top to the data to an existing pamtra profile
@@ -1519,7 +1546,7 @@ class pyPamtra(object):
     print(" ")
     
     
-    return    
+    return
 
   def _addObservationLevels(self):
     """Adds observation levels to the height grid of each profile.
@@ -1752,7 +1779,7 @@ class pyPamtra(object):
 
   
   
-  def writeResultsToNetCDF(self,fname,profileVars="all",ncForm="NETCDF3_CLASSIC"):
+  def writeResultsToNetCDF(self,fname,profileVars="all",wpNames=[],ncForm="NETCDF3_CLASSIC"):
     '''
     write the results to a netcdf file
     
@@ -2036,41 +2063,48 @@ class pyPamtra(object):
       nc_iwv[:] = np.array(self.p["iwv"],dtype="f")
       if not pyNc: nc_iwv._fillValue =missingNumber
 
-    if ("cwp" in profileVars or profileVars =="all") and ("cwp" in self.p.keys()):
-      nc_cwp= cdfFile.createVariable('cwp', 'f',dim2d,**fillVDict)
-      nc_cwp.units = "kg/m^2"
-      nc_cwp[:] = np.array(self.p["cwp"],dtype="f")
-      if not pyNc: nc_cwp._fillValue =missingNumber
+    if ("hydro_wp" in profileVars or profileVars =="all") and ("hydro_wp" in self.p.keys()):
+      for i,wp in enumerate(wpNames):
+	nc_wp= cdfFile.createVariable(wp, 'f',dim2d,**fillVDict)
+	nc_wp.units = "kg/m^2"
+	nc_wp[:] = np.array(self.p["hydro_wp"][...,i],dtype="f")
+	if not pyNc: nc_wp._fillValue =missingNumber
+
+    #if ("cwp" in profileVars or profileVars =="all") and ("cwp" in self.p.keys()):
+      #nc_cwp= cdfFile.createVariable('cwp', 'f',dim2d,**fillVDict)
+      #nc_cwp.units = "kg/m^2"
+      #nc_cwp[:] = np.array(self.p["cwp"],dtype="f")
+      #if not pyNc: nc_cwp._fillValue =missingNumber
   
-    if ("iwp" in profileVars or profileVars =="all") and ("iwp" in self.p.keys()):
-      nc_iwp = cdfFile.createVariable('iwp', 'f',dim2d,**fillVDict)
-      nc_iwp.units = "kg/m^2"
-      nc_iwp[:] = np.array(self.p["iwp"],dtype="f")
-      if not pyNc: nc_iwp._fillValue =missingNumber
+    #if ("iwp" in profileVars or profileVars =="all") and ("iwp" in self.p.keys()):
+      #nc_iwp = cdfFile.createVariable('iwp', 'f',dim2d,**fillVDict)
+      #nc_iwp.units = "kg/m^2"
+      #nc_iwp[:] = np.array(self.p["iwp"],dtype="f")
+      #if not pyNc: nc_iwp._fillValue =missingNumber
 
-    if ("rwp" in profileVars or profileVars =="all") and ("rwp" in self.p.keys()):
-      nc_rwp = cdfFile.createVariable('rwp', 'f',dim2d,**fillVDict)
-      nc_rwp.units = "kg/m^2"
-      nc_rwp[:] = np.array(self.p["rwp"],dtype="f")
-      if not pyNc: nc_rwp._fillValue =missingNumber
+    #if ("rwp" in profileVars or profileVars =="all") and ("rwp" in self.p.keys()):
+      #nc_rwp = cdfFile.createVariable('rwp', 'f',dim2d,**fillVDict)
+      #nc_rwp.units = "kg/m^2"
+      #nc_rwp[:] = np.array(self.p["rwp"],dtype="f")
+      #if not pyNc: nc_rwp._fillValue =missingNumber
 
-    if ("swp" in profileVars or profileVars =="all") and ("swp" in self.p.keys()):
-      nc_swp = cdfFile.createVariable('swp', 'f',dim2d,**fillVDict)
-      nc_swp.units = "kg/m^2"
-      nc_swp[:] = np.array(self.p["swp"],dtype="f")
-      if not pyNc: nc_swp._fillValue =missingNumber
+    #if ("swp" in profileVars or profileVars =="all") and ("swp" in self.p.keys()):
+      #nc_swp = cdfFile.createVariable('swp', 'f',dim2d,**fillVDict)
+      #nc_swp.units = "kg/m^2"
+      #nc_swp[:] = np.array(self.p["swp"],dtype="f")
+      #if not pyNc: nc_swp._fillValue =missingNumber
 
-    if ("gwp" in profileVars or profileVars =="all") and ("gwp" in self.p.keys()):
-      nc_gwp = cdfFile.createVariable('gwp', 'f',dim2d,**fillVDict)
-      nc_gwp.units = "kg/m^2"
-      nc_gwp[:] = np.array(self.p["gwp"],dtype="f")
-      if not pyNc: nc_gwp._fillValue =missingNumber
+    #if ("gwp" in profileVars or profileVars =="all") and ("gwp" in self.p.keys()):
+      #nc_gwp = cdfFile.createVariable('gwp', 'f',dim2d,**fillVDict)
+      #nc_gwp.units = "kg/m^2"
+      #nc_gwp[:] = np.array(self.p["gwp"],dtype="f")
+      #if not pyNc: nc_gwp._fillValue =missingNumber
 
-    if ("hwp" in profileVars or profileVars =="all") and ("hwp" in self.p.keys()):
-      nc_hwp = cdfFile.createVariable('hwp', 'f',dim2d,**fillVDict)
-      nc_hwp.units = "kg/m^2"
-      nc_hwp[:] = np.array(self.p["hwp"],dtype="f")
-      if not pyNc: nc_hwp._fillValue =missingNumber
+    #if ("hwp" in profileVars or profileVars =="all") and ("hwp" in self.p.keys()):
+      #nc_hwp = cdfFile.createVariable('hwp', 'f',dim2d,**fillVDict)
+      #nc_hwp.units = "kg/m^2"
+      #nc_hwp[:] = np.array(self.p["hwp"],dtype="f")
+      #if not pyNc: nc_hwp._fillValue =missingNumber
 
     if ("cloudBase" in profileVars or profileVars =="all") and ("cloudBase" in self.p.keys()):
       nc_cb = cdfFile.createVariable('cloudBase', 'f',dim2d,**fillVDict)

@@ -169,8 +169,8 @@ $(OBJDIR)write_nc_results.o:  $(SRCDIR)write_nc_results.f90 | $(OBJDIR)
 
 
 
-pamtraDebug: FCFLAGS += -g
-pamtraDebug: LFLAGS += -g
+pamtraDebug: FCFLAGS += -g -gdwarf-3
+pamtraDebug: LFLAGS += -g -gdwarf-3
 pamtraDebug: pamtra
 	@echo ""
 	@echo "####################################################################################"
@@ -180,7 +180,7 @@ pamtraDebug: pamtra
 	@echo "####################################################################################"
 
 
-pamtraProfile: FCFLAGS += -pg
+pamtraProfile: FCFLAGS += -pg 
 pamtraProfile: LFLAGS += -pg
 pamtraProfile: 	pamtra
 	@echo ""
