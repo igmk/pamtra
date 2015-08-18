@@ -208,15 +208,15 @@ wavelength,outlevels)
         quad_type,&
         noutlevels,&
         outpol,&
-        units
+        units, &
+        maxlay
 
     use report_module
 
     implicit none
 
-    integer   maxv, maxlay
+    integer   maxv
     parameter (maxv=64)
-    parameter (maxlay=200)
 
     real(kind=dbl), intent(in) ::  mu_values(maxv)
     character*64, intent(in) :: out_file

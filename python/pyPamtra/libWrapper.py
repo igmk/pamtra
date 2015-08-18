@@ -34,8 +34,8 @@ def PamtraFortranWrapper(
       assert profile[key].shape[1] == profile["lat"].shape[1]
   #todo: make shape check for all variables! seg faults can easily be created here! 
        
-  #Pamtra can handle 200 layers maximum:
-  assert profile["max_nlyrs"] <=200
+  #Pamtra can handle not more than maxlay. 
+  assert profile["max_nlyrs"] <= settings.maxlay
        
   #be sure everything is cleaned up before we start
   error = deallocate_everything.do_deallocate_everything()

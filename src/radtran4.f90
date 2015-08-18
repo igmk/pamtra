@@ -134,7 +134,7 @@
       use vars_index, only: i_x, i_y
     use vars_rt, only : &
         rt_hydros_present_reverse
-     use settings, only: verbose
+     use settings, only: verbose, maxlay
         use report_module
 use rt_utilities, only: planck_function,&
 gauss_legendre_quadrature,&
@@ -155,8 +155,8 @@ lobatto_quadrature
       REAL*8    UP_RAD(*), DOWN_RAD(*)
       CHARACTER*1  QUAD_TYPE, GROUND_TYPE
 
-      INTEGER   MAXV, MAXM, MAXLAY, MAXLM
-      PARAMETER (MAXV=64, MAXM=4096, MAXLAY=200, maxlm=201 * (maxv)**2)!MAXLM=201*256)
+      INTEGER   MAXV, MAXM, MAXLM
+      PARAMETER (MAXV=64, MAXM=4096, maxlm=201 * (maxv)**2)!MAXLM=201*256)
 
       REAL*8    PI, TWOPI, ZERO
       PARAMETER (PI = 3.1415926535897932384D0, TWOPI=2.0D0*PI)

@@ -151,7 +151,7 @@ class pyPamtra(object):
     self.dimensions["radar_prop"] = ["ngridx","ngridy","2"]
 
     self.dimensions["Ze"] = ["gridx","gridy","lyr","frequency","radar_npol","radar_npeaks"]
-    self.dimensions["Att_hydros"] = ["gridx","gridy","lyr","frequency","att_npol"]
+    self.dimensions["Att_hydro"] = ["gridx","gridy","lyr","frequency","att_npol"]
     self.dimensions["Att_atmo"] = ["gridx","gridy","lyr","frequency"]
     self.dimensions["tb"] = ["gridx","gridy","outlevels","angles","frequency","passive_npol"]
 
@@ -411,9 +411,6 @@ class pyPamtra(object):
     self.p["nlyrs"] = int(self.p["nlyrs"])
     self.p["max_nlyrs"] = deepcopy(self.p["nlyrs"])
     
-    if self.p["max_nlyrs"] > 200:
-      warnings.warn("Too many layers for pamtra (max:200): " + str(self.p["max_nlyrs"]),Warning)
-    
     
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],)
@@ -612,7 +609,7 @@ class pyPamtra(object):
         ("temp_lev" in kwargs.keys() or "temp" in kwargs.keys()) and 
         ("press_lev" in kwargs.keys() or "press" in kwargs.keys()) and 
         ("relhum_lev" in kwargs.keys() or  "relhum" in kwargs.keys())):#"q" in kwargs.keys()
-      raise TypeError("I need hgt_lev and temp_lev and press_lev and (relhum_lev or relhum)!")
+      raise TypeError("I need hgt(_lev) and temp(_lev) and press(_lev) and relhum(_lev)!")
     
     if "hgt" not in kwargs.keys():
       kwargs["hgt"] = (kwargs["hgt_lev"][...,1:] + kwargs["hgt_lev"][...,:-1])/2.
@@ -638,10 +635,7 @@ class pyPamtra(object):
     self.p["nlyrs"] = np.array(np.sum(kwargs["hgt"]!=missingNumber,axis=-1))
     hgtVar = "hgt"
 
-    
-    if self.p["max_nlyrs"] > 200:
-      warnings.warn("Too many layers for pamtra (max:200): " + str(self.p["max_nlyrs"]),Warning)
-    
+     
     #if np.any(self.p["nlyrs"] != self.p["max_nlyrs"]):
       #self._radiosonde = True
     #else:
@@ -968,9 +962,6 @@ class pyPamtra(object):
         
     self.p["nlyrs"] = np.sum(self.p["hgt_lev"] != missingNumber,axis=-1) -1
     
-    if self.p["max_nlyrs"] > 200:
-      warnings.warn("Still too many layers for pamtra (max:200): " + str(self.p["max_nlyrs"]),Warning)
-
 
     return
     
@@ -1133,10 +1124,7 @@ class pyPamtra(object):
     
     self.p["nlyrs"] = np.sum(hgt_lev!=missingNumber,axis=-1) -1
     self.p["max_nlyrs"] = np.shape(hgt_lev)[-1] -1
-    
-    if self.p["max_nlyrs"] > 200:
-      warnings.warn("Too many layers for pamtra (max:200): " + str(self.p["max_nlyrs"]),Warning)
-    
+
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
@@ -2036,6 +2024,4 @@ class pyPamtra(object):
     cdfFile.close()
     if self.set["pyVerbose"] > 0: print fname,"written"
     
-#some tools
-
 

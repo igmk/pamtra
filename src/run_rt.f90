@@ -41,10 +41,10 @@ subroutine run_rt(errorstatus)
       ground_type,ground_albedo,ground_index,sky_temp,&
       wavelength,outlevels)
         use kinds
+        use settings, only: maxlay
         implicit none
-    integer   maxv, maxlay
+    integer   maxv
     parameter (maxv=64)
-    parameter (maxlay=200)
         real(kind=dbl), intent(in) ::  mu_values(maxv)
         character*64, intent(in) :: out_file
         character, intent(in) ::  ground_type*1
