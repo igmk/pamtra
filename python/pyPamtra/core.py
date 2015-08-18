@@ -2024,4 +2024,45 @@ class pyPamtra(object):
     cdfFile.close()
     if self.set["pyVerbose"] > 0: print fname,"written"
     
+  def averageResultTbs(self,translatorDict):
+    """
+    average several frequencies of the passive observations to account for channel width. Replaces self.r["tb"]
+    
+    Input:
+    translatorDict: dict with list of old and new frequencies. Note that the "new" frequency is only for naming of the channel. e.g.
+    
+    translatorDict = {
+      90.0: [90.0],
+      120.15: [117.35, 120.15],
+    }
+    
+    
+    As of know this works only in passive mode. #
+    The old tbs and freqs are stored in self.r["not_averaged_tb"] and self.set["not_averaged_freqs"].
+    """
+    
+    assert not self.nmlSet["active"]
+    
+    
+    self.r["not_averaged_tb"]  = deepcopy(self.r["tb"])
+    self.set["not_averaged_freqs"] = deepcopy(self.set["freqs"])
+    
+    self.set["freqs"] = sorted(translatorDict.keys())
+    self.set["nfreqs"] = len(self.set["freqs"])
+    self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles*2.,self.set["nfreqs"],self._nstokes))*missingNumber
 
+    for ff, (freqNew, freqList) in enumerate(sorted(translatorDict.items())):
+      assert np.where(np.array(self.set["freqs"]) == freqNew)[0][0] == ff
+      indices = []
+      for freq in freqList:
+        indexFound = np.where(freq == np.array(self.set["not_averaged_freqs"]))[0]
+        assert len(indexFound) == 1
+        indices.append(indexFound[0])
+      if len(indices) > 1:
+        self.r["tb"][:,:,:,:,ff,:] = np.mean(self.r["not_averaged_tb"][:,:,:,:,indices,:],axis=4)
+      else:
+        self.r["tb"][:,:,:,:,ff,:] = self.r["not_averaged_tb"][:,:,:,:,indices[0],:]
+
+
+    
+    
