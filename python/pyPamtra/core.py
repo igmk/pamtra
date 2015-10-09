@@ -563,9 +563,9 @@ class pyPamtra(object):
 	    s +=" "+'%9e'%self.p["hydro_wp"][xx,yy,ihyd]+" "+'%9e'%self.p["hydro_tn"][xx,yy,ihyd]
 	s += "\n"
 	if levLay == 'lev':
-	  s += '%6.1f'%self.p["hgt_lev"][xx,yy,0]+" "+'%6.1f'%self.p["press_lev"][xx,yy,0]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,0]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,0]*100)+"\n"
+	  s += '%6.1f'%self.p["hgt_lev"][xx,yy,0]+" "+'%6.1f'%self.p["press_lev"][xx,yy,0]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,0]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,0])+"\n"
 	  for zz in range(1,self._shape3D[2]+1):
-	    s += '%6.1f'%self.p["hgt_lev"][xx,yy,zz]+" "+'%6.1f'%self.p["press_lev"][xx,yy,zz]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,zz]*100)+" "
+	    s += '%6.1f'%self.p["hgt_lev"][xx,yy,zz]+" "+'%6.1f'%self.p["press_lev"][xx,yy,zz]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,zz])+" "
 	    for ihyd in range(self.df.nhydro):
 	      if self.df.data['moment_in'][ihyd] == 1:
 		s +=str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
@@ -574,7 +574,7 @@ class pyPamtra(object):
 	    s += "\n"
 	elif levLay == 'lay':
 	  for zz in range(0,self._shape3D[2]):
-	    s += '%6.1f'%self.p["hgt"][xx,yy,zz]+" "+'%6.1f'%self.p["press"][xx,yy,zz]+" "+'%3.2f'%self.p["temp"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum"][xx,yy,zz]*100)+" "
+	    s += '%6.1f'%self.p["hgt"][xx,yy,zz]+" "+'%6.1f'%self.p["press"][xx,yy,zz]+" "+'%3.2f'%self.p["temp"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum"][xx,yy,zz])+" "
 	    for ihyd in range(self.df.nhydro):
 	      if self.df.data['moment_in'][ihyd] == 1:
 		s +=str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
@@ -1025,7 +1025,7 @@ class pyPamtra(object):
     self.p['iwv'] =  np.sum(self._helperP['vapor']*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
     #nothing to do without hydrometeors:
     if np.all(self.p['hydro_q']==0):
-      self.p['hydro_wp'] = np.zeros(self._shape2D)
+      self.p['hydro_wp'] = np.zeros(self._shape3Dhyd)
     else:
       for i in range(self.df.nhydro):
 	self.p['hydro_wp'][...,i] = np.sum(self.p['hydro_q'][...,i]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
