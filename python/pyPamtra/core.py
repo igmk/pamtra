@@ -105,6 +105,7 @@ class pyPamtra(object):
     self.nmlSet["radar_npeaks"] = 1
     self.nmlSet["radar_noise_distance_factor"]=  2.0
     self.nmlSet["radar_receiver_uncertainty_std"]=  0.e0 #dB
+    self.nmlSet["radar_receiver_miscalibration"]=  0.e0 #dB
     self.nmlSet["radar_attenuation"]=  "disabled" #! "bottom-up" or "top-down"
     self.nmlSet["radar_polarisation"]=  "NN" #! comma separated
     self.nmlSet["radar_use_wider_peak"]=  False #! comma separated
@@ -151,7 +152,7 @@ class pyPamtra(object):
     self.dimensions["radar_prop"] = ["ngridx","ngridy","2"]
 
     self.dimensions["Ze"] = ["gridx","gridy","lyr","frequency","radar_npol","radar_npeaks"]
-    self.dimensions["Att_hydros"] = ["gridx","gridy","lyr","frequency","att_npol"]
+    self.dimensions["Att_hydro"] = ["gridx","gridy","lyr","frequency","att_npol"]
     self.dimensions["Att_atmo"] = ["gridx","gridy","lyr","frequency"]
     self.dimensions["tb"] = ["gridx","gridy","outlevels","angles","frequency","passive_npol"]
     
@@ -419,9 +420,6 @@ class pyPamtra(object):
     self.p["nlyrs"] = int(self.p["nlyrs"])
     self.p["max_nlyrs"] = deepcopy(self.p["nlyrs"])
     
-    if self.p["max_nlyrs"] > 200:
-      warnings.warn("Too many layers for pamtra (max:200): " + str(self.p["max_nlyrs"]),Warning)
-    
     
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],)
@@ -640,7 +638,7 @@ class pyPamtra(object):
         ("temp_lev" in kwargs.keys() or "temp" in kwargs.keys()) and 
         ("press_lev" in kwargs.keys() or "press" in kwargs.keys()) and 
         ("relhum_lev" in kwargs.keys() or  "relhum" in kwargs.keys())):#"q" in kwargs.keys()
-      raise TypeError("I need hgt_lev and temp_lev and press_lev and (relhum_lev or relhum)!")
+      raise TypeError("I need hgt(_lev) and temp(_lev) and press(_lev) and relhum(_lev)!")
     
     if "hgt" not in kwargs.keys():
       kwargs["hgt"] = (kwargs["hgt_lev"][...,1:] + kwargs["hgt_lev"][...,:-1])/2.
@@ -666,6 +664,7 @@ class pyPamtra(object):
     self.p["nlyrs"] = np.array(np.sum(kwargs["hgt"]!=missingNumber,axis=-1))
     hgtVar = "hgt"
 
+<<<<<<< HEAD
     if "obs_height" in kwargs.keys():
       self.p["noutlevels"] = np.shape(kwargs["obs_height"])[2]
     else:
@@ -674,6 +673,9 @@ class pyPamtra(object):
     if self.p["max_nlyrs"] > 300:
       warnings.warn("Too many layers for pamtra: atmospheric layers + number of output levels < 300: " + str(self.p["max_nlyrs"]),Warning)
     
+=======
+     
+>>>>>>> 0b1b779e04939ecb64c819905c53bbf8f2e4b9f4
     #if np.any(self.p["nlyrs"] != self.p["max_nlyrs"]):
       #self._radiosonde = True
     #else:
@@ -871,6 +873,56 @@ class pyPamtra(object):
       
     return
 
+
+  def tileProfiles(self,rep2D):
+    '''
+    repeat the profiles of Pamtra rep2D times. E.g. rep2D=(1,100) changes a Pamtra shape from (10,2) to (10,200).
+    '''
+    
+    assert len(rep2D) == 2
+    
+    
+    #create a new shape!
+    self.p["ngridx"] = self.p["ngridx"] * rep2D[0]
+    self.p["ngridy"] = self.p["ngridy"] * rep2D[1]
+    
+    try: self.df.fs_nbin =  self.df.dataFullSpec["d_ds"].shape[-1]
+    except: self.df.fs_nbin = 0
+    
+    self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
+    self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
+    self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
+    self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
+    self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
+    self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
+        
+    rep3D =  rep2D + (1,)
+    rep4D =  rep2D + (1,1,)
+    rep5D =  rep2D + (1,1,1,)
+        
+    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","obs_height","groundtemp"]:
+      if key in self.p.keys(): self.p[key] = np.tile(self.p[key], rep2D)
+
+    for key in ["hydro_q","hydro_n","hydro_reff"]:
+      if key in self.p.keys(): self.p[key] = np.tile(self.p[key], rep4D)
+      
+    for key in ["hgt_lev","temp_lev","press_lev","relhum_lev","airturb",'temp', 'press', 'relhum','hgt','wind_w',"radar_prop"]:
+      if key in self.p.keys(): self.p[key] = np.tile(self.p[key], rep3D)
+             
+ 
+    for key in self.df.data4D.keys():
+      self.df.data4D[key] = np.tile(self.df.data4D[key],rep4D)
+      
+    for key in self.df.dataFullSpec.keys():
+      self.df.dataFullSpec[key] = np.tile(self.df.dataFullSpec[key],rep5D)
+      
+
+      
+    return
+
+
+
+
   def addProfile(self,profile, axis=0):
     """
     Add additional dictionary "profiles" with profile information to axis "axis". Number of height bins must be equal.
@@ -981,9 +1033,12 @@ class pyPamtra(object):
         
     self.p["nlyrs"] = np.sum(self.p["hgt_lev"] != missingNumber,axis=-1) -1
     
+<<<<<<< HEAD
     if self.p["max_nlyrs"] > 300:
       warnings.warn("Still too many layers for pamtra (max:300): " + str(self.p["max_nlyrs"]),Warning)
 
+=======
+>>>>>>> 0b1b779e04939ecb64c819905c53bbf8f2e4b9f4
 
     return
     
@@ -1157,10 +1212,7 @@ class pyPamtra(object):
     
     self.p["nlyrs"] = np.sum(hgt_lev!=missingNumber,axis=-1) -1
     self.p["max_nlyrs"] = np.shape(hgt_lev)[-1] -1
-    
-    if self.p["max_nlyrs"] > 200:
-      warnings.warn("Too many layers for pamtra (max:200): " + str(self.p["max_nlyrs"]),Warning)
-    
+
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
@@ -2121,6 +2173,45 @@ class pyPamtra(object):
     cdfFile.close()
     if self.set["pyVerbose"] > 0: print fname,"written"
     
-#some tools
+  def averageResultTbs(self,translatorDict):
+    """
+    average several frequencies of the passive observations to account for channel width. Replaces self.r["tb"]
+    
+    Input:
+    translatorDict: dict with list of old and new frequencies. Note that the "new" frequency is only for naming of the channel. e.g.
+    
+    translatorDict = {
+      90.0: [90.0],
+      120.15: [117.35, 120.15],
+    }
+    
+    
+    As of know this works only in passive mode. #
+    The old tbs and freqs are stored in self.r["not_averaged_tb"] and self.set["not_averaged_freqs"].
+    """
+    
+    assert not self.nmlSet["active"]
+    
+    
+    self.r["not_averaged_tb"]  = deepcopy(self.r["tb"])
+    self.set["not_averaged_freqs"] = deepcopy(self.set["freqs"])
+    
+    self.set["freqs"] = sorted(translatorDict.keys())
+    self.set["nfreqs"] = len(self.set["freqs"])
+    self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles*2.,self.set["nfreqs"],self._nstokes))*missingNumber
+
+    for ff, (freqNew, freqList) in enumerate(sorted(translatorDict.items())):
+      assert np.where(np.array(self.set["freqs"]) == freqNew)[0][0] == ff
+      indices = []
+      for freq in freqList:
+        indexFound = np.where(freq == np.array(self.set["not_averaged_freqs"]))[0]
+        assert len(indexFound) == 1
+        indices.append(indexFound[0])
+      if len(indices) > 1:
+        self.r["tb"][:,:,:,:,ff,:] = np.mean(self.r["not_averaged_tb"][:,:,:,:,indices,:],axis=4)
+      else:
+        self.r["tb"][:,:,:,:,ff,:] = self.r["not_averaged_tb"][:,:,:,:,indices[0],:]
 
 
+    
+    

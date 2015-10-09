@@ -181,6 +181,7 @@
 !                       MIDENTITY, MTRANSPOSE, MMULT, MINVERT
 !
 !
+
 subroutine rt4(errorstatus,out_file,&
      ground_type,ground_albedo,ground_index,sky_temp,&
      wavelength,outlevels)
@@ -209,13 +210,14 @@ subroutine rt4(errorstatus,out_file,&
        quad_type,&
        noutlevels,&
        outpol,&
-       units
+       units,&
+       maxlay
 
   use report_module
 
   implicit none
 
-  integer, parameter :: maxv=64, maxlay=300
+  integer, parameter :: maxv=64
 
   !    real(kind=dbl), intent(in) ::  mu_values(maxv)
   character*64, intent(in) :: out_file
@@ -547,6 +549,3 @@ subroutine convert_output4(units, outpol, nstokes, nout,&
   enddo
   return
 end subroutine convert_output4
-
-
-

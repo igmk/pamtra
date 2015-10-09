@@ -214,6 +214,7 @@ subroutine make_dist(errorstatus)
      if ((d_1_new < -1.d-30) .or. (d_2_new < -1.d-30) .or. (d_1_new > d_2_new)) then
       msg = 'something went wrong with the adaptive grid'
       errorstatus = fatal
+      print*, d_1_new, d_2_new
       call report(errorstatus, msg, nameOfRoutine)
       return
      endif

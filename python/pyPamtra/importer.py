@@ -1120,7 +1120,7 @@ def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,d
 
   return pam
   
-def createUsStandardProfile(pam,**kwargs):
+def createUsStandardProfile(pam=pyPamtra(),**kwargs):
   '''
   Function to create clear sky US Standard Atmosphere.
   

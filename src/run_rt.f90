@@ -41,10 +41,10 @@ subroutine run_rt(errorstatus)
           ground_type,ground_albedo,ground_index,sky_temp,&
           wavelength,outlevels)
        use kinds
+       use settings, only: maxlay
        implicit none
-       integer   maxv, maxlay
+       integer   maxv
        parameter (maxv=64)
-       parameter (maxlay=300)
        character*64, intent(in) :: out_file
        character, intent(in) ::  ground_type*1
        real(kind=dbl), intent(in) ::  ground_albedo
@@ -161,29 +161,6 @@ subroutine run_rt(errorstatus)
   if (active .and. (write_nc .eqv. .false.) .and. (in_python .eqv. .false.)) then
      call save_active(OUT_FILE_ACT,i_x,i_y,i_f)
   end if
-
-!   ! find the output level
-!   if ((atmo_obs_height(i_x,i_y) > 99999._dbl) .or. & 
-!        (atmo_obs_height(i_x,i_y) > atmo_hgt_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1))) then
-!      outlevels(1) = 1
-!   else if ((atmo_obs_height(i_x,i_y) .lt. 0.1) .or. &
-!        (atmo_obs_height(i_x,i_y) .lt. atmo_hgt_lev(i_x,i_y,2))) then
-!      outlevels(1) = atmo_nlyrs(i_x,i_y) + 1
-!   else
-!      out_search: do nz = 1, atmo_nlyrs(i_x,i_y)
-!         if (atmo_hgt_lev(i_x,i_y,nz+1) .ge. atmo_obs_height(i_x,i_y)) then
-!            if (abs(atmo_hgt_lev(i_x,i_y,nz+1) - atmo_obs_height(i_x,i_y)) .lt. &
-!                 abs(atmo_hgt_lev(i_x,i_y,nz) - atmo_obs_height(i_x,i_y))) then
-!               outlevels(1) = atmo_nlyrs(i_x,i_y)-nz+1
-!            else
-!               outlevels(1) = atmo_nlyrs(i_x,i_y)-nz+2
-!            end if
-!            exit out_search
-!         end if
-!      end do out_search
-!   end if
-! 
-!   outlevels(2) = atmo_nlyrs(i_x,i_y)+1    ! this is the bottom
 
   
   ! find the output levels
