@@ -45,7 +45,6 @@ subroutine run_rt(errorstatus)
        implicit none
        integer   maxv
        parameter (maxv=64)
-       parameter (maxlay=300)
        character*64, intent(in) :: out_file
        character, intent(in) ::  ground_type*1
        real(kind=dbl), intent(in) ::  ground_albedo
