@@ -185,7 +185,7 @@ subroutine run_rt(errorstatus)
   end do
   
   if (passive .eqv. .true.) then
-
+     
      if (verbose >= 2) print*, i_x,i_y, "Entering rt4 ...."
 
      call rt4(err, out_file_pas,&
