@@ -282,8 +282,7 @@ class pyPamtra(object):
       self.readClassicPamtraProfile(inputFile)
       return
       
-    
-    self.p["ngridx"], self.p["ngridy"], self.p["max_nlyrs"], self.p["noutlevels"] = np.array(np.array(g.next()[:4]),dtype=int)
+    self.p["ngridx"], self.p["ngridy"], self.p["max_nlyrs"], self.p["noutlevels"] = [int(el) for el in g.next()[:4]]
 
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
@@ -664,18 +663,11 @@ class pyPamtra(object):
     self.p["nlyrs"] = np.array(np.sum(kwargs["hgt"]!=missingNumber,axis=-1))
     hgtVar = "hgt"
 
-<<<<<<< HEAD
     if "obs_height" in kwargs.keys():
       self.p["noutlevels"] = np.shape(kwargs["obs_height"])[2]
     else:
       self.p["noutlevels"] = 2
-    
-    if self.p["max_nlyrs"] > 300:
-      warnings.warn("Too many layers for pamtra: atmospheric layers + number of output levels < 300: " + str(self.p["max_nlyrs"]),Warning)
-    
-=======
-     
->>>>>>> 0b1b779e04939ecb64c819905c53bbf8f2e4b9f4
+
     #if np.any(self.p["nlyrs"] != self.p["max_nlyrs"]):
       #self._radiosonde = True
     #else:
@@ -1032,13 +1024,6 @@ class pyPamtra(object):
         
         
     self.p["nlyrs"] = np.sum(self.p["hgt_lev"] != missingNumber,axis=-1) -1
-    
-<<<<<<< HEAD
-    if self.p["max_nlyrs"] > 300:
-      warnings.warn("Still too many layers for pamtra (max:300): " + str(self.p["max_nlyrs"]),Warning)
-
-=======
->>>>>>> 0b1b779e04939ecb64c819905c53bbf8f2e4b9f4
 
     return
     
