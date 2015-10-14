@@ -81,27 +81,27 @@ subroutine make_dist_params(errorstatus)
     call report(errorstatus, msg, nameOfRoutine)
     return
   elseif ((moment_in == 1) .and. (n_tot <= 0.)) then      
-    msg = 'if moment_in eq 2 then input moment n_tot must be greater than 0!'
+    msg = 'if moment_in eq 1 then input moment n_tot must be greater than 0!'
     errorstatus = fatal
     call report(errorstatus, msg, nameOfRoutine)
     return
   elseif ((moment_in == 2) .and. (r_eff <= 0.)) then      
-    msg = 'if moment_in eq 3 then input moment r_eff must be greater than 0!'
+    msg = 'if moment_in eq 2 then input moment r_eff must be greater than 0!'
     errorstatus = fatal
     call report(errorstatus, msg, nameOfRoutine)
     return
   elseif ((moment_in == 13) .and. ((q_h <= 0.) .or. (n_tot <= 0.))) then      
-    msg = 'if moment_in eq 12 then input moment q_h and n_tot must be greater than 0!'
+    msg = 'if moment_in eq 13 then input moment q_h and n_tot must be greater than 0!'
     errorstatus = fatal
     call report(errorstatus, msg, nameOfRoutine)
     return
   elseif ((moment_in == 23) .and. ((q_h <= 0.) .or. (r_eff <= 0.))) then      
-    msg = 'if moment_in eq 13 then input moment q_h and r_eff must be greater than 0!'
+    msg = 'if moment_in eq 23 then input moment q_h and r_eff must be greater than 0!'
     errorstatus = fatal
     call report(errorstatus, msg, nameOfRoutine)
     return
   elseif ((moment_in == 12) .and. ((n_tot <= 0.) .or. (r_eff <= 0.))) then      
-    msg = 'if moment_in eq 23 then input moment n_tot and r_eff must be greater than 0!'
+    msg = 'if moment_in eq 12 then input moment n_tot and r_eff must be greater than 0!'
     errorstatus = fatal
     call report(errorstatus, msg, nameOfRoutine)
     return

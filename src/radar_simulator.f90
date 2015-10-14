@@ -373,25 +373,29 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
               print*,"#####################"
           end if
 
-          !apply a receiver uncertainty:
-        if (radar_receiver_uncertainty_std /= 0) then
-          !get random
-          call random(err,2,seed,rand_number)
-          if (err /= 0) then
-              msg = 'error in random!'
-              call report(err, msg, nameOfRoutine)
-              errorstatus = err
-              return
+            !apply a receiver uncertainty:
+          if (radar_receiver_uncertainty_std /= 0) then
+            !get random
+            call random(err,2,seed,rand_number)
+            if (err /= 0) then
+                msg = 'error in random!'
+                call report(err, msg, nameOfRoutine)
+                errorstatus = err
+                return
+            end if
+            !apply a gaussian distribution to random numbers
+            receiver_uncertainty =  radar_receiver_uncertainty_std * sqrt( -2.0d0 * log ( rand_number(1))) &
+                          * cos(2.0d0 * pi * rand_number(2))
+            !make linear
+            receiver_uncertainty = 10**(0.1*receiver_uncertainty)
+            !apply to spectrum
+            noise_turb_spectra = noise_turb_spectra * receiver_uncertainty
+            radar_Pnoise = radar_Pnoise * receiver_uncertainty
           end if
-          !apply a gaussian distribution to random numbers
-          receiver_uncertainty =  radar_receiver_uncertainty_std * sqrt( -2.0d0 * log ( rand_number(1))) &
-                        * cos(2.0d0 * pi * rand_number(2))
-          !make linear
-          receiver_uncertainty = 10**(0.1*receiver_uncertainty)
-          !apply to spectrum
-          noise_turb_spectra = noise_turb_spectra * receiver_uncertainty
-        end if
 
+          !apply a receiver miscalibration:
+          noise_turb_spectra = noise_turb_spectra * 10**(0.1*radar_receiver_miscalibration)
+          radar_Pnoise = radar_Pnoise * 10**(0.1*radar_receiver_miscalibration)
 
           call radar_calc_moments(err,radar_nfft,radar_nPeaks,&
             noise_turb_spectra,radar_Pnoise,noise_removed_turb_spectra,&

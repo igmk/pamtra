@@ -116,6 +116,7 @@
 !  are units of inverse length;  K11 = S1 + Integ{P11}, where Integ{} is
 !  integration over azimuth and zenith angles.
 
+<<<<<<< HEAD
 subroutine radtran4(errorstatus, max_delta_tau,&
      ground_temp, ground_type,&
      ground_albedo, ground_index,&
@@ -179,6 +180,72 @@ subroutine radtran4(errorstatus, max_delta_tau,&
   real*8    source(2*maxv*(maxlay+1))
   real*8    gnd_radiance(maxv), sky_radiance(2*maxv)
   character*64 scat_file
+=======
+
+
+
+      SUBROUTINE RADTRAN4(errorstatus, NSTOKES, NUMMU, MAX_DELTA_TAU,&
+                    QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&
+                    GROUND_ALBEDO, GROUND_INDEX,&
+                    SKY_TEMP, WAVELENGTH,&
+                    NUM_LAYERS, HEIGHT, TEMPERATURES,&
+                    GAS_EXTINCT,&
+                    NOUTLEVELS, OUTLEVELS,&
+                    MU_VALUES, UP_FLUX, DOWN_FLUX,&
+                    UP_RAD, DOWN_RAD)
+
+      use kinds
+      use vars_atmosphere, only: atmo_wind10u, atmo_wind10v
+      use vars_index, only: i_x, i_y
+    use vars_rt, only : &
+        rt_hydros_present_reverse
+     use settings, only: verbose, maxlay
+        use report_module
+use rt_utilities, only: planck_function,&
+gauss_legendre_quadrature,&
+double_gauss_quadrature,&
+lobatto_quadrature
+      implicit none
+
+      INTEGER   NSTOKES, NUMMU, NUM_LAYERS
+      INTEGER   NOUTLEVELS, OUTLEVELS(*)
+      REAL*8    GROUND_TEMP, GROUND_ALBEDO
+      COMPLEX*16  GROUND_INDEX
+      REAL*8    SKY_TEMP
+      REAL*8    WAVELENGTH, MAX_DELTA_TAU
+      REAL*8    HEIGHT(*), TEMPERATURES(*)
+      REAL*8    GAS_EXTINCT(*)
+      REAL*8    MU_VALUES(*)
+      REAL*8    UP_FLUX(*), DOWN_FLUX(*)
+      REAL*8    UP_RAD(*), DOWN_RAD(*)
+      CHARACTER*1  QUAD_TYPE, GROUND_TYPE
+
+      INTEGER   MAXV, MAXM, MAXLM
+      PARAMETER (MAXV=64, MAXM=4096, maxlm=201 * (maxv)**2)!MAXLM=201*256)
+
+      REAL*8    PI, TWOPI, ZERO
+      PARAMETER (PI = 3.1415926535897932384D0, TWOPI=2.0D0*PI)
+      PARAMETER (ZERO=0.0D0)
+
+      INTEGER   LAYER, NUM_DOUBLES
+      INTEGER   I, J, K, L, N, KRT, KS
+      LOGICAL   SYMMETRIC
+      REAL*8    LINFACTOR
+      REAL*8    PLANCK0, PLANCK1
+      REAL*8    ZDIFF, DELTA_Z, F, NUM_SUB_LAYERS, EXTINCT
+      REAL*8    QUAD_WEIGHTS(MAXV)
+      REAL*8    SCATTER_MATRIX(4*MAXM)
+      REAL*8    LIN_SOURCE(2*MAXV)
+      REAL*8    EXTINCT_MATRIX(16*2*MAXV), EMIS_VECTOR(4*2*MAXV)
+      REAL*8    REFLECT1(2*MAXM),UPREFLECT(2*MAXM),DOWNREFLECT(2*MAXM)
+      REAL*8    TRANS1(2*MAXM),  UPTRANS(2*MAXM),  DOWNTRANS(2*MAXM)
+      REAL*8    SOURCE1(2*MAXV), UPSOURCE(2*MAXV), DOWNSOURCE(2*MAXV)
+      REAL*8    REFLECT(2*MAXLM)
+      REAL*8    TRANS(2*MAXLM)
+      REAL*8    SOURCE(2*MAXV*(MAXLAY+1))
+      REAL*8    GND_RADIANCE(MAXV), SKY_RADIANCE(2*MAXV)
+      CHARACTER*64 SCAT_FILE
+>>>>>>> 0b1b779e04939ecb64c819905c53bbf8f2e4b9f4
 
   real(kind=dbl) wind10,windratio,windangle
   integer :: iquadrant
