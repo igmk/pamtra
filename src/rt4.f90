@@ -24,7 +24,7 @@
 !     There may be many arbitrary layers which are uniform and infinite in
 !     horizontal extent and may be any thickness.  The properties of the
 !     layers are read from a file.  The single scattering properties are
-!     read in from other files containing the Stokes scattering (Meuller)
+!     read in from other files containing the Stokes scattering (Mueller)
 !     matrix, extinction matrix, and emission vector for appropriate sets
 !     of discrete quadrature angles.  Linear thermal emission within each
 !     layer is calculated.  Thermal emission and reflection from a

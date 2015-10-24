@@ -2203,12 +2203,85 @@ class pyPamtra(object):
     Write a files to run the passive model with the pure RT4 code
     by Frank Evans.
     """
+    def extrap(x, xp, yp):
+      """np.interp function with linear extrapolation"""
+      y = np.interp(x, xp, yp)
+      y[x < xp[0]] = yp[0] + (x[x<xp[0]]-xp[0]) * (yp[0]-yp[1]) / (xp[0]-xp[1])
+      y[x > xp[-1]]= yp[-1] + (x[x>xp[-1]]-xp[-1])*(yp[-1]-yp[-2])/(xp[-1]-xp[-2])
+      return y
+
     # atmosphere is height[km] temp[K] gaseaous extinction scatfile for the low below
     s = ''
     for xx in range(self._shape2D[0]):
       for yy in range(self._shape2D[1]):
-	for zz in range(1,self._shape3D[2]+1):
-	  s += '%6.1f'%self.p["hgt_lev"][xx,yy,zz]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,zz]+'\n'
+#	self.p['temp_lev'][xx,yy,:] = extrap(self.p['hgt_lev'][xx,yy,:],self.p['hgt'][xx,yy,:],self.p['temp'][xx,yy,:])
+	ge = np.zeros((self._shape3D[2]))
+	ge[1:self._shape3D[2]] = self.r["kextatmo"]*1.e3
+	mu = (np.cos(np.deg2rad(self.r['angles_deg'][16::])))
+	sm = self.r['scatter_matrix']*1.e3
+	em = self.r['extinct_matrix']*1.e3
+	ev = self.r['emis_vector']*1.e3
+	for zz in range(self._shape3D[2])[::-1]:
+	  if zz < self._shape3D[2]:
+	    if (np.all(self.p['hydro_q'][xx,yy,zz-1] == 0.)):
+	      scat_file = '            '
+	    else:
+	      scat_file = 'scat_'+'%03d'%(zz-1)+'.txt'
+	      ns = '%.12e'%0.0
+	      sf = open('../../polradtran/src/'+scat_file,'w')
+	      ss = ''
+	      ss += '  16   0 \'LOBATTO        \'\n\n'
+	      for i in range(16):
+		for j in range(16):
+		  ss += '%.9f'%mu[i]+'    '+'%.9f'%mu[j]+'    0'+'\n'
+		  for k in range(2):
+		    ss += '%.12e'%sm[zz-1,k,j,0,i,0]+' '+'%.12e'%sm[zz-1,k,j,1,i,0]+' '+ns+' '+ns+'\n'
+		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+		for j in range(16):
+		  ss += '%.9f'%mu[i]+'    '+'%.9f'%mu[j]+'    0'+'\n'
+		  for k in range(2):
+		    ss += '%.12e'%sm[zz-1,k,j,0,i,2]+' '+'%.12e'%sm[zz-1,k,j,1,i,2]+' '+ns+' '+ns+'\n'
+		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+	      for i in range(16):
+		for j in range(16):
+		  ss += '%.9f'%mu[i]+'    '+'%.9f'%mu[j]+'    0'+'\n'
+		  for k in range(2):
+		    ss += '%.12e'%sm[zz-1,k,j,0,i,1]+' '+'%.12e'%sm[zz-1,k,j,1,i,1]+' '+ns+' '+ns+'\n'
+		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+		for j in range(16):
+		  ss += '%.9f'%mu[i]+'    '+'%.9f'%mu[j]+'    0'+'\n'
+		  for k in range(2):
+		    ss += '%.12e'%sm[zz-1,k,j,0,i,3]+' '+'%.12e'%sm[zz-1,k,j,1,i,3]+' '+ns+' '+ns+'\n'
+		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+	      ss += '\n'
+	      for i in range(16):
+		ss += '%.9f'%mu[i]+'\n'
+		for k in range(2):
+		  ss += '%.12e'%em[zz-1,k,0,i,0]+' '+'%.12e'%em[zz-1,k,1,i,0]+' '+ns+' '+ns+'\n'
+		ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+		ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+	      for i in range(16):
+		ss += '%.9f'%mu[i]+'\n'
+		for k in range(2):
+		  ss += '%.12e'%em[zz-1,k,0,i,1]+' '+'%.12e'%em[zz-1,k,1,i,1]+' '+ns+' '+ns+'\n'
+		ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+		ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+	      ss += '\n'
+	      for i in range(16):
+		ss += '%.9f'%mu[i]+'  '
+		ss += '%.12e'%ev[zz-1,0,i,0]+' '+'%.12e'%ev[zz-1,1,i,0]+' '+ns+' '+ns+'\n'
+	      for i in range(16):
+		ss += '%.9f'%mu[i]+'  '
+		ss += '%.12e'%ev[zz-1,0,i,1]+' '+'%.12e'%ev[zz-1,1,i,1]+' '+ns+' '+ns+'\n'
+	      sf.write(ss)
+	      sf.close()
+	  else:
+	    scat_file = '            '
+	  s += '%3.2f'%(self.p["hgt_lev"][xx,yy,zz]/1.e3)+" "+'%3.2f'%self.p["temp_lev"][xx,yy,zz]+" "+'%3.6f'%ge[zz]+'  \''+scat_file+'\'\n'
     
     
     #firstTime = datetime.datetime.utcfromtimestamp(self.p["unixtime"][0,0])
