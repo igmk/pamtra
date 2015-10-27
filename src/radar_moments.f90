@@ -146,6 +146,7 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
             radar_spectrum_arr(nn,ii) <= noise_max
         if (radar_spectrum_arr(nn,ii) <= noise_max ) EXIT
     end do
+    if (ii > radar_nfft) ii = radar_nfft !Fortran tends to go one step to far if EXIT does not happen
     right_edge = ii
     right_edge4slope = right_edge
     if ((radar_use_wider_peak) .and. &
@@ -158,11 +159,12 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
         if (verbose >= 6) print*, "to the left:",nn,jj, radar_spectrum_arr(nn,jj), noise_max, radar_spectrum_arr(nn,jj) <= noise_max
         if (radar_spectrum_arr(nn,jj) <= noise_max ) EXIT
     end do
+    if (jj < 1) jj = 1 !Fortran tends to go one step to far if EXIT does not happen
     left_edge = jj
     left_edge4slope = left_edge
     if ((radar_use_wider_peak) .and. &
         (radar_spectrum_arr(nn,left_edge) >= noise )  .and. &
-         (left_edge > 0) ) then
+         (left_edge > 1) ) then
 
       left_edge = left_edge -1
       if (verbose >= 6) print*, nn, "extended left edge to ", left_edge
