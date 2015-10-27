@@ -2,7 +2,8 @@ module ocean_sfc_optics
 
   use kinds
   use report_module
-  use crtm_fastemx, only: compute_fastemx
+  use fastemx, only: compute_fastemx
+
   use settings, only: nummu, mu_values, salinity
   use constants, only: rad2deg
   use vars_rt, only: rt_sfc_emissivity, rt_sfc_reflectivity
@@ -13,18 +14,18 @@ module ocean_sfc_optics
   
   contains
 
-  subroutine ocean_sfc_optics_fastem5(errorstatus,freq)
+  subroutine ocean_sfc_optics_fastemx(errorstatus,freq)
 
   integer(long) :: i
   integer(long), parameter :: sl = 80
   real(dbl), intent(in) :: freq!, &
   
-  REAL(dbl) :: Azimuth_Angle
-  REAL(dbl) :: Transmittance 
+!   REAL(dbl) :: azimuth_angle
+!   REAL(dbl) :: transmittance 
   
   real(dbl) :: zenith_angle,&
     wind_speed
-  character(sl) :: nameOfRoutine = 'ocean_sfc_optics_fastem5'
+  character(sl) :: nameOfRoutine = 'ocean_sfc_optics_fastemx'
 
   ! Error handling
 
@@ -36,7 +37,8 @@ module ocean_sfc_optics
   
   do i = 1, nummu
     zenith_angle = acos(mu_values(i))*rad2deg
-    call Compute_FastemX( &
+
+    call compute_fastemx( &
       freq, &     ! Input
       zenith_angle, &  ! Input
       atmo_groundtemp(i_x,i_y), &   ! Input
@@ -50,6 +52,6 @@ module ocean_sfc_optics
   
   if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
 
-  end subroutine ocean_sfc_optics_fastem5
+  end subroutine ocean_sfc_optics_fastemx
   
 end module ocean_sfc_optics

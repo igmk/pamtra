@@ -23,12 +23,12 @@ except:
 Grav = 9.80665  # m/s^2 der Wert fuer mittlere Breiten
 Rair = 287.04  # J/kg/K
 Rvapor = 461.5  # J/kg/K
-Cp = 1005.0	 # J/kg/K specific heat capacity
+Cp = 1005.0  # J/kg/K specific heat capacity
 Gamma = -Grav/Cp  # =-0.0097..K/m  adiabatic temperature gradient
 Lv = 2.5e6  # J/kg  bei 0C Lv heat of vaporization
-Mwml = 0.622	# dimlos, Molmassenverhaeltnis
-Tnull = -273.15 # K Absoluter Nullpunkt
-Kadiab = Rair/Cp # dimlos  Adiabatenexponent
+Mwml = 0.622 # dimlos, Molmassenverhaeltnis
+Tnull = -273.15 # degC absolute zero
+Kadiab = Rair/Cp # dimensionless adiabatic exponenet
 g = 9.80665  # gravitational acceleration
 
 missingNumber = -9999
@@ -46,7 +46,7 @@ def moist_rho_rh(p,T,rh,*qm):
 	density of moist air [kg/m^3]
 
 	Example:
-	moist_rho_q(p,T,rh,q_ice,q_snow,q_rain,q_cloud,q_graupel,q_hail)
+	moist_rho_rh(p,T,rh,q_ice,q_snow,q_rain,q_cloud,q_graupel,q_hail)
 
 	
 	'''

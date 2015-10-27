@@ -116,393 +116,328 @@
 !  are units of inverse length;  K11 = S1 + Integ{P11}, where Integ{} is
 !  integration over azimuth and zenith angles.
 
+subroutine radtran4(errorstatus, max_delta_tau,&
+     ground_temp, ground_type,&
+     ground_albedo, ground_index,&
+     sky_temp, wavelength,&
+     num_layers, height, temperatures,&
+     gas_extinct,&
+     outlevels,&
+     up_flux, down_flux,&
+     up_rad, down_rad)
 
+  use kinds
+  use vars_atmosphere, only: atmo_wind10u, atmo_wind10v
+  use vars_index, only: i_x, i_y
+  use vars_rt, only : &
+       rt_hydros_present_reverse
+  use settings, only: verbose, maxlay, &
+    nstokes, nummu, mu_values, quad_weights, noutlevels
+  use report_module
+  use rt_utilities, only: planck_function!,&
+  !gauss_legendre_quadrature,&
+  !double_gauss_quadrature,&
+  !lobatto_quadrature
+  use sfc_matrices, only: get_sfc_matrices
 
+  implicit none
 
-      SUBROUTINE RADTRAN4(errorstatus, NSTOKES, NUMMU, MAX_DELTA_TAU,&
-                    QUAD_TYPE, GROUND_TEMP, GROUND_TYPE,&
-                    GROUND_ALBEDO, GROUND_INDEX,&
-                    SKY_TEMP, WAVELENGTH,&
-                    NUM_LAYERS, HEIGHT, TEMPERATURES,&
-                    GAS_EXTINCT,&
-                    NOUTLEVELS, OUTLEVELS,&
-                    MU_VALUES, UP_FLUX, DOWN_FLUX,&
-                    UP_RAD, DOWN_RAD)
+  integer   num_layers
+  integer   outlevels(*)
+  real*8    ground_temp, ground_albedo
+  complex*16  ground_index
+  real*8    sky_temp
+  real*8    wavelength, max_delta_tau
+  real*8    height(*), temperatures(*)
+  real*8    gas_extinct(*)
+  !      real*8    mu_values(*)
+  real*8    up_flux(*), down_flux(*)
+  real*8    up_rad(*), down_rad(*)
+  character*1  ground_type
 
-      use kinds
-      use vars_atmosphere, only: atmo_wind10u, atmo_wind10v
-      use vars_index, only: i_x, i_y
-    use vars_rt, only : &
-        rt_hydros_present_reverse
-     use settings, only: verbose, maxlay
-        use report_module
-use rt_utilities, only: planck_function,&
-gauss_legendre_quadrature,&
-double_gauss_quadrature,&
-lobatto_quadrature
-      implicit none
+  integer   maxv, maxm, maxlm
+  parameter (maxv=64, maxm=4096, maxlm=201 * (maxv)**2)!maxlm=201*256)
 
-      INTEGER   NSTOKES, NUMMU, NUM_LAYERS
-      INTEGER   NOUTLEVELS, OUTLEVELS(*)
-      REAL*8    GROUND_TEMP, GROUND_ALBEDO
-      COMPLEX*16  GROUND_INDEX
-      REAL*8    SKY_TEMP
-      REAL*8    WAVELENGTH, MAX_DELTA_TAU
-      REAL*8    HEIGHT(*), TEMPERATURES(*)
-      REAL*8    GAS_EXTINCT(*)
-      REAL*8    MU_VALUES(*)
-      REAL*8    UP_FLUX(*), DOWN_FLUX(*)
-      REAL*8    UP_RAD(*), DOWN_RAD(*)
-      CHARACTER*1  QUAD_TYPE, GROUND_TYPE
+  real*8    pi, twopi, zero
+  parameter (pi = 3.1415926535897932384d0, twopi=2.0d0*pi)
+  parameter (zero=0.0d0)
 
-      INTEGER   MAXV, MAXM, MAXLM
-      PARAMETER (MAXV=64, MAXM=4096, maxlm=201 * (maxv)**2)!MAXLM=201*256)
-
-      REAL*8    PI, TWOPI, ZERO
-      PARAMETER (PI = 3.1415926535897932384D0, TWOPI=2.0D0*PI)
-      PARAMETER (ZERO=0.0D0)
-
-      INTEGER   LAYER, NUM_DOUBLES
-      INTEGER   I, J, K, L, N, KRT, KS
-      LOGICAL   SYMMETRIC
-      REAL*8    LINFACTOR
-      REAL*8    PLANCK0, PLANCK1
-      REAL*8    ZDIFF, DELTA_Z, F, NUM_SUB_LAYERS, EXTINCT
-      REAL*8    QUAD_WEIGHTS(MAXV)
-      REAL*8    SCATTER_MATRIX(4*MAXM)
-      REAL*8    LIN_SOURCE(2*MAXV)
-      REAL*8    EXTINCT_MATRIX(16*2*MAXV), EMIS_VECTOR(4*2*MAXV)
-      REAL*8    REFLECT1(2*MAXM),UPREFLECT(2*MAXM),DOWNREFLECT(2*MAXM)
-      REAL*8    TRANS1(2*MAXM),  UPTRANS(2*MAXM),  DOWNTRANS(2*MAXM)
-      REAL*8    SOURCE1(2*MAXV), UPSOURCE(2*MAXV), DOWNSOURCE(2*MAXV)
-      REAL*8    REFLECT(2*MAXLM)
-      REAL*8    TRANS(2*MAXLM)
-      REAL*8    SOURCE(2*MAXV*(MAXLAY+1))
-      REAL*8    GND_RADIANCE(MAXV), SKY_RADIANCE(2*MAXV)
-      CHARACTER*64 SCAT_FILE
+  integer   layer, num_doubles
+  integer   i, j, k, l, n, krt, ks
+  logical   symmetric
+  real*8    linfactor
+  real*8    planck0, planck1
+  real*8    zdiff, delta_z, f, num_sub_layers, extinct
+  !      real*8    quad_weights(maxv)
+  real*8    scatter_matrix(4*maxm)
+  real*8    lin_source(2*maxv)
+  real*8    extinct_matrix(16*2*maxv), emis_vector(4*2*maxv)
+  real*8    reflect1(2*maxm),upreflect(2*maxm),downreflect(2*maxm)
+  real*8    trans1(2*maxm),  uptrans(2*maxm),  downtrans(2*maxm)
+  real*8    source1(2*maxv), upsource(2*maxv), downsource(2*maxv)
+  real*8    reflect(2*maxlm)
+  real*8    trans(2*maxlm)
+  real*8    source(2*maxv*(maxlay+1))
+  real*8    gnd_radiance(maxv), sky_radiance(2*maxv)
+  character*64 scat_file
 
   real(kind=dbl) wind10,windratio,windangle
   integer :: iquadrant
-  REAL(KIND=dbl), PARAMETER :: quadcof(4,2) =      &
-       & Reshape((/0.0d0, 1.0d0, 1.0d0, 2.0d0, 1.0d0, -1.0d0, 1.0d0, -1.0d0/), (/4, 2/))
+  real(kind=dbl), parameter :: quadcof(4,2) =      &
+       & reshape((/0.0d0, 1.0d0, 1.0d0, 2.0d0, 1.0d0, -1.0d0, 1.0d0, -1.0d0/), (/4, 2/))
 
   ! variables needed for fastem4
 
   real(kind=dbl) :: rel_azimuth, salinity
   real(kind=dbl), dimension(nummu) :: transmittance
 
-    integer(kind=long), intent(out) :: errorstatus
-    integer(kind=long) :: err = 0
-    character(len=80) :: msg
-    character(len=14) :: nameOfRoutine = 'radtran4'
+  integer(kind=long), intent(out) :: errorstatus
+  integer(kind=long) :: err = 0
+  character(len=80) :: msg
+  character(len=14) :: nameOfRoutine = 'radtran4'
 
-    err = 0
-    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
-!  if (verbose .gt. 1) print*, "Entered radtran ...."
-      SYMMETRIC = .TRUE.
-      N = NSTOKES*NUMMU
-      IF (N .GT. MAXV) THEN
-          WRITE (*,'(1X,A,I3)')&
-          'Vector size exceeded.  Maximum size :', MAXV
-            msg = 'radtran check'
-            call report(err,msg, nameOfRoutine)
-            errorstatus = fatal
-            return
-      ENDIF
-      IF (N*N .GT. MAXM) THEN
-          WRITE (*,'(1X,A,I3)')&
-          'Matrix size exceeded.  Maximum size :', MAXM
-            msg = 'radtran check'
-            call report(err,msg, nameOfRoutine)
-            errorstatus = fatal
-            return
-      ENDIF
-      IF (NUM_LAYERS .GT. MAXLAY) THEN
-          WRITE (*,'(1X,A,A,I3)') 'Number of layers exceeded.',&
-          '  Maximum number :', MAXLAY
-            msg = 'radtran check'
-            call report(err,msg, nameOfRoutine)
-            errorstatus = fatal
-            return
-      ENDIF
-      IF ((NUM_LAYERS+1)*N*N .GT. MAXLM) THEN
-          WRITE (*,'(1X,A,A,I3)') 'Matrix layer size exceeded.',&
-          '  Maximum number :', MAXLM
-            msg = 'radtran check'
-            call report(err,msg, nameOfRoutine)
-            errorstatus = fatal
-            return
-      ENDIF
+  err = 0
+  if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
-!           Make the desired quadrature abscissas and weights
-      IF (QUAD_TYPE(1:1) .EQ. 'D') THEN
-        CALL DOUBLE_GAUSS_QUADRATURE&
-                            (NUMMU, MU_VALUES, QUAD_WEIGHTS)
-      ELSE IF (QUAD_TYPE(1:1) .EQ. 'L') THEN
-        CALL LOBATTO_QUADRATURE&
-                            (NUMMU, MU_VALUES, QUAD_WEIGHTS)
-      ELSE IF (QUAD_TYPE(1:1) .EQ. 'E') THEN
-        J = NUMMU
-        DO I = NUMMU, 1, -1
-          IF (MU_VALUES(I) .NE. 0.0) THEN
-            QUAD_WEIGHTS(I) = 0.0
-            J = I - 1
-          ENDIF
-        ENDDO
-        CALL GAUSS_LEGENDRE_QUADRATURE&
-                            (J, MU_VALUES, QUAD_WEIGHTS)
-      ELSE
-        CALL GAUSS_LEGENDRE_QUADRATURE&
-                            (NUMMU, MU_VALUES, QUAD_WEIGHTS)
-      ENDIF
+  symmetric = .true.
+  n = nstokes*nummu
+  if (n .gt. maxv) then
+     write (*,'(1x,a,i3)')&
+          'vector size exceeded.  maximum size :', maxv
+     msg = 'radtran check'
+     call report(err,msg, nameOfRoutine)
+     errorstatus = fatal
+     return
+  end if
+  if (n*n .gt. maxm) then
+     write (*,'(1x,a,i3)')&
+          'matrix size exceeded.  maximum size :', maxm
+     msg = 'radtran check'
+     call report(err,msg, nameOfRoutine)
+     errorstatus = fatal
+     return
+  end if
+  if (num_layers .gt. maxlay) then
+     write (*,'(1x,a,a,i3)') 'number of layers exceeded.',&
+          '  maximum number :', maxlay
+     msg = 'radtran check'
+     call report(err,msg, nameOfRoutine)
+     errorstatus = fatal
+     return
+  end if
+  if ((num_layers+1)*n*n .gt. maxlm) then
+     write (*,'(1x,a,a,i3)') 'matrix layer size exceeded.',&
+          '  maximum number :', maxlm
+     msg = 'radtran check'
+     call report(err,msg, nameOfRoutine)
+     errorstatus = fatal
+     return
+  end if
 
-      SCAT_FILE = '&&&'
-!     ------------------------------------------------------
-!           Loop through the layers
-!              Do doubling to make the reflection and transmission matrices
-!              and soure vectors for each layer, which are stored.
+  ! !           make the desired quadrature abscissas and weights
+  !       if (quad_type(1:1) .eq. 'd') then
+  !         call double_gauss_quadrature&
+  !                             (nummu, mu_values, quad_weights)
+  !       else if (quad_type(1:1) .eq. 'l') then
+  !         call lobatto_quadrature&
+  !                             (nummu, mu_values, quad_weights)
+  !       else if (quad_type(1:1) .eq. 'e') then
+  !         j = nummu
+  !         do i = nummu, 1, -1
+  !           if (mu_values(i) .ne. 0.0) then
+  !             quad_weights(i) = 0.0
+  !             j = i - 1
+  !           endif
+  !         enddo
+  !         call gauss_legendre_quadrature&
+  !                             (j, mu_values, quad_weights)
+  !       else
+  !         call gauss_legendre_quadrature&
+  !                             (nummu, mu_values, quad_weights)
+  !       endif
 
-      DO LAYER = 1, NUM_LAYERS
-!                   Calculate the layer thickness
-          ZDIFF = ABS(HEIGHT(LAYER) - HEIGHT(LAYER+1))
-          GAS_EXTINCT(LAYER) = MAX(GAS_EXTINCT(LAYER),0.0D0)
-!        if (rt4kexttot(layer) .gt. 0.0) then
-        if (rt_hydros_present_reverse(layer)) then
-            call get_scat_mat(layer,NSTOKES, NUMMU,SCATTER_MATRIX,EXTINCT_MATRIX, EMIS_VECTOR)
+  scat_file = '&&&'
+  !     ------------------------------------------------------
+  !           loop through the layers
+  !              do doubling to make the reflection and transmission matrices
+  !              and soure vectors for each layer, which are stored.
 
-            call CHECK_NORM4(err,NSTOKES, NUMMU, QUAD_WEIGHTS,&
-                                      SCATTER_MATRIX,&
-                                      EXTINCT_MATRIX, EMIS_VECTOR)
-        end if
-        if (err /= 0) then
-            msg = 'error in CHECK_NORM4'
-            call report(err,msg, nameOfRoutine)
-            errorstatus = err
-            return
-        end if
-!          IF (SCAT_FILES(LAYER) .NE. SCAT_FILE .AND. SCAT_FILES(LAYER) .NE. ' ')  THEN
-!              SCAT_FILE = SCAT_FILES(LAYER)
-!       Read the scattering matrix from the file
-!              CALL GET_SCAT_FILE(NSTOKES, NUMMU, QUAD_TYPE, SCAT_FILE,&
-!                                 SCATTER_MATRIX,EXTINCT_MATRIX, EMIS_VECTOR)
-!              CALL CHECK_NORM4(NSTOKES, NUMMU, QUAD_WEIGHTS,&
-!                              SCATTER_MATRIX,&
-!                              EXTINCT_MATRIX, EMIS_VECTOR)
-!          ENDIF
+  do layer = 1, num_layers
+     !                   calculate the layer thickness
+     zdiff = abs(height(layer) - height(layer+1))
+     gas_extinct(layer) = max(gas_extinct(layer),0.0d0)
+     !        if (rt4kexttot(layer) .gt. 0.0) then
+     if (rt_hydros_present_reverse(layer)) then
+        call get_scat_mat(layer,nstokes, nummu,scatter_matrix,extinct_matrix, emis_vector)
 
-!                   Do the stuff for thermal source in layer
-!                   Calculate the thermal source for end of layer
-          CALL PLANCK_FUNCTION (TEMPERATURES(LAYER+1), 'R',WAVELENGTH, PLANCK1)
-!                   Calculate the thermal source for beginning of layer
-          CALL PLANCK_FUNCTION (TEMPERATURES(LAYER), 'R',WAVELENGTH, PLANCK0)
+        call check_norm4(err,nstokes, nummu, quad_weights,&
+             scatter_matrix,&
+             extinct_matrix, emis_vector)
+     end if
+     if (err /= 0) then
+        msg = 'error in check_norm4'
+        call report(err,msg, nameOfRoutine)
+        errorstatus = err
+        return
+     end if
+     !          if (scat_files(layer) .ne. scat_file .and. scat_files(layer) .ne. ' ')  then
+     !              scat_file = scat_files(layer)
+     !       read the scattering matrix from the file
+     !              call get_scat_file(nstokes, nummu, quad_type, scat_file,&
+     !                                 scatter_matrix,extinct_matrix, emis_vector)
+     !              call check_norm4(nstokes, nummu, quad_weights,&
+     !                              scatter_matrix,&
+     !                              extinct_matrix, emis_vector)
+     !          endif
 
-          KRT = 1 + 2*N*N*(LAYER-1)
-          KS = 1 + 2*N*(LAYER-1)
+     !                   do the stuff for thermal source in layer
+     !                   calculate the thermal source for end of layer
+     call planck_function (temperatures(layer+1), 'r',wavelength, planck1)
+     !                   calculate the thermal source for beginning of layer
+     call planck_function (temperatures(layer), 'r',wavelength, planck0)
 
-!          IF (SCAT_FILES(LAYER) .EQ. ' ') THEN
-!          IF (rt4kexttot(layer) .EQ. 0.d0) THEN
-          IF (.not. rt_hydros_present_reverse(layer)) THEN
-!                   If the layer is purely absorbing then quickly
-!                     make the reflection and transmission matrices
-!                     and source vector instead of doubling.
-              CALL NONSCATTER_LAYER4(NSTOKES, NUMMU, &
-                               ZDIFF*GAS_EXTINCT(LAYER), MU_VALUES,&
-                               PLANCK0, PLANCK1,&
-                               REFLECT(KRT), TRANS(KRT), SOURCE(KS))
-          ELSE
+     krt = 1 + 2*n*n*(layer-1)
+     ks = 1 + 2*n*(layer-1)
 
-!                   Find initial thickness of sublayer and
-!                     the number of times to double
-              EXTINCT = EXTINCT_MATRIX(1)+GAS_EXTINCT(LAYER)
-!     print*, gas_extinct(layer), extinct_matrix(1), extinct
-              F =DLOG(MAX(EXTINCT*ZDIFF,1.0D-7)/MAX_DELTA_TAU)/LOG(2.)
-              NUM_DOUBLES = 0
-              IF (F .GT. 0.0)  NUM_DOUBLES = INT(F) + 1
-              NUM_SUB_LAYERS = 2.0**NUM_DOUBLES
-              DELTA_Z = ZDIFF / NUM_SUB_LAYERS
+     !          if (scat_files(layer) .eq. ' ') then
+     !          if (rt4kexttot(layer) .eq. 0.d0) then
+     if (.not. rt_hydros_present_reverse(layer)) then
+        !                   if the layer is purely absorbing then quickly
+        !                     make the reflection and transmission matrices
+        !                     and source vector instead of doubling.
+        call nonscatter_layer4(nstokes, nummu, &
+             zdiff*gas_extinct(layer), mu_values,&
+             planck0, planck1,&
+             reflect(krt), trans(krt), source(ks))
+     else
 
-!                   Initialize the source vector
-              CALL INITIAL_SOURCE4(NSTOKES, NUMMU, DELTA_Z, MU_VALUES,&
-                         PLANCK0, EMIS_VECTOR, GAS_EXTINCT(LAYER),&
-                         LIN_SOURCE)
-              IF (PLANCK0 .EQ. 0.0) THEN
-                  LINFACTOR = 0.0
-              ELSE
-                  LINFACTOR = (PLANCK1/PLANCK0-1.0D0) /NUM_SUB_LAYERS
-              ENDIF
+        !                   find initial thickness of sublayer and
+        !                     the number of times to double
+        extinct = extinct_matrix(1)+gas_extinct(layer)
+        !     print*, gas_extinct(layer), extinct_matrix(1), extinct
+        f = dlog(max(extinct*zdiff,1.0d-7)/max_delta_tau)/log(2.)
+        num_doubles = 0
+        if (f .gt. 0.0)  num_doubles = int(f) + 1
+        num_sub_layers = 2.0**num_doubles
+        delta_z = zdiff / num_sub_layers
 
-!                Generate the local reflection and transmission matrices
-              CALL INITIALIZE4(NSTOKES, NUMMU, &
-                              DELTA_Z, MU_VALUES, QUAD_WEIGHTS,&
-                              GAS_EXTINCT(LAYER), EXTINCT_MATRIX,&
-                              SCATTER_MATRIX,  REFLECT1, TRANS1)
+        !                   initialize the source vector
+        call initial_source4(nstokes, nummu, delta_z, mu_values,&
+             planck0, emis_vector, gas_extinct(layer),&
+             lin_source)
+        if (planck0 .eq. 0.0) then
+           linfactor = 0.0
+        else
+           linfactor = (planck1/planck0-1.0d0) /num_sub_layers
+        endif
 
-!                   Double up to the thickness of the layer
-              CALL DOUBLING_INTEGRATION4(N, NUM_DOUBLES, SYMMETRIC,&
-                          REFLECT1, TRANS1, LIN_SOURCE, LINFACTOR,&
-                          REFLECT(KRT), TRANS(KRT), SOURCE(KS))
-          ENDIF
+        !                generate the local reflection and transmission matrices
+        call initialize4(nstokes, nummu, &
+             delta_z, mu_values, quad_weights,&
+             gas_extinct(layer), extinct_matrix,&
+             scatter_matrix,  reflect1, trans1)
 
-      ENDDO
+        !                   double up to the thickness of the layer
+        call doubling_integration4(n, num_doubles, symmetric,&
+             reflect1, trans1, lin_source, linfactor,&
+             reflect(krt), trans(krt), source(ks))
+     endif
 
-!            End of layer loop
+  enddo
+
+  !            end of layer loop
 
 
-!           Get the surface reflection and transmission matrices
-!             and the surface radiance
-      KRT = 1 + 2*N*N*(NUM_LAYERS)
-      KS = 1 + 2*N*(NUM_LAYERS)
+  !           get the surface reflection and transmission matrices
+  !             and the surface radiance
+  krt = 1 + 2*n*n*(num_layers)
+  ks = 1 + 2*n*(num_layers)
 
-     if (verbose .gt. 1) print*, "Calculating surface emissivity ...."
+  if (verbose > 4) print*, "calculating surface emissivity ...."
 
-      IF (GROUND_TYPE .EQ. 'F') THEN
-!               For a Fresnel surface
-        CALL FRESNEL_SURFACE (NSTOKES, NUMMU, &
-                             MU_VALUES, GROUND_INDEX,&
-                             REFLECT(KRT), TRANS(KRT), SOURCE(KS))
-!                The radiance from the ground is thermal
-        CALL FRESNEL_RADIANCE (NSTOKES, NUMMU,0,&
-                       MU_VALUES, GROUND_INDEX, GROUND_TEMP,&
-                       WAVELENGTH, GND_RADIANCE)
-     ELSEIF (GROUND_TYPE.EQ.'S') THEN
-        ! For a specular surface
-        CALL specular_surface(NSTOKES, NUMMU, GROUND_ALBEDO, &
-             REFLECT (KRT), TRANS (KRT), SOURCE (KS) )
-        ! The radiance from the ground is thermal
-        CALL specular_radiance(NSTOKES, NUMMU, 0,       &
-             GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH, GND_RADIANCE)
-     ELSEIF(GROUND_TYPE .EQ. 'O') THEN
-    ! call fastem4 ocean emissivity model. the correction due to transmittance is not necessary in
-    ! our multi-stream model (?!)
-        wind10 = sqrt(atmo_wind10u(i_x,i_y)**2+atmo_wind10v(i_x,i_y)**2)
-        IF (atmo_wind10u(i_x,i_y) >= 0.0 .AND. atmo_wind10v(i_x,i_y) >= 0.0 ) iquadrant = 1
-        IF (atmo_wind10u(i_x,i_y) >= 0.0 .AND. atmo_wind10v(i_x,i_y) <  0.0 ) iquadrant = 2
-        IF (atmo_wind10u(i_x,i_y) <  0.0 .AND. atmo_wind10v(i_x,i_y) >= 0.0 ) iquadrant = 4
-        IF (atmo_wind10u(i_x,i_y) <  0.0 .AND. atmo_wind10v(i_x,i_y) <  0.0 ) iquadrant = 3
-        IF (abs(atmo_wind10v(i_x,i_y)) >= 0.0001) THEN
-           windratio = atmo_wind10u(i_x,i_y) / atmo_wind10v(i_x,i_y)
-        ELSE
-           windratio = 0.0
-           IF (abs(atmo_wind10u(i_x,i_y)) > 0.0001) THEN
-              windratio = 999999.0 * atmo_wind10u(i_x,i_y)
-           ENDIF
-        ENDIF
-        windangle        = atan(abs(windratio))
-        rel_azimuth = (quadcof(iquadrant, 1) * pi + windangle * quadcof(iquadrant, 2))*180./pi
+  call get_sfc_matrices(err,reflect(krt), trans(krt), gnd_radiance)
 
-        ! azimuthal component
-        !
-        ! the azimuthal component is ignored (rel_azimuth > 360°) when doing simulations for COSMO runs
-        ! since we do not know what direction does the satellite have in advance
-        !
-        rel_azimuth = 400.
-        transmittance(:) = 1.
-        salinity = 33.
-        call fastem4(wavelength   , &  ! Input
-             mu_values, &  ! Input
-             nummu, &
-             ground_temp , &  ! Input
-             Salinity    , &  ! Input
-             wind10  ,&
-             transmittance,&  ! Input, may not be used
-             Rel_Azimuth, &  ! Input
-             ground_index,&
-             GND_RADIANCE, &  ! Output
-             REFLECT(KRT), &  ! Output
-             trans(krt),&
-             source(ks))
-     ELSE
-!               For a Lambertian surface
-        CALL LAMBERT_SURFACE (NSTOKES, NUMMU, 0,&
-                            MU_VALUES, QUAD_WEIGHTS, GROUND_ALBEDO,&
-                            REFLECT(KRT), TRANS(KRT), SOURCE(KS))
-!                The radiance from the ground is thermal and reflected direct
-        CALL LAMBERT_RADIANCE (NSTOKES, NUMMU,0, &
-              GROUND_ALBEDO, GROUND_TEMP, WAVELENGTH, GND_RADIANCE)
-      ENDIF
+  if (verbose > 4) print*, ".... done!"
 
-     if (verbose .gt. 1) print*, ".... done!"
+  !           assume the radiation coming from above is blackbody radiation
+  ! 0 stands for mode = 0. this is required, since we use the routine from the former
+  ! radutil3.f
+  call thermal_radiance (nstokes, nummu,0, sky_temp, zero,  &
+       wavelength,  sky_radiance)
 
-!           Assume the radiation coming from above is blackbody radiation
-! 0 stands for mode = 0. this is required, since we use the routine from the former
-! radutil3.f
-      CALL THERMAL_RADIANCE (NSTOKES, NUMMU,0, SKY_TEMP, ZERO,  &
-                            WAVELENGTH,  SKY_RADIANCE)
-
-!         For each desired output level (1 thru NL+2) add layers
-!           above and below level and compute internal radiance.
-!           OUTLEVELS gives the desired output levels.
-      DO I = 1, NOUTLEVELS
-        LAYER = MIN( MAX( OUTLEVELS(I), 1), NUM_LAYERS+2)
-        CALL MZERO (2*N, N, UPREFLECT)
-        CALL MZERO (2*N, N, DOWNREFLECT)
-        CALL MIDENTITY (N, UPTRANS(1))
-        CALL MIDENTITY (N, UPTRANS(1+N*N))
-        CALL MIDENTITY (N, DOWNTRANS(1))
-        CALL MIDENTITY (N, DOWNTRANS(1+N*N))
-        CALL MZERO (2*N, 1, UPSOURCE)
-        CALL MZERO (2*N, 1, DOWNSOURCE)
-        DO L = 1, LAYER-1
-          KRT = 1 + 2*N*N*(L-1)
-          KS = 1 + 2*N*(L-1)
-          IF (L .EQ. 1) THEN
-            CALL MCOPY (2*N,N, REFLECT(KRT), UPREFLECT)
-            CALL MCOPY (2*N,N, TRANS(KRT), UPTRANS) 
-            CALL MCOPY (2*N,1, SOURCE(KS), UPSOURCE)
-          ELSE
-            CALL MCOPY (2*N,N, UPREFLECT, REFLECT1)
-            CALL MCOPY (2*N,N, UPTRANS, TRANS1)
-            CALL MCOPY (2*N,1, UPSOURCE, SOURCE1)
-            CALL COMBINE_LAYERS4(N, REFLECT1, TRANS1, SOURCE1,&
-                             REFLECT(KRT), TRANS(KRT), SOURCE(KS),&
-                             UPREFLECT, UPTRANS, UPSOURCE)
-          ENDIF
-        ENDDO
-        DO L = LAYER, NUM_LAYERS+1
-          KRT = 1 + 2*N*N*(L-1)
-          KS = 1 + 2*N*(L-1)
-          IF (L .EQ. LAYER) THEN
-            CALL MCOPY (2*N,N, REFLECT(KRT), DOWNREFLECT)
-            CALL MCOPY (2*N,N, TRANS(KRT), DOWNTRANS) 
-            CALL MCOPY (2*N,1, SOURCE(KS), DOWNSOURCE)
-          ELSE
-            CALL MCOPY (2*N,N, DOWNREFLECT, REFLECT1)
-            CALL MCOPY (2*N,N, DOWNTRANS, TRANS1)
-            CALL MCOPY (2*N,1, DOWNSOURCE, SOURCE1)
-            CALL COMBINE_LAYERS4(N, REFLECT1, TRANS1, SOURCE1,&
-                             REFLECT(KRT), TRANS(KRT), SOURCE(KS),&
-                             DOWNREFLECT, DOWNTRANS, DOWNSOURCE)
-          ENDIF
-        ENDDO
-        CALL INTERNAL_RADIANCE4(N, UPREFLECT, UPTRANS, UPSOURCE,&
-                               DOWNREFLECT, DOWNTRANS, DOWNSOURCE, &
-                               SKY_RADIANCE, GND_RADIANCE,&
-                               UP_RAD(1+(I-1)*N), DOWN_RAD(1+(I-1)*N))
-      ENDDO
+  !         for each desired output level (1 thru nl+2) add layers
+  !           above and below level and compute internal radiance.
+  !           outlevels gives the desired output levels.
+  do i = 1, noutlevels
+     layer = min( max( outlevels(i), 1), num_layers+2)
+     call mzero (2*n, n, upreflect)
+     call mzero (2*n, n, downreflect)
+     call midentity (n, uptrans(1))
+     call midentity (n, uptrans(1+n*n))
+     call midentity (n, downtrans(1))
+     call midentity (n, downtrans(1+n*n))
+     call mzero (2*n, 1, upsource)
+     call mzero (2*n, 1, downsource)
+     do l = 1, layer-1
+        krt = 1 + 2*n*n*(l-1)
+        ks = 1 + 2*n*(l-1)
+        if (l .eq. 1) then
+           call mcopy (2*n,n, reflect(krt), upreflect)
+           call mcopy (2*n,n, trans(krt), uptrans) 
+           call mcopy (2*n,1, source(ks), upsource)
+        else
+           call mcopy (2*n,n, upreflect, reflect1)
+           call mcopy (2*n,n, uptrans, trans1)
+           call mcopy (2*n,1, upsource, source1)
+           call combine_layers4(n, reflect1, trans1, source1,&
+                reflect(krt), trans(krt), source(ks),&
+                upreflect, uptrans, upsource)
+        endif
+     enddo
+     do l = layer, num_layers+1
+        krt = 1 + 2*n*n*(l-1)
+        ks = 1 + 2*n*(l-1)
+        if (l .eq. layer) then
+           call mcopy (2*n,n, reflect(krt), downreflect)
+           call mcopy (2*n,n, trans(krt), downtrans) 
+           call mcopy (2*n,1, source(ks), downsource)
+        else
+           call mcopy (2*n,n, downreflect, reflect1)
+           call mcopy (2*n,n, downtrans, trans1)
+           call mcopy (2*n,1, downsource, source1)
+           call combine_layers4(n, reflect1, trans1, source1,&
+                reflect(krt), trans(krt), source(ks),&
+                downreflect, downtrans, downsource)
+        endif
+     enddo
+     call internal_radiance4(n, upreflect, uptrans, upsource,&
+          downreflect, downtrans, downsource, &
+          sky_radiance, gnd_radiance,&
+          up_rad(1+(i-1)*n), down_rad(1+(i-1)*n))
+  enddo
 
 
 
-!           Integrate the mu times the radiance to find the fluxes
-      DO L = 1, NOUTLEVELS
-        DO I = 1, NSTOKES
-          K = I+NSTOKES*(L-1)
-          UP_FLUX(K) = 0.0
-          DOWN_FLUX(K) = 0.0
-          DO J = 1, NUMMU
-            UP_FLUX(K) = UP_FLUX(K)&
-                    + TWOPI*QUAD_WEIGHTS(J) * MU_VALUES(J)&
-                    * UP_RAD(I+NSTOKES*(J-1)+N*(L-1))
-            DOWN_FLUX(K) = DOWN_FLUX(K)&
-                    + TWOPI*QUAD_WEIGHTS(J) * MU_VALUES(J)&
-                    * DOWN_RAD(I+NSTOKES*(J-1)+N*(L-1))
-          ENDDO
-        ENDDO
-      ENDDO
+  !           integrate the mu times the radiance to find the fluxes
+  do l = 1, noutlevels
+     do i = 1, nstokes
+        k = i+nstokes*(l-1)
+        up_flux(k) = 0.0
+        down_flux(k) = 0.0
+        do j = 1, nummu
+           up_flux(k) = up_flux(k)&
+                + twopi*quad_weights(j) * mu_values(j)&
+                * up_rad(i+nstokes*(j-1)+n*(l-1))
+           down_flux(k) = down_flux(k)&
+                + twopi*quad_weights(j) * mu_values(j)&
+                * down_rad(i+nstokes*(j-1)+n*(l-1))
+        enddo
+     enddo
+  enddo
 
-    errorstatus = err
-    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+  errorstatus = err
+  if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
 
-
-      RETURN
-      END
+  return
+end subroutine radtran4
 

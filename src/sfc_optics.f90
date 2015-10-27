@@ -1,41 +1,42 @@
 module sfc_optics
 
+  ! variables
   use kinds, only: dbl
   use report_module
   use settings, only: ground_type, emissivity, nstokes, nummu
   use vars_index, only: i_x, i_y
   use vars_atmosphere, only : atmo_lfrac
-  use ocean_sfc_optics, only: ocean_sfc_optics_fastem5
-  use land_sfc_optics, only: get_land_sfc_optics
   use vars_rt, only: rt_sfc_emissivity, rt_sfc_reflectivity
+  ! routines
+  use ocean_sfc_optics, only: ocean_sfc_optics_fastemx
+  use land_sfc_optics, only: get_land_sfc_optics
   
   implicit none
   
 contains
   subroutine set_sfc_optics(errorstatus,freq)
-  
     ! Description:
-    !   <Say what this routine does>
+    !   Within this routine the type of surface reflection is determined.
     !
     ! Method:
-    !   <Say how it does it: include references to external documentation>
-    !   <If this routine is divided into sections, be brief here,
-    !        and put Method comments at the start of each section>
+    !   This detemination is done based on the land-sea fraction parameter.
+    !   Future developments should do this based on a surface type to include
+    !   different surface, e.g., ice, forest, sand.
     !
-    ! Current Code Owner: <Name of person responsible for this code>
+    ! Current Code Owner: Mario Mech
     !
     ! History:
     ! Version   Date     Comment
     ! -------   ----     -------
-    ! <version> <date>   Original code. <Your name>
+    ! 0.1     24/02/15   Original code. Mario Mech
     !
     ! Code Description:
-    !   Language:		Fortran 90.
+    !   Language:            Fortran 90.
     !   Software Standards: "European Standards for Writing and  
     !     Documenting Exchangeable Fortran 90 Code". 
     !
     ! Declarations:
-    ! Modules used:
+    ! Modules used: ocean_sfc_optics_fastem5, get_land_sfc_optics
     
     real(dbl), intent(in) :: freq
 
@@ -49,7 +50,7 @@ contains
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
 
     if ((atmo_lfrac(i_x,i_y) >= 0._dbl) .and. (atmo_lfrac(i_x,i_y) < 0.5_dbl)) then
-      call ocean_sfc_optics_fastem5(err,freq)
+      call ocean_sfc_optics_fastemx(err,freq)
       ground_type = 'O'
     elseif ((atmo_lfrac(i_x,i_y) >= 0.5_dbl) .and. (atmo_lfrac(i_x,i_y) <= 1.0_dbl)) then
       call get_land_sfc_optics(err,freq)

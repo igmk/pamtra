@@ -193,7 +193,7 @@ module scatProperties
     end if
     freq = freqs(i_f)
 
-    !initilaize empyt results
+    ! initialize empty results
     emis_vector_hydro(:,:,:)        = 0.d0
     extinct_matrix_hydro(:,:,:,:)   = 0.d0
     scatter_matrix_hydro(:,:,:,:,:) = 0.d0
@@ -205,7 +205,7 @@ module scatProperties
     legen_coef4_hydro(:)  = 0.d0
     nlegen_coef_hydro     = 0
 
-    !normalize particle density
+    ! normalize particle density
     num_density = n_ds / delta_d_ds
     
     
@@ -283,7 +283,7 @@ module scatProperties
       
       do i_p= 1, radar_npol
         if (radar_pol(i_p) == "NN") then
-          back_hydro(i_p) = scatter_matrix_hydro(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
+          back_hydro(i_p) = scatter_matrix_hydro(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is looking from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
         else if (radar_pol(i_p) == "HH") then
           !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
           back_hydro(i_p) = + scatter_matrix_hydro(1,16,1,16,2) &

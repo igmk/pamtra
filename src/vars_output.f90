@@ -91,6 +91,8 @@ module vars_output
         "atmo_ngridy must be greater zero")   
     call assert_true(err,(no_allocated_lyrs>0),&
         "no_allocated_lyrs must be greater zero")   
+    call assert_true(err,(noutlevels>0),&
+        "noutlevels must be greater zero")   
     call assert_true(err,(radar_nfft>0),&
         "radar_nfft must be greater zero")   
     call assert_true(err,(nummu>0),&
@@ -106,10 +108,10 @@ module vars_output
         return
     end if  
 
-    if (verbose >= 5) print*, atmo_ngridx, atmo_ngridy, no_allocated_lyrs, &
+    if (verbose >= 5) print*, atmo_ngridx, atmo_ngridy, no_allocated_lyrs, noutlevels,&
       radar_nfft, nummu, nstokes, nfrq, MAXVAL(nbin_arr) +1
 
-    if (write_nc) then
+!    if (write_nc) then
 !         allocate(is(atmo_ngridy,atmo_ngridx),js(atmo_ngridy,atmo_ngridx))
 !         allocate(lons(atmo_ngridy,atmo_ngridx),lats(atmo_ngridy,atmo_ngridx),lfracs(atmo_ngridy,atmo_ngridx))
 !         allocate(iwvs(atmo_ngridy,atmo_ngridx))
@@ -123,10 +125,8 @@ module vars_output
 !         rwps(:,:)= nan()
 !         swps(:,:)= nan()
 !         gwps(:,:)= nan()
-!         hwps(:,:)= nan()
-
-      
-    end if
+!         hwps(:,:)= nan()     
+!    end if
 
     allocate(out_angles_deg(2*nummu))
     out_angles_deg = nan()

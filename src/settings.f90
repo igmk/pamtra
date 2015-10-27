@@ -14,8 +14,8 @@ module settings
     maxleg = 200, &
     maxfreq = 100, &
     nummu = 16, & ! no. of observation angles
-    NSTOKES = 2, &
-    NOUTLEVELS = 2
+    NSTOKES = 2
+    
     integer, parameter :: SRC_CODE = 2,&
     NUMAZIMUTHS = 1,&
     Aziorder = 0
@@ -38,6 +38,8 @@ module settings
 !     double precision, dimension(maxfreq) :: freqs
     real(kind=dbl), dimension(maxfreq) :: freqs
 
+    real(kind=dbl), dimension(nummu) :: mu_values, quad_weights
+
     integer(kind=long) :: radar_nfft !number of FFT points in the Doppler spectrum [typically 256 or 512]
     integer(kind=long):: radar_no_Ave !number of average spectra for noise variance reduction, typical range [1 40]
     integer(kind=long):: radar_airmotion_linear_steps !for linear air velocity model, how many staps shall be calculated?
@@ -59,67 +61,70 @@ module settings
   integer, parameter :: maxnleg = 200 !max legnth of legendre series
   logical, parameter :: lphase_flag = .true.
 
-    logical :: in_python !are we in python
+  logical :: in_python !are we in python
 
-    logical :: lgas_extinction, &    ! gas extinction desired
-    lhyd_absorption, &    ! hydrometeor extinction desired
-    lhyd_scattering, &    ! hydrometeor scattering desired
-    lhyd_emission, &    ! hydrometeor emission desired
-    write_nc, &  ! write netcdf or ascii output
-    active, &  	   ! calculate active stuff
-    passive, &     ! calculate passive stuff (with RT4)
-    radar_airmotion, &   ! apply vertical air motion
-    radar_save_noise_corrected_spectra, & !remove the noise from the calculated spectrum again (for testing)
-    radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise0) we can skip that.
-    radar_convolution_fft,&!use fft for convolution of spectrum
-    save_psd, &
-    hydro_includeHydroInRhoAir, &
-    save_ssp, &
-    radar_smooth_spectrum, &
-    hydro_fullSpec, &
-    hydro_limit_density_area, &
-    hydro_adaptive_grid, & ! apply an adaptive grid to the psd. good to reduce mass overestimations for small amounts. works only for modified gamma
-    add_obs_height_to_layer, &
-    radar_use_wider_peak ! use wider peak inlcuding the found noise/peak border
+  logical :: lgas_extinction, &    ! gas extinction desired
+       lhyd_absorption, &    ! hydrometeor extinction desired
+       lhyd_scattering, &    ! hydrometeor scattering desired
+       lhyd_emission, &    ! hydrometeor emission desired
+       write_nc, &  ! write netcdf or ascii output
+       active, &  	   ! calculate active stuff
+       passive, &     ! calculate passive stuff (with RT4)
+       radar_airmotion, &   ! apply vertical air motion
+       radar_save_noise_corrected_spectra, & !remove the noise from the calculated spectrum again (for testing)
+       radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise0) we can skip that.
+       radar_convolution_fft,&!use fft for convolution of spectrum
+       save_psd, &
+       hydro_includeHydroInRhoAir, &
+       save_ssp, &
+       radar_smooth_spectrum, &
+       hydro_fullSpec, &
+       hydro_limit_density_area, &
+       hydro_adaptive_grid, & ! apply an adaptive grid to the psd. good to reduce mass overestimations for small amounts. works only for modified gamma
+       add_obs_height_to_layer, &
+       radar_use_wider_peak ! use wider peak inlcuding the found noise/peak border
 
-    character(3) :: gas_mod
-    character(3) :: liq_mod
-    character(20) :: moments_file,file_desc
-    character(300) :: output_path, data_path
-    character(100) :: creator
-    character(18) :: freq_str
-    character(2) :: OUTPOL
-    character(1) :: GROUND_TYPE
-    character(8) :: radar_airmotion_model, radar_mode
-    character(10) :: radar_attenuation
-    character(15) :: radar_polarisation
-    character(2), dimension(5) :: radar_pol
-    character(1), dimension(5) :: att_pol
-    integer(kind=long):: radar_npol, att_npol
+  character(3) :: gas_mod
+  character(3) :: liq_mod
+  character(20) :: moments_file,file_desc
+  character(300) :: output_path, data_path
+  character(100) :: creator
+  character(18) :: freq_str
+  character(2) :: OUTPOL
+  character(1) :: GROUND_TYPE
+  character(8) :: radar_airmotion_model, radar_mode
+  character(10) :: radar_attenuation
+  character(15) :: radar_polarisation
+  character(2), dimension(5) :: radar_pol
+  character(1), dimension(5) :: att_pol
+  integer(kind=long):: radar_npol, att_npol
 
 
-    character(300)  :: input_pathfile        ! name and path of profile
-    character(300)  :: input_file        ! name of profile
-    character(300) :: namelist_file     ! name of nml_file
-    character(300) :: nc_out_file       ! name of netcdf output file
-    character(9) :: frq_str_s,frq_str_e
-    character(8), dimension(maxfreq) :: frqs_str
-    character(300) :: descriptor_file_name
-    character(10) :: tmatrix_db
-    character(300) :: tmatrix_db_path
+  character(300)  :: input_pathfile        ! name and path of profile
+  character(300)  :: input_file        ! name of profile
+  character(300) :: namelist_file     ! name of nml_file
+  character(300) :: nc_out_file       ! name of netcdf output file
+  character(9) :: frq_str_s,frq_str_e
+  character(8), dimension(maxfreq) :: frqs_str
+  character(300) :: descriptor_file_name
+  character(10) :: tmatrix_db
+  character(300) :: tmatrix_db_path
 
-    integer(kind=long):: radar_nfft_aliased, radar_maxTurbTerms !are gained from radar_aliasing_nyquist_interv and radar_nfft
-    
-    integer(kind=long) :: randomseed !random seed, 0 means time dependence
+  integer(kind=long) :: noutlevels ! number of output levels per profile
+  integer(kind=long) :: radar_nfft_aliased, radar_maxTurbTerms !are gained from radar_aliasing_nyquist_interv and radar_nfft
+
+  integer(kind=long) :: randomseed !random seed, 0 means time dependence
 contains
 
-    subroutine settings_read(errorstatus)
+  subroutine settings_read(errorstatus)
 
     use kinds
+
     implicit none
+
     logical :: file_exists
     integer(kind=long), intent(out) :: errorstatus
-    integer(kind=long) :: err = 0
+    integer(kind=long) :: err
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'settings_read'
 
@@ -134,6 +139,7 @@ contains
         freq_str,&
         file_desc,&
         creator, &
+        noutlevels, &
         add_obs_height_to_layer, &
         active, &
         passive,&
@@ -191,45 +197,45 @@ contains
         INQUIRE(FILE=namelist_file, EXIST=file_exists)   ! file_exists will be TRUE if the file
         call assert_true(err,file_exists,&
             "file "//TRIM(namelist_file)//" does not exist") 
-        if (err /= 0) then
+       if (err /= 0) then
           msg = 'value in settings not allowed'
           call report(err, msg, nameOfRoutine)
           errorstatus = err
           return
-        end if
-      
-      
-        if (verbose >= 3) print*,'Open namelist file: ', namelist_file
-        ! read name list parameter file
-        open(7, file=namelist_file,delim='APOSTROPHE')
-        read(7,nml=SETTINGS)
-        close(7)
+       end if
 
-      else
-        if (verbose >= 3) print*,'No namelist file to read!', namelist_file
-      end if
 
-      call add_settings(err)
-      if (err /= 0) then
-          msg = 'error in add_settings!'
-          call report(err, msg, nameOfRoutine)
-          errorstatus = err
-          return
-      end if
+       if (verbose >= 3) print*,'Open namelist file: ', namelist_file
+       ! read name list parameter file
+       open(7, file=namelist_file,delim='APOSTROPHE')
+       read(7,nml=SETTINGS)
+       close(7)
 
-      call test_settings(err)
-      if (err /= 0) then
-          msg = 'error in test_settings!'
-          call report(err, msg, nameOfRoutine)
-          errorstatus = err
-          return
-      end if
+    else
+       if (verbose >= 3) print*,'No namelist file to read!', namelist_file
+    end if
+
+    call add_settings(err)
+    if (err /= 0) then
+       msg = 'error in add_settings!'
+       call report(err, msg, nameOfRoutine)
+       errorstatus = err
+       return
+    end if
+
+    call test_settings(err)
+    if (err /= 0) then
+       msg = 'error in test_settings!'
+       call report(err, msg, nameOfRoutine)
+       errorstatus = err
+       return
+    end if
 
     errorstatus = err
     if (verbose >= 3) print*,'End of ', nameOfRoutine
     return
   end subroutine settings_read
-    
+
   subroutine test_settings(errorstatus)
     use kinds
     implicit none
@@ -238,26 +244,29 @@ contains
     character(len=80) :: msg
     character(len=15) :: nameOfRoutine = 'test_settings'
     !test for settings go here
-    if (verbose >= 4) print*,'Start of ', nameOfRoutine
+    
     err = 0
+
+    if (verbose >= 4) print*,'Start of ', nameOfRoutine
+    call assert_true(err, noutlevels > 0, 'Number of output levels has to be larger than 0')
     call assert_false(err,MOD(radar_nfft, 2) == 1,&
-        "radar_nfft has to be even") 
+         "radar_nfft has to be even") 
     call assert_true(err,(gas_mod == "L93") .or. (gas_mod == "R98"),&
-        "gas_mod has to be L93 or R98") 
+         "gas_mod has to be L93 or R98") 
     if (hydro_fullSpec) then
-      call assert_true(err,in_python,&
-          "hydro_fullSpec works only in python!") 
+       call assert_true(err,in_python,&
+            "hydro_fullSpec works only in python!") 
     end if
     if (.not. radar_use_hildebrand) then
-      call assert_true(err,(radar_noise_distance_factor>0),&
-          "radar_noise_distance_factor must be larger when not using Hildebrand!") 
+       call assert_true(err,(radar_noise_distance_factor>0),&
+            "radar_noise_distance_factor must be larger when not using Hildebrand!") 
     end if
 
     if (err /= 0) then
-      msg = 'value in settings not allowed'
-      call report(err, msg, nameOfRoutine)
-      errorstatus = err
-      return
+       msg = 'value in settings not allowed'
+       call report(err, msg, nameOfRoutine)
+       errorstatus = err
+       return
     end if
 
     errorstatus = err
@@ -267,46 +276,73 @@ contains
   end subroutine test_settings
 
   subroutine add_settings(errorstatus)
-    use kinds
-    implicit none
-    integer(kind=long) :: pos1, pos2, ii
 
+    use kinds
+    use rt_utilities, &
+         only: double_gauss_quadrature,&
+         lobatto_quadrature,&
+         gauss_legendre_quadrature 
+
+    implicit none
+
+    integer(kind=long) :: i, j, pos1, pos2
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
     character(len=80) :: msg
     character(len=15) :: nameOfRoutine = 'add_settings'
+
     !additional variables derived from others go here
 
     if (verbose >= 4) print*,'Start of ', nameOfRoutine
+
+    ! calculate the quadrature angles and weights used in scattering calculations and radiative transfer
+
+    if (quad_type(1:1) .eq. 'D') then
+       call double_gauss_quadrature(nummu, mu_values, quad_weights)
+    else if (quad_type(1:1) .eq. 'L') then
+       call lobatto_quadrature(nummu, mu_values, quad_weights)
+    else if (quad_type(1:1) .eq. 'E') then
+       j = nummu
+       do i = nummu, 1, -1
+          if (mu_values(i) .ne. 0.0) then
+             quad_weights(i) = 0.0
+             j = i - 1
+          endif
+       enddo
+       call gauss_legendre_quadrature(j, mu_values, quad_weights)
+    else
+       call gauss_legendre_quadrature(nummu, mu_values, quad_weights)
+    endif
+
     !mix some variables to make new ones:
     radar_nfft_aliased = radar_nfft *(1+2*radar_aliasing_nyquist_interv)
     radar_maxTurbTerms = radar_nfft_aliased * 12
 
-    !in python some options are missing:
+    !in python some options are missing. The output levels have already been added by reScaleHeights module of pyPamtra
     if (in_python) add_obs_height_to_layer = .false.
- 
+
     !process radar_polarisation
-  
+
     radar_npol = 0
     radar_pol = ""
     pos1 = 1
     pos2 = 1
     DO
-      pos2 = INDEX(radar_polarisation(pos1:), ",")
-      IF (pos2 == 0) THEN
-        radar_npol = radar_npol + 1
-        radar_pol(radar_npol) = radar_polarisation(pos1:)
-        EXIT
-      END IF
-      radar_npol = radar_npol + 1
-      radar_pol(radar_npol) = radar_polarisation(pos1:pos1+pos2-2)
-      pos1 = pos2+pos1
+       pos2 = INDEX(radar_polarisation(pos1:), ",")
+       IF (pos2 == 0) THEN
+          radar_npol = radar_npol + 1
+          radar_pol(radar_npol) = radar_polarisation(pos1:)
+          EXIT
+       END IF
+       radar_npol = radar_npol + 1
+       radar_pol(radar_npol) = radar_polarisation(pos1:pos1+pos2-2)
+       pos1 = pos2+pos1
     END DO
-    
+
     if (verbose > 5) print*, radar_npol, radar_pol, " old string: ", radar_polarisation
 
-!   as of now, pol for att_hydro is not implemented
+    !   as of now, pol for att_hydro is not implemented
     att_npol = 1
     att_pol(1) = "N"
 
@@ -318,11 +354,13 @@ contains
   end subroutine add_settings
 
   subroutine settings_fill_default
+
     use kinds
+
     implicit none
 
     character(len=14) :: nameOfRoutine = 'settings_fill_default'
-    
+
     if (verbose >= 2) print*,'Start of ', nameOfRoutine
 
         !set namelist defaults!
@@ -331,7 +369,7 @@ contains
         data_path='data/'
         save_psd=.false.
         save_ssp=.false.
-        obs_height=833000.
+        noutlevels=2 ! number of output levels
         outpol='VH'
         freq_str=''
         file_desc=''
@@ -410,6 +448,7 @@ contains
     !for debuging
     subroutine print_settings()
 
+      print*, 'noutlevels: ', noutlevels
       print*, 'add_obs_height_to_layer: ', add_obs_height_to_layer
       print*, 'radar_nfft: ', radar_nfft
       print*, 'radar_polarisation: ', radar_polarisation
@@ -422,7 +461,6 @@ contains
       print*, 'radar_airmotion_linear_steps: ', radar_airmotion_linear_steps
       print*, 'radar_airmotion: ', radar_airmotion
       print*, 'ground_type: ', ground_type
-      print*, 'obs_height: ', obs_height
       print*, 'write_nc: ', write_nc
       print*, 'outpol: ', outpol
       print*, 'radar_no_ave: ', radar_no_ave

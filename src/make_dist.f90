@@ -175,7 +175,7 @@ subroutine make_dist(errorstatus)
 
     else if ((trim(dist_name) == 'mgamma')     .or. (trim(dist_name) == 'exp') .or. &
              (trim(dist_name) =='exp_field_t') .or. (trim(dist_name) == 'exp_cosmo_snow') .or. &
-             (trim(dist_name) == 'exp_ryan') .or. (trim(dist_name) == 'mgamma_MNH')) then
+             (trim(dist_name) == 'exp_ryan') .or. (trim(dist_name) == 'mgamma_MNH') ) then
       do i=1,nbin_work+1
 	f_ds_work(i) = n_0 * d_bound_ds_work(i)**mu * EXP(-lambda * d_bound_ds_work(i)**gam)
       enddo

@@ -1,7 +1,7 @@
 module vars_atmosphere
 
   use kinds
-  use settings, only: maxfreq
+  use settings, only: maxfreq, noutlevels
   use report_module
   
   implicit none
@@ -16,7 +16,8 @@ module vars_atmosphere
   character(len=4), allocatable, dimension(:,:) :: atmo_year, atmo_time
 !   real(kind=sgl), allocatable, dimension(:,:) :: atmo_deltax, atmo_deltay
   integer(kind=long), allocatable, dimension(:,:) :: atmo_model_i, atmo_model_j
-  real(kind=sgl), allocatable, dimension(:,:) :: atmo_lon,atmo_lat,atmo_lfrac,atmo_wind10u,atmo_wind10v,atmo_obs_height
+  real(kind=sgl), allocatable, dimension(:,:) :: atmo_lon,atmo_lat,atmo_lfrac,atmo_wind10u,atmo_wind10v
+  real(kind=sgl), allocatable, dimension(:,:,:) :: atmo_obs_height
   !number of layer can vary (from python)
   integer(kind=long), allocatable, dimension(:,:) :: atmo_nlyrs, atmo_unixtime
   integer(kind=long) :: atmo_max_nlyrs
@@ -53,7 +54,7 @@ module vars_atmosphere
 !##################################################################################################################################
   subroutine screen_input(errorstatus)
 
-    use settings, only: verbose, input_file, input_pathfile, obs_height,&
+    use settings, only: verbose, input_file, input_pathfile, &
       output_path, nc_out_file, file_desc, freq_str
     use descriptor_file, only: moment_in_arr, n_hydro
 
@@ -93,10 +94,10 @@ module vars_atmosphere
     if ((atmo_input_type == 'lev') .or. (atmo_input_type == 'lay')) then
 ! READ atmo_ngridx, atmo_ngridy, atmo_max_nlyrs
       read(14,*) atmo_ngridx, atmo_ngridy, atmo_max_nlyrs
-! add one layer/level to be able to insert the observation height as a new layer/level
-      atmo_max_nlyrs = atmo_max_nlyrs + 1
+! add layers/levels to be able to insert the output levels as a new layers/levels
+      atmo_max_nlyrs = atmo_max_nlyrs + noutlevels
       close(14)
-    endif
+    end if
 
 ! Screen OLD input file format
     if (atmo_input_type == 'cla') then
@@ -115,8 +116,8 @@ module vars_atmosphere
       atmo_ngridx = dum_8(5)
       atmo_ngridy = dum_8(6)
       atmo_max_nlyrs = dum_8(7)
-! add one layer/level to be able to insert the observation height as a new layer/level
-      atmo_max_nlyrs = atmo_max_nlyrs + 1
+! add layers/levels to be able to insert the output levels as a new layers/levels
+      atmo_max_nlyrs = atmo_max_nlyrs + noutlevels
       close(14)
     endif
 
@@ -132,13 +133,16 @@ module vars_atmosphere
   subroutine allocate_atmosphere_vars(errorstatus)
 
     use descriptor_file, only: n_hydro
+    
     real(kind=dbl) :: nan
 
     integer(kind=long), intent(out) :: errorstatus
-    integer(kind=long) :: err = 0
+    integer(kind=long) :: err
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'allocate_atmosphere_vars' 
 
+    err = 0
+    
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
     call assert_true(err,(atmo_ngridx>0),&
@@ -147,6 +151,8 @@ module vars_atmosphere
         "atmo_ngridy must be greater zero")   
     call assert_true(err,(atmo_max_nlyrs>0),&
         "atmo_max_nlyrs must be greater zero")   
+    call assert_true(err,(noutlevels>0),&
+        "noutlevels must be greater zero")   
     if (err > 0) then
         errorstatus = fatal
         msg = "assertation error"
@@ -167,7 +173,7 @@ module vars_atmosphere
     allocate(atmo_lfrac(atmo_ngridx,atmo_ngridy))
     allocate(atmo_wind10u(atmo_ngridx,atmo_ngridy))
     allocate(atmo_wind10v(atmo_ngridx,atmo_ngridy))
-    allocate(atmo_obs_height(atmo_ngridx,atmo_ngridy))
+    allocate(atmo_obs_height(atmo_ngridx,atmo_ngridy,noutlevels))
 
     !todo: add assert ngrid_X > 0 etc etc
     allocate(atmo_nlyrs(atmo_ngridx,atmo_ngridy))
@@ -205,8 +211,8 @@ module vars_atmosphere
 
     atmo_month(:,:) = "na"
     atmo_day(:,:) = "na"
-    atmo_year(:,:) = "nan"
-    atmo_time(:,:) = "nan"
+    atmo_year(:,:) = "na"
+    atmo_time(:,:) = "na"
 !     atmo_deltax(:,:) = nan()
 !     atmo_deltay(:,:) = nan()
     atmo_model_i(:,:) = -9999
@@ -216,7 +222,7 @@ module vars_atmosphere
     atmo_lfrac(:,:) = nan()
     atmo_wind10u(:,:) = nan()
     atmo_wind10v(:,:) = nan()
-    atmo_obs_height(:,:) = nan()
+    atmo_obs_height(:,:,:) = nan()
 
     atmo_relhum_lev(:,:,:) = nan()
     atmo_press_lev(:,:,:) = nan()
@@ -314,22 +320,24 @@ module vars_atmosphere
     implicit none
 
     integer(kind=long), intent(out) :: errorstatus
-    integer(kind=long) :: err = 0
+    integer(kind=long) :: err
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'read_new_fill_variables' 
 
 ! work variables
     real(kind=dbl), allocatable, dimension(:) :: work_xwp
     real(kind=dbl), allocatable, dimension(:,:) :: work_xwc
-    integer(kind=long)  :: i, j, n_tot_moment, i_hydro, index_hydro
+    integer(kind=long) :: i, j, n_tot_moment, i_hydro, index_hydro
 
+    err = 0
+    
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
     n_tot_moment = 0
     do i_hydro = 1,n_hydro
       n_tot_moment = n_tot_moment + 1
       if (moment_in_arr(i_hydro) > 5.) n_tot_moment = n_tot_moment + 1
-    enddo
+    end do
     allocate(work_xwp(n_tot_moment+1))
 
 
@@ -342,14 +350,14 @@ module vars_atmosphere
           read(14,*) atmo_year(i,j), atmo_month(i,j), atmo_day(i,j), atmo_time(i,j),&
                      atmo_nlyrs(i,j), atmo_model_i(i,j), atmo_model_j(i,j)
           if (atmo_input_type == 'lev') atmo_nlyrs(i,j) = atmo_nlyrs(i,j) - 1
+          read(14,*) atmo_obs_height(i,j,:)         ! output heights [m]
           read(14,*) atmo_lat(i,j),       &         ! latitude [degree]
                      atmo_lon(i,j),       &         ! longitude [degree]
                      atmo_lfrac(i,j),     &         ! land sea fraction 1=land 0=ocean
                      atmo_wind10u(i,j),   &         ! 10 meter wind u comp. [m/s]
                      atmo_wind10v(i,j),   &         ! 10 meter wind v comp. [m/s]
                      atmo_groundtemp(i,j),&         ! ground temp. used for ground emission only [K]
-                     atmo_hgt_lev(i,j,1), &         ! ground height [m]
-                     atmo_obs_height(i,j)           ! observation height [m]
+                     atmo_hgt_lev(i,j,1)            ! ground height [m]
 
 ! READ column integrated water vapor and hydrometeors properties
           read(14,*) work_xwp
@@ -448,39 +456,46 @@ module vars_atmosphere
 
     real(kind=dbl) :: e_sat_gg_water
     integer(kind=long), intent(out) :: errorstatus
-    integer(kind=long) :: err = 0
+    integer(kind=long) :: err
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'add_obs_height' 
 
 ! work variables
     real(kind=dbl), allocatable, dimension(:,:) :: work_xwc
     real(kind=dbl) :: dum, derivative, dh, dh_1, var_newlev
-    integer(kind=long)  :: i, j, nz, lev_1, lev_2, lev_use, lay_use, ii
+    integer(kind=long)  :: i, j, k, nz, lev_1, lev_2, lev_use, lay_use, ii
 
+    err = 0
+    
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
     do i = 1, atmo_ngridx
       do j = 1, atmo_ngridy
+        do k = 1, noutlevels
+        if (atmo_obs_height(i,j,k) < atmo_hgt_lev(i,j,1)) then 
+	  atmo_obs_height(i,j,k) = atmo_hgt_lev(i,j,1)
+	  call report(info, 'Setting observation height to lowest atmo level', nameOfRoutine)
+	end if
 ! FIND if a new level is needed: obs_height > heighest level .and. abs(hgt_lev - obs_height) > 1 m
-        if (atmo_hgt_lev(i,j,atmo_nlyrs(i,j)) > atmo_obs_height(i,j) .and. &
-            minval(abs(atmo_hgt_lev(i,j,:) - atmo_obs_height(i,j))) > 1.) then
+        if (atmo_hgt_lev(i,j,atmo_nlyrs(i,j)) > atmo_obs_height(i,j,k) .and. &
+            minval(abs(atmo_hgt_lev(i,j,:) - atmo_obs_height(i,j,k))) > 1.) then
 ! FIND first level above obs_height
           do nz = 1, atmo_nlyrs(i,j)
-            if (atmo_hgt_lev(i,j,nz) > atmo_obs_height(i,j)) then
+            if (atmo_hgt_lev(i,j,nz) > atmo_obs_height(i,j,k)) then
               lev_1 = nz - 1
               lev_2 = nz
               lay_use = lev_1
-              if (atmo_hgt(i,j,lay_use) < atmo_obs_height(i,j)) lev_use = lev_2
-              if (atmo_hgt(i,j,lay_use) > atmo_obs_height(i,j)) lev_use = lev_1
+              if (atmo_hgt(i,j,lay_use) < atmo_obs_height(i,j,k)) lev_use = lev_2
+              if (atmo_hgt(i,j,lay_use) > atmo_obs_height(i,j,k)) lev_use = lev_1
               exit
             endif
           enddo
 ! CALCULATE the variable on the NEW LEVEL
           dh_1 = atmo_hgt_lev(i,j,lev_use) - atmo_hgt(i,j,lay_use) ! used for the derivative
-          dh = atmo_obs_height(i,j) - atmo_hgt(i,j,lay_use)        ! height increment
+          dh = atmo_obs_height(i,j,k) - atmo_hgt(i,j,lay_use)        ! height increment
           ! INSERT obs_height as the new level
           atmo_hgt_lev(i,j,atmo_nlyrs(i,j)+2:lev_2+1:-1) = atmo_hgt_lev(i,j,atmo_nlyrs(i,j)+1:lev_2:-1)
-          atmo_hgt_lev(i,j,lev_2) = atmo_obs_height(i,j)
+          atmo_hgt_lev(i,j,lev_2) = atmo_obs_height(i,j,k)
 
           derivative = (atmo_temp_lev(i,j,lev_use) - atmo_temp(i,j,lay_use)) / dh_1
           var_newlev = atmo_temp(i,j,lay_use) + derivative * dh
@@ -538,6 +553,7 @@ module vars_atmosphere
           atmo_nlyrs(i,j) = atmo_nlyrs(i,j)+1
 
         endif
+        end do
       enddo
     enddo
     
@@ -549,13 +565,13 @@ module vars_atmosphere
 !##################################################################################################################################
   subroutine read_classic_fill_variables(errorstatus)
 
-    use settings, only: verbose, input_pathfile, obs_height
+    use settings, only: verbose, input_pathfile
     use descriptor_file, only: moment_in_arr, n_hydro
 
     implicit none
 
     integer(kind=long), intent(out) :: errorstatus
-    integer(kind=long) :: err = 0
+    integer(kind=long) :: err
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'read_classic_fill_variables' 
 
@@ -564,6 +580,8 @@ module vars_atmosphere
     real(kind=dbl) :: dum
     integer(kind=long)  :: i, j
 
+    err = 0
+    
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
 ! OPEN input file
@@ -575,7 +593,10 @@ module vars_atmosphere
     atmo_day(:,:)   = atmo_day(1,1)
     atmo_time(:,:)  = atmo_time(1,1)
     atmo_nlyrs(:,:) = atmo_nlyrs(1,1)
-    atmo_obs_height(:,:) = obs_height
+    atmo_obs_height(:,:,1) = 833000.
+    atmo_obs_height(:,:,2) = 0.
+    if (noutlevels > 2) call report(info, 'Only 2 outputlevels for classic profiles', nameOfRoutine)
+    
 
       do i = 1, atmo_ngridx
         do j = 1, atmo_ngridy
@@ -622,7 +643,6 @@ module vars_atmosphere
 
     use descriptor_file, only: n_hydro, moment_in_arr
     use constants, only: r_v, r_d
-    use settings, only: obs_height
 
     implicit none
 
@@ -631,12 +651,14 @@ module vars_atmosphere
     integer,dimension(9) :: timestamp
 
     integer(kind=long), intent(out) :: errorstatus
-    integer(kind=long) :: err = 0
+    integer(kind=long) :: err
     character(len=80) :: msg
     character(len=30) :: nameOfRoutine = 'fillMissing_atmosphere_vars' 
 
     integer(kind=long) :: i_hydro
 
+    err = 0
+    
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
     err = 0
     call assert_true(err,(atmo_ngridx>0),&
@@ -645,6 +667,8 @@ module vars_atmosphere
         "atmo_ngridy must be greater zero")   
     call assert_true(err,(all(atmo_nlyrs>0)),&
         "atmo_nlyrs must be greater zero")   
+    call assert_true(err,(noutlevels>0),&
+        "noutlevels must be greater zero")   
     if (err > 0) then
         errorstatus = fatal
         msg = "assertation error"
@@ -667,9 +691,9 @@ module vars_atmosphere
 
 
 
-          call assert_true(err,(all(atmo_hgt_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1)>-370) & 
-              .or. all(atmo_hgt(nx,ny,1:atmo_nlyrs(nx,ny))>-370)),&
-              "hgt or hgt_lev must be greater -370 (depth of Tagebau Hambach :-))")  
+          call assert_true(err,(all(atmo_hgt_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1)>-500) & 
+              .or. all(atmo_hgt(nx,ny,1:atmo_nlyrs(nx,ny))>-500)),&
+              "hgt or hgt_lev must be greater -500 (Depression in northern Egypt within the CORDEX domain :-))")  
           if (err > 0) then
               errorstatus = fatal
               msg = "assertation error"
@@ -760,8 +784,8 @@ module vars_atmosphere
         atmo_groundtemp(nx,ny) = atmo_temp_lev(nx,ny,1)
 
     !for atmo_obs_height, simply use the nml value
-    if (isnan(atmo_obs_height(nx,ny))) &
-        atmo_obs_height(nx,ny) = obs_height
+    if (isnan(atmo_obs_height(nx,ny,noutlevels))) &
+        atmo_obs_height(nx,ny,:) = (/833000.,0./)
 
     !test whether we still have nans in our data!
 ! 3D variable
@@ -827,7 +851,7 @@ module vars_atmosphere
         "found nan in atmo_wind10u")
     call assert_false(err,ANY(ISNAN(atmo_wind10v(:,:))),&
         "found nan in atmo_wind10v")
-    call assert_false(err,ANY(ISNAN(atmo_obs_height(:,:))),&
+    call assert_false(err,ANY(ISNAN(atmo_obs_height(:,:,:))),&
         "found nan in atmo_obs_height")
     call assert_false(err,ANY(ISNAN(atmo_groundtemp(:,:))),&
         "found nan in atmo_groundtemp")
@@ -859,9 +883,11 @@ module vars_atmosphere
     write(6,'(7a12)') 'year', 'month', 'day', 'time', 'nlyrs', 'model_i', 'model_j'
     write(6,'(4a12,3i12)') atmo_year(i,j), atmo_month(i,j), atmo_day(i,j), atmo_time(i,j), atmo_nlyrs(i,j),&
                            atmo_model_i(i,j), atmo_model_j(i,j)
-    write(6,'(8a12)') 'lat', 'lon','lfrac','wind10u','wind10v','groundtemp','ground_hgt','obs_height'
-    write(6,'(8f12.4)') atmo_lat(i,j), atmo_lon(i,j),atmo_lfrac(i,j),atmo_wind10u(i,j),atmo_wind10v(i,j),&
-                        atmo_groundtemp(i,j),atmo_hgt_lev(i,j,1),atmo_obs_height(i,j)
+    write(6,*) 'atmo_obs_height'
+    write(6,*) atmo_obs_height(i,j,:)
+    write(6,'(8a12)') 'lat', 'lon','lfrac','wind10u','wind10v','groundtemp','ground_hgt'
+    write(6,'(7f12.4)') atmo_lat(i,j), atmo_lon(i,j),atmo_lfrac(i,j),atmo_wind10u(i,j),atmo_wind10v(i,j),&
+                        atmo_groundtemp(i,j),atmo_hgt_lev(i,j,1)
     write(6,'(6a12)') 'lay_number','height','pressure','temp.','RH','air_turb'
     do nz=1,atmo_nlyrs(i,j)
       write(6,'(i12,5f12.4)') nz,atmo_hgt(i,j,nz), atmo_press(i,j,nz), &
@@ -894,9 +920,11 @@ module vars_atmosphere
     write(6,'(7a12)') 'year', 'month', 'day', 'time', 'nlev', 'model_i', 'model_j'
     write(6,'(4a12,3i12)') atmo_year(i,j), atmo_month(i,j), atmo_day(i,j), atmo_time(i,j), atmo_nlyrs(i,j)+1,&
                            atmo_model_i(i,j), atmo_model_j(i,j)
-    write(6,'(8a12)') 'lat', 'lon','lfrac','wind10u','wind10v','groundtemp','ground_hgt','obs_height'
+    write(6,*) 'atmo_obs_height'
+    write(6,*) atmo_obs_height(i,j,:)
+    write(6,'(8a12)') 'lat', 'lon','lfrac','wind10u','wind10v','groundtemp','ground_hgt'
     write(6,'(8f12.4)') atmo_lat(i,j), atmo_lon(i,j),atmo_lfrac(i,j),atmo_wind10u(i,j),atmo_wind10v(i,j),&
-                        atmo_groundtemp(i,j),atmo_hgt_lev(i,j,1),atmo_obs_height(i,j)
+                        atmo_groundtemp(i,j),atmo_hgt_lev(i,j,1)
     write(6,'(5a12)') 'lev_number','height','pressure','temp.','RH'
     do nz=1,atmo_nlyrs(i,j)+1
       write(6,'(i12,4f12.4)') nz,atmo_hgt_lev(i,j,nz), atmo_press_lev(i,j,nz), atmo_temp_lev(i,j,nz), atmo_relhum_lev(i,j,nz)

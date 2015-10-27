@@ -41,7 +41,9 @@ subroutine make_soft_spheroid(errorstatus)
 
   use drop_size_dist, only: rho_ms, as_ratio, a_ms, b_ms, d_ds,nbin, mass_ds,  &    ! IN
 		     soft_rho_eff, soft_d_eff,liq_ice                                     ! OUT
-  use settings, only: hydro_limit_density_area, hydro_softsphere_min_density
+  use settings, only: hydro_limit_density_area, hydro_softsphere_min_density, freqs
+  use vars_index, only: i_f
+
   implicit none
 
 !- End of header ---------------------------------------------------------------
@@ -63,9 +65,12 @@ subroutine make_soft_spheroid(errorstatus)
 
   if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
-  allocate(soft_rho_eff(nbin))
-  allocate(soft_d_eff(nbin))
+  allocate(soft_rho_eff(nbin)) ! Emil, why isn't this done in allocateVars_drop_size_dist ?
+  allocate(soft_d_eff(nbin)) ! Emil, why isn't this done in allocateVars_drop_size_dist ?
 
+  soft_rho_eff(:) = 0.
+  soft_d_eff(:) = 0.
+  
 ! Particle mass
   mass = mass_ds
 
@@ -86,17 +91,20 @@ subroutine make_soft_spheroid(errorstatus)
         soft_d_eff(i) = ((6._dbl * mass(i) * as_ratio**2._dbl) / (pi * rho_ms))**(1._dbl/3._dbl)
       enddo
     endif
-  endif
-
 ! Calculate the density of the soft spheroids
-  if (rho_ms < 0.) then
+  elseif (rho_ms < 0.) then
     soft_d_eff = d_ds
     ! oblate spheroid or sphere
     if (as_ratio <= 1.) then
       do i=1,nbin
-        if (as_ratio < 0.) soft_rho_eff(i) = (6._dbl * mass(i)) / (pi *  d_ds(i)**3._dbl)
+!         if (as_ratio < 0.) soft_rho_eff(i) = (6._dbl * mass(i)) / (pi *  d_ds(i)**3._dbl)
+        if (as_ratio == -10.) soft_rho_eff(i) = 917._dbl !CLOUD ICE 
+        if (as_ratio == -20.) soft_rho_eff(i) = 0.863_dbl * freqs(i_f) + 115._dbl !SNOW
+        if (as_ratio == -30.) soft_rho_eff(i) = 0.815_dbl * freqs(i_f) + 11.2_dbl !GRAUPEL
         if (as_ratio > 0.) soft_rho_eff(i) = (6._dbl * mass(i)) / (pi *  d_ds(i)**3._dbl * as_ratio)
-        if (soft_rho_eff(i) < 5._dbl) soft_rho_eff(i) = 5._dbl
+        if (soft_rho_eff(i) < 100._dbl) soft_rho_eff(i) = 100._dbl  ! used to be 5._dbl
+        if (as_ratio == -10. .or. as_ratio == -20. .or. as_ratio == -30.) &
+             soft_d_eff(i) = ((6._dbl * mass(i)) / (pi *  soft_rho_eff(i) ))**(1._dbl/3._dbl)
       enddo
     endif
     ! prolate spheroid
@@ -106,6 +114,11 @@ subroutine make_soft_spheroid(errorstatus)
         if (soft_rho_eff(i) < 5._dbl) soft_rho_eff(i) = 5._dbl
       enddo
     endif
+  else
+    msg = 'rho_ms = 0 in '
+    errorstatus = fatal
+    call report(errorstatus, msg, nameOfRoutine)
+    return
   endif
 
 !   change mass and density in case density is larger than 917 or below hydro_softsphere_min_density

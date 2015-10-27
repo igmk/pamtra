@@ -5,8 +5,8 @@ module vars_rt
   use settings, only : radar_npol
   implicit none
 
-  real(kind=dbl), allocatable, dimension(:) :: rt_kextatmo, &
-       rt_kexttot
+  real(kind=dbl), allocatable, dimension(:,:) :: rt_sfc_emissivity, rt_sfc_reflectivity
+  real(kind=dbl), allocatable, dimension(:) :: rt_kextatmo, rt_kexttot
   real(kind=dbl), allocatable, dimension(:,:) :: rt_back
   real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: rt_scattermatrix_reverse,rt_scattermatrix
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: rt_extmatrix_reverse,rt_extmatrix
@@ -14,13 +14,12 @@ module vars_rt
 
   logical, allocatable, dimension(:) :: rt_hydros_present, rt_hydros_present_reverse
 
-
   contains
 
   subroutine allocate_rt_vars(errorstatus)
     
 
-    use settings, only: nstokes,nummu, verbose
+    use settings, only: nstokes, nummu, verbose
     use vars_atmosphere, only: atmo_nlyrs
     use vars_index, only: i_x, i_y
 
@@ -33,8 +32,6 @@ module vars_rt
     character(len=30) :: nameOfRoutine = 'allocate_rt_vars'
 
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
-
-
 
     nlyr = atmo_nlyrs(i_x,i_y)
 
@@ -51,6 +48,9 @@ module vars_rt
         return
     end if  
 
+    
+    allocate(rt_sfc_emissivity(nstokes,nummu), stat=alloc_status)
+    allocate(rt_sfc_reflectivity(nstokes,nummu), stat=alloc_status)
     allocate(rt_kextatmo(nlyr), stat=alloc_status)
     allocate(rt_kexttot(nlyr), stat=alloc_status)
     allocate(rt_back(nlyr, radar_npol), stat=alloc_status)
@@ -63,10 +63,13 @@ module vars_rt
     allocate(rt_hydros_present(nlyr),stat=alloc_status)
     allocate(rt_hydros_present_reverse(nlyr),stat=alloc_status)
 
+    rt_sfc_emissivity(:,:) = 0._dbl
+    rt_sfc_reflectivity(:,:) = 0._dbl
+    
     ! set them to zero, just in case they are not calculated but used for Ze/PIA calculation
-    rt_kexttot(:) = 0d0
-    rt_kextatmo(:) = 0d0
-    rt_back(:,:) = 0d0  
+    rt_kexttot(:) = 0._dbl
+    rt_kextatmo(:) = 0._dbl
+    rt_back(:,:) = 0._dbl  
 
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
 
@@ -75,6 +78,8 @@ module vars_rt
   end subroutine allocate_rt_vars
 
   subroutine deallocate_rt_vars()
+    if (allocated(rt_sfc_emissivity)) deallocate(rt_sfc_emissivity)
+    if (allocated(rt_sfc_reflectivity)) deallocate(rt_sfc_reflectivity)  
     if (allocated(rt_kextatmo)) deallocate(rt_kextatmo)
     if (allocated(rt_kexttot)) deallocate(rt_kexttot)
     if (allocated(rt_back)) deallocate(rt_back)

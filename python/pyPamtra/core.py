@@ -20,7 +20,7 @@ import warnings
 from .libWrapper import PamtraFortranWrapper, parallelPamtraFortranWrapper
 from .descriptorFile import pamDescriptorFile
 from .tools import sftp2Cluster, formatExceptionInfo
-from .meteoSI import detect_liq_cloud, mod_ad
+from .meteoSI import detect_liq_cloud, mod_ad, moist_rho_rh,rh2q
 from .fortranNamelist import Namelist
 
 missingNumber=-9999.
@@ -53,7 +53,8 @@ class pyPamtra(object):
     self.nmlSet["data_path"]= 'data/'
     self.nmlSet["save_psd"]= False #also saves the PSDs used for radiative transfer
     self.nmlSet["save_ssp"]= False #also saves the single scattering properties used for radiative transfer
-    self.nmlSet["obs_height"]= 833000.
+    self.nmlSet["noutlevels"]= 2 # output levels are given from top to bottom in meters
+    self.nmlSet["add_obs_height_to_layer"] = False # add observation levels to atmospheric levels by interpolation 
     self.nmlSet["outpol"]= 'VH'
     self.nmlSet["file_desc"]= ''
     self.nmlSet["creator"]= 'Pamtrauser'
@@ -134,7 +135,7 @@ class pyPamtra(object):
     self.dimensions["wind10u"] = ["ngridx","ngridy"]
     self.dimensions["wind10v"] = ["ngridx","ngridy"]
     self.dimensions["wind_w"] = ["ngridx","ngridy","max_nlyrs"]
-    self.dimensions["obs_height"] = ["ngridx","ngridy"]
+    self.dimensions["obs_height"] = ["ngridx","ngridy","noutlevels"]
 
     self.dimensions["iwv"] = ["ngridx","ngridy"]
 
@@ -154,7 +155,6 @@ class pyPamtra(object):
     self.dimensions["Att_hydro"] = ["gridx","gridy","lyr","frequency","att_npol"]
     self.dimensions["Att_atmo"] = ["gridx","gridy","lyr","frequency"]
     self.dimensions["tb"] = ["gridx","gridy","outlevels","angles","frequency","passive_npol"]
-
     
     self.units = dict()
     
@@ -163,6 +163,7 @@ class pyPamtra(object):
     self.units["ngridx"] = "-"
     self.units["ngridy"] = "-"
     self.units["nlyrs"] = "-"
+    self.units["noutlevels"] = "-"
     
     self.units["model_i"] = "-"
     self.units["model_j"] = "-"
@@ -191,10 +192,8 @@ class pyPamtra(object):
     self.units["Att_hydros"] = "dB"
     self.units["Att_atmo"] = "dB"
     self.units["tb"] = "K"  
-  
-    
+      
     self._nstokes = 2
-    self._noutlevels = 2
     self._nangles = 16
     
     self.df = pamDescriptorFile(self)
@@ -204,7 +203,8 @@ class pyPamtra(object):
     
     self.p["ngridx"] = 0
     self.p["ngridy"] = 0
-    self.p["max_nlyrs"] = 0  
+    self.p["max_nlyrs"] = 0
+    self.p["noutlevels"] = 0
   
     return
   
@@ -255,10 +255,11 @@ class pyPamtra(object):
           if nmlFile[key]["par"][0][subkey][0] == ".true.": value = True
           elif nmlFile[key]["par"][0][subkey][0] == ".false.": value = False
           else: value = nmlFile[key]["par"][0][subkey][0]
-          try: value = int(value)
-          except: 
-            try: value = float(value.replace("d","e").replace("D","e"))
-            except: pass
+          if type(value) != bool:
+	    try: value = int(value)
+	    except: 
+	      try: value = float(value.replace("d","e").replace("D","e"))
+	      except: pass
           self.nmlSet[subkey.lower()] = value
           if self.set["pyVerbose"] > 1: print subkey.lower(), ":", value
         elif self.set["pyVerbose"] > 0:
@@ -274,18 +275,19 @@ class pyPamtra(object):
     f = open(inputFile,"r")
     g = csv.reader(f,delimiter=" ",skipinitialspace=True)
     levLay = inputFile.split(".")[-1]
-    
+
+    # check whether it is the new style. otherwise read the old style
     if levLay not in ["lay","lev"]:
       f.close()
       self.readClassicPamtraProfile(inputFile)
       return
       
-    
-    self.p["ngridx"], self.p["ngridy"], self.p["max_nlyrs"] = np.array(np.array(g.next()[:3]),dtype=int)
+    self.p["ngridx"], self.p["ngridy"], self.p["max_nlyrs"], self.p["noutlevels"] = [int(el) for el in g.next()[:4]]
 
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
+    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.nmlSet["noutlevels"],)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,0)
@@ -299,7 +301,7 @@ class pyPamtra(object):
     self.p["wind10v"] = np.ones(self._shape2D) * np.nan
     self.p["groundtemp"] = np.ones(self._shape2D) * np.nan
     self.p["unixtime"] = np.ones(self._shape2D,dtype=int) * missingIntNumber
-    self.p["obs_height"] = np.ones(self._shape2D) * np.nan
+    self.p["obs_height"] = np.ones(self._shape3Dout) * np.nan
     self.p["nlyrs"] = np.ones(self._shape2D,dtype=int) * missingIntNumber
     self.p["iwv"] = np.ones(self._shape2D) * np.nan
     self.p["radar_prop"] = np.ones(self._shape2D+tuple([2])) * np.nan
@@ -323,10 +325,11 @@ class pyPamtra(object):
     for xx in xrange(self._shape2D[0]):
       for yy in xrange(self._shape2D[1]):
         
-        #first all the stuff wihtout heigth dimension
+        #first all the stuff without heigth dimension
         year,month,day,time, self.p["nlyrs"][xx,yy], self.p["model_i"][xx,yy], self.p["model_j"][xx,yy] = g.next()[:7]
         self.p["unixtime"][xx,yy] = calendar.timegm(datetime.datetime(year = int(year), month = int(month), day = int(day), hour = int(time[0:2]), minute = int(time[2:4]), second = 0).timetuple())
-        self.p["lat"][xx,yy], self.p["lon"][xx,yy], self.p["lfrac"][xx,yy],self.p["wind10u"][xx,yy],self.p["wind10v"][xx,yy],self.p["groundtemp"][xx,yy],self.p["hgt_lev"][xx,yy,0],self.p["obs_height"][xx,yy]  = np.array(np.array(g.next()[:8]),dtype=float)
+        self.p["obs_height"][xx,yy,:] = np.array(np.array(g.next()[:int(self.nmlSet["noutlevels"])]),dtype=float)
+        self.p["lat"][xx,yy], self.p["lon"][xx,yy], self.p["lfrac"][xx,yy],self.p["wind10u"][xx,yy],self.p["wind10v"][xx,yy],self.p["groundtemp"][xx,yy],self.p["hgt_lev"][xx,yy,0]  = np.array(np.array(g.next()[:7]),dtype=float)
  
         self.p["iwv"][xx,yy] = np.array(np.array(g.next()[0]),dtype=float)
         
@@ -391,6 +394,11 @@ class pyPamtra(object):
           assert len(dataLine)  == 0
                     
     f.close()
+    # if layer input is used, include hgt_lev. This is required when inserting observation heights in runPamtra orr runParallelPamtra
+    if levLay == "lay":
+      self.p["hgt_lev"][...,1:-1] = 0.5 * (self.p["hgt"][...,:-1] + self.p["hgt"][...,1:])
+      self.p["hgt_lev"][...,-1] = self.p["hgt"][...,-1] + (self.p["hgt"][...,-1] - self.p["hgt"][...,-2])*0.5
+    
     return 
     
   def readClassicPamtraProfile(self,inputFile,n_moments=1):
@@ -521,64 +529,84 @@ class pyPamtra(object):
       
     return
     
-  def writePamtraProfile(self,filename):
+  def writePamtraProfile(self,profileFile):
+  
+    levLay = profileFile.split(".")[-1]
     
-    #the ASCII format has no support for changing dates, thus tkae the first one for all!
-    raise NotImplementedError("not yet implemented again in v1.0")
+    firstTime = datetime.datetime.utcfromtimestamp(self.p["unixtime"][0,0])
+    year=str(firstTime.year)
+    mon=str(firstTime.month).zfill(2)
+    day=str(firstTime.day).zfill(2)
+    hhmm=datetime.datetime.strftime(firstTime,"%H%M")
     
-    
-    #firstTime = datetime.datetime.utcfromtimestamp(self.p["unixtime"][0,0])
-    #year=str(firstTime.year)
-    #mon=str(firstTime.month).zfill(2)
-    #day=str(firstTime.day).zfill(2)
-    #hhmm=datetime.datetime.strftime(firstTime,"%H%M")
-    
-    #if "iwv" not in self.p.keys():
+    if "iwv" not in self.p.keys():
+      self.p['iwv'] = np.ones((self._shape2D[0],self._shape2D[1]))*-9999.
+      self.p['hydro_wp'] = np.ones((self._shape2D[0],self._shape2D[1],self.df.nhydro))*-9999.
+      self.p['hydro_tn'] = np.ones((self._shape2D[0],self._shape2D[1],self.df.nhydro))*-9999.
       #self.addIntegratedValues()
 
-    #s = ""
-    #s += year+" "+mon+" "+day+" "+hhmm+" "+str(self._shape2D[0])+" "+str(self._shape2D[1])+" "+str(self._shape3D[2])+" "+str(self.p["deltax"])+" "+str(self.p["deltay"])+"\n"
+    s = str(self._shape2D[0])+" "+str(self._shape2D[1])+" "+str(self._shape3D[2])+" "+str(self._shape3Dout[2])+"\n"
     
-    #for xx in range(self._shape2D[0]):
-      #for yy in range(self._shape2D[1]):
-	#s += str(xx+1)+" "+str(yy+1)+"\n"
-	#s += '%3.2f'%self.p["lat"][xx,yy]+" "+'%3.2f'%self.p["lon"][xx,yy]+" "+str(self.p["lfrac"][xx,yy])+" "+str(self.p["wind10u"][xx,yy])+" "+str(self.p["wind10v"][xx,yy])+"\n"
-	#s += str(self.p["iwv"][xx,yy])+" "+str(self.p["cwp"][xx,yy])+" "+str(self.p["iwp"][xx,yy])+" "+str(self.p["rwp"][xx,yy])+" "+str(self.p["swp"][xx,yy])+" "+str(self.p["gwp"][xx,yy])
-	#if (self.nmlSet["n_moments"]) == 2: s += " "+str(self.p["hwp"][xx,yy])
-	#s += "\n"
-	#s += '%6.1f'%self.p["hgt_lev"][xx,yy,0]+" "+'%6.1f'%self.p["press_lev"][xx,yy,0]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,0]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,0]*100)+"\n"
-	#for zz in range(1,self._shape3D[2]+1):
-	  #s += '%6.1f'%self.p["hgt_lev"][xx,yy,zz]+" "+'%6.1f'%self.p["press_lev"][xx,yy,zz]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,zz]*100)+\
-	  #" "+'%9e'%self.p["cwc_q"][xx,yy,zz-1]+" "+'%9e'%self.p["iwc_q"][xx,yy,zz-1]+" "+'%9e'%self.p["rwc_q"][xx,yy,zz-1]+" "+'%9e'%self.p["swc_q"][xx,yy,zz-1]+" "+'%9e'%self.p["gwc_q"][xx,yy,zz-1]
-	  #if (self.nmlSet["n_moments"]) == 2: s += " "+'%9e'%self.p["hwc_q"][xx,yy,zz-1]
-	  #s += "\n"
+    for xx in range(self._shape2D[0]):
+      for yy in range(self._shape2D[1]):
+	s += year+" "+mon+" "+day+" "+hhmm+" "+str(self._shape3D[2])+" "+str(xx+1)+" "+str(yy+1)+"\n"
+	s += ' '.join(['%9e'%height for height in self.p['obs_height'][xx,yy,:]])+"\n"
+	s += '%3.2f'%self.p["lat"][xx,yy]+" "+'%3.2f'%self.p["lon"][xx,yy]+" "+str(self.p["lfrac"][xx,yy])+" "+str(self.p["wind10u"][xx,yy])+" "+str(self.p["wind10v"][xx,yy])+" "+str(self.p['groundtemp'][xx,yy])+" "+str(self.p['hgt_lev'][xx,yy,0])+"\n"
+	s += str(self.p["iwv"][xx,yy])
+	for ihyd in range(self.df.nhydro):
+	  if self.df.data['moment_in'][ihyd] == 1:
+	    s +=" "+'%9e'%self.p["hydro_wp"][xx,yy,ihyd]
+	  if self.df.data['moment_in'][ihyd] == 13:
+	    s +=" "+'%9e'%self.p["hydro_wp"][xx,yy,ihyd]+" "+'%9e'%self.p["hydro_tn"][xx,yy,ihyd]
+	s += "\n"
+	if levLay == 'lev':
+	  s += '%6.1f'%self.p["hgt_lev"][xx,yy,0]+" "+'%6.1f'%self.p["press_lev"][xx,yy,0]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,0]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,0])+"\n"
+	  for zz in range(1,self._shape3D[2]+1):
+	    s += '%6.1f'%self.p["hgt_lev"][xx,yy,zz]+" "+'%6.1f'%self.p["press_lev"][xx,yy,zz]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,zz])+" "
+	    for ihyd in range(self.df.nhydro):
+	      if self.df.data['moment_in'][ihyd] == 1:
+		s +=str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
+	      if self.df.data['moment_in'][ihyd] == 13:
+		s +=str('%9e'%self.p["hydro_n"][xx,yy,zz,ihyd])+" "+str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
+	    s += "\n"
+	elif levLay == 'lay':
+	  for zz in range(0,self._shape3D[2]):
+	    s += '%6.1f'%self.p["hgt"][xx,yy,zz]+" "+'%6.1f'%self.p["press"][xx,yy,zz]+" "+'%3.2f'%self.p["temp"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum"][xx,yy,zz])+" "
+	    for ihyd in range(self.df.nhydro):
+	      if self.df.data['moment_in'][ihyd] == 1:
+		s +=str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
+	      if self.df.data['moment_in'][ihyd] == 13:
+		s +=str('%9e'%self.p["hydro_n"][xx,yy,zz,ihyd])+" "+str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
+	    s += "\n"
+	else:
+	  raise IOError("Did not understand lay/lev: "+layLev)
 
     
-    ## write stuff to file
-    #f = open(filename, 'w')
-    #f.write(s)
-    #f.close()
+    # write stuff to file
+    f = open(profileFile, 'w')
+    f.write(s)
+    f.close()
     return
 
   def createProfile(self,**kwargs):
     '''
     Function to create Pamtra Profiles.
     
-    Variables ending on _lev mean level values, variables without are layer values (height vector one entry shorter!)!
+    Variables ending on _lev mean level values, variables without are layer values (vectors one entry shorter!)!
     
     Everything is needed in SI units, relhum is in Pa/PA not %
     
     The following variables are mandatroy:
     hgt_lev, (temp_lev or temp), (press_lev or press) and (relhum_lev OR relhum)
     
-    The following variables are optional and guessed if not provided:  "timestamp","lat","lon","lfrac","wind10u","wind10v","hgt_lev","hydro_q","hydro_n","hydro_reff"
+    The following variables are optional and guessed if not provided:  "timestamp","lat","lon","lfrac","wind10u","wind10v","hgt_lev","hydro_q","hydro_n","hydro_reff","obs_height"
     
     hydro_q, hydro_reff and hydro_n can also provided as hydro_q+no001, hydro_q+no002 etc etc
 
     #'''
       
       
-    #we don't wnat any masked arrays here:
+    #we don't want any masked arrays here:
         
     for key in kwargs.keys():
       if type(kwargs[key]) == np.ma.core.MaskedArray:
@@ -635,7 +663,11 @@ class pyPamtra(object):
     self.p["nlyrs"] = np.array(np.sum(kwargs["hgt"]!=missingNumber,axis=-1))
     hgtVar = "hgt"
 
-     
+    if "obs_height" in kwargs.keys():
+      self.p["noutlevels"] = np.shape(kwargs["obs_height"])[2]
+    else:
+      self.p["noutlevels"] = 2
+
     #if np.any(self.p["nlyrs"] != self.p["max_nlyrs"]):
       #self._radiosonde = True
     #else:
@@ -645,6 +677,7 @@ class pyPamtra(object):
     
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
+    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
@@ -695,6 +728,16 @@ class pyPamtra(object):
           self.p[environment] = np.ones(self._shape2D) * kwargs[environment]
         else:
           self.p[environment] = kwargs[environment].reshape(self._shape2D)
+
+    for environment, preset in [["obs_height",[833000.,0.]]]:
+      if environment not in kwargs.keys():
+        self.p[environment] = np.ones(self._shape3Dout)*preset
+        warnings.warn("%s set to %s"%(environment,preset,), Warning)
+      else:
+        if type(kwargs[environment]) in (int,np.int32,np.int64,float,np.float32,np.float64):
+          self.p[environment] = np.ones(self._shape3Dout) * kwargs[environment]
+        else:
+          self.p[environment] = kwargs[environment].reshape(self._shape3Dout)
     
     for qValue in ["hydro_q","hydro_reff","hydro_n"]:
       if qValue not in kwargs.keys()  and qValue+"+no000" not in kwargs.keys():
@@ -779,13 +822,17 @@ class pyPamtra(object):
     
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
+    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
         
-    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","obs_height","groundtemp"]:
+    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","groundtemp"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape2D)
+
+    for key in ["obs_height"]:
+      if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3Dout)
 
     for key in ["hydro_q","hydro_n","hydro_reff"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape4D)
@@ -888,15 +935,14 @@ class pyPamtra(object):
     
     
   def rescaleHeights(self,new_hgt_lev, new_hgt=[]):
+
     # sort height vectors
     old_hgt_lev = self.p["hgt_lev"]
     old_hgt = self.p["hgt"]
     if len(new_hgt) == 0: new_hgt = (new_hgt_lev[...,1:] + new_hgt_lev[...,:-1])/2.
-    
-
-
-    
-    self.p["max_nlyrs"] = len(new_hgt_lev) -1
+       
+#    self.p["max_nlyrs"] = len(new_hgt_lev) -1
+    self.p["max_nlyrs"] = np.shape(new_hgt_lev)[2] -1
     
     #new shape
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
@@ -907,6 +953,13 @@ class pyPamtra(object):
     assert len(self.df.data4D.keys())  == 0
     assert len(self.df.dataFullSpec.keys()) == 0
 
+    def extrap(x, xp, yp):
+      """np.interp function with linear extrapolation"""
+      y = np.interp(x, xp, yp)
+      y[x < xp[0]] = yp[0] + (x[x<xp[0]]-xp[0]) * (yp[0]-yp[1]) / (xp[0]-xp[1])
+      y[x > xp[-1]]= yp[-1] + (x[x>xp[-1]]-xp[-1])*(yp[-1]-yp[-2])/(xp[-1]-xp[-2])
+      return y
+  
     for key in ["hydro_q","hydro_n","hydro_reff",]:
       if key in self.p.keys():
         #make new array
@@ -915,7 +968,9 @@ class pyPamtra(object):
           for y in xrange(self._shape2D[1]):
             for h in xrange(self.df.nhydro):
             #interpolate!
-              newP[x,y,:,h] = np.interp(new_hgt,old_hgt[x,y,:],self.p[key][x,y,:,h])
+#              newP[x,y,:,h] = np.interp(new_hgt,old_hgt[x,y,:],self.p[key][x,y,:,h])
+#              newP[x,y,:,h] = np.interp(new_hgt[x,y,:],old_hgt[x,y,:],self.p[key][x,y,:,h])
+              newP[x,y,:,h] = extrap(new_hgt[x,y,:],old_hgt[x,y,:],self.p[key][x,y,:,h])
         #save new array
         self.p[key] = newP
         #and mark all entries below -1 as missing Number!
@@ -926,18 +981,22 @@ class pyPamtra(object):
         newP = np.ones(self._shape3Dplus) * missingNumber
         for x in xrange(self._shape2D[0]):
           for y in xrange(self._shape2D[1]):
-            newP[x,y] = np.interp(new_hgt_lev,old_hgt_lev[x,y],self.p[key][x,y])
+#            newP[x,y] = np.interp(new_hgt_lev,old_hgt_lev[x,y],self.p[key][x,y])
+#            newP[x,y] = np.interp(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
+            newP[x,y] = extrap(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
         self.p[key] = newP
-        self.p[key][self.p[key]<-1] = missingNumber
+        if key != "hgt_lev": self.p[key][self.p[key]<-1] = missingNumber
       
     for key in ["airturb","wind_w","hgt","temp","relhum"]:
       if key in self.p.keys():
         newP = np.ones(self._shape3D) * missingNumber
         for x in xrange(self._shape2D[0]):
           for y in xrange(self._shape2D[1]):
-            newP[x,y] = np.interp(new_hgt,old_hgt[x,y],self.p[key][x,y])
+#            newP[x,y] = np.interp(new_hgt,old_hgt[x,y],self.p[key][x,y])
+#            newP[x,y] = np.interp(new_hgt[x,y],old_hgt[x,y],self.p[key][x,y])
+            newP[x,y] = extrap(new_hgt[x,y],old_hgt[x,y],self.p[key][x,y])
         self.p[key] = newP
-        self.p[key][self.p[key]<-1] = missingNumber
+        if key != "hgt": self.p[key][self.p[key]<-1] = missingNumber
       
       
     for key in ["press_lev"]:
@@ -945,7 +1004,9 @@ class pyPamtra(object):
         newP = np.ones(self._shape3Dplus) * missingNumber
         for x in xrange(self._shape2D[0]):
           for y in xrange(self._shape2D[1]):
-            newP[x,y] = np.exp(np.interp(new_hgt_lev,old_hgt_lev[x,y],np.log(self.p[key][x,y])))
+#            newP[x,y] = np.exp(np.interp(new_hgt_lev,old_hgt_lev[x,y],np.log(self.p[key][x,y])))
+#            newP[x,y] = np.exp(np.interp(new_hgt_lev[x,y],old_hgt_lev[x,y],np.log(self.p[key][x,y])))
+            newP[x,y] = np.exp(extrap(new_hgt_lev[x,y],old_hgt_lev[x,y],np.log(self.p[key][x,y])))
         self.p[key] = newP
         self.p[key][self.p[key]<-1] = missingNumber
         
@@ -954,14 +1015,15 @@ class pyPamtra(object):
         newP = np.ones(self._shape3D) * missingNumber
         for x in xrange(self._shape2D[0]):
           for y in xrange(self._shape2D[1]):
-            newP[x,y] = np.exp(np.interp(new_hgt,old_hgt[x,y],np.log(self.p[key][x,y])))
+#            newP[x,y] = np.exp(np.interp(new_hgt,old_hgt[x,y],np.log(self.p[key][x,y])))
+#            newP[x,y] = np.exp(np.interp(new_hgt[x,y],old_hgt[x,y],np.log(self.p[key][x,y])))
+            newP[x,y] = np.exp(extrap(new_hgt[x,y],old_hgt[x,y],np.log(self.p[key][x,y])))
         self.p[key] = newP
         self.p[key][self.p[key]<-1] = missingNumber
 
         
         
     self.p["nlyrs"] = np.sum(self.p["hgt_lev"] != missingNumber,axis=-1) -1
-    
 
     return
     
@@ -993,21 +1055,32 @@ class pyPamtra(object):
     sig_T = np.sqrt(3*kolmogorov/2. * (EDR/(2.*np.pi))**(2./3.) * (L_s**(2./3.) - L_lambda**(2./3.)))
     self.p["airturb"][:] = np.sqrt(sig_B**2 + sig_T**2)
 
-    
-    
+    return
+  
   def addIntegratedValues(self):
-    raise NotImplementedError("not yet avaiable in pamtra v 1.0")
-    #for pDict,qValue,intValue in [[self._helperP,"q","iwv"],[self.p,"cwc_q","cwp"],[self.p,"iwc_q","iwp"],[self.p,"rwc_q","rwp"],[self.p,"swc_q","swp"],[self.p,"gwc_q","gwp"],[self.p,"hwc_q","hwp"]]:
-      ##now we need q!
-      #self._calcQ()
-      ##nothing to do without hydrometeors:
-      #if np.all(pDict[qValue]==0):
-        #self.p[intValue] = np.zeros(self._shape2D)
-      #else:
-        #self._calcMoistRho() #provides also temp,press,dz and q!
-        #self.p[intValue] =  np.sum(pDict[qValue]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
+    
+    self._shape3Dhyd = (self.p["ngridx"],self.p["ngridy"],self.df.nhydro)
+    self.p['hydro_wp'] = np.zeros(self._shape3Dhyd)
+    self._calcMoistRho() # provies as well dz, sum_hydro_q, and q within dict() self._helperP
+    self.p['iwv'] =  np.sum(self._helperP['vapor']*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
+    #nothing to do without hydrometeors:
+    if np.all(self.p['hydro_q']==0):
+      self.p['hydro_wp'] = np.zeros(self._shape3Dhyd)
+    else:
+      for i in range(self.df.nhydro):
+	self.p['hydro_wp'][...,i] = np.sum(self.p['hydro_q'][...,i]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
+
     return
 
+  def _calcMoistRho(self):
+    self._helperP = dict()
+    self._helperP['dz'] = self.p['hgt_lev'][...,1::]-self.p['hgt_lev'][...,0:-1]
+    self._helperP['vapor'] = rh2q(self.p['relhum']/100.,self.p['temp'],self.p['press'])
+    self._helperP['sum_hydro_q'] = np.sum(self.p['hydro_q'],axis=-1)
+    self._helperP['rho_moist'] = moist_rho_rh(self.p['press'],self.p['temp'],self.p['relhum']/100.,self._helperP['sum_hydro_q'])
+
+    return
+    
   def addCloudShape(self):
     """
     adds cloud base and cloud top to the data to an existing pamtra profile
@@ -1174,9 +1247,13 @@ class pyPamtra(object):
     assert self.set["nfreqs"] > 0
     assert self.set["radar_npol"] > 0
     assert self.set["att_npol"] > 0
+    assert self.nmlSet["noutlevels"] > 0
     assert np.prod(self._shape2D)>0
     
     if checkData: self._checkData()
+
+    if self.nmlSet["add_obs_height_to_layer"]: self._addObservationLevels()
+ 
     
     fortResults, self.fortError, fortObject = PamtraFortranWrapper(self.set,self.nmlSet,self.df.data,self.df.data4D,self.df.dataFullSpec,self.p)
     self.r = fortResults
@@ -1221,6 +1298,8 @@ class pyPamtra(object):
     assert np.prod(self._shape2D)>0
     
     if checkData: self._checkData()
+
+    if self.nmlSet["add_obs_height_to_layer"]: self._addObservationLevels()
 
     jobs = list()
     self.pp_resultData = list()
@@ -1308,6 +1387,8 @@ class pyPamtra(object):
     assert np.prod(self._shape2D)>0
     
     if checkData: self._checkData()
+
+    if self.nmlSet["add_obs_height_to_layer"]: self._addObservationLevels()
     
     
     jobs = list()
@@ -1422,6 +1503,8 @@ class pyPamtra(object):
     
     if checkData: self._checkData()
 
+    if self.nmlSet["add_obs_height_to_layer"]: self._addObservationLevels()
+
     jobs = list()
     self.pp_resultData = list()
     pp_i = 0
@@ -1500,9 +1583,52 @@ class pyPamtra(object):
     print(" ")
     
     
-    return    
+    return
 
- 
+  def _addObservationLevels(self):
+    """Adds observation levels to the height grid of each profile.
+    Observation heights are 3-dimensional arrays (nx,ny,nout) and can be provided by either the 
+    ascii input files for each profile or as profile variable self.p["obs_height"].
+    
+    The function is called from runPamtra and its relatives.
+    """
+    reduceObsTop = 0
+    reduceObsBot = 0
+    for i in range(np.shape(self.p["obs_height"])[2]): 
+      if np.all(self.p["obs_height"][:,:,i] >= self.p["hgt_lev"][:,:,-1]):
+	reduceObsTop =+1
+      if np.all(self.p["obs_height"][:,:,i] <= self.p["hgt_lev"][:,:,0]):
+	reduceObsBot =+1
+#    import pdb; pdb.set_trace()
+    new_hgt_lev = np.ones((self._shape3Dplus[0],self._shape3Dplus[1],self._shape3Dplus[2]+np.shape(self.p["obs_height"])[2]-reduceObsTop-reduceObsBot)) * np.nan
+    for i in range(np.shape(self.p["obs_height"])[0]):
+      for j in range(np.shape(self.p["obs_height"])[1]):
+	tmp_hgt_lev = self.p["hgt_lev"][i,j,:]
+	# Loop over obs heights to insert
+	for k in range(reduceObsTop,np.shape(self.p["obs_height"])[2]-reduceObsBot):
+#	  if (self.p["obs_height"][i,j,k] < tmp_hgt_lev[-1]) and (self.p["obs_height"][i,j,k] > tmp_hgt_lev[0]):
+	    if np.any(self.p["obs_height"][i,j,k] == tmp_hgt_lev[1:-1]):
+	      tmp_hgt_lev = np.sort(np.append(tmp_hgt_lev[:],self.p["obs_height"][i,j,k]+1.))
+	    elif self.p["obs_height"][i,j,k] >= tmp_hgt_lev[-1]:
+	      tmp_hgt_lev = np.sort(np.append(tmp_hgt_lev[:],tmp_hgt_lev[-1]-1.))
+	    elif self.p["obs_height"][i,j,k] <= tmp_hgt_lev[0]:
+	      tmp_hgt_lev = np.sort(np.append(tmp_hgt_lev[:],tmp_hgt_lev[0]+1.))
+	    else:
+	      tmp_hgt_lev = np.sort(np.append(tmp_hgt_lev[:],self.p["obs_height"][i,j,k]))
+	new_hgt_lev[i,j,:] = tmp_hgt_lev
+    ##      assert np.all(self.p["obs_height"][:,:,i] > self.p["hgt_lev"][:,:,0])
+	  #if not np.all(self.p["obs_height"][:,:,i] > self.p["hgt_lev"][:,:,0]):
+	    #print "Setting some observation heights to surface level!"
+	    #self.p["obs_height"][(self.p["obs_height"][...,i] > self.p["hgt_lev"][...,0]),i] = self.p["hgt_lev"][(self.p["obs_height"][...,i] > self.p["hgt_lev"][...,0]),0]
+	  #if np.any(self.p["obs_height"][:,:,i] < self.p["hgt_lev"][:,:,-1]) and np.all(self.p["obs_height"][:,:,i] > self.p["hgt_lev"][:,:,0]):
+	    #new_hgt_lev = np.sort(np.concatenate((self.p["hgt_lev"],self.p["obs_height"][:,:,i].reshape(self.p["ngridx"],self.p["ngridy"],1)),axis=2),axis=2)
+	    #if not np.all(np.diff(new_hgt_lev) > 0.):
+	      #new_hgt_lev[np.diff(new_hgt_lev) == 0.] = new_hgt_lev[np.diff(new_hgt_lev) == 0.]-1.
+	    #self.rescaleHeights(new_hgt_lev)
+
+    self.rescaleHeights(new_hgt_lev)
+    
+    return
  
   def _sliceProfile(self,pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY):
     
@@ -1557,7 +1683,7 @@ class pyPamtra(object):
     self.r["radar_slopes"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],self.nmlSet["radar_npeaks"],2,))*missingNumber
     self.r["radar_edges"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],self.nmlSet["radar_npeaks"],2,))*missingNumber
     self.r["radar_quality"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],self.nmlSet["radar_npeaks"],),dtype=int)*missingNumber
-    self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles*2.,self.set["nfreqs"],self._nstokes))*missingNumber
+    self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.nmlSet["noutlevels"],self._nangles*2.,self.set["nfreqs"],self._nstokes))*missingNumber
     if self.nmlSet["save_psd"]:
       self.r["psd_area"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
       self.r["psd_n"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
@@ -1690,7 +1816,7 @@ class pyPamtra(object):
 
   
   
-  def writeResultsToNetCDF(self,fname,profileVars="all",ncForm="NETCDF3_CLASSIC"):
+  def writeResultsToNetCDF(self,fname,profileVars="all",wpNames=[],ncForm="NETCDF3_CLASSIC"):
     '''
     write the results to a netcdf file
     
@@ -1740,7 +1866,7 @@ class pyPamtra(object):
     
     if (self.r["nmlSettings"]["passive"]):
       cdfFile.createDimension('angles',len(self.r["angles_deg"]))
-      cdfFile.createDimension('outlevels',int(self._noutlevels))
+      cdfFile.createDimension('outlevels',int(self.nmlSet["noutlevels"]))
       cdfFile.createDimension('passive_polarisation',int(self._nstokes))
       
     if (self.r["nmlSettings"]["radar_mode"] in ["spectrum","moments"]):
@@ -1754,6 +1880,7 @@ class pyPamtra(object):
       
     dim2d = ("grid_x","grid_y",)
     dim3d = ("grid_x","grid_y","heightbins",)
+    dim3dout = ("grid_x","grid_y","outlevels",)
     dim4d = ("grid_x","grid_y","heightbins","frequency")
     dim5d_att = ("grid_x","grid_y","heightbins","frequency","attenuation_polarisation")
     dim6d_rad = ("grid_x","grid_y","heightbins","frequency","radar_polarisation","radar_peak_number")
@@ -1821,9 +1948,9 @@ class pyPamtra(object):
       nc_stokes.units = "-"
       nc_stokes[:] = "HV"
       
-      nc_out = cdfFile.createVariable('outlevels', 'f',("outlevels",),**fillVDict)
-      nc_out.units = "m over sea level (top of atmosphere value) OR m over ground (ground value)"
-      nc_out[:] = np.array([self.r["nmlSettings"]["obs_height"],0],dtype="f")
+      nc_out = cdfFile.createVariable('outlevels', 'f',dim3dout,**fillVDict)
+      nc_out.units = "m over sea level"
+      nc_out[:] = np.array(self.p["obs_height"],dtype="f")
       if not pyNc: nc_out._fillValue =missingNumber
       
     #create and write variables
@@ -1973,41 +2100,48 @@ class pyPamtra(object):
       nc_iwv[:] = np.array(self.p["iwv"],dtype="f")
       if not pyNc: nc_iwv._fillValue =missingNumber
 
-    if ("cwp" in profileVars or profileVars =="all") and ("cwp" in self.p.keys()):
-      nc_cwp= cdfFile.createVariable('cwp', 'f',dim2d,**fillVDict)
-      nc_cwp.units = "kg/m^2"
-      nc_cwp[:] = np.array(self.p["cwp"],dtype="f")
-      if not pyNc: nc_cwp._fillValue =missingNumber
+    if ("hydro_wp" in profileVars or profileVars =="all") and ("hydro_wp" in self.p.keys()):
+      for i,wp in enumerate(wpNames):
+	nc_wp= cdfFile.createVariable(wp, 'f',dim2d,**fillVDict)
+	nc_wp.units = "kg/m^2"
+	nc_wp[:] = np.array(self.p["hydro_wp"][...,i],dtype="f")
+	if not pyNc: nc_wp._fillValue =missingNumber
+
+    #if ("cwp" in profileVars or profileVars =="all") and ("cwp" in self.p.keys()):
+      #nc_cwp= cdfFile.createVariable('cwp', 'f',dim2d,**fillVDict)
+      #nc_cwp.units = "kg/m^2"
+      #nc_cwp[:] = np.array(self.p["cwp"],dtype="f")
+      #if not pyNc: nc_cwp._fillValue =missingNumber
   
-    if ("iwp" in profileVars or profileVars =="all") and ("iwp" in self.p.keys()):
-      nc_iwp = cdfFile.createVariable('iwp', 'f',dim2d,**fillVDict)
-      nc_iwp.units = "kg/m^2"
-      nc_iwp[:] = np.array(self.p["iwp"],dtype="f")
-      if not pyNc: nc_iwp._fillValue =missingNumber
+    #if ("iwp" in profileVars or profileVars =="all") and ("iwp" in self.p.keys()):
+      #nc_iwp = cdfFile.createVariable('iwp', 'f',dim2d,**fillVDict)
+      #nc_iwp.units = "kg/m^2"
+      #nc_iwp[:] = np.array(self.p["iwp"],dtype="f")
+      #if not pyNc: nc_iwp._fillValue =missingNumber
 
-    if ("rwp" in profileVars or profileVars =="all") and ("rwp" in self.p.keys()):
-      nc_rwp = cdfFile.createVariable('rwp', 'f',dim2d,**fillVDict)
-      nc_rwp.units = "kg/m^2"
-      nc_rwp[:] = np.array(self.p["rwp"],dtype="f")
-      if not pyNc: nc_rwp._fillValue =missingNumber
+    #if ("rwp" in profileVars or profileVars =="all") and ("rwp" in self.p.keys()):
+      #nc_rwp = cdfFile.createVariable('rwp', 'f',dim2d,**fillVDict)
+      #nc_rwp.units = "kg/m^2"
+      #nc_rwp[:] = np.array(self.p["rwp"],dtype="f")
+      #if not pyNc: nc_rwp._fillValue =missingNumber
 
-    if ("swp" in profileVars or profileVars =="all") and ("swp" in self.p.keys()):
-      nc_swp = cdfFile.createVariable('swp', 'f',dim2d,**fillVDict)
-      nc_swp.units = "kg/m^2"
-      nc_swp[:] = np.array(self.p["swp"],dtype="f")
-      if not pyNc: nc_swp._fillValue =missingNumber
+    #if ("swp" in profileVars or profileVars =="all") and ("swp" in self.p.keys()):
+      #nc_swp = cdfFile.createVariable('swp', 'f',dim2d,**fillVDict)
+      #nc_swp.units = "kg/m^2"
+      #nc_swp[:] = np.array(self.p["swp"],dtype="f")
+      #if not pyNc: nc_swp._fillValue =missingNumber
 
-    if ("gwp" in profileVars or profileVars =="all") and ("gwp" in self.p.keys()):
-      nc_gwp = cdfFile.createVariable('gwp', 'f',dim2d,**fillVDict)
-      nc_gwp.units = "kg/m^2"
-      nc_gwp[:] = np.array(self.p["gwp"],dtype="f")
-      if not pyNc: nc_gwp._fillValue =missingNumber
+    #if ("gwp" in profileVars or profileVars =="all") and ("gwp" in self.p.keys()):
+      #nc_gwp = cdfFile.createVariable('gwp', 'f',dim2d,**fillVDict)
+      #nc_gwp.units = "kg/m^2"
+      #nc_gwp[:] = np.array(self.p["gwp"],dtype="f")
+      #if not pyNc: nc_gwp._fillValue =missingNumber
 
-    if ("hwp" in profileVars or profileVars =="all") and ("hwp" in self.p.keys()):
-      nc_hwp = cdfFile.createVariable('hwp', 'f',dim2d,**fillVDict)
-      nc_hwp.units = "kg/m^2"
-      nc_hwp[:] = np.array(self.p["hwp"],dtype="f")
-      if not pyNc: nc_hwp._fillValue =missingNumber
+    #if ("hwp" in profileVars or profileVars =="all") and ("hwp" in self.p.keys()):
+      #nc_hwp = cdfFile.createVariable('hwp', 'f',dim2d,**fillVDict)
+      #nc_hwp.units = "kg/m^2"
+      #nc_hwp[:] = np.array(self.p["hwp"],dtype="f")
+      #if not pyNc: nc_hwp._fillValue =missingNumber
 
     if ("cloudBase" in profileVars or profileVars =="all") and ("cloudBase" in self.p.keys()):
       nc_cb = cdfFile.createVariable('cloudBase', 'f',dim2d,**fillVDict)
@@ -2064,5 +2198,144 @@ class pyPamtra(object):
         self.r["tb"][:,:,:,:,ff,:] = self.r["not_averaged_tb"][:,:,:,:,indices[0],:]
 
 
+  def dumpForRT4(self,runFile):
+    """
+    Write a files to run the passive model with the pure RT4 code
+    by Frank Evans.
+    """
+    def extrap(x, xp, yp):
+      """np.interp function with linear extrapolation"""
+      y = np.interp(x, xp, yp)
+      y[x < xp[0]] = yp[0] + (x[x<xp[0]]-xp[0]) * (yp[0]-yp[1]) / (xp[0]-xp[1])
+      y[x > xp[-1]]= yp[-1] + (x[x>xp[-1]]-xp[-1])*(yp[-1]-yp[-2])/(xp[-1]-xp[-2])
+      return y
+
+    # atmosphere is height[km] temp[K] gaseaous extinction scatfile for the low below
+    s = ''
+    for xx in range(self._shape2D[0]):
+      for yy in range(self._shape2D[1]):
+#	self.p['temp_lev'][xx,yy,:] = extrap(self.p['hgt_lev'][xx,yy,:],self.p['hgt'][xx,yy,:],self.p['temp'][xx,yy,:])
+	ge = np.zeros((self._shape3D[2]))
+	ge[1:self._shape3D[2]] = self.r["kextatmo"]*1.e3
+	mu = (np.cos(np.deg2rad(self.r['angles_deg'][16::])))
+	sm = self.r['scatter_matrix']*1.e3
+	em = self.r['extinct_matrix']*1.e3
+	ev = self.r['emis_vector']*1.e3
+	for zz in range(self._shape3D[2])[::-1]:
+	  if zz < self._shape3D[2]:
+	    if (np.all(self.p['hydro_q'][xx,yy,zz-1] == 0.)):
+	      scat_file = '            '
+	    else:
+	      scat_file = 'scat_'+'%03d'%(zz-1)+'.txt'
+	      ns = '%.12e'%0.0
+	      sf = open('../../polradtran/src/'+scat_file,'w')
+	      ss = ''
+	      ss += '  16   0 \'LOBATTO        \'\n\n'
+	      for i in range(16):
+		for j in range(16):
+		  ss += '%.9f'%mu[i]+'    '+'%.9f'%mu[j]+'    0'+'\n'
+		  for k in range(2):
+		    ss += '%.12e'%sm[zz-1,k,j,0,i,0]+' '+'%.12e'%sm[zz-1,k,j,1,i,0]+' '+ns+' '+ns+'\n'
+		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+		for j in range(16):
+		  ss += '%.9f'%mu[i]+'    '+'%.9f'%mu[j]+'    0'+'\n'
+		  for k in range(2):
+		    ss += '%.12e'%sm[zz-1,k,j,0,i,2]+' '+'%.12e'%sm[zz-1,k,j,1,i,2]+' '+ns+' '+ns+'\n'
+		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+	      for i in range(16):
+		for j in range(16):
+		  ss += '%.9f'%mu[i]+'    '+'%.9f'%mu[j]+'    0'+'\n'
+		  for k in range(2):
+		    ss += '%.12e'%sm[zz-1,k,j,0,i,1]+' '+'%.12e'%sm[zz-1,k,j,1,i,1]+' '+ns+' '+ns+'\n'
+		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+		for j in range(16):
+		  ss += '%.9f'%mu[i]+'    '+'%.9f'%mu[j]+'    0'+'\n'
+		  for k in range(2):
+		    ss += '%.12e'%sm[zz-1,k,j,0,i,3]+' '+'%.12e'%sm[zz-1,k,j,1,i,3]+' '+ns+' '+ns+'\n'
+		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+	      ss += '\n'
+	      for i in range(16):
+		ss += '%.9f'%mu[i]+'\n'
+		for k in range(2):
+		  ss += '%.12e'%em[zz-1,k,0,i,0]+' '+'%.12e'%em[zz-1,k,1,i,0]+' '+ns+' '+ns+'\n'
+		ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+		ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+	      for i in range(16):
+		ss += '%.9f'%mu[i]+'\n'
+		for k in range(2):
+		  ss += '%.12e'%em[zz-1,k,0,i,1]+' '+'%.12e'%em[zz-1,k,1,i,1]+' '+ns+' '+ns+'\n'
+		ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+		ss += ns+' '+ns+' '+ns+' '+ns+'\n'
+	      ss += '\n'
+	      for i in range(16):
+		ss += '%.9f'%mu[i]+'  '
+		ss += '%.12e'%ev[zz-1,0,i,0]+' '+'%.12e'%ev[zz-1,1,i,0]+' '+ns+' '+ns+'\n'
+	      for i in range(16):
+		ss += '%.9f'%mu[i]+'  '
+		ss += '%.12e'%ev[zz-1,0,i,1]+' '+'%.12e'%ev[zz-1,1,i,1]+' '+ns+' '+ns+'\n'
+	      sf.write(ss)
+	      sf.close()
+	  else:
+	    scat_file = '            '
+	  s += '%3.2f'%(self.p["hgt_lev"][xx,yy,zz]/1.e3)+" "+'%3.2f'%self.p["temp_lev"][xx,yy,zz]+" "+'%3.6f'%ge[zz]+'  \''+scat_file+'\'\n'
     
+    
+    #firstTime = datetime.datetime.utcfromtimestamp(self.p["unixtime"][0,0])
+    #year=str(firstTime.year)
+    #mon=str(firstTime.month).zfill(2)
+    #day=str(firstTime.day).zfill(2)
+    #hhmm=datetime.datetime.strftime(firstTime,"%H%M")
+    
+    #if "iwv" not in self.p.keys():
+      #self.p['iwv'] = np.ones((self._shape2D[0],self._shape2D[1]))*-9999.
+      #self.p['hydro_wp'] = np.ones((self._shape2D[0],self._shape2D[1],self.df.nhydro))*-9999.
+      #self.p['hydro_tn'] = np.ones((self._shape2D[0],self._shape2D[1],self.df.nhydro))*-9999.
+      ##self.addIntegratedValues()
+
+    #s = str(self._shape2D[0])+" "+str(self._shape2D[1])+" "+str(self._shape3D[2])+" "+str(self._shape3Dout[2])+"\n"
+    
+    #for xx in range(self._shape2D[0]):
+      #for yy in range(self._shape2D[1]):
+	#s += year+" "+mon+" "+day+" "+hhmm+" "+str(self._shape3D[2])+" "+str(xx+1)+" "+str(yy+1)+"\n"
+	#s += ' '.join(['%9e'%height for height in self.p['obs_height'][xx,yy,:]])+"\n"
+	#s += '%3.2f'%self.p["lat"][xx,yy]+" "+'%3.2f'%self.p["lon"][xx,yy]+" "+str(self.p["lfrac"][xx,yy])+" "+str(self.p["wind10u"][xx,yy])+" "+str(self.p["wind10v"][xx,yy])+" "+str(self.p['groundtemp'][xx,yy])+" "+str(self.p['hgt_lev'][xx,yy,0])+"\n"
+	#s += str(self.p["iwv"][xx,yy])
+	#for ihyd in range(self.df.nhydro):
+	  #if self.df.data['moment_in'][ihyd] == 1:
+	    #s +=" "+'%9e'%self.p["hydro_wp"][xx,yy,ihyd]
+	  #if self.df.data['moment_in'][ihyd] == 13:
+	    #s +=" "+'%9e'%self.p["hydro_wp"][xx,yy,ihyd]+" "+'%9e'%self.p["hydro_tn"][xx,yy,ihyd]
+	#s += "\n"
+	#if levLay == 'lev':
+	  #s += '%6.1f'%self.p["hgt_lev"][xx,yy,0]+" "+'%6.1f'%self.p["press_lev"][xx,yy,0]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,0]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,0])+"\n"
+	  #for zz in range(1,self._shape3D[2]+1):
+	    #s += '%6.1f'%self.p["hgt_lev"][xx,yy,zz]+" "+'%6.1f'%self.p["press_lev"][xx,yy,zz]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,zz])+" "
+	    #for ihyd in range(self.df.nhydro):
+	      #if self.df.data['moment_in'][ihyd] == 1:
+		#s +=str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
+	      #if self.df.data['moment_in'][ihyd] == 13:
+		#s +=str('%9e'%self.p["hydro_n"][xx,yy,zz,ihyd])+" "+str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
+	    #s += "\n"
+	#elif levLay == 'lay':
+	  #for zz in range(0,self._shape3D[2]):
+	    #s += '%6.1f'%self.p["hgt"][xx,yy,zz]+" "+'%6.1f'%self.p["press"][xx,yy,zz]+" "+'%3.2f'%self.p["temp"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum"][xx,yy,zz])+" "
+	    #for ihyd in range(self.df.nhydro):
+	      #if self.df.data['moment_in'][ihyd] == 1:
+		#s +=str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
+	      #if self.df.data['moment_in'][ihyd] == 13:
+		#s +=str('%9e'%self.p["hydro_n"][xx,yy,zz,ihyd])+" "+str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
+	    #s += "\n"
+	#else:
+	  #raise IOError("Did not understand lay/lev: "+layLev)
+
+    
+    # write stuff to file
+    f = open(runFile, 'w')
+    f.write(s)
+    f.close()
+    return
     
