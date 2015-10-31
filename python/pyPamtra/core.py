@@ -204,7 +204,6 @@ class pyPamtra(object):
     self.p["ngridx"] = 0
     self.p["ngridy"] = 0
     self.p["max_nlyrs"] = 0
-    self.p["noutlevels"] = 0
   
     return
   
@@ -282,7 +281,7 @@ class pyPamtra(object):
       self.readClassicPamtraProfile(inputFile)
       return
       
-    self.p["ngridx"], self.p["ngridy"], self.p["max_nlyrs"], self.p["noutlevels"] = [int(el) for el in g.next()[:4]]
+    self.p["ngridx"], self.p["ngridy"], self.p["max_nlyrs"], self.nmlSet["noutlevels"] = [int(el) for el in g.next()[:4]]
 
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
@@ -664,9 +663,9 @@ class pyPamtra(object):
     hgtVar = "hgt"
 
     if "obs_height" in kwargs.keys():
-      self.p["noutlevels"] = np.shape(kwargs["obs_height"])[2]
+      self.nmlSet["noutlevels"] = np.shape(kwargs["obs_height"])[2]
     else:
-      self.p["noutlevels"] = 2
+      self.nmlSet["noutlevels"] = 2
 
     #if np.any(self.p["nlyrs"] != self.p["max_nlyrs"]):
       #self._radiosonde = True
@@ -677,7 +676,7 @@ class pyPamtra(object):
     
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
-    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
+    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.nmlSet["noutlevels"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
@@ -822,7 +821,7 @@ class pyPamtra(object):
     
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
-    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
+    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.nmlSet["noutlevels"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
