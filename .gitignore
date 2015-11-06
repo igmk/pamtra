@@ -8,6 +8,7 @@ pamtra
 .pydevproject
 *.nml
 !test/nmls/*nml
+!examples/*.nml
 fort*
 !python/pyPamtra/fort*
 output/
