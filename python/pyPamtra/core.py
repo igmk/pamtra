@@ -2239,20 +2239,20 @@ class pyPamtra(object):
 		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
 		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
 		for j in range(16):
-		  ss += '%.9f'%mu[i]+'    '+'%.9f'%mu[j]+'    0'+'\n'
+		  ss += '%.9f'%mu[i]+'    '+'%.9f'%(-1.*mu[j])+'    0'+'\n'
 		  for k in range(2):
 		    ss += '%.12e'%sm[zz-1,k,j,0,i,2]+' '+'%.12e'%sm[zz-1,k,j,1,i,2]+' '+ns+' '+ns+'\n'
 		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
 		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
 	      for i in range(16):
 		for j in range(16):
-		  ss += '%.9f'%mu[i]+'    '+'%.9f'%mu[j]+'    0'+'\n'
+		  ss += '%.9f'%(-1.*mu[i])+'    '+'%.9f'%mu[j]+'    0'+'\n'
 		  for k in range(2):
 		    ss += '%.12e'%sm[zz-1,k,j,0,i,1]+' '+'%.12e'%sm[zz-1,k,j,1,i,1]+' '+ns+' '+ns+'\n'
 		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
 		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
 		for j in range(16):
-		  ss += '%.9f'%mu[i]+'    '+'%.9f'%mu[j]+'    0'+'\n'
+		  ss += '%.9f'%(-1.*mu[i])+'    '+'%.9f'%(-1.*mu[j])+'    0'+'\n'
 		  for k in range(2):
 		    ss += '%.12e'%sm[zz-1,k,j,0,i,3]+' '+'%.12e'%sm[zz-1,k,j,1,i,3]+' '+ns+' '+ns+'\n'
 		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
@@ -2265,7 +2265,7 @@ class pyPamtra(object):
 		ss += ns+' '+ns+' '+ns+' '+ns+'\n'
 		ss += ns+' '+ns+' '+ns+' '+ns+'\n'
 	      for i in range(16):
-		ss += '%.9f'%mu[i]+'\n'
+		ss += '%.9f'%(-1.*mu[i])+'\n'
 		for k in range(2):
 		  ss += '%.12e'%em[zz-1,k,0,i,1]+' '+'%.12e'%em[zz-1,k,1,i,1]+' '+ns+' '+ns+'\n'
 		ss += ns+' '+ns+' '+ns+' '+ns+'\n'
@@ -2275,7 +2275,7 @@ class pyPamtra(object):
 		ss += '%.9f'%mu[i]+'  '
 		ss += '%.12e'%ev[zz-1,0,i,0]+' '+'%.12e'%ev[zz-1,1,i,0]+' '+ns+' '+ns+'\n'
 	      for i in range(16):
-		ss += '%.9f'%mu[i]+'  '
+		ss += '%.9f'%(-1.*mu[i])+'  '
 		ss += '%.12e'%ev[zz-1,0,i,1]+' '+'%.12e'%ev[zz-1,1,i,1]+' '+ns+' '+ns+'\n'
 	      sf.write(ss)
 	      sf.close()

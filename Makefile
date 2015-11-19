@@ -74,6 +74,8 @@ OBJECTS=kinds.o \
 	eps_water.o \
 	mie_scat_utilities.o \
 	mie_spheres.o \
+	scatdb.o \
+	dda_db_liu.o \
 	dia2vel.o \
 	rescale_spectra.o \
 	radar_moments.o \
@@ -86,7 +88,6 @@ OBJECTS=kinds.o \
 	equcom.o \
 	land_emis.o \
 	equare.o \
-	scatdb.o \
 	ref_water.o \
 	ref_ice.o \
 	e_sat_gg_water.o \

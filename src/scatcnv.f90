@@ -101,6 +101,20 @@ subroutine transform_ext_emis(mu_values,extinct,albedo,ext_matrix,emis_vec)
 end subroutine transform_ext_emis
 
 subroutine transform_scatter(CONST,MU_VALUES, NLEGEN, COEF,scatter_matrix)
+  !
+  !  transform_scatter calculates the polarization scattering matrix.
+  !  For each pair of quadrature angles (incoming and outgoing)
+  !  the routine evaluates the single scattering phase matrix
+  !  for many delta phi's.  This is done by calculating the
+  !  scattering angle and summing the Legendre series for
+  !  necessary matrix elements.  Then the polarization reference
+  !  is rotated from the scattering plane to the meridional planes.
+  !  A Fourier transform is done to transform the phase matrices from
+  !  phi space to azimuth mode space.  Because all of the azimuth modes
+  !  are calculated at one time the scattering matrix is stored in a
+  !  temporary disk file to be accessed later one mode at a time.
+  !  The scattering matrix includes the quadrature weights for
+  !  integrating.
 
   use kinds
   use settings, only: nummu, aziorder, nstokes

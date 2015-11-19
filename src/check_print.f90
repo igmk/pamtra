@@ -36,4 +36,4 @@ subroutine check_print()
 
   close(112)
   return
-end
+end subroutine check_print

@@ -3,5 +3,5 @@
  cwc_q       -99.           1          -99.    -99.    -99.   -99.     -99.   3           1         mono           -99.    -99.    -99.    -99.     2.e-5     -99.          mie-sphere  khvorostyanov01_drops          -99.
  iwc_q       -99.          -1          917.    130.    3.0    0.684    2.     3           1         mono_cosmo_ice -99.    -99.    -99.    -99.    -99.      -99.          mie-sphere  heymsfield10_particles          -99.
  rwc_q       -99.           1          -99.    -99.    -99.   -99.     -99.   3           50        exp            -99.    -99.    8.d6    -99.    1.2d-4    6.d-3         mie-sphere  khvorostyanov01_drops          -99.
- swc_q       -99.          -1          200.   0.038    2.0    0.3971   1.88   3           100       exp_field_t    -99.    -99.    -99.    -99.    0.51d-10  1.d-2         mie-sphere  heymsfield10_particles          -99.
+ swc_q       -99.          -1          200.   0.038    2.0    0.3971   1.88   3           100       exp_field_t    -99.    -99.    -99.    -99.    0.51d-10  1.d-2         liudb_01  heymsfield10_particles          -99.
  gwc_q       -99.          -1          400.   169.6    3.1    -99.     -99.   3           50        exp            -99.    -99.     4.d6   -99.    1.d-10    1.d-2         mie-sphere  khvorostyanov01_spheres          -99.

@@ -4,7 +4,7 @@ module mie_spheres
   use constants, only: pi,c, Im
   use settings, only: lphase_flag, maxnleg, lhyd_absorption
   use report_module
-  use mie_scat_utlities  
+  use mie_scat_utilities  
   use vars_index, only: i_x,i_y, i_z, i_h
   implicit none
 
@@ -180,7 +180,6 @@ module mie_spheres
       !Do not process if no particles present
       if (ndens(ir) <= 0) CYCLE
 
-
       ndens_eff = ndens(ir)
       del_d_eff = del_d(ir)
 
@@ -229,6 +228,7 @@ module mie_spheres
       sumqe = sumqe + ( qext * del_d_eff)
       sumqs = sumqs + ( qscat * del_d_eff)
       sumqback = sumqback + ( qback * del_d_eff)
+     print*, diameter(ir), ndens_eff, del_d_eff, n_tot, sumqe, sumqs, sumqback
 
       if (verbose >= 4) print*, "NEW: sumqback, sumqs, sumqe"
       if (verbose >= 4) print*,  sumqback , sumqs, sumqe
@@ -238,10 +238,10 @@ module mie_spheres
 	  nmie = min0(nmie, nterms) 
 	  do i = 1, nquad 
 	    call mieangle (nmie, a, b, mu (i), p1, p2, p3, p4) 
-	    sump1 (i) = sump1 (i) + p1 * ndens_eff * del_d_eff
-	    sump2 (i) = sump2 (i) + p2 * ndens_eff * del_d_eff
-	    sump3 (i) = sump3 (i) + p3 * ndens_eff * del_d_eff
-	    sump4 (i) = sump4 (i) + p4 * ndens_eff * del_d_eff
+	    sump1 (i) = sump1 (i) + p1 * ndens_eff * del_d_eff ! = M11 = M22
+	    sump2 (i) = sump2 (i) + p2 * ndens_eff * del_d_eff ! = M12 = M21
+	    sump3 (i) = sump3 (i) + p3 * ndens_eff * del_d_eff ! = M33 = M44
+	    sump4 (i) = sump4 (i) + p4 * ndens_eff * del_d_eff ! = M34 = -M43
 	  end do
       end if
     end do
@@ -261,7 +261,7 @@ module mie_spheres
     scatter = sumqs 
     back_scatt = sumqback 
     albedo = scatter / extinction 
-
+print*, sumqe, sumqs, sumqback, n_tot
       if (verbose >= 4) print*, "extinction, scatter, back_scatt, albedo"
       if (verbose >= 4) print*,  extinction, scatter, back_scatt, albedo
        
