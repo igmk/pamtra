@@ -663,9 +663,9 @@ class pyPamtra(object):
     self.p["nlyrs"] = np.array(np.sum(kwargs["hgt"]!=missingNumber,axis=-1))
     hgtVar = "hgt"
 
-    if "obs_height" in kwargs.keys():
+    try:
       self.p["noutlevels"] = np.shape(kwargs["obs_height"])[2]
-    else:
+    except (KeyError,IndexError):
       self.p["noutlevels"] = 2
 
     #if np.any(self.p["nlyrs"] != self.p["max_nlyrs"]):
