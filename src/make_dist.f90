@@ -158,6 +158,7 @@ subroutine make_dist(errorstatus)
       do i=1,nbin_work+1
 	f_ds_work(i) = n_t / (d_bound_ds_work(i) * sig * sqrt(2._dbl * pi)) * &
 		  EXP(-( (log(d_bound_ds_work(i)) - d_ln)**2 )/(2. * sig**2) )
+        if (verbose >= 10) print*,trim(dist_name),d_bound_ds_work(i),f_ds_work(i)
       enddo
   ! normalized modified gamma
   !follows the definition from Testud et al, 
@@ -171,6 +172,7 @@ subroutine make_dist(errorstatus)
 	tmp1 = gamma(b_ms+1)/(b_ms+1)**(b_ms+1) * (b_ms+mu+1)**(b_ms+mu+1)/gamma(b_ms+mu+1)
 	tmp2 = exp(-(b_ms+mu+1)*tmpX)
 	f_ds_work(i) = n_0_star * tmp1 * tmpX**mu * tmp2
+        if (verbose >= 10) print*,trim(dist_name),d_bound_ds_work(i),f_ds_work(i)
       enddo
 
     else if ((trim(dist_name) == 'mgamma')     .or. (trim(dist_name) == 'exp') .or. &
@@ -178,6 +180,7 @@ subroutine make_dist(errorstatus)
              (trim(dist_name) == 'exp_ryan') .or. (trim(dist_name) == 'mgamma_MNH') ) then
       do i=1,nbin_work+1
 	f_ds_work(i) = n_0 * d_bound_ds_work(i)**mu * EXP(-lambda * d_bound_ds_work(i)**gam)
+        if (verbose >= 10) print*,trim(dist_name),d_bound_ds_work(i),f_ds_work(i)
       enddo
       
     else if ((trim(dist_name) /= 'mono')  .and. (trim(dist_name) /= 'mono_cosmo_ice') .and. &
@@ -191,6 +194,7 @@ subroutine make_dist(errorstatus)
 !  Find the d_1 and d_2 where f_ds_work(d) = thres_n
 ! STEP INTO this cycle ONLY if first loop (ibig == 1) and ONLY if adaptive grid
    if (hydro_adaptive_grid .and. (ibig == 1)) then
+     if (verbose >= 10) print*, "in hydro_adaptive_grid .and. (ibig == 1)"
      d_1_new = -1._dbl
      d_2_new = -1._dbl
      
@@ -230,8 +234,9 @@ enddo bigloop
     
   do i = 1, nbin
       d_ds(i) = (d_bound_ds(i) + d_bound_ds(i+1)) * .5_dbl
+      if (verbose > 10) print *, d_bound_ds(i), f_ds(i)
   enddo
-    
+  if (verbose > 10) print *, d_bound_ds(nbin+1), f_ds(nbin+1)
   do i=1,nbin
     delta_d_ds(i) =  d_bound_ds(i+1) - d_bound_ds(i)
     n_ds(i) = (f_ds(i) + f_ds(i+1)) / 2._dbl * delta_d_ds(i)  ! Trapezoidal approximation of the integral

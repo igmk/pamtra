@@ -273,7 +273,7 @@ subroutine hydrometeor_extinction(errorstatus)
 
 
         if (verbose >= 2) print*, i_h, hydro_name
-
+        if (verbose >= 3) print*, "i_h, q_h, n_tot, r_eff", i_h, q_h, n_tot, r_eff
         if ((q_h < hydro_threshold .or. isnan(q_h)) .and. &
             (n_tot <=0 .or. isnan(n_tot)) .and. &
             (r_eff <=0 .or. isnan(r_eff)) .and. &
@@ -292,6 +292,12 @@ subroutine hydrometeor_extinction(errorstatus)
           call report(err, msg, nameOfRoutine)
           errorstatus = err
           return
+        end if
+
+        if (all(n_ds <= 0)) then
+          if (verbose >=3) print*, i_x,i_y,i_z,i_h,hydro_name, "all n_ds < 0", MAXVAL(n_ds)
+          call deallocateVars_drop_size_dist()
+          CYCLE
         end if
 
         if (save_psd) then
