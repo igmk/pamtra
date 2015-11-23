@@ -48,6 +48,7 @@ contains
     character(len=14) :: nameOfRoutine = 'set_sfc_optics'
 
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
+    err = 0
 
     if ((atmo_lfrac(i_x,i_y) >= 0._dbl) .and. (atmo_lfrac(i_x,i_y) < 0.5_dbl)) then
       call ocean_sfc_optics_fastemx(err,freq)
@@ -63,7 +64,7 @@ contains
 
     if (err > 0) then
       errorstatus = fatal
-      msg = "assertation error"
+      msg = "error in get_land_sfc_optics or ocean_sfc_optics_fastemx"
       call report(errorstatus, msg, nameOfRoutine)
       return
     end if 

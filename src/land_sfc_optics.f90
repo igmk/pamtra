@@ -23,6 +23,7 @@ subroutine get_land_sfc_optics(errorstatus, freq)
   character(14) :: nameOfRoutine = 'get_land_sfc_optics'
 
   if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
+  err= 0
 
   inquire(iolength=iolsgl) 1._sgl
 

@@ -31,6 +31,7 @@ module ocean_sfc_optics
 
   integer(kind=long), intent(out) :: errorstatus
     
+  errorstatus = 0
   if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
   wind_speed = sqrt(atmo_wind10u(i_x,i_y)**2+atmo_wind10v(i_x,i_y)**2)
