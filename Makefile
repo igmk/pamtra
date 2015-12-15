@@ -206,6 +206,9 @@ pyDebug: 	py
 
 
 $(OBJDIR)pypamtralib.pyf:  $(FOBJECTS)
+	@echo "####################################################################################"
+	@echo "Note there is a bug in numpy 1.10.1, intent in or out is not recognized"
+	@echo "####################################################################################"
 	f2py2.7 --overwrite-signature -m pyPamtraLib -h $(OBJDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)pyPamtraLib.f90
 
 
