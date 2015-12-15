@@ -83,7 +83,7 @@ subroutine radar_spectrum(&
     real(kind=dbl), dimension(radar_nfft_aliased):: out_radar_velo_aliased
     real(kind=dbl):: del_v_radar, K2, wavelength, &
     delta_air, rho_air, rho, viscosity, nu, Ze, K, &
-    min_V_aliased, max_V_aliased, k_factor, fallvel_A, fallvel_B
+    min_V_aliased, max_V_aliased, k_factor, fallvel_A, fallvel_B, rho0, Y
     integer :: ii, jj, pos1,nn,pos2
     character(30) :: tokenized(3)
     integer(kind=long), intent(out) :: errorstatus
@@ -163,46 +163,9 @@ subroutine radar_spectrum(&
     else if (vel_size_mod .eq. "rogers_graupel") then
       call dia2vel_rogers_graupel(err,nbins,diameter_spec_cp,vel_spec)
     else if (vel_size_mod(:8) .eq. "powerLaw") then
-      call assert_true(err,(len(TRIM(vel_size_mod)) > 8),&
-          "vel_size_mod must be longer than 8") 
-      if (err > 0) then
-        errorstatus = fatal
-        msg = "assertation error"
-        call report(errorstatus, msg, nameOfRoutine)
-        return
-      end if   
-      tokenized(1) = "NAN"
-      tokenized(2) = "NAN"
-      tokenized(3) = "NAN"
-      pos1 = 1
-      nn = 0
-      DO
-        pos2 = INDEX(vel_size_mod(pos1:), "_")
-        IF (pos2 == 0) THEN
-          nn = nn + 1
-          tokenized(nn) = vel_size_mod(pos1:)
-          EXIT
-        END IF
-        nn = nn + 1
-        tokenized(nn) = vel_size_mod(pos1:pos1+pos2-2)
-        pos1 = pos2+pos1
-      END DO
-      read(tokenized(2),*) fallvel_A
-      read(tokenized(3),*) fallvel_B
-      call assert_false(err,(tokenized(1) == "NAN"),&
-          "tokenized(1) must not be NAN") 
-      call assert_false(err,(tokenized(2) == "NAN"),&
-          "tokenized(2) must not be NAN") 
-      call assert_false(err,(tokenized(3) == "NAN"),&
-          "tokenized(3) must not be NAN") 
-      if (err > 0) then
-        errorstatus = fatal
-        msg = "assertation error"
-        call report(errorstatus, msg, nameOfRoutine)
-        return
-      end if  
-      !finally apply coefficients
-      vel_spec(:) = fallvel_A * diameter_spec_cp(:)**fallvel_B
+      call dia2vel_power_law(err,nbins,diameter_spec_cp,vel_size_mod,vel_spec)
+    else if (vel_size_mod(:11) .eq. "corPowerLaw") then
+      call dia2vel_corrected_power_law(err,nbins,diameter_spec_cp,rho,temp,vel_size_mod,vel_spec)
     else
       errorstatus = fatal
       msg = 'Did not understand variable vel_size_mod: '//vel_size_mod

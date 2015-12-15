@@ -111,7 +111,8 @@ def PamtraFortranWrapper(
 
   if sets["pyVerbose"] > 8:    
     for key in profile.keys():
-      exec("print key, vars_atmosphere.atmo_"+key +", profile['"+key+"']")
+      if key not in ["noutlevels"]: 
+        exec("print key, vars_atmosphere.atmo_"+key +", profile['"+key+"']")
   
   #return  dict(),pyPamtraLib    
   #deal with the atmospheric input_file
@@ -121,7 +122,9 @@ def PamtraFortranWrapper(
     
     if key in ["ngridx","ngridy","max_nlyrs"]:
       continue
-    
+    elif key in ["noutlevels"]:
+      if sets["pyVerbose"] > 3: print("settings."+key +" = profile['"+key+"']")
+      exec("settings."+key +" = profile['"+key+"']")
     
     elif type(profile[key]) in [int, float, str]:
       if sets["pyVerbose"] > 3: print("vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
@@ -135,7 +138,8 @@ def PamtraFortranWrapper(
 
   if sets["pyVerbose"] > 8:    
     for key in profile.keys():
-      exec("print key, vars_atmosphere.atmo_"+key +", profile['"+key+"']")
+      if key not in ["noutlevels"]: 
+        exec("print key, vars_atmosphere.atmo_"+key +", profile['"+key+"']")
   #see whether it worked:
   if sets["pyVerbose"] > 3:
     print "Fortran view on vars_atmosphere variables"
