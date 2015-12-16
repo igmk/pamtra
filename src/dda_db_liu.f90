@@ -205,7 +205,7 @@ subroutine dda_db_liu(errorstatus,f, t, liu_type, mindex,       nbins, &
      sumqs = sumqs + qscat * ndens_eff * del_d_eff!weights(ir)
      sumqback = sumqback + qback * ndens_eff * del_d_eff!weights(ir)
      back_spec(ir) = qback * ndens_eff !* weights(ir) *(dia2-dia1)/2.d0![m²/m⁴]
-     print*, diameter(ir), ndens_eff, del_d_eff, n_tot, sumqe, sumqs, sumqback
+    if (verbose >= 5) print*, diameter(ir), ndens_eff, del_d_eff, n_tot, sumqe, sumqs, sumqback
      if (lphase_flag) then
         ang_quad = acos(mu(nquad:1:-1))*180.d0/pi
         call interpolation(nang_db,nquad,dble(ang_db),dble(p_liu),ang_quad,P1_quad)
@@ -227,7 +227,7 @@ subroutine dda_db_liu(errorstatus,f, t, liu_type, mindex,       nbins, &
 !   sumqback = sumqback*(diameter(nbins)-diameter(1))/2.d0
 !   sump1 = sump1*(diameter(nbins)-diameter(1))/2.d0
 !   n_tot = n_tot*(diameter(nbins)-diameter(1))/2.d0
-print*, sumqe, sumqs, sumqback,n_tot
+! print*, sumqe, sumqs, sumqback,n_tot
   extinction = sumqe !* del_d      ! [1/m]
   scatter = sumqs !* del_d       ! [1/m]
   back_scatt = sumqback !* del_d   ! [1/m]
