@@ -41,7 +41,6 @@ subroutine write_nc_results
 
   character(300) :: timestring
   character(40) :: gitVersion,gitHash
-  character(10) :: attUnit,zeUnit
 
   integer(kind=long) :: errorstatus
   integer(kind=long) :: err
@@ -154,18 +153,18 @@ subroutine write_nc_results
      dim4d = (/dfrqID,dlayerID,dlatID,dlonID/)
 
      call check(nf90_def_var(ncid,'Attenuation_Atmosphere', nf90_double,dim4d, AttAtmoVarID))
-     call check(nf90_put_att(ncid, AttAtmoVarID, "units", attUnit))
+     call check(nf90_put_att(ncid, AttAtmoVarID, "units", "dB"))
      call check(nf90_put_att(ncid, AttAtmoVarID, "missing_value", -9999))
 
      dim5d_att = (/dattpolID,dfrqID,dlayerID,dlatID,dlonID/)
      call check(nf90_def_var(ncid,'Attenuation_Hydrometeors', nf90_double,dim5d_att, AttHydroVarID))
-     call check(nf90_put_att(ncid, AttHydroVarID, "units", attUnit))
+     call check(nf90_put_att(ncid, AttHydroVarID, "units", "dB"))
      call check(nf90_put_att(ncid, AttHydroVarID, "missing_value", -9999))
 
      dim6d_rad= (/dradpeakID,dradpolID,dfrqID,dlayerID,dlatID,dlonID/)
 
      call check(nf90_def_var(ncid,'Ze', nf90_double,dim6d_rad, ZeVarID))
-     call check(nf90_put_att(ncid, ZeVarID, "units", zeUnit))
+     call check(nf90_put_att(ncid, ZeVarID, "units", "dBz"))
      call check(nf90_put_att(ncid, ZeVarID, "missing_value", -9999))
 
      if ((radar_mode .eq. "spectrum") .or. (radar_mode .eq. "moments")) then

@@ -178,6 +178,8 @@ pamtraDebug: pamtra
 	@echo "start debugging with:"
 	@echo "gdb ./pamtra"
 	@echo "run -n namelist -p profile ..."	
+	@echo "or with valgrind:"
+	@echo "valgrind --leak-check=yes ./pamtra ..."
 	@echo "####################################################################################"
 
 

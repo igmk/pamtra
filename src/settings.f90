@@ -128,6 +128,7 @@ contains
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'settings_read'
 
+
         ! name list declarations
         namelist /SETTINGS/ &
         write_nc, &
@@ -187,6 +188,8 @@ contains
         radar_attenuation,&
         radar_polarisation
         
+      err = 0
+
      if (verbose >= 3) print*,'Start of ', nameOfRoutine
 
       ! first put default values
