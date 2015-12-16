@@ -49,3 +49,4 @@ build
 lib
 doc/build
 *.pyf
+.python-version
