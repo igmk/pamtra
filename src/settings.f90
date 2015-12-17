@@ -82,7 +82,8 @@ module settings
        hydro_limit_density_area, &
        hydro_adaptive_grid, & ! apply an adaptive grid to the psd. good to reduce mass overestimations for small amounts. works only for modified gamma
        add_obs_height_to_layer, &
-       radar_use_wider_peak ! use wider peak inlcuding the found noise/peak border
+       radar_use_wider_peak, & ! use wider peak inlcuding the found noise/peak border
+       liblapack ! use liblapack for matrix inversion which much faster
 
   character(3) :: gas_mod
   character(3) :: liq_mod
@@ -186,7 +187,8 @@ contains
         radar_nPeaks,&
         radar_smooth_spectrum,&
         radar_attenuation,&
-        radar_polarisation
+        radar_polarisation, &
+        liblapack
         
       err = 0
 
@@ -430,6 +432,7 @@ contains
         radar_smooth_spectrum = .true.
         radar_attenuation = "disabled" ! "bottom-up" or "top-down"
         radar_use_wider_peak = .false.
+        liblapack = .true.
 
         ! create frequency string if not set in pamtra
         if (freq_str == "") then
@@ -512,6 +515,7 @@ contains
       print*, "radar_npol", radar_npol
       print*, "radar_nfft_aliased", radar_nfft_aliased
       print*, "radar_maxTurbTerms", radar_maxTurbTerms
+      print*, "liblapack", liblapack
 
     end subroutine print_settings
     

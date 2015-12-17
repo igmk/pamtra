@@ -108,7 +108,11 @@ class pyPamtra(object):
     self.nmlSet["radar_receiver_miscalibration"]=  0.e0 #dB
     self.nmlSet["radar_attenuation"]=  "disabled" #! "bottom-up" or "top-down"
     self.nmlSet["radar_polarisation"]=  "NN" #! comma separated
-    self.nmlSet["radar_use_wider_peak"]=  False #! comma separated
+    self.nmlSet["radar_use_wider_peak"]=  False #
+    self.nmlSet["liblapack"]=  True # use liblapack for matrix inversion
+    
+    
+    
     #all settings which do not go into the nml file go here:
     self.set = dict()
     self.set["pyVerbose"] = 0

@@ -1,4 +1,5 @@
 &settings
 data_path="/work/mmaahn/pamtra_data/"
 save_ssp=.true.
+liblapack=.true.
 /
