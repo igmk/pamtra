@@ -40,12 +40,12 @@ def PamtraFortranWrapper(
   #be sure everything is cleaned up before we start
   error = deallocate_everything.do_deallocate_everything()
   if error > 0: raise RuntimeError("Error in deallocate everything")
-  
-  settings.settings_fill_default()    
-  
+    
   settings.in_python = True
   settings.nfrq = len(sets["freqs"])
   settings.freqs[:len(sets["freqs"])] = sets["freqs"]
+  
+  settings.settings_fill_default()      
   
   #temporary fixes:
   settings.input_file[:] = "test_mie.dat"

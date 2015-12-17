@@ -25,8 +25,9 @@ print "##########################"
 
 
 
-#pam.set["pyVerbose"] = 10
-#pam.set["verbose"] = 10
+pam.set["pyVerbose"] = 10
+pam.set["verbose"] = 10
+
 pam.runPamtra(35.5)
 
 

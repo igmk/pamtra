@@ -14,7 +14,7 @@ gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 FC=gfortran
 CC=gcc
-FCFLAGS=-c -fPIC -Wunused -O2 -cpp -J$(OBJDIR) -I$(OBJDIR) 
+FCFLAGS=-c -fPIC -Wunused -fbounds-check  -cpp -J$(OBJDIR) -I$(OBJDIR) 
 #FCFLAGS=-g -c -fPIC -Wunused -O0 -cpp -J$(OBJDIR) -I$(OBJDIR) 
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran-mp-4.8
@@ -23,7 +23,7 @@ ifeq ($(ARCH),Darwin)
 	LFLAGS= -L$(LIBDIR) -L../$(LIBDIR) -ldfftpack  -L/opt/local/lib/ -llapack
 	LDFLAGS=-lnetcdf -lnetcdff  -lz
 else
-	NCFLAGS :=  $(shell nc-config --fflags)  -O2
+	NCFLAGS :=  $(shell nc-config --fflags)  -fbounds-check 
 	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
 	LFLAGS := -llapack -L$(LIBDIR) -L../$(LIBDIR) -ldfftpack
 	LDFLAGS := $(shell nc-config --flibs) -lz
@@ -170,8 +170,8 @@ $(OBJDIR)write_nc_results.o:  $(SRCDIR)write_nc_results.f90 | $(OBJDIR)
 
 
 
-pamtraDebug: FCFLAGS += -g -gdwarf-3
-pamtraDebug: LFLAGS += -g -gdwarf-3
+pamtraDebug: FCFLAGS += -g -fbacktrace
+pamtraDebug: LFLAGS += -g -fbacktrace
 pamtraDebug: pamtra
 	@echo ""
 	@echo "####################################################################################"
@@ -198,7 +198,9 @@ pyProfile: 	py
 	@echo "####################################################################################"
 	@echo "performance report displayed at exit of python"
 	@echo "####################################################################################"
-pyDebug: NCFLAGS_F2PY += --debug-capi
+
+pyDebug: FCFLAGS += -g -fbacktrace
+pyDebug: NCFLAGS_F2PY += --debug-capi 
 pyDebug: 	py
 	@echo ""
 	@echo "####################################################################################"

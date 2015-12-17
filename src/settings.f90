@@ -434,6 +434,8 @@ contains
         radar_use_wider_peak = .false.
         liblapack = .true.
 
+print*, freq_str
+print*, frqs_str
         ! create frequency string if not set in pamtra
         if (freq_str == "") then
              ! get integer and character frequencies
