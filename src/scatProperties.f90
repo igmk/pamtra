@@ -2,12 +2,12 @@ module scatProperties
 
 
   use kinds
-
+  use settings, only: maxnleg
   implicit none
 
   !rt3 style
   real(kind=dbl) :: salbedo
-  real(kind=dbl), dimension(6,200) :: legen_coef
+  real(kind=dbl), dimension(6,maxnleg) :: legen_coef
   integer :: nlegen_coef
 
   !rt4 style
@@ -110,10 +110,10 @@ contains
 
     real(kind=dbl) :: freq
 
-    real(kind=dbl), dimension(200) :: legen_coef1_hydro 
-    real(kind=dbl), dimension(200) :: legen_coef2_hydro
-    real(kind=dbl), dimension(200) :: legen_coef3_hydro 
-    real(kind=dbl), dimension(200) :: legen_coef4_hydro
+    real(kind=dbl), dimension(maxnleg) :: legen_coef1_hydro 
+    real(kind=dbl), dimension(maxnleg) :: legen_coef2_hydro
+    real(kind=dbl), dimension(maxnleg) :: legen_coef3_hydro 
+    real(kind=dbl), dimension(maxnleg) :: legen_coef4_hydro
 
     real(kind=dbl), dimension(nstokes,nummu,nstokes,nummu,4) :: scatter_matrix_hydro
     real(kind=dbl), dimension(nstokes,nstokes,nummu,2) :: extinct_matrix_hydro
@@ -589,7 +589,7 @@ contains
        return
     end if
 
-    if (nlegen_coef .gt. maxnleg) then
+    if (nlegen_coef .gt. maxnleg-1) then
        print*, "nlegen_coef",nlegen_coef
        msg = 'nlegen_coef greater maxnleg'
        errorstatus = fatal

@@ -14,7 +14,7 @@ gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 FC=gfortran
 CC=gcc
-FCFLAGS=-c -fPIC -Wunused -fbounds-check  -cpp -J$(OBJDIR) -I$(OBJDIR) 
+FCFLAGS=-c -fPIC -Wunused  -cpp -J$(OBJDIR) -I$(OBJDIR) 
 #FCFLAGS=-g -c -fPIC -Wunused -O0 -cpp -J$(OBJDIR) -I$(OBJDIR) 
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran-mp-4.8
@@ -133,6 +133,8 @@ dfftpack: | $(LIBDIR)
 	cd tools/dfftpack && $(MAKE)
 	cp tools/dfftpack/libdfftpack.a $(LIBDIR)
 
+pamtra: FCFLAGS += -O2
+pamtra: NCFLAGS += -O2 
 pamtra: dfftpack $(FOBJECTS) $(BINDIR)$(BIN) | $(BINDIR)
 
 $(OBJDIR)versionNumber.auto.o: .git/HEAD .git/index
@@ -170,8 +172,8 @@ $(OBJDIR)write_nc_results.o:  $(SRCDIR)write_nc_results.f90 | $(OBJDIR)
 
 
 
-pamtraDebug: FCFLAGS += -g -fbacktrace
-pamtraDebug: LFLAGS += -g -fbacktrace
+pamtraDebug: FCFLAGS += -g -fbacktrace -fbounds-check 
+pamtraDebug: LFLAGS += -g -fbacktrace -fbounds-check 
 pamtraDebug: pamtra
 	@echo ""
 	@echo "####################################################################################"
@@ -199,7 +201,7 @@ pyProfile: 	py
 	@echo "performance report displayed at exit of python"
 	@echo "####################################################################################"
 
-pyDebug: FCFLAGS += -g -fbacktrace
+pyDebug: FCFLAGS += -g -fbacktrace -fbounds-check 
 pyDebug: NCFLAGS_F2PY += --debug-capi 
 pyDebug: 	py
 	@echo ""
@@ -215,7 +217,8 @@ $(OBJDIR)pypamtralib.pyf:  $(FOBJECTS)
 	@echo "####################################################################################"
 	f2py2.7 --overwrite-signature -m pyPamtraLib -h $(OBJDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)pyPamtraLib.f90
 
-
+py: FCFLAGS += -O2
+py: NCFLAGS += -O2 
 py: $(PYTDIR)pyPamtraLib.so
 
 $(PYTDIR)pyPamtraLib.so:  $(SRCDIR)pyPamtraLib.f90 $(OBJDIR)pypamtralib.pyf $(FOBJECTS) | $(BINDIR)

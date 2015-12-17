@@ -33,7 +33,7 @@ subroutine dda_db_liu(errorstatus,f, t, liu_type, mindex,       nbins, &
   real(kind=dbl) :: ad, bd, alpha, gamma 
   complex(kind=dbl) :: mindex 
   real(kind=dbl) :: extinction, albedo, back_scatt
-  real(kind=dbl) :: legen(200), legen2(200), legen3(200), legen4(200)
+  real(kind=dbl) :: legen(maxnleg), legen2(maxnleg), legen3(maxnleg), legen4(maxnleg)
     real(kind=dbl), intent(in), dimension(nbins) :: diameter
     real(kind=dbl), intent(in), dimension(nbins) :: del_d    
     real(kind=dbl), intent(in), dimension(nbins) ::  ndens
@@ -137,7 +137,7 @@ subroutine dda_db_liu(errorstatus,f, t, liu_type, mindex,       nbins, &
      return
   end if
   nlegen = 2 * nterms 
-  nlegen = min(maxnleg, nlegen) 
+  nlegen = min(maxnleg-1, nlegen) 
   nquad = (nlegen + 2 * nterms + 2) / 2 
   if (nquad > maxn) then
      errorstatus = fatal

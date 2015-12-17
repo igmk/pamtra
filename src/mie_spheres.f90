@@ -58,7 +58,7 @@ module mie_spheres
     real(kind=dbl), intent(out) :: extinction
     real(kind=dbl), intent(out) :: albedo
     real(kind=dbl), intent(out) :: back_scatt
-    real(kind=dbl), intent(out), dimension(200) :: legen, legen2, legen3, legen4 
+    real(kind=dbl), intent(out), dimension(maxnleg) :: legen, legen2, legen3, legen4 
     real(kind=dbl), intent(out), dimension(nbins) :: back_spec
     integer, intent(out) :: nlegen
 
@@ -155,7 +155,7 @@ module mie_spheres
 	  return
       end if         
       nlegen = 2 * nterms 
-      nlegen = min(maxnleg, nlegen) 
+      nlegen = min(maxnleg-1, nlegen) 
       nquad = (nlegen + 2 * nterms + 2) / 2 
       if (nquad.gt.maxn) then
 	  errorstatus = fatal
