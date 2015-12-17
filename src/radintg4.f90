@@ -472,12 +472,6 @@ SUBROUTINE COMBINE_LAYERS4(N, REFLECT1, TRANS1, SOURCE1, REFLECT2,&
   CALL MIDENTITY (N, ID_NN)
   Y_NN=ID_NN - X_NN
 
-print*, N
-
-print*, Y_NN
-print*, G_NN
-
-
   CALL MINVERT (N, Y_NN, G_NN)
 
   !           RTp = R2p + T2p * GAMMAp * R1p * T2m
