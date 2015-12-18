@@ -112,8 +112,10 @@ source)
     REAL(fp) :: ac, sc, fre_c, phi, wind10
 
     n = 2*nummu
-    CALL MZERO (2 * N, N, REFLECT)
-    CALL MZERO (2 * N, 1, SOURCE)
+    Reflect(:,:,:,:,:) = 0.d0
+    SOURCE(:,:,:) = 0.d0
+
+
     CALL MIDENTITY (N, TRANS (1, 1, 1, 1, 1) )
     CALL MIDENTITY (N, TRANS (1, 1, 1, 1, 2) )
     Frequency = 299792.5/wavelength

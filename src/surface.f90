@@ -28,8 +28,8 @@ subroutine lambert_surface (nstokes, nummu, mode, mu_values,      &
 
 
   n = nstokes * nummu 
-  call mzero (2 * n, n, reflect) 
-  call mzero (2 * n, 1, source) 
+  reflect(:,:,:,:,:) = 0.D0
+  source(:,:,:) = 0.D0
   call midentity (n, trans (1, 1, 1, 1, 1) ) 
   call midentity (n, trans (1, 1, 1, 1, 2) ) 
   !           the lambertian ground reflects the flux equally in all directions
@@ -56,12 +56,11 @@ subroutine lambert_radiance (nstokes, nummu, mode, &
   integer nstokes, nummu, mode
   real(kind=dbl) ground_albedo, ground_temp, wavelength 
   real(kind=dbl) radiance (nstokes, nummu) 
-  integer j, n 
+  integer j
   real(kind=dbl) :: thermal, planck, pi
   parameter (pi = 3.1415926535897932384d0) 
 
-  n = nstokes * nummu 
-  call mzero (n, 1, radiance) 
+  radiance(:,:) = 0.D0
   if (mode.eq.0) then 
      !           thermal radiation going up                                  
     call planck_function (ground_temp, 'r', wavelength, planck)
@@ -93,8 +92,9 @@ subroutine fresnel_surface (nstokes, nummu, mu_values, index,reflect, trans, sou
   complex(kind=dbl) epsilon, d, rh, rv
 
   n = nstokes * nummu 
-  call mzero (2 * n, n, reflect) 
-  call mzero (2 * n, 1, source) 
+  reflect(:,:,:,:,:) = 0.d0
+  source(:,:,:) = 0.d0
+
   call midentity (n, trans (1, 1, 1, 1, 1) ) 
   call midentity (n, trans (1, 1, 1, 1, 2) ) 
   epsilon = index**2
@@ -139,14 +139,14 @@ subroutine fresnel_radiance (nstokes, nummu, mode, mu_values,     &
   real(kind=dbl) ground_temp, wavelength, mu_values (nummu) 
   real(kind=dbl) radiance (nstokes, nummu) 
   complex(kind=dbl) index 
-  integer j, n 
+  integer j
   real(kind=dbl) zero, planck, cosi, r1, r2 
   complex(kind=dbl) epsilon, d, rh, rv 
   parameter (zero = 0.0d0) 
 
   ! thermal radiation going up                                  
-  n = nstokes * nummu 
-  call mzero (n, 1, radiance) 
+  radiance(:,:) = 0.D0
+
   if (mode.eq.0) then 
      call planck_function (ground_temp, 'r', wavelength, planck) 
      epsilon = index**2 
@@ -179,11 +179,10 @@ subroutine thermal_radiance(nstokes, nummu, mode, temperature,   &
   integer nstokes, nummu, mode 
   real(kind=dbl) temperature, wavelength, albedo 
   real(kind=dbl) radiance (nstokes, nummu, 2) 
-  integer j, n 
+  integer j
   real(kind=dbl) planck, thermal 
 
-  n = nstokes * nummu 
-  call mzero (2 * n, 1, radiance) 
+  radiance(:,:,:) = 0.d0
   if (mode.eq.0) then 
      call planck_function (temperature, 'r', wavelength, planck) 
      thermal = (1.0 - albedo) * planck 

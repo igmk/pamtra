@@ -370,14 +370,15 @@ subroutine radtran4(errorstatus, max_delta_tau,&
   !           outlevels gives the desired output levels.
   do i = 1, noutlevels
      layer = min( max( outlevels(i), 1), num_layers+2)
-     call mzero (2*n, n, upreflect)
-     call mzero (2*n, n, downreflect)
+     upreflect(:) = 0.D0
+     downreflect(:) = 0.D0
      call midentity (n, uptrans(1))
      call midentity (n, uptrans(1+n*n))
      call midentity (n, downtrans(1))
      call midentity (n, downtrans(1+n*n))
-     call mzero (2*n, 1, upsource)
-     call mzero (2*n, 1, downsource)
+     upsource(:) = 0.D0
+     downsource(:) = 0.D0
+
      do l = 1, layer-1
         krt = 1 + 2*n*n*(l-1)
         ks = 1 + 2*n*(l-1)
