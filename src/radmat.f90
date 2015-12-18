@@ -239,8 +239,8 @@ END SUBROUTINE MINVERT_LAPACK
 
 SUBROUTINE dgefa (a, lda, n, ipvt, info)
   use kinds
-  INTEGER lda, n, ipvt (1), info
-  real(kind=dbl) a (lda, 1)
+  INTEGER lda, n, ipvt (*), info
+  real(kind=dbl) a (lda, *)
   !
   !     dgefa factors a double precision matrix by gaussian elimination.
   !
@@ -347,8 +347,8 @@ END SUBROUTINE dgefa
 
 SUBROUTINE dgedi (a, lda, n, ipvt, det, work, job)
   use kinds
-  INTEGER lda, n, ipvt (1), job
-  real(kind=dbl) a (lda, 1), det (2), work (1)
+  INTEGER lda, n, ipvt (*), job
+  real(kind=dbl) a (lda, *), det (2), work (*)
   !
   !     dgedi computes the determinant and inverse of a matrix
   !     using the factors computed by dgeco or dgefa.
