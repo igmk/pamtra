@@ -28,7 +28,7 @@
 SUBROUTINE MCOPY (N, M, MATRIX1, MATRIX2)
   use kinds
   INTEGER N, M, I
-  REAL(kind=dbl) MATRIX1 (1), MATRIX2 (1)
+  REAL(kind=dbl) MATRIX1 (N*M), MATRIX2 (N*M)
 
   DO I = 1, N * M
      MATRIX2 (I) = MATRIX1 (I)
