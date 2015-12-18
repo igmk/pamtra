@@ -65,7 +65,7 @@ END SUBROUTINE MSUB
 SUBROUTINE MSCALARMULT (N, M, C, MATRIX1, MATRIX2)
   use kinds
   INTEGER N, M, I
-  REAL(kind=dbl) C, MATRIX1 (1), MATRIX2 (1)
+  REAL(kind=dbl) C, MATRIX1 (*), MATRIX2 (*)
 
   DO I = 1, N * M
      MATRIX2 (I) = C * MATRIX1 (I)
@@ -91,7 +91,7 @@ END SUBROUTINE MSCALARMULT
 SUBROUTINE MDIAG (N, VECTOR, MATRIX)
   use kinds
   INTEGER N, I, J
-  REAL(kind=dbl) VECTOR (1), MATRIX (N, N)
+  REAL(kind=dbl) VECTOR (*), MATRIX (N, N)
 
   DO I = 1, N
      DO J = 1, N
