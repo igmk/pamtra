@@ -33,6 +33,7 @@ module vars_output
   integer, allocatable, dimension(:,:,:,:,:,:) ::    out_radar_quality
   real(kind=dbl), allocatable, dimension(:) :: out_radar_vel
 
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_deltad
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_d
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_n
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_mass
@@ -174,11 +175,13 @@ module vars_output
 
         allocate(&
           out_psd_d(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin),&
+          out_psd_deltad(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin),&
           out_psd_n(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin),&
           out_psd_mass(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin),&
           out_psd_area(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin))
 
           out_psd_d = -9999.d0
+          out_psd_deltad = -9999.d0
           out_psd_n = -9999.d0
           out_psd_mass = -9999.d0
           out_psd_area = -9999.d0
@@ -250,6 +253,7 @@ module vars_output
     if (allocated(out_radar_edges)) deallocate(out_radar_edges)
     if (allocated(out_radar_quality)) deallocate(out_radar_quality)
     if (allocated(out_psd_d)) deallocate(out_psd_d)
+    if (allocated(out_psd_deltad)) deallocate(out_psd_deltad)
     if (allocated(out_psd_n)) deallocate(out_psd_n)
     if (allocated(out_psd_mass)) deallocate(out_psd_mass)
     if (allocated(out_psd_area)) deallocate(out_psd_area)

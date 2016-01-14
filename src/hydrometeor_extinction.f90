@@ -54,6 +54,7 @@ subroutine hydrometeor_extinction(errorstatus)
   use vars_output, only: &
     out_psd_area, &
     out_psd_d, &
+    out_psd_deltad, &
     out_psd_n, &
     out_psd_mass, &
     out_scatter_matrix, &
@@ -302,6 +303,7 @@ subroutine hydrometeor_extinction(errorstatus)
 
         if (save_psd) then
           out_psd_d(i_x,i_y,i_z,i_h,1:nbin) =  d_ds
+          out_psd_deltad(i_x,i_y,i_z,i_h,1:nbin) =  delta_d_ds
           out_psd_n(i_x,i_y,i_z,i_h,1:nbin) = n_ds
           out_psd_mass(i_x,i_y,i_z,i_h,1:nbin) = mass_ds
           out_psd_area(i_x,i_y,i_z,i_h,1:nbin) = area_ds
