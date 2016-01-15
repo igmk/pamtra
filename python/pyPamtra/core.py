@@ -974,16 +974,16 @@ class pyPamtra(object):
         #and mark all entries below -1 as missing Number!
         self.p[key][self.p[key]<-1] = missingNumber
 
-    for key in seld.df.data4D:
+    for key in self.df.data4D:
       #make new array
       newP = np.ones(self._shape4D) * missingNumber
       for x in xrange(self._shape2D[0]):
         for y in xrange(self._shape2D[1]):
           for h in xrange(self.df.nhydro):
           #interpolate!
-            newP[x,y,:,h] = extrap(new_hgt[x,y,:],old_hgt[x,y,:],seld.df.data4D[key][x,y,:,h])
+            newP[x,y,:,h] = extrap(new_hgt[x,y,:],old_hgt[x,y,:],self.df.data4D[key][x,y,:,h])
       #save new array
-      seld.df.data4D[key] = newP
+      self.df.data4D[key] = newP
 
       
     for key in ["hgt_lev","temp_lev","relhum_lev"]:
