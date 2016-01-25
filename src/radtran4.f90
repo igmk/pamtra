@@ -37,7 +37,6 @@
 !  GROUND_TYPE       CHAR*1        Type of ground surface:
 !                                    L for Lambertian, F for Fresnel.
 !  GROUND_ALBEDO     REAL          Albedo of Lambertian surface
-!  GROUND_INDEX      COMPLEX       Index of refraction of Fresnel surface
 !  SKY_TEMP          REAL          Temperature of blackbody radiation
 !                                    incident on atmosphere from above
 !  WAVELENGTH        REAL          Wavelength of radiation in microns.
@@ -118,7 +117,7 @@
 
 subroutine radtran4(errorstatus, max_delta_tau,&
      ground_temp, ground_type,&
-     ground_albedo, ground_index,&
+     ground_albedo,&
      sky_temp, wavelength,&
      num_layers, height, temperatures,&
      gas_extinct,&
@@ -145,7 +144,6 @@ subroutine radtran4(errorstatus, max_delta_tau,&
   integer   num_layers
   integer   outlevels(*)
   real*8    ground_temp, ground_albedo
-  complex*16  ground_index
   real*8    sky_temp
   real*8    wavelength, max_delta_tau
   real*8    height(*), temperatures(*)
