@@ -135,10 +135,10 @@ SUBROUTINE INTERNAL_RADIANCE4(N, UPREFLECT, UPTRANS, UPSOURCE,&
   PARAMETER (MAXV=64, MAXM=4096)
   REAL*8    S(MAXV), V(MAXV)
   REAL*8    X(MAXM), Y(MAXM)
+
+
   COMMON /SCRATCH1/ X, Y
-
-
-  !               Compute gamma plus
+ !               Compute gamma plus
   CALL MMULT (N,N,N, UPREFLECT(1,1,1), DOWNREFLECT(1,1,2), X)
   CALL MIDENTITY (N, Y)
   CALL MSUB (N,N, Y, X, Y)
