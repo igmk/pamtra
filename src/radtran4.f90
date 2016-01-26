@@ -194,8 +194,23 @@ subroutine radtran4(errorstatus, max_delta_tau,&
   character(len=80) :: msg
   character(len=14) :: nameOfRoutine = 'radtran4'
 
+  !Without setting these values to zero, PyPamtra results might when called several times!
+  source(:) = 0.d0
+  reflect(:) = 0.d0
+  trans(:) = 0.d0
+
   err = 0
   if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+
+
+  if (verbose >= 99) print*, "RADTRAN4"
+  if (verbose >= 99) print*, max_delta_tau,&
+     ground_temp, ground_type,&
+     ground_albedo,&
+     sky_temp, wavelength,&
+     num_layers, sum(height(1:num_layers)), sum(temperatures(1:num_layers)),&
+     SUM(gas_extinct(1:num_layers)),&
+     outlevels(1:noutlevels)
 
   symmetric = .true.
   n = nstokes*nummu
@@ -265,6 +280,7 @@ subroutine radtran4(errorstatus, max_delta_tau,&
      zdiff = abs(height(layer) - height(layer+1))
      gas_extinct(layer) = max(gas_extinct(layer),0.0d0)
      !        if (rt4kexttot(layer) .gt. 0.0) then
+
      if (rt_hydros_present_reverse(layer)) then
         call get_scat_mat(layer,nstokes, nummu,scatter_matrix,extinct_matrix, emis_vector)
 
@@ -340,11 +356,8 @@ subroutine radtran4(errorstatus, max_delta_tau,&
              reflect1, trans1, lin_source, linfactor,&
              reflect(krt), trans(krt), source(ks))
      endif
-
   enddo
-
   !            end of layer loop
-
 
   !           get the surface reflection and transmission matrices
   !             and the surface radiance

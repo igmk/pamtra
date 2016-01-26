@@ -250,6 +250,14 @@ subroutine rt4(errorstatus,out_file,&
 
   if (verbose >= 1) call report(info, 'start of ', nameOfRoutine)
 
+  if (verbose >= 99) print*, "RT4 in"
+  if (verbose >= 99) print*, "errorstatus,out_file"
+  if (verbose >= 99) print*, errorstatus,out_file
+  if (verbose >= 99) print*, "ground_type,ground_albedo,sky_temp"
+  if (verbose >= 99) print*, ground_type,ground_albedo,sky_temp
+  if (verbose >= 99) print*, "wavelength,outlevels"
+  if (verbose >= 99) print*, wavelength,outlevels
+
   height = 0.
   temperatures = 0.
   gas_extinct = 0.
@@ -266,6 +274,7 @@ subroutine rt4(errorstatus,out_file,&
   height(1:atmo_nlyrs(i_x,i_y)+1) = atmo_hgt_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1:1:-1)             ! [m]
   temperatures(1:atmo_nlyrs(i_x,i_y)+1) = atmo_temp_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1:1:-1)      ! [k]
   gas_extinct(1:atmo_nlyrs(i_x,i_y)) = rt_kextatmo(atmo_nlyrs(i_x,i_y):1:-1)         ! [np/m]
+
 
   !do some tests
   call assert_true(err,(maxlay>=num_layers),&
@@ -288,11 +297,10 @@ subroutine rt4(errorstatus,out_file,&
   end if
 
   if (verbose >= 99) print*, "ground_temp, num_layers,height ,temperatures , gas_extinct"
-  if (verbose >= 99) print*, ground_temp, num_layers,height ,temperatures , gas_extinct
+  if (verbose >= 99) print*, ground_temp,  num_layers, sum(height), sum(temperatures), sum(gas_extinct)
 
 
   rt_hydros_present_reverse(1:atmo_nlyrs(i_x,i_y)) = rt_hydros_present(atmo_nlyrs(i_x,i_y):1:-1)
-
   rt_scattermatrix_reverse(1:atmo_nlyrs(i_x,i_y),:,:,:,:,:) = rt_scattermatrix(atmo_nlyrs(i_x,i_y):1:-1,:,:,:,:,:)
   rt_extmatrix_reverse(1:atmo_nlyrs(i_x,i_y),:,:,:,:) = rt_extmatrix(atmo_nlyrs(i_x,i_y):1:-1,:,:,:,:)
   rt_emisvec_reverse(1:atmo_nlyrs(i_x,i_y),:,:,:) = rt_emisvec(atmo_nlyrs(i_x,i_y):1:-1,:,:,:)
@@ -317,6 +325,9 @@ subroutine rt4(errorstatus,out_file,&
      errorstatus = err
      return
   end if
+
+  if (verbose >= 99) print*, "up_rad, down_rad"
+  if (verbose >= 99) print*, SUM(up_rad), SUM(down_rad)
 
   !  if (verbose .gt. 0) print*, ".... radtran done!"
 
