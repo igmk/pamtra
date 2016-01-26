@@ -162,7 +162,7 @@ subroutine convolutionFFT(Xin,M,Ain,N,Yout)
     RF = RF/( DBLE( MNext ))
 
 
-    Yout(1:MN) = RF(:)
+    Yout(:) = RF(1:MN)
     deallocate(R1,R2,RF, WSAVE)
     return
 end subroutine convolutionFFT
