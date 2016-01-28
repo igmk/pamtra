@@ -1,4 +1,4 @@
-module mie_scat_utlities
+module mie_scat_utilities
   use kinds
   use constants, only: pi, c
   use report_module
@@ -141,7 +141,7 @@ module mie_scat_utlities
       integer(kind=long) :: errorstatus
       integer(kind=long) :: err = 0
       character(len=80) :: msg
-      character(len=14) :: nameOfRoutine = 'miecross'
+      character(len=14) :: nameOfRoutine = 'mieangle'
        
 
       s1 = cmplx(0.0, 0.0)
@@ -287,4 +287,4 @@ module mie_scat_utlities
       return
   end subroutine amplScatMat_to_extinctionMatrix
 
-end module mie_scat_utlities
+end module mie_scat_utilities

@@ -721,4 +721,148 @@ module dia2vel
 
       return
   end subroutine dia2vel_rogers_graupel
+
+
+  subroutine dia2vel_power_law &
+    (errorstatus,&      ! out
+    nDia,&              ! in
+    diaSpec,&           ! in
+    vel_size_mod, &     !in
+    velSpec)            ! out
+    
+      !in
+      !nDia: no of diameters
+      !diaSpec = diameter spectrum [m] in Rogers definition more dMin than dMax, which is diaSpec
+      !out
+      !velSpec: velocity spectrum [m/s]
+
+      ! power law
+      use settings, only: verbose
+      use kinds
+      use constants
+      use report_module
+      implicit none
+
+      integer, intent(in) :: nDia
+      real(kind=dbl), intent(in), dimension(ndia)::diaSpec
+      character(len=30),intent(in) :: vel_size_mod
+      real(kind=dbl), dimension(ndia), intent(out) :: velSpec
+      character(30) :: tokenized(3)
+      integer :: pos1,nn,pos2
+      real(kind=dbl) ::fallvel_A, fallvel_B, rho0, Y
+      integer(kind=long), intent(out) :: errorstatus
+      integer(kind=long) :: err = 0
+      character(len=80) :: msg
+      character(len=20) :: nameOfRoutine = 'dia2vel_power_law'
+
+      call assert_true(err,(len(TRIM(vel_size_mod)) > 8),&
+          "vel_size_mod must be longer than 8") 
+      if (err > 0) then
+        errorstatus = fatal
+        msg = "assertation error"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+      end if   
+
+      tokenized(1) = "NAN"
+      tokenized(2) = "NAN"
+      tokenized(3) = "NAN"
+      pos1 = 1
+      nn = 0
+      DO
+        pos2 = INDEX(vel_size_mod(pos1:), "_")
+        IF (pos2 == 0) THEN
+          nn = nn + 1
+          tokenized(nn) = vel_size_mod(pos1:)
+          EXIT
+        END IF
+        nn = nn + 1
+        tokenized(nn) = vel_size_mod(pos1:pos1+pos2-2)
+        pos1 = pos2+pos1
+      END DO
+      read(tokenized(2),*) fallvel_A
+      read(tokenized(3),*) fallvel_B
+      call assert_false(err,(tokenized(1) == "NAN"),&
+          "tokenized(1) must not be NAN") 
+      call assert_false(err,(tokenized(2) == "NAN"),&
+          "tokenized(2) must not be NAN") 
+      call assert_false(err,(tokenized(3) == "NAN"),&
+          "tokenized(3) must not be NAN") 
+      if (err > 0) then
+        errorstatus = fatal
+        msg = "assertation error"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+      end if  
+      !finally apply coefficients
+      velSpec(:) = fallvel_A * diaSpec(:)**fallvel_B
+
+      return
+  end subroutine dia2vel_power_law
+
+  subroutine dia2vel_corrected_power_law &
+    (errorstatus,&      ! out
+    nDia,&              ! in
+    diaSpec,&           ! in
+    rho_air,&           ! in
+    temp,&              ! in
+    vel_size_mod, &     !in
+    velSpec)            ! out
+      
+
+      !in
+      !nDia: no of diameters
+      !diaSpec = diameter spectrum [m]
+      !rho_air density of air [kg/m³]
+      !out
+      !velSpec: velocity spectrum [m/s]
+
+      !power law using the density correction of Foote, G. B. & Du Toit, P. S. Terminal Velocity of Raindrops Aloft. Journal of Applied Meteorology 8, 249–253 (1969).
+
+      use settings, only: verbose
+      use kinds
+      use constants
+      use report_module
+      implicit none
+
+      integer, intent(in) :: nDia
+      real(kind=dbl), intent(in), dimension(ndia)::diaSpec
+      real(kind=dbl), intent(in) :: rho_air, temp
+      character(len=30),intent(in) :: vel_size_mod
+      real(kind=dbl), dimension(ndia), intent(out) :: velSpec
+      real(kind=dbl) :: Y, rho0
+      integer :: jj
+
+      integer(kind=long), intent(out) :: errorstatus
+      integer(kind=long) :: err = 0
+      character(len=80) :: msg
+      character(len=20) :: nameOfRoutine = 'dia2vel_corrected_power_law'
+
+      if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+
+      call assert_true(err,(len(TRIM(vel_size_mod)) > 11),&
+          "vel_size_mod must be longer than 11") 
+      if (err > 0) then
+        errorstatus = fatal
+        msg = "assertation error"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+      end if   
+
+      call dia2vel_power_law(err,nDia,diaSpec,vel_size_mod,velSpec)
+
+      rho0 = 1.2038631624242195d0 !p=1013 hPa, T=20°C
+      if (rho0 < rho_air) rho0 = rho_air*1.00001 !it's numeric, stupid!
+
+      Y = 0.43d0*log10(rho0/rho_air)-0.4d0*(log10(rho0/rho_air))**2.5d0
+      velSpec = velSpec*10.d0**Y*(1d0+(0.0023d0*(1.1-(rho_air/rho_air))*(293.15d0-temp)))
+
+      errorstatus = err
+      if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+
+      return
+
+  end subroutine dia2vel_corrected_power_law
+
+
 end module

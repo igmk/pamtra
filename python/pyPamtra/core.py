@@ -53,7 +53,7 @@ class pyPamtra(object):
     self.nmlSet["data_path"]= 'data/'
     self.nmlSet["save_psd"]= False #also saves the PSDs used for radiative transfer
     self.nmlSet["save_ssp"]= False #also saves the single scattering properties used for radiative transfer
-    self.nmlSet["noutlevels"]= 2 # output levels are given from top to bottom in meters
+    #self.nmlSet["noutlevels"]= 2 # output levels are given from top to bottom in meters
     self.nmlSet["add_obs_height_to_layer"] = False # add observation levels to atmospheric levels by interpolation 
     self.nmlSet["outpol"]= 'VH'
     self.nmlSet["file_desc"]= ''
@@ -108,7 +108,11 @@ class pyPamtra(object):
     self.nmlSet["radar_receiver_miscalibration"]=  0.e0 #dB
     self.nmlSet["radar_attenuation"]=  "disabled" #! "bottom-up" or "top-down"
     self.nmlSet["radar_polarisation"]=  "NN" #! comma separated
-    self.nmlSet["radar_use_wider_peak"]=  False #! comma separated
+    self.nmlSet["radar_use_wider_peak"]=  False #
+    self.nmlSet["liblapack"]=  True # use liblapack for matrix inversion
+    
+    
+    
     #all settings which do not go into the nml file go here:
     self.set = dict()
     self.set["pyVerbose"] = 0
@@ -286,7 +290,7 @@ class pyPamtra(object):
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
-    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.nmlSet["noutlevels"],)
+    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,0)
@@ -327,7 +331,7 @@ class pyPamtra(object):
         #first all the stuff without heigth dimension
         year,month,day,time, self.p["nlyrs"][xx,yy], self.p["model_i"][xx,yy], self.p["model_j"][xx,yy] = g.next()[:7]
         self.p["unixtime"][xx,yy] = calendar.timegm(datetime.datetime(year = int(year), month = int(month), day = int(day), hour = int(time[0:2]), minute = int(time[2:4]), second = 0).timetuple())
-        self.p["obs_height"][xx,yy,:] = np.array(np.array(g.next()[:int(self.nmlSet["noutlevels"])]),dtype=float)
+        self.p["obs_height"][xx,yy,:] = np.array(np.array(g.next()[:int(self.p["noutlevels"])]),dtype=float)
         self.p["lat"][xx,yy], self.p["lon"][xx,yy], self.p["lfrac"][xx,yy],self.p["wind10u"][xx,yy],self.p["wind10v"][xx,yy],self.p["groundtemp"][xx,yy],self.p["hgt_lev"][xx,yy,0]  = np.array(np.array(g.next()[:7]),dtype=float)
  
         self.p["iwv"][xx,yy] = np.array(np.array(g.next()[0]),dtype=float)
@@ -662,10 +666,10 @@ class pyPamtra(object):
     self.p["nlyrs"] = np.array(np.sum(kwargs["hgt"]!=missingNumber,axis=-1))
     hgtVar = "hgt"
 
-    if "obs_height" in kwargs.keys():
-      self.nmlSet["noutlevels"] = np.shape(kwargs["obs_height"])[2]
-    else:
-      self.nmlSet["noutlevels"] = 2
+    try:
+      self.p["noutlevels"] = np.shape(kwargs["obs_height"])[-1]
+    except (KeyError,IndexError):
+      self.p["noutlevels"] = 2
 
     #if np.any(self.p["nlyrs"] != self.p["max_nlyrs"]):
       #self._radiosonde = True
@@ -762,10 +766,7 @@ class pyPamtra(object):
         warnings.warn(qValue + " set to nan", Warning)
       else:
         self.p[qValue] = kwargs[qValue].reshape(self._shape3D)        
-        
-    if "obs_height" in kwargs.keys():
-      self.p["obs_height"] = kwargs["obs_height"].reshape(self._shape2D)
-      
+              
     if "radar_prop" in kwargs.keys():
       self.p["radar_prop"] = kwargs["radar_prop"].reshape(self._shape2D+tuple([2]))
     else:
@@ -949,7 +950,6 @@ class pyPamtra(object):
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
-    assert len(self.df.data4D.keys())  == 0
     assert len(self.df.dataFullSpec.keys()) == 0
 
     def extrap(x, xp, yp):
@@ -967,13 +967,23 @@ class pyPamtra(object):
           for y in xrange(self._shape2D[1]):
             for h in xrange(self.df.nhydro):
             #interpolate!
-#              newP[x,y,:,h] = np.interp(new_hgt,old_hgt[x,y,:],self.p[key][x,y,:,h])
-#              newP[x,y,:,h] = np.interp(new_hgt[x,y,:],old_hgt[x,y,:],self.p[key][x,y,:,h])
               newP[x,y,:,h] = extrap(new_hgt[x,y,:],old_hgt[x,y,:],self.p[key][x,y,:,h])
         #save new array
         self.p[key] = newP
         #and mark all entries below -1 as missing Number!
         self.p[key][self.p[key]<-1] = missingNumber
+
+    for key in self.df.data4D:
+      #make new array
+      newP = np.ones(self._shape4D) * missingNumber
+      for x in xrange(self._shape2D[0]):
+        for y in xrange(self._shape2D[1]):
+          for h in xrange(self.df.nhydro):
+          #interpolate!
+            newP[x,y,:,h] = extrap(new_hgt[x,y,:],old_hgt[x,y,:],self.df.data4D[key][x,y,:,h])
+      #save new array
+      self.df.data4D[key] = newP
+
       
     for key in ["hgt_lev","temp_lev","relhum_lev"]:
       if key in self.p.keys():
@@ -1196,9 +1206,11 @@ class pyPamtra(object):
     
     self.p["nlyrs"] = np.sum(hgt_lev!=missingNumber,axis=-1) -1
     self.p["max_nlyrs"] = np.shape(hgt_lev)[-1] -1
-
+    self.p["noutlevels"] = np.shape(obs_height)[-1]
+    
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
+    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
@@ -1212,7 +1224,7 @@ class pyPamtra(object):
     self.p["model_j"] = np.array(np.where(lon.reshape(self._shape2D))[1]).reshape(self._shape2D) +1
     self.p["wind10u"] = wind10u.reshape(self._shape2D)
     self.p["wind10v"] = wind10v.reshape(self._shape2D)
-    self.p["obs_height"] = obs_height.reshape(self._shape2D)
+    self.p["obs_height"] = obs_height.reshape(self._shape3Dout)
 
     self.p["hydro_q"] = hydro_q.reshape(self._shape4D)
     self.p["hydro_n"] = hydro_n.reshape(self._shape4D)
@@ -1246,7 +1258,7 @@ class pyPamtra(object):
     assert self.set["nfreqs"] > 0
     assert self.set["radar_npol"] > 0
     assert self.set["att_npol"] > 0
-    assert self.nmlSet["noutlevels"] > 0
+    assert self.p["noutlevels"] > 0
     assert np.prod(self._shape2D)>0
     
     if checkData: self._checkData()
@@ -1682,7 +1694,7 @@ class pyPamtra(object):
     self.r["radar_slopes"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],self.nmlSet["radar_npeaks"],2,))*missingNumber
     self.r["radar_edges"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],self.nmlSet["radar_npeaks"],2,))*missingNumber
     self.r["radar_quality"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],self.nmlSet["radar_npeaks"],),dtype=int)*missingNumber
-    self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.nmlSet["noutlevels"],self._nangles*2.,self.set["nfreqs"],self._nstokes))*missingNumber
+    self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],self._nangles*2.,self.set["nfreqs"],self._nstokes))*missingNumber
     if self.nmlSet["save_psd"]:
       self.r["psd_area"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
       self.r["psd_n"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
@@ -1865,7 +1877,7 @@ class pyPamtra(object):
     
     if (self.r["nmlSettings"]["passive"]):
       cdfFile.createDimension('angles',len(self.r["angles_deg"]))
-      cdfFile.createDimension('outlevels',int(self.nmlSet["noutlevels"]))
+      cdfFile.createDimension('outlevels',int(self.p["noutlevels"]))
       cdfFile.createDimension('passive_polarisation',int(self._nstokes))
       
     if (self.r["nmlSettings"]["radar_mode"] in ["spectrum","moments"]):
@@ -2182,7 +2194,7 @@ class pyPamtra(object):
     
     self.set["freqs"] = sorted(translatorDict.keys())
     self.set["nfreqs"] = len(self.set["freqs"])
-    self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._noutlevels,self._nangles*2.,self.set["nfreqs"],self._nstokes))*missingNumber
+    self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],self._nangles*2.,self.set["nfreqs"],self._nstokes))*missingNumber
 
     for ff, (freqNew, freqList) in enumerate(sorted(translatorDict.items())):
       assert np.where(np.array(self.set["freqs"]) == freqNew)[0][0] == ff
@@ -2238,20 +2250,20 @@ class pyPamtra(object):
 		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
 		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
 		for j in range(16):
-		  ss += '%.9f'%mu[i]+'    '+'%.9f'%mu[j]+'    0'+'\n'
+		  ss += '%.9f'%mu[i]+'    '+'%.9f'%(-1.*mu[j])+'    0'+'\n'
 		  for k in range(2):
 		    ss += '%.12e'%sm[zz-1,k,j,0,i,2]+' '+'%.12e'%sm[zz-1,k,j,1,i,2]+' '+ns+' '+ns+'\n'
 		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
 		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
 	      for i in range(16):
 		for j in range(16):
-		  ss += '%.9f'%mu[i]+'    '+'%.9f'%mu[j]+'    0'+'\n'
+		  ss += '%.9f'%(-1.*mu[i])+'    '+'%.9f'%mu[j]+'    0'+'\n'
 		  for k in range(2):
 		    ss += '%.12e'%sm[zz-1,k,j,0,i,1]+' '+'%.12e'%sm[zz-1,k,j,1,i,1]+' '+ns+' '+ns+'\n'
 		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
 		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
 		for j in range(16):
-		  ss += '%.9f'%mu[i]+'    '+'%.9f'%mu[j]+'    0'+'\n'
+		  ss += '%.9f'%(-1.*mu[i])+'    '+'%.9f'%(-1.*mu[j])+'    0'+'\n'
 		  for k in range(2):
 		    ss += '%.12e'%sm[zz-1,k,j,0,i,3]+' '+'%.12e'%sm[zz-1,k,j,1,i,3]+' '+ns+' '+ns+'\n'
 		  ss += ns+' '+ns+' '+ns+' '+ns+'\n'
@@ -2264,7 +2276,7 @@ class pyPamtra(object):
 		ss += ns+' '+ns+' '+ns+' '+ns+'\n'
 		ss += ns+' '+ns+' '+ns+' '+ns+'\n'
 	      for i in range(16):
-		ss += '%.9f'%mu[i]+'\n'
+		ss += '%.9f'%(-1.*mu[i])+'\n'
 		for k in range(2):
 		  ss += '%.12e'%em[zz-1,k,0,i,1]+' '+'%.12e'%em[zz-1,k,1,i,1]+' '+ns+' '+ns+'\n'
 		ss += ns+' '+ns+' '+ns+' '+ns+'\n'
@@ -2274,7 +2286,7 @@ class pyPamtra(object):
 		ss += '%.9f'%mu[i]+'  '
 		ss += '%.12e'%ev[zz-1,0,i,0]+' '+'%.12e'%ev[zz-1,1,i,0]+' '+ns+' '+ns+'\n'
 	      for i in range(16):
-		ss += '%.9f'%mu[i]+'  '
+		ss += '%.9f'%(-1.*mu[i])+'  '
 		ss += '%.12e'%ev[zz-1,0,i,1]+' '+'%.12e'%ev[zz-1,1,i,1]+' '+ns+' '+ns+'\n'
 	      sf.write(ss)
 	      sf.close()

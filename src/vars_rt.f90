@@ -19,7 +19,7 @@ module vars_rt
   subroutine allocate_rt_vars(errorstatus)
     
 
-    use settings, only: nstokes, nummu, verbose
+    use settings, only: nstokes, nummu
     use vars_atmosphere, only: atmo_nlyrs
     use vars_index, only: i_x, i_y
 

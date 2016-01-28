@@ -1,20 +1,23 @@
-
-
 subroutine gausquad (n, xa, wt) 
     !      generates the abscissas (x) and weights (w) for an n point
     !      gauss-legendre quadrature.
     use kinds
+    use constants, only: pi
+    use report_module
 
     implicit none
+    
     integer :: n
     real(kind=dbl) :: xa(*), wt(*)
     integer :: k, i, j, l
     real(kind=dbl) :: x, xp, pl, pl1, pl2, dpl
     real(kind=dbl), parameter :: tiny = 3.0d-13
 
+    if (verbose >= 4) print*, 'Entering gausquad'
+    
     k = (n + 1) / 2
     do j = 1, k
-        x = cos(3.141592654 * (j - .25) / (n + .5))
+        x = cos(pi * (j - 0.25d0) / (n + 0.5d0))
         i = 0
 100 continue
     pl1 = 1
@@ -34,6 +37,8 @@ subroutine gausquad (n, xa, wt)
     wt(j) = 2.0d0 / ( (1.0d0 - x * x) * dpl * dpl)
     wt(n - j + 1) = wt(j)
 end do
+
+    if (verbose >= 4) print*, 'Leaving gausquad'
 
 return
 end subroutine gausquad

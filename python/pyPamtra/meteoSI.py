@@ -191,7 +191,24 @@ def rh2a(rh,T):
 	e = rh*e_sat_gg_water(T)
 	a = e/(Rvapor*T)
 	return a
- 
+
+def a2rh(a,T):
+        '''
+        Calculate the relative from absolute humidity and air temperature.
+
+        Input
+        T is in K
+        a in kg/kg
+        Output
+        rh in Pa/Pa
+        
+        Source: Kraus: Chapter 8.1.2
+        '''
+        
+        e = a*(Rvapor*T)
+        rh = e/e_sat_gg_water(T)
+        return rh
+  
 	
 	
 def q2rh(q,T,p):

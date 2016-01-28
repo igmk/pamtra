@@ -54,6 +54,7 @@ subroutine hydrometeor_extinction(errorstatus)
   use vars_output, only: &
     out_psd_area, &
     out_psd_d, &
+    out_psd_deltad, &
     out_psd_n, &
     out_psd_mass, &
     out_scatter_matrix, &
@@ -273,7 +274,7 @@ subroutine hydrometeor_extinction(errorstatus)
 
 
         if (verbose >= 2) print*, i_h, hydro_name
-
+        if (verbose >= 3) print*, "i_h, q_h, n_tot, r_eff", i_h, q_h, n_tot, r_eff
         if ((q_h < hydro_threshold .or. isnan(q_h)) .and. &
             (n_tot <=0 .or. isnan(n_tot)) .and. &
             (r_eff <=0 .or. isnan(r_eff)) .and. &
@@ -294,8 +295,15 @@ subroutine hydrometeor_extinction(errorstatus)
           return
         end if
 
+        if (all(n_ds <= 0)) then
+          if (verbose >=3) print*, i_x,i_y,i_z,i_h,hydro_name, "all n_ds < 0", MAXVAL(n_ds)
+          call deallocateVars_drop_size_dist()
+          CYCLE
+        end if
+
         if (save_psd) then
           out_psd_d(i_x,i_y,i_z,i_h,1:nbin) =  d_ds
+          out_psd_deltad(i_x,i_y,i_z,i_h,1:nbin) =  delta_d_ds
           out_psd_n(i_x,i_y,i_z,i_h,1:nbin) = n_ds
           out_psd_mass(i_x,i_y,i_z,i_h,1:nbin) = mass_ds
           out_psd_area(i_x,i_y,i_z,i_h,1:nbin) = area_ds

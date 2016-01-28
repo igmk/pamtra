@@ -14,7 +14,7 @@ subroutine scatcnv(errorstatus,nlegen,&
 !
 
   use settings, only: nstokes,nummu, aziorder, &
-    quad_type, verbose
+    quad_type, verbose, maxnleg
   use rt_utilities, only: lobatto_quadrature
   use report_module
 
@@ -22,7 +22,7 @@ subroutine scatcnv(errorstatus,nlegen,&
 
   INTEGER  NLEGEN
   REAL*8   MU_VALUES(32), QUAD_WEIGHTS(32)
-  REAL*8   COEF(6,100),  EXTINCT, ALBEDO, CONST
+  REAL*8   COEF(6,maxnleg),  EXTINCT, ALBEDO, CONST
   CHARACTER*8   QUADTYPE
   real*8 scatter_matrix(nstokes,nummu,nstokes,nummu,4)
   real*8 ext_matrix(nstokes,nstokes,nummu,2)
@@ -101,9 +101,23 @@ subroutine transform_ext_emis(mu_values,extinct,albedo,ext_matrix,emis_vec)
 end subroutine transform_ext_emis
 
 subroutine transform_scatter(CONST,MU_VALUES, NLEGEN, COEF,scatter_matrix)
+  !
+  !  transform_scatter calculates the polarization scattering matrix.
+  !  For each pair of quadrature angles (incoming and outgoing)
+  !  the routine evaluates the single scattering phase matrix
+  !  for many delta phi's.  This is done by calculating the
+  !  scattering angle and summing the Legendre series for
+  !  necessary matrix elements.  Then the polarization reference
+  !  is rotated from the scattering plane to the meridional planes.
+  !  A Fourier transform is done to transform the phase matrices from
+  !  phi space to azimuth mode space.  Because all of the azimuth modes
+  !  are calculated at one time the scattering matrix is stored in a
+  !  temporary disk file to be accessed later one mode at a time.
+  !  The scattering matrix includes the quadrature weights for
+  !  integrating.
 
   use kinds
-  use settings, only: nummu, aziorder, nstokes
+  use settings, only: nummu, aziorder, nstokes, maxnleg
   use rt_utilities, only: number_sums,&
     sum_legendre,&
     rotate_phase_matrix,&
@@ -113,7 +127,7 @@ subroutine transform_scatter(CONST,MU_VALUES, NLEGEN, COEF,scatter_matrix)
   implicit none
 
   INTEGER  NLEGEN, l
-  REAL(kind=dbl) :: MU_VALUES(NUMMU), CONST, COEF(6,1)
+  REAL(kind=dbl) :: MU_VALUES(NUMMU), CONST, COEF(6,maxnleg)
   INTEGER  MAXLEG
   PARAMETER (MAXLEG=64)
   INTEGER  I1, I2, I, J1, J2, K, L1, L2

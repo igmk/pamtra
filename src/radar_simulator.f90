@@ -116,6 +116,11 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
     do i_p = 1  , radar_npol
       if (verbose >= 4) print*, "do polarisation", i_p, radar_pol(i_p)
 
+      if (back(i_p) == 0.0) then
+        if (verbose >= 3) print*, "Skipping polarisation", i_p, radar_pol(i_p), "backscattering is zero"
+        CYCLE
+      end if
+
       !transform backscattering in linear reflectivity units, 10*log10(back) would be in dBz
       Ze_back = 1.d18* (1.d0/ (K2*pi**5) ) * back(i_p) * (wavelength)**4 ![mm⁶/m³]
 

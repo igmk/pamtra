@@ -58,8 +58,9 @@ subroutine calc_moment(errorstatus)
     errorstatus = fatal
     call report(errorstatus, msg, nameOfRoutine)
     return
-  elseif (maxval(n_ds) <= 0.) then
-    msg = 'maximum particle number concentration <= 0!!'
+  elseif (any(n_ds < 0.)) then
+    print*, n_ds
+    msg = 'particle number concentration < 0!!'
     errorstatus = fatal
     call report(errorstatus, msg, nameOfRoutine)
     return

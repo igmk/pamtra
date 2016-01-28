@@ -25,8 +25,6 @@ subroutine run_rt(errorstatus)
   real(kind=dbl) :: wavelength       ! microns
   real(kind=dbl) :: ground_albedo
 
-  complex(kind=dbl) :: ground_index
-
   character(300) :: out_file_pas, out_file_act !file names if no nc
 
   ! Error handling
@@ -38,20 +36,19 @@ subroutine run_rt(errorstatus)
 
   interface
      subroutine RT4(errorstatus,out_file,&
-          ground_type,ground_albedo,ground_index,sky_temp,&
+          ground_type,ground_albedo,sky_temp,&
           wavelength,outlevels)
        use kinds
-       use settings, only: maxlay
+       use settings, only: noutlevels
        implicit none
        integer   maxv
        parameter (maxv=64)
        character*64, intent(in) :: out_file
        character, intent(in) ::  ground_type*1
        real(kind=dbl), intent(in) ::  ground_albedo
-       complex*16, intent(in) ::   ground_index
        real(kind=dbl), intent(in) ::  sky_temp
        real(kind=dbl), intent(in) ::   wavelength
-       integer, intent(in) ::  outlevels(maxlay)
+       integer, intent(in) ::  outlevels(noutlevels)
        integer(kind=long), intent(out) :: errorstatus
      end subroutine RT4
 
@@ -118,9 +115,11 @@ subroutine run_rt(errorstatus)
      rt_kextatmo = 0._dbl ! for the whole column
   end if
   !save atmospheric attenuation and height for radar
+
   if (active) then
-     out_att_atmo(i_x,i_y,:,i_f)  = 10._dbl*log10(exp(rt_kextatmo*atmo_delta_hgt_lev(i_x,i_y,:)))
-     out_radar_hgt(i_x,i_y,:) = atmo_hgt(i_x,i_y,:)
+     out_att_atmo(i_x,i_y,:atmo_nlyrs(i_x,i_y),i_f)  = 10._dbl* &
+        log10(exp(rt_kextatmo(atmo_nlyrs(i_x,i_y))*atmo_delta_hgt_lev(i_x,i_y,:atmo_nlyrs(i_x,i_y))))
+     out_radar_hgt(i_x,i_y,:atmo_nlyrs(i_x,i_y)) = atmo_hgt(i_x,i_y,:atmo_nlyrs(i_x,i_y))
   end if
 
 
@@ -189,7 +188,7 @@ subroutine run_rt(errorstatus)
      if (verbose >= 2) print*, i_x,i_y, "Entering rt4 ...."
 
      call rt4(err, out_file_pas,&
-          ground_type,ground_albedo,ground_index,sky_temp,&
+          ground_type,ground_albedo,sky_temp,&
           wavelength,outlevels)
 
      if (verbose >= 2) print*, i_x,i_y, "....rt4 finished"

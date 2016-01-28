@@ -4,7 +4,7 @@ module rayleigh_gans
   use constants, only: pi,c, Im, rho_ice
   use settings, only: passive
   use report_module
-  use mie_scat_utlities  
+  use mie_scat_utilities  
   use vars_index, only: i_x,i_y, i_z, i_h
   implicit none
 
