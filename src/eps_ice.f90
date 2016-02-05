@@ -48,7 +48,7 @@ function eps_ice(T,f)
     beta = beta_m + delta_beta
     eps_imag = (alpha/f)+beta*f
 
-    eps_ice = cmplx(eps_real, eps_imag)
+    eps_ice = dcmplx(eps_real, eps_imag)
 
     return
 

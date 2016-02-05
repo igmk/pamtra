@@ -180,11 +180,11 @@ subroutine run_drop_size_dist(errorstatus)
     return
   end if
 
-  if (liq_ice == -1) then                         ! ADD a filter if a SCATTERING DATABASE is used
+  if (liq_ice == -1) then
     call make_soft_spheroid(errorstatus)
   endif
 
-! fill in the density and diamter array for the scattering routines
+! fill in the density and diameter array for the scattering routines
   if (liq_ice == -1) then
     density2scat = soft_rho_eff
     diameter2scat = soft_d_eff

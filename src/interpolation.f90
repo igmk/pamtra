@@ -2,7 +2,8 @@ subroutine interpolation(nx1,nx2,x1,y1,x2,y2)
 
 !  use settings, only: verbose
   use kinds
-        use report_module
+  use report_module
+
   implicit none
 
   integer :: i
@@ -23,7 +24,7 @@ subroutine interpolation(nx1,nx2,x1,y1,x2,y2)
   end interface
 
 
-  if (verbose .gt. 1) print*, 'entering interpolation'
+!  if (verbose .gt. 1) print*, 'entering interpolation'
 
   ix2 = 0
 

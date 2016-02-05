@@ -8,7 +8,7 @@ pamtra
 .pydevproject
 *.nml
 !test/nmls/*nml
-!examples/*nml
+!examples/*.nml
 fort*
 !python/pyPamtra/fort*
 output/
@@ -50,4 +50,7 @@ build
 lib
 doc/build
 *.pyf
+src/recycle/
+descriptorfiles/
+nml/
 .python-version

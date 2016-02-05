@@ -41,7 +41,7 @@ class pamDescriptorFile(object):
           row[ii] = item.replace("'", "").replace('"', '')
   
       self.addHydrometeor(row)
-      print ', '.join(row), len(row)
+      #print ', '.join(row), len(row)
       
     f.close()  
     #make rec array

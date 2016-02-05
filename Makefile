@@ -76,6 +76,8 @@ OBJECTS=kinds.o \
 	mie_spheres.o \
 	scatdb.o \
 	dda_db_liu.o \
+	dda_db_hong.o \
+	hongdb.o \
 	dia2vel.o \
 	rescale_spectra.o \
 	radar_moments.o \

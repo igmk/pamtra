@@ -1,4 +1,4 @@
-subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
+subroutine dda_db_hong(errorstatus,f,t,hong_type,mindex,nbins, &
       diameter, &
       del_d, &
       ndens, & 
@@ -16,7 +16,7 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
 
   use kinds
   use constants, only: pi,c
-  use settings, only: data_path, lphase_flag, maxnleg
+  use settings, only: lphase_flag, maxnleg
   use mie_scat_utilities
   use report_module
 
@@ -26,17 +26,17 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
 
   real(kind=dbl), intent(in) :: f,  &! frequency [GHz]
        t    ! temperature [K]
-  integer, intent(in) :: liu_type
+  integer, intent(in) :: hong_type
   integer, intent(in) :: nbins
   
-  real(kind=dbl) :: wavelength, mass_eq_dia
+  real(kind=dbl) :: wavelength
   real(kind=dbl) :: ad, bd, alpha, gamma 
   complex(kind=dbl) :: mindex 
   real(kind=dbl) :: extinction, albedo, back_scatt
-  real(kind=dbl) :: legen(maxnleg), legen2(maxnleg), legen3(maxnleg), legen4(maxnleg)
-    real(kind=dbl), intent(in), dimension(nbins) :: diameter
-    real(kind=dbl), intent(in), dimension(nbins) :: del_d    
-    real(kind=dbl), intent(in), dimension(nbins) ::  ndens
+  real(kind=dbl) :: legen(200), legen2(200), legen3(200), legen4(200)
+  real(kind=dbl), intent(in), dimension(nbins) :: diameter
+  real(kind=dbl), intent(in), dimension(nbins) :: del_d    
+  real(kind=dbl), intent(in), dimension(nbins) ::  ndens
   real(kind=dbl), intent(out) :: back_spec(nbins)
   integer, parameter :: maxn = 5000
   integer :: nterms, nquad, nleg
@@ -62,30 +62,28 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
   real(kind=dbl) :: del_d_eff, ndens_eff
   ! variables communicating with the database. need to be single precission !!!
 
-  integer :: iret, is_loaded
-  integer, parameter :: nang_db = 37
-  real(kind=sgl) :: t_liu, f_liu
-  real(kind=sgl) :: dia_liu
-  real(kind=sgl) :: abs_liu,sca_liu,bsc_liu,g, r_ice_eq
-  real(kind=sgl), dimension(nang_db) :: p_liu
-  real(kind=sgl), dimension(nang_db) :: ang_db
-  real(kind=sgl), parameter, dimension(0:10) :: dmax = (/4835.,3304.,2632.,3246.,5059.,&
-       10000.,10000.,10000.,10000.,10000.,12454./)*1.e-6
-  real(kind=sgl), parameter, dimension(0:10) :: dmin = (/121.,83.,66.,81.,127.,&
-       50.,50.,50.,50.,50.,75./)*1.e-6
-  real(kind=sgl), parameter, dimension(0:10) :: a_m = (/33.996,106.526,210.529,112.290,29.680,&
-       0.183,0.1287,0.1680,0.2124,1.191e-3,5.666e-3/)
-  real(kind=sgl), parameter, dimension(0:10) :: b_m = (/3.,3.,3.,3.,3.,&
-       2.274,2.264,2.274,2.285,1.511,1.82/)
+  integer :: iret
+  integer, parameter :: nang_db = 181
+  real(kind=dbl) :: dia
+  real(kind=dbl) :: abs_hong,ext_hong,bsc_hong,g, r_ice_eq
+  real(kind=dbl), dimension(nang_db) :: p_hong
+  real(kind=dbl), dimension(nang_db) :: ang_db
+  real(kind=dbl), parameter, dimension(0:5) :: mass_eq_dia = (/514.71503,310.88101,897.64746,307.97501,344.20901,283.388/)*2.e-6
+  real(kind=sgl), parameter, dimension(0:5) :: a_m = (/0.03,0.02,0.75,0.18,65.45,347.31/) ! taken from Kulie et al. 2010
+  real(kind=sgl), parameter, dimension(0:5) :: b_m = (/2.0,2.0,2.47,2.34,3.0,3.0/) ! taken from Kulie et al. 2010  
+  real(kind=dbl), parameter :: dmax = 2000.*1.e-6
+  real(kind=dbl), parameter :: dmin = 2.*1.e-6
 
   real(kind=dbl), allocatable, dimension(:) :: ang_quad, mu, wts, P1_quad
 
   integer(kind=long) :: errorstatus
-  integer(kind=long) :: err = 0
+  integer(kind=long) :: err
   character(len=80) :: msg
-  character(len=14) :: nameOfRoutine = 'dda_db_liu'
+  character(len=14) :: nameOfRoutine = 'dda_db_hong'
 
   if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+  
+  err = 0
 
   qext = 0.d0;  qscat = 0.d0;  qback = 0.d0
   nlegen = 0
@@ -96,37 +94,16 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
   n_tot = 0.d0
   
   ! initialize database phase function angles
-  do i = 0,36
-     ang_db(i+1) = i*5.
+  do i = 0,180
+     ang_db(i+1) = i
   end do
-
-  t_liu = real(t)   ! convert to 4byte real (database requirement!)
-  f_liu = real(f)   ! convert to 4byte real (database requirement!)
-  is_loaded = 0
-
-  ! print*,"###"
-  ! call scatdb(89.d0,255.3790d0,8,203.13146955642290,abs_liu,sca_liu,bsc_liu,g,p_liu,r_ice_eq,iret,is_loaded,&
-  !           trim(data_path))
-  ! print*,abs_liu,sca_liu,bsc_liu,g,p_liu,r_ice_eq,iret
-  ! print*,"###"
-
-  if (t_liu .lt. 234.) then
-     if (verbose .gt. 1) print*, "temperature to low for database"
-     t_liu = 234. ! lowest value in database
-  end if
-
-  if (t_liu .gt. 273.15) then
-     if (verbose .gt. 1) print*, "temperature to high for database"
-     t_liu = 273.15 ! highest value in database
-  end if
 
   ! find the maximum number of terms required in the mie series
   ! probably this should be the mass equivalent sphere diameter
   if (verbose >= 3) print*, 'find maximum number for the mie series'
   msphere = mindex
-  mass_eq_dia = (6.*a_m(liu_type)*diameter(nbins)**b_m(liu_type)/(pi*917.))**(1./3.)
   !  x = pi * dia2 / wavelength
-  x = pi * mass_eq_dia / wavelength
+  x = pi * mass_eq_dia(hong_type) / wavelength
   nterms = 0 
   call miecalc(err, nterms, x, msphere, a, b) ! miecalc returns nterms
   if (err /= 0) then
@@ -136,7 +113,7 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
      return
   end if
   nlegen = 2 * nterms 
-  nlegen = min(maxnleg-1, nlegen) 
+  nlegen = min(maxnleg, nlegen) 
   nquad = (nlegen + 2 * nterms + 2) / 2 
   if (nquad > maxn) then
      errorstatus = fatal
@@ -144,7 +121,6 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
      call report(errorstatus, msg, nameOfRoutine)
      return
   end if
-
   
   allocate(ang_quad(nquad),mu(nquad),wts(nquad),P1_quad(nquad))
   allocate(sump1(nquad), coef1(nquad), sump2(nquad), coef2(nquad))
@@ -166,48 +142,47 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
 
 
   !   integration loop over radius of spheres 
-  if (verbose .gt. 3) print*, 'Doing database search for diameter intervall: '
+  if (verbose > 3) print*, 'Doing database search for diameter intervall: '
   do ir = 1, nbins
      !Do not process if no particles present
      if (ndens(ir) <= 0) CYCLE
 
-        ndens_eff = ndens(ir)
-        del_d_eff = del_d(ir)
+     ndens_eff = ndens(ir)
+     del_d_eff = del_d(ir)
+     dia = diameter(ir)
         
-     !    dia_liu = dia1 + (ir - 1) * del_d
-!     diameter(ir) = (dia2-dia1)/2.d0*xi(ir)+(dia1+dia2)/2.d0 !because ir goes from -1 to 1, not equidistant!
-     dia_liu = REAL(diameter(ir))
-! !     ndens = distribution(ad, bd, alpha, gamma, dble(dia_liu), aerodist)  ! number density
-     !    if ((ir .eq. 1 .or. ir .eq. nbins+1) .and. nbins .gt. 0) then
-     !		ndens = 0.5d0 * ndens
-     !    end if
      n_tot = n_tot + ndens_eff*del_d_eff !weights are required as integration coefficient instead of del_d
-     if (dia_liu > dmax(liu_type)) then
-        dia_liu = dmax(liu_type)
-        if (verbose >= 1) print*, 'WARNING dda_liu: particles larger than d_max of liu database'
+     if (dia < dmin) then
+        if (verbose >= 1) print*, 'WARNING dda_hong: particle with ', dia ,' smaller than d_min of hong database'
+        dia = dmin
      end if
-     if (dia_liu < dmin(liu_type)) then
-        dia_liu = dmin(liu_type)
-        if (verbose >= 1) print*, 'WARNING dda_liu: particles smaller than d_min of liu database'
+     if (dia > dmax) then
+        if (verbose >= 1) print*, 'WARNING dda_hong: particle with ', dia ,' larger than d_max of hong database'
+        dia = dmax
      end if
-     if (verbose >= 3) print*, ir, ' with: ',f_liu,t_liu,liu_type,dia_liu*1.e6
-     call scatdb(f_liu,t_liu,liu_type,dia_liu*1.e6,abs_liu,sca_liu,bsc_liu,g,p_liu,r_ice_eq,iret,is_loaded,&
-          trim(data_path))
-     if (verbose >= 3) print*, iret,f_liu,t_liu,liu_type,dia_liu*1.e6, abs_liu,sca_liu,bsc_liu
+     if (verbose >= 3) print*, ir, ' with: ',f,t,hong_type,dia
+     call hongdb(err,f,t,hong_type,dia,abs_hong,ext_hong,bsc_hong,g,p_hong)
+     if (err /= 0) then
+	msg = 'error in hongdb!'
+	call report(err, msg, nameOfRoutine)
+	errorstatus = err
+	return
+     end if
+     if (verbose >= 3) print*, f,t,hong_type,dia, abs_hong,ext_hong,bsc_hong,p_hong
 
-     qext = (abs_liu+sca_liu)
-     qscat = sca_liu
-     qback = bsc_liu
+     qext = ext_hong
+     qscat = ext_hong - abs_hong
+     qback = bsc_hong
      ! sum up extinction, scattering, and backscattering as cross-sections/pi
 
      sumqe = sumqe + qext * ndens_eff * del_d_eff!weights(ir)
      sumqs = sumqs + qscat * ndens_eff * del_d_eff!weights(ir)
      sumqback = sumqback + qback * ndens_eff * del_d_eff!weights(ir)
      back_spec(ir) = qback * ndens_eff !* weights(ir) *(dia2-dia1)/2.d0![m²/m⁴]
-
+!     print*, diameter(ir), ndens_eff, del_d_eff, n_tot, sumqe, sumqs, sumqback
      if (lphase_flag) then
         ang_quad = acos(mu(nquad:1:-1))*180.d0/pi
-        call interpolation(nang_db,nquad,dble(ang_db),dble(p_liu),ang_quad,P1_quad)
+        call interpolation(nang_db,nquad,ang_db,p_hong,ang_quad,P1_quad)
         fac = sum(P1_quad*wts)
         P1_quad = P1_quad*(2.d0/fac)
         do i = 1, nquad 
@@ -226,7 +201,6 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
 !   sumqback = sumqback*(diameter(nbins)-diameter(1))/2.d0
 !   sump1 = sump1*(diameter(nbins)-diameter(1))/2.d0
 !   n_tot = n_tot*(diameter(nbins)-diameter(1))/2.d0
-
   extinction = sumqe !* del_d      ! [1/m]
   scatter = sumqs !* del_d       ! [1/m]
   back_scatt = sumqback !* del_d   ! [1/m]
@@ -284,4 +258,4 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
   if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
   
   return
-end subroutine dda_db_liu
+end subroutine dda_db_hong

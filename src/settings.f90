@@ -202,13 +202,14 @@ contains
         INQUIRE(FILE=namelist_file, EXIST=file_exists)   ! file_exists will be TRUE if the file
         call assert_true(err,file_exists,&
             "file "//TRIM(namelist_file)//" does not exist") 
+
        if (err /= 0) then
           msg = 'value in settings not allowed'
           call report(err, msg, nameOfRoutine)
           errorstatus = err
           return
        end if
-
+       print*, 2    
 
        if (verbose >= 3) print*,'Open namelist file: ', namelist_file
        ! read name list parameter file

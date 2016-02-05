@@ -228,10 +228,9 @@ module mie_spheres
       sumqe = sumqe + ( qext * del_d_eff)
       sumqs = sumqs + ( qscat * del_d_eff)
       sumqback = sumqback + ( qback * del_d_eff)
-      if (verbose >= 4) print*, diameter(ir), ndens_eff, del_d_eff, n_tot, sumqe, sumqs, sumqback
 
-      if (verbose >= 4) print*, "NEW: sumqback, sumqs, sumqe"
-      if (verbose >= 4) print*,  sumqback , sumqs, sumqe
+      if (verbose >= 4) print*, "NEW: diameter(ir), ndens_eff, del_d_eff, n_tot, sumqback, sumqs, sumqe"
+      if (verbose >= 4) print*, diameter(ir), ndens_eff, del_d_eff, n_tot, sumqback , sumqs, sumqe
       back_spec(ir) =  qback   ! volumetric backscattering cross section for radar simulator in backscat per volume per del_d[m²/m⁴]
 
       if (lphase_flag) then 
@@ -261,10 +260,9 @@ module mie_spheres
     scatter = sumqs 
     back_scatt = sumqback 
     albedo = scatter / extinction 
-      if (verbose >= 4) print*, sumqe, sumqs, sumqback, n_tot
-      if (verbose >= 4) print*, "extinction, scatter, back_scatt, albedo"
-      if (verbose >= 4) print*,  extinction, scatter, back_scatt, albedo
-       
+
+    if (verbose >= 4) print*, "extinction, scatter, back_scatt, albedo"
+    if (verbose >= 4) print*,  extinction, scatter, back_scatt, albedo       
     
     ! if the liq_ice function is not desired then leave now           
     if ( .not. lphase_flag) return 

@@ -208,7 +208,6 @@ class pyPamtra(object):
     self.p["ngridx"] = 0
     self.p["ngridy"] = 0
     self.p["max_nlyrs"] = 0
-    self.p["noutlevels"] = 0
   
     return
   
@@ -286,7 +285,7 @@ class pyPamtra(object):
       self.readClassicPamtraProfile(inputFile)
       return
       
-    self.p["ngridx"], self.p["ngridy"], self.p["max_nlyrs"], self.p["noutlevels"] = [int(el) for el in g.next()[:4]]
+    self.p["ngridx"], self.p["ngridy"], self.p["max_nlyrs"], self.nmlSet["noutlevels"] = [int(el) for el in g.next()[:4]]
 
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
@@ -681,7 +680,7 @@ class pyPamtra(object):
     
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
-    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
+    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.nmlSet["noutlevels"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
@@ -823,7 +822,7 @@ class pyPamtra(object):
     
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
-    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
+    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.nmlSet["noutlevels"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
@@ -951,7 +950,6 @@ class pyPamtra(object):
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
-    assert len(self.df.data4D.keys())  == 0
     assert len(self.df.dataFullSpec.keys()) == 0
 
     def extrap(x, xp, yp):
@@ -969,13 +967,23 @@ class pyPamtra(object):
           for y in xrange(self._shape2D[1]):
             for h in xrange(self.df.nhydro):
             #interpolate!
-#              newP[x,y,:,h] = np.interp(new_hgt,old_hgt[x,y,:],self.p[key][x,y,:,h])
-#              newP[x,y,:,h] = np.interp(new_hgt[x,y,:],old_hgt[x,y,:],self.p[key][x,y,:,h])
               newP[x,y,:,h] = extrap(new_hgt[x,y,:],old_hgt[x,y,:],self.p[key][x,y,:,h])
         #save new array
         self.p[key] = newP
         #and mark all entries below -1 as missing Number!
         self.p[key][self.p[key]<-1] = missingNumber
+
+    for key in self.df.data4D:
+      #make new array
+      newP = np.ones(self._shape4D) * missingNumber
+      for x in xrange(self._shape2D[0]):
+        for y in xrange(self._shape2D[1]):
+          for h in xrange(self.df.nhydro):
+          #interpolate!
+            newP[x,y,:,h] = extrap(new_hgt[x,y,:],old_hgt[x,y,:],self.df.data4D[key][x,y,:,h])
+      #save new array
+      self.df.data4D[key] = newP
+
       
     for key in ["hgt_lev","temp_lev","relhum_lev"]:
       if key in self.p.keys():
@@ -2231,7 +2239,7 @@ class pyPamtra(object):
 	    else:
 	      scat_file = 'scat_'+'%03d'%(zz-1)+'.txt'
 	      ns = '%.12e'%0.0
-	      sf = open('../../polradtran/src/'+scat_file,'w')
+	      sf = open(scat_file,'w')
 	      ss = ''
 	      ss += '  16   0 \'LOBATTO        \'\n\n'
 	      for i in range(16):
