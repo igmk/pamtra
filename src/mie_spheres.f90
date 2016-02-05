@@ -228,7 +228,6 @@ module mie_spheres
       sumqe = sumqe + ( qext * del_d_eff)
       sumqs = sumqs + ( qscat * del_d_eff)
       sumqback = sumqback + ( qback * del_d_eff)
-     print*, diameter(ir), ndens_eff, del_d_eff, n_tot, sumqe, sumqs, sumqback
 
       if (verbose >= 4) print*, "NEW: sumqback, sumqs, sumqe"
       if (verbose >= 4) print*,  sumqback , sumqs, sumqe
@@ -261,9 +260,8 @@ module mie_spheres
     scatter = sumqs 
     back_scatt = sumqback 
     albedo = scatter / extinction 
-print*, sumqe, sumqs, sumqback, n_tot
-      if (verbose >= 4) print*, "extinction, scatter, back_scatt, albedo"
-      if (verbose >= 4) print*,  extinction, scatter, back_scatt, albedo
+    if (verbose >= 4) print*, "extinction, scatter, back_scatt, albedo"
+    if (verbose >= 4) print*,  extinction, scatter, back_scatt, albedo
        
     
     ! if the liq_ice function is not desired then leave now           

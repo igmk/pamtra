@@ -102,7 +102,7 @@ subroutine make_soft_spheroid(errorstatus)
         if (as_ratio == -20.) soft_rho_eff(i) = 0.863_dbl * freqs(i_f) + 115._dbl !SNOW
         if (as_ratio == -30.) soft_rho_eff(i) = 0.815_dbl * freqs(i_f) + 11.2_dbl !GRAUPEL
         if (as_ratio > 0.) soft_rho_eff(i) = (6._dbl * mass(i)) / (pi *  d_ds(i)**3._dbl * as_ratio)
-        if (soft_rho_eff(i) < 100._dbl) soft_rho_eff(i) = 100._dbl  ! used to be 5._dbl
+        if (soft_rho_eff(i) < hydro_softsphere_min_density) soft_rho_eff(i) = hydro_softsphere_min_density  ! used to be 5._dbl
         if (as_ratio == -10. .or. as_ratio == -20. .or. as_ratio == -30.) &
              soft_d_eff(i) = ((6._dbl * mass(i)) / (pi *  soft_rho_eff(i) ))**(1._dbl/3._dbl)
       enddo

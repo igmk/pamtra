@@ -1,6 +1,5 @@
 module scatProperties
 
-
   use kinds
 
   implicit none
@@ -30,8 +29,6 @@ contains
   subroutine prepare_rt3_scatProperties()
     use kinds
     implicit none
-
-
 
     salbedo     = 0.d0
     legen_coef(:,:)   = 0.d0
@@ -122,12 +119,12 @@ contains
     real(kind=dbl), dimension(nbin) :: num_density
     real(kind=dbl), dimension(radar_npol) :: back_hydro
     real(kind=dbl), dimension(radar_npol,radar_nfft_aliased) :: back_spec_dia
-    real(kind=dbl), dimension(radar_nfft_aliased) :: back_spec_mie, back_spec_liu
+    real(kind=dbl), dimension(radar_nfft_aliased) :: back_spec_mie, back_spec_liu, back_spec_hong
     real(kind=dbl), dimension(radar_nfft_aliased) :: back_spec_rg
     real(kind=dbl), allocatable, dimension(:) :: as_ratio_list, canting_list
     real(kind=dbl) :: kext_hydro
     real(kind=dbl) :: salb_hydro
-    real(kind=dbl) :: back_hydro_mie, back_hydro_liu
+    real(kind=dbl) :: back_hydro_mie, back_hydro_liu, back_hydro_hong
     real(kind=dbl) :: back_hydro_rg
     real(kind=dbl) :: refre
     real(kind=dbl) :: refim
@@ -145,7 +142,7 @@ contains
 
     integer :: nlegen_coef_hydro
     integer :: jj
-    integer(kind=long) :: liu_type
+    integer(kind=long) :: liu_type, hong_type
 
     integer(kind=long) :: errorstatus
     integer(kind=long) :: err = 0
@@ -533,6 +530,26 @@ contains
        nlegen_coef = max(nlegen_coef,nlegen_coef_hydro)
       if (err /= 0) then
         msg = 'error in dda_db_liu!'
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
+        return
+      end if
+    else if (scat_name(:6) == "hongdb") then
+      read(scat_name(8:8),*) hong_type
+      call dda_db_hong(err,freq, layer_t, hong_type, refre-Im*refim,nbin,&
+            diameter2scat,&
+            delta_d_ds, &
+            num_density,&
+      kext_hydro, salb_hydro, back_hydro_hong,  &
+     nlegen_coef_hydro, legen_coef1_hydro, legen_coef2_hydro, legen_coef3_hydro, &
+     legen_coef4_hydro, back_spec_hong)
+       do i_p=1, radar_npol
+          back_spec_dia(i_p,:) = back_spec_hong(:)
+          back_hydro(i_p) = back_hydro_hong
+       end do
+       nlegen_coef = max(nlegen_coef,nlegen_coef_hydro)
+      if (err /= 0) then
+        msg = 'error in dda_db_hong!'
         call report(err, msg, nameOfRoutine)
         errorstatus = err
         return

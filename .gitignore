@@ -49,3 +49,6 @@ build
 lib
 doc/build
 *.pyf
+src/recycle/
+descriptorfiles/
+nml/

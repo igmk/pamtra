@@ -2227,7 +2227,7 @@ class pyPamtra(object):
 	    else:
 	      scat_file = 'scat_'+'%03d'%(zz-1)+'.txt'
 	      ns = '%.12e'%0.0
-	      sf = open('../../polradtran/src/'+scat_file,'w')
+	      sf = open(scat_file,'w')
 	      ss = ''
 	      ss += '  16   0 \'LOBATTO        \'\n\n'
 	      for i in range(16):
