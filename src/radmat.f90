@@ -37,7 +37,6 @@ SUBROUTINE MCOPY (N, M, MATRIX1, MATRIX2)
   RETURN
 END SUBROUTINE MCOPY
 
-
 SUBROUTINE MADD (N, M, MATRIX1, MATRIX2, MATRIX3)
   use kinds
   INTEGER N, M, I
@@ -154,38 +153,53 @@ SUBROUTINE MMULT (N, M, L, MATRIX1, MATRIX2, MATRIX3)
 END SUBROUTINE MMULT
 
 
-!       SUBROUTINE MINVERT_OLD (N, MATRIX1, MATRIX2)
-!       use kinds
-!       INTEGER N
-!       REAL(kind=dbl) MATRIX1 (N, N), MATRIX2 (N, N)
-!       INTEGER NMAX
-!       PARAMETER (NMAX = 256)
-!       INTEGER I, J, INDX (NMAX), IZ
-!       REAL(kind=dbl) DET (2), WORK (NMAX)
-!
-!       IF (N.GT.NMAX) THEN
-!       WRITE ( * , '(1X,A,I3)') 'Exceeded maximum matrix size for inversi&
-!      &on.  Max = ', NMAX
-!          STOP
-!       ENDIF
-!       CALL DGEFA (MATRIX1, N, N, INDX, IZ)
-!       IF (IZ.GT.0) THEN
-!       WRITE ( * , '(1X,A,I3)') 'Encountered a zero pivot at element ', I&
-!      &Z
-!          STOP
-!       ENDIF
-!       DO 100 I = 1, N
-!          DO 110 J = 1, N
-!             MATRIX2 (I, J) = MATRIX1 (I, J)
-!   110    END DO
-!   100 END DO
-!       CALL DGEDI (MATRIX2, N, N, INDX, DET, WORK, 1)
-!
-!       RETURN
-!       END SUBROUTINE MINVERT_OLD
-
-
 SUBROUTINE MINVERT (N, MATRIX1, MATRIX2)
+  use kinds
+  use settings, only: liblapack
+  INTEGER N
+  REAL(kind=dbl) MATRIX1 (N, N), MATRIX2 (N, N)
+  
+  if (liblapack) then
+    call MINVERT_LAPACK (N, MATRIX1, MATRIX2)
+  else
+    call MINVERT_FORT (N, MATRIX1, MATRIX2)
+  end if
+
+  RETURN
+END SUBROUTINE MINVERT
+
+SUBROUTINE MINVERT_FORT (N, MATRIX1, MATRIX2)
+      use kinds
+      INTEGER N
+      REAL(kind=dbl) MATRIX1 (N, N), MATRIX2 (N, N)
+      INTEGER NMAX
+      PARAMETER (NMAX = 256)
+      INTEGER I, J, INDX (NMAX), IZ
+      REAL(kind=dbl) DET (2), WORK (NMAX)
+
+      IF (N.GT.NMAX) THEN
+      WRITE ( * , '(1X,A,I3)') 'Exceeded maximum matrix size for inversi&
+     &on.  Max = ', NMAX
+         STOP
+      ENDIF
+      CALL DGEFA (MATRIX1, N, N, INDX, IZ)
+      IF (IZ.GT.0) THEN
+      WRITE ( * , '(1X,A,I3)') 'Encountered a zero pivot at element ', I&
+     &Z
+         STOP
+      ENDIF
+      DO 100 I = 1, N
+         DO 110 J = 1, N
+            MATRIX2 (I, J) = MATRIX1 (I, J)
+  110    END DO
+  100 END DO
+      CALL DGEDI (MATRIX2, N, N, INDX, DET, WORK, 1)
+
+      RETURN
+END SUBROUTINE MINVERT_FORT
+
+
+SUBROUTINE MINVERT_LAPACK (N, MATRIX1, MATRIX2)
   use kinds
   INTEGER N
   REAL(kind=dbl) MATRIX1(N, N), MATRIX2(N, N)
@@ -217,7 +231,7 @@ SUBROUTINE MINVERT (N, MATRIX1, MATRIX2)
   ENDIF
 
   RETURN
-END SUBROUTINE MINVERT
+END SUBROUTINE MINVERT_LAPACK
 
 
 

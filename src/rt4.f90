@@ -183,7 +183,7 @@
 !
 
 subroutine rt4(errorstatus,out_file,&
-     ground_type,ground_albedo,ground_index,sky_temp,&
+     ground_type,ground_albedo,sky_temp,&
      wavelength,outlevels)
 
   use kinds
@@ -223,10 +223,9 @@ subroutine rt4(errorstatus,out_file,&
   character*64, intent(in) :: out_file
   character, intent(in) ::  ground_type*1
   real(kind=dbl), intent(in) ::  ground_albedo
-  complex*16, intent(in) ::   ground_index
   real(kind=dbl), intent(in) ::  sky_temp
   real(kind=dbl), intent(in) ::   wavelength
-  integer, intent(in), dimension(maxlay) ::  outlevels
+  integer, intent(in), dimension(noutlevels) ::  outlevels
 
   integer :: num_layers
 
@@ -251,6 +250,14 @@ subroutine rt4(errorstatus,out_file,&
 
   if (verbose >= 1) call report(info, 'start of ', nameOfRoutine)
 
+  if (verbose >= 99) print*, "RT4 in"
+  if (verbose >= 99) print*, "errorstatus,out_file"
+  if (verbose >= 99) print*, errorstatus,out_file
+  if (verbose >= 99) print*, "ground_type,ground_albedo,sky_temp"
+  if (verbose >= 99) print*, ground_type,ground_albedo,sky_temp
+  if (verbose >= 99) print*, "wavelength,outlevels"
+  if (verbose >= 99) print*, wavelength,outlevels
+
   height = 0.
   temperatures = 0.
   gas_extinct = 0.
@@ -267,6 +274,7 @@ subroutine rt4(errorstatus,out_file,&
   height(1:atmo_nlyrs(i_x,i_y)+1) = atmo_hgt_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1:1:-1)             ! [m]
   temperatures(1:atmo_nlyrs(i_x,i_y)+1) = atmo_temp_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1:1:-1)      ! [k]
   gas_extinct(1:atmo_nlyrs(i_x,i_y)) = rt_kextatmo(atmo_nlyrs(i_x,i_y):1:-1)         ! [np/m]
+
 
   !do some tests
   call assert_true(err,(maxlay>=num_layers),&
@@ -288,18 +296,22 @@ subroutine rt4(errorstatus,out_file,&
      return
   end if
 
+  if (verbose >= 99) print*, "ground_temp, num_layers,height ,temperatures , gas_extinct"
+  if (verbose >= 99) print*, ground_temp,  num_layers, sum(height), sum(temperatures), sum(gas_extinct)
+
 
   rt_hydros_present_reverse(1:atmo_nlyrs(i_x,i_y)) = rt_hydros_present(atmo_nlyrs(i_x,i_y):1:-1)
-
   rt_scattermatrix_reverse(1:atmo_nlyrs(i_x,i_y),:,:,:,:,:) = rt_scattermatrix(atmo_nlyrs(i_x,i_y):1:-1,:,:,:,:,:)
   rt_extmatrix_reverse(1:atmo_nlyrs(i_x,i_y),:,:,:,:) = rt_extmatrix(atmo_nlyrs(i_x,i_y):1:-1,:,:,:,:)
   rt_emisvec_reverse(1:atmo_nlyrs(i_x,i_y),:,:,:) = rt_emisvec(atmo_nlyrs(i_x,i_y):1:-1,:,:,:)
 
   !  if (verbose .gt. 0) print*, ".... read_layers done!"
 
+
+
   call radtran4(err,max_delta_tau,&
        ground_temp, ground_type,&
-       ground_albedo, ground_index,&
+       ground_albedo,&
        sky_temp, wavelength,&
        num_layers, height, temperatures,&
        gas_extinct,&
@@ -314,6 +326,9 @@ subroutine rt4(errorstatus,out_file,&
      return
   end if
 
+  if (verbose >= 99) print*, "up_rad, down_rad"
+  if (verbose >= 99) print*, SUM(up_rad), SUM(down_rad)
+
   !  if (verbose .gt. 0) print*, ".... radtran done!"
 
   if (write_nc .or. in_python) then
@@ -326,7 +341,7 @@ subroutine rt4(errorstatus,out_file,&
      call output_file4(nstokes, nummu,&
           layer_file, out_file,&
           quad_type, ground_temp, ground_type,&
-          ground_albedo, ground_index,&
+          ground_albedo,&
           sky_temp, wavelength, units, outpol,&
           num_layers, height,&
           noutlevels, outlevels, &
@@ -382,7 +397,7 @@ end subroutine read_layers
 subroutine output_file4(nstokes, nummu, &
      layer_file, out_file,&
      quad_type, ground_temp, ground_type,&
-     ground_albedo, ground_index,&
+     ground_albedo,&
      sky_temp, wavelength, units, outpol,&
      num_layers, height,&
      noutlevels, outlevels, &
@@ -403,7 +418,6 @@ subroutine output_file4(nstokes, nummu, &
   real(kind=dbl)   down_flux(nstokes,noutlevels)
   real(kind=dbl)   up_rad(nstokes,nummu,noutlevels)
   real(kind=dbl)   down_rad(nstokes,nummu,noutlevels)
-  complex*16  ground_index
   character*(*) layer_file, out_file
   character  quad_type*1, units*1, outpol*2, ground_type*1
   character*32 quad_name, units_name, ground_name
@@ -445,8 +459,8 @@ subroutine output_file4(nstokes, nummu, &
        'c  ground_temp=',   ground_temp,&
        '   ground_type=',   ground_name
   if (ground_type(1:1) .eq. 'f') then
-     write (3,'(a,2f9.4,a,f8.2)')&
-          'c  ground_index=',  ground_index,&
+     write (3,'(a,a,f8.2)')&
+          'c  ground_index=XX',&
           '   sky_temp=',      sky_temp
   else
      write (3,'(a,f8.5,a,f8.2)')&

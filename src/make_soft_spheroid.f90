@@ -111,7 +111,6 @@ subroutine make_soft_spheroid(errorstatus)
     if (as_ratio > 1.) then
       do i=1,nbin
         soft_rho_eff(i) = (6._dbl * mass(i) * as_ratio**2._dbl) / (pi *  d_ds(i)**3._dbl)
-        if (soft_rho_eff(i) < 5._dbl) soft_rho_eff(i) = 5._dbl
       enddo
     endif
   else

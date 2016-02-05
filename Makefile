@@ -14,7 +14,7 @@ gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 FC=gfortran
 CC=gcc
-FCFLAGS=-c -fPIC -Wunused -O2 -cpp -J$(OBJDIR) -I$(OBJDIR) 
+FCFLAGS=-c -fPIC -Wunused  -cpp -J$(OBJDIR) -I$(OBJDIR) 
 #FCFLAGS=-g -c -fPIC -Wunused -O0 -cpp -J$(OBJDIR) -I$(OBJDIR) 
 ifeq ($(ARCH),Darwin)
 	FC=/opt/local/bin/gfortran-mp-4.8
@@ -23,7 +23,7 @@ ifeq ($(ARCH),Darwin)
 	LFLAGS= -L$(LIBDIR) -L../$(LIBDIR) -ldfftpack  -L/opt/local/lib/ -llapack
 	LDFLAGS=-lnetcdf -lnetcdff  -lz
 else
-	NCFLAGS :=  $(shell nc-config --fflags)  -O2
+	NCFLAGS :=  $(shell nc-config --fflags)  -fbounds-check 
 	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
 	LFLAGS := -llapack -L$(LIBDIR) -L../$(LIBDIR) -ldfftpack
 	LDFLAGS := $(shell nc-config --flibs) -lz
@@ -135,6 +135,8 @@ dfftpack: | $(LIBDIR)
 	cd tools/dfftpack && $(MAKE)
 	cp tools/dfftpack/libdfftpack.a $(LIBDIR)
 
+pamtra: FCFLAGS += -O2
+pamtra: NCFLAGS += -O2 
 pamtra: dfftpack $(FOBJECTS) $(BINDIR)$(BIN) | $(BINDIR)
 
 $(OBJDIR)versionNumber.auto.o: .git/HEAD .git/index
@@ -172,14 +174,16 @@ $(OBJDIR)write_nc_results.o:  $(SRCDIR)write_nc_results.f90 | $(OBJDIR)
 
 
 
-pamtraDebug: FCFLAGS += -g -gdwarf-3
-pamtraDebug: LFLAGS += -g -gdwarf-3
+pamtraDebug: FCFLAGS += -g -fbacktrace -fbounds-check 
+pamtraDebug: LFLAGS += -g -fbacktrace -fbounds-check 
 pamtraDebug: pamtra
 	@echo ""
 	@echo "####################################################################################"
 	@echo "start debugging with:"
 	@echo "gdb ./pamtra"
 	@echo "run -n namelist -p profile ..."	
+	@echo "or with valgrind:"
+	@echo "valgrind --leak-check=yes ./pamtra ..."
 	@echo "####################################################################################"
 
 
@@ -198,7 +202,9 @@ pyProfile: 	py
 	@echo "####################################################################################"
 	@echo "performance report displayed at exit of python"
 	@echo "####################################################################################"
-pyDebug: NCFLAGS_F2PY += --debug-capi
+
+pyDebug: FCFLAGS += -g -fbacktrace -fbounds-check 
+pyDebug: NCFLAGS_F2PY += --debug-capi 
 pyDebug: 	py
 	@echo ""
 	@echo "####################################################################################"
@@ -208,9 +214,13 @@ pyDebug: 	py
 
 
 $(OBJDIR)pypamtralib.pyf:  $(FOBJECTS)
+	@echo "####################################################################################"
+	@echo "Note there is a bug in numpy 1.10.1, intent in or out is not recognized"
+	@echo "####################################################################################"
 	f2py2.7 --overwrite-signature -m pyPamtraLib -h $(OBJDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)pyPamtraLib.f90
 
-
+py: FCFLAGS += -O2
+py: NCFLAGS += -O2 
 py: $(PYTDIR)pyPamtraLib.so
 
 $(PYTDIR)pyPamtraLib.so:  $(SRCDIR)pyPamtraLib.f90 $(OBJDIR)pypamtralib.pyf $(FOBJECTS) | $(BINDIR)

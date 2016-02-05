@@ -58,7 +58,7 @@ module mie_spheres
     real(kind=dbl), intent(out) :: extinction
     real(kind=dbl), intent(out) :: albedo
     real(kind=dbl), intent(out) :: back_scatt
-    real(kind=dbl), intent(out), dimension(200) :: legen, legen2, legen3, legen4 
+    real(kind=dbl), intent(out), dimension(maxnleg) :: legen, legen2, legen3, legen4 
     real(kind=dbl), intent(out), dimension(nbins) :: back_spec
     integer, intent(out) :: nlegen
 
@@ -155,7 +155,7 @@ module mie_spheres
 	  return
       end if         
       nlegen = 2 * nterms 
-      nlegen = min(maxnleg, nlegen) 
+      nlegen = min(maxnleg-1, nlegen) 
       nquad = (nlegen + 2 * nterms + 2) / 2 
       if (nquad.gt.maxn) then
 	  errorstatus = fatal
@@ -229,8 +229,8 @@ module mie_spheres
       sumqs = sumqs + ( qscat * del_d_eff)
       sumqback = sumqback + ( qback * del_d_eff)
 
-      if (verbose >= 4) print*, "NEW: sumqback, sumqs, sumqe"
-      if (verbose >= 4) print*,  sumqback , sumqs, sumqe
+      if (verbose >= 4) print*, "NEW: diameter(ir), ndens_eff, del_d_eff, n_tot, sumqback, sumqs, sumqe"
+      if (verbose >= 4) print*, diameter(ir), ndens_eff, del_d_eff, n_tot, sumqback , sumqs, sumqe
       back_spec(ir) =  qback   ! volumetric backscattering cross section for radar simulator in backscat per volume per del_d[m²/m⁴]
 
       if (lphase_flag) then 
@@ -260,9 +260,9 @@ module mie_spheres
     scatter = sumqs 
     back_scatt = sumqback 
     albedo = scatter / extinction 
+
     if (verbose >= 4) print*, "extinction, scatter, back_scatt, albedo"
-    if (verbose >= 4) print*,  extinction, scatter, back_scatt, albedo
-       
+    if (verbose >= 4) print*,  extinction, scatter, back_scatt, albedo       
     
     ! if the liq_ice function is not desired then leave now           
     if ( .not. lphase_flag) return 

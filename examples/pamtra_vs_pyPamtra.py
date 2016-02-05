@@ -19,7 +19,7 @@ plt.clf()
 pam = pyPamtra.pyPamtra()
 pam.df.readFile(descriptorFile)
 pam.readPamtraProfile("../profile/example_input.lev")
-pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
+pam.readNmlFile("pamtra_vs_pyPamtra.nml")
 
 print "##########################"
 
@@ -27,6 +27,7 @@ print "##########################"
 
 pam.set["pyVerbose"] = 10
 pam.set["verbose"] = 10
+
 pam.runPamtra(35.5)
 
 
@@ -44,8 +45,8 @@ print Ze.compressed()
 pam = pyPamtra.pyPamtra()
 pam.df.readFile(descriptorFile)
 pam.readPamtraProfile("../profile/example_input.lay")
+pam.readNmlFile("pamtra_vs_pyPamtra.nml")
 print "##########################"
-pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 
 
 pam.runPamtra(35.5)

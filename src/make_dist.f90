@@ -60,7 +60,8 @@ subroutine make_dist(errorstatus)
 
   ! Local scalar:
 
-  real(kind=dbl) :: d_1_work, d_2_work, work1, tmp1, tmp2, tmpX, n_tot, am_b
+  real(kind=dbl) :: d_1_work, d_2_work, work1, tmp1, tmp2, tmpX, tmpG1, tmpG2, &
+        n_tot, am_b
   real(kind=dbl) :: d_1_new, d_2_new, min_lin, min_log, thres_n
   integer(kind=long) :: i, ibig, nbin_work, nbin_log, nbin_lin
   integer(kind=long) :: erroalloc
@@ -159,6 +160,19 @@ subroutine make_dist(errorstatus)
            f_ds_work(i) = n_t / (d_bound_ds_work(i) * sig * sqrt(2._dbl * pi)) * &
                 EXP(-( (log(d_bound_ds_work(i)) - d_ln)**2 )/(2. * sig**2) )
         enddo
+        ! normalized gamma
+        !follows the definition from Testud et al, 
+        !but with Dmax as size descriptor and 
+        !WITHOUT fixed exponent of mass size relation! Instead, use, b of mass size relation
+        !d_m defined as M_(b+1)/M_b (with M_i the ith moment)
+        !N_0_star = (b_ms+1)**(b_ms+1)/gamma(b_ms+1) *M_b**(b_ms+2)/M_(b+1)**(b_ms+1)
+     else if (trim(dist_name) == 'norm_gamma') then
+        do i=1,nbin_work+1
+           tmpX =  d_bound_ds_work(i)/d_m
+           tmp1 = gamma(b_ms+1)/(b_ms+1)**(b_ms+1) * (b_ms+mu+1)**(b_ms+mu+1)/gamma(b_ms+mu+1)
+           tmp2 = exp(-(b_ms+mu+1)*tmpX)
+           f_ds_work(i) = n_0_star * tmp1 * tmpX**mu * tmp2
+        enddo
         ! normalized modified gamma
         !follows the definition from Testud et al, 
         !but with Dmax as size descriptor and 
@@ -166,11 +180,14 @@ subroutine make_dist(errorstatus)
         !d_m defined as M_(b+1)/M_b (with M_i the ith moment)
         !N_0_star = (b_ms+1)**(b_ms+1)/gamma(b_ms+1) *M_b**(b_ms+2)/M_(b+1)**(b_ms+1)
      else if (trim(dist_name) == 'norm_mgamma') then
+        tmpG1 = gamma((mu+b_ms+1.)/gam)
+        tmpG2 = gamma((mu+b_ms+2.)/gam)
+        tmp1 = gam * gamma(b_ms+1)/(b_ms+1)**(b_ms+1) * tmpG2**(b_ms+1+mu)/tmpG1**(b_ms+2+mu)
         do i=1,nbin_work+1
            tmpX =  d_bound_ds_work(i)/d_m
-           tmp1 = gamma(b_ms+1)/(b_ms+1)**(b_ms+1) * (b_ms+mu+1)**(b_ms+mu+1)/gamma(b_ms+mu+1)
-           tmp2 = exp(-(b_ms+mu+1)*tmpX)
+           tmp2 = exp(-(tmpX * tmpG2/tmpG1)**gam)
            f_ds_work(i) = n_0_star * tmp1 * tmpX**mu * tmp2
+
         enddo
 
      else if ((trim(dist_name) == 'mgamma')     .or. (trim(dist_name) == 'exp') .or. &

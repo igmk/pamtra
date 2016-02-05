@@ -33,7 +33,7 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
   real(kind=dbl) :: ad, bd, alpha, gamma 
   complex(kind=dbl) :: mindex 
   real(kind=dbl) :: extinction, albedo, back_scatt
-  real(kind=dbl) :: legen(200), legen2(200), legen3(200), legen4(200)
+  real(kind=dbl) :: legen(maxnleg), legen2(maxnleg), legen3(maxnleg), legen4(maxnleg)
     real(kind=dbl), intent(in), dimension(nbins) :: diameter
     real(kind=dbl), intent(in), dimension(nbins) :: del_d    
     real(kind=dbl), intent(in), dimension(nbins) ::  ndens
@@ -136,7 +136,7 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
      return
   end if
   nlegen = 2 * nterms 
-  nlegen = min(maxnleg, nlegen) 
+  nlegen = min(maxnleg-1, nlegen) 
   nquad = (nlegen + 2 * nterms + 2) / 2 
   if (nquad > maxn) then
      errorstatus = fatal
@@ -204,6 +204,7 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
      sumqs = sumqs + qscat * ndens_eff * del_d_eff!weights(ir)
      sumqback = sumqback + qback * ndens_eff * del_d_eff!weights(ir)
      back_spec(ir) = qback * ndens_eff !* weights(ir) *(dia2-dia1)/2.d0![m²/m⁴]
+
      if (lphase_flag) then
         ang_quad = acos(mu(nquad:1:-1))*180.d0/pi
         call interpolation(nang_db,nquad,dble(ang_db),dble(p_liu),ang_quad,P1_quad)
@@ -225,6 +226,7 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
 !   sumqback = sumqback*(diameter(nbins)-diameter(1))/2.d0
 !   sump1 = sump1*(diameter(nbins)-diameter(1))/2.d0
 !   n_tot = n_tot*(diameter(nbins)-diameter(1))/2.d0
+
   extinction = sumqe !* del_d      ! [1/m]
   scatter = sumqs !* del_d       ! [1/m]
   back_scatt = sumqback !* del_d   ! [1/m]

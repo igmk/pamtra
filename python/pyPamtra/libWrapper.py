@@ -40,12 +40,12 @@ def PamtraFortranWrapper(
   #be sure everything is cleaned up before we start
   error = deallocate_everything.do_deallocate_everything()
   if error > 0: raise RuntimeError("Error in deallocate everything")
-  
-  settings.settings_fill_default()    
-  
+    
   settings.in_python = True
   settings.nfrq = len(sets["freqs"])
   settings.freqs[:len(sets["freqs"])] = sets["freqs"]
+  
+  settings.settings_fill_default()      
   
   #temporary fixes:
   settings.input_file[:] = "test_mie.dat"
@@ -181,7 +181,7 @@ def PamtraFortranWrapper(
   
   ##process the results!
   results = dict()
-  for key in ["tb","Ze","Att_hydro","Att_atmo","radar_hgt","radar_moments","radar_edges","radar_slopes","radar_quality","radar_snr", "radar_spectra","radar_vel","psd_d","psd_n","psd_mass","psd_area","kextatmo","scatter_matrix","extinct_matrix","emis_vector","angles_deg"]:
+  for key in ["tb","Ze","Att_hydro","Att_atmo","radar_hgt","radar_moments","radar_edges","radar_slopes","radar_quality","radar_snr", "radar_spectra","radar_vel","psd_d","psd_deltad","psd_n","psd_mass","psd_area","kextatmo","scatter_matrix","extinct_matrix","emis_vector","angles_deg"]:
     if sets["pyVerbose"] > 3: print("allocTest = vars_output.out_"+key.lower()+" is None")
     exec("allocTest = vars_output.out_"+key.lower()+" is None")
     if not allocTest:

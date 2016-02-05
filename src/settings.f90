@@ -82,7 +82,8 @@ module settings
        hydro_limit_density_area, &
        hydro_adaptive_grid, & ! apply an adaptive grid to the psd. good to reduce mass overestimations for small amounts. works only for modified gamma
        add_obs_height_to_layer, &
-       radar_use_wider_peak ! use wider peak inlcuding the found noise/peak border
+       radar_use_wider_peak, & ! use wider peak inlcuding the found noise/peak border
+       liblapack ! use liblapack for matrix inversion which much faster
 
   character(3) :: gas_mod
   character(3) :: liq_mod
@@ -127,6 +128,7 @@ contains
     integer(kind=long) :: err
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'settings_read'
+
 
         ! name list declarations
         namelist /SETTINGS/ &
@@ -185,8 +187,11 @@ contains
         radar_nPeaks,&
         radar_smooth_spectrum,&
         radar_attenuation,&
-        radar_polarisation
+        radar_polarisation, &
+        liblapack
         
+      err = 0
+
      if (verbose >= 3) print*,'Start of ', nameOfRoutine
 
       ! first put default values
@@ -197,13 +202,14 @@ contains
         INQUIRE(FILE=namelist_file, EXIST=file_exists)   ! file_exists will be TRUE if the file
         call assert_true(err,file_exists,&
             "file "//TRIM(namelist_file)//" does not exist") 
+
        if (err /= 0) then
           msg = 'value in settings not allowed'
           call report(err, msg, nameOfRoutine)
           errorstatus = err
           return
        end if
-
+       print*, 2    
 
        if (verbose >= 3) print*,'Open namelist file: ', namelist_file
        ! read name list parameter file
@@ -427,6 +433,7 @@ contains
         radar_smooth_spectrum = .true.
         radar_attenuation = "disabled" ! "bottom-up" or "top-down"
         radar_use_wider_peak = .false.
+        liblapack = .true.
 
         ! create frequency string if not set in pamtra
         if (freq_str == "") then
@@ -509,6 +516,7 @@ contains
       print*, "radar_npol", radar_npol
       print*, "radar_nfft_aliased", radar_nfft_aliased
       print*, "radar_maxTurbTerms", radar_maxTurbTerms
+      print*, "liblapack", liblapack
 
     end subroutine print_settings
     
