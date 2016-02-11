@@ -273,6 +273,12 @@ subroutine hydrometeor_extinction(errorstatus)
         pressure   = atmo_press(i_x,i_y,i_z)
 
 
+! In case moment_in = 13 (number_concentration (#/kg) and mass_mixing ratio (kg/kg))
+! if number_concentration is less than 1 particle per kg, cycle.
+        if (moment_in .eq. 13 .and. (q_h < hydro_threshold .or. n_tot <= 1.)) then
+          if (verbose >=3) print*, i_x,i_y,i_z,i_h,hydro_name, "q_h or n_tot below threshold", q_h, n_tot
+          CYCLE
+        endif
         if (verbose >= 2) print*, i_h, hydro_name
         if (verbose >= 3) print*, "i_h, q_h, n_tot, r_eff", i_h, q_h, n_tot, r_eff
         if ((q_h < hydro_threshold .or. isnan(q_h)) .and. &
