@@ -11,8 +11,8 @@ SUBROUTINE specular_surface(NSTOKES, NUMMU, GROUND_ALBEDO,     &
   REAL(kind=dbl) R1, R2
 
   N = NSTOKES * NUMMU 
-  CALL MZERO (2 * N, N, REFLECT) 
-  CALL MZERO (2 * N, 1, SOURCE) 
+  SOURCE(:,:,:) = 0.D0
+  REFLECT(:,:,:,:,:) = 0.D0
   CALL MIDENTITY (N, TRANS (1, 1, 1, 1, 1) ) 
   CALL MIDENTITY (N, TRANS (1, 1, 1, 1, 2) ) 
 
@@ -38,12 +38,11 @@ SUBROUTINE specular_radiance (NSTOKES, NUMMU, MODE,    &
   INTEGER NSTOKES, NUMMU, MODE 
   REAL(kind=dbl) GROUND_TEMP, GROUND_ALBEDO, WAVELENGTH
   REAL(kind=dbl) RADIANCE (NSTOKES, NUMMU) 
-  INTEGER J, N 
+  INTEGER J
   REAL(kind=dbl) PLANCK, thermal
 
   ! Thermal radiation going up
-  N = NSTOKES * NUMMU 
-  CALL MZERO (N, 1, RADIANCE) 
+  RADIANCE(:,:) = 0.D0
   IF (MODE.EQ.0) THEN 
      CALL PLANCK_FUNCTION (GROUND_TEMP, 'R', WAVELENGTH, PLANCK) 
      thermal = (1.0 - GROUND_ALBEDO) * PLANCK

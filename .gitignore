@@ -9,6 +9,7 @@ pamtra
 *.nml
 !test/nmls/*nml
 !examples/*.nml
+examples/*.txt
 fort*
 !python/pyPamtra/fort*
 output/
