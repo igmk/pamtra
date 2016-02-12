@@ -615,7 +615,7 @@ class pyPamtra(object):
     for key in kwargs.keys():
       if type(kwargs[key]) == np.ma.core.MaskedArray:
         kwargs[key] = kwargs[key].filled(np.nan)  
-      
+      kwargs[key] = np.array(kwargs[key]) #in case its a list/tuple etc.
       
     #make sure that an descriptor file exists already!
     if not self.df.data.shape[0] > 0:
@@ -2210,10 +2210,10 @@ class pyPamtra(object):
         self.r["tb"][:,:,:,:,ff,:] = self.r["not_averaged_tb"][:,:,:,:,indices[0],:]
 
 
-  def dumpForRT4(self,runFile):
+  def dumpForRT4(self,runFile,path):
     """
     Write a files to run the passive model with the pure RT4 code
-    by Frank Evans.
+    by Frank Evans. runFile contains filenames of the files in path
     """
     def extrap(x, xp, yp):
       """np.interp function with linear extrapolation"""
@@ -2221,6 +2221,13 @@ class pyPamtra(object):
       y[x < xp[0]] = yp[0] + (x[x<xp[0]]-xp[0]) * (yp[0]-yp[1]) / (xp[0]-xp[1])
       y[x > xp[-1]]= yp[-1] + (x[x>xp[-1]]-xp[-1])*(yp[-1]-yp[-2])/(xp[-1]-xp[-2])
       return y
+
+    #create path if required
+    try: 
+      os.makedirs(path)
+    except OSError:
+      if not os.path.isdir(path):
+        raise
 
     # atmosphere is height[km] temp[K] gaseaous extinction scatfile for the low below
     s = ''
@@ -2240,7 +2247,7 @@ class pyPamtra(object):
 	    else:
 	      scat_file = 'scat_'+'%03d'%(zz-1)+'.txt'
 	      ns = '%.12e'%0.0
-	      sf = open('../../polradtran/src/'+scat_file,'w')
+	      sf = open('%s/%s'%(path,scat_file),'w')
 	      ss = ''
 	      ss += '  16   0 \'LOBATTO        \'\n\n'
 	      for i in range(16):
@@ -2295,55 +2302,6 @@ class pyPamtra(object):
 	    scat_file = '            '
 	  s += '%3.2f'%(self.p["hgt_lev"][xx,yy,zz]/1.e3)+" "+'%3.2f'%self.p["temp_lev"][xx,yy,zz]+" "+'%3.6f'%ge[zz]+'  \''+scat_file+'\'\n'
     
-    
-    #firstTime = datetime.datetime.utcfromtimestamp(self.p["unixtime"][0,0])
-    #year=str(firstTime.year)
-    #mon=str(firstTime.month).zfill(2)
-    #day=str(firstTime.day).zfill(2)
-    #hhmm=datetime.datetime.strftime(firstTime,"%H%M")
-    
-    #if "iwv" not in self.p.keys():
-      #self.p['iwv'] = np.ones((self._shape2D[0],self._shape2D[1]))*-9999.
-      #self.p['hydro_wp'] = np.ones((self._shape2D[0],self._shape2D[1],self.df.nhydro))*-9999.
-      #self.p['hydro_tn'] = np.ones((self._shape2D[0],self._shape2D[1],self.df.nhydro))*-9999.
-      ##self.addIntegratedValues()
-
-    #s = str(self._shape2D[0])+" "+str(self._shape2D[1])+" "+str(self._shape3D[2])+" "+str(self._shape3Dout[2])+"\n"
-    
-    #for xx in range(self._shape2D[0]):
-      #for yy in range(self._shape2D[1]):
-	#s += year+" "+mon+" "+day+" "+hhmm+" "+str(self._shape3D[2])+" "+str(xx+1)+" "+str(yy+1)+"\n"
-	#s += ' '.join(['%9e'%height for height in self.p['obs_height'][xx,yy,:]])+"\n"
-	#s += '%3.2f'%self.p["lat"][xx,yy]+" "+'%3.2f'%self.p["lon"][xx,yy]+" "+str(self.p["lfrac"][xx,yy])+" "+str(self.p["wind10u"][xx,yy])+" "+str(self.p["wind10v"][xx,yy])+" "+str(self.p['groundtemp'][xx,yy])+" "+str(self.p['hgt_lev'][xx,yy,0])+"\n"
-	#s += str(self.p["iwv"][xx,yy])
-	#for ihyd in range(self.df.nhydro):
-	  #if self.df.data['moment_in'][ihyd] == 1:
-	    #s +=" "+'%9e'%self.p["hydro_wp"][xx,yy,ihyd]
-	  #if self.df.data['moment_in'][ihyd] == 13:
-	    #s +=" "+'%9e'%self.p["hydro_wp"][xx,yy,ihyd]+" "+'%9e'%self.p["hydro_tn"][xx,yy,ihyd]
-	#s += "\n"
-	#if levLay == 'lev':
-	  #s += '%6.1f'%self.p["hgt_lev"][xx,yy,0]+" "+'%6.1f'%self.p["press_lev"][xx,yy,0]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,0]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,0])+"\n"
-	  #for zz in range(1,self._shape3D[2]+1):
-	    #s += '%6.1f'%self.p["hgt_lev"][xx,yy,zz]+" "+'%6.1f'%self.p["press_lev"][xx,yy,zz]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,zz])+" "
-	    #for ihyd in range(self.df.nhydro):
-	      #if self.df.data['moment_in'][ihyd] == 1:
-		#s +=str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
-	      #if self.df.data['moment_in'][ihyd] == 13:
-		#s +=str('%9e'%self.p["hydro_n"][xx,yy,zz,ihyd])+" "+str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
-	    #s += "\n"
-	#elif levLay == 'lay':
-	  #for zz in range(0,self._shape3D[2]):
-	    #s += '%6.1f'%self.p["hgt"][xx,yy,zz]+" "+'%6.1f'%self.p["press"][xx,yy,zz]+" "+'%3.2f'%self.p["temp"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum"][xx,yy,zz])+" "
-	    #for ihyd in range(self.df.nhydro):
-	      #if self.df.data['moment_in'][ihyd] == 1:
-		#s +=str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
-	      #if self.df.data['moment_in'][ihyd] == 13:
-		#s +=str('%9e'%self.p["hydro_n"][xx,yy,zz,ihyd])+" "+str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
-	    #s += "\n"
-	#else:
-	  #raise IOError("Did not understand lay/lev: "+layLev)
-
     
     # write stuff to file
     f = open(runFile, 'w')
