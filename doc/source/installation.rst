@@ -93,3 +93,5 @@ if you do not have root permissions you can also use instead of the last line::
 Eventually, you can build the documentation by using the Makefile in the pamtra main directory with ::
 
   make htmldoc
+
+
