@@ -81,6 +81,7 @@ module settings
        hydro_fullSpec, &
        hydro_limit_density_area, &
        hydro_adaptive_grid, & ! apply an adaptive grid to the psd. good to reduce mass overestimations for small amounts. works only for modified gamma
+       conserve_mass_rescale_dsd, & ! in case the total mass calculated integrating the DSD is different from q_h (mass mixing ratio given in input) rescale the DSD
        add_obs_height_to_layer, &
        radar_use_wider_peak, & ! use wider peak inlcuding the found noise/peak border
        liblapack ! use liblapack for matrix inversion which much faster
@@ -159,6 +160,7 @@ contains
         hydro_limit_density_area,&
         hydro_softsphere_min_density, &
         hydro_adaptive_grid, &
+        conserve_mass_rescale_dsd, &
         tmatrix_db, &
         tmatrix_db_path, &
         liq_mod, &
@@ -398,6 +400,7 @@ contains
         hydro_limit_density_area = .true.
         hydro_softsphere_min_density = 10. !kg/m^3
         hydro_adaptive_grid = .true.
+        conserve_mass_rescale_dsd = .true.
         liq_mod = "Ell"
         tmatrix_db = "none" ! none or file
         tmatrix_db_path = "database/"
@@ -487,6 +490,7 @@ contains
       print*, 'hydro_limit_density_area: ', hydro_limit_density_area
       print*, 'hydro_softsphere_min_density: ', hydro_softsphere_min_density
       print*, 'hydro_adaptive_grid: ', hydro_adaptive_grid
+      print*, 'conserve_mass_rescale_dsd', conserve_mass_rescale_dsd
       print*, 'radar_noise_distance_factor: ', radar_noise_distance_factor
       print*, 'radar_airmotion_step_vmin: ', radar_airmotion_step_vmin
       print*, 'radar_use_hildebrand: ', radar_use_hildebrand

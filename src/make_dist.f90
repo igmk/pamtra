@@ -44,9 +44,9 @@ subroutine make_dist(errorstatus)
 
   use constants, only: pi, delta_d_mono
 
-  use settings, only: hydro_adaptive_grid
+  use settings, only: hydro_adaptive_grid, conserve_mass_rescale_dsd
 
-  use drop_size_dist, only: dist_name, d_1, d_2, nbin, n_0, lambda, mu, gam, n_t, d_ln, sig, d_mono, & ! IN
+  use drop_size_dist, only: dist_name, d_1, d_2, nbin, n_0, lambda, mu, gam, n_t, d_ln, sig, d_mono, q_h, moment_in, & ! IN
        d_ds, d_bound_ds, f_ds, n_ds, delta_d_ds, b_ms, n_0_star, d_m, a_ms
 
   use descriptor_file
@@ -61,7 +61,7 @@ subroutine make_dist(errorstatus)
   ! Local scalar:
 
   real(kind=dbl) :: d_1_work, d_2_work, work1, tmp1, tmp2, tmpX, tmpG1, tmpG2, &
-        n_tot, am_b
+        n_tot, mass_tot
   real(kind=dbl) :: d_1_new, d_2_new, min_lin, min_log, thres_n
   integer(kind=long) :: i, ibig, nbin_work, nbin_log, nbin_lin
   integer(kind=long) :: erroalloc
@@ -75,11 +75,14 @@ subroutine make_dist(errorstatus)
   logical :: skip
 
   real(kind=dbl), allocatable, dimension(:) :: f_ds_work, d_bound_ds_work, d_bound_ds_lin, d_bound_ds_log
+  real :: min_d, max_d
 
   if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
   skip = .false.
-  thres_n = .1
+  thres_n = .1_dbl
+  min_d = 1.d-7
+  max_d = 2.d-2
 
   ! Monodisperse distribution
   if ((trim(dist_name) == 'mono')  .or. (trim(dist_name) == 'mono_cosmo_ice')) then
@@ -99,14 +102,14 @@ subroutine make_dist(errorstatus)
   bigloop: do ibig=1,2 ! Loop 2 is done only if hydro_adaptive_grid = .true.
      if (skip) exit bigloop
      if ((ibig == 1) .and. (.not.hydro_adaptive_grid)) then 
-        d_1_work = d_1
+        d_1_work = d_1 + 1.d-8 ! + 1.e-8 to avoid problems with logspace diameter array
         d_2_work = d_2
         nbin_work = nbin
         skip = .true.
      endif
      if ((ibig == 1) .and. hydro_adaptive_grid) then 
-        d_1_work = 1.d-8
-        d_2_work = 2.d-2
+        d_1_work = min_d
+        d_2_work = max_d
         nbin_work = 5.d2
      endif
      if (ibig == 2) then 
@@ -223,7 +226,11 @@ subroutine make_dist(errorstatus)
         enddo search_loop1
         search_loop2: do i=1,nbin_work
            d_1_new = d_bound_ds_work(i)           ! largest possible d_1 =  d_bound_ds_work(nbin_work)
-           if (((f_ds_work(i) < thres_n) .and. (f_ds_work(i+1) >= thres_n)) .or. (f_ds_work(i) > f_ds_work(i+1))) then
+           if (f_ds_work(i) >= f_ds_work(i+1)) then ! exponential case; works also for gamma in case f_ds_work(1) > thres_n
+             d_1_new = min_d
+             exit search_loop2
+           endif
+           if (((f_ds_work(i) < thres_n) .and. (f_ds_work(i+1) >= thres_n)) .or. (f_ds_work(i) >= f_ds_work(i+1))) then
               exit search_loop2
            endif
         enddo search_loop2
@@ -247,21 +254,25 @@ subroutine make_dist(errorstatus)
 
   do i = 1, nbin
      d_ds(i) = (d_bound_ds(i) + d_bound_ds(i+1)) * .5_dbl
+     delta_d_ds(i) =  d_bound_ds(i+1) - d_bound_ds(i)
   enddo
 
+  mass_tot = 0.0_dbl
   do i=1,nbin
-     delta_d_ds(i) =  d_bound_ds(i+1) - d_bound_ds(i)
+     mass_tot = mass_tot + a_ms * (f_ds(i) + f_ds(i+1)) / 2._dbl * delta_d_ds(i) * d_ds(i)**b_ms
+  enddo
+
+  if (conserve_mass_rescale_dsd .and. (moment_in == 3 .or. moment_in == 23 .or. moment_in == 13)) then
+ ! rescale the drop-size-dist to avoid lost of mass
+    f_ds(:) = f_ds(:) * q_h/mass_tot
+  endif
+
+  do i=1,nbin
      n_ds(i) = (f_ds(i) + f_ds(i+1)) / 2._dbl * delta_d_ds(i)  ! Trapezoidal approximation of the integral
   enddo
 
-  n_tot = SUM(n_ds)  
-
-  do i=1,nbin
-     am_b = am_b + a_ms * (f_ds(i) + f_ds(i+1)) / 2._dbl * (d_bound_ds(i+1) - d_bound_ds(i)) * d_ds(i)**b_ms
-  enddo
-
-
   !remove numerical instabilities
+  n_tot = SUM(n_ds)  
   WHERE (n_ds < n_tot/nbin * 1d-60) n_ds = 0.d0
 
   ! print*, "lambda", lambda, "mu", mu, "n_0", n_0, "gam", gam
