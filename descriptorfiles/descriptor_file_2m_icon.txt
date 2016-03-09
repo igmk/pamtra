@@ -1,0 +1,8 @@
+!234567890|                                                                          012345678912345|                                       012345678912345|012345678912345|
+!name       as_ratio    liq_ice     rho_ms    a_ms    b_ms    alpha    beta   moment_in   nbin      dist_name        p_1     p_2     p_3     p_4     d_1       d_2           scat_name   vel_size_mod                canting
+ cwc_q       1.0            1        -99.      -99.    -99.   -99.     -99.   13           100       mgamma          -99.    -99.     5.00   3.00    1.d-12    1.d-2         mie-sphere  khvorostyanov01_drops          -99.
+ iwc_q       1.0           -1        -99.    1.6026   2.5641  0.684    2.     13           100       mgamma          -99.    -99.     1.5641 0.8547  1.d-12    1.d-2         mie-sphere  heymsfield10_particles         -99.
+ rwc_q       1.0            1        -99.      -99.    -99.   -99.     -99.   13           100       mgamma          -99.    -99.     2.00   1.00    1.d-12    1.d-2         mie-sphere  khvorostyanov01_drops          -99.
+ swc_q       1.0           -1        -99.     0.038   2.00    0.3971   1.88   13           100       mgamma          -99.    -99.     1.00   1.00    1.d-12    1.d-2         mie-sphere  heymsfield10_particles         -99.
+ gwc_q       1.0           -1        -99.    500.863  3.1847  -99.     -99.   13           100       mgamma          -99.    -99.     5.3694 1.0616  1.d-12    1.d-2         mie-sphere  khvorostyanov01_spheres        -99.
+ hwc_q       1.0           -1        -99.    392.327   3.0    -99.     -99.   13           100       mgamma          -99.    -99.     5.00   1.00    1.d-12    1.d-2         mie-sphere  khvorostyanov01_spheres        -99.
