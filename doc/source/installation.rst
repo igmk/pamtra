@@ -63,13 +63,17 @@ and ::
 
   make py
 
-Usually superuser permission are required to install python routines. To avoid that, a local python library folder has to be created ::
-
-  mkdir -p ~/lib/python/
-
-and this path has to be added to the $PYTHONPATH variable of your shell (assuming you are using Ubuntu and bash) ::
+Usually superuser permission are required to install python routines. To avoid
+that a local python library folder is used in ~/lib/python/ and this path has to
+be added to the $PYTHONPATH variable of your shell (assuming you are using Ubuntu
+and bash) ::
 
   echo 'export PYTHONPATH=$PYTHONPATH:$HOME/lib/python' >> ~/.bashrc
+
+For Mac OS X, do ::
+
+    echo 'export PYTHONPATH=$PYTHONPATH:$HOME/lib/python' >> ~/.bash_profile
+
 
 Then, the python routines can be installed with ::
 
