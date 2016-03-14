@@ -45,7 +45,7 @@ Get model from git repository
 *****************************
 The version control system git (http://git-scm.com/) is used to keep track of the code. Get a copy of the model with::
 
-    git clone ssh://your_user_name@gop/srv/git_repos/pamtra.git/
+    git clone https://github.com/igmk/pamtra
 
 The very basics of git can be found here https://try.github.io/levels/1/challenges/1
 
