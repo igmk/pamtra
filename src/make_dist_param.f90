@@ -120,7 +120,7 @@ subroutine make_dist_params(errorstatus)
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! MONODISPERSE distribution   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if ((trim(dist_name) == 'mono') .or. (trim(dist_name) == 'mono_cosmo_ice')) then 
+  if ((trim(dist_name) == 'mono') .or. (trim(dist_name) == 'mono_cosmo_ice')) then
      ! Set parameter for the Gamma dist. to get a monodisperse dist.
      lambda = 0._dbl
      mu = 0._dbl
@@ -144,7 +144,7 @@ subroutine make_dist_params(errorstatus)
            n_0 = q_h / (delta_d_mono * a_ms * d_mono**b_ms)
         endif
      endif
-     if ((trim(dist_name) == 'mono_cosmo_ice') .and. (moment_in == 3)) then
+     if ((trim(dist_name) == 'mono_cosmo_ice') .and. (moment_in == 3 .or. moment_in == 13)) then
         ! ! Monodisperse size distribution coherent with COSMO-de 1-moment scheme
         ! Number_concentration of activated ice crystal is temperature dependent
         ! from COSMO-de code src_gscp.f90 routine: hydci_pp_gr

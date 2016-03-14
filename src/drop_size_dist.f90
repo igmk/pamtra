@@ -144,11 +144,19 @@ subroutine run_drop_size_dist(errorstatus)
   end if
 
 ! Print out the distribution
+!   if (verbose >= 4) then
+!     do ibin=1,nbin+1
+!       print*,'   distribution: bin boundaries[m], drop_size_dist[1/m4]',d_bound_ds(ibin),f_ds(ibin)
+!     enddo
+!   endif
   if (verbose >= 4) then
-    do ibin=1,nbin+1
-      print*,'   distribution: bin boundaries[m], drop_size_dist[1/m4]',d_bound_ds(ibin),f_ds(ibin)
+    do ibin=1,nbin
+      print*,'   distribution: bin center[m], drop_size_dist[1/m4], % of total number, % of total mass',&
+                 d_ds(ibin),n_ds(ibin),n_ds(ibin)/n_tot*100.,n_ds(ibin)*mass_ds(ibin)/q_h*100.
     enddo
+  print*,'sum(n_ds)',sum(n_ds)
   endif
+
 
 ! Calculate particle MASS at bin boundaries
   do ibin=1,nbin

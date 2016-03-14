@@ -94,7 +94,7 @@ subroutine calc_moment(errorstatus)
 ! am_b  --> Total mass concentration
   am_b = 0._dbl
   do i=1,nbin
-    am_b = am_b + a_ms * (f_ds(i) + f_ds(i+1)) / 2._dbl * (d_bound_ds(i+1) - d_bound_ds(i)) * d_ds(i)**b_ms
+    am_b = am_b + a_ms * n_ds(i) * d_ds(i)**b_ms
 !     print*,i,am_b,a_ms * (f_ds(i) + f_ds(i+1)) / 2._dbl * (d_bound_ds(i+1) - d_bound_ds(i)) * d_ds(i)**b_ms
   enddo
 
