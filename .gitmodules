@@ -1,0 +1,3 @@
+[submodule "tools/py_usStandard"]
+	path = tools/py_usStandard
+	url = https://github.com/maahn/py_usStandard
