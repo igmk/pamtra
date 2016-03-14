@@ -314,7 +314,7 @@ module vars_atmosphere
 !##################################################################################################################################
   subroutine read_new_fill_variables(errorstatus)
 
-    use settings, only: verbose, input_pathfile, radar_mode, active
+    use settings, only: verbose, input_pathfile, radar_mode, active, read_turbolence_ascii
     use descriptor_file, only: moment_in_arr, n_hydro
 
     implicit none
@@ -362,10 +362,10 @@ module vars_atmosphere
 ! READ column integrated water vapor and hydrometeors properties
           read(14,*) work_xwp
           atmo_iwv(i,j) = work_xwp(1)
-          if ((.not. active) .or. (radar_mode == "simple")) &
+          if (.not. read_turbolence_ascii) &
               allocate(work_xwc(n_tot_moment+4,atmo_nlyrs(i,j)))
 ! For radar moments or spectrum mode then atmospheric turbulence should be provided in the last column of the input file
-          if (active .and. ((radar_mode == "moments") .or. (radar_mode == "spectrum"))) &
+          if (read_turbolence_ascii) &
               allocate(work_xwc(n_tot_moment+5,atmo_nlyrs(i,j)))
 ! READ lowest level variable (ONLY for "lev" input type)
           if (atmo_input_type == 'lev') read(14,*) atmo_hgt_lev(i,j,1),&
@@ -432,9 +432,8 @@ module vars_atmosphere
             if (moment_in_arr(i_hydro) > 5) index_hydro = index_hydro + 2
           enddo
 ! FILL turbulence for radar moments or spectrum mode
-          if ((radar_mode == "moments") .or. (radar_mode == "spectrum")) &
-          atmo_airturb(i,j,1:atmo_nlyrs(i,j)) = work_xwc(index_hydro,:) 
-
+          if (read_turbolence_ascii) &
+             atmo_airturb(i,j,1:atmo_nlyrs(i,j)) = work_xwc(index_hydro,:)
 
           deallocate(work_xwc)
 

@@ -70,6 +70,7 @@ module settings
        write_nc, &  ! write netcdf or ascii output
        active, &  	   ! calculate active stuff
        passive, &     ! calculate passive stuff (with RT4)
+       read_turbolence_ascii, & ! if .true. turbulence need to be included in the ascii input_file, rightmost column. Not relevant for PyPamtra and for passive simulations. 
        radar_airmotion, &   ! apply vertical air motion
        radar_save_noise_corrected_spectra, & !remove the noise from the calculated spectrum again (for testing)
        radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise0) we can skip that.
@@ -82,7 +83,7 @@ module settings
        hydro_limit_density_area, &
        hydro_adaptive_grid, & ! apply an adaptive grid to the psd. good to reduce mass overestimations for small amounts. works only for modified gamma
        conserve_mass_rescale_dsd, & ! in case the total mass calculated integrating the DSD is different from q_h (mass mixing ratio given in input) rescale the DSD
-       add_obs_height_to_layer, &
+       add_obs_height_to_layer, & ! if passive=.true. and the observation height don't correspond to a layer interface, add to the profile the observation height and interpolate all variables
        radar_use_wider_peak, & ! use wider peak inlcuding the found noise/peak border
        liblapack ! use liblapack for matrix inversion which much faster
 
@@ -146,6 +147,7 @@ contains
         add_obs_height_to_layer, &
         active, &
         passive,&
+        read_turbolence_ascii,&
         radar_mode, &
         randomseed, &
         ground_type, &
@@ -386,6 +388,7 @@ contains
         active=.true.
         passive=.true.
         radar_mode="simple" !|"moments"|"spectrum"
+        read_turbolence_ascii = .false.
         randomseed = 0
         ground_type='L'
         salinity=33.0
@@ -476,6 +479,7 @@ contains
       print*, 'radar_no_ave: ', radar_no_ave
       print*, 'hydro_includeHydroInRhoAir: ', hydro_includeHydroInRhoAir
       print*, 'passive: ', passive
+      print*, 'read_turbolence_ascii: ', read_turbolence_ascii
       print*, 'radar_airmotion_model: ', radar_airmotion_model
       print*, 'tmatrix_db_path: ', tmatrix_db_path
       print*, 'tmatrix_db: ', tmatrix_db

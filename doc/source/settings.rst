@@ -17,7 +17,8 @@ file_desc                          str                            ""
 gas_mod                            L93, R98                       R98         Model for gas absorption. Either ROSENKRANZ (1998) or LIEBE (1993)
 ground_type                        L,                             L           Lambertian or 
 hydro_adaptive_grid                bool                           True
-conserve_mass_rescale_dsd          bool                           True        In case the mass mixing ratio for an hydrometeor calculated integrating the drop-size-distribution (DSD) doesn't correspond to the input value, rescale the DSD to account for the mass loss. 
+conserve_mass_rescale_dsd          bool                           True        In case the mass mixing ratio for an hydrometeor calculated integrating the drop-size-distribution (DSD) doesn't correspond to the input value, rescale the DSD to account for the mass loss.
+read_turbolence_ascii              bool                           False       If .true. turbulence need to be included in the ascii input_file, rightmost column. Not relevant for PyPamtra and for passive simulations. 
 hydro_fullspec                     bool                           False       For pyPamtra only: Do not estimate particle diameter, mass, area, number concentration, rho and aspect ratio directly from the descriptor file but pass them directly from python to Pamtra using numpy arrays. See also addFullSpectra() of pyPamtra's descriptorFile class.
 hydro_includehydroinrhoair         bool                           True        Include hydrometeors when estimating the density of wet air. Different models use different conventions here.
 hydro_limit_density_area           bool                           True        Change mass, cross section area and density of particles in case it is larger or smaller than possible. Min density is hydro_softsphere_min_density, max density is 917 kg/m3. max area is D**2
