@@ -103,11 +103,9 @@ If not available try ::
 
     sudo easy_install numpydoc
 
-In addition, the sphinx-fortran-extension is required ::
+In addition, the sphinx-fortran-extension is required which can be found in the tools folder of Pamtra::
 
-    cd /tmp
-    git clone https://github.com/maahn/sphinx-fortran-extension
-    cd /tmp/sphinx-fortran-extension
+    cd tools/sphinx-fortran-extension
     sudo python setup.py install
 
 if you do not have root permissions you can also use instead of the last line::
