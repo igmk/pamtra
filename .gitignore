@@ -30,6 +30,7 @@ test/tmp/*
 check_moments
 *.pyc
 *.so
+*.so.dSYM
 *.tmp
 *.png
 snowCRYSTALuli
