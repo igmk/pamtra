@@ -35,7 +35,7 @@ vars_output
 .. f:automodule::  vars_output
 settings
 ^^^^^^^^^^^^^^^^^^^^
-.. f:automodule::  settings 
+.. f:automodule::  settings
 vars_atmosphere
 ^^^^^^^^^^^^^^^^^^^^
 .. f:automodule::  vars_atmosphere
@@ -75,9 +75,6 @@ dia2vel
 rescale_spec
 ^^^^^^^^^^^^^^^^^^^^
 .. f:automodule::  rescale_spec
-mie_scat_utlities
-^^^^^^^^^^^^^^^^^^^^
-.. f:automodule::  mie_scat_utlities
 rt_utilities
 ^^^^^^^^^^^^^^^^^^^^
 .. f:automodule::  rt_utilities
@@ -122,9 +119,6 @@ Subroutines
 parse_options
 ^^^^^^^^^^^^^^^^^^^^
 .. f:autosubroutine::  parse_options
-get_surface
-^^^^^^^^^^^^^^^^^^^^
-.. f:autosubroutine::  get_surface
 run_rt
 ^^^^^^^^^^^^^^^^^^^^
 .. f:autosubroutine::  run_rt
@@ -171,10 +165,6 @@ random
 radtran4
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. f:autosubroutine::  radtran4
-
-get_surface
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-.. f:autosubroutine::  get_surface
 rt4
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. f:autosubroutine::  rt4
@@ -238,5 +228,3 @@ get_atmosg
 getopt
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 .. f:autosubroutine::  getopt
-
-
