@@ -1,5 +1,6 @@
 &settings
 hydro_threshold = 1.d-20
+conserve_mass_rescale_dsd = .true.
 write_nc=.true.
 data_path='data/'
 save_psd=.false.

@@ -55,6 +55,7 @@ class pyPamtra(object):
     self.nmlSet["save_ssp"]= False #also saves the single scattering properties used for radiative transfer
     #self.nmlSet["noutlevels"]= 2 # output levels are given from top to bottom in meters
     self.nmlSet["add_obs_height_to_layer"] = False # add observation levels to atmospheric levels by interpolation
+    self.nmlSet["conserve_mass_rescale_dsd"] = True #In case the mass mixing ratio for an hydrometeor calculated integrating the drop-size-distribution (DSD) doesn't correspond to the input value, rescale the DSD to account for the mass loss.
     self.nmlSet["outpol"]= 'VH'
     self.nmlSet["file_desc"]= ''
     self.nmlSet["creator"]= 'Pamtrauser'
