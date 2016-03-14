@@ -15,7 +15,7 @@ module settings
     maxfreq = 100, &
     nummu = 16, & ! no. of observation angles
     NSTOKES = 2
-    
+
     integer, parameter :: SRC_CODE = 2,&
     NUMAZIMUTHS = 1,&
     Aziorder = 0
@@ -28,7 +28,7 @@ module settings
 
     character(1), parameter :: units='T'
 
-    
+
     ! set by command line options
     integer(kind=long) :: nfrq
 
@@ -70,7 +70,7 @@ module settings
        write_nc, &  ! write netcdf or ascii output
        active, &  	   ! calculate active stuff
        passive, &     ! calculate passive stuff (with RT4)
-       read_turbolence_ascii, & ! if .true. turbulence need to be included in the ascii input_file, rightmost column. Not relevant for PyPamtra and for passive simulations. 
+       read_turbulence_ascii, & ! if .true. turbulence need to be included in the ascii input_file, rightmost column. Not relevant for PyPamtra and for passive simulations.
        radar_airmotion, &   ! apply vertical air motion
        radar_save_noise_corrected_spectra, & !remove the noise from the calculated spectrum again (for testing)
        radar_use_hildebrand,&  ! use Hildebrand & Sekhon for noise estimation as a real radar would do. However, since we set the noise (radar_pnoise0) we can skip that.
@@ -147,7 +147,7 @@ contains
         add_obs_height_to_layer, &
         active, &
         passive,&
-        read_turbolence_ascii,&
+        read_turbulence_ascii,&
         radar_mode, &
         randomseed, &
         ground_type, &
@@ -155,8 +155,8 @@ contains
         emissivity, &
         lgas_extinction, &
         lhyd_absorption, &
-        lhyd_scattering, &   
-        lhyd_emission, &    
+        lhyd_scattering, &
+        lhyd_emission, &
         gas_mod, &
         hydro_fullSpec, &
         hydro_limit_density_area,&
@@ -193,19 +193,19 @@ contains
         radar_attenuation,&
         radar_polarisation, &
         liblapack
-        
+
       err = 0
 
      if (verbose >= 3) print*,'Start of ', nameOfRoutine
 
       ! first put default values
       call settings_fill_default()
-  
+
       if (namelist_file /= "None") then
 
         INQUIRE(FILE=namelist_file, EXIST=file_exists)   ! file_exists will be TRUE if the file
         call assert_true(err,file_exists,&
-            "file "//TRIM(namelist_file)//" does not exist") 
+            "file "//TRIM(namelist_file)//" does not exist")
 
        if (err /= 0) then
           msg = 'value in settings not allowed'
@@ -213,7 +213,7 @@ contains
           errorstatus = err
           return
        end if
-       print*, 2    
+       print*, 2
 
        if (verbose >= 3) print*,'Open namelist file: ', namelist_file
        ! read name list parameter file
@@ -254,22 +254,22 @@ contains
     character(len=80) :: msg
     character(len=15) :: nameOfRoutine = 'test_settings'
     !test for settings go here
-    
+
     err = 0
 
     if (verbose >= 4) print*,'Start of ', nameOfRoutine
     call assert_true(err, noutlevels > 0, 'Number of output levels has to be larger than 0')
     call assert_false(err,MOD(radar_nfft, 2) == 1,&
-         "radar_nfft has to be even") 
+         "radar_nfft has to be even")
     call assert_true(err,(gas_mod == "L93") .or. (gas_mod == "R98"),&
-         "gas_mod has to be L93 or R98") 
+         "gas_mod has to be L93 or R98")
     if (hydro_fullSpec) then
        call assert_true(err,in_python,&
-            "hydro_fullSpec works only in python!") 
+            "hydro_fullSpec works only in python!")
     end if
     if (.not. radar_use_hildebrand) then
        call assert_true(err,(radar_noise_distance_factor>0),&
-            "radar_noise_distance_factor must be larger when not using Hildebrand!") 
+            "radar_noise_distance_factor must be larger when not using Hildebrand!")
     end if
 
     if (err /= 0) then
@@ -291,7 +291,7 @@ contains
     use rt_utilities, &
          only: double_gauss_quadrature,&
          lobatto_quadrature,&
-         gauss_legendre_quadrature 
+         gauss_legendre_quadrature
 
     implicit none
 
@@ -374,7 +374,7 @@ contains
     if (verbose >= 2) print*,'Start of ', nameOfRoutine
 
         !set namelist defaults!
-        hydro_threshold = 1.d-20   ! [kg/kg] 
+        hydro_threshold = 1.d-20   ! [kg/kg]
         write_nc=.true.
         data_path='data/'
         save_psd=.false.
@@ -388,7 +388,7 @@ contains
         active=.true.
         passive=.true.
         radar_mode="simple" !|"moments"|"spectrum"
-        read_turbolence_ascii = .false.
+        read_turbulence_ascii = .false.
         randomseed = 0
         ground_type='L'
         salinity=33.0
@@ -451,13 +451,13 @@ contains
                 frq_str_e = "-"//frqs_str(nfrq)
             end if
             freq_str = frq_str_s//frq_str_e
-            
-        end if 
-    
-    
-    
+
+        end if
+
+
+
     end subroutine settings_fill_default
-    
+
     !for debuging
     subroutine print_settings()
 
@@ -479,7 +479,7 @@ contains
       print*, 'radar_no_ave: ', radar_no_ave
       print*, 'hydro_includeHydroInRhoAir: ', hydro_includeHydroInRhoAir
       print*, 'passive: ', passive
-      print*, 'read_turbolence_ascii: ', read_turbolence_ascii
+      print*, 'read_turbulence_ascii: ', read_turbulence_ascii
       print*, 'radar_airmotion_model: ', radar_airmotion_model
       print*, 'tmatrix_db_path: ', tmatrix_db_path
       print*, 'tmatrix_db: ', tmatrix_db
@@ -527,5 +527,5 @@ contains
       print*, "liblapack", liblapack
 
     end subroutine print_settings
-    
+
 end module settings
