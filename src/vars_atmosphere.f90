@@ -335,7 +335,7 @@ module vars_atmosphere
 
     n_tot_moment = 0
     do i_hydro = 1,n_hydro
-      n_tot_moment = n_tot_moment + 1
+      if (moment_in_arr(i_hydro) > 0.) n_tot_moment = n_tot_moment + 1
       if (moment_in_arr(i_hydro) > 5.) n_tot_moment = n_tot_moment + 1
     end do
     allocate(work_xwp(n_tot_moment+1))
