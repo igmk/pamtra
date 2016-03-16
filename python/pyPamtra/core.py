@@ -214,35 +214,26 @@ class pyPamtra(object):
 
 
   def writeNmlFile(self,nmlFile):
-    raise NotImplementedError("not yet implemented again in v1.0")
-
-    #for keygr in self.nmlSet.keys():
-      #for key in self.nmlSet[keygr].keys():
-        #if key not in self._nmlDefaultKeys:
-          #warnings.warn("Warning can not parse setting: "+str(key))
-
-
-    #f = open(nmlFile,"w")
-    #for keygr in self.nmlSet.keys():
-      #f.write("&%s\n\r"%keygr)
-      #for key in self.nmlSet[keygr].keys():
-        #if self.set["pyVerbose"] > 1: print "write: ", keygr, key
-        #if type(self._nmlDefaultValues[keygr][key])==bool:
-          #value = str(self.nmlSet[keygr][key]).lower()
-          #f.write("%s=.%s.\n\r"%(key,value,))
-        #elif type(self._nmlDefaultValues[keygr][key]) in [int,np.int32,np.int64]:
-          #value = int(self.nmlSet[keygr][key])
-          #f.write("%s=%i\n\r"%(key,value,))
-        #elif type(self._nmlDefaultValues[keygr][key]) in [float,np.float32,np.float64]:
-          #value = np.float64(self.nmlSet[keygr][key])
-          #f.write("%s=%f\n\r"%(key,value,))
-        #elif type(self._nmlDefaultValues[keygr][key]) in [str]:
-          #value = str(self.nmlSet[keygr][key])
-          #f.write("%s='%s'\n\r"%(key,value,))
-        #else:
-          #raise ValueError("cannot determine type of nml key "+ key)
-      #f.write("/\n\r")
-    #f.close()
+    f = open(nmlFile,"w")
+    f.write("&settings\n\r")
+    for key in self.nmlSet.keys():
+      if self.set["pyVerbose"] > 1: print "write: ", key
+      if type(self.nmlSet[key])==bool:
+        value = str(self.nmlSet[key]).lower()
+        f.write("%s=.%s.\n\r"%(key,value,))
+      elif type(self.nmlSet[key]) in [int,np.int32,np.int64]:
+        value = int(self.nmlSet[key])
+        f.write("%s=%i\n\r"%(key,value,))
+      elif type(self.nmlSet[key]) in [float,np.float32,np.float64]:
+        value = np.float64(self.nmlSet[key])
+        f.write("%s=%f\n\r"%(key,value,))
+      elif type(self.nmlSet[key]) in [str]:
+        value = str(self.nmlSet[key])
+        f.write("%s='%s'\n\r"%(key,value,))
+      else:
+        raise ValueError("cannot determine type of nml key "+ key)
+    f.write("/\n\r")
+    f.close()
 
   def readNmlFile(self,inputFile):
     """
@@ -550,11 +541,14 @@ class pyPamtra(object):
       self.p['hydro_tn'] = np.ones((self._shape2D[0],self._shape2D[1],self.df.nhydro))*-9999.
       #self.addIntegratedValues()
 
-    s = str(self._shape2D[0])+" "+str(self._shape2D[1])+" "+str(self._shape3D[2])+" "+str(self._shape3Dout[2])+"\n"
+    nHeights = self._shape3D[2]
+    if levLay == 'lev': nHeights+1
+
+    s = str(self._shape2D[0])+" "+str(self._shape2D[1])+" "+str(nHeights)+" "+str(self._shape3Dout[2])+"\n"
 
     for xx in range(self._shape2D[0]):
       for yy in range(self._shape2D[1]):
-	s += year+" "+mon+" "+day+" "+hhmm+" "+str(self._shape3D[2])+" "+str(xx+1)+" "+str(yy+1)+"\n"
+	s += year+" "+mon+" "+day+" "+hhmm+" "+str(nHeights)+" "+str(xx+1)+" "+str(yy+1)+"\n"
 	s += ' '.join(['%9e'%height for height in self.p['obs_height'][xx,yy,:]])+"\n"
 	s += '%3.2f'%self.p["lat"][xx,yy]+" "+'%3.2f'%self.p["lon"][xx,yy]+" "+str(self.p["lfrac"][xx,yy])+" "+str(self.p["wind10u"][xx,yy])+" "+str(self.p["wind10v"][xx,yy])+" "+str(self.p['groundtemp'][xx,yy])+" "+str(self.p['hgt_lev'][xx,yy,0])+"\n"
 	s += str(self.p["iwv"][xx,yy])
