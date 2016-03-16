@@ -422,11 +422,12 @@ class pyPamtra(object):
     self.p["ngridy"] = int(self.p["ngridy"])
     self.p["nlyrs"] = int(self.p["nlyrs"])
     self.p["max_nlyrs"] = deepcopy(self.p["nlyrs"])
-
+    self.p["noutlevels"] = 2
 
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"]+1,)
+    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],4+n_moments)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],4+n_moments,1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["nlyrs"],4+n_moments,0)
@@ -885,6 +886,7 @@ class pyPamtra(object):
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
+    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
@@ -930,6 +932,7 @@ class pyPamtra(object):
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
+    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
@@ -948,6 +951,7 @@ class pyPamtra(object):
     #new shape
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
+    self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
@@ -1822,10 +1826,12 @@ class pyPamtra(object):
       self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
       self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
       self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
-
+      try:
+        self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
+      except KeyError as e: #fallback for older Pamtra versions
+        self.p["noutlevels"] = 2
+        self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
       return
-
-
 
 
   def writeResultsToNetCDF(self,fname,profileVars="all",wpNames=[],ncForm="NETCDF3_CLASSIC"):
