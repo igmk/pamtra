@@ -26,7 +26,7 @@ LDFLAGS := $(shell nc-config --flibs) -lz
 
 
 OBJECTS=kinds.o \
-    vars_index.o \
+  vars_index.o \
 	report_module.o \
 	rt_utilities.o \
 	settings.o \
@@ -39,7 +39,7 @@ OBJECTS=kinds.o \
 	descriptor_file.o \
 	vars_atmosphere.o \
 	vars_rt.o \
-    vars_hydroFullSpec.o \
+  vars_hydroFullSpec.o \
 	mod_io_strings.o \
 	getopt.o \
 	parse_options.o \

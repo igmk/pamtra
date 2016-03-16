@@ -213,7 +213,6 @@ contains
           errorstatus = err
           return
        end if
-       print*, 2
 
        if (verbose >= 3) print*,'Open namelist file: ', namelist_file
        ! read name list parameter file

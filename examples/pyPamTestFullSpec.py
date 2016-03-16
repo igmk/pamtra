@@ -3,7 +3,7 @@ from copy import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np
 
-
+verbosity = 0
 plt.figure()
 
 pam = pyPamtra.pyPamtra()
@@ -27,11 +27,16 @@ pam.nmlSet["conserve_mass_rescale_dsd"] = False
 pam.p["hydro_q"][:] = 0.002
 pam.nmlSet["save_psd"] = True
 
-pam.set['verbose'] = 3
-pam.set['pyVerbose'] = 3
+pam.set['verbose'] = verbosity
+pam.set['pyVerbose'] = verbosity
+
+# pam.writeNmlFile("test.nml")
+# pam.writePamtraProfile("test.lev")
 
 pam.runPamtra(freqs,checkData=False)
 plt.plot(pam.r["radar_vel"],pam.r["radar_spectra"][0,0,0,0,0])
+
+# sys.exit()
 
 pamFS = pyPamtra.pyPamtra()
 #!name       as_ratio    liq_ice     rho_ms    a_ms    b_ms    alpha    beta   moment_in   nbin      dist_name        p_1     p_2     p_3     p_4     d_1       d_2           scat_name   vel_size_mod           canting
@@ -67,8 +72,8 @@ pamFS.df.dataFullSpec["mass_ds"][0,0,0,0,:] = np.pi/6. *pamFS.df.dataFullSpec["r
 pamFS.df.dataFullSpec["as_ratio"][0,0,0,0,:] = 1.0
 
 
-pamFS.set['verbose'] = 3
-pamFS.set['pyVerbose'] = 3
+pamFS.set['verbose'] = verbosity
+pamFS.set['pyVerbose'] = verbosity
 
 pamFS.runPamtra(freqs,checkData=False)
 

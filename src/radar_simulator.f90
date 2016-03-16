@@ -20,23 +20,20 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
     use vars_output, only: out_radar_spectra, out_radar_snr, out_radar_vel,out_radar_hgt, &
     out_radar_moments, out_radar_slopes, out_radar_edges, out_radar_quality, out_ze, out_att_hydro, & !output of the radar simulator
       out_att_atmo, &
-      out_debug_diameter, &
-      out_debug_back_of_d, &
       out_debug_radarvel, &
-      out_debug_radarback, &
       out_debug_radarback_wturb, &
       out_debug_radarback_wturb_wnoise
     use report_module
     use vars_index, only: i_x,i_y, i_z, i_f, i_p, i_n
 
     implicit none
-  
+
 
     real(kind=dbl), dimension(radar_npol),intent(in) ::  back !volumetric backscattering crossection in m²/m³
     real(kind=dbl),intent(in) ::  delta_h !heigth of layer in m
     real(kind=dbl),intent(in) ::  kexthydro !hydrometeor absorption coefficient [Np/m]
     real(kind=dbl), dimension(radar_npol,radar_nfft_aliased),intent(in):: particle_spectrum !backscattering particle spectrum per Doppler velocity [mm⁶/m³/(m/s)] NON-SI
-    
+
     real(kind=dbl), dimension(radar_nfft_aliased) :: particle_spectrum_att
     real(kind=dbl), dimension(radar_nfft_aliased) :: spectra_velo_aliased
     real(kind=dbl), dimension(radar_maxTurbTerms):: turb
@@ -58,8 +55,8 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
     character(len=80) :: msg
-    character(len=15) :: nameOfRoutine = 'radar_simulator'    
-    
+    character(len=15) :: nameOfRoutine = 'radar_simulator'
+
     interface
         subroutine convolution(errorstatus,X,M,A,N,Y)
             use kinds
@@ -80,27 +77,27 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
             integer, intent(in) :: seedval
             real(kind=dbl), intent(out), dimension(n) :: x_noise
         end subroutine random
-  
+
     end interface
 
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
     err = 0
 
 !     call assert_true(err,(radar_nPeaks == 1),&
-!         "only radar_nPeaks=1 allowed as of today")    
+!         "only radar_nPeaks=1 allowed as of today")
     call assert_false(err,(ANY(ISNAN(particle_spectrum))),&
         "got nan in values in backscattering spectrum")
     call assert_false(err,(ANY(ISNAN(back)) .or. ANY(back < 0.d0)),&
-        "got nan or negative value in linear Ze") 
+        "got nan or negative value in linear Ze")
     if (err > 0) then
       errorstatus = fatal
       msg = "assertation error"
       call report(errorstatus, msg, nameOfRoutine)
       return
-    end if   
-     
+    end if
+
     i_n = 1 ! only radar_nPeaks=1 implemented as of today
-     
+
     if (verbose >= 10)print*, "particle_spectrum"
     if (verbose >= 10)print*, particle_spectrum
 
@@ -142,7 +139,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
         msg = "do not understand radar_attenuation: "//radar_attenuation
         call report(errorstatus, msg, nameOfRoutine)
         return
-      end if 
+      end if
 
       PIA = 10d0**(0.1d0*PIA) !linearize
       Ze_back = Ze_back/PIA
@@ -152,16 +149,16 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
 
       if (radar_mode == "simple") then
         call assert_true(err,(radar_nPeaks == 1),&
-            "radar_nPeaks=1 required for 'simple' radar_mode") 
+            "radar_nPeaks=1 required for 'simple' radar_mode")
         if (err > 0) then
           errorstatus = fatal
           msg = "assertation error"
           call report(errorstatus, msg, nameOfRoutine)
           return
-        end if   
+        end if
           if (Ze_back .eq. 0.d0) then
             out_Ze(i_x,i_y,i_z,i_f,i_p,1) = -9999.d0
-          else 
+          else
             out_Ze(i_x,i_y,i_z,i_f,i_p,1) = 10*log10(Ze_back)
           end if
         if (verbose >= 3) print*, "i_x,i_y,i_z,i_f,out_Ze", i_x,i_y,i_z,i_f,out_Ze(i_x,i_y,i_z,i_f,i_p,1)
@@ -171,35 +168,35 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
           ! did not find any value in the atmo arrays, take the one from namelist file!
           if (ISNAN(atmo_radar_prop(i_x,i_y,1)) .or. (atmo_radar_prop(i_x,i_y,1) == -9999.)) then
             radar_Pnoise = 10**(0.1*radar_Pnoise0) * &
-              (out_radar_hgt(i_x,i_y,i_z)/1000.)**2 
+              (out_radar_hgt(i_x,i_y,i_z)/1000.)**2
             if (verbose >= 3) print*, "took radar noise from nml file", 10*log10(radar_Pnoise), &
                 radar_Pnoise0, out_radar_hgt(i_x,i_y,i_z)
           else
             ! take the one from the atmo files
             radar_Pnoise = 10**(0.1*atmo_radar_prop(i_x,i_y,1)) * &
-              (out_radar_hgt(i_x,i_y,i_z)/1000.)**2 
+              (out_radar_hgt(i_x,i_y,i_z)/1000.)**2
             if (verbose >= 3) print*, "took radar noise from atmo array", 10*log10(radar_Pnoise), &
                     atmo_radar_prop(i_x,i_y,1), out_radar_hgt(i_x,i_y,i_z)
           end if
           call assert_true(err,(radar_Pnoise > 0),&
-              "nan or negative radar_Pnoise") 
+              "nan or negative radar_Pnoise")
           if (err > 0) then
             errorstatus = fatal
             msg = "assertation error"
             call report(errorstatus, msg, nameOfRoutine)
             return
-          end if   
+          end if
 
 
           !get delta velocity
           del_v = (radar_max_V-radar_min_V) / radar_nfft ![m/s]
           !create array from min_v to max_v iwth del_v spacing -> velocity spectrum of radar
-          spectra_velo = (/(((ii*del_v)+radar_min_V),ii=0,radar_nfft)/) ! [m/s]
+          spectra_velo = (/(((ii*del_v)+radar_min_V),ii=0,radar_nfft-1)/) ! [m/s]
 
           !same for the extended spectrum
           min_V_aliased = radar_min_V - radar_aliasing_nyquist_interv*(radar_max_V-radar_min_V)
           max_V_aliased = radar_max_V + radar_aliasing_nyquist_interv*(radar_max_V-radar_min_V)
-          spectra_velo_aliased = (/(((ii*del_v)+min_V_aliased),ii=0,radar_nfft_aliased)/) ! [m/s]
+          spectra_velo_aliased = (/(((ii*del_v)+min_V_aliased),ii=0,radar_nfft_aliased-1)/) ! [m/s]
 
           !get turbulence (no turbulence in clear sky...)
           if ((atmo_airturb(i_x,i_y,i_z) > 0.d0) .and. (back(i_p) > 0)) then
@@ -240,7 +237,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
                   errorstatus = err
                   if (allocated(turb_spectra)) deallocate(turb_spectra)
                   return
-              end if   
+              end if
 
 
               !I don't like Nans and negative values here'
@@ -301,11 +298,11 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
             print*, SHAPE(turb_spectra_aliased)
             print*, turb_spectra_aliased
             print*, "##########################################"
-        out_debug_radarvel(:) = spectra_velo(:) 
+        out_debug_radarvel(:) = spectra_velo(:)
         out_debug_radarback_wturb(:) = turb_spectra_aliased
-        
-          end if  
-          
+
+          end if
+
           !get the SNR
           SNR = 10.d0*log10(Ze_back/radar_Pnoise)
           !this here is for scaling, if we have now a wrong Ze due to all the turbulence, rescaling etc...
@@ -319,7 +316,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
               noise_turb_spectra = snr_turb_spectra
           else
 
-              !get noise. 
+              !get noise.
               if (verbose > 2) print*, "get noise"
               if (randomseed == -1) then
                 !get it from lat lon
@@ -334,7 +331,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
                   errorstatus = err
                   if (allocated(turb_spectra)) deallocate(turb_spectra)
                   return
-              end if   
+              end if
               do tt = 1, radar_no_Ave
                   noise_turb_spectra_tmp(tt,:) = -log(x_noise((tt-1)*radar_nfft+1:tt*radar_nfft))*snr_turb_spectra
               end do
@@ -346,7 +343,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
               end if
           end if
 
-          
+
           !spetial output for testing the radar simulator
           if (verbose == 666) then
             print*, "##########################################"
@@ -354,8 +351,8 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
             print*, noise_turb_spectra
             print*, "##########################################"
             out_debug_radarback_wturb_wnoise(:) = noise_turb_spectra(:)
-          end if  
-          
+          end if
+
           !apply spectral resolution
           noise_turb_spectra = noise_turb_spectra * del_v !now [mm⁶/m³]
 
@@ -411,7 +408,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
             errorstatus = err
             if (allocated(turb_spectra)) deallocate(turb_spectra)
             return
-        end if   
+        end if
           if (verbose >= 4) then
             do i_n = 1  , radar_nPeaks
               print*,"TOTAL#",i_n," Ze moments log ",10*log10(moments(0,i_n)), "lin ", moments(0,i_n)
@@ -452,8 +449,8 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
             IF (ISNAN(moments(0,i_n))) moments(0,i_n) = -9999.d0
             out_Ze(i_x,i_y,i_z,i_f,i_p,i_n) = moments(0,i_n)
             if (verbose >= 5 ) then
-              print*, "i_x,i_y,i_z,i_f,i_p,i_n ",i_x,i_y,i_z,i_f,i_p,i_n 
-              print*, "out_radar_snr",out_radar_snr(i_x,i_y,i_z,i_f,i_p,i_n) 
+              print*, "i_x,i_y,i_z,i_f,i_p,i_n ",i_x,i_y,i_z,i_f,i_p,i_n
+              print*, "out_radar_snr",out_radar_snr(i_x,i_y,i_z,i_f,i_p,i_n)
               print*, "out_radar_moments",out_radar_moments(i_x,i_y,i_z,i_f,i_p,i_n,:)
               print*, "out_radar_slopes",out_radar_slopes(i_x,i_y,i_z,i_f,i_p,i_n,:)
               print*, "out_radar_edges",out_radar_edges(i_x,i_y,i_z,i_f,i_p,i_n,:)
