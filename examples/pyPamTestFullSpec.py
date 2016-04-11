@@ -82,3 +82,9 @@ plt.plot(pamFS.r["radar_vel"],pamFS.r["radar_spectra"][0,0,0,0,0])
 
 
 print pamFS.r["Ze"], pam.r["Ze"]
+
+plt.figure()
+plt.plot(pam.r['psd_d'].ravel(), pam.r['psd_n'].ravel()/pam.r['psd_deltad'].ravel(),label='para')
+plt.plot(pamFS.df.dataFullSpec['d_ds'].ravel(), pamFS.df.dataFullSpec['n_ds'].ravel()/np.diff(pamFS.df.dataFullSpec["d_bound_ds"]).ravel(),label='fullbin')
+plt.legend()
+plt.show()
