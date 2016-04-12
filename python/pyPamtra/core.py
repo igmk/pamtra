@@ -251,14 +251,13 @@ class pyPamtra(object):
     for key in nmlFile.keys():
       for subkey in nmlFile[key]["par"][0].keys():
         if subkey.lower() in self._nmlDefaultSet.keys():
-          if nmlFile[key]["par"][0][subkey][0] == ".true.": value = True
-          elif nmlFile[key]["par"][0][subkey][0] == ".false.": value = False
-          else: value = nmlFile[key]["par"][0][subkey][0]
-          if type(value) != bool:
-	    try: value = int(value)
-	    except:
-	      try: value = float(value.replace("d","e").replace("D","e"))
-	      except: pass
+          try:
+            value = np.array(map(lambda x:x.replace("d","e").replace("D","e"),nmlFile[key]["par"][0][subkey]),dtype=float)
+            if len(value) == 1: value = value[0]
+          except ValueError:
+            if nmlFile[key]["par"][0][subkey][0] == ".true.": value = True
+            elif nmlFile[key]["par"][0][subkey][0] == ".false.": value = False
+            else: value = nmlFile[key]["par"][0][subkey][0]
           self.nmlSet[subkey.lower()] = value
           if self.set["pyVerbose"] > 1: print subkey.lower(), ":", value
         elif self.set["pyVerbose"] > 0:
