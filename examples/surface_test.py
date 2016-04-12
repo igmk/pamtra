@@ -11,7 +11,6 @@ pam.df.addHydrometeor(("ice", -99., -1, 917., 130., 3.0, 0.684, 2., 3, 1, "mono_
 pam = pyPamtra.importer.createUsStandardProfile(pam,hgt_lev=[100,200,300])
 
 pam.set["verbose"] = 3
-pam.nmlSet['data_path'] = '/home/mech/workspace/pamtra/data'
 #pam.set["pyVerbose"] = 3
 #pam.nmlSet['ground_type'] = 'F'
 pam.p['lfrac'][:] = 0.

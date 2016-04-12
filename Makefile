@@ -122,7 +122,15 @@ FOBJECTS=$(addprefix $(OBJDIR),$(OBJECTS))
 
 BIN=pamtra
 
-all: dfftpack pamtra py py_usStandard
+warning:
+ifndef PAMTRA_DATADIR
+	@echo "########################################################"
+	@echo "Do not forget to define PAMTRA_DIR environment variable"
+	@echo "########################################################"
+endif
+
+
+all: dfftpack pamtra py py_usStandard warning
 
 dfftpack: | $(LIBDIR)
 	cd tools/dfftpack && $(MAKE)
@@ -130,7 +138,7 @@ dfftpack: | $(LIBDIR)
 
 pamtra: FCFLAGS += -O2
 pamtra: NCFLAGS += -O2
-pamtra: dfftpack $(FOBJECTS) $(BINDIR)$(BIN) | $(BINDIR)
+pamtra: warning dfftpack $(FOBJECTS) $(BINDIR)$(BIN) | $(BINDIR) 
 
 $(OBJDIR)versionNumber.auto.o: .git/HEAD .git/index
 	echo "!edit in makefile only!" > $(SRCDIR)versionNumber.auto.f90
@@ -225,7 +233,7 @@ $(PYTDIR)pyPamtraLib.so:  $(SRCDIR)pyPamtraLib.f90 $(OBJDIR)pypamtralib.pyf $(FO
 py_usStandard:
 	cd tools/py_usStandard/ && $(MAKE) all
 
-pyinstall: dfftpack py py_usStandard
+pyinstall: warning dfftpack py py_usStandard
 	mkdir -p ~/lib/python/
 	cp -r $(PYTDIR) ~/lib/python/
 	cd tools/py_usStandard/ && $(MAKE) install
