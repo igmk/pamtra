@@ -409,6 +409,9 @@ contains
     att_npol = 1
     att_pol(1) = "N"
 
+    !get data path from envrironmental variable if required
+    if (data_path == '$PAMTRA_DATADIR') CALL getenv("PAMTRA_DATADIR", data_path)
+
     errorstatus = err
     if (verbose > 3) call print_settings()
     if (verbose >= 4) print*,'End of ', nameOfRoutine
@@ -437,7 +440,7 @@ contains
         !set namelist defaults!
         hydro_threshold = 1.d-20   ! [kg/kg]
         write_nc=.true.
-        data_path='data/'
+        data_path='$PAMTRA_DATADIR'
         save_psd=.false.
         save_ssp=.false.
         noutlevels=2 ! number of output levels

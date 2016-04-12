@@ -1,5 +1,4 @@
 &settings
-data_path="/Users/maximilian.maahn/data/pamtra_data/"
 save_ssp=.true.
 liblapack=.true.
 radar_mode='spectrum'

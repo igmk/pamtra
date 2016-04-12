@@ -6,6 +6,8 @@ import numpy as np
 
 reload(pyPamtra)
 
+if os.getenv('PAMTRA_DATADIR') is None:
+  raise SystemError('Set $PAMTRA_DATADIR environment variable first')
 
 descriptorFile = "../descriptorfiles/descriptor_file_COSMO_1mom.txt"
 

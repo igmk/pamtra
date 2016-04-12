@@ -16,8 +16,6 @@ pamData["hydro_q"] = [[1e-5]]
 pam.df.addHydrometeor(('ice', 0.6, -1,  917.,  -99.0, -99.0,  -99.,  -99., 3, 1, 'mono', -99.0, -99.0, -99.0, -99.0, 0.005,  -99., "tmatrix", 'heymsfield10_particles',20.0))
 pam.createProfile(**pamData)
 
-
-pam.nmlSet["data_path"] = "/net/marin/mmaahn/pamtra_data"
 pam.nmlSet["save_ssp"] = True
 pam.nmlSet["save_psd"] = True
 

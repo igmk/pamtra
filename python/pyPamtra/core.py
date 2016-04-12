@@ -50,7 +50,7 @@ class pyPamtra(object):
     self.nmlSet["hydro_threshold"]=  1.e-10   # [kg/kg]
     #set namelist defaults#
     self.nmlSet["write_nc"]= True
-    self.nmlSet["data_path"]= 'data/'
+    self.nmlSet["data_path"]= '$PAMTRA_DATADIR'
     self.nmlSet["save_psd"]= False #also saves the PSDs used for radiative transfer
     self.nmlSet["save_ssp"]= False #also saves the single scattering properties used for radiative transfer
     #self.nmlSet["noutlevels"]= 2 # output levels are given from top to bottom in meters

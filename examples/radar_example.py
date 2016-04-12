@@ -11,7 +11,6 @@ pam = pyPamtra.importer.createUsStandardProfile(pam,hgt_lev=[100,200,300])
 pam.set["verbose"] = 0
 pam.p["hydro_q"][0,0,1] = 1e-2
 pam.p["airturb"][:] = 1e-1
-pam.nmlSet["data_path"] = '/net/marin//mmaahn/pamtra_data/'
 pam.nmlSet["radar_mode"] = "spectrum"
 pam.nmlSet["radar_noise_distance_factor"] = 2.0
 pam.nmlSet["radar_save_noise_corrected_spectra"]=  False
