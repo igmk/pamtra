@@ -44,7 +44,7 @@ class pyPamtra(object):
     set setting default values
     """
 
-    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb","radar_prop","groundtemp","wind_w"]
+    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb","radar_prop","groundtemp","wind_w", "wind_uv","turb_edr"]
     self.nmlSet = dict() #:settings which are required for the nml file. keeping the order is important for fortran
     #keys MUST be lowercase for f2py!
     self.nmlSet["hydro_threshold"]=  1.e-10   # [kg/kg]
@@ -140,6 +140,8 @@ class pyPamtra(object):
     self.dimensions["wind10u"] = ["ngridx","ngridy"]
     self.dimensions["wind10v"] = ["ngridx","ngridy"]
     self.dimensions["wind_w"] = ["ngridx","ngridy","max_nlyrs"]
+    self.dimensions["wind_uv"] = ["ngridx","ngridy","max_nlyrs"]
+    self.dimensions["turb_edr"] = ["ngridx","ngridy","max_nlyrs"]
     self.dimensions["obs_height"] = ["ngridx","ngridy","noutlevels"]
 
     self.dimensions["iwv"] = ["ngridx","ngridy"]
@@ -178,6 +180,8 @@ class pyPamtra(object):
     self.units["wind10u"] = "m/s"
     self.units["wind10v"] = "m/s"
     self.units["wind_w"] = "m/s"
+    self.units["wind_uv"] = "m/s"
+    self.units["turb_edr"] = "m^2/s^3 "
     self.units["obs_height"] = "m"
 
     self.units["iwv"] = "kg/m^2"
@@ -305,7 +309,8 @@ class pyPamtra(object):
     self.p["hydro_n"] = np.ones(self._shape4D) * np.nan
     self.p["hydro_reff"] = np.ones(self._shape4D) * np.nan
     if (self.nmlSet["active"] and (self.nmlSet["radar_mode"] in ["moments","spectrum"])):
-      self.p["airturb"] = np.ones(self._shape4D) * np.nan
+      self.p["airturb"] = np.ones(self._shape3D) * np.nan
+
 
     self.p["hgt_lev"] = np.ones(self._shape3Dplus) * np.nan
     self.p["hgt"] = np.ones(self._shape3D) * np.nan
@@ -383,7 +388,7 @@ class pyPamtra(object):
             else:
               raise IOError ('Did not understand df.data["moment_in"]')
             if "airturb" in self.p.keys():
-              self.p["airturb"][xx,yy,zz,hh] = dataLine.pop(0)
+              self.p["airturb"][xx,yy,zz] = dataLine.pop(0)
 
           #make sure we used all the data!
           assert len(dataLine)  == 0
@@ -393,6 +398,10 @@ class pyPamtra(object):
     if levLay == "lay":
       self.p["hgt_lev"][...,1:-1] = 0.5 * (self.p["hgt"][...,:-1] + self.p["hgt"][...,1:])
       self.p["hgt_lev"][...,-1] = self.p["hgt"][...,-1] + (self.p["hgt"][...,-1] - self.p["hgt"][...,-2])*0.5
+
+
+    self.p["wind_uv"] = np.ones(self._shape3D) * np.nan
+    self.p["turb_edr"] = np.ones(self._shape3D) * np.nan
 
     return
 
@@ -522,6 +531,8 @@ class pyPamtra(object):
     self.p["wind_w"] = np.zeros(self._shape3D) + np.nan
     for key in ["cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"] :
       del self.p[key]
+    self.p["wind_uv"] = np.ones(self._shape3D) * np.nan
+    self.p["turb_edr"] = np.ones(self._shape3D) * np.nan
 
     return
 
@@ -756,7 +767,7 @@ class pyPamtra(object):
       else:
         self.p[qValue] = kwargs[qValue].reshape(self._shape3D)
 
-    for qValue in ["wind_w"]:
+    for qValue in ["wind_w","wind_uv","turb_edr"]:
       if qValue not in kwargs.keys():
         self.p[qValue] = np.zeros(self._shape3D) + np.nan
         warnings.warn(qValue + " set to nan", Warning)
@@ -836,7 +847,7 @@ class pyPamtra(object):
     for key in ["hgt_lev","temp_lev","press_lev","relhum_lev"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3Dplus)
 
-    for key in ["airturb",'temp', 'press', 'relhum','hgt','wind_w']:
+    for key in ["airturb",'temp', 'press', 'relhum','hgt','wind_w','wind_uv','turb_edr']:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3D)
 
     if "radar_prop" in self.p.keys(): self.p["radar_prop"] = self.p["radar_prop"][condition].reshape(self._shape2D+tuple([2]))
@@ -895,7 +906,7 @@ class pyPamtra(object):
     for key in ["hydro_q","hydro_n","hydro_reff"]:
       if key in self.p.keys(): self.p[key] = np.tile(self.p[key], rep4D)
 
-    for key in ["hgt_lev","temp_lev","press_lev","relhum_lev","airturb",'temp', 'press', 'relhum','hgt','wind_w',"radar_prop"]:
+    for key in ["hgt_lev","temp_lev","press_lev","relhum_lev","airturb",'temp', 'press', 'relhum','hgt','wind_w',"radar_prop",'wind_uv','turb_edr']:
       if key in self.p.keys(): self.p[key] = np.tile(self.p[key], rep3D)
 
 
@@ -995,7 +1006,7 @@ class pyPamtra(object):
         self.p[key] = newP
         if key != "hgt_lev": self.p[key][self.p[key]<-1] = missingNumber
 
-    for key in ["airturb","wind_w","hgt","temp","relhum"]:
+    for key in ["airturb","wind_w","hgt","temp","relhum",'wind_uv','turb_edr']:
       if key in self.p.keys():
         newP = np.ones(self._shape3D) * missingNumber
         for x in xrange(self._shape2D[0]):
@@ -1247,7 +1258,7 @@ class pyPamtra(object):
 
     if type(freqs) in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
 
-    self.set["freqs"] = freqs
+    self.set["freqs"] = sorted(freqs)
     self.set["nfreqs"] = len(freqs)
     self.set["radar_pol"] = self.nmlSet["radar_polarisation"].split(",")
     self.set["radar_npol"] = len(self.set["radar_pol"])

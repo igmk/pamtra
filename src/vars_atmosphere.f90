@@ -1,7 +1,7 @@
 module vars_atmosphere
 
   use kinds
-  use settings, only: maxfreq, noutlevels
+  use settings, only: noutlevels
   use report_module
 
   implicit none
@@ -35,6 +35,8 @@ module vars_atmosphere
        atmo_hgt, &
        atmo_delta_hgt_lev, &
        atmo_airturb, &
+       atmo_wind_uv, &
+       atmo_turb_edr, &
        atmo_vapor_pressure, &
        atmo_rho_vap, &
        atmo_q_hum, &
@@ -198,6 +200,8 @@ module vars_atmosphere
     allocate(atmo_delta_hgt_lev(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
     allocate(atmo_airturb(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
     allocate(atmo_wind_w(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
+    allocate(atmo_wind_uv(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
+    allocate(atmo_turb_edr(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
 
     allocate(atmo_hydro_q(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs,n_hydro))
     allocate(atmo_hydro_q_column(atmo_ngridx,atmo_ngridy,n_hydro))
@@ -242,6 +246,8 @@ module vars_atmosphere
     atmo_hgt(:,:,:) = nan()
     atmo_delta_hgt_lev(:,:,:) = nan()
     atmo_airturb(:,:,:) = 0.d0
+    atmo_wind_uv(:,:,:) = nan()
+    atmo_turb_edr(:,:,:) = nan()
     atmo_wind_w(:,:,:) =nan()
 
     atmo_hydro_q(:,:,:,:) = nan()
@@ -283,6 +289,8 @@ module vars_atmosphere
     if (allocated(atmo_delta_hgt_lev)) deallocate(atmo_delta_hgt_lev)
     if (allocated(atmo_airturb)) deallocate(atmo_airturb)
     if (allocated(atmo_wind_w)) deallocate(atmo_wind_w)
+    if (allocated(atmo_wind_uv)) deallocate(atmo_wind_uv)
+    if (allocated(atmo_turb_edr)) deallocate(atmo_turb_edr)
 
     if (allocated(atmo_hydro_q)) deallocate(atmo_hydro_q)
     if (allocated(atmo_hydro_q_column)) deallocate(atmo_hydro_q_column)
@@ -523,6 +531,10 @@ module vars_atmosphere
           atmo_hgt(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1)            = atmo_hgt(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
           atmo_airturb(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1)        = atmo_airturb(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
           atmo_airturb(i,j,lay_use+1)                             = atmo_airturb(i,j,lay_use) ! Keep the same value for the 2 children layer
+          atmo_turb_edr(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1)       = atmo_turb_edr(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
+          atmo_turb_edr(i,j,lay_use+1)                            = atmo_turb_edr(i,j,lay_use) ! Keep the same value for the 2 children layer
+          atmo_wind_uv(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1)        = atmo_wind_uv(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
+          atmo_wind_uv(i,j,lay_use+1)                             = atmo_wind_uv(i,j,lay_use) ! Keep the same value for the 2 children layer
           atmo_wind_w(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1)         = atmo_wind_w(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
           atmo_wind_w(i,j,lay_use+1)                              = atmo_wind_w(i,j,lay_use) ! Keep the same value for the 2 children layer
           atmo_vapor_pressure(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1) = atmo_vapor_pressure(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
@@ -777,6 +789,7 @@ module vars_atmosphere
                 atmo_q_hum(nx,ny,nz) = r_v/r_d*atmo_vapor_pressure(nx,ny,nz)/&
                 (atmo_press(nx,ny,nz) - (1._dbl- r_v/r_d) * atmo_vapor_pressure(nx,ny,nz))  ! [kg/kg]
 
+
         end do
     !for ground temp, simply use the lowes avalable one if not provided
     if (isnan(atmo_groundtemp(nx,ny))) &
@@ -968,6 +981,8 @@ module vars_atmosphere
     print*, "atmo_delta_hgt_lev", atmo_delta_hgt_lev
     print*, "atmo_airturb", atmo_airturb
     print*, "atmo_wind_w", atmo_wind_w
+    print*, "atmo_wind_uv", atmo_wind_uv
+    print*, "atmo_turb_edr", atmo_turb_edr
 
     print*, "atmo_hydro_q", atmo_hydro_q
     print*, "atmo_hydro_reff", atmo_hydro_reff

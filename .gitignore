@@ -13,6 +13,7 @@ examples/*.txt
 fort*
 !python/pyPamtra/fort*
 output/
+!output/.empty
 profiles/
 profile/*
 !profile/example_input*

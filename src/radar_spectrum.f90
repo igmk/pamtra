@@ -129,7 +129,7 @@ subroutine radar_spectrum(&
     ! get |K|**2 and lambda
 
 !     K2 = dielec_water(0.D0,radar_K2_temp-t_abs,frequency)
-    K2 = radar_K2
+    K2 = radar_K2(i_f)
     wavelength = c / (frequency*1.d9)   ! m
 
     diameter_spec_cp(:) = diameter_spec(:)
@@ -242,14 +242,14 @@ subroutine radar_spectrum(&
     del_v_model(nbins) = del_v_model(nbins)
     back_vel_spec = back_spec_ref * ABS(dD_dU)  !non-SI: [mm⁶/m³/m * m/(m/s)]
     !get delta velocity
-    del_v_radar = (radar_max_V-radar_min_V)/radar_nfft ![m/s]
+    del_v_radar = (radar_max_V(i_f)-radar_min_V(i_f))/radar_nfft ![m/s]
 
-    min_V_aliased = radar_min_V - radar_aliasing_nyquist_interv*(radar_max_V-radar_min_V)
-    max_V_aliased = radar_max_V + radar_aliasing_nyquist_interv*(radar_max_V-radar_min_V)
+    min_V_aliased = radar_min_V(i_f) - radar_aliasing_nyquist_interv*(radar_max_V(i_f)-radar_min_V(i_f))
+    max_V_aliased = radar_max_V(i_f) + radar_aliasing_nyquist_interv*(radar_max_V(i_f)-radar_min_V(i_f))
 
-    call assert_true(err,radar_min_V<=0,&
+    call assert_true(err,radar_min_V(i_f)<=0,&
         "radar_min_V must be smaller equal 0")
-    call assert_true(err,radar_max_V>=0,&
+    call assert_true(err,radar_max_V(i_f)>=0,&
         "radar_max_V must be greater equal 0")
     call assert_true(err,min_V_aliased<=MINVAL(vel_spec),&
         "increase radar_aliasing_nyquist_interv to the left!")

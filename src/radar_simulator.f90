@@ -16,7 +16,9 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
       atmo_radar_prop, &
       atmo_lat, &
       atmo_lon, &
-      atmo_nlyrs
+      atmo_nlyrs, &
+      atmo_wind_uv, &
+      atmo_turb_edr
     use vars_output, only: out_radar_spectra, out_radar_snr, out_radar_vel,out_radar_hgt, &
     out_radar_moments, out_radar_slopes, out_radar_edges, out_radar_quality, out_ze, out_att_hydro, & !output of the radar simulator
       out_att_atmo, &
@@ -37,8 +39,8 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
     real(kind=dbl), dimension(radar_nfft_aliased) :: particle_spectrum_att
     real(kind=dbl), dimension(radar_nfft_aliased) :: spectra_velo_aliased
     real(kind=dbl), dimension(radar_maxTurbTerms):: turb
-    real(kind=dbl), dimension(radar_nfft*radar_no_Ave):: x_noise
-    real(kind=dbl), dimension(radar_no_Ave,radar_nfft):: noise_turb_spectra_tmp
+    real(kind=dbl), dimension(radar_nfft*radar_no_Ave(i_f)):: x_noise
+    real(kind=dbl), dimension(radar_no_Ave(i_f),radar_nfft):: noise_turb_spectra_tmp
     real(kind=dbl), dimension(radar_nfft):: noise_turb_spectra,&
     snr_turb_spectra,spectra_velo, turb_spectra_aliased, noise_removed_turb_spectra
     integer::quality_moments, quailty_aliasing
@@ -104,7 +106,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
     frequency = freqs(i_f)
     ! get |K|**2 and lambda
 
-    K2 = radar_K2!dielec_water(0.D0,radar_K2_temp-t_abs,frequency)
+    K2 = radar_K2(i_f)!dielec_water(0.D0,radar_K2_temp-t_abs,frequency)
     wavelength = c / (frequency*1.d9)   ! [m]
 
     !first, calculate the attenuation for hydrometeors
@@ -167,10 +169,10 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
           !calculate the noise level depending on range:
           ! did not find any value in the atmo arrays, take the one from namelist file!
           if (ISNAN(atmo_radar_prop(i_x,i_y,1)) .or. (atmo_radar_prop(i_x,i_y,1) == -9999.)) then
-            radar_Pnoise = 10**(0.1*radar_Pnoise0) * &
+            radar_Pnoise = 10**(0.1*radar_Pnoise0(i_f)) * &
               (out_radar_hgt(i_x,i_y,i_z)/1000.)**2
             if (verbose >= 3) print*, "took radar noise from nml file", 10*log10(radar_Pnoise), &
-                radar_Pnoise0, out_radar_hgt(i_x,i_y,i_z)
+                radar_Pnoise0(i_f), out_radar_hgt(i_x,i_y,i_z)
           else
             ! take the one from the atmo files
             radar_Pnoise = 10**(0.1*atmo_radar_prop(i_x,i_y,1)) * &
@@ -189,18 +191,32 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
 
 
           !get delta velocity
-          del_v = (radar_max_V-radar_min_V) / radar_nfft ![m/s]
+          del_v = (radar_max_V(i_f)-radar_min_V(i_f)) / radar_nfft ![m/s]
           !create array from min_v to max_v iwth del_v spacing -> velocity spectrum of radar
-          spectra_velo = (/(((ii*del_v)+radar_min_V),ii=0,radar_nfft-1)/) ! [m/s]
+          spectra_velo = (/(((ii*del_v)+radar_min_V(i_f)),ii=0,radar_nfft-1)/) ! [m/s]
 
           !same for the extended spectrum
-          min_V_aliased = radar_min_V - radar_aliasing_nyquist_interv*(radar_max_V-radar_min_V)
-          max_V_aliased = radar_max_V + radar_aliasing_nyquist_interv*(radar_max_V-radar_min_V)
+          min_V_aliased = radar_min_V(i_f) - radar_aliasing_nyquist_interv*(radar_max_V(i_f)-radar_min_V(i_f))
+          max_V_aliased = radar_max_V(i_f) + radar_aliasing_nyquist_interv*(radar_max_V(i_f)-radar_min_V(i_f))
           spectra_velo_aliased = (/(((ii*del_v)+min_V_aliased),ii=0,radar_nfft_aliased-1)/) ! [m/s]
 
+
+          if (isnan(atmo_airturb(i_x,i_y,i_z)) .and. (.not. isnan(atmo_turb_edr(i_x,i_y,i_z)*atmo_wind_uv(i_x,i_y,i_z))) ) then
+
+            ! call spectralBroadening(atmo_turb_edr(i_x,i_y,i_z),atmo_wind_uv(i_x,i_y,i_z),beamwidth_deg,integration_time,wavelength,kolmogorov = 0.5,ss)
+            ! call spectralBroadening(EDR,wind_uv,beamwidth_deg,integration_time,wavelength,kolmogorov = 0.5,ss)
+             ss = atmo_airturb(i_x,i_y,i_z)/del_v !in array indices!
+           ss = ss/del_v !in array indices!
+
+          else
+            ss = atmo_airturb(i_x,i_y,i_z)/del_v !in array indices!
+          end if  
+
+
+
           !get turbulence (no turbulence in clear sky...)
-          if ((atmo_airturb(i_x,i_y,i_z) > 0.d0) .and. (back(i_p) > 0)) then
-              ss = atmo_airturb(i_x,i_y,i_z)/del_v;            !in array indices!
+          if ((ss > 0.d0) .and. (back(i_p) > 0)) then
+        
 
               turb(:) = 0.d0
               tt = 1
@@ -312,7 +328,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
           !   snr_turb_spectra =turb_spectra_aliased + radar_Pnoise/(radar_nfft*del_v)
 
 
-          if (radar_no_Ave .eq. 0) then !0 means infinity-> no noise
+          if (radar_no_Ave(i_f) .eq. 0) then !0 means infinity-> no noise
               noise_turb_spectra = snr_turb_spectra
           else
 
@@ -324,7 +340,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
               else
                 seed = randomseed
               end if
-              call random(err,radar_no_Ave*radar_nfft,seed,x_noise)
+              call random(err,radar_no_Ave(i_f)*radar_nfft,seed,x_noise)
               if (err /= 0) then
                   msg = 'error in random!'
                   call report(err, msg, nameOfRoutine)
@@ -332,14 +348,14 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
                   if (allocated(turb_spectra)) deallocate(turb_spectra)
                   return
               end if
-              do tt = 1, radar_no_Ave
+              do tt = 1, radar_no_Ave(i_f)
                   noise_turb_spectra_tmp(tt,:) = -log(x_noise((tt-1)*radar_nfft+1:tt*radar_nfft))*snr_turb_spectra
               end do
 
-              if (radar_no_Ave .eq. 1) then
+              if (radar_no_Ave(i_f) .eq. 1) then
                   noise_turb_spectra = noise_turb_spectra_tmp(1,:)
               else
-                  noise_turb_spectra = SUM(noise_turb_spectra_tmp,DIM=1)/radar_no_Ave
+                  noise_turb_spectra = SUM(noise_turb_spectra_tmp,DIM=1)/radar_no_Ave(i_f)
               end if
           end if
 
@@ -376,7 +392,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
           end if
 
             !apply a receiver uncertainty:
-          if (radar_receiver_uncertainty_std /= 0) then
+          if (radar_receiver_uncertainty_std(i_f) /= 0) then
             !get random
             call random(err,2,seed,rand_number)
             if (err /= 0) then
@@ -386,7 +402,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
                 return
             end if
             !apply a gaussian distribution to random numbers
-            receiver_uncertainty =  radar_receiver_uncertainty_std * sqrt( -2.0d0 * log ( rand_number(1))) &
+            receiver_uncertainty =  radar_receiver_uncertainty_std(i_f) * sqrt( -2.0d0 * log ( rand_number(1))) &
                           * cos(2.0d0 * pi * rand_number(2))
             !make linear
             receiver_uncertainty = 10**(0.1*receiver_uncertainty)
@@ -396,8 +412,8 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
           end if
 
           !apply a receiver miscalibration:
-          noise_turb_spectra = noise_turb_spectra * 10**(0.1*radar_receiver_miscalibration)
-          radar_Pnoise = radar_Pnoise * 10**(0.1*radar_receiver_miscalibration)
+          noise_turb_spectra = noise_turb_spectra * 10**(0.1*radar_receiver_miscalibration(i_f))
+          radar_Pnoise = radar_Pnoise * 10**(0.1*radar_receiver_miscalibration(i_f))
 
           call radar_calc_moments(err,radar_nfft,radar_nPeaks,&
             noise_turb_spectra,radar_Pnoise,noise_removed_turb_spectra,&
