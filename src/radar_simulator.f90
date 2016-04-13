@@ -25,6 +25,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
       out_debug_radarvel, &
       out_debug_radarback_wturb, &
       out_debug_radarback_wturb_wnoise
+    use radar_spectral_broadening, only: estimate_spectralBroadening  
     use report_module
     use vars_index, only: i_x,i_y, i_z, i_f, i_p, i_n
 
@@ -203,13 +204,25 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
 
           if (isnan(atmo_airturb(i_x,i_y,i_z)) .and. (.not. isnan(atmo_turb_edr(i_x,i_y,i_z)*atmo_wind_uv(i_x,i_y,i_z))) ) then
 
-            ! call spectralBroadening(atmo_turb_edr(i_x,i_y,i_z),atmo_wind_uv(i_x,i_y,i_z),beamwidth_deg,integration_time,wavelength,kolmogorov = 0.5,ss)
-            ! call spectralBroadening(EDR,wind_uv,beamwidth_deg,integration_time,wavelength,kolmogorov = 0.5,ss)
-             ss = atmo_airturb(i_x,i_y,i_z)/del_v !in array indices!
-           ss = ss/del_v !in array indices!
+            call estimate_spectralBroadening(atmo_turb_edr(i_x,i_y,i_z),atmo_wind_uv(i_x,i_y,i_z),out_radar_hgt(i_x,i_y,i_z),&
+                radar_fwhr_beamwidth_deg(i_f),radar_integration_time(i_f),wavelength,radar_kolmogorov_constant,ss)
 
-          else
+            if (verbose > -10) print*, i_x,i_y,i_z,i_f, ss
+
+            ss = ss/del_v !in array indices!
+
+          else if (.not.  isnan(atmo_airturb(i_x,i_y,i_z)) .and. &
+                  (isnan(atmo_turb_edr(i_x,i_y,i_z)*atmo_wind_uv(i_x,i_y,i_z)))) then
             ss = atmo_airturb(i_x,i_y,i_z)/del_v !in array indices!
+          else if ((isnan(atmo_airturb(i_x,i_y,i_z))) .and. (isnan(atmo_turb_edr(i_x,i_y,i_z))) .and. &
+                 (isnan(atmo_wind_uv(i_x,i_y,i_z))) ) then! no value provided.. take zero
+            ss = 0.d0
+          else
+            errorstatus = fatal
+            msg = "Didn't get valid broadening value"
+            call report(errorstatus, msg, nameOfRoutine)
+            return
+
           end if  
 
 
@@ -455,7 +468,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
           end if
           do i_n = 1  , radar_nPeaks
             out_radar_snr(i_x,i_y,i_z,i_f,i_p,i_n) = SNR !same SNR for all values as of now...
-            out_radar_vel(:) = spectra_velo(:)
+            out_radar_vel(i_f,:) = spectra_velo(:)
             out_radar_moments(i_x,i_y,i_z,i_f,i_p,i_n,:) = moments(1:4,i_n)
             out_radar_slopes(i_x,i_y,i_z,i_f,i_p,i_n,:) = slope(:,i_n)
             out_radar_edges(i_x,i_y,i_z,i_f,i_p,i_n,:) = edge(:,i_n)
@@ -488,3 +501,10 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
     if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
     return
 end subroutine radar_simulator
+
+
+
+
+
+
+

@@ -61,7 +61,7 @@ def PamtraFortranWrapper(
     else:
       if isList:
         if sets["pyVerbose"] > 3: print("settings."+key.lower() +"[:] = numpy.array(nmlSets['"+key+"']).tolist()")
-        exec("settings."+key.lower() +"[:] = numpy.array(nmlSets['"+key+"']).tolist()")
+        exec("settings."+key.lower() +"[0:numpy.prod(numpy.array(nmlSets['"+key+"']).shape)] = numpy.array(nmlSets['"+key+"']).tolist()")
       else:  
         if sets["pyVerbose"] > 3: print("settings."+key.lower() +" = " + str(nmlSets[key]))
         exec("settings."+key.lower() +" = " + str(nmlSets[key]))

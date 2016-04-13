@@ -75,6 +75,7 @@ OBJECTS=kinds.o \
 	rescale_spectra.o \
 	radar_moments.o \
 	radar_spectrum.o \
+	radar_spectral_broadening.o \
 	radar_simulator.o \
 	rosen98_gasabs.o \
 	surface.o \
@@ -122,6 +123,10 @@ FOBJECTS=$(addprefix $(OBJDIR),$(OBJECTS))
 
 BIN=pamtra
 
+
+
+all: dfftpack pamtra py py_usStandard 
+
 warning:
 ifndef PAMTRA_DATADIR
 	@echo "########################################################"
@@ -129,8 +134,6 @@ ifndef PAMTRA_DATADIR
 	@echo "########################################################"
 endif
 
-
-all: dfftpack pamtra py py_usStandard warning
 
 dfftpack: | $(LIBDIR)
 	cd tools/dfftpack && $(MAKE)

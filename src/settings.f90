@@ -30,6 +30,8 @@ module settings
 
     character(1), parameter :: units='T'
 
+    real(kind=dbl), parameter :: radar_kolmogorov_constant = 0.5     ! kolmogorov constant for turbulence
+
 
     ! set by command line options
     integer(kind=long) :: nfrq
@@ -64,6 +66,12 @@ module settings
     real(kind=dbl) :: radar_receiver_miscalibration_default !radar calibration offset in dB
     real(kind=dbl), dimension(maxfreq) :: radar_noise_distance_factor 
     real(kind=dbl) :: radar_noise_distance_factor_default 
+    real(kind=dbl), dimension(maxfreq) :: radar_fwhr_beamwidth_deg !full width half radiation beamwidth
+    real(kind=dbl) :: radar_fwhr_beamwidth_deg_default 
+    real(kind=dbl), dimension(maxfreq) :: radar_integration_time 
+    real(kind=dbl) :: radar_integration_time_default 
+
+
 
     real(kind=dbl) :: radar_airmotion_vmin
     real(kind=dbl) :: radar_airmotion_vmax
@@ -205,6 +213,8 @@ contains
         radar_smooth_spectrum,&
         radar_attenuation,&
         radar_polarisation, &
+        radar_integration_time, &
+        radar_fwhr_beamwidth_deg, &
         liblapack
 
       err = 0
@@ -286,8 +296,26 @@ contains
             "radar_noise_distance_factor must be larger when not using Hildebrand!")
     end if
 
+    call assert_false(err,ANY(ISNAN(radar_max_V(1:nfrq))),&
+         "too few values for radar_max_V")
+    call assert_false(err,ANY(ISNAN(radar_min_V(1:nfrq))),&
+         "too few values for radar_min_V")
     call assert_false(err,ANY(ISNAN(radar_pnoise0(1:nfrq))),&
          "too few values for radar_pnoise0")
+    call assert_false(err,ANY(ISNAN(radar_min_spectral_snr(1:nfrq))),&
+         "too few values for radar_min_spectral_snr")
+    call assert_false(err,ANY(ISNAN(radar_K2(1:nfrq))),&
+         "too few values for radar_K2")
+    call assert_false(err,ANY(ISNAN(radar_noise_distance_factor(1:nfrq))),&
+         "too few values for radar_noise_distance_factor")
+    call assert_false(err,ANY(ISNAN(radar_receiver_uncertainty_std(1:nfrq))),&
+          "too few values for radar_receiver_uncertainty_std")
+    call assert_false(err,ANY(ISNAN(radar_receiver_miscalibration(1:nfrq))),&
+         "too few values for radar_receiver_miscalibration")
+    call assert_false(err,ANY(ISNAN(radar_integration_time(1:nfrq))),&
+         "too few values for radar_integration_time")
+    call assert_false(err,ANY(ISNAN(radar_fwhr_beamwidth_deg(1:nfrq))),&
+         "too few values for radar_fwhr_beamwidth_deg")
     if (err /= 0) then
        msg = 'not enough values for all frequencies!'
        call report(err, msg, nameOfRoutine)
@@ -352,6 +380,8 @@ contains
     call fillRealValues(radar_noise_distance_factor,radar_noise_distance_factor_default)
     call fillRealValues(radar_receiver_uncertainty_std,radar_receiver_uncertainty_std_default)
     call fillRealValues(radar_receiver_miscalibration,radar_receiver_miscalibration_default)
+    call fillRealValues(radar_integration_time,radar_integration_time_default)
+    call fillRealValues(radar_fwhr_beamwidth_deg,radar_fwhr_beamwidth_deg_default)
     if (ALL(radar_no_Ave == missingInt)) then
       radar_no_Ave(:) = radar_no_Ave_default
     else if (ALL(radar_no_Ave(2:) == missingInt)) then
@@ -487,6 +517,11 @@ contains
         !radar noise at 1km in same unit as Ze 10*log10(mm⁶/m³). noise is calculated with noise = radar_pnoise0 + 20*log10(range/1000)
         radar_pnoise0(:)= floatNfreq ! mean value for BArrow MMCR during ISDAC
         radar_pnoise0_default=  -32.23 ! mean value for BArrow MMCR during ISDAC
+        radar_integration_time(:)= floatNfreq ! radar integration time
+        radar_integration_time_default=  1.4 ! MMCR Barrow during ISDAC
+        radar_fwhr_beamwidth_deg(:)= floatNfreq ! full width haalf radiation beam width
+        radar_fwhr_beamwidth_deg_default=  0.31/2. ! MMCR Barrow during ISDAC
+
 
         radar_min_spectral_snr(:)= floatNfreq
         radar_min_spectral_snr_default = 1.2!threshold for peak detection. if radar_no_Ave >> 150, it can be set to 1.1

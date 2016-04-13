@@ -110,6 +110,9 @@ class pyPamtra(object):
     self.nmlSet["radar_attenuation"]=  "disabled" #! "bottom-up" or "top-down"
     self.nmlSet["radar_polarisation"]=  "NN" #! comma separated
     self.nmlSet["radar_use_wider_peak"]=  False #
+    self.nmlSet["radar_integration_time"] =  1.4 # MMCR Barrow during ISDAC
+    self.nmlSet["radar_fwhr_beamwidth_deg"] = 0.31 # full width haalf radiation beam width MMCR Barrow 
+
     self.nmlSet["liblapack"]=  True # use liblapack for matrix inversion
 
 
@@ -526,7 +529,7 @@ class pyPamtra(object):
       self.p["hydro_n"][:,:,:,5] = self.p["hwc_n"]
 
 
-    self.p["airturb"] = np.zeros(self._shape3D)
+    self.p["airturb"] = np.zeros(self._shape3D)+ np.nan
     self.p["wind_w"] = np.zeros(self._shape3D) + np.nan
     for key in ["cwc_q","iwc_q","rwc_q","swc_q","gwc_q","hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"] :
       del self.p[key]
@@ -759,14 +762,7 @@ class pyPamtra(object):
       else:
         self.p[qValue] = kwargs[qValue].reshape(self._shape4D)
 
-    for qValue in ["airturb"]:
-      if qValue not in kwargs.keys():
-        self.p[qValue] = np.zeros(self._shape3D)
-        warnings.warn(qValue + " set to 0", Warning)
-      else:
-        self.p[qValue] = kwargs[qValue].reshape(self._shape3D)
-
-    for qValue in ["wind_w","wind_uv","turb_edr"]:
+    for qValue in ["airturb","wind_w","wind_uv","turb_edr"]:
       if qValue not in kwargs.keys():
         self.p[qValue] = np.zeros(self._shape3D) + np.nan
         warnings.warn(qValue + " set to nan", Warning)
@@ -1065,7 +1061,7 @@ class pyPamtra(object):
 
 
     heightVec = self.p["hgt"]
-    lamb = 3e8/(frequency * 1e9)
+    lamb = 299792458./(frequency * 1e9)
     beamWidth=beamwidth_deg/2./180.*np.pi #half width half radiated http://www.wmo.int/pages/prog/gcos/documents/gruanmanuals/Z_instruments/mmcr_handbook.pdf
     L_s = (wind_uv * integration_time) + 2*heightVec*np.sin(beamWidth)#RIGHT, formular of shupe or oconnor is for full width beam width
     L_lambda = lamb / 2.
@@ -1753,7 +1749,7 @@ class pyPamtra(object):
     self.r["radar_slopes"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_slopes"]
     self.r["radar_edges"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_edges"]
     self.r["radar_quality"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_quality"]
-    self.r["radar_vel"]= results["radar_vel"]
+    self.r["radar_vel"][pp_startF:pp_endF]= results["radar_vel"]
     self.r["angles_deg"]= results["angles_deg"]
     if self.nmlSet["save_psd"]:
       for key in ["psd_d","psd_n","psd_mass","psd_area"]:
@@ -2098,7 +2094,7 @@ class pyPamtra(object):
 
 	if ((self.r["nmlSettings"]["radar_mode"] == "spectrum")):
 
-	  nc_vel=cdfFile.createVariable('Radar_Velocity', 'f',("nfft",),**fillVDict)
+	  nc_vel=cdfFile.createVariable('Radar_Velocity', 'f',("frequency","nfft",),**fillVDict)
 	  nc_vel.units="m/s"
 	  nc_vel[:] = np.array(self.r["radar_vel"],dtype='f')
 	  if not pyNc: nc_vel._fillValue =missingNumber

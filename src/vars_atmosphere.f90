@@ -245,7 +245,7 @@ module vars_atmosphere
     atmo_q_hum(:,:,:) = nan()
     atmo_hgt(:,:,:) = nan()
     atmo_delta_hgt_lev(:,:,:) = nan()
-    atmo_airturb(:,:,:) = 0.d0
+    atmo_airturb(:,:,:) = nan()
     atmo_wind_uv(:,:,:) = nan()
     atmo_turb_edr(:,:,:) = nan()
     atmo_wind_w(:,:,:) =nan()
@@ -828,8 +828,7 @@ module vars_atmosphere
         "found nan in atmo_hgt")
     call assert_false(err,ANY(ISNAN(atmo_delta_hgt_lev(nx,ny,1:atmo_nlyrs(nx,ny)))),&
         "found nan in atmo_delta_hgt_lev")
-    call assert_false(err,ANY(ISNAN(atmo_airturb(nx,ny,1:atmo_nlyrs(nx,ny)))),&
-        "found nan in atmo_airturb")
+
 !     call assert_false(err,ANY(ISNAN(atmo_wind_w(nx,ny,1:atmo_nlyrs(nx,ny)))),&
 !         "found nan in atmo_wind_w")
     call assert_false(err,ANY(ISNAN(atmo_relhum_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1))),&

@@ -31,7 +31,7 @@ module vars_output
   real(kind=dbl), allocatable, dimension(:,:,:,:,:,:,:) ::    out_radar_slopes
   real(kind=dbl), allocatable, dimension(:,:,:,:,:,:,:) ::    out_radar_edges
   integer, allocatable, dimension(:,:,:,:,:,:) ::    out_radar_quality
-  real(kind=dbl), allocatable, dimension(:) :: out_radar_vel
+  real(kind=dbl), allocatable, dimension(:,:) :: out_radar_vel
 
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_deltad
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_d
@@ -157,7 +157,7 @@ module vars_output
         out_radar_slopes(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,radar_npol,radar_nPeaks,2),&
         out_radar_edges(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,radar_npol,radar_nPeaks,2),&
         out_radar_quality(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,nfrq,radar_npol,radar_nPeaks),&
-        out_radar_vel(radar_nfft))
+        out_radar_vel(nfrq,radar_nfft))
         !set to -9999, because height of profiles can vary!
         out_radar_spectra = -9999.d0
         out_radar_snr = -9999.d0
