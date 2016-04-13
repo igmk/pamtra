@@ -38,18 +38,21 @@ radar\_airmotion\_vmax             float                          4 m/s       Ma
 radar_aliasing_nyquist_interv      positive integer               1           Consider aliasing effects for overspending the nyquist range radar_aliasing_nyquist_interv times.
 radar\_attenuation                 disabled, bottom-up, top-down  disabled    Attenuate radar spectrum and  Z_e  depending on measurement geometry
 radar_convolution_fft              boolean                        True        Use FFT for convolution. FFt is much faster, but can have numerical issues in rare cases.
-radar\_K2 (|K_w^2|)                positive float                 0.93        Dielectric factor of water used to estimate radr reflectivity.
-radar\_max\_v ( v_nyq )            float                          -7.885 m/s  Maximum Nyquist velocity (usually radar\_min\_V = -radar\_max\_V)
-radar\_min\_v ( v_nyq )            float                          7.885 m/s   Minimum Nyquist velocity
-radar_min_spectral_snr             positive float                 1.2         Minimal required signal+noise to noise ratio required for a peak. Smaller peaks are discarded.
+radar_fwhr_beamwidth_deg           float*                         0.3         radar full width half radiation beamwidth (required for spectral broadening estimation)
+radar_integration_time             float*                         1.4         radar beamwidth (required for spectral broadening estimation)
+radar\_K2 (|K_w^2|)                positive float*                0.93        Dielectric factor of water used to estimate radr reflectivity.
+radar\_max\_v ( v_nyq )            float*                         -7.885 m/s  Maximum Nyquist velocity (usually radar\_min\_V = -radar\_max\_V)
+radar\_min\_v ( v_nyq )            float*                         7.885 m/s   Minimum Nyquist velocity
+radar_min_spectral_snr             positive float*                1.2         Minimal required signal+noise to noise ratio required for a peak. Smaller peaks are discarded.
 radar\_mode                        simple, spectrum, moments      simple      Use "simple" radar simulator provides only Z_e by integrating Eq. \label{eq:etaD} over  D. The advanced "spectrum" simulator simulates the complete radar Doppler spectrum and estimates all moments from the spectrum. "moments" is identical to "spectrum" but the full Doppler spectrum is discarded to save memory.
 radar\_nfft ( N_fft )              positive integer               256         Number of FFT points in the Doppler spectrum
-radar\_no\_Ave ( Nave )            positive integer               150         Number of spectral averages
-radar_noise_distance_factor        positive float                 2.0         Required distance of the peak edge to the noise level. If radar_noise_distance_factor<0 and radar\_use\_hildebrand, then noise_max from Hildebrand is used for peak edge determination. Sometimes, lower SNR values can be achieved with radar_noise_distance_factor instead of noise_max
+radar\_no\_Ave ( Nave )            positive integer*              150         Number of spectral averages
+radar_noise_distance_factor        positive float*                2.0         Required distance of the peak edge to the noise level. If radar_noise_distance_factor<0 and radar\_use\_hildebrand, then noise_max from Hildebrand is used for peak edge determination. Sometimes, lower SNR values can be achieved with radar_noise_distance_factor instead of noise_max
 radar_npeaks                       1                              1           Number of detected peaks in the Doppler spectrum. As of today fixed to 1.
-radar\_pnoise0 ( N_1000 )          float                          -32.23 dBz  Radar noise at 1km in same unit as reflectivity Z_e (Eq.~\ref{eq:radarnoise})
+radar\_pnoise0 ( N_1000 )          float*                         -32.23 dBz  Radar noise at 1km in same unit as reflectivity Z_e (Eq.~\ref{eq:radarnoise})
 radar\_polarisation                NN, HV, VH, VV, HH             NN          Radar polarisation. NN: no polarisation, HV: horizontal transmit, vertical receive, etc.. Can be a comma separated list.
-radar_receiver_uncertainty_std     positive float                 0.0         Add Gaussian noise to radar noise level to simulate unstable receivers
+radar_receiver_miscalibration      float*                         0.0 dB      Radar calibration error 
+radar_receiver_uncertainty_std     positive float*                0.0         Add Gaussian noise to radar noise level to simulate unstable receivers
 radar_save_noise_corrected_spectra boolean                        False       For debugging purposes: Save radar Doppler spectrum after noise is removed
 radar_smooth_spectrum              boolean                        True        smooth spectrum before estimating moments
 radar\_use\_hildebrand             boolean                        False       Derive  N_P  not from radar\_pnoise0 but using the method of \citet{hildebrand:1974a}. Set  radar_noise_distance_factor<0 to use also noise_max from hildebrand for determination od the peak edge. Sometimes, lower SNR values can be achieved with radar_noise_distance_factor instead of noise_max
@@ -63,3 +66,5 @@ tmatrix_db                         none or file                   none        us
 tmatrix_db_path                    str                            database/   path to T-Matrix data base
 write_nc                           bool                           True        write netcdf or ascii output
 ================================== ============================== =========== ===========================================================================================
+
+\* These variables *can* be also provided as list to account for different instrument specifications. In this case, each entry corresponds to one frequency. 
