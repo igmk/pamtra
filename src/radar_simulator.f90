@@ -204,10 +204,16 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
 
           if (isnan(atmo_airturb(i_x,i_y,i_z)) .and. (.not. isnan(atmo_turb_edr(i_x,i_y,i_z)*atmo_wind_uv(i_x,i_y,i_z))) ) then
 
-            call estimate_spectralBroadening(atmo_turb_edr(i_x,i_y,i_z),atmo_wind_uv(i_x,i_y,i_z),out_radar_hgt(i_x,i_y,i_z),&
+            call estimate_spectralBroadening(err,atmo_turb_edr(i_x,i_y,i_z),atmo_wind_uv(i_x,i_y,i_z),out_radar_hgt(i_x,i_y,i_z),&
                 radar_fwhr_beamwidth_deg(i_f),radar_integration_time(i_f),wavelength,radar_kolmogorov_constant,ss)
+             if (err > 0) then
+                errorstatus = fatal
+                msg = 'Error in atmo_airturb'
+                call report(errorstatus, msg, nameOfRoutine)
+                return
+             end if
 
-            if (verbose > -10) print*, i_x,i_y,i_z,i_f, ss
+            if (verbose > 10) print*, i_x,i_y,i_z,i_f, ss
 
             ss = ss/del_v !in array indices!
 

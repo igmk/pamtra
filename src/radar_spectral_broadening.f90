@@ -2,7 +2,15 @@ module radar_spectral_broadening
 
   contains
 
-  subroutine estimate_spectralBroadening(EDR,wind_uv,height,beamwidth_deg,integration_time,wavelength,kolmogorov,specBroad)
+  subroutine estimate_spectralBroadening(errorstatus,&
+    EDR,&
+    wind_uv,&
+    height,&
+    beamwidth_deg,&
+    integration_time,&
+    wavelength,&
+    kolmogorov,&
+    specBroad)
    
   ! everything in SI units
   ! estimate spectral broadening of radar Doppler spectrum due to turbulence and horizontal wind. Wind gradient is neglected
@@ -22,7 +30,37 @@ module radar_spectral_broadening
     real(kind=dbl), intent(in) :: kolmogorov
     real(kind=dbl), intent(out) :: specBroad
 
+    integer(kind=long), intent(out) :: errorstatus
+    integer(kind=long) :: err
+    character(len=80) :: msg
+    character(len=15) :: nameOfRoutine = 'estimate_spectralBroadening'
+
     real(kind=dbl) :: L_s, L_lambda, sig_B, sig_T, beamwidth
+
+    if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
+    err = 0
+
+    call assert_false(err,(ISNAN(EDR)),&
+        "got nan in values in EDR")
+    call assert_false(err,(ISNAN(wind_uv)),&
+        "got nan in values in wind_uv")
+    call assert_false(err,(ISNAN(height)),&
+        "got nan in values in height")
+    call assert_false(err,(ISNAN(beamwidth_deg)),&
+        "got nan in values in beamwidth_deg")
+    call assert_false(err,(ISNAN(integration_time)),&
+        "got nan in values in integration_time")
+    call assert_false(err,(ISNAN(wavelength)),&
+        "got nan in values in wavelength")
+    call assert_false(err,(ISNAN(kolmogorov)),&
+        "got nan in values in kolmogorov")
+    if (err > 0) then
+      errorstatus = fatal
+      msg = "assertation error"
+      call report(errorstatus, msg, nameOfRoutine)
+      return
+    end if
+
 
       beamwidth = beamwidth_deg/2./180.*pi 
 
@@ -32,6 +70,9 @@ module radar_spectral_broadening
       sig_T = sqrt(3*kolmogorov/2. * (EDR/(2.*pi))**(2./3.) * (L_s**(2./3.) - L_lambda**(2./3.)))
       specBroad = sqrt(sig_B**2 + sig_T**2)
 
+    errorstatus = err
+    if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
+    return
 
   end subroutine estimate_spectralBroadening
 end module radar_spectral_broadening

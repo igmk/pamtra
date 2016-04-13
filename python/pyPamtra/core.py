@@ -1253,7 +1253,9 @@ class pyPamtra(object):
 
     if type(freqs) in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
 
-    self.set["freqs"] = sorted(freqs)
+    assert sorted(freqs) == freqs # frequencies should be sorted to avoid strange things...
+
+    self.set["freqs"] = freqs
     self.set["nfreqs"] = len(freqs)
     self.set["radar_pol"] = self.nmlSet["radar_polarisation"].split(",")
     self.set["radar_npol"] = len(self.set["radar_pol"])
