@@ -130,7 +130,7 @@ all: dfftpack pamtra py py_usStandard
 warning:
 ifndef PAMTRA_DATADIR
 	@echo "########################################################"
-	@echo "Do not forget to define PAMTRA_DIR environment variable"
+	@echo "Do not forget to define PAMTRA_DATADIR environment variable"
 	@echo "########################################################"
 endif
 
