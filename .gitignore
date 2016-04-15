@@ -57,3 +57,4 @@ src/recycle/
 descriptorfiles/
 nml/
 .python-version
+.DS_Store

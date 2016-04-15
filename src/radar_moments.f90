@@ -30,6 +30,9 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
     ! edge, dimension(2): left(0) and right(1) edge the peak [m/s]
     ! quality
 
+    use vars_index, only: i_f
+    implicit none
+
     integer, intent(in) :: radar_nfft, radar_nPeaks
     real(kind=dbl), dimension(radar_nfft), intent(in):: radar_spectrum_in
     real(kind=dbl), intent(in):: noise_model
