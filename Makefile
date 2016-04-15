@@ -11,15 +11,15 @@ gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 
-F2PY := $(shell type -p f2py2.7 || echo f2py) #on newer Ubuntu systems, only f2py2.7 is available
+F2PY := $(shell which f2py2.7 || which f2py) #on newer Ubuntu systems, only f2py2.7 is available
 FC=gfortran
 CC=gcc
 FCFLAGS=-c -fPIC -Wunused  -cpp -J$(OBJDIR) -I$(OBJDIR)
 #FCFLAGS=-g -c -fPIC -Wunused -O0 -cpp -J$(OBJDIR) -I$(OBJDIR)
-
+	
 NCFLAGS :=  $(shell nc-config --fflags)  -fbounds-check
 NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
-LFLAGS := -llapack -L$(LIBDIR) -L../$(LIBDIR) -ldfftpack -lblas
+LFLAGS := -L/usr/lib/ -llapack -L$(LIBDIR) -L../$(LIBDIR) -ldfftpack -lblas
 LDFLAGS := $(shell nc-config --flibs) -lz
 
 
@@ -221,7 +221,7 @@ $(OBJDIR)pypamtralib.pyf:  $(FOBJECTS)
 	@echo "####################################################################################"
 	@echo "Note there is a bug in numpy 1.10.1, intent in or out is not recognized"
 	@echo "####################################################################################"
-	$(F2PY) --overwrite-signature -m pyPamtraLib -h $(OBJDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)pyPamtraLib.f90
+	$(F2PY) --overwrite-signature -m pyPamtraLib -h $(OBJDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)vars_index.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)radar_moments.f90 $(SRCDIR)pyPamtraLib.f90
 
 py: FCFLAGS += -O2
 py: NCFLAGS += -O2
