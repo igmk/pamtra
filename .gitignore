@@ -51,6 +51,6 @@ lib
 doc/build
 *.pyf
 src/recycle/
-descriptorfiles/
+descriptorfiles/*
 nml/
 .python-version
