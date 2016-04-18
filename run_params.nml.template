@@ -1,5 +1,6 @@
 &settings
-hydro_threshold = 1.d-20 
+hydro_threshold = 1.d-20
+conserve_mass_rescale_dsd = .true.
 write_nc=.true.
 data_path='data/'
 save_psd=.false.
@@ -13,7 +14,7 @@ add_obs_height_to_layer = .false.
 active=.true.
 passive=.true.
 !"simple"|"moments"|"spectrum"
-radar_mode="simple" 
+radar_mode="simple"
 randomseed = 0
 ground_type='L'
 salinity=33.0
@@ -28,10 +29,10 @@ hydro_softsphere_min_density = 10.
 hydro_adaptive_grid = .true.
 liq_mod = "Ell"
 ! none or file
-tmatrix_db = "none" 
+tmatrix_db = "none"
 tmatrix_db_path = "database/"
 ! comma spearated list "NN,HV,VH,VV,HH", translated into radar_pol array
-radar_polarisation = "NN" 
+radar_polarisation = "NN"
 !number of FFT points in the Doppler spectrum [typically 256 or 512]
 radar_nfft=256
 !number of average spectra for noise variance reduction, typical range [1 150]
@@ -42,10 +43,10 @@ radar_max_V=7.885
 radar_min_V=-7.885
 !radar noise at 1km in same unit as Ze 10*log10(mm⁶/m³). noise is calculated with noise = radar_pnoise0 + 20*log10(range/1000)
 ! mean value for BArrow MMCR during ISDAC
-radar_pnoise0=-32.23 
+radar_pnoise0=-32.23
 radar_airmotion = .false.
 !"constant","linear","step"
-radar_airmotion_model = "step" 
+radar_airmotion_model = "step"
 radar_airmotion_vmin = -4.d0
 radar_airmotion_vmax = +4.d0
 radar_airmotion_linear_steps = 30
@@ -56,15 +57,16 @@ radar_use_hildebrand = .false.
 !threshold for peak detection. if radar_no_Ave >> 150, it can be set to 1.1
 radar_min_spectral_snr = 1.2
 !use fft for convolution of spectrum. is alomst 10 times faster, but can introduce aretfacts for radars with *extremely* low noise levels or if noise is turned off at all.
-radar_convolution_fft = .true. 
+radar_convolution_fft = .true.
 ! dielectric constant |K|² (always for liquid water by convention) for the radar equation
-radar_K2 = 0.93 
+radar_K2 = 0.93
 radar_noise_distance_factor = 1.25
 !radar_receiver_uncertainty_std in dB
 radar_receiver_uncertainty_std = 0.d0
 !number of peaks the radar simulator is looking for
-radar_nPeaks = 1 
+radar_nPeaks = 1
 radar_smooth_spectrum = .true.
 ! "bottom-up" or "top-down"
-radar_attenuation = "disabled" 
+radar_attenuation = "disabled"
+read_turbulence_ascii = .false.
 /

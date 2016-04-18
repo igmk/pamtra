@@ -1,9 +1,9 @@
 module vars_atmosphere
 
   use kinds
-  use settings, only: maxfreq, noutlevels
+  use settings, only: noutlevels
   use report_module
-  
+
   implicit none
   save
 
@@ -35,6 +35,8 @@ module vars_atmosphere
        atmo_hgt, &
        atmo_delta_hgt_lev, &
        atmo_airturb, &
+       atmo_wind_uv, &
+       atmo_turb_edr, &
        atmo_vapor_pressure, &
        atmo_rho_vap, &
        atmo_q_hum, &
@@ -63,15 +65,15 @@ module vars_atmosphere
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
     character(len=80) :: msg
-    character(len=14) :: nameOfRoutine = 'screen_input' 
+    character(len=14) :: nameOfRoutine = 'screen_input'
 
 ! work variables
-    real(kind=dbl), dimension(8) :: dum_8      
+    real(kind=dbl), dimension(8) :: dum_8
 
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
 
-    atmo_input_type = trim(input_pathfile(len_trim(input_pathfile)-2:len_trim(input_pathfile))) 
+    atmo_input_type = trim(input_pathfile(len_trim(input_pathfile)-2:len_trim(input_pathfile)))
 
     if ((atmo_input_type .ne. 'cla') .and. (atmo_input_type .ne. 'lev') .and. (atmo_input_type .ne. 'lay'))  then
         msg = "Unknown ascii input file type"//trim(atmo_input_type)
@@ -103,15 +105,15 @@ module vars_atmosphere
     if (atmo_input_type == 'cla') then
 ! consistency CHECK
       call assert_true(err,(n_hydro==5),&
-          "STOP: 'classic' input with n_hydro /= 5")   
+          "STOP: 'classic' input with n_hydro /= 5")
       call assert_true(err,((maxval(moment_in_arr) == 3).and.(minval(moment_in_arr) == 3) ),&
-          "STOP: 'classic' input with moment_in /= 3")   
+          "STOP: 'classic' input with moment_in /= 3")
       if (err > 0) then
         errorstatus = fatal
         msg = "assertation error"
         call report(errorstatus, msg, nameOfRoutine)
         return
-      end if  
+      end if
       read(14,*) dum_8
       atmo_ngridx = dum_8(5)
       atmo_ngridy = dum_8(6)
@@ -123,7 +125,7 @@ module vars_atmosphere
 
     nc_out_file = trim(output_path)//"/"//trim(input_file(1:len_trim(input_file)-4))//&
     trim(freq_str)//trim(file_desc)//'.nc'
-   
+
     errorstatus = err
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
     return
@@ -133,32 +135,32 @@ module vars_atmosphere
   subroutine allocate_atmosphere_vars(errorstatus)
 
     use descriptor_file, only: n_hydro
-    
+
     real(kind=dbl) :: nan
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err
     character(len=80) :: msg
-    character(len=14) :: nameOfRoutine = 'allocate_atmosphere_vars' 
+    character(len=14) :: nameOfRoutine = 'allocate_atmosphere_vars'
 
     err = 0
-    
+
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
     call assert_true(err,(atmo_ngridx>0),&
-        "atmo_ngridx must be greater zero")   
+        "atmo_ngridx must be greater zero")
     call assert_true(err,(atmo_ngridy>0),&
-        "atmo_ngridy must be greater zero")   
+        "atmo_ngridy must be greater zero")
     call assert_true(err,(atmo_max_nlyrs>0),&
-        "atmo_max_nlyrs must be greater zero")   
+        "atmo_max_nlyrs must be greater zero")
     call assert_true(err,(noutlevels>0),&
-        "noutlevels must be greater zero")   
+        "noutlevels must be greater zero")
     if (err > 0) then
         errorstatus = fatal
         msg = "assertation error"
         call report(errorstatus, msg, nameOfRoutine)
         return
-    end if  
+    end if
 
     allocate(atmo_month(atmo_ngridx,atmo_ngridy))
     allocate(atmo_day(atmo_ngridx,atmo_ngridy))
@@ -198,6 +200,8 @@ module vars_atmosphere
     allocate(atmo_delta_hgt_lev(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
     allocate(atmo_airturb(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
     allocate(atmo_wind_w(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
+    allocate(atmo_wind_uv(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
+    allocate(atmo_turb_edr(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs))
 
     allocate(atmo_hydro_q(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs,n_hydro))
     allocate(atmo_hydro_q_column(atmo_ngridx,atmo_ngridy,n_hydro))
@@ -241,7 +245,9 @@ module vars_atmosphere
     atmo_q_hum(:,:,:) = nan()
     atmo_hgt(:,:,:) = nan()
     atmo_delta_hgt_lev(:,:,:) = nan()
-    atmo_airturb(:,:,:) = 0.d0
+    atmo_airturb(:,:,:) = nan()
+    atmo_wind_uv(:,:,:) = nan()
+    atmo_turb_edr(:,:,:) = nan()
     atmo_wind_w(:,:,:) =nan()
 
     atmo_hydro_q(:,:,:,:) = nan()
@@ -255,7 +261,7 @@ module vars_atmosphere
     atmo_unixtime(:,:) = -9999
 
     atmo_radar_prop(:,:,:) = nan()
-  
+
     errorstatus = err
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
 
@@ -283,6 +289,8 @@ module vars_atmosphere
     if (allocated(atmo_delta_hgt_lev)) deallocate(atmo_delta_hgt_lev)
     if (allocated(atmo_airturb)) deallocate(atmo_airturb)
     if (allocated(atmo_wind_w)) deallocate(atmo_wind_w)
+    if (allocated(atmo_wind_uv)) deallocate(atmo_wind_uv)
+    if (allocated(atmo_turb_edr)) deallocate(atmo_turb_edr)
 
     if (allocated(atmo_hydro_q)) deallocate(atmo_hydro_q)
     if (allocated(atmo_hydro_q_column)) deallocate(atmo_hydro_q_column)
@@ -290,7 +298,7 @@ module vars_atmosphere
     if (allocated(atmo_hydro_reff_column)) deallocate(atmo_hydro_reff_column)
     if (allocated(atmo_hydro_n)) deallocate(atmo_hydro_n)
     if (allocated(atmo_hydro_n_column)) deallocate(atmo_hydro_n_column)
- 
+
     if (allocated(atmo_groundtemp)) deallocate(atmo_groundtemp)
     if (allocated(atmo_iwv)) deallocate(atmo_iwv)
 
@@ -314,7 +322,7 @@ module vars_atmosphere
 !##################################################################################################################################
   subroutine read_new_fill_variables(errorstatus)
 
-    use settings, only: verbose, input_pathfile, radar_mode, active
+    use settings, only: verbose, input_pathfile, radar_mode, active, read_turbulence_ascii
     use descriptor_file, only: moment_in_arr, n_hydro
 
     implicit none
@@ -322,7 +330,7 @@ module vars_atmosphere
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err
     character(len=80) :: msg
-    character(len=14) :: nameOfRoutine = 'read_new_fill_variables' 
+    character(len=14) :: nameOfRoutine = 'read_new_fill_variables'
 
 ! work variables
     real(kind=dbl), allocatable, dimension(:) :: work_xwp
@@ -330,12 +338,12 @@ module vars_atmosphere
     integer(kind=long) :: i, j, n_tot_moment, i_hydro, index_hydro
 
     err = 0
-    
+
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
     n_tot_moment = 0
     do i_hydro = 1,n_hydro
-      n_tot_moment = n_tot_moment + 1
+      if (moment_in_arr(i_hydro) > 0.) n_tot_moment = n_tot_moment + 1
       if (moment_in_arr(i_hydro) > 5.) n_tot_moment = n_tot_moment + 1
     end do
     allocate(work_xwp(n_tot_moment+1))
@@ -362,10 +370,10 @@ module vars_atmosphere
 ! READ column integrated water vapor and hydrometeors properties
           read(14,*) work_xwp
           atmo_iwv(i,j) = work_xwp(1)
-          if ((.not. active) .or. (radar_mode == "simple")) &
+          if (.not. read_turbulence_ascii) &
               allocate(work_xwc(n_tot_moment+4,atmo_nlyrs(i,j)))
 ! For radar moments or spectrum mode then atmospheric turbulence should be provided in the last column of the input file
-          if (active .and. ((radar_mode == "moments") .or. (radar_mode == "spectrum"))) &
+          if (read_turbulence_ascii) &
               allocate(work_xwc(n_tot_moment+5,atmo_nlyrs(i,j)))
 ! READ lowest level variable (ONLY for "lev" input type)
           if (atmo_input_type == 'lev') read(14,*) atmo_hgt_lev(i,j,1),&
@@ -382,7 +390,7 @@ module vars_atmosphere
             atmo_relhum(i,j,1:atmo_nlyrs(i,j)) = work_xwc(4,:)       ! layer relative humidity [%]
           endif
 ! FILL level variables
-          if (atmo_input_type == 'lev') then	
+          if (atmo_input_type == 'lev') then
             atmo_hgt_lev(i,j,2:atmo_nlyrs(i,j)+1)    = work_xwc(1,:) ! layer height [m]
             atmo_press_lev(i,j,2:atmo_nlyrs(i,j)+1)  = work_xwc(2,:) ! layer pressure [Pa]
             atmo_temp_lev(i,j,2:atmo_nlyrs(i,j)+1)   = work_xwc(3,:) ! layer temperature [K]
@@ -390,14 +398,14 @@ module vars_atmosphere
           endif
 
 
-! FILL hydrometeor moments          
+! FILL hydrometeor moments
           index_hydro = 5
           do i_hydro = 1,n_hydro
-            if (moment_in_arr(i_hydro) == 1) then 
+            if (moment_in_arr(i_hydro) == 1) then
               atmo_hydro_n(i,j,1:atmo_nlyrs(i,j),i_hydro)    = work_xwc(index_hydro,:)
               if (i_hydro == 1) atmo_hydro_n_column(i,j,i_hydro) = work_xwp(index_hydro)
 
-            elseif (moment_in_arr(i_hydro) == 2) then 
+            elseif (moment_in_arr(i_hydro) == 2) then
               atmo_hydro_reff(i,j,1:atmo_nlyrs(i,j),i_hydro) = work_xwc(index_hydro,:)
               if (i_hydro == 1) atmo_hydro_reff_column(i,j,i_hydro) = work_xwp(index_hydro)
 
@@ -432,9 +440,8 @@ module vars_atmosphere
             if (moment_in_arr(i_hydro) > 5) index_hydro = index_hydro + 2
           enddo
 ! FILL turbulence for radar moments or spectrum mode
-          if ((radar_mode == "moments") .or. (radar_mode == "spectrum")) &
-          atmo_airturb(i,j,1:atmo_nlyrs(i,j)) = work_xwc(index_hydro,:) 
-
+          if (read_turbulence_ascii) &
+             atmo_airturb(i,j,1:atmo_nlyrs(i,j)) = work_xwc(index_hydro,:)
 
           deallocate(work_xwc)
 
@@ -458,7 +465,7 @@ module vars_atmosphere
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err
     character(len=80) :: msg
-    character(len=14) :: nameOfRoutine = 'add_obs_height' 
+    character(len=14) :: nameOfRoutine = 'add_obs_height'
 
 ! work variables
     real(kind=dbl), allocatable, dimension(:,:) :: work_xwc
@@ -466,13 +473,13 @@ module vars_atmosphere
     integer(kind=long)  :: i, j, k, nz, lev_1, lev_2, lev_use, lay_use, ii
 
     err = 0
-    
+
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
     do i = 1, atmo_ngridx
       do j = 1, atmo_ngridy
         do k = 1, noutlevels
-        if (atmo_obs_height(i,j,k) < atmo_hgt_lev(i,j,1)) then 
+        if (atmo_obs_height(i,j,k) < atmo_hgt_lev(i,j,1)) then
 	  atmo_obs_height(i,j,k) = atmo_hgt_lev(i,j,1)
 	  call report(info, 'Setting observation height to lowest atmo level', nameOfRoutine)
 	end if
@@ -524,6 +531,10 @@ module vars_atmosphere
           atmo_hgt(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1)            = atmo_hgt(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
           atmo_airturb(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1)        = atmo_airturb(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
           atmo_airturb(i,j,lay_use+1)                             = atmo_airturb(i,j,lay_use) ! Keep the same value for the 2 children layer
+          atmo_turb_edr(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1)       = atmo_turb_edr(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
+          atmo_turb_edr(i,j,lay_use+1)                            = atmo_turb_edr(i,j,lay_use) ! Keep the same value for the 2 children layer
+          atmo_wind_uv(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1)        = atmo_wind_uv(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
+          atmo_wind_uv(i,j,lay_use+1)                             = atmo_wind_uv(i,j,lay_use) ! Keep the same value for the 2 children layer
           atmo_wind_w(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1)         = atmo_wind_w(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
           atmo_wind_w(i,j,lay_use+1)                              = atmo_wind_w(i,j,lay_use) ! Keep the same value for the 2 children layer
           atmo_vapor_pressure(i,j,atmo_nlyrs(i,j)+1:lay_use+2:-1) = atmo_vapor_pressure(i,j,atmo_nlyrs(i,j):lay_use+1:-1)
@@ -556,7 +567,7 @@ module vars_atmosphere
         end do
       enddo
     enddo
-    
+
     errorstatus = err
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
     return
@@ -573,7 +584,7 @@ module vars_atmosphere
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err
     character(len=80) :: msg
-    character(len=14) :: nameOfRoutine = 'read_classic_fill_variables' 
+    character(len=14) :: nameOfRoutine = 'read_classic_fill_variables'
 
 ! work variables
     real(kind=dbl), allocatable, dimension(:,:) :: work_xwc
@@ -581,7 +592,7 @@ module vars_atmosphere
     integer(kind=long)  :: i, j
 
     err = 0
-    
+
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
 ! OPEN input file
@@ -596,7 +607,7 @@ module vars_atmosphere
     atmo_obs_height(:,:,1) = 833000.
     atmo_obs_height(:,:,2) = 0.
     if (noutlevels > 2) call report(info, 'Only 2 outputlevels for classic profiles', nameOfRoutine)
-    
+
 
       do i = 1, atmo_ngridx
         do j = 1, atmo_ngridy
@@ -626,7 +637,7 @@ module vars_atmosphere
           atmo_temp_lev(i,j,2:atmo_nlyrs(i,j)+1)   = work_xwc(3,:) ! layer temperature [K]
           atmo_relhum_lev(i,j,2:atmo_nlyrs(i,j)+1) = work_xwc(4,:) ! layer relative humidity [%]
 
-! FILL hydrometeor moments          
+! FILL hydrometeor moments
           atmo_hydro_q(i,j,1:atmo_nlyrs(i,j),:)    = transpose(work_xwc(5:9,:))
           deallocate(work_xwc)
 
@@ -653,28 +664,28 @@ module vars_atmosphere
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err
     character(len=80) :: msg
-    character(len=30) :: nameOfRoutine = 'fillMissing_atmosphere_vars' 
+    character(len=30) :: nameOfRoutine = 'fillMissing_atmosphere_vars'
 
     integer(kind=long) :: i_hydro
 
     err = 0
-    
+
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
     err = 0
     call assert_true(err,(atmo_ngridx>0),&
-        "atmo_ngridx must be greater zero")   
+        "atmo_ngridx must be greater zero")
     call assert_true(err,(atmo_ngridy>0),&
-        "atmo_ngridy must be greater zero")   
+        "atmo_ngridy must be greater zero")
     call assert_true(err,(all(atmo_nlyrs>0)),&
-        "atmo_nlyrs must be greater zero")   
+        "atmo_nlyrs must be greater zero")
     call assert_true(err,(noutlevels>0),&
-        "noutlevels must be greater zero")   
+        "noutlevels must be greater zero")
     if (err > 0) then
         errorstatus = fatal
         msg = "assertation error"
         call report(errorstatus, msg, nameOfRoutine)
         return
-    end if  
+    end if
 
     do nx = 1, atmo_ngridx
       do ny = 1, atmo_ngridy
@@ -691,19 +702,19 @@ module vars_atmosphere
 
 
 
-          call assert_true(err,(all(atmo_hgt_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1)>-500) & 
+          call assert_true(err,(all(atmo_hgt_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1)>-500) &
               .or. all(atmo_hgt(nx,ny,1:atmo_nlyrs(nx,ny))>-500)),&
-              "hgt or hgt_lev must be greater -500 (Depression in northern Egypt within the CORDEX domain :-))")  
+              "hgt or hgt_lev must be greater -500 (Depression in northern Egypt within the CORDEX domain :-))")
           if (err > 0) then
               errorstatus = fatal
               msg = "assertation error"
               call report(errorstatus, msg, nameOfRoutine)
               return
-          end if  
+          end if
           ! first make sure that hgt is present
           do nz = 1, atmo_nlyrs(nx,ny)
             if (isnan(atmo_hgt(nx,ny,nz))) &
-                  atmo_hgt(nx,ny,nz) = 0.5_dbl * (atmo_hgt_lev(nx,ny,nz) + atmo_hgt_lev(nx,ny,nz+1)) 
+                  atmo_hgt(nx,ny,nz) = 0.5_dbl * (atmo_hgt_lev(nx,ny,nz) + atmo_hgt_lev(nx,ny,nz+1))
           end do
 
 
@@ -726,7 +737,7 @@ module vars_atmosphere
             (log(atmo_press(nx,ny,2)) - log(atmo_press(nx,ny,1))) / (atmo_hgt(nx,ny,2) - atmo_hgt(nx,ny,1)) * &
             (atmo_hgt(nx,ny,1) - atmo_hgt_lev(nx,ny,1)))
 
-          do nz = 2, atmo_nlyrs(nx,ny) 
+          do nz = 2, atmo_nlyrs(nx,ny)
            if (isnan(atmo_temp_lev(nx,ny,nz))) &
               atmo_temp_lev(nx,ny,nz) = 0.5_dbl * (atmo_temp(nx,ny,nz) + atmo_temp(nx,ny,nz-1))
             if (isnan(atmo_hgt_lev(nx,ny,nz))) &
@@ -735,7 +746,7 @@ module vars_atmosphere
               atmo_relhum_lev(nx,ny,nz) = 0.5_dbl * (atmo_relhum(nx,ny,nz) + atmo_relhum(nx,ny,nz-1))
             if (isnan(atmo_press_lev(nx,ny,nz))) &
               atmo_press_lev(nx,ny,nz) = exp (0.5_dbl * (log(atmo_press(nx,ny,nz)) + log(atmo_press(nx,ny,nz-1))))
-          end do 
+          end do
           nz = atmo_nlyrs(nx,ny) +1
           if (isnan(atmo_hgt_lev(nx,ny,nz))) &
             atmo_hgt_lev(nx,ny,nz) = atmo_hgt(nx,ny,nz-1) + &
@@ -758,7 +769,7 @@ module vars_atmosphere
 
           ! first test the layers variables for nan and calculate them otherwise
           if (isnan(atmo_temp(nx,ny,nz))) &
-                atmo_temp(nx,ny,nz) = 0.5_dbl * (atmo_temp_lev(nx,ny,nz) + atmo_temp_lev(nx,ny,nz+1)) 
+                atmo_temp(nx,ny,nz) = 0.5_dbl * (atmo_temp_lev(nx,ny,nz) + atmo_temp_lev(nx,ny,nz+1))
           if (isnan(atmo_relhum(nx,ny,nz))) &
                 atmo_relhum(nx,ny,nz) = 0.5_dbl * (atmo_relhum_lev(nx,ny,nz) + atmo_relhum_lev(nx,ny,nz+1))
           if (isnan(atmo_press(nx,ny,nz))) &
@@ -778,6 +789,7 @@ module vars_atmosphere
                 atmo_q_hum(nx,ny,nz) = r_v/r_d*atmo_vapor_pressure(nx,ny,nz)/&
                 (atmo_press(nx,ny,nz) - (1._dbl- r_v/r_d) * atmo_vapor_pressure(nx,ny,nz))  ! [kg/kg]
 
+
         end do
     !for ground temp, simply use the lowes avalable one if not provided
     if (isnan(atmo_groundtemp(nx,ny))) &
@@ -789,43 +801,42 @@ module vars_atmosphere
 
     !test whether we still have nans in our data!
 ! 3D variable
-    err = 0 
+    err = 0
     call assert_true(err,atmo_nlyrs(nx,ny) <= atmo_max_nlyrs ,&
-        "atmo_nlyrs(nx,ny) larger than atmo_max_nlyrs") 
+        "atmo_nlyrs(nx,ny) larger than atmo_max_nlyrs")
     call assert_false(err,ANY(ISNAN(atmo_temp_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1))),&
-        "found nan in atmo_temp_lev")   
+        "found nan in atmo_temp_lev")
     call assert_false(err,ANY(ISNAN(atmo_hgt_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1))),&
-        "found nan in atmo_hgt_lev")   
+        "found nan in atmo_hgt_lev")
     call assert_true(err,atmo_hgt_lev(nx,ny,atmo_nlyrs(nx,ny)+1)>atmo_hgt_lev(nx,ny,1),&
-        "atmo_hgt_lev must be defined defined bottom-up")   
+        "atmo_hgt_lev must be defined defined bottom-up")
     call assert_false(err,ANY(ISNAN(atmo_hgt(nx,ny,1:atmo_nlyrs(nx,ny)))),&
-        "found nan in atmo_hgt")  
+        "found nan in atmo_hgt")
     call assert_false(err,ANY(ISNAN(atmo_relhum(nx,ny,1:atmo_nlyrs(nx,ny)))),&
-        "found nan in atmo_relhum")   
+        "found nan in atmo_relhum")
     call assert_false(err,ANY(ISNAN(atmo_press(nx,ny,1:atmo_nlyrs(nx,ny)))),&
-        "found nan in atmo_press")   
+        "found nan in atmo_press")
     call assert_false(err,ANY(ISNAN(atmo_temp(nx,ny,1:atmo_nlyrs(nx,ny)))),&
-        "found nan in atmo_temp")   
+        "found nan in atmo_temp")
     call assert_false(err,ANY(ISNAN(atmo_vapor_pressure(nx,ny,1:atmo_nlyrs(nx,ny)))),&
-        "found nan in atmo_vapor_pressure")   
+        "found nan in atmo_vapor_pressure")
     call assert_false(err,ANY(ISNAN(atmo_rho_vap(nx,ny,1:atmo_nlyrs(nx,ny)))),&
-        "found nan in atmo_rho_vap")   
+        "found nan in atmo_rho_vap")
     call assert_false(err,ANY(ISNAN(atmo_q_hum(nx,ny,1:atmo_nlyrs(nx,ny)))),&
-        "found nan in atmo_q_hum")   
+        "found nan in atmo_q_hum")
     call assert_false(err,ANY(ISNAN(atmo_hgt(nx,ny,1:atmo_nlyrs(nx,ny)))),&
-        "found nan in atmo_hgt")   
+        "found nan in atmo_hgt")
     call assert_false(err,ANY(ISNAN(atmo_delta_hgt_lev(nx,ny,1:atmo_nlyrs(nx,ny)))),&
-        "found nan in atmo_delta_hgt_lev")   
-    call assert_false(err,ANY(ISNAN(atmo_airturb(nx,ny,1:atmo_nlyrs(nx,ny)))),&
-        "found nan in atmo_airturb")
+        "found nan in atmo_delta_hgt_lev")
+
 !     call assert_false(err,ANY(ISNAN(atmo_wind_w(nx,ny,1:atmo_nlyrs(nx,ny)))),&
 !         "found nan in atmo_wind_w")
     call assert_false(err,ANY(ISNAN(atmo_relhum_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1))),&
-        "found nan in atmo_relhum_lev")   
+        "found nan in atmo_relhum_lev")
     call assert_false(err,ANY(ISNAN(atmo_press_lev(nx,ny,1:atmo_nlyrs(nx,ny)+1))),&
-        "found nan in atmo_press_lev") 
+        "found nan in atmo_press_lev")
     call assert_true(err,ALL(moment_in_arr >= 0),&
-        "found negative value in moment_in_arr") 
+        "found negative value in moment_in_arr")
 
     do i_hydro = 1,n_hydro
       if ((moment_in_arr(i_hydro) == 1) .or. (moment_in_arr(i_hydro) == 12) .or. (moment_in_arr(i_hydro) == 13)) &
@@ -863,7 +874,7 @@ module vars_atmosphere
         msg = "assertation error"
         call report(errorstatus, msg, nameOfRoutine)
         return
-    end if  
+    end if
 
    if (verbose >= 5) call print_vars_atmosphere()
 
@@ -969,11 +980,13 @@ module vars_atmosphere
     print*, "atmo_delta_hgt_lev", atmo_delta_hgt_lev
     print*, "atmo_airturb", atmo_airturb
     print*, "atmo_wind_w", atmo_wind_w
+    print*, "atmo_wind_uv", atmo_wind_uv
+    print*, "atmo_turb_edr", atmo_turb_edr
 
     print*, "atmo_hydro_q", atmo_hydro_q
     print*, "atmo_hydro_reff", atmo_hydro_reff
     print*, "atmo_hydro_n", atmo_hydro_n
- 
+
     print*, "atmo_groundtemp", atmo_groundtemp
     print*, "atmo_iwv", atmo_iwv
 

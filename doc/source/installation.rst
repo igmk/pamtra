@@ -5,8 +5,8 @@ Installation
 ============
 
 
-Dependencies
-************
+Dependencies on Ubuntu
+**********************
 
 On Ubuntu, install the following packages in advance in order to compile the Fortran Pamtra version::
 
@@ -22,13 +22,33 @@ The Netcdf4 python package is not in the repositories, install with::
 
     sudo pip install netcdf4
 
+
+Dependencies on Mac OS X
+************************
+
+On Mac OS X, it is recommended to use brew (http://brew.sh) to install gfortran (via gcc) and netcdf ::
+
+    brew install gcc
+    brew install netcdf --enable-fortran
+
+For the Python version, it is recommended not to use OS X's default python version,
+but to install an independent one, e.g. with brew or conda
+(https://www.continuum.io/downloads). In addition, the following packages are required::
+
+    pip install pandas numpy scipy matplotlib netcdf4
+
+Please note that netcdf4 must be installed using pip even if you use the conda
+package manager. The reason is that conda brings its own netcdf library, but without
+the fortran libraries which are required by the fortran part of PAMTRA.
+
 Get model from git repository
 *****************************
 The version control system git (http://git-scm.com/) is used to keep track of the code. Get a copy of the model with::
 
-    git clone ssh://your_user_name@gop/srv/git_repos/pamtra.git/
+    git clone --recursive https://github.com/igmk/pamtra
 
-The very basics of git can be found here https://try.github.io/levels/1/challenges/1 
+The very basics of git can be found here https://try.github.io/levels/1/challenges/1 .
+"--recursive" is required because gut submodules are used.
 
 Build Pamtra
 *******************
@@ -44,13 +64,17 @@ and ::
 
   make py
 
-Usually superuser permission are required to install python routines. To avoid that, a local python library folder has to be created ::
-  
-  mkdir -p ~/lib/python/
-
-and this path has to be added to the $PYTHONPATH variable of your shell (assuming you are using Ubuntu and bash) ::
+Usually superuser permission are required to install python routines. To avoid
+that a local python library folder is used in ~/lib/python/ and this path has to
+be added to the $PYTHONPATH variable of your shell (assuming you are using Ubuntu
+and bash) ::
 
   echo 'export PYTHONPATH=$PYTHONPATH:$HOME/lib/python' >> ~/.bashrc
+
+For Mac OS X, do ::
+
+    echo 'export PYTHONPATH=$PYTHONPATH:$HOME/lib/python' >> ~/.bash_profile
+
 
 Then, the python routines can be installed with ::
 
@@ -79,13 +103,11 @@ If not available try ::
 
     sudo easy_install numpydoc
 
-In addition, the sphinx-fortran-extension is required ::
+In addition, the sphinx-fortran-extension is required which can be found in the tools folder of Pamtra::
 
-    cd /tmp
-    git clone https://github.com/maahn/sphinx-fortran-extension
-    cd /tmp/sphinx-fortran-extension
+    cd tools/sphinx-fortran-extension
     sudo python setup.py install
-    
+
 if you do not have root permissions you can also use instead of the last line::
 
     python setup.py install --user

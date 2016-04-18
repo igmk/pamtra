@@ -13,7 +13,6 @@ freqs = [35.5]#,80,150]
 
 pam.set["verbose"] = -666
 pam.set["pyVerbose"] =0
-pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 pam.nmlSet["randomseed"] = 100
 pam.nmlSet["radar_mode"] = "spectrum"
 pam.nmlSet["radar_aliasing_nyquist_interv"] = 0

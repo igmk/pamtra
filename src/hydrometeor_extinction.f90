@@ -56,11 +56,7 @@ subroutine hydrometeor_extinction(errorstatus)
     out_psd_d, &
     out_psd_deltad, &
     out_psd_n, &
-    out_psd_mass, &
-    out_scatter_matrix, &
-    out_extinct_matrix, &
-    out_emis_vector
-
+    out_psd_mass
   use vars_index, only: i_x,i_y, i_z, i_h
 
   implicit none
@@ -71,12 +67,12 @@ subroutine hydrometeor_extinction(errorstatus)
 
   integer(kind=long) :: increment, start, stop
 
-  
+
   integer(kind=long), intent(out) :: errorstatus
   integer(kind=long) :: err = 0
   character(len=80) :: msg
   character(len=40) :: nameOfRoutine = 'hydrometeor_extinction'
-  
+
   interface
     subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,&
     delta_h)
@@ -99,7 +95,7 @@ subroutine hydrometeor_extinction(errorstatus)
   !in case we want to calczulate the attenuation top-down we have to reverse the order
   if (TRIM(radar_attenuation) == "top-down") then
     increment = -1
-    start = atmo_nlyrs(i_x,i_y) 
+    start = atmo_nlyrs(i_x,i_y)
     stop =  1
   else
     increment = 1
@@ -112,7 +108,7 @@ subroutine hydrometeor_extinction(errorstatus)
     call prepare_rt3_scatProperties()
     call prepare_rt4_scatProperties()
     rt_hydros_present(i_z) = .false.
-    
+
     if (verbose .gt. 1) print*, 'Layer: ', i_z
 
     hydros: do i_h = 1,n_hydro
@@ -135,17 +131,16 @@ subroutine hydrometeor_extinction(errorstatus)
         n_ds(:) = hydrofs_n_ds(i_x,i_y,i_z,i_h,:)
         mass_ds(:) = hydrofs_mass_ds(i_x,i_y,i_z,i_h,:)
         area_ds(:) = hydrofs_area_ds(i_x,i_y,i_z,i_h,:)
-        delta_d_ds(:) = d_bound_ds(2:) - d_bound_ds(:-1)
-
+        delta_d_ds(:) = d_bound_ds(2:) - d_bound_ds(:nbin)
 
         pressure = atmo_press(i_x,i_y,i_z)
         layer_t = atmo_temp(i_x,i_y,i_z)
-        
+
         if (PRODUCT(SHAPE(canting_arr)) == n_hydro) then
           dsd_canting   = canting_arr(1,1,1,i_h)
         else
           dsd_canting   = canting_arr(i_x,i_y,i_z,i_h)
-        end if         
+        end if
 
         if (SUM(n_ds) > 0.d0) then
           rt_hydros_present(i_z) = .true.
@@ -165,43 +160,43 @@ subroutine hydrometeor_extinction(errorstatus)
           as_ratio   = as_ratio_arr(1,1,1,i_h)
         else
           as_ratio   = as_ratio_arr(i_x,i_y,i_z,i_h)
-        end if 
+        end if
 
         if (PRODUCT(SHAPE(rho_ms_arr)) == n_hydro) then
           rho_ms   = rho_ms_arr(1,1,1,i_h)
         else
           rho_ms   = rho_ms_arr(i_x,i_y,i_z,i_h)
-        end if 
+        end if
 
         if (PRODUCT(SHAPE(a_ms_arr)) == n_hydro) then
           a_ms   = a_ms_arr(1,1,1,i_h)
         else
           a_ms   = a_ms_arr(i_x,i_y,i_z,i_h)
-        end if 
+        end if
 
         if (PRODUCT(SHAPE(b_ms_arr)) == n_hydro) then
           b_ms   = b_ms_arr(1,1,1,i_h)
         else
           b_ms   = b_ms_arr(i_x,i_y,i_z,i_h)
-        end if 
+        end if
 
         if (PRODUCT(SHAPE(alpha_as_arr)) == n_hydro) then
           alpha_as   = alpha_as_arr(1,1,1,i_h)
         else
           alpha_as   = alpha_as_arr(i_x,i_y,i_z,i_h)
-        end if 
+        end if
 
         if (PRODUCT(SHAPE(beta_as_arr)) == n_hydro) then
           beta_as   = beta_as_arr(1,1,1,i_h)
         else
           beta_as   = beta_as_arr(i_x,i_y,i_z,i_h)
-        end if 
+        end if
 
         if (PRODUCT(SHAPE(nbin_arr)) == n_hydro) then
           nbin   = nbin_arr(1,1,1,i_h)
         else
           nbin   = nbin_arr(i_x,i_y,i_z,i_h)
-        end if 
+        end if
 
 !   Force nbin = 2 when monodisperse distribution is used. Needed by radar simulator.
         if ( (trim(dist_name) == 'mono') .or. (trim(dist_name) == 'mono_cosmo_ice')) &
@@ -212,43 +207,43 @@ subroutine hydrometeor_extinction(errorstatus)
           p_1   = p_1_arr(1,1,1,i_h)
         else
           p_1   = p_1_arr(i_x,i_y,i_z,i_h)
-        end if 
+        end if
 
         if (PRODUCT(SHAPE(p_2_arr)) == n_hydro) then
           p_2   = p_2_arr(1,1,1,i_h)
         else
           p_2   = p_2_arr(i_x,i_y,i_z,i_h)
-        end if 
+        end if
 
         if (PRODUCT(SHAPE(p_3_arr)) == n_hydro) then
           p_3   = p_3_arr(1,1,1,i_h)
         else
           p_3   = p_3_arr(i_x,i_y,i_z,i_h)
-        end if 
+        end if
 
         if (PRODUCT(SHAPE(p_4_arr)) == n_hydro) then
           p_4   = p_4_arr(1,1,1,i_h)
         else
           p_4   = p_4_arr(i_x,i_y,i_z,i_h)
-        end if 
+        end if
 
         if (PRODUCT(SHAPE(d_1_arr)) == n_hydro) then
           d_1   = d_1_arr(1,1,1,i_h)
         else
           d_1   = d_1_arr(i_x,i_y,i_z,i_h)
-        end if 
+        end if
 
         if (PRODUCT(SHAPE(d_2_arr)) == n_hydro) then
           d_2   = d_2_arr(1,1,1,i_h)
         else
           d_2   = d_2_arr(i_x,i_y,i_z,i_h)
-        end if 
+        end if
 
         if (PRODUCT(SHAPE(canting_arr)) == n_hydro) then
           dsd_canting   = canting_arr(1,1,1,i_h)
         else
           dsd_canting   = canting_arr(i_x,i_y,i_z,i_h)
-        end if 
+        end if
 
         !short cut in case we disabled the particle
         if (dist_name == "disabled") then
@@ -341,7 +336,7 @@ subroutine hydrometeor_extinction(errorstatus)
 	  call report(err, msg, nameOfRoutine)
 	  errorstatus = err
 	  return
-      end if   
+      end if
 
       rt_scattermatrix(i_z,:,:,:,:,:) = rt_scattermatrix(i_z,:,:,:,:,:) + scatter_matrix_scatcnv
       rt_extmatrix(i_z,:,:,:,:) = rt_extmatrix(i_z,:,:,:,:) + extinct_matrix_scatcnv
@@ -350,8 +345,8 @@ subroutine hydrometeor_extinction(errorstatus)
 
     if (.not. lhyd_scattering) rt_scattermatrix(i_z,:,:,:,:,:) = 0.d0
     if (.not. lhyd_emission) rt_emisvec(i_z,:,:,:) = 0.d0
-    
-    
+
+
     if (active .and. rt_hydros_present(i_z)) then
       call radar_simulator(err,radar_spec, rt_back(i_z,:), rt_kexttot(i_z),&
 	atmo_delta_hgt_lev(i_x,i_y,i_z))
@@ -360,7 +355,7 @@ subroutine hydrometeor_extinction(errorstatus)
 	  call report(err, msg, nameOfRoutine)
 	  errorstatus = err
 	  return
-      end if   
+      end if
     else
       if (verbose >= 5) print*, "Skipped radar simulator because of active .and. rt_hydros_present(i_z)", &
             active, rt_hydros_present(i_z)
@@ -377,4 +372,3 @@ subroutine hydrometeor_extinction(errorstatus)
   return
 
 end subroutine hydrometeor_extinction
-

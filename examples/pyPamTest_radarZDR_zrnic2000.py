@@ -26,7 +26,6 @@ pam.p["relhum_lev"][:] = 10
 pam.p["airturb"][:] = 0
 pam.set["verbose"] = 0
 pam.set["pyVerbose"] =0
-pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 pam.nmlSet["randomseed"] = 0
 pam.nmlSet["radar_mode"] = "simple"
 pam.nmlSet["tmatrix_db"] = "none"

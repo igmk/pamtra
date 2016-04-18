@@ -142,7 +142,6 @@ for scat in scats:
 
   pam.set["verbose"] = verbose
   pam.set["pyVerbose"] =verbose
-  pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
   pam.nmlSet["passive"] = False
   pam.nmlSet["save_psd"] = True
 
@@ -188,7 +187,6 @@ for scat in scats:
 
   pam.set["verbose"] = verbose
   pam.set["pyVerbose"] =verbose
-  pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
   pam.nmlSet["passive"] = False
   pam.nmlSet["save_psd"] = True
 

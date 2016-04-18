@@ -4,7 +4,7 @@ Python/Fortran 90 package to solve the passive and active microwave radiative tr
 
 ## Installation
 
-see install.txt
+see http://gop.meteo.uni-koeln.de/~mmaahn/pamtra/installation.html
 
 ## Manual
 

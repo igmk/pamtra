@@ -9,9 +9,11 @@ pamtra
 *.nml
 !test/nmls/*nml
 !examples/*.nml
+examples/*.txt
 fort*
 !python/pyPamtra/fort*
 output/
+!output/.empty
 profiles/
 profile/*
 !profile/example_input*
@@ -29,6 +31,7 @@ test/tmp/*
 check_moments
 *.pyc
 *.so
+*.so.dSYM
 *.tmp
 *.png
 snowCRYSTALuli
@@ -54,3 +57,4 @@ src/recycle/
 descriptorfiles/*
 nml/
 .python-version
+.DS_Store

@@ -18,7 +18,6 @@ plt.clf()
 pam = pyPamtra.pyPamtra()
 pam.df.readFile(descriptorFile)
 pam.readPamtraProfile("../profile/example_input.lev")
-pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 
 print "##########################"
 
@@ -38,7 +37,6 @@ plt.plot(Ze.compressed(),label="Mie")
 pam = pyPamtra.pyPamtra()
 pam.df.readFile(descriptorFile)
 pam.readPamtraProfile("../profile/example_input.lev")
-pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 
 pam.df.data["scat_name"][:] = "tmatrix"
 pam.df.data["as_ratio"][:] = 1.0
@@ -60,7 +58,6 @@ plt.plot(Ze.compressed(),label="tmatrix 1.0")
 pam = pyPamtra.pyPamtra()
 pam.df.readFile(descriptorFile)
 pam.readPamtraProfile("../profile/example_input.lev")
-pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
 
 pam.df.data["scat_name"][:] = "tmatrix"
 pam.df.data["as_ratio"][:] = 0.6

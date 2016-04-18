@@ -28,7 +28,7 @@
 SUBROUTINE MCOPY (N, M, MATRIX1, MATRIX2)
   use kinds
   INTEGER N, M, I
-  REAL(kind=dbl) MATRIX1 (1), MATRIX2 (1)
+  REAL(kind=dbl) MATRIX1 (*), MATRIX2 (*)
 
   DO I = 1, N * M
      MATRIX2 (I) = MATRIX1 (I)
@@ -40,7 +40,7 @@ END SUBROUTINE MCOPY
 SUBROUTINE MADD (N, M, MATRIX1, MATRIX2, MATRIX3)
   use kinds
   INTEGER N, M, I
-  REAL(kind=dbl) MATRIX1 (1), MATRIX2 (1), MATRIX3 (1)
+  REAL(kind=dbl) MATRIX1 (*), MATRIX2 (*), MATRIX3 (*)
 
   DO I = 1, N * M
      MATRIX3 (I) = MATRIX1 (I) + MATRIX2 (I)
@@ -49,11 +49,10 @@ SUBROUTINE MADD (N, M, MATRIX1, MATRIX2, MATRIX3)
   RETURN
 END SUBROUTINE MADD
 
-
 SUBROUTINE MSUB (N, M, MATRIX1, MATRIX2, MATRIX3)
   use kinds
   INTEGER N, M, I
-  REAL(kind=dbl) MATRIX1 (1), MATRIX2 (1), MATRIX3 (1)
+  REAL(kind=dbl) MATRIX1 (*), MATRIX2 (*), MATRIX3 (*)
 
   DO I = 1, N * M
      MATRIX3 (I) = MATRIX1 (I) - MATRIX2 (I)
@@ -66,7 +65,7 @@ END SUBROUTINE MSUB
 SUBROUTINE MSCALARMULT (N, M, C, MATRIX1, MATRIX2)
   use kinds
   INTEGER N, M, I
-  REAL(kind=dbl) C, MATRIX1 (1), MATRIX2 (1)
+  REAL(kind=dbl) C, MATRIX1 (*), MATRIX2 (*)
 
   DO I = 1, N * M
      MATRIX2 (I) = C * MATRIX1 (I)
@@ -76,23 +75,23 @@ SUBROUTINE MSCALARMULT (N, M, C, MATRIX1, MATRIX2)
 END SUBROUTINE MSCALARMULT
 
 
-SUBROUTINE MZERO (N, M, MATRIX1)
-  use kinds
-  INTEGER N, M, I
-  REAL(kind=dbl) MATRIX1 (1)
-
-  DO I = 1, N * M
-     MATRIX1(I) = 0.0D0
-  END DO
-
-  RETURN
-END SUBROUTINE MZERO
+! SUBROUTINE MZERO (N, M, MATRIX1)
+!   use kinds
+!   INTEGER N, M, I
+!   REAL(kind=dbl) MATRIX1 (1)
+! 
+!   DO I = 1, N * M
+!      MATRIX1(I) = 0.0D0
+!   END DO
+! 
+!   RETURN
+! END SUBROUTINE MZERO
 
 
 SUBROUTINE MDIAG (N, VECTOR, MATRIX)
   use kinds
   INTEGER N, I, J
-  REAL(kind=dbl) VECTOR (1), MATRIX (N, N)
+  REAL(kind=dbl) VECTOR (*), MATRIX (N, N)
 
   DO I = 1, N
      DO J = 1, N
@@ -239,8 +238,8 @@ END SUBROUTINE MINVERT_LAPACK
 
 SUBROUTINE dgefa (a, lda, n, ipvt, info)
   use kinds
-  INTEGER lda, n, ipvt (1), info
-  real(kind=dbl) a (lda, 1)
+  INTEGER lda, n, ipvt (*), info
+  real(kind=dbl) a (lda, *)
   !
   !     dgefa factors a double precision matrix by gaussian elimination.
   !
@@ -289,6 +288,7 @@ SUBROUTINE dgefa (a, lda, n, ipvt, info)
   !
   real(kind=dbl) t
   INTEGER idamax, j, k, kp1, l, nm1
+  external dscal, idamax, daxpy
   !
   !
   !     gaussian elimination with partial pivoting
@@ -346,8 +346,8 @@ END SUBROUTINE dgefa
 
 SUBROUTINE dgedi (a, lda, n, ipvt, det, work, job)
   use kinds
-  INTEGER lda, n, ipvt (1), job
-  real(kind=dbl) a (lda, 1), det (2), work (1)
+  INTEGER lda, n, ipvt (*), job
+  real(kind=dbl) a (lda, *), det (2), work (*)
   !
   !     dgedi computes the determinant and inverse of a matrix
   !     using the factors computed by dgeco or dgefa.
@@ -407,6 +407,7 @@ SUBROUTINE dgedi (a, lda, n, ipvt, det, work, job)
   real(kind=dbl) t
   real(kind=dbl) ten
   INTEGER i, j, k, kb, kp1, l, nm1
+  external DSCAL, DSWAP, daxpy
   !
   !
   !     compute determinant
@@ -475,195 +476,195 @@ SUBROUTINE dgedi (a, lda, n, ipvt, det, work, job)
 END SUBROUTINE dgedi
 
 
-SUBROUTINE daxpy (n, da, dx, incx, dy, incy)
-  !
-  !     constant times a vector plus a vector.
-  !     uses unrolled loops for increments equal to one.
-  !     jack dongarra, linpack, 3/11/78.
-  !
-  use kinds
-  real(kind=dbl)  dx (1), dy (1), da
-  INTEGER i, incx, incy, ix, iy, m, mp1, n
-  !
-  IF (n.le.0) return
-  IF (da.eq.0.0d0) return
-  IF (incx.eq.1.and.incy.eq.1) goto 20
-  !
-  !        code for unequal increments or equal increments
-  !          not equal to 1
-  !
-  ix = 1
-  iy = 1
-  IF (incx.lt.0) ix = ( - n + 1) * incx + 1
-  IF (incy.lt.0) iy = ( - n + 1) * incy + 1
-  DO 10 i = 1, n
-     dy (iy) = dy (iy) + da * dx (ix)
-     ix = ix + incx
-     iy = iy + incy
-10 END DO
-  RETURN
-  !
-  !        code for both increments equal to 1
-  !
-  !
-  !        clean-up loop
-  !
-20 m = mod (n, 4)
-  IF (m.eq.0) goto 40
-  DO 30 i = 1, m
-     dy (i) = dy (i) + da * dx (i)
-30 END DO
-  IF (n.lt.4) return
-40 mp1 = m + 1
-  DO 50 i = mp1, n, 4
-     dy (i) = dy (i) + da * dx (i)
-     dy (i + 1) = dy (i + 1) + da * dx (i + 1)
-     dy (i + 2) = dy (i + 2) + da * dx (i + 2)
-     dy (i + 3) = dy (i + 3) + da * dx (i + 3)
-50 END DO
-  RETURN
-END SUBROUTINE daxpy
+! SUBROUTINE daxpy (n, da, dx, incx, dy, incy)
+!   !
+!   !     constant times a vector plus a vector.
+!   !     uses unrolled loops for increments equal to one.
+!   !     jack dongarra, linpack, 3/11/78.
+!   !
+!   use kinds
+!   real(kind=dbl)  dx (1), dy (1), da
+!   INTEGER i, incx, incy, ix, iy, m, mp1, n
+!   !
+!   IF (n.le.0) return
+!   IF (da.eq.0.0d0) return
+!   IF (incx.eq.1.and.incy.eq.1) goto 20
+!   !
+!   !        code for unequal increments or equal increments
+!   !          not equal to 1
+!   !
+!   ix = 1
+!   iy = 1
+!   IF (incx.lt.0) ix = ( - n + 1) * incx + 1
+!   IF (incy.lt.0) iy = ( - n + 1) * incy + 1
+!   DO 10 i = 1, n
+!      dy (iy) = dy (iy) + da * dx (ix)
+!      ix = ix + incx
+!      iy = iy + incy
+! 10 END DO
+!   RETURN
+!   !
+!   !        code for both increments equal to 1
+!   !
+!   !
+!   !        clean-up loop
+!   !
+! 20 m = mod (n, 4)
+!   IF (m.eq.0) goto 40
+!   DO 30 i = 1, m
+!      dy (i) = dy (i) + da * dx (i)
+! 30 END DO
+!   IF (n.lt.4) return
+! 40 mp1 = m + 1
+!   DO 50 i = mp1, n, 4
+!      dy (i) = dy (i) + da * dx (i)
+!      dy (i + 1) = dy (i + 1) + da * dx (i + 1)
+!      dy (i + 2) = dy (i + 2) + da * dx (i + 2)
+!      dy (i + 3) = dy (i + 3) + da * dx (i + 3)
+! 50 END DO
+!   RETURN
+! END SUBROUTINE daxpy
 
 
-SUBROUTINE dscal (n, da, dx, incx)
-  !
-  !     scales a vector by a constant.
-  !     uses unrolled loops for increment equal to one.
-  !     jack dongarra, linpack, 3/11/78.
-  !     modified 3/93 to return if incx .le. 0.
-  !
-  use kinds
-  real(kind=dbl) da, dx (1)
-  INTEGER i, incx, m, mp1, n, nincx
-  !
-  IF (n.le.0.or.incx.le.0) return
-  IF (incx.eq.1) goto 20
-  !
-  !        code for increment not equal to 1
-  !
-  nincx = n * incx
-  DO 10 i = 1, nincx, incx
-     dx (i) = da * dx (i)
-10 END DO
-  RETURN
-  !
-  !        code for increment equal to 1
-  !
-  !
-  !        clean-up loop
-  !
-20 m = mod (n, 5)
-  IF (m.eq.0) goto 40
-  DO 30 i = 1, m
-     dx (i) = da * dx (i)
-30 END DO
-  IF (n.lt.5) return
-40 mp1 = m + 1
-  DO 50 i = mp1, n, 5
-     dx (i) = da * dx (i)
-     dx (i + 1) = da * dx (i + 1)
-     dx (i + 2) = da * dx (i + 2)
-     dx (i + 3) = da * dx (i + 3)
-     dx (i + 4) = da * dx (i + 4)
-50 END DO
-  RETURN
-END SUBROUTINE dscal
+! SUBROUTINE dscal (n, da, dx, incx)
+!   !
+!   !     scales a vector by a constant.
+!   !     uses unrolled loops for increment equal to one.
+!   !     jack dongarra, linpack, 3/11/78.
+!   !     modified 3/93 to return if incx .le. 0.
+!   !
+!   use kinds
+!   real(kind=dbl) da, dx (1)
+!   INTEGER i, incx, m, mp1, n, nincx
+!   !
+!   IF (n.le.0.or.incx.le.0) return
+!   IF (incx.eq.1) goto 20
+!   !
+!   !        code for increment not equal to 1
+!   !
+!   nincx = n * incx
+!   DO 10 i = 1, nincx, incx
+!      dx (i) = da * dx (i)
+! 10 END DO
+!   RETURN
+!   !
+!   !        code for increment equal to 1
+!   !
+!   !
+!   !        clean-up loop
+!   !
+! 20 m = mod (n, 5)
+!   IF (m.eq.0) goto 40
+!   DO 30 i = 1, m
+!      dx (i) = da * dx (i)
+! 30 END DO
+!   IF (n.lt.5) return
+! 40 mp1 = m + 1
+!   DO 50 i = mp1, n, 5
+!      dx (i) = da * dx (i)
+!      dx (i + 1) = da * dx (i + 1)
+!      dx (i + 2) = da * dx (i + 2)
+!      dx (i + 3) = da * dx (i + 3)
+!      dx (i + 4) = da * dx (i + 4)
+! 50 END DO
+!   RETURN
+! END SUBROUTINE dscal
 
 
-INTEGER function idamax (n, dx, incx)
-  !
-  !     finds the index of element having max. absolute value.
-  !     jack dongarra, linpack, 3/11/78.
-  !     modified 3/93 to return if incx .le. 0.
-  !
-  use kinds
-  real(kind=dbl) :: dx (1), dmax
-  INTEGER i, incx, ix, n
-  !
-  idamax = 0
-  IF (n.lt.1.or.incx.le.0) return
-  idamax = 1
-  IF (n.eq.1) return
-  IF (incx.eq.1) goto 20
-  !
-  !        code for increment not equal to 1
-  !
-  ix = 1
-  dmax = dabs (dx (1) )
-  ix = ix + incx
-  DO 10 i = 2, n
-     IF (dabs (dx (ix) ) .le.dmax) goto 5
-     idamax = i
-     dmax = dabs (dx (ix) )
-5    ix = ix + incx
-10 END DO
-  RETURN
-  !
-  !        code for increment equal to 1
-  !
-20 dmax = dabs (dx (1) )
-  DO i = 2, n
-     IF (dabs (dx (i) ) .le. dmax) exit
-     idamax = i
-     dmax = dabs (dx (i) )
-  END DO
-  RETURN
-END FUNCTION idamax
+! INTEGER function idamax (n, dx, incx)
+!   !
+!   !     finds the index of element having max. absolute value.
+!   !     jack dongarra, linpack, 3/11/78.
+!   !     modified 3/93 to return if incx .le. 0.
+!   !
+!   use kinds
+!   real(kind=dbl) :: dx (*), dmax
+!   INTEGER i, incx, ix, n
+!   !
+!   idamax = 0
+!   IF (n.lt.1.or.incx.le.0) return
+!   idamax = 1
+!   IF (n.eq.1) return
+!   IF (incx.eq.1) goto 20
+!   !
+!   !        code for increment not equal to 1
+!   !
+!   ix = 1
+!   dmax = dabs (dx (1) )
+!   ix = ix + incx
+!   DO 10 i = 2, n
+!      IF (dabs (dx (ix) ) .le.dmax) goto 5
+!      idamax = i
+!      dmax = dabs (dx (ix) )
+! 5    ix = ix + incx
+! 10 END DO
+!   RETURN
+!   !
+!   !        code for increment equal to 1
+!   !
+! 20 dmax = dabs (dx (1) )
+!   DO i = 2, n
+!      IF (dabs (dx (i) ) .le. dmax) exit
+!      idamax = i
+!      dmax = dabs (dx (i) )
+!   END DO
+!   RETURN
+! END FUNCTION idamax
 
 
-SUBROUTINE dswap (n, dx, incx, dy, incy)
-  !
-  !     interchanges two vectors.
-  !     uses unrolled loops for increments equal one.
-  !     jack dongarra, linpack, 3/11/78.
-  !
-  use kinds
-  real(kind=dbl) :: dx (1), dy (1), dtemp
-  INTEGER i, incx, incy, ix, iy, m, mp1, n
-  !
-  IF (n.le.0) return
-  IF (incx.eq.1.and.incy.eq.1) goto 20
-  !
-  !       code for unequal increments or equal increments not equal
-  !         to 1
-  !
-  ix = 1
-  iy = 1
-  IF (incx.lt.0) ix = ( - n + 1) * incx + 1
-  IF (incy.lt.0) iy = ( - n + 1) * incy + 1
-  DO 10 i = 1, n
-     dtemp = dx (ix)
-     dx (ix) = dy (iy)
-     dy (iy) = dtemp
-     ix = ix + incx
-     iy = iy + incy
-10 END DO
-  RETURN
-  !
-  !       code for both increments equal to 1
-  !
-  !
-  !       clean-up loop
-  !
-20 m = mod (n, 3)
-  IF (m.eq.0) goto 40
-  DO 30 i = 1, m
-     dtemp = dx (i)
-     dx (i) = dy (i)
-     dy (i) = dtemp
-30 END DO
-  IF (n.lt.3) return
-40 mp1 = m + 1
-  DO 50 i = mp1, n, 3
-     dtemp = dx (i)
-     dx (i) = dy (i)
-     dy (i) = dtemp
-     dtemp = dx (i + 1)
-     dx (i + 1) = dy (i + 1)
-     dy (i + 1) = dtemp
-     dtemp = dx (i + 2)
-     dx (i + 2) = dy (i + 2)
-     dy (i + 2) = dtemp
-50 END DO
-  RETURN
-END SUBROUTINE dswap
+! SUBROUTINE dswap (n, dx, incx, dy, incy)
+!   !
+!   !     interchanges two vectors.
+!   !     uses unrolled loops for increments equal one.
+!   !     jack dongarra, linpack, 3/11/78.
+!   !
+!   use kinds
+!   real(kind=dbl) :: dx (1), dy (1), dtemp
+!   INTEGER i, incx, incy, ix, iy, m, mp1, n
+!   !
+!   IF (n.le.0) return
+!   IF (incx.eq.1.and.incy.eq.1) goto 20
+!   !
+!   !       code for unequal increments or equal increments not equal
+!   !         to 1
+!   !
+!   ix = 1
+!   iy = 1
+!   IF (incx.lt.0) ix = ( - n + 1) * incx + 1
+!   IF (incy.lt.0) iy = ( - n + 1) * incy + 1
+!   DO 10 i = 1, n
+!      dtemp = dx (ix)
+!      dx (ix) = dy (iy)
+!      dy (iy) = dtemp
+!      ix = ix + incx
+!      iy = iy + incy
+! 10 END DO
+!   RETURN
+!   !
+!   !       code for both increments equal to 1
+!   !
+!   !
+!   !       clean-up loop
+!   !
+! 20 m = mod (n, 3)
+!   IF (m.eq.0) goto 40
+!   DO 30 i = 1, m
+!      dtemp = dx (i)
+!      dx (i) = dy (i)
+!      dy (i) = dtemp
+! 30 END DO
+!   IF (n.lt.3) return
+! 40 mp1 = m + 1
+!   DO 50 i = mp1, n, 3
+!      dtemp = dx (i)
+!      dx (i) = dy (i)
+!      dy (i) = dtemp
+!      dtemp = dx (i + 1)
+!      dx (i + 1) = dy (i + 1)
+!      dy (i + 1) = dtemp
+!      dtemp = dx (i + 2)
+!      dx (i + 2) = dy (i + 2)
+!      dy (i + 2) = dtemp
+! 50 END DO
+!   RETURN
+! END SUBROUTINE dswap

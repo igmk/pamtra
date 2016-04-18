@@ -211,7 +211,7 @@ subroutine write_nc_results
         call check(nf90_put_att(ncid, rQualVarID, "missing_value", -9999))
 
         if (radar_mode == "spectrum") then
-           call check(nf90_def_var(ncid,'Radar_Velocity', nf90_double,(/dnfftID/), RadarVelID))
+           call check(nf90_def_var(ncid,'Radar_Velocity', nf90_double,(/dfrqID,dnfftID/), RadarVelID))
            call check(nf90_put_att(ncid, RadarVelID, "units", "m/s"))
            call check(nf90_put_att(ncid, RadarVelID, "missing_value", -9999))
 
@@ -316,7 +316,7 @@ subroutine write_nc_results
              RESHAPE( out_radar_quality, &
              (/ radar_nPeaks, radar_npol, nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), ORDER = (/6,5,4,3,2,1/))))
         if (radar_mode == "spectrum") then
-           call check(nf90_put_var(ncid, RadarVelID, out_radar_vel))
+           call check(nf90_put_var(ncid, RadarVelID, RESHAPE(out_radar_vel, (/ radar_nfft,nfrq/),ORDER = (/2,1/))))
            call check(nf90_put_var(ncid, RadarSpecID, &
                 RESHAPE( out_radar_spectra, &
                 (/ radar_nfft,radar_npol, nfrq, atmo_max_nlyrs, atmo_ngridy, atmo_ngridx/), &

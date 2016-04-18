@@ -2,7 +2,7 @@ subroutine parse_options(gitVersion,gitHash)
 
     use kinds, only: long
     use getopt_m
-    use settings, only: maxfreq, nfrq, freqs,frqs_str,namelist_file,&
+    use settings, only: nfrq, freqs,frqs_str,namelist_file,&
       input_pathfile,input_file,verbose, descriptor_file_name, output_path
 !     use vars_profile, only: coords
     use mod_io_strings, only: formatted_frqstr

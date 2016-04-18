@@ -5,35 +5,28 @@ OBJDIR := src/
 SRCDIR := src/
 BINDIR := bin/
 LIBDIR := lib/
-PYTDIR := python/pyPamtra/
+PYTDIR := python/pyPamtra
 
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 
-
+F2PY := $(shell which f2py2.7 || which f2py) #on newer Ubuntu systems, only f2py2.7 is available
 FC=gfortran
 CC=gcc
-FCFLAGS=-c -fPIC -Wunused  -cpp -J$(OBJDIR) -I$(OBJDIR) 
-#FCFLAGS=-g -c -fPIC -Wunused -O0 -cpp -J$(OBJDIR) -I$(OBJDIR) 
-ifeq ($(ARCH),Darwin)
-	FC=/opt/local/bin/gfortran-mp-4.8
-	NCFLAGS=-I/opt/local/include/ 
-	NCFLAGS_F2PY=-I/opt/local/include/ 
-	LFLAGS= -L$(LIBDIR) -L../$(LIBDIR) -ldfftpack  -L/opt/local/lib/ -llapack
-	LDFLAGS=-lnetcdf -lnetcdff  -lz
-else
-	NCFLAGS :=  $(shell nc-config --fflags)  -fbounds-check 
-	NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
-	LFLAGS := -llapack -L$(LIBDIR) -L../$(LIBDIR) -ldfftpack
-	LDFLAGS := $(shell nc-config --flibs) -lz
-endif
+FCFLAGS=-c -fPIC -Wunused  -cpp -J$(OBJDIR) -I$(OBJDIR)
+#FCFLAGS=-g -c -fPIC -Wunused -O0 -cpp -J$(OBJDIR) -I$(OBJDIR)
+	
+NCFLAGS :=  $(shell nc-config --fflags)  -fbounds-check
+NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
+LFLAGS := -L/usr/lib/ -llapack -L$(LIBDIR) -L../$(LIBDIR) -ldfftpack -lblas
+LDFLAGS := $(shell nc-config --flibs) -lz
 
 
 
 
 OBJECTS=kinds.o \
-        vars_index.o \
+  vars_index.o \
 	report_module.o \
 	rt_utilities.o \
 	settings.o \
@@ -46,7 +39,7 @@ OBJECTS=kinds.o \
 	descriptor_file.o \
 	vars_atmosphere.o \
 	vars_rt.o \
-        vars_hydroFullSpec.o \
+  vars_hydroFullSpec.o \
 	mod_io_strings.o \
 	getopt.o \
 	parse_options.o \
@@ -82,6 +75,7 @@ OBJECTS=kinds.o \
 	rescale_spectra.o \
 	radar_moments.o \
 	radar_spectrum.o \
+	radar_spectral_broadening.o \
 	radar_simulator.o \
 	rosen98_gasabs.o \
 	surface.o \
@@ -129,15 +123,25 @@ FOBJECTS=$(addprefix $(OBJDIR),$(OBJECTS))
 
 BIN=pamtra
 
-all: dfftpack pamtra py py_usStandard
+
+
+all: dfftpack pamtra py py_usStandard 
+
+warning:
+ifndef PAMTRA_DATADIR
+	@echo "########################################################"
+	@echo "Do not forget to define PAMTRA_DATADIR environment variable"
+	@echo "########################################################"
+endif
+
 
 dfftpack: | $(LIBDIR)
 	cd tools/dfftpack && $(MAKE)
 	cp tools/dfftpack/libdfftpack.a $(LIBDIR)
 
 pamtra: FCFLAGS += -O2
-pamtra: NCFLAGS += -O2 
-pamtra: dfftpack $(FOBJECTS) $(BINDIR)$(BIN) | $(BINDIR)
+pamtra: NCFLAGS += -O2
+pamtra: warning dfftpack $(FOBJECTS) $(BINDIR)$(BIN) | $(BINDIR) 
 
 $(OBJDIR)versionNumber.auto.o: .git/HEAD .git/index
 	echo "!edit in makefile only!" > $(SRCDIR)versionNumber.auto.f90
@@ -158,11 +162,11 @@ $(BINDIR):
 	mkdir -p $(BINDIR)
 
 $(BINDIR)$(BIN): $(FOBJECTS) | $(BINDIR)
-	$(FC) -I$(OBJDIR) -o $(BINDIR)$(BIN) $(SRCDIR)pamtra.f90 $(FOBJECTS) $(LFLAGS) $(LDFLAGS) 
+	$(FC) -I$(OBJDIR) -o $(BINDIR)$(BIN) $(SRCDIR)pamtra.f90 $(FOBJECTS) $(LFLAGS) $(LDFLAGS)
 
 $(OBJDIR)scatdb.o:  $(SRCDIR)scatdb.c  | $(OBJDIR)
 	$(CC) -O  -fPIC -c $< -o $@
-	
+
 $(OBJDIR)%.o:  $(SRCDIR)%.f90 | $(OBJDIR)
 	$(FC) $(FCFLAGS) $< -o $@
 
@@ -174,20 +178,20 @@ $(OBJDIR)write_nc_results.o:  $(SRCDIR)write_nc_results.f90 | $(OBJDIR)
 
 
 
-pamtraDebug: FCFLAGS += -g -fbacktrace -fbounds-check 
-pamtraDebug: LFLAGS += -g -fbacktrace -fbounds-check 
+pamtraDebug: FCFLAGS += -g -fbacktrace -fbounds-check
+pamtraDebug: LFLAGS += -g -fbacktrace -fbounds-check
 pamtraDebug: pamtra
 	@echo ""
 	@echo "####################################################################################"
 	@echo "start debugging with:"
 	@echo "gdb ./pamtra"
-	@echo "run -n namelist -p profile ..."	
+	@echo "run -n namelist -p profile ..."
 	@echo "or with valgrind:"
 	@echo "valgrind --leak-check=yes ./pamtra ..."
 	@echo "####################################################################################"
 
 
-pamtraProfile: FCFLAGS += -pg 
+pamtraProfile: FCFLAGS += -pg
 pamtraProfile: LFLAGS += -pg
 pamtraProfile: 	pamtra
 	@echo ""
@@ -203,8 +207,8 @@ pyProfile: 	py
 	@echo "performance report displayed at exit of python"
 	@echo "####################################################################################"
 
-pyDebug: FCFLAGS += -g -fbacktrace -fbounds-check 
-pyDebug: NCFLAGS_F2PY += --debug-capi 
+pyDebug: FCFLAGS += -g -fbacktrace -fbounds-check
+pyDebug: NCFLAGS_F2PY += --debug-capi
 pyDebug: 	py
 	@echo ""
 	@echo "####################################################################################"
@@ -217,14 +221,14 @@ $(OBJDIR)pypamtralib.pyf:  $(FOBJECTS)
 	@echo "####################################################################################"
 	@echo "Note there is a bug in numpy 1.10.1, intent in or out is not recognized"
 	@echo "####################################################################################"
-	f2py2.7 --overwrite-signature -m pyPamtraLib -h $(OBJDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)pyPamtraLib.f90
+	$(F2PY) --overwrite-signature -m pyPamtraLib -h $(OBJDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)vars_index.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)radar_moments.f90 $(SRCDIR)pyPamtraLib.f90
 
 py: FCFLAGS += -O2
-py: NCFLAGS += -O2 
+py: NCFLAGS += -O2
 py: $(PYTDIR)pyPamtraLib.so
 
 $(PYTDIR)pyPamtraLib.so:  $(SRCDIR)pyPamtraLib.f90 $(OBJDIR)pypamtralib.pyf $(FOBJECTS) | $(BINDIR)
-	cd $(OBJDIR) && f2py2.7 $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) -c --fcompiler=gnu95  ../$(OBJDIR)pypamtralib.pyf $(OBJECTS) ../$(SRCDIR)pyPamtraLib.f90 
+	cd $(OBJDIR) && $(F2PY) $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) -c --fcompiler=gnu95  ../$(OBJDIR)pypamtralib.pyf $(OBJECTS) ../$(SRCDIR)pyPamtraLib.f90
 	mv $(OBJDIR)/pyPamtraLib.so $(PYTDIR)
 	cp $(PYTDIR)/pamtra.py $(BINDIR)
 
@@ -232,7 +236,8 @@ $(PYTDIR)pyPamtraLib.so:  $(SRCDIR)pyPamtraLib.f90 $(OBJDIR)pypamtralib.pyf $(FO
 py_usStandard:
 	cd tools/py_usStandard/ && $(MAKE) all
 
-pyinstall: dfftpack py py_usStandard
+pyinstall: warning dfftpack py py_usStandard
+	mkdir -p ~/lib/python/
 	cp -r $(PYTDIR) ~/lib/python/
 	cd tools/py_usStandard/ && $(MAKE) install
 

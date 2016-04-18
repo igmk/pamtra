@@ -30,6 +30,9 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
     ! edge, dimension(2): left(0) and right(1) edge the peak [m/s]
     ! quality
 
+    use vars_index, only: i_f
+    implicit none
+
     integer, intent(in) :: radar_nfft, radar_nPeaks
     real(kind=dbl), dimension(radar_nfft), intent(in):: radar_spectrum_in
     real(kind=dbl), intent(in):: noise_model
@@ -91,14 +94,14 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
     slope(:,:) = -9999
 
 
-    del_v = (radar_max_V-radar_min_V) / radar_nfft
-    spectra_velo = (/(((ii*del_v)+radar_min_V),ii=0,radar_nfft-1)/) ! [m/s]
+    del_v = (radar_max_V(i_f)-radar_min_V(i_f)) / radar_nfft
+    spectra_velo = (/(((ii*del_v)+radar_min_V(i_f)),ii=0,radar_nfft-1)/) ! [m/s]
     quality = 0
     additionalPeaks = .false.
 
     !calculate noise level (actually we know already the result which is noise_model)
     if (radar_use_hildebrand) then
-        call radar_hildebrand_sekhon(err,radar_spectrum_in,radar_no_Ave,radar_nfft,&
+        call radar_hildebrand_sekhon(err,radar_spectrum_in,radar_no_Ave(i_f),radar_nfft,&
           noise,noise_max)
         if (err /= 0) then
             msg = 'error in radar_hildebrand_sekhon!'
@@ -107,11 +110,11 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
             return
         end if   
         if (verbose .gt. 2) print*, 'calculated noise:', noise
-        if (radar_noise_distance_factor > 0) &
-          noise_max = radar_noise_distance_factor*noise
+        if (radar_noise_distance_factor(i_f) > 0) &
+          noise_max = radar_noise_distance_factor(i_f)*noise
     else
         noise = noise_model/radar_nfft !no devison by del_v neccessary!
-        noise_max = radar_noise_distance_factor*noise
+        noise_max = radar_noise_distance_factor(i_f)*noise
     end if
 
   do nn = 1, radar_nPeaks + 1
@@ -179,14 +182,14 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
     end do 
     
     !check whether peak is NOT present:
-    if ((SUM(radar_spectrum_arr(nn,left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise <radar_min_spectral_snr) &
+    if ((SUM(radar_spectrum_arr(nn,left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise <radar_min_spectral_snr(i_f)) &
       .or. (right_edge-left_edge <= 2)  .or. (right_edge-left_edge ==  radar_nfft+ 1) ) then
 
       !no or too thin peak or too wide peak
       if (verbose >= 3) print*, "Skipped peak ", nn, " because of:", &
-        "radar_min_spectral_snr", &
-        SUM(radar_spectrum_in(left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise <radar_min_spectral_snr, &
-        SUM(radar_spectrum_in(left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise, radar_min_spectral_snr, &
+        "radar_min_spectral_snr(i_f)", &
+        SUM(radar_spectrum_in(left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise <radar_min_spectral_snr(i_f), &
+        SUM(radar_spectrum_in(left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise, radar_min_spectral_snr(i_f), &
         "too thin", (right_edge-left_edge <= 2), "too wide", (right_edge-left_edge ==  radar_nfft+ 1)
 
       if (nn == 1) then 

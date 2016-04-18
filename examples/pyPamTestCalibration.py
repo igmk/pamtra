@@ -20,7 +20,6 @@ for miscalibration in [-10,-5,0,5,10]:
 
   pam.set["verbose"] = 0
   pam.set["pyVerbose"] =0
-  pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
   pam.nmlSet["randomseed"] = 10
   pam.nmlSet["radar_mode"] = "spectrum"
   pam.nmlSet["radar_aliasing_nyquist_interv"] = 3
@@ -52,7 +51,6 @@ for miscalibration in [-10,-5,0,5,10]:
 
   pam.set["verbose"] = 0
   pam.set["pyVerbose"] =0
-  pam.nmlSet["data_path"] = "/work/mmaahn/pamtra_data/"
   pam.nmlSet["randomseed"] = 10
   pam.nmlSet["radar_mode"] = "spectrum"
   pam.nmlSet["radar_aliasing_nyquist_interv"] = 3

@@ -6,15 +6,11 @@ import traceback
 import warnings
 import sys
 
-try: 
-  import paramiko 
-except: 
-  warnings.warn("paramiko not available", Warning)
-
 
 class sftp2Cluster(object):
 
   def __init__(self,machinename, username):
+    import paramiko 
     self.ssh = paramiko.SSHClient()
     self.ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
     self.ssh.connect(machinename, username=username)
