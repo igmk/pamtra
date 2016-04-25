@@ -8,8 +8,10 @@ missingNumber=-9999.
 missingIntNumber=int(missingNumber)
 
 class pamDescriptorFile(object):
-  #class with the descriptor file content in data. In case you want to use 4D data, use data4D instead, the coreesponding column in data is automatically removed.
-  
+  '''
+  class with the descriptor file content in data. In case you want to use 4D data, use data4D instead, 
+  the coreesponding column in data is automatically removed. Inializes with an empty array.
+  '''
          
   def __init__(self,parent):
     self.names = np.array(["hydro_name", "as_ratio", "liq_ice", "rho_ms", "a_ms", "b_ms", "alpha_as", "beta_as", "moment_in", "nbin", "dist_name", "p_1", "p_2", "p_3", "p_4", "d_1", "d_2", "scat_name", "vel_size_mod","canting"])
@@ -24,6 +26,14 @@ class pamDescriptorFile(object):
     
    
   def readFile(self,fname):
+    '''
+    Read ASCII Pamtra descriptor file
+
+    Parameters
+    ----------
+    fname : str
+      filename
+    '''
     f = open(fname,"r")
     for row in csv.reader(f,delimiter=" ",skipinitialspace=True):
       #skipp comments
@@ -47,10 +57,28 @@ class pamDescriptorFile(object):
     #make rec array
 
   def writeFile(self,fname):
+    '''
+    Write ASCII Pamtra descriptor file
+
+    Parameters
+    ----------
+    fname : str
+      filename
+    '''
     assert len(data[0]) == len(self.names)
     return mlab.rec2csv(data, fname, delimiter=' ',withheader=False)
       
   def addHydrometeor(self,hydroTuple):
+    '''
+    Add hydrometeor to df array. 
+
+    Parameters
+    ----------
+    hydroTuple : tuple
+      tuple describing the hydrometeor. Consists of
+      "hydro_name", "as_ratio", "liq_ice", "rho_ms", "a_ms", "b_ms", "alpha_as", "beta_as", "moment_in", "nbin", "dist_name", "p_1", 
+      "p_2", "p_3", "p_4", "d_1", "d_2", "scat_name", "vel_size_mod","canting"
+    '''
     assert hydroTuple[0] not in self.data["hydro_name"]
     assert len(self.dataFullSpec.keys()) == 0
     
@@ -63,6 +91,15 @@ class pamDescriptorFile(object):
     return
     
   def removeHydrometeor(self,hydroName):
+    '''
+    Remove hydrometeor from df array. 
+
+    Parameters
+    ----------
+    hydroName : str
+      Name of hydrometeor to be removed.
+    '''
+
     assert len(self.dataFullSpec.keys()) == 0
     if hydroName == "all":
       self.__init__()
@@ -90,16 +127,66 @@ class pamDescriptorFile(object):
 
     
   def add4D(self, key, arr):
-    print "changing", key, "to 4D"
+    '''
+    Add 4D information for one hydrometeor property. I.e the 1D value with dimesnions (hydrometeors) in the df array is replaced by an array with (x,y,z,hydrometeor) dimensions. 
+
+    Parameters
+    ----------
+    key : str
+      Name of hydrometeor property to be altered.
+    arr : array 
+      New 4D values
+    '''
     self.data = mlab.rec_drop_fields(self.data,[key])
     self.data4D[key] = arr.reshape(self.parent._shape4D)
     
   def remove4D(self, key, val):
+    '''
+    Remove 4D information for one hydrometeor property.
+
+    Parameters
+    ----------
+    key : str
+      Name of hydrometeor property to be altered.
+    arr : array 
+      New 1 D values.
+    '''
+
     self.data = mlab.rec_append_fields(self.data,key,val)
     del data4D[key]
     
   def addFullSpectra(self):
-    #assert len(self.data4D.keys()) == 0
+    '''
+    This function creates empty arrays which have 5 dimensions (x,y,z,hydrometeor,bin). 
+    They are not returned but added to the df object. 
+    Note that the hydrometeors have to be added to the df array before calling this 
+    routine with dummy values. Information not avaialable here (e.g. scattering) are 
+    still taken from the descriptor file. Note that all arrays of dataFullSpec mus be filled!
+    Make sure that the array dimensions are not changed, otherwise Pamtra might crash.
+
+    Returns
+    -------
+    dataFullSpec["rho_ds"] : 
+      particle density at the middle of the bin in [kg/m3]
+    dataFullSpec["d_ds"] : 
+      particle diameter at the middle of the bin where the scattering properties shall be calculated
+    dataFullSpec["d_bound_ds"] : 
+      particle diameter at the edges of the bins. 5th dimension bin is one longer.
+    dataFullSpec["n_ds"] : 
+      particle number concentration in [#/m^3]. I.e. it is NOT normalized!
+    dataFullSpec["mass_ds"] : 
+      particle mass at the middle of the bin in [kg]
+    dataFullSpec["area_ds"] : 
+      particle cross section area at the middle of the bin in [m^2]
+    dataFullSpec["as_ratio"] : 
+      particle aspect ratio in the middle of the bin [no unit]
+    dataFullSpec["canting"] : 
+      particle canting the middle of the bin in [deg]
+
+    Notes
+    -----
+    Do not forget to set nmlSet['hydro_fullspec'] to True.
+    '''
     assert len(self.data) >0
     assert np.min(self.data["nbin"]) == np.max(self.data["nbin"])
 
@@ -116,7 +203,3 @@ class pamDescriptorFile(object):
     self.dataFullSpec["as_ratio"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
     self.dataFullSpec["canting"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
   
-    #for name in self.names:
-      #if name not in ["hydro_name","liq_ice","scat_name","vel_size_mod"]:
-        #self.data = mlab.rec_drop_fields(self.data,[name])
-    #return

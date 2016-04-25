@@ -33,8 +33,7 @@ missingIntNumber=int(missingNumber)
 class pyPamtra(object):
 
   '''
-  Class for pamtra calculations. Initalisations fill dictonary 'set' with default values and
-  also fills 'dimensions' and 'units'
+  Class for pamtra calculations. Initalisation fills dictonary 'set', 'nmlSet', 'dimensions', and 'units' with default values.
 
   '''
 
@@ -221,6 +220,14 @@ class pyPamtra(object):
 
 
   def writeNmlFile(self,nmlFile):
+    """
+    write classical Pamtra Namelist File from nmlSet
+    
+    Parameter
+    ---------
+    nmlFile: str 
+        filename with path    
+    """
     f = open(nmlFile,"w")
     f.write("&settings\n\r")
     for key in self.nmlSet.keys():
@@ -245,6 +252,11 @@ class pyPamtra(object):
   def readNmlFile(self,inputFile):
     """
     read classical Pamtra Namelist File from inputFile
+
+    Parameter
+    ---------
+    nmlFile: str 
+        filename with path    
     """
 
     nmlFile = Namelist(inputFile)
@@ -270,6 +282,14 @@ class pyPamtra(object):
 
 
   def readPamtraProfile(self,inputFile):
+    """
+    read lay or lev pamtra profile from file. Descriptot file must be defined before
+ 
+    Parameter
+    ---------
+    inputFile: str 
+        filename with path    
+    """
     #make sure that a descriptor file was defined
     assert self.df.nhydro > 0
 
@@ -410,6 +430,9 @@ class pyPamtra(object):
   def readClassicPamtraProfile(self,inputFile,n_moments=1):
     """
     read classical pamtra profile from file
+    Input:
+
+    inputFile: str filename with path    
     """
 
     f = open(inputFile,"r")
@@ -539,6 +562,14 @@ class pyPamtra(object):
     return
 
   def writePamtraProfile(self,profileFile):
+    """
+    write lay or lev (depending on file extension) pamtra profile to file. 
+
+    Parameter
+    ---------
+    profileFile: str 
+        filename with path    
+    """
 
     levLay = profileFile.split(".")[-1]
 
@@ -606,7 +637,7 @@ class pyPamtra(object):
 
     Variables ending on _lev mean level values, variables without are layer values (vectors one entry shorter!)!
 
-    Everything is needed in SI units, relhum is in Pa/PA not %
+    Everything is needed in SI units, relhum is in %
 
     The following variables are mandatroy:
     hgt_lev, (temp_lev or temp), (press_lev or press) and (relhum_lev OR relhum)
@@ -800,7 +831,12 @@ class pyPamtra(object):
 
   def filterProfiles(self,condition):
     '''
-    discard profiles, which do not fullfill "condition" (2D boolean array)
+    discard profiles, which do not fullfill "condition"
+
+    Parameter
+    ---------
+    condition : array of bool
+        2D boolean array
 
     Note: If the initial field is a 2D grid, the field is flattend after application
 
@@ -870,7 +906,12 @@ class pyPamtra(object):
 
   def tileProfiles(self,rep2D):
     '''
-    repeat the profiles of Pamtra rep2D times. E.g. rep2D=(1,100) changes a Pamtra shape from (10,2) to (10,200).
+    repeat the profiles of Pamtra 
+
+    Parameters
+    ----------
+    rep2D : tuple(int,int)
+        E.g. rep2D=(1,100) changes a Pamtra shape from (10,2) to (10,200).
     '''
 
     assert len(rep2D) == 2
@@ -921,6 +962,12 @@ class pyPamtra(object):
   def addProfile(self,profile, axis=0):
     """
     Add additional dictionary "profiles" with profile information to axis "axis". Number of height bins must be equal.
+
+    Parameters
+    ----------
+    profile : Pamtra profile dict
+        Pamtra profile to append
+    axis : int
     """
     for key in self.p.keys():
       if len(np.shape(self.p[key])) >= 2:
@@ -939,6 +986,16 @@ class pyPamtra(object):
 
 
   def rescaleHeights(self,new_hgt_lev, new_hgt=[]):
+    """
+    Rescale Pamtra pofile to new height grid
+
+    Parameters
+    ----------
+    new_hgt_lev: Array
+        Array to replace hgt_lev
+    new_hgt: Array, optional
+        array to replace hgt_lev (default [], i.e. interpoated from new_hgt_lev)
+    """
 
     # sort height vectors
     old_hgt_lev = self.p["hgt_lev"]
@@ -1044,15 +1101,22 @@ class pyPamtra(object):
   def addSpectralBroadening(self,EDR,wind_uv,beamwidth_deg,integration_time,frequency,kolmogorov = 0.5):
     """
     Fills array self.p["airturb"] according to input data. Array are broadcasted to self._shape3D
-    Only broadening by horizontal wind and turbuilence is considered as of now.
+    Only broadening by horizontal wind and turbuilence is considered as of now. Populates self.p["airturb"]
 
-    Input:
-      EDR(array) : Eddy dissipation rate (SI units)
-      wind_uv(array) : horizontal wind field (SI units)
-      beamwidth_deg(float) : full-width half-radiated one-way (deg)
-      integration_time(float) : radar integration time
-      frequency(float) : frequency used to determien lower integration bound
-      kolmogorov(float,optional) : Kolmogorov constant, default 0.5
+    Parameters
+    ----------
+  EDR : arrayE
+    Eddy dissipation rate (SI units)
+  wind_uv : array
+    horizontal wind field (SI units)
+  beamwidth_deg : float 
+    full-width half-radiated one-way (deg)
+  integration_time : float
+    radar integration time in s
+  frequency : float
+    frequency used to determien lower integration bound
+  kolmogorov : float,optional
+    Kolmogorov constant, default 0.5
 
     """
 
@@ -1158,26 +1222,28 @@ class pyPamtra(object):
     Adds "PIA" to `self.r`
     """
 
-    shapePIA = np.shape(self.r["Att_hydro"])
-    if applyAtmo:
-      Att_atmo = np.zeros(shapePIA)
-      Att_atmo.T[:] = self.r["Att_atmo"].T
-      Att_atmo[Att_atmo==missingNumber] = 0
-    else:
-      Att_atmo = np.zeros(shapePIA)
-    if applyHydros:
-      Att_hydro = self.r["Att_hydro"]
-      Att_hydro[Att_hydro==missingNumber] = 0
-    else:
-      Att_hydro = np.zeros(shapePIA)
+    sys.exit('Deprecated: use nmlSet radar_attenuation instead.')
 
-    self.r["PIA"] = np.zeros(shapePIA) - missingNumber
-    if direction == "bottom-up":
-      for hh in range(self.p["max_nlyrs"]):
-        self.r["PIA"][:,:,hh,:] = Att_atmo[:,:,hh,:] +Att_hydro[:,:,hh,:] + 2*np.sum(Att_atmo[:,:,:hh,:] +Att_hydro[:,:,:hh,:],axis=2)#only half for the current layer
-    elif direction == "top-down":
-      for hh in range(self.p["max_nlyrs"]-1,-1,-1):
-        self.r["PIA"][:,:,hh,:] = Att_atmo[:,:,hh,:] +Att_hydro[:,:,hh,:] + 2*np.sum(Att_atmo[:,:,hh+1:,:] +Att_hydro[:,:,hh+1:,:],axis=2)#only half for the current layer
+    # shapePIA = np.shape(self.r["Att_hydro"])
+    # if applyAtmo:
+    #   Att_atmo = np.zeros(shapePIA)
+    #   Att_atmo.T[:] = self.r["Att_atmo"].T
+    #   Att_atmo[Att_atmo==missingNumber] = 0
+    # else:
+    #   Att_atmo = np.zeros(shapePIA)
+    # if applyHydros:
+    #   Att_hydro = self.r["Att_hydro"]
+    #   Att_hydro[Att_hydro==missingNumber] = 0
+    # else:
+    #   Att_hydro = np.zeros(shapePIA)
+
+    # self.r["PIA"] = np.zeros(shapePIA) - missingNumber
+    # if direction == "bottom-up":
+    #   for hh in range(self.p["max_nlyrs"]):
+    #     self.r["PIA"][:,:,hh,:] = Att_atmo[:,:,hh,:] +Att_hydro[:,:,hh,:] + 2*np.sum(Att_atmo[:,:,:hh,:] +Att_hydro[:,:,:hh,:],axis=2)#only half for the current layer
+    # elif direction == "top-down":
+    #   for hh in range(self.p["max_nlyrs"]-1,-1,-1):
+    #     self.r["PIA"][:,:,hh,:] = Att_atmo[:,:,hh,:] +Att_hydro[:,:,hh,:] + 2*np.sum(Att_atmo[:,:,hh+1:,:] +Att_hydro[:,:,hh+1:,:],axis=2)#only half for the current layer
 
     return
 
@@ -1188,7 +1254,7 @@ class pyPamtra(object):
       hydro_q,hydro_n,hydro_reff,radar_prop):
 
     '''
-    create comple PAmtra Profile
+    create comple Pamtra Profile
 
     No Extras, no missing values are guessed. the Data is only reshaped
     '''
@@ -1246,7 +1312,14 @@ class pyPamtra(object):
 
   def runPamtra(self,freqs,checkData=True):
     '''
-    run Pamtra from python
+    run Pamtra from python. Populates result dictionary 'r'. 
+
+    Parameters
+    ----------
+    freqs : float of list of floats
+        Frequencies in GHz.They must be sorted from small to large.
+    checkData : bool, optional
+        Check input data for consitency (default True)
     '''
     tttt = time.time()
 
@@ -1283,9 +1356,27 @@ class pyPamtra(object):
     if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
     return
 
-  def runParallelPamtra(self,freqs,pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto",checkData=True,timeout=None):
+  def runParallelPamtra(self,freqs,pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0,checkData=True,timeout=None):
     '''
-    run Pamtra from python
+    run Pamtra parallel from python. Populates result dictionary 'r'. 
+
+    Parameters
+    ----------
+    freqs : float of list of floats
+        Frequencies in GHz.They must be sorted from small to large.
+    checkData : bool, optional
+        Check input data for consitency (default True)
+    pp_local_workers : int or 'auto', optional
+        number of parallel threads (default 'auto' correpons to number of cpus.)
+    pp_deltaF : int , optional
+        Size of each thread in frequency domain. 0 means infinity. (default 1)
+    pp_deltaX : int , optional
+        Size of each thread in X domain. 0 means infinity. (default 0)
+    pp_deltaY : int , optional
+        Size of each thread in Y domain. 0 means infinity. (default 0)
+    timeout : int or None, optional
+        Timeout for each thread in seconds (default None)
+
     '''
 
     if type(freqs) in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
@@ -1371,9 +1462,9 @@ class pyPamtra(object):
     del pool, jobs
     return
 
-  def runPicklePamtra(self,freqs,picklePath="pyPamJobs",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto",checkData=True,timeout=None,maxWait =3600):
+  def runPicklePamtra(self,freqs,picklePath="pyPamJobs",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0,checkData=True,timeout=None,maxWait =3600):
     '''
-    run Pamtra from python
+    Special variant of runParallelPamtra writing Pickles to picklePath which are processed by another job. 
     '''
     import hashlib
 
@@ -1484,9 +1575,9 @@ class pyPamtra(object):
     print(" ")
     return
 
-  def runPicklePamtraSFTP(self,freqs,host,user,localPicklePath="pyPamJobs",remotePicklePath="pyPamJobs",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0, activeFreqs="auto", passiveFreqs="auto",checkData=True,timeout=None,maxWait =3600):
+  def runPicklePamtraSFTP(self,freqs,host,user,localPicklePath="pyPamJobs",remotePicklePath="pyPamJobs",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0,checkData=True,timeout=None,maxWait =3600):
     '''
-    run Pamtra from python
+    Special variant of runParallelPamtra writing Pickles to picklePath which are send by SFTP. 
     '''
     import hashlib
 
@@ -1764,6 +1855,17 @@ class pyPamtra(object):
     return
 
   def writeResultsToNumpy(self,fname,seperateFiles=False):
+    '''
+    write the complete state of the session (profile,results,settings to npy pickles.
+
+    Parameters
+    ----------
+
+    fname : str
+        filename or - if seperateFiles - directory name
+    seperateFiles : bool, optional
+        Write every variable to separate file. Required for very large data sets. 
+    '''
 
     if not seperateFiles:
       '''
@@ -1798,7 +1900,13 @@ class pyPamtra(object):
 
   def loadResultsFromNumpy(self,fname):
     '''
-    load the complete state of the session (profile,results,settings from (a) file(s)
+    load complete pamtra object (profile,results,settings from (a) file(s)
+ 
+    Parameters
+    ----------
+
+    fname : str
+        filename or directory name
     '''
     if os.path.isdir(fname):
       try:
@@ -1841,11 +1949,19 @@ class pyPamtra(object):
     '''
     write the results to a netcdf file
 
-    Input:
+    Parameters
+    ----------
 
-    fname: str filename with path
-    profileVars list of variables of the profile to be saved. "all" saves all implmented ones
-    ncForm: str netcdf file format, possible values are NETCDF3_CLASSIC, NETCDF3_64BIT, NETCDF4_CLASSIC, and NETCDF4 for the python-netcdf4 package (netcdf3 gives netcdf4 files for newer ubuntu versions!!") NETCDF3 takes the "old" Scientific.IO.NetCDF module, which is a bit more convinient
+    fname : str 
+        filename with path
+    profileVars : list of str or 'all', optional
+        list of variables of the profile to be saved. "all" saves all implmented ones (default all)
+    ncForm: str, optional
+        netcdf file format, possible values are NETCDF3_CLASSIC, NETCDF3_64BIT, NETCDF4_CLASSIC, and NETCDF4 
+        for the python-netcdf4 package (netcdf3 gives netcdf4 files for newer ubuntu versions!!") NETCDF3 takes 
+        the "old" Scientific.IO.NetCDF module, which is a bit more convinient (default NETCDF3_CLASSIC)
+    wpNames: list of str, optional
+        integrated values to be saved (default [])
     '''
 
     #most syntax is identical, but there is one nasty difference regarding the fillValue...
@@ -2123,10 +2239,10 @@ class pyPamtra(object):
 
     if ("hydro_wp" in profileVars or profileVars =="all") and ("hydro_wp" in self.p.keys()):
       for i,wp in enumerate(wpNames):
-	nc_wp= cdfFile.createVariable(wp, 'f',dim2d,**fillVDict)
-	nc_wp.units = "kg/m^2"
-	nc_wp[:] = np.array(self.p["hydro_wp"][...,i],dtype="f")
-	if not pyNc: nc_wp._fillValue =missingNumber
+        nc_wp= cdfFile.createVariable(wp, 'f',dim2d,**fillVDict)
+        nc_wp.units = "kg/m^2"
+        nc_wp[:] = np.array(self.p["hydro_wp"][...,i],dtype="f")
+        if not pyNc: nc_wp._fillValue =missingNumber
 
     #if ("cwp" in profileVars or profileVars =="all") and ("cwp" in self.p.keys()):
       #nc_cwp= cdfFile.createVariable('cwp', 'f',dim2d,**fillVDict)
@@ -2181,22 +2297,22 @@ class pyPamtra(object):
 
   def averageResultTbs(self,translatorDict):
     """
-    average several frequencies of the passive observations to account for channel width. Replaces self.r["tb"]
+    average several frequencies of the passive observations to account for channel width. Replaces self.r["tb"]. As of know this works only in passive mode. 
+    Backups of teh original data are kept in self.r["not_averaged_tb"] and self.set["not_averaged_freqs"]
 
-    Input:
-    translatorDict: dict with list of old and new frequencies. Note that the "new" frequency is only for naming of the channel. e.g.
+    Parameters
+    ----------
 
-    translatorDict = {
-      90.0: [90.0],
-      120.15: [117.35, 120.15],
-    }
-
-
-    As of know this works only in passive mode. #
-    The old tbs and freqs are stored in self.r["not_averaged_tb"] and self.set["not_averaged_freqs"].
+    translatorDict: dict 
+        with list of old and new frequencies. Note that the "new" frequency is only for naming of the channel. e.g.
+            translatorDict = {
+              90.0: [90.0],
+              120.15: [117.35, 120.15],
+            }
     """
 
     assert not self.nmlSet["active"]
+    assert self.nmlSet["passive"]
 
 
     self.r["not_averaged_tb"]  = deepcopy(self.r["tb"])
