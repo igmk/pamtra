@@ -1,7 +1,7 @@
-    """
-    Example how to write a files to run the passive model with the pure RT4 code
-    by Frank Evans. runFile contains filenames of the files in path
-    """
+"""
+Example how to write a files to run the passive model with the pure RT4 code
+by Frank Evans. runFile contains filenames of the files in path
+"""
 import numpy as np
 import pyPamtra
 

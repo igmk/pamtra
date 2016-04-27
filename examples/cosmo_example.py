@@ -1,3 +1,6 @@
+"""
+This example plots the simulated hourly horizontaly plorized brightness temperature at 89 GHz for a satellite over Juelich. 
+"""
 import pyPamtra
 import matplotlib.pyplot as plt
 
@@ -8,7 +11,7 @@ kind = "gop_collumn"
 descriptorFile = "../descriptorfiles/descriptor_file_COSMO_1mom.txt"
 pam = pyPamtra.importer.readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex=0,tmpDir="/tmp/",fnameInTar="",concatenateAxis=1,debug=False,verbosity=0)
 
-pam.runPamtra(35)
+pam.runPamtra(89)
 
 plt.figure()
 pyPamtra.plot.plotTB(pam,levels=[1,400])

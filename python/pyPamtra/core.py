@@ -88,7 +88,7 @@ class pyPamtra(object):
     #: MaximumNyquistVelocity in m/sec
     self.nmlSet["radar_min_v"]= -7.885
     #: radar noise in 1km in same unit as Ze 10*log10(mm⁶/m³). noise is calculated with noise"]=  radar_pnoise0 + 20*log10(range/1000)
-    self.nmlSet["radar_pnoise0"]= -32.23 # mean value for BArrow MMCR during iSDAC
+    self.nmlSet["radar_pnoise0"]= -32.23 # mean value for Barrow MMCR during iSDAC
     self.nmlSet["radar_airmotion"]=  False
     self.nmlSet["radar_airmotion_model"]=  "step" #: "constant","linear","step"
     self.nmlSet["radar_airmotion_vmin"]=  -4.e0
@@ -1253,7 +1253,7 @@ class pyPamtra(object):
 
     if type(freqs) in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
 
-    assert sorted(freqs) == freqs # frequencies should be sorted to avoid strange things...
+    assert np.array_equal(np.sort(freqs),freqs) # frequencies should be sorted to avoid strange things...
 
     self.set["freqs"] = freqs
     self.set["nfreqs"] = len(freqs)
@@ -1266,7 +1266,7 @@ class pyPamtra(object):
     assert self.set["radar_npol"] > 0
     assert self.set["att_npol"] > 0
     assert self.p["noutlevels"] > 0
-    assert np.prod(self._shape2D)>0
+    assert np.prod(self._shape2D) > 0
 
     if checkData: self._checkData()
 

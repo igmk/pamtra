@@ -32,7 +32,7 @@ for miscalibration in [-10,-5,0,5,10]:
   pam.nmlSet["save_psd"] = True
 
   pam.runPamtra(freqs,checkData=False)
-  plt.plot(pam.r["radar_vel"],pam.r["radar_spectra"][0,0,0,0,0])
+  plt.plot(pam.r["radar_vel"][0],pam.r["radar_spectra"][0,0,0,0,0])
 
   print miscalibration, "Ze", pam.r["Ze"].ravel()[0], "W", pam.r["radar_moments"].ravel()[0], "SW", pam.r["radar_moments"].ravel()[1], "Sk", pam.r["radar_moments"].ravel()[2], "Ku", pam.r["radar_moments"].ravel()[3], "lS", pam.r["radar_slopes"].ravel()[0], "rS", pam.r["radar_slopes"].ravel()[1]
 
@@ -64,7 +64,7 @@ for miscalibration in [-10,-5,0,5,10]:
   pam.nmlSet["save_psd"] = True
 
   pam.runPamtra(freqs,checkData=False)
-  plt.plot(pam.r["radar_vel"],pam.r["radar_spectra"][0,0,0,0,0])
+  plt.plot(pam.r["radar_vel"][0],pam.r["radar_spectra"][0,0,0,0,0])
 
   print miscalibration, "Ze", pam.r["Ze"].ravel()[0], "W", pam.r["radar_moments"].ravel()[0], "SW", pam.r["radar_moments"].ravel()[1], "Sk", pam.r["radar_moments"].ravel()[2], "Ku", pam.r["radar_moments"].ravel()[3], "lS", pam.r["radar_slopes"].ravel()[0], "rS", pam.r["radar_slopes"].ravel()[1]
 

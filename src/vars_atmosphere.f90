@@ -372,7 +372,7 @@ module vars_atmosphere
           atmo_iwv(i,j) = work_xwp(1)
           if (.not. read_turbulence_ascii) &
               allocate(work_xwc(n_tot_moment+4,atmo_nlyrs(i,j)))
-! For radar moments or spectrum mode then atmospheric turbulence should be provided in the last column of the input file
+! For radar moments or spectrum mode the atmospheric turbulence should be provided in the last column of the input file
           if (read_turbulence_ascii) &
               allocate(work_xwc(n_tot_moment+5,atmo_nlyrs(i,j)))
 ! READ lowest level variable (ONLY for "lev" input type)

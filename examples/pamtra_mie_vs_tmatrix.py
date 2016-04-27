@@ -4,8 +4,6 @@ import netCDF4
 
 reload(pyPamtra)
 
-
-
 descriptorFile = "../descriptorfiles/descriptor_file_COSMO_1mom.txt"
 
 

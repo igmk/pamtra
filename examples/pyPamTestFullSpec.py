@@ -34,7 +34,7 @@ pam.set['pyVerbose'] = verbosity
 # pam.writePamtraProfile("test.lev")
 
 pam.runPamtra(freqs,checkData=False)
-plt.plot(pam.r["radar_vel"],pam.r["radar_spectra"][0,0,0,0,0])
+plt.plot(pam.r["radar_vel"][0],pam.r["radar_spectra"][0,0,0,0,0])
 
 # sys.exit()
 
@@ -78,7 +78,7 @@ pamFS.set['pyVerbose'] = verbosity
 pamFS.runPamtra(freqs,checkData=False)
 
 #plt.plot(pam.r["radar_vel"],pam.r["radar_spectra"][0,0,0,0])
-plt.plot(pamFS.r["radar_vel"],pamFS.r["radar_spectra"][0,0,0,0,0])
+plt.plot(pamFS.r["radar_vel"][0],pamFS.r["radar_spectra"][0,0,0,0,0])
 
 
 print pamFS.r["Ze"], pam.r["Ze"]
