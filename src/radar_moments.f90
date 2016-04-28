@@ -88,6 +88,16 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
  
     err = 0
 
+      call assert_false(err,any(ISNAN(radar_spectrum_in)),&
+          "found nan in radar_spectrum")
+      if (err /= 0) then
+        msg = 'assertation error'
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
+        return
+      end if
+
+
     !initilaize
     moments(:,:) = -9999
     edge(:,:) = -9999
@@ -327,6 +337,10 @@ specMax = 10*log10(MAXVAL(radar_spectrum_4mom)) !without any noise removed!
       msg = 'assertation error'
       call report(err, msg, nameOfRoutine)
       errorstatus = err
+
+print*, noiselog, specMax, spectra_velo(left_edge4slope), spectra_velo(right_edge4slope), spectra_velo(spec_max_ii)
+print*, 'radar_spectrum_4mom', radar_spectrum_4mom
+
       return
     end if
 

@@ -110,9 +110,11 @@ subroutine run_drop_size_dist(errorstatus)
 ! Error handling
 
   integer(kind=long)  :: errorstatus, ibin
-  integer(kind=long)  :: err = 0
+  integer(kind=long)  :: err
   character(len=80)   :: msg
   character(len=14)   :: nameOfRoutine = 'make_hydro'
+
+  err = 0
 
   call make_mass_size(errorstatus)
 

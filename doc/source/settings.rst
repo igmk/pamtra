@@ -29,6 +29,7 @@ liq_mod                            str                            Ell
 obs_height                         positive float                 833000.0           upper level output height [m] (> 100000. for satellite)
 outpol                             str                            VH                  
 passive                            bool                           True               estimate brightness temperatures
+radar_allow_negative_dD_dU         bool                           False              allow that particle velocity is decreasing with size. Should be usually set to false.
 radar\_airmotion                   boolean                        False              Consider air motion in direction of radar beam.
 radar\_airmotion\_linear\_steps    positive integer               30                 For linear function: number of discrete intervals.
 radar\_airmotion\_model            constant, linear, step         step               Model to describe vertical air motion: Either constant velocity, linear change from vmin to vmax or abrupt change using a step function.

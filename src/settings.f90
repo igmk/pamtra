@@ -106,8 +106,8 @@ module settings
        conserve_mass_rescale_dsd, & ! in case the total mass calculated integrating the DSD is different from q_h (mass mixing ratio given in input) rescale the DSD
        add_obs_height_to_layer, & ! if passive=.true. and the observation height don't correspond to a layer interface, add to the profile the observation height and interpolate all variables
        radar_use_wider_peak, & ! use wider peak inlcuding the found noise/peak border
-       liblapack ! use liblapack for matrix inversion which much faster
-
+       liblapack, & ! use liblapack for matrix inversion which much faster
+       radar_allow_negative_dD_dU !allow that particle velocity is decreasing with size
   character(3) :: gas_mod
   character(3) :: liq_mod
   character(20) :: moments_file,file_desc
@@ -215,7 +215,8 @@ contains
         radar_polarisation, &
         radar_integration_time, &
         radar_fwhr_beamwidth_deg, &
-        liblapack
+        liblapack, &
+        radar_allow_negative_dD_dU
 
       err = 0
 
@@ -551,6 +552,8 @@ contains
         radar_airmotion_linear_steps = 30
         radar_airmotion_step_vmin = 0.5d0
 
+        radar_allow_negative_dD_dU = .false.
+
         liblapack = .true.
 
         ! create frequency string if not set in pamtra
@@ -637,6 +640,7 @@ contains
       print*, "radar_nfft_aliased", radar_nfft_aliased
       print*, "radar_maxTurbTerms", radar_maxTurbTerms
       print*, "liblapack", liblapack
+      print*, "radar_allow_negative_dD_dU", radar_allow_negative_dD_dU
 
     end subroutine print_settings
 

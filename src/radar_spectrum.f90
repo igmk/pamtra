@@ -227,8 +227,12 @@ subroutine radar_spectrum(&
     end do
     dD_dU(nbins) = dD_dU(nbins-1)
 
-    call assert_false(err,any(isnan(dD_dU) .or. all(dD_dU <= 0.d0)),&
-        "nan or negative  dD_dU")
+    call assert_false(err,any(isnan(dD_dU)),&
+        "nan  dD_dU")
+    if (.not. radar_allow_negative_dD_dU) then
+        call assert_false(err,any(dD_dU <= 0.d0),&
+            "negative  dD_dU")
+    end if
     call assert_false(err,any(vel_spec<0) .or. any(isnan(vel_spec)),&
         "nan or negative vel_spec")
     if (err /= 0) then
@@ -343,7 +347,7 @@ subroutine radar_spectrum(&
         "nan or negative particle_spec")
     if (err /= 0) then
     print*, i_x,i_y, i_z, i_f, i_h
-    print*, "particle_spec", particle_spec
+    print*, "SUM(particle_spec)", SUM(particle_spec)
       msg = 'error in transforming the spectrum to velocity space...'
       call report(err, msg, nameOfRoutine)
       errorstatus = err

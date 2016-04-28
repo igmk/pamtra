@@ -20,6 +20,23 @@ subroutine convolution(errorstatus,X,M,A,N,Y)
     
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
     
+
+    call assert_false(err,(ALL(X == 0)),&
+      "all x values zero")
+    call assert_false(err,(ALL(A == 0)),&
+      "all A values zero")
+    call assert_false(err,(ANY(ISNAN(X))),&
+      "found nan in x")
+    call assert_false(err,(ANY(ISNAN(A))),&
+      "found nan in a")
+    if (err > 0) then
+        errorstatus = fatal
+        msg = "assertation error"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+    end if
+
+
     if (radar_convolution_fft) then
         if (verbose > 2) print*, "Entering FFT-Comvolution"
         call convolutionFFT(X,M,A,N,Y)
@@ -30,6 +47,18 @@ subroutine convolution(errorstatus,X,M,A,N,Y)
         if (verbose > 2) print*, "Done Non-FFT-Comvolution"
     end if
     
+    call assert_false(err,(ALL(X == Y)),&
+      "all Y values zero")
+    call assert_false(err,(ANY(ISNAN(Y))),&
+      "found nan in Y")
+    if (err > 0) then
+        errorstatus = fatal
+        msg = "assertation error"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+    end if
+
+
     errorstatus = err
     if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
     return

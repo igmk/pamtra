@@ -92,6 +92,10 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
         "got nan in values in backscattering spectrum")
     call assert_false(err,(ANY(ISNAN(back)) .or. ANY(back < 0.d0)),&
         "got nan or negative value in linear Ze")
+    call assert_false(err,ALL(back == 0.d0),&
+        "back == 0")
+    call assert_false(err,(SUM(particle_spectrum) == 0.d0),&
+        "all particle_spectrum == 0")
     if (err > 0) then
       errorstatus = fatal
       msg = "assertation error"
@@ -233,11 +237,10 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
 
 
 
-          !get turbulence (no turbulence in clear sky...)
-          if ((ss > 0.d0) .and. (back(i_p) > 0)) then
+         !get turbulence (no turbulence in clear sky...)
+         turb(:) = 0.d0
+         if ((ss > 0.d0) .and. (back(i_p) > 0)) then
         
-
-              turb(:) = 0.d0
               tt = 1
               do while (tt .le. 24.d0/del_v+1)
                   if (tt .gt. radar_maxTurbTerms) then
@@ -252,6 +255,19 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
               end do
 
               turbLen=tt-1
+
+        end if
+        ! in case ss was so little that sum(turb) is zero)
+        if ((SUM(turb) > 0.d0) .and. (back(i_p) > 0)) then
+         
+          call assert_false(err,(ANY(ISNAN(turb)) .or. (SUM(turb) <= 0.d0)),&
+              "got nan or negative value in linear turb")
+          if (err > 0) then
+            errorstatus = fatal
+            msg = "assertation error"
+            call report(errorstatus, msg, nameOfRoutine)
+            return
+          end if
 
               if (SIZE(particle_spectrum_att)+turbLen-1 .lt. floor(12.d0/del_v+1)+radar_nfft-1) then
                 print*, SIZE(particle_spectrum_att)+turbLen-1,floor(12.d0/del_v+1)+radar_nfft-1
@@ -273,7 +289,6 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
                   if (allocated(turb_spectra)) deallocate(turb_spectra)
                   return
               end if
-
 
               !I don't like Nans and negative values here'
               where(ISNAN(turb_spectra)) turb_spectra = 0.d0
@@ -323,6 +338,17 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
               end if
           end if
 
+          call assert_false(err,(ANY(ISNAN(turb_spectra_aliased)) .or. ANY(turb_spectra_aliased < 0.d0)),&
+              "got nan or negative value in linear turb_spectra_aliased")
+          call assert_false(err,(ALL(turb_spectra_aliased==0)),&
+              "all values of turb_spectra_aliased == 0")
+          if (err > 0) then
+            errorstatus = fatal
+            msg = "assertation error"
+            call report(errorstatus, msg, nameOfRoutine)
+            return
+          end if
+
           !spetial output for testing the radar simulator
           if (verbose == 666) then
             print*, "##########################################"
@@ -340,12 +366,23 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
 
           !get the SNR
           SNR = 10.d0*log10(Ze_back/radar_Pnoise)
-          !this here is for scaling, if we have now a wrong Ze due to all the turbulence, rescaling etc...
+          !this here is for scaling, if we have now a wrong Ze due to all the turbulence, rescaling etc. 
+          !Can happen e.g. due to numeric issues when applying very large or very small turbulence.
           K = (Ze_back/SUM(turb_spectra_aliased*del_v))
           if (verbose >= 4) print*, "first K", K
           snr_turb_spectra = (K* turb_spectra_aliased + radar_Pnoise/(radar_nfft*del_v))
           !   snr_turb_spectra =turb_spectra_aliased + radar_Pnoise/(radar_nfft*del_v)
 
+          call assert_false(err,(ANY(ISNAN(snr_turb_spectra)) .or. ANY(snr_turb_spectra < 0.d0)),&
+              "got nan or negative value in linear snr_turb_spectra")
+          call assert_false(err,(ISNAN(K)) .or. (K >= HUGE(K)),&
+              "K is nan or infinitive")
+          if (err > 0) then
+            errorstatus = fatal
+            msg = "assertation error"
+            call report(errorstatus, msg, nameOfRoutine)
+            return
+          end if
 
           if (radar_no_Ave(i_f) .eq. 0) then !0 means infinity-> no noise
               noise_turb_spectra = snr_turb_spectra

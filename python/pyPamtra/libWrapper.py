@@ -52,7 +52,7 @@ def PamtraFortranWrapper(
 
   #loop through settings
   for key in nmlSets.keys():
-    exec("foo = settings."+key)
+    exec("foo = settings."+key.lower())
     exec("isList = numpy.prod(settings."+key.lower() +".shape) >1")
     if type(nmlSets[key]) == str:
       if sets["pyVerbose"] > 3: print("settings."+key.lower() +"[:] = '" + str(nmlSets[key])+"'") 
