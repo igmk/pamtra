@@ -1136,17 +1136,16 @@ class pyPamtra(object):
     return
 
   def addIntegratedValues(self):
-
     self._shape3Dhyd = (self.p["ngridx"],self.p["ngridy"],self.df.nhydro)
     self.p['hydro_wp'] = np.zeros(self._shape3Dhyd)
     self._calcMoistRho() # provies as well dz, sum_hydro_q, and q within dict() self._helperP
-    self.p['iwv'] =  np.sum(self._helperP['vapor']*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
+    self.p['iwv'] =  np.nansum(self._helperP['vapor']*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
     #nothing to do without hydrometeors:
     if np.all(self.p['hydro_q']==0):
       self.p['hydro_wp'] = np.zeros(self._shape3Dhyd)
     else:
       for i in range(self.df.nhydro):
-	self.p['hydro_wp'][...,i] = np.sum(self.p['hydro_q'][...,i]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
+	self.p['hydro_wp'][...,i] = np.nansum(self.p['hydro_q'][...,i]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
 
     return
 
@@ -1154,7 +1153,7 @@ class pyPamtra(object):
     self._helperP = dict()
     self._helperP['dz'] = self.p['hgt_lev'][...,1::]-self.p['hgt_lev'][...,0:-1]
     self._helperP['vapor'] = rh2q(self.p['relhum']/100.,self.p['temp'],self.p['press'])
-    self._helperP['sum_hydro_q'] = np.sum(self.p['hydro_q'],axis=-1)
+    self._helperP['sum_hydro_q'] = np.nansum(self.p['hydro_q'],axis=-1)
     self._helperP['rho_moist'] = moist_rho_rh(self.p['press'],self.p['temp'],self.p['relhum']/100.,self._helperP['sum_hydro_q'])
 
     return
