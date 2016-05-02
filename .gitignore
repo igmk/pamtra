@@ -58,3 +58,4 @@ descriptorfiles/*
 nml/
 .python-version
 .DS_Store
+doc/tutorials/
