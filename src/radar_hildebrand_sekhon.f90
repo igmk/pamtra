@@ -91,18 +91,16 @@ subroutine radar_hildebrand_sekhon(&
     sumSq = sumSq + spectrum_sorted(i)**2
     n = n+1
     a3(i) = sumLi*sumLi
-    a1(i) = SQRT(DBLE(n_ave))*(n*sumSq-a3(i))
-    if (n > n_ffts/4) then
+    a1(i) = DBLE(n_ave)*(n*sumSq-a3(i))
       if (a1(i) <= a3(i)) then
         sumNs = sumLi
         numNs = n
         maxNs = spectrum_sorted(i)
+      else
+        !partial spectrum no longer has characteristics of white noise
+        EXIT
       end if
-    else
-      sumNs = sumLi
-      numNs = n
-      maxNs = spectrum_sorted(i)
-    end if
+
   end do
 
   noise_mean   = sumNs/numNs
