@@ -90,6 +90,7 @@ subroutine radar_spectrum(&
     if (verbose >= 2) then
       call report(info,'Start of ', nameOfRoutine)
       print*, "i_x,i_y, i_z, i_f, i_h, i_p", i_x,i_y, i_z, i_f, i_h, i_p
+      print*, "back,temp, press, frequency, mass,nbins", back,temp, press, frequency, mass,nbins
     end if
     err = 0
 
@@ -99,7 +100,7 @@ subroutine radar_spectrum(&
         "nan or negative back_spec")
     call assert_true(err,nbins>1,&
         "nbins must be greater than 1 for the radar simulator!")
-    call assert_true(err,back>0,&
+    call assert_true(err,back>=0,&
         "nan or negative back")
     call assert_true(err,temp>0,&
         "nan or negative temperature")
@@ -121,6 +122,15 @@ subroutine radar_spectrum(&
       call report(errorstatus, msg, nameOfRoutine)
       return
     end if
+
+
+    if (back == 0) then 
+        if (verbose >= 2) call report(info,'Taking shortcut because of back==0', nameOfRoutine)
+        particle_spec(:) =0.d0
+        errorstatus = err
+        if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+        return
+    end if    
 
     !initialize
     back_vel_spec_ext(:) = 0.d0

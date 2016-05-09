@@ -92,10 +92,8 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
         "got nan in values in backscattering spectrum")
     call assert_false(err,(ANY(ISNAN(back)) .or. ANY(back < 0.d0)),&
         "got nan or negative value in linear Ze")
-    call assert_false(err,ALL(back == 0.d0),&
-        "back == 0")
-    call assert_false(err,(SUM(particle_spectrum) == 0.d0),&
-        "all particle_spectrum == 0")
+    call assert_false(err,(SUM(particle_spectrum) < 0.d0),&
+        "sum particle_spectrum < 0")
     if (err > 0) then
       errorstatus = fatal
       msg = "assertation error"
@@ -120,10 +118,10 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
     do i_p = 1  , radar_npol
       if (verbose >= 4) print*, "do polarisation", i_p, radar_pol(i_p)
 
-      if (back(i_p) == 0.0) then
-        if (verbose >= 3) print*, "Skipping polarisation", i_p, radar_pol(i_p), "backscattering is zero"
-        CYCLE
-      end if
+      ! if (back(i_p) == 0.0) then
+      !   if (verbose >= 3) print*, "Skipping polarisation", i_p, radar_pol(i_p), "backscattering is zero"
+      !   CYCLE
+      ! end if
 
       !transform backscattering in linear reflectivity units, 10*log10(back) would be in dBz
       Ze_back = 1.d18* (1.d0/ (K2*pi**5) ) * back(i_p) * (wavelength)**4 ![mm⁶/m³]
@@ -340,8 +338,8 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
 
           call assert_false(err,(ANY(ISNAN(turb_spectra_aliased)) .or. ANY(turb_spectra_aliased < 0.d0)),&
               "got nan or negative value in linear turb_spectra_aliased")
-          call assert_false(err,(ALL(turb_spectra_aliased==0)),&
-              "all values of turb_spectra_aliased == 0")
+          ! call assert_false(err,(ALL(turb_spectra_aliased==0)),&
+          !     "all values of turb_spectra_aliased == 0")
           if (err > 0) then
             errorstatus = fatal
             msg = "assertation error"
@@ -367,8 +365,14 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
           !get the SNR
           SNR = 10.d0*log10(Ze_back/radar_Pnoise)
           !this here is for scaling, if we have now a wrong Ze due to all the turbulence, rescaling etc. 
-          !Can happen e.g. due to numeric issues when applying very large or very small turbulence.
-          K = (Ze_back/SUM(turb_spectra_aliased*del_v))
+          !Can happen e.g. due to numeric issues when applying very large or very small turbulence. Skip 
+          !if Ze_back ==0.
+          if (Ze_back >0) then
+            K = (Ze_back/SUM(turb_spectra_aliased*del_v))
+          else
+            K = 1.d0
+          end if
+
           if (verbose >= 4) print*, "first K", K
           snr_turb_spectra = (K* turb_spectra_aliased + radar_Pnoise/(radar_nfft*del_v))
           !   snr_turb_spectra =turb_spectra_aliased + radar_Pnoise/(radar_nfft*del_v)

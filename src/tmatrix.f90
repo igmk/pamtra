@@ -131,8 +131,8 @@ character(len=nstokes*nummu*28) :: emis_vector_str
 	  "nan del_d")
       call assert_false(err,(any(isnan(ndens)) .or. any(ndens < 0.d0)),&
 	  "nan or negative ndens")
-      call assert_true(err,SUM(ndens)>0,&
-          "sum(ndens) must be greater zero")    
+      call assert_true(err,SUM(ndens)>=0,&
+          "sum(ndens) must be greater equal zero")    
       call assert_false(err,(any(isnan(density)) .or. any(density < 0.d0)),&
 	  "nan or negative density")
       call assert_false(err,any(isnan(as_ratio)) .or. any(as_ratio <= 0.d0),&

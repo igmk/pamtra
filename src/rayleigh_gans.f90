@@ -122,8 +122,8 @@ module rayleigh_gans
           "mass must be positive")  
       call assert_true(err,all(ndens>=0),&
           "ndens must be positive")
-      call assert_true(err,SUM(ndens)>0,&
-          "sum(ndens) must be greater zero")    
+      call assert_true(err,SUM(ndens)>=0,&
+          "sum(ndens) must be greater equal zero")    
       call assert_true(err,all(diameter>0),&
           "diameter must be positive")   
       call assert_true(err,all(del_d>0),&
@@ -298,8 +298,8 @@ module rayleigh_gans
 
       call assert_true(err,all(ndens>=0),&
           "ndens must be positive")
-      call assert_true(err,SUM(ndens)>0,&
-          "sum(ndens) must be greater zero")    
+      call assert_true(err,SUM(ndens)>=0,&
+          "sum(ndens) must be greater equal zero")    
       call assert_true(err,all(diameter>0),&
           "diameter must be positive")   
       call assert_true(err,all(del_d>0),&
@@ -424,8 +424,8 @@ use settings, only: radar_K2
 
       call assert_true(err,all(ndens>=0),&
           "ndens must be positive")
-      call assert_true(err,SUM(ndens)>0,&
-          "sum(ndens) must be greater zero")    
+      call assert_true(err,SUM(ndens)>=0,&
+          "sum(ndens) must be greater equal zero")    
       call assert_true(err,all(diameter>0),&
           "diameter must be positive")   
       call assert_true(err,all(del_d>0),&

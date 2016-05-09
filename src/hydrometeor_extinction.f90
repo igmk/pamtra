@@ -142,7 +142,7 @@ subroutine hydrometeor_extinction(errorstatus)
           dsd_canting   = canting_arr(i_x,i_y,i_z,i_h)
         end if
 
-        if (SUM(n_ds) > 0.d0) then
+        if ((SUM(n_ds) > 0.d0) .or. (hydro_threshold <=0)) then
           rt_hydros_present(i_z) = .true.
         else
           call deallocateVars_drop_size_dist()
