@@ -93,7 +93,6 @@ module rayleigh_gans
     real(kind=dbl), intent(out) :: sumqback
 
     real(kind=dbl) :: wavelength
-    real(kind=dbl) :: d_eq !mass equivalent diameter
     real(kind=dbl) :: volume !volume of solid ice with same mass
     real(kind=dbl) :: K2 !dielectric variable
     real(kind=dbl) :: k !wavenumber
@@ -133,7 +132,7 @@ module rayleigh_gans
       call assert_true(err,(freq>0),&
           "freq must be positive")   
       call assert_true(err,all((canting == 0) .or. (canting == 90)),&
-          "canting must be zero or 90deg")   
+          "Not yet implemented: canting must be zero or 90deg")   
       call assert_true(err,all(as_ratio > 0.d0),&
           "nan or negative as_ratio")
       call assert_false(err,passive,&
@@ -163,9 +162,8 @@ module rayleigh_gans
 
       ! Electrical size
       x = k*d_wave
-
-      d_eq = (mass(ii) * 6.d0 / (rho_ice * pi))**(1.d0/3.d0) !better estimate it idrectly from density...
-      volume = d_eq**3 * pi /6.d0
+      !volume of pure ice in particle
+      volume = mass(ii) / rho_ice 
 
       ! Factor outside the braces in Eq. 12 of Hogan and Westbrook
       prefactor = 9.0d0 * pi * k**4 *K2 * volume**2 /16
