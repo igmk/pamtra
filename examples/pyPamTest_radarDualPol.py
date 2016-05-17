@@ -11,7 +11,7 @@ pam = pyPamtra.importer.createUsStandardProfile(pam,hgt_lev=np.arange(1000,1300,
 freqs = [9.5]
 
 pam.set["verbose"] = 0
-pam.set["pyVerbose"] =0
+pam.set["pyVerbose"] = 0
 
 pam.nmlSet["passive"] = False
 pam.nmlSet["radar_mode"] = "spectrum"
@@ -29,7 +29,7 @@ pam.runPamtra(freqs,checkData=False)
 plt.figure(11)
 plt.clf()
 for i_p in range(pam.set["radar_npol"]):
-  plt.plot(pam.r["radar_vel"],pam.r["radar_spectra"][0,0,0,0,i_p],label=pam.set["radar_pol"][i_p] + " " + str(pam.r["Ze"][...,i_p]))
+  plt.plot(pam.r["radar_vel"][0,:],pam.r["radar_spectra"][0,0,0,0,i_p,:],label=pam.set["radar_pol"][i_p] + " " + str(pam.r["Ze"][...,i_p,0]))
   
 plt.legend(loc="upper left")  
 plt.title(pam.df.data["canting"])

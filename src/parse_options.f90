@@ -23,13 +23,13 @@ subroutine parse_options(gitVersion,gitHash)
     opts(7) = option_s( "help", .false., 'h' )
 
     namelist_file = 'None'
-    input_pathfile = 'profile/standard.dat'
+    input_pathfile = 'profile/example_input.lay'
     output_path = "."
 !     coords = (/1,1,1,1/)
     frqs_str = ''
     frqs_str(1) = '89.0'
     nfrq = 1
-    descriptor_file_name = "descriptor_file.txt"
+    descriptor_file_name = "descriptorfiles/descriptor_file.txt"
     
     do
         select case( getopt( "n:cp:cd:co:cf:cv:ch", opts ))

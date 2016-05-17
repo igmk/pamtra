@@ -404,12 +404,14 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
 
   return pam
 
-def readCosmoDe2MomDataset(fnamesA,descriptorFile,forecastIndex = 1,tmpDir="/tmp/",fnameInTar="",debug=False,verbosity=0,df_kind="default",constantFields=None,maxLevel=0,subGrid=None):
+def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',forecastIndex = 1,tmpDir="/tmp/",fnameInTar="",debug=False,verbosity=0,df_kind="default",constantFields=None,maxLevel=0,subGrid=None):
   '''
   import cosmo 2-moment dataset
   
   fnamesA = str , fileNames of atmospheric variables, wildCards allowed! can be either nc file, nc,gz file or nc.gz file of name fnameInTar within tar file
   descriptorFile = Pamtra descriptor file
+  fnamesN = str , fileNames of number concentrations, wildCards allowed! can be either nc file, nc,gz file or nc.gz file of name fnameInTar within tar file (only required for the old style of NARVAL cases)
+  kind = str, can be either new (default, new NARVAL calculations) or old (old NARVAL calculations)
   forecastIndex = 1 #take the forecast being between 3 and 5.75 hours old.
   fnameInTar = if nc.gz file in tar file, name of nc.gz file (wildcards allowed!)
   debug: stop and load debugger on exception
@@ -419,108 +421,264 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,forecastIndex = 1,tmpDir="/tmp
   
   assert constantFields
   forecastIndex = 0
-  variables3D = ["T_G","PS","U_10M","V_10M"]
-  variables4D = ["T","P","QV","QC","QI","QR","QS","QG","QH","QNCLOUD","QNICE","QNRAIN","QNSNOW","QNGRAUPEL","QNHAIL"]
-  
   nHydro = 6
-
+  ffOK = 0 #successfull runs
+  
   conFields = ncToDict(constantFields)
   data = dict()
   if maxLevel  == 0: maxLevel = conFields["HHL"].shape[1] - 1
   filesA = np.sort(glob.glob(fnamesA))
   if len(filesA) == 0: raise RuntimeError( "no files found")
   filesA.sort()
+
+  if kind == 'new':
+    variables3D = ["T_G","PS","U_10M","V_10M"]
+    variables4D = ["T","P","QV","QC","QI","QR","QS","QG","QH","QNCLOUD","QNICE","QNRAIN","QNSNOW","QNGRAUPEL","QNHAIL"]
   
-  ffOK = 0 #successfull runs
   
-  for ff, fnameA in enumerate(filesA):
-    if verbosity>0: print fnameA
-    try:
-      if fnameA.split(".")[-1]!="nc":
-	tmpFile = tmpDir+"/pyPamtraImport_netcdf_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nc"
-	if fnameA.split(".")[-1]=="tar":
-	  if verbosity>3:print "tar -O --wildcards -x "+fnameInTar+" -f "+fnameA+">"+tmpFile+".gz"
-	  os.system("tar -O --wildcards -x "+fnameInTar+" -f "+fnameA+">"+tmpFile+".gz")
-	  gzFile = tmpFile+".gz"
-	  if os.stat(gzFile).st_size == 0:
-	    os.system("rm -f "+tmpFile+"*")
-	    raise IOError("fnameInTar not found in "+fnameA)
-	  if verbosity>2:print "created ", gzFile
-	else:
-	  gzFile = fnameA
-	os.system("zcat "+gzFile+">"+tmpFile)
-	if verbosity>1:print "created ", tmpFile
-	ncFileA = netCDF4.Dataset(tmpFile,"r")
-	if verbosity>1:print "opend ", tmpFile    
-      else:  
-	ncFileA = netCDF4.Dataset(fnameA,"r")
-	if verbosity>1:print "opend ", fnameA
+    for ff, fnameA in enumerate(filesA):
+      if verbosity>0: print fnameA
+      try:
+	if fnameA.split(".")[-1]!="nc":
+	  tmpFile = tmpDir+"/pyPamtraImport_netcdf_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nc"
+	  if fnameA.split(".")[-1]=="tar":
+	    if verbosity>3:print "tar -O --wildcards -x "+fnameInTar+" -f "+fnameA+">"+tmpFile+".gz"
+	    os.system("tar -O --wildcards -x "+fnameInTar+" -f "+fnameA+">"+tmpFile+".gz")
+	    gzFile = tmpFile+".gz"
+	    if os.stat(gzFile).st_size == 0:
+	      os.system("rm -f "+tmpFile+"*")
+	      raise IOError("fnameInTar not found in "+fnameA)
+	    if verbosity>2:print "created ", gzFile
+	  else:
+	    gzFile = fnameA
+	  os.system("zcat "+gzFile+">"+tmpFile)
+	  if verbosity>1:print "created ", tmpFile
+	  ncFileA = netCDF4.Dataset(tmpFile,"r")
+	  if verbosity>1:print "opend ", tmpFile    
+	else:  
+	  ncFileA = netCDF4.Dataset(fnameA,"r")
+	  if verbosity>1:print "opend ", fnameA
+	  
+	#import pdb;pdb.set_trace()
+	dataSingle = dict()  
+	for var in variables3D:
+	  if subGrid == None:
+	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,1)
+	  else:
+	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,1)[subGrid[0]:subGrid[1],subGrid[2]:subGrid[3]]
+	for var in variables4D:
+	  if subGrid == None:
+	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel]#reverse height order  
+	  else:
+	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
+	timestamp = ncFileA.variables["time"][:]
+	ncFileA.close()
+	if verbosity>1:print "closed nc"
+	if fnameA.split(".")[-1]!="nc":
+	  if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+	  os.system("rm -f "+tmpFile+"*")
+	shape3Dplus = tuple(np.array(dataSingle["T"].shape) + np.array([0,0,1]))
+	shape3D = dataSingle["T"].shape
+	shape2D = shape3D[:2]
+
 	
-      #import pdb;pdb.set_trace()
-      dataSingle = dict()  
-      for var in variables3D:
-	if subGrid == None:
-	  dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,1)
-	else:
-	  dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,1)[subGrid[0]:subGrid[1],subGrid[2]:subGrid[3]]
-      for var in variables4D:
-	if subGrid == None:
-	  dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel]#reverse height order  
-	else:
-	  dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
-      timestamp = ncFileA.variables["time"][:]
-      ncFileA.close()
-      if verbosity>1:print "closed nc"
-      if fnameA.split(".")[-1]!="nc":
-	if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
-	os.system("rm -f "+tmpFile+"*")
-      shape3Dplus = tuple(np.array(dataSingle["T"].shape) + np.array([0,0,1]))
-      shape3D = dataSingle["T"].shape
-      shape2D = shape3D[:2]
-
-      
-      dataSingle["timestamp"] = np.zeros(shape2D)
-      dataSingle["timestamp"][:] = timestamp
-      
-      for key in ["lon","lat"]:
-	dataSingle[key]  = np.zeros(shape2D)
-	if subGrid == None:
-	  dataSingle[key][:] = np.swapaxes(conFields[key],0,1)
-	else:
-	  dataSingle[key][:] = np.swapaxes(conFields[key],0,1)[subGrid[0]:subGrid[1],subGrid[2]:subGrid[3]]
-      for key in ["FR_LAND","HSURF"]:
-	dataSingle[key]  = np.zeros(shape2D)
-	if subGrid == None:
-	  dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,1)
-	else:
-	  dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,1)[subGrid[0]:subGrid[1],subGrid[2]:subGrid[3]]
-      for key in ["HHL"]:
-	dataSingle[key]  = np.zeros(shape3Dplus)
-	if subGrid == None:
-	  dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1]
-	else:
-	  dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
-  
-      if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
-	data = deepcopy(dataSingle)
-      else:
-	for key in data.keys():
-	  data[key] = np.ma.concatenate((data[key],dataSingle[key],),axis=concatenateAxis)
+	dataSingle["timestamp"] = np.zeros(shape2D)
+	dataSingle["timestamp"][:] = timestamp
 	
-      ffOK += 1  
-      
+	for key in ["lon","lat"]:
+	  dataSingle[key]  = np.zeros(shape2D)
+	  if subGrid == None:
+	    dataSingle[key][:] = np.swapaxes(conFields[key],0,1)
+	  else:
+	    dataSingle[key][:] = np.swapaxes(conFields[key],0,1)[subGrid[0]:subGrid[1],subGrid[2]:subGrid[3]]
+	for key in ["FR_LAND","HSURF"]:
+	  dataSingle[key]  = np.zeros(shape2D)
+	  if subGrid == None:
+	    dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,1)
+	  else:
+	    dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,1)[subGrid[0]:subGrid[1],subGrid[2]:subGrid[3]]
+	for key in ["HHL"]:
+	  dataSingle[key]  = np.zeros(shape3Dplus)
+	  if subGrid == None:
+	    dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1]
+	  else:
+	    dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
+    
+	if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
+	  data = deepcopy(dataSingle)
+	else:
+	  for key in data.keys():
+	    data[key] = np.ma.concatenate((data[key],dataSingle[key],),axis=concatenateAxis)
+	  
+	ffOK += 1  
+	
 
-    #except IOError:
-    except Exception as inst:
-      if fnameA.split(".")[-1]!="nc":
-	if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
-	os.system("rm -f "+tmpFile+"*")
-      print "ERROR:", fnameA      
-      print type(inst)     # the exception instance
-      print inst.args      # arguments stored in .args
-      print inst
-      if debug: import pdb;pdb.set_trace()
+      #except IOError:
+      except Exception as inst:
+	if fnameA.split(".")[-1]!="nc":
+	  if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+	  os.system("rm -f "+tmpFile+"*")
+	print "ERROR:", fnameA      
+	print type(inst)     # the exception instance
+	print inst.args      # arguments stored in .args
+	print inst
+	if debug: import pdb;pdb.set_trace()
 
+    data["hydro_n"] = np.zeros(data["QNCLOUD"].shape + (nHydro,)) + np.nan
+    data["hydro_n"][...,0] = data["QNCLOUD"]
+    data["hydro_n"][...,1] = data["QNICE"]
+    data["hydro_n"][...,2] = data["QNRAIN"]
+    data["hydro_n"][...,3] = data["QNSNOW"]
+    data["hydro_n"][...,4] = data["QNGRAUPEL"]
+    data["hydro_n"][...,5] = data["QNHAIL"]
+
+  elif kind == 'old':
+    
+    filesN = np.sort(glob.glob(fnamesN))
+    if len(filesN) == 0: raise RuntimeError( "no files found")
+    filesN.sort()
+    
+    if len(filesA) != len(filesN): raise RuntimeError("number of atmospheric files does not equal number of concentration files!")
+
+    variables3D = ["T_G","PS"]
+    variables3Dplus1 = ["U_10M","V_10M"]
+    variables4D = ["T","P","QV","QC","QI","QR","QS","QG","QH"]
+    variables4DN = ['QNC','QNI','QNR','QNS','QNG','QNH']
+    
+    
+    for ff, fnameA in enumerate(filesA):
+      fnameN = filesN[ff]
+      if verbosity>0: print fnameA, fnameN
+      try:
+	if fnameA.split(".")[-1]!="nc":
+	  tmpFile = tmpDir+"/pyPamtraImport_netcdf_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nc"
+	  if fnameA.split(".")[-1]=="tar":
+	    if verbosity>3:print "tar -O --wildcards -x "+fnameInTar+" -f "+fnameA+">"+tmpFile+".gz"
+	    os.system("tar -O --wildcards -x "+fnameInTar+" -f "+fnameA+">"+tmpFile+".gz")
+	    gzFile = tmpFile+".gz"
+	    if os.stat(gzFile).st_size == 0:
+	      os.system("rm -f "+tmpFile+"*")
+	      raise IOError("fnameInTar not found in "+fnameA)
+	    if verbosity>2:print "created ", gzFile
+	  else:
+	    gzFile = fnameA
+	  os.system("zcat "+gzFile+">"+tmpFile)
+	  if verbosity>1:print "created ", tmpFile
+	  ncFileA = netCDF4.Dataset(tmpFile,"r")
+	  if verbosity>1:print "opend ", tmpFile    
+	else:  
+	  ncFileA = netCDF4.Dataset(fnameA,"r")
+	  if verbosity>1:print "opend ", fnameA
+	  
+	# number density files
+	if fnameN.split(".")[-1]!="nc":
+	  tmpFile = tmpDir+"/pyPamtraImport_netcdf_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nc"
+	  if fnameN.split(".")[-1]=="tar":
+	    if verbosity>3:print "tar -O --wildcards -x "+fnameInTar+" -f "+fnameN+">"+tmpFile+".gz"
+	    os.system("tar -O --wildcards -x "+fnameInTar+" -f "+fnameN+">"+tmpFile+".gz")
+	    gzFile = tmpFile+".gz"
+	    if os.stat(gzFile).st_size == 0:
+	      os.system("rm -f "+tmpFile+"*")
+	      raise IOError("fnameInTar not found in "+fnameN)
+	    if verbosity>2:print "created ", gzFile
+	  else:
+	    gzFile = fnameN
+	  os.system("zcat "+gzFile+">"+tmpFile)
+	  if verbosity>1:print "created ", tmpFile
+	  ncFileN = netCDF4.Dataset(tmpFile,"r")
+	  if verbosity>1:print "opend ", tmpFile    
+	else:  
+	  ncFileN = netCDF4.Dataset(fnameN,"r")
+	  if verbosity>1:print "opend ", fnameN
+
+	#import pdb;pdb.set_trace()
+	dataSingle = dict()  
+	for var in variables3D:
+	  if subGrid == None:
+	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,1)
+	  else:
+	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,1)[subGrid[0]:subGrid[1],subGrid[2]:subGrid[3]]
+	for var in variables3Dplus1:
+	  if subGrid == None:
+	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex,0],0,1)
+	  else:
+	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex,0],0,1)[subGrid[0]:subGrid[1],subGrid[2]:subGrid[3]]
+	for var in variables4D:
+	  if subGrid == None:
+	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel]#reverse height order  
+	  else:
+	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
+	timestamp = ncFileA.variables["time"][:]
+	ncFileA.close()
+	if verbosity>1:print "closed nc"
+	if fnameA.split(".")[-1]!="nc":
+	  if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+	  os.system("rm -f "+tmpFile+"*")
+	for var in variables4DN:
+	  if subGrid == None:
+	    dataSingle[var] = np.swapaxes(ncFileN.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel]#reverse height order  
+	  else:
+	    dataSingle[var] = np.swapaxes(ncFileN.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
+	ncFileN.close()
+	if verbosity>1:print "closed nc"
+	if fnameN.split(".")[-1]!="nc":
+	  if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+	  os.system("rm -f "+tmpFile+"*")
+	shape3Dplus = tuple(np.array(dataSingle["T"].shape) + np.array([0,0,1]))
+	shape3D = dataSingle["T"].shape
+	shape2D = shape3D[:2]
+
+	
+	dataSingle["timestamp"] = np.zeros(shape2D)
+	dataSingle["timestamp"][:] = timestamp
+	
+	for key in ["lon","lat"]:
+	  dataSingle[key]  = np.zeros(shape2D)
+	  if subGrid == None:
+	    dataSingle[key][:] = np.swapaxes(conFields[key],0,1)
+	  else:
+	    dataSingle[key][:] = np.swapaxes(conFields[key],0,1)[subGrid[0]:subGrid[1],subGrid[2]:subGrid[3]]
+	for key in ["FR_LAND","HSURF"]:
+	  dataSingle[key]  = np.zeros(shape2D)
+	  if subGrid == None:
+	    dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,1)
+	  else:
+	    dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,1)[subGrid[0]:subGrid[1],subGrid[2]:subGrid[3]]
+	for key in ["HHL"]:
+	  dataSingle[key]  = np.zeros(shape3Dplus)
+	  if subGrid == None:
+	    dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1]
+	  else:
+	    dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
+    
+	if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
+	  data = deepcopy(dataSingle)
+	else:
+	  for key in data.keys():
+	    data[key] = np.ma.concatenate((data[key],dataSingle[key],),axis=concatenateAxis)
+	  
+	ffOK += 1  
+	
+
+      #except IOError:
+      except Exception as inst:
+	if fnameA.split(".")[-1]!="nc":
+	  if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+	  os.system("rm -f "+tmpFile+"*")
+	print "ERROR:", fnameA      
+	print type(inst)     # the exception instance
+	print inst.args      # arguments stored in .args
+	print inst
+	if debug: import pdb;pdb.set_trace()
+
+    data["hydro_n"] = np.zeros(data["QNC"].shape + (nHydro,)) + np.nan
+    data["hydro_n"][...,0] = data["QNC"]
+    data["hydro_n"][...,1] = data["QNI"]
+    data["hydro_n"][...,2] = data["QNR"]
+    data["hydro_n"][...,3] = data["QNS"]
+    data["hydro_n"][...,4] = data["QNG"]
+    data["hydro_n"][...,5] = data["QNH"]
+    
   #shapes may have changed!
   shape3Dplus = tuple(np.array(data["T"].shape) + np.array([0,0,1]))
   shape3D = data["T"].shape
@@ -540,17 +698,8 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,forecastIndex = 1,tmpDir="/tmp
   data["hydro_q"][...,4] = data["QG"]
   data["hydro_q"][...,5] = data["QH"]
 
-  data["hydro_n"] = np.zeros(data["QNCLOUD"].shape + (nHydro,)) + np.nan
-  data["hydro_n"][...,0] = data["QNCLOUD"]
-  data["hydro_n"][...,1] = data["QNICE"]
-  data["hydro_n"][...,2] = data["QNRAIN"]
-  data["hydro_n"][...,3] = data["QNSNOW"]
-  data["hydro_n"][...,4] = data["QNGRAUPEL"]
-  data["hydro_n"][...,5] = data["QNHAIL"]
-  
   varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],["FR_LAND","lfrac"],["U_10M","wind10u"],["V_10M","wind10v"],["HHL","hgt_lev"],["P","press"],["T","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["hydro_n","hydro_n"],["T_G","groundtemp"],["press_lev","press_lev"]]    
     
-
   pamData = dict()
   for cosmoVar,pamVar in varPairs:
     pamData[pamVar] = data[cosmoVar]
@@ -566,204 +715,109 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,forecastIndex = 1,tmpDir="/tmp
   pam.createProfile(**pamData)
   del data
 
-  return pam
-
-def readCosmoDe2MomDataset_old(fnamesA,fnamesN,descriptorFile,forecastIndex = 1,tmpDir="/tmp/",fnameInTar="",debug=False,verbosity=0,df_kind="default",constantFields=None,maxLevel=0,subGrid=None):
+def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",debug=False,verbosity=0,df_kind="default",maxLevel=0):
   '''
-  import cosmo 2-moment dataset
+  import cosmo 2-moment dataset extracted on a HALO flight track^
   
-  fnamesA = str , fileNames of atmospheric variables, wildCards allowed! can be either nc file, nc,gz file or nc.gz file of name fnameInTar within tar file
-  fnamesN = str , fileNames of number concentrations, wildCards allowed! can be either nc file, nc,gz file or nc.gz file of name fnameInTar within tar file
+  fnamesA = str , fileNames of atmospheric variables, wildCards allowed! can be either nc file, nc,gz file or nc.gz file
   descriptorFile = Pamtra descriptor file
-  forecastIndex = 1 #take the forecast being between 3 and 5.75 hours old.
-  fnameInTar = if nc.gz file in tar file, name of nc.gz file (wildcards allowed!)
   debug: stop and load debugger on exception
-  subGrid: array with indices [lon_start,lon_end,lat_start,lat_end] ((1,1) in model corresponds to (0,0) in python!)
   '''
   import netCDF4
   
-  assert constantFields
-  forecastIndex = 0
-  variables3D = ["T_G","PS"]
-  variables3Dplus1 = ["U_10M","V_10M"]
-  variables4D = ["T","P","QV","QC","QI","QR","QS","QG","QH"]
-  variables4DN = ['QNC','QNI','QNR','QNS','QNG','QNH']
-  
   nHydro = 6
-
-  conFields = ncToDict(constantFields)
-  data = dict()
-  if maxLevel  == 0: maxLevel = conFields["HHL"].shape[1] - 1
-  filesA = np.sort(glob.glob(fnamesA))
-  if len(filesA) == 0: raise RuntimeError( "no files found")
-  filesA.sort()
-  filesN = np.sort(glob.glob(fnamesN))
-  if len(filesN) == 0: raise RuntimeError( "no files found")
-  filesN.sort()
   
-  if len(filesA) != len(filesN): raise RuntimeError("number of atmospheric files does not equal number of concentration files!")
-  
-  ffOK = 0 #successfull runs
-  
-  for ff, fnameA in enumerate(filesA):
-    fnameN = filesN[ff]
-    if verbosity>0: print fnameA, fnameN
-    try:
-      if fnameA.split(".")[-1]!="nc":
-	tmpFile = tmpDir+"/pyPamtraImport_netcdf_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nc"
-	if fnameA.split(".")[-1]=="tar":
-	  if verbosity>3:print "tar -O --wildcards -x "+fnameInTar+" -f "+fnameA+">"+tmpFile+".gz"
-	  os.system("tar -O --wildcards -x "+fnameInTar+" -f "+fnameA+">"+tmpFile+".gz")
-	  gzFile = tmpFile+".gz"
-	  if os.stat(gzFile).st_size == 0:
-	    os.system("rm -f "+tmpFile+"*")
-	    raise IOError("fnameInTar not found in "+fnameA)
-	  if verbosity>2:print "created ", gzFile
-	else:
-	  gzFile = fnameA
-	os.system("zcat "+gzFile+">"+tmpFile)
-	if verbosity>1:print "created ", tmpFile
-	ncFileA = netCDF4.Dataset(tmpFile,"r")
-	if verbosity>1:print "opend ", tmpFile    
-      else:  
-	ncFileA = netCDF4.Dataset(fnameA,"r")
-	if verbosity>1:print "opend ", fnameA
-	
-      # number density files
-      if fnameN.split(".")[-1]!="nc":
-	tmpFile = tmpDir+"/pyPamtraImport_netcdf_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nc"
-	if fnameN.split(".")[-1]=="tar":
-	  if verbosity>3:print "tar -O --wildcards -x "+fnameInTar+" -f "+fnameN+">"+tmpFile+".gz"
-	  os.system("tar -O --wildcards -x "+fnameInTar+" -f "+fnameN+">"+tmpFile+".gz")
-	  gzFile = tmpFile+".gz"
-	  if os.stat(gzFile).st_size == 0:
-	    os.system("rm -f "+tmpFile+"*")
-	    raise IOError("fnameInTar not found in "+fnameN)
-	  if verbosity>2:print "created ", gzFile
-	else:
-	  gzFile = fnameN
-	os.system("zcat "+gzFile+">"+tmpFile)
-	if verbosity>1:print "created ", tmpFile
-	ncFileN = netCDF4.Dataset(tmpFile,"r")
-	if verbosity>1:print "opend ", tmpFile    
-      else:  
-	ncFileN = netCDF4.Dataset(fnameN,"r")
-	if verbosity>1:print "opend ", fnameN
+#  filesA = np.sort(glob.glob(fnamesA))
+#  if len(filesA) == 0: raise RuntimeError( "no files found")
+#  filesA.sort()
 
-      #import pdb;pdb.set_trace()
-      dataSingle = dict()  
-      for var in variables3D:
-	if subGrid == None:
-	  dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,1)
-	else:
-	  dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,1)[subGrid[0]:subGrid[1],subGrid[2]:subGrid[3]]
-      for var in variables3Dplus1:
-	if subGrid == None:
-	  dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex,0],0,1)
-	else:
-	  dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex,0],0,1)[subGrid[0]:subGrid[1],subGrid[2]:subGrid[3]]
-      for var in variables4D:
-	if subGrid == None:
-	  dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel]#reverse height order  
-	else:
-	  dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
-      timestamp = ncFileA.variables["time"][:]
-      ncFileA.close()
-      if verbosity>1:print "closed nc"
-      if fnameA.split(".")[-1]!="nc":
-	if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
-	os.system("rm -f "+tmpFile+"*")
-      for var in variables4DN:
-	if subGrid == None:
-	  dataSingle[var] = np.swapaxes(ncFileN.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel]#reverse height order  
-	else:
-	  dataSingle[var] = np.swapaxes(ncFileN.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
-      ncFileN.close()
-      if verbosity>1:print "closed nc"
-      if fnameN.split(".")[-1]!="nc":
-	if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
-	os.system("rm -f "+tmpFile+"*")
-      shape3Dplus = tuple(np.array(dataSingle["T"].shape) + np.array([0,0,1]))
-      shape3D = dataSingle["T"].shape
-      shape2D = shape3D[:2]
+  variables1D = ["T_G","PS","U_10M","V_10M"]
+  variables2D = ["T","P","QV","QC","QI","QR","QS","QG","QH","QNCLOUD","QNICE","QNRAIN","QNSNOW","QNGRAUPEL","QNHAIL"]
 
-      
-      dataSingle["timestamp"] = np.zeros(shape2D)
-      dataSingle["timestamp"][:] = timestamp
-      
-      for key in ["lon","lat"]:
-	dataSingle[key]  = np.zeros(shape2D)
-	if subGrid == None:
-	  dataSingle[key][:] = np.swapaxes(conFields[key],0,1)
-	else:
-	  dataSingle[key][:] = np.swapaxes(conFields[key],0,1)[subGrid[0]:subGrid[1],subGrid[2]:subGrid[3]]
-      for key in ["FR_LAND","HSURF"]:
-	dataSingle[key]  = np.zeros(shape2D)
-	if subGrid == None:
-	  dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,1)
-	else:
-	  dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,1)[subGrid[0]:subGrid[1],subGrid[2]:subGrid[3]]
-      for key in ["HHL"]:
-	dataSingle[key]  = np.zeros(shape3Dplus)
-	if subGrid == None:
-	  dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1]
-	else:
-	  dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
-  
-      if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
-	data = deepcopy(dataSingle)
-      else:
-	for key in data.keys():
-	  data[key] = np.ma.concatenate((data[key],dataSingle[key],),axis=concatenateAxis)
-	
-      ffOK += 1  
-      
+  if verbosity>0: print fnameA
+  try:
+    if fnameA.split(".")[-1]!="nc":
+      tmpFile = tmpDir+"/pyPamtraImport_netcdf_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nc"
+      gzFile = fnameA
+      os.system("zcat "+gzFile+">"+tmpFile)
+      if verbosity>1:print "created ", tmpFile
+      data = ncToDict(tmpFile)
+      if verbosity>1:print "read ", tmpFile    
+    else:  
+      data = ncToDict(fnameA)
+      if verbosity>1:print "read ", fnameA
+          
+    if debug: import pdb;pdb.set_trace()
+    #dataSingle = dict()  
+    #for var in variables1D:
+      #data[var] = np.swapaxes(ncFileA.variables[var][0],0,1)
+    #for var in variables2D:
+      #data[var] = np.swapaxes(ncFileA.variables[var][0],0,2)[...,::-1][...,:maxLevel]#reverse height order  
+    if verbosity>1:print "closed nc"
+    if fnameA.split(".")[-1]!="nc":
+      if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+      os.system("rm -f "+tmpFile+"*")
+        
+    #for key in ["cosmoTime","cosmoLon","cosmoLat"]:
+      #dataSingle[key]  = np.zeros(shape2D)
+      #dataSingle[key][:] = np.swapaxes(conFields[key],0,1)
+    #for key in ["FR_LAND","HSURF"]:
+      #dataSingle[key]  = np.zeros(shape2D)
+      #dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,1)
+    #for key in ["HHL"]:
+      #dataSingle[key]  = np.zeros(shape3Dplus)
+      #dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1]
+    #data = deepcopy(dataSingle)
+  except Exception as inst:
+    if fnameA.split(".")[-1]!="nc":
+      if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+      os.system("rm -f "+tmpFile+"*")
+    print "ERROR:", fnameA      
+    print type(inst)     # the exception instance
+    print inst.args      # arguments stored in .args
+    print inst
+    if debug: import pdb;pdb.set_trace()
 
-    #except IOError:
-    except Exception as inst:
-      if fnameA.split(".")[-1]!="nc":
-	if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
-	os.system("rm -f "+tmpFile+"*")
-      print "ERROR:", fnameA      
-      print type(inst)     # the exception instance
-      print inst.args      # arguments stored in .args
-      print inst
-      if debug: import pdb;pdb.set_trace()
-
-  #shapes may have changed!
-  shape3Dplus = tuple(np.array(data["T"].shape) + np.array([0,0,1]))
-  shape3D = data["T"].shape
+  shape3D = tuple(np.array([data["T"].shape[0],1,data["T"].shape[1]]))
+  shape3Dplus = shape3D + np.array([0,0,1])
   shape2D = shape3D[:2]
-  
-  #we can also fill the arrays partly!
-  data["press_lev"] = np.zeros(shape3Dplus) + np.nan
-  data["press_lev"][...,0] = data["PS"]
-  
-  data["relhum"] = q2rh(data["QV"],data["T"],data["P"]) * 100.
-  
-  data["hydro_q"] = np.zeros(data["QC"].shape + (nHydro,)) + np.nan
-  data["hydro_q"][...,0] = data["QC"]
-  data["hydro_q"][...,1] = data["QI"]
-  data["hydro_q"][...,2] = data["QR"]
-  data["hydro_q"][...,3] = data["QS"]
-  data["hydro_q"][...,4] = data["QG"]
-  data["hydro_q"][...,5] = data["QH"]
 
-  data["hydro_n"] = np.zeros(data["QNC"].shape + (nHydro,)) + np.nan
-  data["hydro_n"][...,0] = data["QNC"]
-  data["hydro_n"][...,1] = data["QNI"]
-  data["hydro_n"][...,2] = data["QNR"]
-  data["hydro_n"][...,3] = data["QNS"]
-  data["hydro_n"][...,4] = data["QNG"]
-  data["hydro_n"][...,5] = data["QNH"]
-  
-  varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],["FR_LAND","lfrac"],["U_10M","wind10u"],["V_10M","wind10v"],["HHL","hgt_lev"],["P","press"],["T","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["hydro_n","hydro_n"],["T_G","groundtemp"],["press_lev","press_lev"]]    
-    
+  if maxLevel  == 0: maxLevel = data["HHL"].shape[1] - 1
 
   pamData = dict()
+
+  pamData["hydro_n"] = np.zeros(data["QNCLOUD"].shape + (nHydro,)) + np.nan
+  pamData["hydro_n"][...,0] = data["QNCLOUD"][:,::-1]
+  pamData["hydro_n"][...,1] = data["QNICE"][:,::-1]
+  pamData["hydro_n"][...,2] = data["QNRAIN"][:,::-1]
+  pamData["hydro_n"][...,3] = data["QNSNOW"][:,::-1]
+  pamData["hydro_n"][...,4] = data["QNGRAUPEL"][:,::-1]
+  pamData["hydro_n"][...,5] = data["QNHAIL"][:,::-1]
+
+  pamData["hydro_q"] = np.zeros(data["QC"].shape + (nHydro,)) + np.nan
+  pamData["hydro_q"][...,0] = data["QC"][:,::-1]
+  pamData["hydro_q"][...,1] = data["QI"][:,::-1]
+  pamData["hydro_q"][...,2] = data["QR"][:,::-1]
+  pamData["hydro_q"][...,3] = data["QS"][:,::-1]
+  pamData["hydro_q"][...,4] = data["QG"][:,::-1]
+  pamData["hydro_q"][...,5] = data["QH"][:,::-1]
+  
+  #we can also fill the arrays partly!
+  pamData["press_lev"] = np.zeros(shape3Dplus) + np.nan
+  pamData["press_lev"][:,0,0] = data["PS"]
+
+  pamData["relhum"] = np.expand_dims((q2rh(data["QV"],data["T"],data["P"]) * 100.)[:,::-1],axis=1)
+
+  varPairs = [["cosmoTime","timestamp"],["cosmoLat","lat"],["cosmoLon","lon"],["FR_LAND","lfrac"],["U_10M","wind10u"],["V_10M","wind10v"],["T_G","groundtemp"]]    
+    
   for cosmoVar,pamVar in varPairs:
-    pamData[pamVar] = data[cosmoVar]
-   
+    pamData[pamVar] = np.expand_dims(data[cosmoVar],axis=1)
+
+  varPairs = [["HHL","hgt_lev"],["P","press"],["T","temp"]]
+    
+  for cosmoVar,pamVar in varPairs:
+    pamData[pamVar] = np.expand_dims(data[cosmoVar][:,::-1],axis=1)
+  
   pam = pyPamtra()
   pam.set["pyVerbose"]= verbosity
   if type(descriptorFile) == str:
@@ -772,7 +826,6 @@ def readCosmoDe2MomDataset_old(fnamesA,fnamesN,descriptorFile,forecastIndex = 1,
     for df in descriptorFile:
       pam.df.addHydrometeor(df)
 
-  print pamData.keys()
   pam.createProfile(**pamData)
   del data
 
@@ -1143,7 +1196,7 @@ def _createUsStandardProfile(**kwargs):
   HELPER
   Function to create clear sky US Standard Atmosphere.
   
-  hgt_lev is teh only mandatory variables
+  hgt_lev is the only mandatory variables
   humidity will be set to zero if not provided, all other variables are guessed by "createProfile"
   
   values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwritte us staandard if provided 

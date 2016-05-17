@@ -87,7 +87,7 @@ class pyPamtra(object):
     #: MaximumNyquistVelocity in m/sec
     self.nmlSet["radar_min_v"]= -7.885
     #: radar noise in 1km in same unit as Ze 10*log10(mm⁶/m³). noise is calculated with noise"]=  radar_pnoise0 + 20*log10(range/1000)
-    self.nmlSet["radar_pnoise0"]= -32.23 # mean value for BArrow MMCR during iSDAC
+    self.nmlSet["radar_pnoise0"]= -32.23 # mean value for BArrow MMCR during ISDAC
     self.nmlSet['radar_allow_negative_dD_dU'] = False #allow that particle velocity is decreasing with size
     self.nmlSet["radar_airmotion"]=  False
     self.nmlSet["radar_airmotion_model"]=  "step" #: "constant","linear","step"
@@ -1137,17 +1137,16 @@ class pyPamtra(object):
     return
 
   def addIntegratedValues(self):
-
     self._shape3Dhyd = (self.p["ngridx"],self.p["ngridy"],self.df.nhydro)
     self.p['hydro_wp'] = np.zeros(self._shape3Dhyd)
     self._calcMoistRho() # provies as well dz, sum_hydro_q, and q within dict() self._helperP
-    self.p['iwv'] =  np.sum(self._helperP['vapor']*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
+    self.p['iwv'] =  np.nansum(self._helperP['vapor']*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
     #nothing to do without hydrometeors:
     if np.all(self.p['hydro_q']==0):
       self.p['hydro_wp'] = np.zeros(self._shape3Dhyd)
     else:
       for i in range(self.df.nhydro):
-	self.p['hydro_wp'][...,i] = np.sum(self.p['hydro_q'][...,i]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
+	self.p['hydro_wp'][...,i] = np.nansum(self.p['hydro_q'][...,i]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
 
     return
 
@@ -1155,7 +1154,7 @@ class pyPamtra(object):
     self._helperP = dict()
     self._helperP['dz'] = self.p['hgt_lev'][...,1::]-self.p['hgt_lev'][...,0:-1]
     self._helperP['vapor'] = rh2q(self.p['relhum']/100.,self.p['temp'],self.p['press'])
-    self._helperP['sum_hydro_q'] = np.sum(self.p['hydro_q'],axis=-1)
+    self._helperP['sum_hydro_q'] = np.nansum(self.p['hydro_q'],axis=-1)
     self._helperP['rho_moist'] = moist_rho_rh(self.p['press'],self.p['temp'],self.p['relhum']/100.,self._helperP['sum_hydro_q'])
 
     return
@@ -1327,7 +1326,7 @@ class pyPamtra(object):
 
     if type(freqs) in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
 
-    assert sorted(freqs) == freqs # frequencies should be sorted to avoid strange things...
+    assert np.array_equal(np.sort(freqs),freqs) # frequencies should be sorted to avoid strange things...
 
     self.set["freqs"] = freqs
     self.set["nfreqs"] = len(freqs)
@@ -1340,7 +1339,7 @@ class pyPamtra(object):
     assert self.set["radar_npol"] > 0
     assert self.set["att_npol"] > 0
     assert self.p["noutlevels"] > 0
-    assert np.prod(self._shape2D)>0
+    assert np.prod(self._shape2D) > 0
 
     if checkData: self._checkData()
 
