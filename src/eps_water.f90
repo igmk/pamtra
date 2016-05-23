@@ -52,6 +52,10 @@ module eps_water
       if (verbose >= 4) print*, 'Take Stogryn model for refractive index'
       eps_water = eps_water_stogryn(s,T,f)
 
+    else if (liq_mod .eq. 'TKC') then
+      if (verbose >= 4) print*, 'Take Turner, Kneifel, and Cadeddu model for refractive index'
+      eps_water = eps_water_tkc(T,f)
+
     else 
       errorstatus = fatal
       msg = "Do not know liq_mod: "//liq_mod
@@ -612,8 +616,6 @@ module eps_water
             T,& ! temperature [°C]
             f   ! frequency [GHz]
 
-      real(kind=dbl), parameter :: pi = 3.141592653589793
-
       real(kind=dbl) :: a, b
 
       real(kind=dbl) :: two_pi_tau_1, two_pi_tau_2, q, sig
@@ -648,5 +650,88 @@ module eps_water
 
       end function eps_water_stogryn
 
+      function eps_water_tkc(T,f)   
+        
+      ! Returns the liquid mass absorption, in m2 kg-1
+      ! Input frequency (scalar float), in GHz
+      ! Input cloud temperature (scalar float), in degC
+      ! Optional output (complex): the permittivity value
+
+      use kinds
+      use constants, only: c, pi
+
+      implicit none
+      
+      real(kind=dbl), intent(in) :: &
+	    T,& ! temperature [°C]
+            f   ! frequency [GHz]
+
+      real(kind=dbl) :: frq, a_1, b_1, c_1, d_1, a_2, b_2, c_2, d_2, t_c, &
+	      eps_s, delta_1, tau_1, delta_2, tau_2, term1_p1, term2_p1, &
+	      eps1, eps2
+      
+      complex(kind=dbl) :: eps_water_tkc
+
+      ! Empirical coefficients for the TKC model. The first 4 are a1, b1, c1, and d1, 
+      ! the next four are a2, b2, c2, and d2, and the last one is tc.
+      real(kind=dbl), dimension(9), parameter :: coef = (/&
+	  8.169396d+01, 4.410555d-03, 1.208992d-13, 6.768869d+02, &
+	  1.597733d+00, 1.060228d-02, 9.982113d-15, 5.720517d+02, &
+	  1.351758d+02/)
+
+      ! Convert the frequency from GHz to Hz
+
+      frq = f * 1d9
+
+
+      ! This helps to understand how things work below
+      a_1 = coef(1)
+      b_1 = coef(2)
+      c_1 = coef(3)
+      d_1 = coef(4)
+
+      a_2 = coef(5)
+      b_2 = coef(6)
+      c_2 = coef(7)
+      d_2 = coef(8)
+
+      t_c = coef(9)
+
+
+      ! Compute the static dielectric permittivity (Eq 6)
+      eps_s = 87.9144d0 - 0.404399d0 * T + 9.58726d-4 * T**2. - 1.32802d-6 * T**3.
+
+      ! Compute the components of the relaxation terms (Eqs 9 and 10)
+      ! First Debye component
+      delta_1 = a_1 * exp(-b_1 * T)
+      tau_1   = c_1 * exp(d_1 / (T + t_c))
+      ! Second Debye component
+      delta_2 = a_2 * exp(-b_2 * T)
+      tau_2   = c_2 * exp(d_2 / (T + t_c))
+
+      ! Compute the relaxation terms (Eq 7) for the two Debye components
+      term1_p1 = (tau_1**2.*delta_1) / (1.d0 + (2.d0*pi*frq*tau_1)**2.)
+      term2_p1 = (tau_2**2.*delta_2) / (1.d0 + (2.d0*pi*frq*tau_2)**2.)
+
+      ! Compute the real permittivitity coefficient (Eq 4)
+      eps1 = eps_s - ((2.d0*pi*frq)**2.)*(term1_p1 + term2_p1) 
+   
+
+      ! Compute the relaxation terms (Eq 8) for the two Debye components
+      term1_p1 = (tau_1 * delta_1) / (1.d0 + (2.d0*pi*frq*tau_1)**2.)
+      term2_p1 = (tau_2 * delta_2) / (1.d0 + (2.d0*pi*frq*tau_2)**2.)
+
+      ! Compute the imaginary permittivitity coefficient (Eq 5)
+      eps2 = 2.d0*pi*frq * (term1_p1 + term2_p1)
+ 
+      eps_water_tkc = complex(eps1, eps2)
+
+!       ! Compute the mass absorption coefficient (Eq 1)
+!       RE = (epsilon-1)/(epsilon+2)
+!       alpha = 6.d*!dpi*IMAGINARY(RE)*frq*1d-3/cl
+
+      return
+  
+  end function eps_water_tkc
 
 end module eps_water
