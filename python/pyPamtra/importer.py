@@ -404,7 +404,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
 
   return pam
 
-def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN="",kind='new',forecastIndex = 1,tmpDir="/tmp/",fnameInTar="",debug=False,verbosity=0,df_kind="default",constantFields=None,maxLevel=0,subGrid=None):
+def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',forecastIndex = 1,tmpDir="/tmp/",fnameInTar="",debug=False,verbosity=0,df_kind="default",constantFields=None,maxLevel=0,subGrid=None):
   '''
   import cosmo 2-moment dataset
   
@@ -704,6 +704,120 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN="",kind='new',forecast
   for cosmoVar,pamVar in varPairs:
     pamData[pamVar] = data[cosmoVar]
    
+  pam = pyPamtra()
+  pam.set["pyVerbose"]= verbosity
+  if type(descriptorFile) == str:
+    pam.df.readFile(descriptorFile)
+  else:
+    for df in descriptorFile:
+      pam.df.addHydrometeor(df)
+
+  pam.createProfile(**pamData)
+  del data
+
+def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",debug=False,verbosity=0,df_kind="default",maxLevel=0):
+  '''
+  import cosmo 2-moment dataset extracted on a HALO flight track^
+  
+  fnamesA = str , fileNames of atmospheric variables, wildCards allowed! can be either nc file, nc,gz file or nc.gz file
+  descriptorFile = Pamtra descriptor file
+  debug: stop and load debugger on exception
+  '''
+  import netCDF4
+  
+  nHydro = 6
+  
+#  filesA = np.sort(glob.glob(fnamesA))
+#  if len(filesA) == 0: raise RuntimeError( "no files found")
+#  filesA.sort()
+
+  variables1D = ["T_G","PS","U_10M","V_10M"]
+  variables2D = ["T","P","QV","QC","QI","QR","QS","QG","QH","QNCLOUD","QNICE","QNRAIN","QNSNOW","QNGRAUPEL","QNHAIL"]
+
+  if verbosity>0: print fnameA
+  try:
+    if fnameA.split(".")[-1]!="nc":
+      tmpFile = tmpDir+"/pyPamtraImport_netcdf_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nc"
+      gzFile = fnameA
+      os.system("zcat "+gzFile+">"+tmpFile)
+      if verbosity>1:print "created ", tmpFile
+      data = ncToDict(tmpFile)
+      if verbosity>1:print "read ", tmpFile    
+    else:  
+      data = ncToDict(fnameA)
+      if verbosity>1:print "read ", fnameA
+          
+    if debug: import pdb;pdb.set_trace()
+    #dataSingle = dict()  
+    #for var in variables1D:
+      #data[var] = np.swapaxes(ncFileA.variables[var][0],0,1)
+    #for var in variables2D:
+      #data[var] = np.swapaxes(ncFileA.variables[var][0],0,2)[...,::-1][...,:maxLevel]#reverse height order  
+    if verbosity>1:print "closed nc"
+    if fnameA.split(".")[-1]!="nc":
+      if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+      os.system("rm -f "+tmpFile+"*")
+        
+    #for key in ["cosmoTime","cosmoLon","cosmoLat"]:
+      #dataSingle[key]  = np.zeros(shape2D)
+      #dataSingle[key][:] = np.swapaxes(conFields[key],0,1)
+    #for key in ["FR_LAND","HSURF"]:
+      #dataSingle[key]  = np.zeros(shape2D)
+      #dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,1)
+    #for key in ["HHL"]:
+      #dataSingle[key]  = np.zeros(shape3Dplus)
+      #dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1]
+    #data = deepcopy(dataSingle)
+  except Exception as inst:
+    if fnameA.split(".")[-1]!="nc":
+      if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+      os.system("rm -f "+tmpFile+"*")
+    print "ERROR:", fnameA      
+    print type(inst)     # the exception instance
+    print inst.args      # arguments stored in .args
+    print inst
+    if debug: import pdb;pdb.set_trace()
+
+  shape3D = tuple(np.array([data["T"].shape[0],1,data["T"].shape[1]]))
+  shape3Dplus = shape3D + np.array([0,0,1])
+  shape2D = shape3D[:2]
+
+  if maxLevel  == 0: maxLevel = data["HHL"].shape[1] - 1
+
+  pamData = dict()
+
+  pamData["hydro_n"] = np.zeros(data["QNCLOUD"].shape + (nHydro,)) + np.nan
+  pamData["hydro_n"][...,0] = data["QNCLOUD"][:,::-1]
+  pamData["hydro_n"][...,1] = data["QNICE"][:,::-1]
+  pamData["hydro_n"][...,2] = data["QNRAIN"][:,::-1]
+  pamData["hydro_n"][...,3] = data["QNSNOW"][:,::-1]
+  pamData["hydro_n"][...,4] = data["QNGRAUPEL"][:,::-1]
+  pamData["hydro_n"][...,5] = data["QNHAIL"][:,::-1]
+
+  pamData["hydro_q"] = np.zeros(data["QC"].shape + (nHydro,)) + np.nan
+  pamData["hydro_q"][...,0] = data["QC"][:,::-1]
+  pamData["hydro_q"][...,1] = data["QI"][:,::-1]
+  pamData["hydro_q"][...,2] = data["QR"][:,::-1]
+  pamData["hydro_q"][...,3] = data["QS"][:,::-1]
+  pamData["hydro_q"][...,4] = data["QG"][:,::-1]
+  pamData["hydro_q"][...,5] = data["QH"][:,::-1]
+  
+  #we can also fill the arrays partly!
+  pamData["press_lev"] = np.zeros(shape3Dplus) + np.nan
+  pamData["press_lev"][:,0,0] = data["PS"]
+
+  pamData["relhum"] = np.expand_dims((q2rh(data["QV"],data["T"],data["P"]) * 100.)[:,::-1],axis=1)
+
+  varPairs = [["cosmoTime","timestamp"],["cosmoLat","lat"],["cosmoLon","lon"],["FR_LAND","lfrac"],["U_10M","wind10u"],["V_10M","wind10v"],["T_G","groundtemp"]]    
+    
+  for cosmoVar,pamVar in varPairs:
+    pamData[pamVar] = np.expand_dims(data[cosmoVar],axis=1)
+
+  varPairs = [["HHL","hgt_lev"],["P","press"],["T","temp"]]
+    
+  for cosmoVar,pamVar in varPairs:
+    pamData[pamVar] = np.expand_dims(data[cosmoVar][:,::-1],axis=1)
+  
   pam = pyPamtra()
   pam.set["pyVerbose"]= verbosity
   if type(descriptorFile) == str:
@@ -1082,7 +1196,7 @@ def _createUsStandardProfile(**kwargs):
   HELPER
   Function to create clear sky US Standard Atmosphere.
   
-  hgt_lev is teh only mandatory variables
+  hgt_lev is the only mandatory variables
   humidity will be set to zero if not provided, all other variables are guessed by "createProfile"
   
   values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwritte us staandard if provided 

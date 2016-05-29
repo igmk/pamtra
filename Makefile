@@ -5,7 +5,7 @@ OBJDIR := src/
 SRCDIR := src/
 BINDIR := bin/
 LIBDIR := lib/
-PYTDIR := python/pyPamtra
+PYTDIR := python/pyPamtra/
 
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
@@ -17,10 +17,10 @@ CC=gcc
 FCFLAGS=-c -fPIC -Wunused  -cpp -J$(OBJDIR) -I$(OBJDIR)
 #FCFLAGS=-g -c -fPIC -Wunused -O0 -cpp -J$(OBJDIR) -I$(OBJDIR)
 	
-NCFLAGS :=  $(shell nc-config --fflags)  -fbounds-check
-NCFLAGS_F2PY := -I$(shell nc-config --includedir) #f2py does not like -g and -O2
+NCFLAGS :=  $(shell nf-config --fflags)  -fbounds-check
+NCFLAGS_F2PY := -I$(shell nf-config --includedir) #f2py does not like -g and -O2
 LFLAGS := -L/usr/lib/ -llapack -L$(LIBDIR) -L../$(LIBDIR) -ldfftpack -lblas
-LDFLAGS := $(shell nc-config --flibs) -lz
+LDFLAGS := -L/usr/lib -lnetcdff -lnetcdf -lz #$(shell nf-config --flibs) -lz
 
 
 
