@@ -70,7 +70,7 @@ class pamDescriptorFile(object):
       
   def addHydrometeor(self,hydroTuple):
     '''
-    Add hydrometeor to df array. 
+    Add hydrometeor to df array. See :any:`descriptorFile` for details.
 
     Parameters
     ----------
@@ -161,9 +161,14 @@ class pamDescriptorFile(object):
     They are not returned but added to the df object. 
     Note that the hydrometeors have to be added to the df array before calling this 
     routine with dummy values. Information not avaialable here (e.g. scattering) are 
-    still taken from the descriptor file. Note that all arrays of dataFullSpec mus be filled!
+    still taken from the descriptor file. Note that all arrays of dataFullSpec mus be filled and
+    you still need to define the hydrometeors if the df object! However, only name, liq_ice,
+    nbins+1, scat_name, and vel_size_mod is used even though you have to define the other
+    variables as well.
+    
     Make sure that the array dimensions are not changed, otherwise Pamtra might crash.
 
+    The following objects are added to the df object:
     Returns
     -------
     dataFullSpec["rho_ds"] : 

@@ -162,6 +162,7 @@ class pyPamtra(object):
 
     self.dimensions["radar_hgt"] = ["ngridx","ngridy","max_nlyrs"]
     self.dimensions["radar_prop"] = ["ngridx","ngridy","2"]
+    self.dimensions["radar_spectra"] = ["gridx","gridy","lyr","frequency","radar_npol"]
 
     self.dimensions["Ze"] = ["gridx","gridy","lyr","frequency","radar_npol","radar_npeaks"]
     self.dimensions["Att_hydro"] = ["gridx","gridy","lyr","frequency","att_npol"]
