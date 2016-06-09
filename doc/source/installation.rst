@@ -33,7 +33,8 @@ On Mac OS X, it is recommended to use brew (http://brew.sh) to install gfortran 
 
 For the Python version, it is recommended not to use OS X's default python version,
 but to install an independent one, e.g. with brew or conda
-(https://www.continuum.io/downloads). In addition, the following packages are required::
+(https://www.continuum.io/downloads). Note that pyPamtra does not support Python3 yet.
+In addition, the following packages are required::
 
     pip install pandas numpy scipy matplotlib netcdf4
 

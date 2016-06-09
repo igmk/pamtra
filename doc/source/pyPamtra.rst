@@ -13,7 +13,6 @@ pyPamtra Class
     :inherited-members:
     :show-inheritance:
 
-
 descriptorFile Class
 ********************
 .. automodule:: pyPamtra.descriptorFile

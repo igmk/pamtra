@@ -83,17 +83,40 @@ def readWrfDataset(fname,kind):
   
 def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex=0,tmpDir="/tmp/",fnameInTar="",concatenateAxis=1,debug=False,verbosity=0,df_kind="default",constantFields=None,maxLevel=0,subGrid=None):
   '''
-  import cosmo 1-moment dataset with fname of kind 
-  
-  fnames = str , fileNames, wildCards allowed! can be either nc, nc and gz, or nc.gz files of name fnameInTar within tar file
-  kind = kind of Cosmo file, right now only collum and synsat netcdf files are implemented.
-  descriptorFile = Pamtra descriptor file
-  forecastIndex = 1 #take the forecast being between 3 and 5.75 hours old.
-  colIndex: which collum should be taken? list allowed!
-  fnameInTar = if nc.gz file in tar file, name of nc.gz file (wildcards allowed!)
-  concatenateAxis: axis to concatenate the grids
-  debug: stop and load debugger on exception
-  subGrid: array with indices [lon_start,lon_end,lat_start,lat_end] ((1,1) in model corresponds to (0,0) in python!)
+  convert cosmo 1-moment dataset with fname of kind to pamtra object
+
+  Parameters
+  ----------
+  fname : str
+    file name, wildCards allowed! can be either nc, nc and gz, or nc.gz files of name fnameInTar within tar file
+  kind : str
+    kind of Cosmo file, right now only collum and synsat netcdf files are implemented.
+  descriptorFile : str or pyPamtra descriptorFile object
+    Pamtra descriptor file
+  forecastIndex : int, optional
+    e.g. 1 means take the forecast being between 3 and 5.75 hours old (default 1).
+  colIndex: list or int, optional
+    which collum should be taken? list allowed! (default 0)
+  tmpDir : str, optional
+    temporary directory (default "/tmp/")
+  fnameInTar : str, optional
+    if nc.gz file in tar file, name of nc.gz file (wildcards allowed!) (default "")
+  concatenateAxis : in,t optional
+    axis to concatenate the grids (default 1)
+  debug: bool optional
+    stop and load debugger on exception (default False)
+  verbosity : int, optional
+    verbosity level (default 0)  
+  constantFields : str, optional
+    fiel with constant fields (default "")s
+  subGrid : int array, optional
+    array with indices [lon_start,lon_end,lat_start,lat_end] ((1,1) in model corresponds to (0,0) in python!) (default None)
+
+  Returns
+  --------
+
+  pam : pyPamtra Object
+
   '''
   import netCDF4
   
