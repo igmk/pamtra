@@ -1,6 +1,18 @@
 import pyPamtra
 
-def calc_pyRadarMoments(spectrum,verbose = 0, max_v = 7.885, min_v = -7.885, no_ave = 150, npeaks = 3, noise_distance_factor = 1.25, min_spectral_snr=1.2, smooth_spectrum= True,use_wider_peak=False):
+def calc_pyRadarMoments(spectrum,
+    verbose = 0, 
+    max_v = 7.885, 
+    min_v = -7.885, 
+    no_ave = 150, 
+    npeaks = 3, 
+    noise_distance_factor = 1.25, 
+    peak_min_snr=1.2, 
+    peak_snr_definition='specLin',
+    peak_min_bins=2, 
+    smooth_spectrum= True,
+    use_wider_peak=False,
+    ):
   
   """
   Calculates the moments, slopes and edges of the linear radar spectrum. Refer to the Pamtra documentation for options.
@@ -15,8 +27,10 @@ def calc_pyRadarMoments(spectrum,verbose = 0, max_v = 7.885, min_v = -7.885, no_
   pyPamtra.pyPamtraLib.settings.radar_use_hildebrand= True  
   pyPamtra.pyPamtraLib.settings.radar_no_ave[:]= no_ave  
   pyPamtra.pyPamtraLib.settings.radar_npeaks= npeaks  
+  pyPamtra.pyPamtraLib.settings.radar_peak_min_bins[:] = peak_min_bins
   pyPamtra.pyPamtraLib.settings.radar_noise_distance_factor[:]= noise_distance_factor  
-  pyPamtra.pyPamtraLib.settings.radar_min_spectral_snr[:]= min_spectral_snr  
+  pyPamtra.pyPamtraLib.settings.radar_peak_min_snr[:]= peak_min_snr  
+  pyPamtra.pyPamtraLib.settings.radar_peak_snr_definition[:]= peak_snr_definition  
   pyPamtra.pyPamtraLib.settings.radar_smooth_spectrum  = smooth_spectrum  
   pyPamtra.pyPamtraLib.settings.radar_use_wider_peak  =  use_wider_peak  
   

@@ -95,11 +95,13 @@ class pyPamtra(object):
     self.nmlSet["radar_airmotion_vmax"]=  +4.e0
     self.nmlSet["radar_airmotion_linear_steps"]=  30
     self.nmlSet["radar_airmotion_step_vmin"]=  0.5e0
-
+    self.nmlSet["radar_airmotion_step_vmin"]=  0.5e0
+    self.nmlSet["radar_peak_min_bins"]=  2
     self.nmlSet["radar_aliasing_nyquist_interv"]=  1
     self.nmlSet["radar_save_noise_corrected_spectra"]=  False
     self.nmlSet["radar_use_hildebrand"]=  False
-    self.nmlSet["radar_min_spectral_snr"]=  1.2#threshold for peak detection. if radar_no_Ave >> 150, it can be set to 1.1
+    self.nmlSet["radar_peak_snr_definition"] = 'log'
+    self.nmlSet["radar_peak_min_snr"]=  -10#threshold for peak detection. if radar_no_Ave >> 150, it can be set to 1.1
     self.nmlSet["radar_convolution_fft"]=  True #use fft for convolution of spectrum. is alomst 10 times faster, but can introduce aretfacts for radars with *extremely* low noise levels or if noise is turned off at all.
     self.nmlSet["radar_smooth_spectrum"]=  True #smooth spectrum before moment estimation
     self.nmlSet["radar_k2"]=  0.93 # dielectric constant |K|² (always for liquid water by convention) for the radar equation

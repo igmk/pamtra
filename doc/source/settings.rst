@@ -44,7 +44,9 @@ radar_integration_time             float*                         1.4           
 radar\_K2 (|K_w^2|)                positive float*                0.93               Dielectric factor of water used to estimate radr reflectivity.
 radar\_max\_v ( v_nyq )            float*                         -7.885 m/s         Maximum Nyquist velocity (usually radar\_min\_V = -radar\_max\_V)
 radar\_min\_v ( v_nyq )            float*                         7.885 m/s          Minimum Nyquist velocity
-radar_min_spectral_snr             positive float*                1.2                Minimal required signal+noise to noise ratio required for a peak. Smaller peaks are discarded.
+radar_peak_min_bins                int*                           2                  Minimum peak width
+radar_peak_min_snr                 positive float*                -10 dB             Minimal required SNR reqired for a peak. See radar_peak_min_snr for defintion
+radar_peak_snr_definition          linSpec | log                  log                log: radar_peak_min_snr describes snr of peak in dB. linSpec: radar_peak_min_snr descibes mean signal+noise to noise ratio (available for historical reasons)
 radar\_mode                        simple, spectrum, moments      simple             Use "simple" radar simulator provides only Z_e by integrating Eq. \label{eq:etaD} over  D. The advanced "spectrum" simulator simulates the complete radar Doppler spectrum and estimates all moments from the spectrum. "moments" is identical to "spectrum" but the full Doppler spectrum is discarded to save memory.
 radar\_nfft ( N_fft )              positive integer               256                Number of FFT points in the Doppler spectrum
 radar\_no\_Ave ( Nave )            positive integer*              150                Number of spectral averages

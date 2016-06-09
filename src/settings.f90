@@ -56,8 +56,8 @@ module settings
     real(kind=dbl) :: radar_min_V_default !MaximumNyquistVelocity in m/sec
     real(kind=dbl), dimension(maxfreq) :: radar_pnoise0 !radar noise at 1km
     real(kind=dbl) :: radar_pnoise0_default !radar noise at 1km
-    real(kind=dbl), dimension(maxfreq) :: radar_min_spectral_snr !threshold for peak detection
-    real(kind=dbl) :: radar_min_spectral_snr_default !threshold for peak detection
+    real(kind=dbl), dimension(maxfreq) :: radar_peak_min_snr !threshold for peak detection
+    real(kind=dbl) :: radar_peak_min_snr_default !threshold for peak detection
     real(kind=dbl), dimension(maxfreq) :: radar_K2
     real(kind=dbl) :: radar_K2_default
     real(kind=dbl), dimension(maxfreq) :: radar_receiver_uncertainty_std
@@ -70,7 +70,8 @@ module settings
     real(kind=dbl) :: radar_fwhr_beamwidth_deg_default 
     real(kind=dbl), dimension(maxfreq) :: radar_integration_time 
     real(kind=dbl) :: radar_integration_time_default 
-
+    real(kind=dbl), dimension(maxfreq) :: radar_peak_min_bins
+    real(kind=dbl) :: radar_peak_min_bins_default 
 
 
     real(kind=dbl) :: radar_airmotion_vmin
@@ -118,6 +119,7 @@ module settings
   character(1) :: GROUND_TYPE
   character(8) :: radar_airmotion_model, radar_mode
   character(10) :: radar_attenuation
+  character(7) :: radar_peak_snr_definition
   character(15) :: radar_polarisation
   character(2), dimension(5) :: radar_pol
   character(1), dimension(5) :: att_pol
@@ -203,7 +205,7 @@ contains
         radar_aliasing_nyquist_interv,&
         radar_save_noise_corrected_spectra,&
         radar_use_hildebrand,&
-        radar_min_spectral_snr,&
+        radar_peak_min_snr,&
         radar_convolution_fft,&
         radar_K2,&
         radar_noise_distance_factor,&
@@ -212,8 +214,10 @@ contains
         radar_nPeaks,&
         radar_smooth_spectrum,&
         radar_attenuation,&
+        radar_peak_snr_definition , &
         radar_polarisation, &
         radar_integration_time, &
+        radar_peak_min_bins, &
         radar_fwhr_beamwidth_deg, &
         liblapack, &
         radar_allow_negative_dD_dU
@@ -303,8 +307,8 @@ contains
          "too few values for radar_min_V")
     call assert_false(err,ANY(ISNAN(radar_pnoise0(1:nfrq))),&
          "too few values for radar_pnoise0")
-    call assert_false(err,ANY(ISNAN(radar_min_spectral_snr(1:nfrq))),&
-         "too few values for radar_min_spectral_snr")
+    call assert_false(err,ANY(ISNAN(radar_peak_min_snr(1:nfrq))),&
+         "too few values for radar_peak_min_snr")
     call assert_false(err,ANY(ISNAN(radar_K2(1:nfrq))),&
          "too few values for radar_K2")
     call assert_false(err,ANY(ISNAN(radar_noise_distance_factor(1:nfrq))),&
@@ -315,6 +319,10 @@ contains
          "too few values for radar_receiver_miscalibration")
     call assert_false(err,ANY(ISNAN(radar_integration_time(1:nfrq))),&
          "too few values for radar_integration_time")
+    call assert_false(err,ANY(ISNAN(radar_peak_min_bins(1:nfrq))),&
+         "too few values for radar_peak_min_bins")
+
+
     call assert_false(err,ANY(ISNAN(radar_fwhr_beamwidth_deg(1:nfrq))),&
          "too few values for radar_fwhr_beamwidth_deg")
     if (err /= 0) then
@@ -376,12 +384,13 @@ contains
     call fillRealValues(radar_pnoise0,radar_pnoise0_default)
     call fillRealValues(radar_max_V,radar_max_V_default)
     call fillRealValues(radar_min_V,radar_min_V_default)
-    call fillRealValues(radar_min_spectral_snr,radar_min_spectral_snr_default)
+    call fillRealValues(radar_peak_min_snr,radar_peak_min_snr_default)
     call fillRealValues(radar_K2,radar_K2_default)
     call fillRealValues(radar_noise_distance_factor,radar_noise_distance_factor_default)
     call fillRealValues(radar_receiver_uncertainty_std,radar_receiver_uncertainty_std_default)
     call fillRealValues(radar_receiver_miscalibration,radar_receiver_miscalibration_default)
     call fillRealValues(radar_integration_time,radar_integration_time_default)
+    call fillRealValues(radar_peak_min_bins,radar_peak_min_bins_default)
     call fillRealValues(radar_fwhr_beamwidth_deg,radar_fwhr_beamwidth_deg_default)
     if (ALL(radar_no_Ave == missingInt)) then
       radar_no_Ave(:) = radar_no_Ave_default
@@ -520,12 +529,15 @@ contains
         radar_pnoise0_default=  -32.23 ! mean value for BArrow MMCR during ISDAC
         radar_integration_time(:)= floatNfreq ! radar integration time
         radar_integration_time_default=  1.4 ! MMCR Barrow during ISDAC
+        radar_peak_min_bins(:) = intNfreq !minimum peak width in fft bins
+        radar_peak_min_bins_default=  2
+
         radar_fwhr_beamwidth_deg(:)= floatNfreq ! full width haalf radiation beam width
         radar_fwhr_beamwidth_deg_default=  0.31/2. ! MMCR Barrow during ISDAC
 
-
-        radar_min_spectral_snr(:)= floatNfreq
-        radar_min_spectral_snr_default = 1.2!threshold for peak detection. if radar_no_Ave >> 150, it can be set to 1.1
+        radar_peak_snr_definition = 'log'
+        radar_peak_min_snr(:)= floatNfreq
+        radar_peak_min_snr_default = -10!threshold for peak detection. 
         radar_K2(:)= floatNfreq
         radar_K2_default = 0.93 ! dielectric constant |K|² (always for liquid water by convention) for the radar equation
         radar_noise_distance_factor(:)= floatNfreq
@@ -584,7 +596,7 @@ contains
       print*, 'radar_mode: ', radar_mode
       print*, 'radar_pnoise0: ', radar_pnoise0
       print*, 'data_path: ', data_path
-      print*, 'radar_min_spectral_snr: ', radar_min_spectral_snr
+      print*, 'radar_peak_min_snr: ', radar_peak_min_snr
       print*, 'radar_aliasing_nyquist_interv: ', radar_aliasing_nyquist_interv
       print*, 'radar_airmotion_linear_steps: ', radar_airmotion_linear_steps
       print*, 'radar_airmotion: ', radar_airmotion
@@ -616,6 +628,8 @@ contains
       print*, 'radar_convolution_fft: ', radar_convolution_fft
       print*, 'radar_smooth_spectrum', radar_smooth_spectrum
       print*, 'radar_attenuation', radar_attenuation
+      print*, "radar_peak_min_bins", radar_peak_min_bins
+      print*, 'radar_peak_snr_definition', radar_peak_snr_definition
       print*, 'radar_use_wider_peak', radar_use_wider_peak
       print*, 'active: ', active
       print*, 'radar_max_v: ', radar_max_v

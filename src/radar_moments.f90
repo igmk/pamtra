@@ -7,9 +7,11 @@ module radar_moments
     radar_use_hildebrand,&
     radar_no_Ave,&
     radar_noise_distance_factor,&
-    radar_min_spectral_snr,&
     radar_smooth_spectrum, &
-    radar_use_wider_peak
+    radar_use_wider_peak, &
+    radar_peak_min_bins, &
+    radar_peak_min_snr,&
+    radar_peak_snr_definition
   use constants
   use report_module
   implicit none
@@ -46,7 +48,7 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
     real(kind=dbl), dimension(radar_nfft):: radar_spectrum_only_noise
     real(kind=dbl), dimension(radar_nfft):: radar_spectrum_4mom
     real(kind=dbl):: noise_max
-    real(kind=dbl) :: del_v, specMax, noiselog
+    real(kind=dbl) :: del_v, specMax, noiselog, specSNR
     integer :: spec_max_ii, spec_max_ii_a(1), right_edge,left_edge, &
     ii, jj, right_edge4slope, &
     left_edge4slope
@@ -192,16 +194,25 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
       radar_spectrum_arr(kk,left_edge+1:right_edge-1) = 0.d0
     end do 
     
+    if (radar_peak_snr_definition == 'log') then
+      specSNR = 10 * log10 (SUM(radar_spectrum_arr(nn,left_edge+1:right_edge-1))/(noise*radar_nfft) )
+    else if (radar_peak_snr_definition == 'specLin') then !old defintiion kept for backwards compatibility
+      specSNR = SUM(radar_spectrum_arr(nn,left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise
+    else
+            msg = 'Do not understand radar_peak_snr_definition'
+            call report(err, msg, nameOfRoutine)
+            errorstatus = err
+            return
+    end if
     !check whether peak is NOT present:
-    if ((SUM(radar_spectrum_arr(nn,left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise <radar_min_spectral_snr(i_f)) &
-      .or. (right_edge-left_edge <= 2)  .or. (right_edge-left_edge ==  radar_nfft+ 1) ) then
+    if ((specSNR <radar_peak_min_snr(i_f)) &
+      .or. (right_edge-left_edge <= radar_peak_min_bins(i_f))  .or. (right_edge-left_edge ==  radar_nfft+ 1) ) then
 
       !no or too thin peak or too wide peak
       if (verbose >= 3) print*, "Skipped peak ", nn, " because of:", &
-        "radar_min_spectral_snr(i_f)", &
-        SUM(radar_spectrum_in(left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise <radar_min_spectral_snr(i_f), &
-        SUM(radar_spectrum_in(left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise, radar_min_spectral_snr(i_f), &
-        "too thin", (right_edge-left_edge <= 2), "too wide", (right_edge-left_edge ==  radar_nfft+ 1)
+        "radar_peak_min_snr(i_f)", specSNR <radar_peak_min_snr(i_f), specSNR, radar_peak_min_snr(i_f), &
+        "too thin", (right_edge-left_edge <= radar_peak_min_bins(i_f)), &
+        "too wide", (right_edge-left_edge ==  radar_nfft+ 1)
 
       if (nn == 1) then 
         radar_spectrum_out(:) = -9999 !right now, only primary peak is processed for radar_spectrum_out...
@@ -210,8 +221,7 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
       EXIT !loop. no more peaks
 
     else !peak is present!
-      if (verbose >= 3) print*, nn, "peak ", nn, " confirmed with spec SNR of", &
-        SUM(radar_spectrum_arr(nn,left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise
+      if (verbose >= 3) print*, nn, "peak ", nn, " confirmed with spec SNR of", specSNR
 
       radar_spectrum_only_noise(left_edge+1:right_edge-1) = -9999 ! in this spectrum we want ALL peaks removed
 
