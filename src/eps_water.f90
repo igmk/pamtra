@@ -1,5 +1,5 @@
 module eps_water
-
+  use kinds 
   implicit none
   contains
 
@@ -29,6 +29,7 @@ module eps_water
 
     complex(kind=dbl), intent(out) :: eps_water
     integer(kind=long), intent(out) :: errorstatus
+
     integer(kind=long) :: err = 0
     character(len=80) :: msg
     character(len=30) :: nameOfRoutine = 'get_eps_water'
@@ -38,23 +39,23 @@ module eps_water
 
     if (liq_mod .eq. 'Ell') then
       if (verbose >= 4) print*, 'Take Ellison model for refractive index'
-      eps_water = eps_water_ellison(s,T,f)
+      call eps_water_ellison(s,T,f,eps_water)
 
     else if (liq_mod .eq. 'Lie') then
       if (verbose >= 4) print*, 'Take Liebe model for refractive index'
-      eps_water = eps_water_liebe(s,T,f)
+      call eps_water_liebe(s,T,f,eps_water)
 
     else if (liq_mod .eq. 'Ray') then
       if (verbose >= 4) print*, 'Take Ray model for refractive index'
-      eps_water = eps_water_ray(s,T,f)
+      call eps_water_ray(s,T,f,eps_water)
 
     else if (liq_mod .eq. 'Sto') then
       if (verbose >= 4) print*, 'Take Stogryn model for refractive index'
-      eps_water = eps_water_stogryn(s,T,f)
+      call eps_water_stogryn(s,T,f,eps_water)
 
     else if (liq_mod .eq. 'TKC') then
       if (verbose >= 4) print*, 'Take Turner, Kneifel, and Cadeddu model for refractive index'
-      eps_water = eps_water_tkc(T,f)
+      call eps_water_tkc(T,f,eps_water)
 
     else 
       errorstatus = fatal
@@ -82,7 +83,7 @@ module eps_water
 
 
 
-      function eps_water_ellison(s,T,f)
+      subroutine eps_water_ellison(s,T,f,eps)
 
       ! This function calculates the complex permittivity
       ! of natural water including soluted salt.
@@ -107,6 +108,7 @@ module eps_water
       real(kind=dbl), intent(in) :: s,& ! salinity [0/00]
             T,& ! temperature [°C]
             f   ! frequency [GHz]
+      complex(kind=dbl), intent(out) :: eps
 
       real(kind=dbl), dimension(18), parameter :: a = (/&
             0.46606917e-02, & ! a1
@@ -138,7 +140,6 @@ module eps_water
 
       complex(kind=dbl) :: eps_s, eps_1, eps_inf
 
-      complex(kind=dbl) :: eps_water_ellison
 
       p = s*(37.5109+5.45216*s+0.014409*s**2)/(1004.75+182.283*s+s**2)
       alpha_0 = (6.9431+3.2841*s-0.099486*s**2)/(84.85+69.024*s+s**2)
@@ -153,14 +154,14 @@ module eps_water
       q = 1+(alpha_0*(T-15))/(T+alpha_1)
       sig = sig_s35*p*q
 
-      eps_water_ellison = (eps_s-eps_1)/(1-(0.,1)*2*pi*f*tau_1)+&
+      eps = (eps_s-eps_1)/(1-(0.,1)*2*pi*f*tau_1)+&
             (eps_1-eps_inf)/(1-(0.,1.)*2*pi*f*tau_2)+eps_inf+(0.,1.)*17.9751*sig/f
 
       return
 
-      end function eps_water_ellison
+      end subroutine eps_water_ellison
 
-      function eps_water_liebe(s,T,f)
+      subroutine eps_water_liebe(s,T,f,eps)
 
       ! This function calculates the complex permittivity
       ! of natural water including soluted salt.
@@ -185,6 +186,7 @@ module eps_water
       real(kind=dbl), intent(in) :: s,& ! salinity [0/00]
             T,& ! temperature [°C]
             f   ! frequency [GHz]
+      complex(kind=dbl), intent(out) :: eps
 
       real(kind=dbl), parameter :: pi = 3.141592653589793
 
@@ -192,7 +194,6 @@ module eps_water
 
       complex(kind=dbl) :: eps_0, eps_1, eps_2
 
-      complex(kind=dbl) :: eps_water_liebe
 
       !convert temperature to Kelvin
       T_K = T + 273.15
@@ -205,14 +206,14 @@ module eps_water
       eps_1 = 0.0671*eps_0
       eps_2 = 3.52 !from MPM93
 
-      eps_water_liebe = (eps_0-eps_1)/cmplx(1.,-f/fp)+&
+      eps = (eps_0-eps_1)/cmplx(1.,-f/fp)+&
             (eps_1-eps_2)/cmplx(1.,-f/fs) + eps_2
 
       return
 
-      end function eps_water_liebe
+      end subroutine eps_water_liebe
 
-      function eps_water_ray(s,T,f)
+      subroutine eps_water_ray(s,T,f,eps)
 
       ! This function calculates the complex permittivity
       ! of natural water including soluted salt.
@@ -260,6 +261,7 @@ module eps_water
       real(kind=dbl), intent(in) :: s,& ! salinity [0/00]
             T,& ! temperature [°C]
             f   ! frequency [GHz]
+      complex(kind=dbl), intent(out) :: eps
 
       integer :: i, i1, i2
 
@@ -509,7 +511,7 @@ module eps_water
       real(kind=dbl) :: powtrm, denom
       real(kind=dbl) :: eps_r, eps_i
 
-      complex(kind=dbl) :: eps_water_ray, n
+      complex(kind=dbl) ::  n
 
       !convert frequency to microns
       wl = 1.e6*2.99792458e8/(f*1.e9)
@@ -570,9 +572,9 @@ module eps_water
       eps_i = (sigma*xl/18.8496e10)+(eps_s-eps_inf)*powtrm*cos(pi*alpha/2)/denom
 
       !complex permittivity
-      eps_water_ray = dcmplx(eps_r,eps_i)
+      eps = dcmplx(eps_r,eps_i)
 !       print*,eps_water_ray
-      n = sqrt(eps_water_ray)
+      n = sqrt(eps)
       rn = real(n)
       cn = aimag(n)
 
@@ -585,12 +587,12 @@ module eps_water
 
       402 CONTINUE
       n = dcmplx(rn,cn)
-      eps_water_ray = n**2
+      eps = n**2
       return
 
-      end function eps_water_ray
+      end subroutine eps_water_ray
 
-      function eps_water_stogryn(s,T,f)
+      subroutine eps_water_stogryn(s,T,f,eps)
 
       ! This function calculates the complex permittivity
       ! of natural water including soluted salt.
@@ -615,6 +617,7 @@ module eps_water
       real(kind=dbl), intent(in) :: s,& ! salinity [0/00]
             T,& ! temperature [°C]
             f   ! frequency [GHz]
+      complex(kind=dbl), intent(out) :: eps
 
       real(kind=dbl) :: a, b
 
@@ -624,8 +627,6 @@ module eps_water
       real(kind=dbl) :: sig_s35
 
       complex(kind=dbl) :: eps_s, eps_1, eps_inf
-
-      complex(kind=dbl) :: eps_water_stogryn
 
       p = s*(37.5109+5.45216*s+0.014409*s**2)/(1004.75+182.283*s+s**2)
       alpha_0 = (6.9431+3.2841*s-0.099486*s**2)/(84.85+69.024*s+s**2)
@@ -643,14 +644,14 @@ module eps_water
       q = 1+(alpha_0*(T-15))/(T+alpha_1)
       sig = sig_s35*p*q
 
-      eps_water_stogryn = (eps_s-eps_1)/(1-(0.,1.)*f*two_pi_tau_1)+&
+      eps = (eps_s-eps_1)/(1-(0.,1.)*f*two_pi_tau_1)+&
             (eps_1-eps_inf)/(1-(0.,1.)*f*two_pi_tau_2)+eps_inf+(0.,1.)*17.9751*sig/f
 
       return
 
-      end function eps_water_stogryn
+      end subroutine eps_water_stogryn
 
-      function eps_water_tkc(T,f)   
+      subroutine eps_water_tkc(T,f,eps)   
         
       ! Returns the liquid mass absorption, in m2 kg-1
       ! Input frequency (scalar float), in GHz
@@ -664,13 +665,13 @@ module eps_water
       
       real(kind=dbl), intent(in) :: &
 	    T,& ! temperature [°C]
-            f   ! frequency [GHz]
+      f   ! frequency [GHz]
+      complex(kind=dbl), intent(out) :: eps
 
       real(kind=dbl) :: frq, a_1, b_1, c_1, d_1, a_2, b_2, c_2, d_2, t_c, &
 	      eps_s, delta_1, tau_1, delta_2, tau_2, term1_p1, term2_p1, &
 	      eps1, eps2
       
-      complex(kind=dbl) :: eps_water_tkc
 
       ! Empirical coefficients for the TKC model. The first 4 are a1, b1, c1, and d1, 
       ! the next four are a2, b2, c2, and d2, and the last one is tc.
@@ -724,7 +725,7 @@ module eps_water
       ! Compute the imaginary permittivitity coefficient (Eq 5)
       eps2 = 2.d0*pi*frq * (term1_p1 + term2_p1)
  
-      eps_water_tkc = complex(eps1, eps2)
+      eps = complex(eps1, eps2)
 
 !       ! Compute the mass absorption coefficient (Eq 1)
 !       RE = (epsilon-1)/(epsilon+2)
@@ -732,6 +733,6 @@ module eps_water
 
       return
   
-  end function eps_water_tkc
-
+  end subroutine eps_water_tkc
 end module eps_water
+

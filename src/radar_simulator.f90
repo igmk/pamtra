@@ -51,6 +51,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
     real(kind=dbl), dimension(2,radar_nPeaks):: slope
     real(kind=dbl), dimension(2,radar_nPeaks):: edge
     real(kind=dbl) :: noise_out, PIA
+    real(kind=dbl) :: noise, noise_max
     real(kind=dbl):: SNR, del_v, ss, K2, wavelength, Ze_back, K, &
     min_V_aliased, max_V_aliased, receiver_uncertainty, radar_Pnoise, frequency
     integer(kind=long) :: ii, tt, turbLen,alloc_status,ts_imin, ts_imax, startI, stopI, seed
@@ -81,8 +82,17 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
             real(kind=dbl), intent(out), dimension(n) :: x_noise
         end subroutine random
 
+        subroutine radar_hildebrand_sekhon(errorstatus,spectrum,n_ave,n_ffts,&
+          noise_mean,noise_max)
+            use kinds
+            implicit none
+            integer(kind=long), intent(out) :: errorstatus
+            integer, intent(in) :: n_ave, n_ffts
+            real(kind=dbl), dimension(n_ffts), intent(in) :: spectrum
+            real(kind=dbl), intent(out) :: noise_mean
+            real(kind=dbl), intent(out) :: noise_max
+        end subroutine radar_hildebrand_sekhon
     end interface
-
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
     err = 0
 
@@ -474,10 +484,33 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
           !apply a receiver miscalibration:
           noise_turb_spectra = noise_turb_spectra * 10**(0.1*radar_receiver_miscalibration(i_f))
           radar_Pnoise = radar_Pnoise * 10**(0.1*radar_receiver_miscalibration(i_f))
+          
+
+          !calculate noise level (actually we know already the result which is noise_model)
+          if (radar_use_hildebrand) then
+              call radar_hildebrand_sekhon(err,noise_turb_spectra,radar_no_Ave(i_f),radar_nfft,&
+                noise,noise_max)
+              if (err /= 0) then
+                  msg = 'error in radar_hildebrand_sekhon!'
+                  call report(err, msg, nameOfRoutine)
+                  errorstatus = err
+                  return
+              end if   
+              if (verbose .ge. 3) print*, i_f, 'calculated noise, noise_max:', noise, noise_max
+              if (radar_noise_distance_factor(i_f) > 0) &
+                noise_max = radar_noise_distance_factor(i_f)*noise
+          else
+              noise = radar_Pnoise/radar_nfft !no devison by del_v neccessary!
+              noise_max = radar_noise_distance_factor(i_f)*noise
+          end if          
+
+          !noise for the output
+          noise_out = noise * radar_nfft
 
           call radar_calc_moments(err,radar_nfft,radar_nPeaks,&
-            noise_turb_spectra,radar_Pnoise,noise_removed_turb_spectra,&
-            moments,slope,edge,quality_moments,noise_out)
+            noise_turb_spectra,noise,noise_max, &
+            noise_removed_turb_spectra,&
+            moments,slope,edge,quality_moments)
           if (err /= 0) then
             msg = 'error in radar_calc_moments!'
             call report(err, msg, nameOfRoutine)

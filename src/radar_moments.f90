@@ -4,9 +4,7 @@ module radar_moments
   use settings, only: &
     radar_max_V,&
     radar_min_V,&
-    radar_use_hildebrand,&
     radar_no_Ave,&
-    radar_noise_distance_factor,&
     radar_smooth_spectrum, &
     radar_use_wider_peak, &
     radar_peak_min_bins, &
@@ -17,14 +15,17 @@ module radar_moments
   implicit none
 
   contains 
-subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum_in,noise_model,&
-  radar_spectrum_out,moments,slope,edge,quality,noise)
+subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum_in,&
+  noise,noise_max, &
+  radar_spectrum_out,moments,slope,edge,quality)
 
     ! written by P. Kollias, translated to Fortran by M. Maahn (12.2012)
     ! calculate the 0th -4th moment and the slopes of the peak of a radar spectrum!
     !
     ! in
     ! radar_spectrum_in: radar spectrum with noise [mm⁶/m³]
+    ! noise: mean spectral noise in [mm⁶/m³]
+    ! noise_max: max spectral noise in [mm⁶/m³]
     ! out
     ! radar_spectrum_out: radar spectrum with noise removed [mm⁶/m³]
     ! moments, dimension(0:4):0th - 4th moment [mm⁶/m³, m/s, m/s,-,-]
@@ -37,17 +38,15 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
 
     integer, intent(in) :: radar_nfft, radar_nPeaks
     real(kind=dbl), dimension(radar_nfft), intent(in):: radar_spectrum_in
-    real(kind=dbl), intent(in):: noise_model
+    real(kind=dbl), intent(in):: noise, noise_max
     real(kind=dbl), dimension(radar_nfft), intent(out):: radar_spectrum_out
     real(kind=dbl), dimension(0:4,radar_nPeaks), intent(out):: moments
     real(kind=dbl), dimension(2,radar_nPeaks), intent(out):: slope
     real(kind=dbl), dimension(2,radar_nPeaks), intent(out):: edge
-    real(kind=dbl), intent(out):: noise
     integer, intent(out) :: quality
     real(kind=dbl), dimension(radar_nPeaks+1,radar_nfft):: radar_spectrum_arr
     real(kind=dbl), dimension(radar_nfft):: radar_spectrum_only_noise
     real(kind=dbl), dimension(radar_nfft):: radar_spectrum_4mom
-    real(kind=dbl):: noise_max
     real(kind=dbl) :: del_v, specMax, noiselog, specSNR
     integer :: spec_max_ii, spec_max_ii_a(1), right_edge,left_edge, &
     ii, jj, right_edge4slope, &
@@ -71,22 +70,12 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
             real(kind=dbl), intent(out), dimension(length) :: dataOut
         END SUBROUTINE SMOOTH_SAVITZKY_GOLAY
 
-        subroutine radar_hildebrand_sekhon(errorstatus,spectrum,n_ave,n_ffts,&
-          noise_mean,noise_max)
-            use kinds
-            implicit none
-            integer(kind=long), intent(out) :: errorstatus
-            integer, intent(in) :: n_ave, n_ffts
-            real(kind=dbl), dimension(n_ffts), intent(in) :: spectrum
-            real(kind=dbl), intent(out) :: noise_mean
-            real(kind=dbl), intent(out) :: noise_max
-        end subroutine radar_hildebrand_sekhon
     end interface
 
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
     
-    if (verbose >= 10) print*, "radar_nfft,radar_nPeaks,noise_model,radar_spectrum_in"
-    if (verbose >= 10) print*, radar_nfft,radar_nPeaks,noise_model,"spec:",radar_spectrum_in
+    if (verbose >= 10) print*, "radar_nfft,radar_nPeaks,noise, noise_max,radar_spectrum_in"
+    if (verbose >= 10) print*, radar_nfft,radar_nPeaks,noise,noise_max,"spec:",radar_spectrum_in
  
     err = 0
 
@@ -111,23 +100,6 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
     quality = 0
     additionalPeaks = .false.
 
-    !calculate noise level (actually we know already the result which is noise_model)
-    if (radar_use_hildebrand) then
-        call radar_hildebrand_sekhon(err,radar_spectrum_in,radar_no_Ave(i_f),radar_nfft,&
-          noise,noise_max)
-        if (err /= 0) then
-            msg = 'error in radar_hildebrand_sekhon!'
-            call report(err, msg, nameOfRoutine)
-            errorstatus = err
-            return
-        end if   
-        if (verbose .ge. 3) print*, i_f, 'calculated noise, noise_max:', noise, noise_max
-        if (radar_noise_distance_factor(i_f) > 0) &
-          noise_max = radar_noise_distance_factor(i_f)*noise
-    else
-        noise = noise_model/radar_nfft !no devison by del_v neccessary!
-        noise_max = radar_noise_distance_factor(i_f)*noise
-    end if
 
   do nn = 1, radar_nPeaks + 1
     radar_spectrum_arr(nn,:) = radar_spectrum_in
@@ -161,7 +133,7 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
             radar_spectrum_arr(nn,ii) <= noise_max
         if (radar_spectrum_arr(nn,ii) <= noise_max ) EXIT
     end do
-    if (ii > radar_nfft) ii = radar_nfft !Fortran tends to go one step too far if EXIT does not happen
+    ! if (ii > radar_nfft) ii = radar_nfft !Fortran tends to go one step too far if EXIT does not happen
     right_edge = ii
     right_edge4slope = right_edge
     if ((radar_use_wider_peak) .and. &
@@ -175,7 +147,7 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
             radar_spectrum_arr(nn,jj) <= noise_max
         if (radar_spectrum_arr(nn,jj) <= noise_max ) EXIT
     end do
-    if (jj < 1) jj = 1 !Fortran tends to go one step too far if EXIT does not happen
+    ! if (jj < 1) jj = 1 !Fortran tends to go one step too far if EXIT does not happen
     left_edge = jj
     left_edge4slope = left_edge
     if ((radar_use_wider_peak) .and. &
@@ -186,8 +158,8 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
       if (verbose >= 6) print*, nn, "extended left edge to ", left_edge
     end if
 
-    if (verbose >= 5)  print*, nn, "found peak from", left_edge, radar_spectrum_arr(nn,left_edge),&
-      "to", right_edge, radar_spectrum_arr(nn,right_edge), "noiseMax", noise_max
+    if (verbose >= 5)  print*, nn, "found peak from", left_edge, radar_spectrum_arr(nn,left_edge+1),&
+      "to", right_edge-1, radar_spectrum_arr(nn,right_edge-1), "noiseMax", noise_max
 
     !we don't want to find this peak again, so set it to zero for the other spectra
     do kk=nn+1, radar_nPeaks+1
@@ -248,8 +220,8 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
       radar_spectrum_4mom = radar_spectrum_4mom - noise
 
 !     for moments estimation, set remaining sectrum to zero
-      radar_spectrum_4mom(1:left_edge) = 0.d0
-      radar_spectrum_4mom(right_edge:radar_nfft) = 0.d0
+      if (left_edge  >= 1) radar_spectrum_4mom(1:left_edge) = 0.d0
+      if (right_edge <= radar_nfft) radar_spectrum_4mom(right_edge:radar_nfft) = 0.d0
 
       if (verbose >= 5) print*, "radar_spectrum_smooth, peak only", SHAPE(radar_spectrum_4mom),  radar_spectrum_4mom
       if (verbose >= 5) print*, "spectra_velo", SHAPE(spectra_velo), spectra_velo
@@ -267,8 +239,8 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
       if (nn == 1) then 
   !     output spectrum is with main peak only and noise removed but without the smoothing
         radar_spectrum_out = radar_spectrum_in - noise
-        radar_spectrum_out(1:left_edge) = 0.d0
-        radar_spectrum_out(right_edge:radar_nfft) = 0.d0
+        if (left_edge  >= 1) radar_spectrum_out(1:left_edge) = 0.d0
+        if (right_edge <= radar_nfft) radar_spectrum_out(right_edge:radar_nfft) = 0.d0
       end if
 
     if (moments(1,nn) == -9999) then
@@ -334,8 +306,7 @@ specMax = 10*log10(MAXVAL(radar_spectrum_4mom)) !without any noise removed!
     if (verbose >= 5) print*, "radar_nfft", radar_nfft
     if (verbose >= 5) print*, "radar_spectrum_out", radar_spectrum_out
 
-    !noise for the output
-    noise = noise * radar_nfft
+
 
     call assert_false(err,any(ISNAN(slope)),&
         "nan in slope")
@@ -349,8 +320,8 @@ specMax = 10*log10(MAXVAL(radar_spectrum_4mom)) !without any noise removed!
       call report(err, msg, nameOfRoutine)
       errorstatus = err
 
-print*, noiselog, specMax, spectra_velo(left_edge4slope), spectra_velo(right_edge4slope), spectra_velo(spec_max_ii)
-print*, 'radar_spectrum_4mom', radar_spectrum_4mom
+! print*, noiselog, specMax, spectra_velo(left_edge4slope), spectra_velo(right_edge4slope), spectra_velo(spec_max_ii)
+! print*, 'radar_spectrum_4mom', radar_spectrum_4mom
 
       return
     end if

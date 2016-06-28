@@ -190,8 +190,10 @@ subroutine make_dist(errorstatus)
            tmpX =  d_bound_ds_work(i)/d_m
            tmp2 = exp(-(tmpX * tmpG2/tmpG1)**gam)
            f_ds_work(i) = n_0_star * tmp1 * tmpX**mu * tmp2
-
+           print*, i, d_bound_ds_work(i), f_ds_work(i)
         enddo
+        print*, 'mu, b_ms, gam, n_0_star, d_m, tmpG1, tmpG2, tmp1'
+        print*, mu, b_ms, gam, n_0_star, d_m, tmpG1, tmpG2, tmp1
 
      else if ((trim(dist_name) == 'mgamma')     .or. (trim(dist_name) == 'exp') .or. &
           (trim(dist_name) =='exp_field_t') .or. (trim(dist_name) == 'exp_cosmo_snow') .or. &
