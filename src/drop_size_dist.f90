@@ -193,11 +193,11 @@ subroutine run_drop_size_dist(errorstatus)
   endif
 
 ! fill in the density and diameter array for the scattering routines
-  if (liq_ice == -1) then
+  if (liq_ice == -1) then  ! ice
     density2scat = soft_rho_eff
     diameter2scat = soft_d_eff
   endif
-  if (liq_ice == 1) then
+  if (liq_ice == 1) then  ! liquid
     density2scat(:) = rho_water
     diameter2scat = d_ds
   endif

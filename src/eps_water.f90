@@ -651,7 +651,34 @@ module eps_water
       end function eps_water_stogryn
 
       function eps_water_tkc(T,f)   
-        
+
+      ! Abstract:
+      !  The "Turner-Kneifel-Cadeddu" liquid water absorption model (submitted to JTECH 2015).
+      !  It was built using both laboratory observations (primarily at warm temperatures) and 
+      !  field data observed by MWRs at multiple frequencies at supercool temperatures. The field
+      !  data were published in Kneifel et al. JAMC 2014.  The strength of the TKC model is the 
+      !  use of an optimal estimation framework to determine the empirical coefficients of the 
+      !  double-Debye model.  A full description of this model is given in 
+      !
+      !  Turner, D.D., S. Kneifel, and M.P. Cadeddu, 2015: An improved liquid
+      !  water absorption model in the microwave for supercooled liquid clouds.
+      !  J. Atmos. Oceanic Technol., submitted April 2015.
+      !
+      ! Note that the model is designed to operate over the frequency range 
+      ! from 0.5 to 500 GHz, and temperatures from -40 degC to +50 degC.  
+      !
+      ! Authors:
+      !  Dave Turner, National Severe Storms Laborotory / NOAA
+      !  Stefan Kneifel, McGill University and the University of Cologne
+      !  Maria Cadeddu, Argonne National Laboratory
+      !
+      ! Input:
+      ! T  temperature [°C]
+      ! f  frequency [GHz]
+      !
+      ! Result:
+      !  eps_water_tkc complex permittivity of natural water
+      !       
       ! Returns the liquid mass absorption, in m2 kg-1
       ! Input frequency (scalar float), in GHz
       ! Input cloud temperature (scalar float), in degC

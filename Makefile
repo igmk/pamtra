@@ -10,23 +10,34 @@ PYTDIR := python/pyPamtra/
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
-
-F2PY := $(shell which f2py2.7 || which f2py) #on newer Ubuntu systems, only f2py2.7 is available
+NCCONF = $(shell which nf-config || which nc-config) # on newer Ubuntu version C and Fortran libraries have their own configure scripts
+F2PY := $(shell which f2py2.7 || which f2py) # on newer Ubuntu systems, only f2py2.7 is available
 FC=gfortran
 CC=gcc
 FCFLAGS=-c -fPIC -Wunused  -cpp -J$(OBJDIR) -I$(OBJDIR)
 #FCFLAGS=-g -c -fPIC -Wunused -O0 -cpp -J$(OBJDIR) -I$(OBJDIR)
+<<<<<<< HEAD
 	
 NCFLAGS :=  $(shell nf-config --fflags)  -fbounds-check
 NCFLAGS_F2PY := -I$(shell nf-config --includedir) #f2py does not like -g and -O2
 LFLAGS := -L/usr/lib/ -llapack -L$(LIBDIR) -L../$(LIBDIR) -ldfftpack -lblas
 LDFLAGS := -L/usr/lib -lnetcdff -lnetcdf -lz #$(shell nf-config --flibs) -lz
+=======
+
+NCFLAGS :=  $(shell $(NCCONF) --fflags)  -fbounds-check
+NCFLAGS_F2PY := -I$(shell $(NCCONF) --includedir) #f2py does not like -g and -O2
+LFLAGS := -L/usr/lib/ -llapack -L$(LIBDIR) -L../$(LIBDIR) -ldfftpack -lblas
+LDFLAGS := $(shell $(NCCONF) --flibs) -lz
+# it's messi but needed for ubuntu 16.04
+to_remove:=-Wl,-Bsymbolic-functions -Wl,-z,relro
+LDFLAGS := $(subst $(to_remove),,$(LDFLAGS))
+>>>>>>> 2bd657d7c23940ef410b385308f12de1cc1a260d
 
 
 
 
 OBJECTS=kinds.o \
-  vars_index.o \
+	vars_index.o \
 	report_module.o \
 	rt_utilities.o \
 	settings.o \
@@ -39,7 +50,7 @@ OBJECTS=kinds.o \
 	descriptor_file.o \
 	vars_atmosphere.o \
 	vars_rt.o \
-  vars_hydroFullSpec.o \
+	vars_hydroFullSpec.o \
 	mod_io_strings.o \
 	getopt.o \
 	parse_options.o \
@@ -134,6 +145,7 @@ ifndef PAMTRA_DATADIR
 	@echo "########################################################"
 endif
 
+print-%  : ; @echo $* = $($*)
 
 dfftpack: | $(LIBDIR)
 	cd tools/dfftpack && $(MAKE)
