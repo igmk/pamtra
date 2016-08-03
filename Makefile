@@ -16,13 +16,6 @@ FC=gfortran
 CC=gcc
 FCFLAGS=-c -fPIC -Wunused  -cpp -J$(OBJDIR) -I$(OBJDIR)
 #FCFLAGS=-g -c -fPIC -Wunused -O0 -cpp -J$(OBJDIR) -I$(OBJDIR)
-<<<<<<< HEAD
-	
-NCFLAGS :=  $(shell nf-config --fflags)  -fbounds-check
-NCFLAGS_F2PY := -I$(shell nf-config --includedir) #f2py does not like -g and -O2
-LFLAGS := -L/usr/lib/ -llapack -L$(LIBDIR) -L../$(LIBDIR) -ldfftpack -lblas
-LDFLAGS := -L/usr/lib -lnetcdff -lnetcdf -lz #$(shell nf-config --flibs) -lz
-=======
 
 NCFLAGS :=  $(shell $(NCCONF) --fflags)  -fbounds-check
 NCFLAGS_F2PY := -I$(shell $(NCCONF) --includedir) #f2py does not like -g and -O2
@@ -31,7 +24,6 @@ LDFLAGS := $(shell $(NCCONF) --flibs) -lz
 # it's messi but needed for ubuntu 16.04
 to_remove:=-Wl,-Bsymbolic-functions -Wl,-z,relro
 LDFLAGS := $(subst $(to_remove),,$(LDFLAGS))
->>>>>>> 2bd657d7c23940ef410b385308f12de1cc1a260d
 
 
 
