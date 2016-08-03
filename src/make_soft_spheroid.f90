@@ -61,7 +61,7 @@ subroutine make_soft_spheroid(errorstatus)
   integer(kind=long), intent(out) :: errorstatus
 !   integer(kind=long) :: err = 0
   character(len=80) :: msg
-  character(len=14) :: nameOfRoutine = 'make_soft_spheroid'
+  character(len=18) :: nameOfRoutine = 'make_soft_spheroid'
 
   if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
@@ -120,9 +120,8 @@ subroutine make_soft_spheroid(errorstatus)
     return
   endif
 
-!   change mass and density in case density is larger than 917 or below hydro_softsphere_min_density
-  if ((liq_ice == -1) .and. &
-      hydro_limit_density_area) then 
+  !   change mass and density in case density is larger than 917 or below hydro_softsphere_min_density
+  if ((liq_ice == -1) .and. hydro_limit_density_area) then 
     do i=1,nbin
       if ((soft_rho_eff(i) > rho_ice) .or. (soft_rho_eff(i) < hydro_softsphere_min_density)) then
         if (soft_rho_eff(i) > rho_ice) then

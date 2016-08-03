@@ -366,6 +366,7 @@ class pyPamtra(object):
 
           #in the file its actually nlevels, so:
           self.p["nlyrs"][xx,yy] = self.p["nlyrs"][xx,yy] - 1
+	#import pdb;pdb.set_trace()
 
         for zz in xrange(self.p["nlyrs"][xx,yy]):
           dataLine =g.next()
