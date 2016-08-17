@@ -6,6 +6,7 @@ SRCDIR := src/
 BINDIR := bin/
 LIBDIR := lib/
 PYTDIR := python/pyPamtra/
+PYINSTDIR := ~/lib/python/
 
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
@@ -241,9 +242,10 @@ py_usStandard:
 	cd tools/py_usStandard/ && $(MAKE) all
 
 pyinstall: warning dfftpack py py_usStandard
-	mkdir -p ~/lib/python/
-	cp -r $(PYTDIR) ~/lib/python/
+	mkdir -p $(PYINSTDIR)
+	cp -r $(PYTDIR) $(PYINSTDIR)
 	cd tools/py_usStandard/ && $(MAKE) install
+	cp tools/pyRadarMoments/radarMoments.py	 $(PYINSTDIR)
 
 clean:
 	-rm -f $(OBJDIR)*.o
