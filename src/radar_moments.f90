@@ -255,12 +255,9 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
       if (verbose >= 5) print*,MAXVAL(radar_spectrum_only_noise), noise
     end if !moments(1,1) == -9999
 
-      !slopes are estimated between max of peak and max of nosise level
-!       noiseMax = 10*log10(MAXVAL(radar_spectrum_only_noise) - noise)
-!       specMax =  10*log10(MAXVAL(radar_spectrum_in) - noise)
-!test:
-noiselog = 10*log10(noise)
-specMax = 10*log10(MAXVAL(radar_spectrum_4mom)) !without any noise removed!
+
+    noiselog = 10*log10(noise)
+    specMax = 10*log10(MAXVAL(radar_spectrum_4mom)) !without any noise removed!
 
       call assert_false(err,nn>radar_nPeaks,&
           "nn>radar_nPeaks")
@@ -274,12 +271,21 @@ specMax = 10*log10(MAXVAL(radar_spectrum_4mom)) !without any noise removed!
         errorstatus = err
         return
       end if
-      ! so far we have only nn = 1:
+
       slope(:,nn) = 0.d0 ! dB/(m/s)
-      slope(1,nn) = (specMax-noiselog)/&
+      if (left_edge4slope >= 1) then
+        slope(1,nn) = (specMax-noiselog)/&
                     (spectra_velo(spec_max_ii)-spectra_velo(left_edge4slope))
-      slope(2,nn) = (noiselog-specMax)/&
+      else
+        slope(1,nn) = -9999
+      end if
+      if (right_edge4slope <= radar_nfft) then
+        slope(2,nn) = (noiselog-specMax)/&
                     (spectra_velo(right_edge4slope)-spectra_velo(spec_max_ii))
+      else
+        slope(2,nn) = -9999
+      end if
+
 
     if (verbose >= 5) print*, "nn", nn
     if (verbose >= 5) print*, "left slope",specMax, noiselog, spectra_velo(spec_max_ii),&
