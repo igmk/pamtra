@@ -18,7 +18,7 @@ module constants
     real(kind=dbl), parameter :: g = 9.80665_dbl
     real(kind=dbl), parameter :: sky_temp = 2.73_dbl
     real(kind=dbl), parameter :: rho_water = 1000_dbl
-    real(kind=dbl), parameter :: rho_ice = 916.7_dbl
+    real(kind=dbl), parameter :: rho_ice = 917._dbl   ! used to be 916.7_dbl (changed by MM 16.6.2016, due to check in make_soft_spheroid)
 
     real(kind=dbl), parameter :: tpt = 273.16_dbl               ! triple point temperature
     real(kind=dbl), parameter :: estpt = 611.14_dbl             ! saturation vapor triple point temperature

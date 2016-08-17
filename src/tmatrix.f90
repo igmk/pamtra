@@ -107,7 +107,7 @@ character(len=nstokes*nummu*28) :: emis_vector_str
       integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0
       character(len=80) :: msg
-      character(len=14) :: nameOfRoutine = 'tmatrix_clac'
+      character(len=14) :: nameOfRoutine = 'tmatrix_calc'
 
       if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)    
       

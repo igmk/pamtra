@@ -36,7 +36,7 @@ subroutine check_print()
     write(112,'(a9,i5,i5,i5,i5,i5)')"x y z f h",i_x,i_y, i_z, i_f, i_h
     write(112,'(a10,a10,5x,i5,4(3x,f20.10))')hydro_name,dist_name,moment_in,p_1,p_2,p_3,p_4
     if (wrt_n0) &
-      write(112,'(2(a10,5x,f20.10,5x),a12,5x,f20.10,a2)')'m_0',m_0,'n_tot [m-3]',n_tot,'diff[%]',(m_0-n_tot)/n_tot*100.,' %'
+      write(112,'(2(a11,5x,f20.10,5x),a12,5x,f20.10,a2)')'m_0',m_0,'n_tot [m-3]',n_tot,'diff[%]',(m_0-n_tot)/n_tot*100.,' %'
     if (wrt_n32) &
       write(112,'(2(a10,5x,f20.10,5x),a12,5x,f20.10,a2)')'m_32',m_32,'r_eff [m]',r_eff,'diff[%]',(m_32-r_eff)/r_eff*100.,' %'
     if (wrt_n3) &

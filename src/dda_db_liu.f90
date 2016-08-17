@@ -73,6 +73,7 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
        10000.,10000.,10000.,10000.,10000.,12454./)*1.e-6
   real(kind=sgl), parameter, dimension(0:10) :: dmin = (/121.,83.,66.,81.,127.,&
        50.,50.,50.,50.,50.,75./)*1.e-6
+  ! a_m and b_m have been calculated by Stefan Kneifel @ IGMK
   real(kind=sgl), parameter, dimension(0:10) :: a_m = (/33.996,106.526,210.529,112.290,29.680,&
        0.183,0.1287,0.1680,0.2124,1.191e-3,5.666e-3/)
   real(kind=sgl), parameter, dimension(0:10) :: b_m = (/3.,3.,3.,3.,3.,&
