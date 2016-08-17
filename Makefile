@@ -221,7 +221,7 @@ $(OBJDIR)pypamtralib.pyf:  $(FOBJECTS)
 	@echo "####################################################################################"
 	@echo "Note there is a bug in numpy 1.10.1, intent in or out is not recognized"
 	@echo "####################################################################################"
-	$(F2PY) --overwrite-signature -m pyPamtraLib -h $(OBJDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)vars_index.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)radar_moments.f90 $(SRCDIR)eps_water.f90  $(SRCDIR)radar_hildebrand_sekhon.f90 $(SRCDIR)pyPamtraLib.f90
+	$(F2PY) --overwrite-signature -m pyPamtraLib -h $(OBJDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)vars_index.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)radar_moments.f90 $(SRCDIR)eps_water.f90  $(SRCDIR)radar_hildebrand_sekhon.f90 $(SRCDIR)dia2vel.f90 $(SRCDIR)pyPamtraLib.f90
 
 py: FCFLAGS += -O2
 py: NCFLAGS += -O2
