@@ -5,7 +5,7 @@ OBJDIR := src/
 SRCDIR := src/
 BINDIR := bin/
 LIBDIR := lib/
-PYTDIR := python/pyPamtra/
+PYTDIR := python/pyPamtra
 PYINSTDIR := ~/lib/python/
 
 gitHash    := $(shell git show -s --pretty=format:%H)
