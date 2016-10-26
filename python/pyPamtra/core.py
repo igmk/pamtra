@@ -1325,7 +1325,7 @@ class pyPamtra(object):
 
 
     if type(freqs) in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
-
+    
     assert np.array_equal(np.sort(freqs),freqs) # frequencies should be sorted to avoid strange things...
 
     self.set["freqs"] = freqs

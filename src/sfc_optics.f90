@@ -3,7 +3,7 @@ module sfc_optics
   ! variables
   use kinds, only: dbl
   use report_module
-  use settings, only: ground_type, emissivity, nstokes, nummu
+  use settings, only: ground_type, emissivity!, nstokes, nummu
   use vars_index, only: i_x, i_y
   use vars_atmosphere, only : atmo_lfrac
   use vars_rt, only: rt_sfc_emissivity, rt_sfc_reflectivity
@@ -49,7 +49,6 @@ contains
 
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
     err = 0
-
     if ((atmo_lfrac(i_x,i_y) >= 0._dbl) .and. (atmo_lfrac(i_x,i_y) < 0.5_dbl)) then
       call ocean_sfc_optics_fastemx(err,freq)
       ground_type = 'O'

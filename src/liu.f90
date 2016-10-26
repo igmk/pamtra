@@ -14,7 +14,7 @@ module liu
   !                       Quanhua.Liu@noaa.gov
   !
   !       Adapted to PAMTRA code: Mario Mech, February 2014 
-  !                               mech@meteo.uni-koeln.de
+  !                               mario.mech@uni-koeln.de
 
   ! -----------------
   ! Environment setup
@@ -268,8 +268,8 @@ contains
     ! ...Combine them (e = re - j.ie)
     permittivity = cmplx(re,-ie,dbl)                                  
 
-  if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
+    if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
 
   end subroutine liu_ocean_permittivity
 
-END MODULE Liu
+end module liu

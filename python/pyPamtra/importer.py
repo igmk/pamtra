@@ -713,7 +713,10 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
       pam.df.addHydrometeor(df)
 
   pam.createProfile(**pamData)
+
   del data
+  
+  return pam
 
 def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",debug=False,verbosity=0,df_kind="default",maxLevel=0):
   '''

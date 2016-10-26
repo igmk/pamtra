@@ -26,7 +26,7 @@ module vars_rt
     integer(kind=long) :: nlyr
 
     integer(kind=long) :: alloc_status
-    integer(kind=long) :: errorstatus
+    integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
     character(len=200) :: msg
     character(len=30) :: nameOfRoutine = 'allocate_rt_vars'
