@@ -130,7 +130,12 @@ def PamtraFortranWrapper(
     elif key in ["noutlevels"]:
       if sets["pyVerbose"] > 3: print("settings."+key +" = profile['"+key+"']")
       exec("settings."+key +" = profile['"+key+"']")
-    
+    elif key in ["sfc_type","sfc_model","sfc_salinity"]:
+      if sets["pyVerbose"] > 3: print("vars_atmosphere."+key +" = profile['"+key+"'].tolist()")
+      exec("vars_atmosphere."+key +" = profile['"+key+"']")
+    elif key in ["sfc_refl"]:
+      if sets["pyVerbose"] > 3: print("vars_atmosphere."+key +" = profile['"+key+"'].tolist()")
+      exec("vars_atmosphere."+key +" = profile['"+key+"']")
     elif type(profile[key]) in [int, float, str]:
       if sets["pyVerbose"] > 3: print("vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
       exec("vars_atmosphere.atmo_"+key +" = profile['"+key+"']")

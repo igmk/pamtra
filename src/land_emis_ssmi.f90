@@ -1,7 +1,7 @@
 ! Get and interpolate land surface emissivities
 !
-subroutine land_emis (&
-ise, & ! in
+subroutine land_emis_ssmi(errorstatus,&
+femis, & ! in
 lon, & ! in
 lat, & ! in
 freqdbl,& ! in
@@ -25,10 +25,11 @@ emissivity)  ! out
 
     use equcom
     use kinds
+    use report_module
 
     implicit none
     !subroutine arguments:
-    integer, intent(in) :: ise
+    integer(long) :: ise, iolsgl
 
     real(kind=sgl), intent(in) :: lon,lat
 
@@ -52,6 +53,31 @@ emissivity)  ! out
 
     real(kind=dbl), intent(out) :: emissivity
 
+    character(80), intent(in) :: femis ! filename for the emissivity databases
+    
+    logical :: file_exists
+
+    integer(kind=long), intent(out) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
+    character(len=14) :: nameOfRoutine = 'land_emis_ssmi' 
+
+    inquire(iolength=iolsgl) 1._sgl
+
+    ise=13
+ 
+    if (verbose >= 4) call report(info,'Opening: '//trim(femis), nameOfRoutine)
+    INQUIRE(FILE=trim(femis), EXIST=file_exists) 
+    if (.not.(file_exists)) then
+        errorstatus = fatal
+        msg = "File not found:"//trim(femis)
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+    end if   
+
+    open(ise,file=trim(femis),status='old',form='unformatted',&
+    access='direct',recl=iolsgl*7,ACTION="READ")
+   
     ! Equal area computations
 
     freq = real(freqdbl)
@@ -228,6 +254,10 @@ emissivity)  ! out
 
     emissivity = dble((emiv+emih)/2.d0)
 
+    close(ise)
+    
+    errorstatus = err
+
     return
 
-end subroutine land_emis
+end subroutine land_emis_ssmi

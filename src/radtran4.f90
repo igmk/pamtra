@@ -186,7 +186,7 @@ subroutine radtran4(errorstatus, max_delta_tau,&
 
   ! variables needed for fastem4
 
-  real(kind=dbl) :: rel_azimuth, salinity
+  real(kind=dbl) :: rel_azimuth
   real(kind=dbl), dimension(nummu) :: transmittance
 
   integer(kind=long), intent(out) :: errorstatus
@@ -366,7 +366,7 @@ subroutine radtran4(errorstatus, max_delta_tau,&
 
   if (verbose > 4) print*, "calculating surface emissivity ...."
 
-  call get_sfc_matrices(err,reflect(krt), trans(krt), gnd_radiance)
+  call get_sfc_matrices(err,ground_type, ground_temp, reflect(krt), trans(krt), gnd_radiance)
 
   if (verbose > 4) print*, ".... done!"
 

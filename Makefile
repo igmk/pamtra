@@ -60,6 +60,7 @@ OBJECTS=kinds.o \
 	liu.o \
 	fresnel.o \
 	fastemx.o \
+	tessem2.o \
 	ocean_sfc_optics.o \
 	land_sfc_optics.o \
 	sfc_optics.o \
@@ -85,7 +86,7 @@ OBJECTS=kinds.o \
 	eps_ice.o \
 	eps_mix.o \
 	equcom.o \
-	land_emis.o \
+	land_emis_ssmi.o \
 	equare.o \
 	ref_water.o \
 	ref_ice.o \
@@ -225,7 +226,7 @@ $(OBJDIR)pypamtralib.pyf:  $(FOBJECTS)
 	@echo "####################################################################################"
 	@echo "Note there is a bug in numpy 1.10.1, intent in or out is not recognized"
 	@echo "####################################################################################"
-	$(F2PY) --overwrite-signature -m pyPamtraLib -h $(OBJDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)vars_index.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_rt.f90  $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)radar_moments.f90 $(SRCDIR)sfc_optics.f90 $(SRCDIR)ocean_sfc_optics.f90 $(SRCDIR)land_sfc_optics.f90 $(SRCDIR)fastemx.f90 $(SRCDIR)land_emis.f90 $(SRCDIR)liu.f90 $(SRCDIR)fresnel.f90 $(SRCDIR)pyPamtraLib.f90
+	$(F2PY) --overwrite-signature -m pyPamtraLib -h $(OBJDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)vars_index.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_rt.f90  $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)radar_moments.f90 $(SRCDIR)sfc_optics.f90 $(SRCDIR)ocean_sfc_optics.f90 $(SRCDIR)land_sfc_optics.f90 $(SRCDIR)fastemx.f90 $(SRCDIR)tessem2.f90 $(SRCDIR)land_emis_ssmi.f90 $(SRCDIR)liu.f90 $(SRCDIR)fresnel.f90 $(SRCDIR)pyPamtraLib.f90
 
 py: FCFLAGS += -O2
 py: NCFLAGS += -O2

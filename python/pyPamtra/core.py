@@ -43,7 +43,7 @@ class pyPamtra(object):
     set setting default values
     """
 
-    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb","radar_prop","groundtemp","wind_w", "wind_uv","turb_edr"]
+    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb","radar_prop","groundtemp","wind_w", "wind_uv","turb_edr","sfc_type","sfc_model","sfc_refl","sfc_salinity"]
     self.nmlSet = dict() #:settings which are required for the nml file. keeping the order is important for fortran
     #keys MUST be lowercase for f2py!
     self.nmlSet["hydro_threshold"]=  1.e-10   # [kg/kg]
@@ -62,8 +62,6 @@ class pyPamtra(object):
     self.nmlSet["passive"]= True
     self.nmlSet["radar_mode"]= "simple" #"splitted"|"moments"|"spectrum"
     self.nmlSet["randomseed"] = 0 #0 is real noise, other value gives always the same random numbers
-    self.nmlSet["ground_type"]= 'L'
-    self.nmlSet["salinity"]= 33.0
     self.nmlSet["emissivity"]= 0.6
     self.nmlSet["lgas_extinction"]= True
     self.nmlSet["gas_mod"]= 'R98'
@@ -164,6 +162,11 @@ class pyPamtra(object):
     self.dimensions["Att_hydro"] = ["gridx","gridy","lyr","frequency","att_npol"]
     self.dimensions["Att_atmo"] = ["gridx","gridy","lyr","frequency"]
     self.dimensions["tb"] = ["gridx","gridy","outlevels","angles","frequency","passive_npol"]
+    
+    self.dimensions["sfc_type"] = ["ngridx","ngridy"]
+    self.dimensions["sfc_model"] = ["ngridx","ngridy"]
+    self.dimensions["sfc_refl"] = ["ngridx","ngridy"]
+    self.dimensions["sfc_salinity"] = ["ngridx","ngridy"]
 
     self.units = dict()
 
@@ -203,6 +206,11 @@ class pyPamtra(object):
     self.units["Att_hydros"] = "dB"
     self.units["Att_atmo"] = "dB"
     self.units["tb"] = "K"
+    
+    self.units["sfc_type"] = "-" 
+    self.units["sfc_model"] = "-" 
+    self.units["sfc_refl"] = "-" 
+    self.units["sfc_salinity"] = "ppt"
 
     self._nstokes = 2
     self._nangles = 16
@@ -326,6 +334,11 @@ class pyPamtra(object):
     self.p["nlyrs"] = np.ones(self._shape2D,dtype=int) * missingIntNumber
     self.p["iwv"] = np.ones(self._shape2D) * np.nan
     self.p["radar_prop"] = np.ones(self._shape2D+tuple([2])) * np.nan
+
+    self.p["sfc_type"] = np.ones(self._shape2D,dtype=int) *missingIntNumber
+    self.p["sfc_model"] = np.ones(self._shape2D,dtype=int) *missingIntNumber
+    self.p["sfc_refl"] = np.chararray(self._shape2D)
+    self.p["sfc_salinity"] = np.ones(self._shape2D) * np.nan
 
     self.p["hydro_q"] = np.ones(self._shape4D)  * np.nan
     self.p["hydro_n"] = np.ones(self._shape4D) * np.nan
@@ -643,7 +656,7 @@ class pyPamtra(object):
     The following variables are mandatroy:
     hgt_lev, (temp_lev or temp), (press_lev or press) and (relhum_lev OR relhum)
 
-    The following variables are optional and guessed if not provided:  "timestamp","lat","lon","lfrac","wind10u","wind10v","hgt_lev","hydro_q","hydro_n","hydro_reff","obs_height"
+    The following variables are optional and guessed if not provided:  "timestamp","lat","lon","lfrac","wind10u","wind10v","hgt_lev","hydro_q","hydro_n","hydro_reff","obs_height","sfc_type","sfc_model","sfc_refl","sfc_salinity"
 
     hydro_q, hydro_reff and hydro_n can also provided as hydro_q+no001, hydro_q+no002 etc etc
 
@@ -763,13 +776,35 @@ class pyPamtra(object):
       else:
         raise TypeError("timestamp has to be int, float or datetime object")
 
-    for environment, preset in [["lat",50.938056],["lon",6.956944],["lfrac",1],["wind10u",0],["wind10v",0],["groundtemp",np.nan]]:
+    for environment, preset in [["lat",50.938056],["lon",6.956944],["lfrac",1],["wind10u",0],["wind10v",0],["groundtemp",np.nan],["sfc_salinity",np.nan]]:
       if environment not in kwargs.keys():
         self.p[environment] = np.ones(self._shape2D)*preset
         warnings.warn("%s set to %s"%(environment,preset,), Warning)
       else:
         if type(kwargs[environment]) in (int,np.int32,np.int64,float,np.float32,np.float64):
           self.p[environment] = np.ones(self._shape2D) * kwargs[environment]
+        else:
+          self.p[environment] = kwargs[environment].reshape(self._shape2D)
+
+    for environment, preset in [["sfc_type",-9999],["sfc_model",-9999]]:
+      if environment not in kwargs.keys():
+        self.p[environment] = np.ones(self._shape2D,dtype=int)*preset
+        warnings.warn("%s set to %s"%(environment,preset,), Warning)
+      else:
+        if type(kwargs[environment]) in (int,np.int32,np.int64,float,np.float32,np.float64):
+          self.p[environment] = np.ones(self._shape2D) * kwargs[environment]
+        else:
+          self.p[environment] = kwargs[environment].reshape(self._shape2D)
+
+    for environment, preset in [["sfc_refl",'L']]:
+      if environment not in kwargs.keys():
+        self.p[environment] = np.chararray(self._shape2D)
+        self.p[environment][:] = preset
+        warnings.warn("%s set to %s"%(environment,preset,), Warning)
+      else:
+        if type(kwargs[environment]) in ('|S1'):
+          self.p[environment] = np.chararray(self._shape2D)
+          self.p[environment][:] = preset
         else:
           self.p[environment] = kwargs[environment].reshape(self._shape2D)
 
@@ -867,7 +902,7 @@ class pyPamtra(object):
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
 
-    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","groundtemp"]:
+    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","groundtemp","sfc_type","sfc_model","sfc_refl","sfc_salinity"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape2D)
 
     for key in ["obs_height"]:
@@ -937,7 +972,7 @@ class pyPamtra(object):
     rep4D =  rep2D + (1,1,)
     rep5D =  rep2D + (1,1,1,)
 
-    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","obs_height","groundtemp"]:
+    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","obs_height","groundtemp","sfc_type","sfc_model","sfc_refl","sfc_salinity"]:
       if key in self.p.keys(): self.p[key] = np.tile(self.p[key], rep2D)
 
     for key in ["hydro_q","hydro_n","hydro_reff"]:
@@ -1251,10 +1286,10 @@ class pyPamtra(object):
   def createFullProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
       obs_height,
       hgt_lev,press_lev,temp_lev,relhum_lev,
-      hydro_q,hydro_n,hydro_reff,radar_prop):
+      hydro_q,hydro_n,hydro_reff,radar_prop,sfc_type,sfc_model,sfc_refl,sfc_salinity):
 
     '''
-    create comple Pamtra Profile
+    create complete Pamtra Profile
 
     No Extras, no missing values are guessed. the Data is only reshaped
     '''
@@ -1307,6 +1342,12 @@ class pyPamtra(object):
     self.p["relhum_lev"] = relhum_lev.reshape(self._shape3Dplus)
 
     self.p["radar_prop"] = radar_prop.reshape(self._shape2D)
+
+    self.p["sfc_type"] = sfc_type.reshape(self._shape2D)
+    self.p["sfc_model"] = sfc_model.reshape(self._shape2D)
+    self.p["sfc_refl"] = sfc_refl.reshape(self._shape2D)
+    self.p["sfc_salinity"] = sfc_salinity.reshape(self._shape2D)
+    
     return
 
 
@@ -2126,6 +2167,11 @@ class pyPamtra(object):
     nc_lfrac.units = "-"
     nc_lfrac[:] = np.array(self.p["lfrac"],dtype="f")
     if not pyNc: nc_lfrac._fillValue =missingNumber
+
+    nc_sfc_type = cdfFile.createVariable('sfc_type', 'i',dim2d,**fillVDict)
+    nc_sfc_type.units = "-"
+    nc_sfc_type[:] = np.array(self.p["sfc_type"],dtype="i")
+    if not pyNc: nc_sfc_type._fillValue =missingNumber
 
 
     if (self.r["nmlSettings"]["active"]):

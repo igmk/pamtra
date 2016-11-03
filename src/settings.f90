@@ -38,8 +38,6 @@ module settings
 
     real(kind=dbl) :: obs_height     ! upper level output height [m] (> 100000. for satellite)
     real(kind=dbl) :: emissivity
-    real(kind=dbl) :: salinity         ! sea surface salinity
-!     double precision, dimension(maxfreq) :: freqs
     real(kind=dbl), dimension(maxfreq) :: freqs
 
     real(kind=dbl), dimension(nummu) :: mu_values, quad_weights
@@ -115,7 +113,6 @@ module settings
   character(100) :: creator
   character(18) :: freq_str
   character(2) :: OUTPOL
-  character(1) :: GROUND_TYPE
   character(8) :: radar_airmotion_model, radar_mode
   character(10) :: radar_attenuation
   character(15) :: radar_polarisation
@@ -171,8 +168,6 @@ contains
         read_turbulence_ascii,&
         radar_mode, &
         randomseed, &
-        ground_type, &
-        salinity, &
         emissivity, &
         lgas_extinction, &
         lhyd_absorption, &
@@ -484,8 +479,6 @@ contains
         radar_mode="simple" !|"moments"|"spectrum"
         read_turbulence_ascii = .false.
         randomseed = 0
-        ground_type='L'
-        salinity=33.0
         emissivity=0.6
         lgas_extinction=.true.
         gas_mod='R98'
@@ -585,7 +578,6 @@ contains
       print*, 'radar_aliasing_nyquist_interv: ', radar_aliasing_nyquist_interv
       print*, 'radar_airmotion_linear_steps: ', radar_airmotion_linear_steps
       print*, 'radar_airmotion: ', radar_airmotion
-      print*, 'ground_type: ', ground_type
       print*, 'write_nc: ', write_nc
       print*, 'outpol: ', outpol
       print*, 'radar_no_ave: ', radar_no_ave
@@ -622,7 +614,6 @@ contains
       print*, 'lhyd_scattering: ', lhyd_scattering
       print*, 'radar_k2: ', radar_k2
       print*, 'radar_nPeaks', radar_nPeaks
-      print*, 'salinity: ', salinity
       print*, 'radar_airmotion_vmax: ', radar_airmotion_vmax
       print*, 'radar_min_v: ', radar_min_v
       print*, 'freq_str: ', freq_str
