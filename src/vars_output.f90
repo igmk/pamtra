@@ -18,6 +18,7 @@ module vars_output
 
   !for passive
   real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: out_tb
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_emissivity
   real(kind=dbl), allocatable, dimension(:) :: out_angles_deg 
 
   !for active 
@@ -129,6 +130,8 @@ module vars_output
 !         hwps(:,:)= nan()     
 !    end if
 
+    allocate(out_emissivity(atmo_ngridx,atmo_ngridy,nstokes,nfrq,nummu))
+    out_emissivity = nan()
     allocate(out_angles_deg(2*nummu))
     out_angles_deg = nan()
 !     if (write_nc .or. in_python) then
@@ -240,6 +243,7 @@ module vars_output
 !     if (allocated(hwps)) deallocate(hwps)
 
     if (allocated(out_angles_deg)) deallocate(out_angles_deg)
+    if (allocated(out_emissivity)) deallocate(out_emissivity)
     if (allocated(out_tb)) deallocate(out_tb)
     if (allocated(out_Ze)) deallocate(out_Ze)
     if (allocated(out_radar_hgt)) deallocate(out_radar_hgt)

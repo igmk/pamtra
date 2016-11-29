@@ -1,12 +1,13 @@
 module sfc_optics
 
   ! variables
-  use kinds, only: dbl
+  use kinds
   use report_module
   use settings, only: emissivity!, nstokes, nummu
-  use vars_index, only: i_x, i_y
-  use vars_atmosphere, only : sfc_type, sfc_model, sfc_refl
+  use vars_index, only: i_x, i_y, i_f
+  use vars_atmosphere, only : sfc_type, sfc_model
   use vars_rt, only: rt_sfc_emissivity, rt_sfc_reflectivity
+  use vars_output, only: out_emissivity
   ! routines
   use ocean_sfc_optics
   use land_sfc_optics
@@ -49,18 +50,17 @@ contains
     character(len=14) :: nameOfRoutine = 'set_sfc_optics'
 
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
-    err = 0
     
     if (sfc_type(i_x,i_y) == 0) then ! water
-        if ((sfc_model(i_x,i_y) == 0) .or. (sfc_model(i_x,i_y) == -9999))then ! TESSEM2
+        if ((sfc_model(i_x,i_y) == 0) .or. (sfc_model(i_x,i_y) == -9999)) then ! TESSEM2
             call ocean_sfc_optics_tessem2(err,freq)
         elseif (sfc_model(i_x,i_y) == 1) then ! FASTEM
             call ocean_sfc_optics_fastemx(err,freq)
         end if
     elseif (sfc_type(i_x,i_y) == 1) then ! land
-        if ((sfc_model(i_x,i_y) == 2) .or. (sfc_model(i_x,i_y) == -9999)) then ! TELSEM2
+        if ((sfc_model(i_x,i_y) == 0) .or. (sfc_model(i_x,i_y) == -9999)) then ! TELSEM2
             call land_sfc_optics_telsem2(err,freq)
-        elseif (sfc_model(i_x,i_y) == 3) then ! SSMI
+        elseif (sfc_model(i_x,i_y) == 1) then ! SSMI
             call land_sfc_optics_ssmi(err,freq)
         end if
     else ! default sfc_type == -9999 and sfc_model == -9999
@@ -68,14 +68,17 @@ contains
         rt_sfc_reflectivity(:,:) = 1._dbl - emissivity
     end if
 
-    if (err > 0) then
+    if (err /= 0) then
       errorstatus = fatal
       msg = "error in land_sfc_optics_xxx or ocean_sfc_optics_xxx"
       call report(errorstatus, msg, nameOfRoutine)
       return
-    end if 
+    end if
+    
+    out_emissivity(i_x,i_y,:,i_f,:) = rt_sfc_emissivity(:,:)
 
     errorstatus = err
+   
     if (verbose >= 1) call report(info,'End of ', nameOfRoutine)
     
   end subroutine set_sfc_optics

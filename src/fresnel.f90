@@ -84,7 +84,7 @@ contains
 !       Modified by:    Paul van Delst, CIMSS/SSEC 11-Apr-2007
 !                       paul.vandelst@noaa.gov
 !       Adopted to PAMTRA: Mario Mech, February 2015
-!                          mech@meteo.uni-koeln.de
+!                          mario.mech@uni-koeln.de
 !
 !--------------------------------------------------------------------------------
 

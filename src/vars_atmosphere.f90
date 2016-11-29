@@ -26,7 +26,7 @@ module vars_atmosphere
 
   integer(kind=long), allocatable, dimension(:,:) :: sfc_type, sfc_model
   real(kind=dbl), allocatable, dimension(:,:) :: sfc_salinity
-  character(len=2), allocatable, dimension(:,:) ::  sfc_refl
+  character(len=1), allocatable, dimension(:,:) ::  sfc_refl
   
   real(kind=dbl), allocatable, dimension(:,:,:) :: atmo_relhum_lev,&
        atmo_press_lev, &
@@ -248,7 +248,7 @@ module vars_atmosphere
 
     sfc_type(:,:) = -9999
     sfc_model(:,:) = -9999
-    sfc_refl(:,:) = "na"
+    sfc_refl(:,:) = "L"
     sfc_salinity(:,:) = nan()
 
     atmo_relhum(:,:,:) = nan()

@@ -1,11 +1,11 @@
 ! Get and interpolate land surface emissivities
 !
-subroutine land_emis_ssmi(errorstatus,&
-month, & ! in
+subroutine land_emis (&
+ise, & ! in
 lon, & ! in
 lat, & ! in
 freqdbl,& ! in
-emissivity) ! out
+emissivity)  ! out
     !
     ! Description:
     ! To read and interpolate surface emissivities provided
@@ -25,14 +25,10 @@ emissivity) ! out
 
     use equcom
     use kinds
-    use report_module
-    use settings, only: data_path
-    use mod_io_strings, only: nxstr, nystr
 
     implicit none
     !subroutine arguments:
-    integer(long) :: ise, iolsgl
-    integer(kind=long) :: imonth
+    integer, intent(in) :: ise
 
     real(kind=sgl), intent(in) :: lon,lat
 
@@ -56,46 +52,6 @@ emissivity) ! out
 
     real(kind=dbl), intent(out) :: emissivity
 
-    character(2), intent(in) :: month
-    character(80) :: femis ! filename for the emissivity databases
-    
-    logical :: file_exists
-
-    integer(kind=long), intent(out) :: errorstatus
-    integer(kind=long) :: err = 0
-    character(len=80) :: msg
-    character(len=14) :: nameOfRoutine = 'land_emis_ssmi' 
-
-    if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)   
-
-    inquire(iolength=iolsgl) 1._sgl
-
-    read(month,'(i2)') imonth
-    if ((imonth .ge. 7) .and. (imonth .le. 12)) then
-        femis = data_path(:len_trim(data_path))//'/emissivity/ssmi_mean_emis_92'//month//'_direct'
-    else if ((imonth .ge. 1 ).and. (imonth .lt. 7)) then
-        femis = data_path(:len_trim(data_path))//'/emissivity/ssmi_mean_emis_93'//month//'_direct'
-    else
-        msg = "Warning: No emissivity data found for "//nxstr//" and "//nystr
-        errorstatus = fatal
-        call report(errorstatus,msg,nameOfRoutine)
-        return
-    end if
-
-    ise=13
- 
-    if (verbose >= 4) call report(info,'Opening: '//trim(femis), nameOfRoutine)
-    INQUIRE(FILE=trim(femis), EXIST=file_exists) 
-    if (.not.(file_exists)) then
-        errorstatus = fatal
-        msg = "File not found:"//trim(femis)
-        call report(errorstatus, msg, nameOfRoutine)
-        return
-    end if   
-
-    open(ise,file=trim(femis),status='old',form='unformatted',&
-    access='direct',recl=iolsgl*7,ACTION="READ")
-   
     ! Equal area computations
 
     freq = real(freqdbl)
@@ -272,10 +228,6 @@ emissivity) ! out
 
     emissivity = dble((emiv+emih)/2.d0)
 
-    close(ise)
-    
-    errorstatus = err
-
     return
 
-end subroutine land_emis_ssmi
+end subroutine land_emis

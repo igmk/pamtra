@@ -268,14 +268,12 @@ subroutine rt4(errorstatus,out_file,&
   !scat_files = ''
   !scat_files(atmo_nlyrs(i_x,i_y)) = '1.txt'
 
-
   ground_temp = atmo_groundtemp(i_x,i_y)
   ground_type = sfc_refl(i_x,i_y)
   num_layers = atmo_nlyrs(i_x,i_y)
   height(1:atmo_nlyrs(i_x,i_y)+1) = atmo_hgt_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1:1:-1)             ! [m]
   temperatures(1:atmo_nlyrs(i_x,i_y)+1) = atmo_temp_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1:1:-1)      ! [k]
   gas_extinct(1:atmo_nlyrs(i_x,i_y)) = rt_kextatmo(atmo_nlyrs(i_x,i_y):1:-1)         ! [np/m]
-
 
   !do some tests
   call assert_true(err,(maxlay>=num_layers),&

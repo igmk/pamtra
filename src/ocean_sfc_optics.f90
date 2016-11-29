@@ -85,7 +85,6 @@ module ocean_sfc_optics
   
   do i = 1, nummu
     zenith_angle = acos(mu_values(i))*rad2deg
-
     call compute_fastemx( &
       freq, &     ! Input
       zenith_angle, &  ! Input

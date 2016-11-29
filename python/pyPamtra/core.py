@@ -668,6 +668,8 @@ class pyPamtra(object):
     for key in kwargs.keys():
       if type(kwargs[key]) == np.ma.core.MaskedArray:
         kwargs[key] = kwargs[key].filled(np.nan)
+      if type(kwargs[key]) == np.core.defchararray.chararray:
+          continue
       kwargs[key] = np.array(kwargs[key]) #in case its a list/tuple etc.
 
     #make sure that an descriptor file exists already!
@@ -776,7 +778,7 @@ class pyPamtra(object):
       else:
         raise TypeError("timestamp has to be int, float or datetime object")
 
-    for environment, preset in [["lat",50.938056],["lon",6.956944],["lfrac",1],["wind10u",0],["wind10v",0],["groundtemp",np.nan],["sfc_salinity",np.nan]]:
+    for environment, preset in [["lat",50.938056],["lon",6.956944],["lfrac",1],["wind10u",0],["wind10v",0],["groundtemp",np.nan],["sfc_salinity",33.]]:
       if environment not in kwargs.keys():
         self.p[environment] = np.ones(self._shape2D)*preset
         warnings.warn("%s set to %s"%(environment,preset,), Warning)
@@ -802,7 +804,8 @@ class pyPamtra(object):
         self.p[environment][:] = preset
         warnings.warn("%s set to %s"%(environment,preset,), Warning)
       else:
-        if type(kwargs[environment]) in ('|S1'):
+#        if type(kwargs[environment]) in ('|S1'):
+        if type(kwargs[environment]) == str:
           self.p[environment] = np.chararray(self._shape2D)
           self.p[environment][:] = preset
         else:
@@ -1835,6 +1838,7 @@ class pyPamtra(object):
     self.r["radar_quality"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],self.nmlSet["radar_npeaks"],),dtype=int)*missingNumber
     self.r["radar_vel"] = np.ones((self.set["nfreqs"],radar_spectrum_length))*missingNumber
     self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],self._nangles*2.,self.set["nfreqs"],self._nstokes))*missingNumber
+    self.r["emissivity"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._nstokes,self.set["nfreqs"],self._nangles))*missingNumber
     if self.nmlSet["save_psd"]:
       self.r["psd_area"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
       self.r["psd_n"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
@@ -1877,6 +1881,7 @@ class pyPamtra(object):
     self.r["Att_atmo"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF] = results["Att_atmo"]
     self.r["radar_hgt"][pp_startX:pp_endX,pp_startY:pp_endY,:]= results["radar_hgt"]
     self.r["tb"][pp_startX:pp_endX,pp_startY:pp_endY,:,:,pp_startF:pp_endF,:]= results["tb"]
+    self.r["emissivity"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF,:]= results["emissivity"]
     if self.nmlSet["radar_mode"]=="spectrum":
       self.r["radar_spectra"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_spectra"]
     self.r["radar_snr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_snr"]

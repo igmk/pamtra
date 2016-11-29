@@ -66,11 +66,20 @@ def readWrfDataset(fname,kind):
 
   data["T"] = np.concatenate((data["TSK"],data["T"]),axis=-1)
   data["P"] = np.concatenate((data["PSFC"],data["P"]),axis=-1)
+
   
   #translate variables
-  varPairs = [["Times","timestamp"],["XLAT","lat"],["XLONG","lon"],["LANDMASK","lfrac"],["U10","wind10u"],["V10","wind10v"],["PH","hgt_lev"],["P","press_lev"],["T","temp_lev"],["QVAPOR","q"],["QCLOUD","cwc_q"],["QICE","iwc_q"],["QRAIN","rwc_q"],["QSNOW","swc_q"],["QGRAUP","gwc_q"]]
+  varPairs = [["Times","timestamp"],["XLAT","lat"],["XLONG","lon"],["U10","wind10u"],["V10","wind10v"],["PH","hgt_lev"],["P","press_lev"],["T","temp_lev"],["QVAPOR","q"],["QCLOUD","cwc_q"],["QICE","iwc_q"],["QRAIN","rwc_q"],["QSNOW","swc_q"],["QGRAUP","gwc_q"]]
   
   pamData = dict()
+
+  # surface properties
+  pamData['sfc_type'] = np.zeros(data['PSFC'].shape)
+  pamData['sfc_type'] = np.around(data['LANDMASK'])
+  pamData['sfc_model'] = np.zeros(data['PSFC'].shape)
+  pamData['sfc_refl'] = np.chararray(data['PSFC'].shape)
+  pamData['sfc_refl'][:] = 'F'
+
   for wrfVar,pamVar in varPairs:
     pamData[pamVar] = data[wrfVar]
   
@@ -256,7 +265,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
     data["hydro_q"][...,4] = data["qg"]
     
     #translate variables
-    varPairs = [["time1h","timestamp"],["latitude","lat"],["longitude","lon"],["fr_land","lfrac"],["u_10m","wind10u"],["v_10m","wind10v"],["hhl","hgt_lev"],["p","press"],["temperature","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["t_s","groundtemp"],["temp_lev","temp_lev"],["press_lev","press_lev"]]
+    varPairs = [["time1h","timestamp"],["latitude","lat"],["longitude","lon"],["u_10m","wind10u"],["v_10m","wind10v"],["hhl","hgt_lev"],["p","press"],["temperature","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["t_s","groundtemp"],["temp_lev","temp_lev"],["press_lev","press_lev"]]
   
   elif kind == "gop_fields_SynSatMic":
     assert constantFields
@@ -381,7 +390,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
     data["hydro_q"][...,3] = data["QS"]
     data["hydro_q"][...,4] = data["QG"]
     
-    varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],["FR_LAND","lfrac"],["U_10M","wind10u"],["V_10M","wind10v"],["HHL","hgt_lev"],["P","press"],["T","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["T_G","groundtemp"],["press_lev","press_lev"]]    
+    varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],["U_10M","wind10u"],["V_10M","wind10v"],["HHL","hgt_lev"],["P","press"],["T","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["T_G","groundtemp"],["press_lev","press_lev"]]    
     
   else:
         raise TypeError("unknown Cosmo DE data type "+kind)
@@ -389,6 +398,12 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
   pamData = dict()
   for cosmoVar,pamVar in varPairs:
     pamData[pamVar] = data[cosmoVar]
+  # surface properties
+  pamData['sfc_type'] = np.zeros(shape2D)
+  pamData['sfc_type'] = np.around(data['FR_LAND'])
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][:] = 'F'
    
   pam = pyPamtra()
   pam.set["pyVerbose"]= verbosity
@@ -698,11 +713,18 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
   data["hydro_q"][...,4] = data["QG"]
   data["hydro_q"][...,5] = data["QH"]
 
-  varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],["FR_LAND","lfrac"],["U_10M","wind10u"],["V_10M","wind10v"],["HHL","hgt_lev"],["P","press"],["T","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["hydro_n","hydro_n"],["T_G","groundtemp"],["press_lev","press_lev"]]    
+  varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],["U_10M","wind10u"],["V_10M","wind10v"],["HHL","hgt_lev"],["P","press"],["T","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["hydro_n","hydro_n"],["T_G","groundtemp"],["press_lev","press_lev"]]    
     
   pamData = dict()
   for cosmoVar,pamVar in varPairs:
     pamData[pamVar] = data[cosmoVar]
+
+  # surface properties
+  pamData['sfc_type'] = np.zeros(shape2D)
+  pamData['sfc_type'] = np.around(data['FR_LAND'])
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][:] = 'F'
    
   pam = pyPamtra()
   pam.set["pyVerbose"]= verbosity
@@ -734,7 +756,7 @@ def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",deb
 #  if len(filesA) == 0: raise RuntimeError( "no files found")
 #  filesA.sort()
 
-  variables1D = ["T_G","PS","U_10M","V_10M"]
+  variables1D = ["T_G","PS","U_10M","V_10M","FR_LAND"]
   variables2D = ["T","P","QV","QC","QI","QR","QS","QG","QH","QNCLOUD","QNICE","QNRAIN","QNSNOW","QNGRAUPEL","QNHAIL"]
 
   if verbosity>0: print fnameA
@@ -811,7 +833,15 @@ def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",deb
 
   pamData["relhum"] = np.expand_dims((q2rh(data["QV"],data["T"],data["P"]) * 100.)[:,::-1],axis=1)
 
-  varPairs = [["cosmoTime","timestamp"],["cosmoLat","lat"],["cosmoLon","lon"],["FR_LAND","lfrac"],["U_10M","wind10u"],["V_10M","wind10v"],["T_G","groundtemp"]]    
+#  import pdb;pdb.set_trace()
+  # surface properties
+  pamData['sfc_type'] = np.zeros(shape2D)
+  pamData['sfc_type'] = np.around(data['FR_LAND'])
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][:] = 'F'
+  
+  varPairs = [["cosmoTime","timestamp"],["cosmoLat","lat"],["cosmoLon","lon"],["sfc_type","sfc_type"],["sfc_model","sfc_model"],["U_10M","wind10u"],["V_10M","wind10v"],["T_G","groundtemp"]]    
     
   for cosmoVar,pamVar in varPairs:
     pamData[pamVar] = np.expand_dims(data[cosmoVar],axis=1)
@@ -941,13 +971,19 @@ def readCosmoReAn2km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
   
   pam = pyPamtra()
   pam.df.readFile(descriptorFile)
-  varPairs = [["timestamp","timestamp"],["rlat","lat"],["rlon","lon"],["fr_land","lfrac"],["10u","wind10u"],["10v","wind10v"],
+  varPairs = [["timestamp","timestamp"],["rlat","lat"],["rlon","lon"],["10u","wind10u"],["10v","wind10v"],
 	      ["press","press"],["t","temp"],["relhum","relhum"],["t_g","groundtemp"],['hhl','hgt_lev'],['hydro_q','hydro_q']]    
 
   pamData = dict()
 
   for dataVar,pamVar in varPairs:
     pamData[pamVar] = data[dataVar]
+  # surface properties
+  pamData['sfc_type'] = np.zeros(shape2D)
+  pamData['sfc_type'] = np.around(data['fr_land'])
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][:] = 'F'
 
   del data
   
@@ -1074,7 +1110,7 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
   
   pam = pyPamtra()
   pam.df.readFile(descriptorFile)
-  varPairs = [["timestamp","timestamp"],["rlat","lat"],["rlon","lon"],["fr_land","lfrac"],["10u","wind10u"],["10v","wind10v"],
+  varPairs = [["timestamp","timestamp"],["rlat","lat"],["rlon","lon"],["10u","wind10u"],["10v","wind10v"],
 	      ["press","press"],["t","temp"],["relhum","relhum"],["t_g","groundtemp"],['hhl','hgt_lev'],['hydro_q','hydro_q']]    
 
   pamData = dict()
@@ -1082,6 +1118,13 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
 
   for dataVar,pamVar in varPairs:
     pamData[pamVar] = data[dataVar]
+
+  # surface properties
+  pamData['sfc_type'] = np.zeros(shape2D)
+  pamData['sfc_type'] = np.around(data['fr_land'])
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][:] = 'F'
 
   del data
   
@@ -1163,12 +1206,18 @@ def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,d
   pam = pyPamtra()
   pam.df.readFile("../descriptorfiles/descriptor_file_meso-nh.txt")
   #pam.df.readFile("../descriptorfiles/descriptor_file_COSMO_1mom.txt")
-  varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],["lfrac","lfrac"],["wind10u","wind10u"],["wind10v","wind10v"],
+  varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],["wind10u","wind10u"],["wind10v","wind10v"],
 	      ["press","press"],["temp","temp"],["relhum","relhum"],["groundtemp","groundtemp"],['hgt_lev','hgt_lev'],['hydro_q','hydro_q']]    
 
   pamData = dict()
   for dataVar,pamVar in varPairs:
     pamData[pamVar] = data[dataVar]
+  # surface properties
+  pamData['sfc_type'] = np.zeros(shape2D)
+  pamData['sfc_type'] = np.around(data['lfrac'])
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][:] = 'F'
 
   del data
   
