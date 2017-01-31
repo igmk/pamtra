@@ -172,8 +172,8 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
       specSNR = SUM(radar_spectrum_arr(nn,left_edge+1:right_edge-1))/(right_edge-left_edge-1)/noise
     else
             msg = 'Do not understand radar_peak_snr_definition'
-            call report(err, msg, nameOfRoutine)
-            errorstatus = err
+            call report(fatal, msg, nameOfRoutine)
+            errorstatus = fatal
             return
     end if
     !check whether peak is NOT present:
