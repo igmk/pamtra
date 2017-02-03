@@ -31,7 +31,6 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
 
     implicit none
 
-
     real(kind=dbl), dimension(radar_npol),intent(in) ::  back !volumetric backscattering crossection in m²/m³
     real(kind=dbl),intent(in) ::  delta_h !heigth of layer in m
     real(kind=dbl),intent(in) ::  kexthydro !hydrometeor absorption coefficient [Np/m]
@@ -39,14 +38,14 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
 
     real(kind=dbl), dimension(radar_nfft_aliased) :: particle_spectrum_att
     real(kind=dbl), dimension(radar_nfft_aliased) :: spectra_velo_aliased
-    real(kind=dbl), dimension(radar_maxTurbTerms):: turb
+    real(kind=dbl), dimension(radar_nfft_aliased):: turb
     real(kind=dbl), dimension(radar_nfft*radar_no_Ave(i_f)):: x_noise
     real(kind=dbl), dimension(radar_no_Ave(i_f),radar_nfft):: noise_turb_spectra_tmp
     real(kind=dbl), dimension(radar_nfft):: noise_turb_spectra,&
     snr_turb_spectra,spectra_velo, turb_spectra_aliased, noise_removed_turb_spectra
     integer::quality_moments, quailty_aliasing
     real(kind=dbl), dimension(2) :: rand_number
-    real(kind=dbl), dimension(:),allocatable:: turb_spectra
+    real(kind=dbl), dimension(2*radar_nfft_aliased-1):: turb_spectra
     real(kind=dbl), dimension(0:4,radar_nPeaks):: moments
     real(kind=dbl), dimension(2,radar_nPeaks):: slope
     real(kind=dbl), dimension(2,radar_nPeaks):: edge
@@ -54,8 +53,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
     real(kind=dbl) :: noise, noise_max
     real(kind=dbl):: SNR, del_v, ss, K2, wavelength, Ze_back, K, &
     min_V_aliased, max_V_aliased, receiver_uncertainty, radar_Pnoise, frequency
-    integer(kind=long) :: ii, tt, turbLen,alloc_status,ts_imin, ts_imax, startI, stopI, seed
-
+    integer(kind=long) :: ii, tt,ts_imin, ts_imax, startI, stopI, seed
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
     character(len=80) :: msg
@@ -110,8 +108,6 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
       call report(errorstatus, msg, nameOfRoutine)
       return
     end if
-
-    i_n = 1 ! only radar_nPeaks=1 implemented as of today
 
     if (verbose >= 10)print*, "particle_spectrum"
     if (verbose >= 10)print*, particle_spectrum
@@ -227,11 +223,10 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
 
             if (verbose > 10) print*, i_x,i_y,i_z,i_f, ss
 
-            ss = ss/del_v !in array indices!
 
           else if (.not.  isnan(atmo_airturb(i_x,i_y,i_z)) .and. &
                   (isnan(atmo_turb_edr(i_x,i_y,i_z)*atmo_wind_uv(i_x,i_y,i_z)))) then
-            ss = atmo_airturb(i_x,i_y,i_z)/del_v !in array indices!
+            ss = atmo_airturb(i_x,i_y,i_z)
           else if ((isnan(atmo_airturb(i_x,i_y,i_z))) .and. (isnan(atmo_turb_edr(i_x,i_y,i_z))) .and. &
                  (isnan(atmo_wind_uv(i_x,i_y,i_z))) ) then! no value provided.. take zero
             ss = 0.d0
@@ -244,32 +239,28 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
           end if  
 
 
+          ! The convolution function will return a vector of length 2*radar_nfft_aliased-1. 
+          ! Get the indices to cut out the required part.
+          ! Error here result in a shifted spectrum
+          ts_imin = (radar_nfft_aliased/2.) + 1
+          ts_imax = 2*(radar_nfft_aliased/2.)
 
          !get turbulence (no turbulence in clear sky...)
          turb(:) = 0.d0
          if ((ss > 0.d0) .and. (back(i_p) > 0)) then
-        
-              tt = 1
-              do while (tt .le. 24.d0/del_v+1)
-                  if (tt .gt. radar_maxTurbTerms) then
-                      print*,radar_maxTurbTerms, INT(12.d0/del_v+1.d0)
-                      errorstatus = fatal
-                      msg = "maximum of turbulence terms reached. increase radar_maxTurbTerms (settings.f90)"
-                      call report(errorstatus, msg, nameOfRoutine)
-                      return
-                  end if
-                  turb(tt) = 1.d0/(sqrt(2.d0*pi)*ss) * exp(-(tt-(12.d0/del_v+1))**2.d0/(2.d0*ss**2.d0))
-                  tt = tt+1
+              do tt = 1  , radar_nfft_aliased
+                  ! gaussian function with same length as radar spectrum, centered around zero
+                  turb(tt) = exp(-(spectra_velo_aliased(tt)-0)**2.d0/(2.d0*ss**2.d0))
               end do
-
-              turbLen=tt-1
-
+              turb(:) = turb/ sum(turb) !normalize to unity area   
         end if
-        ! in case ss was so little that sum(turb) is zero)
+
+        ! skip in case ss was so little that sum(turb) is zero)
         if ((SUM(turb) > 0.d0) .and. (back(i_p) > 0)) then
-         
           call assert_false(err,(ANY(ISNAN(turb)) .or. (SUM(turb) <= 0.d0)),&
               "got nan or negative value in linear turb")
+          call assert_true(err,((ABS(turb(1)) < almostZero) .and.(ABS(turb(radar_nfft_aliased))  < almostZero)),&
+              "increase radar_aliasing_nyquist_interv, turbulence too large")
           if (err > 0) then
             errorstatus = fatal
             msg = "assertation error"
@@ -277,47 +268,28 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
             return
           end if
 
-              if (SIZE(particle_spectrum_att)+turbLen-1 .lt. floor(12.d0/del_v+1)+radar_nfft-1) then
-                print*, SIZE(particle_spectrum_att)+turbLen-1,floor(12.d0/del_v+1)+radar_nfft-1
-                errorstatus = fatal
-                msg =  "vector resulting from convolution to short!"
-                call report(errorstatus, msg, nameOfRoutine)
-                return
-              end if
-
-              allocate(turb_spectra(SIZE(particle_spectrum_att)+turbLen-1),stat=alloc_status)
-
 
               !convolute spectrum and noise
-              call convolution(err,particle_spectrum_att,SIZE(particle_spectrum_att),turb(1:turbLen),turbLen,turb_spectra)
+              call convolution(err,particle_spectrum_att,radar_nfft_aliased,turb,radar_nfft_aliased,turb_spectra)
               if (err /= 0) then
                   msg = 'error in convolution!'
                   call report(err, msg, nameOfRoutine)
                   errorstatus = err
-                  if (allocated(turb_spectra)) deallocate(turb_spectra)
                   return
               end if
 
-              !I don't like Nans and negative values here'
+              !I don't like Nans values here
               where(ISNAN(turb_spectra)) turb_spectra = 0.d0
+              ! negative number are resulting from numerical effects
               where(turb_spectra<0) turb_spectra = 0.d0
-              ts_imin = floor(12.d0/del_v+1)
-              ts_imax = floor(12.d0/del_v+1)+radar_nfft_aliased-1
           else
-              !add no turbulence
-              ts_imin = 1
-              ts_imax = radar_nfft_aliased
-              allocate(turb_spectra(radar_nfft_aliased),stat=alloc_status)
-              turb_spectra = particle_spectrum_att
+              turb_spectra(:) = 0.d0
+              turb_spectra(ts_imin:ts_imax) = particle_spectrum_att
+
           end if
           if (verbose >= 10)print*, "turb_spectra"
           if (verbose >= 10)print*, SHAPE(turb_spectra)
           if (verbose >= 10)print*, turb_spectra
-
-          !     if ((turb_spectra(ts_imin) .ne. 0.d0) .or.(turb_spectra(ts_imax) .ne. 0.d0)) then
-          !       print*, "WARNING: radar_aliasing_nyquist_interv too small to handle aliasing effects, increase it!"
-          !       stop
-          !     end if
 
           quailty_aliasing = 0
           !lets look for aliasing effects. if we calculated radar_aliasing_nyquist_interv for a broader spectrum than necessary, fold it again:
@@ -328,13 +300,13 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
                   startI = ts_imin + (ii-1)*radar_nfft
                   stopI =  ts_imax -  (1+2*radar_aliasing_nyquist_interv - ii)*radar_nfft
                   if ((ii .ne. radar_aliasing_nyquist_interv + 1) &
-                  .and. (SUM(turb_spectra(startI:stopI)) .gt. 0.d0)) then
+                  .and. (SUM(turb_spectra(startI:stopI)) .gt. almostZero)) then
                       quailty_aliasing = 1
                   end if
                   !appy aliasing
                   turb_spectra_aliased = turb_spectra_aliased + turb_spectra(startI:stopI)
               end do
-          else
+          else ! aliasing effects not considered
               turb_spectra_aliased = turb_spectra(ts_imin:ts_imax)
           end if
 
@@ -357,7 +329,6 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
             return
           end if
 
-          !spetial output for testing the radar simulator
           if (verbose == 666) then
             print*, "##########################################"
             print*, "velocity (m/s)"
@@ -367,10 +338,11 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
             print*, SHAPE(turb_spectra_aliased)
             print*, turb_spectra_aliased
             print*, "##########################################"
+          end if
+          !spetial output for testing the radar simulator
         out_debug_radarvel(:) = spectra_velo(:)
         out_debug_radarback_wturb(:) = turb_spectra_aliased
 
-          end if
 
           !get the SNR
           SNR = 10.d0*log10(Ze_back/radar_Pnoise)
@@ -415,7 +387,6 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
                   msg = 'error in random!'
                   call report(err, msg, nameOfRoutine)
                   errorstatus = err
-                  if (allocated(turb_spectra)) deallocate(turb_spectra)
                   return
               end if
               do tt = 1, radar_no_Ave(i_f)
@@ -436,8 +407,8 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
             print*, "particle_spec with turbulence and noise (v) [mm⁶/m³/(m/s)] ", MAXVAL(noise_turb_spectra)
             print*, noise_turb_spectra
             print*, "##########################################"
-            out_debug_radarback_wturb_wnoise(:) = noise_turb_spectra(:)
           end if
+          out_debug_radarback_wturb_wnoise(:) = noise_turb_spectra(:)
 
           !apply spectral resolution
           noise_turb_spectra = noise_turb_spectra * del_v !now [mm⁶/m³]
@@ -515,7 +486,6 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
             msg = 'error in radar_calc_moments!'
             call report(err, msg, nameOfRoutine)
             errorstatus = err
-            if (allocated(turb_spectra)) deallocate(turb_spectra)
             return
         end if
           if (verbose >= 4) then
@@ -567,7 +537,6 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
               print*, "out_Ze",out_Ze(i_x,i_y,i_z,i_f,i_p,i_n)
             end if
           end do
-          if (allocated(turb_spectra)) deallocate(turb_spectra)
       else
         errorstatus = fatal
         msg =   "did not understand radar_mode"// radar_mode
