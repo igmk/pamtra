@@ -39,5 +39,6 @@ module constants
     real(kind=dbl), parameter :: deg2rad = pi/180.0_dbl
     real(kind=dbl), parameter :: rad2deg = 180.0_dbl/pi
     complex(kind=dbl), parameter :: im = (0.0_dbl, 1.0_dbl)
+    real(kind=dbl), parameter :: almostZero = 1d-20              !to account for numeric noise when comparing to zero
 
 end module constants

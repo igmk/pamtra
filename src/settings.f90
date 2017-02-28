@@ -73,7 +73,6 @@ module settings
     real(kind=dbl), dimension(maxfreq) :: radar_peak_min_bins
     real(kind=dbl) :: radar_peak_min_bins_default 
 
-
     real(kind=dbl) :: radar_airmotion_vmin
     real(kind=dbl) :: radar_airmotion_vmax
     real(kind=dbl) :: radar_airmotion_step_vmin
@@ -137,7 +136,7 @@ module settings
   character(300) :: tmatrix_db_path
 
   integer(kind=long) :: noutlevels ! number of output levels per profile
-  integer(kind=long) :: radar_nfft_aliased, radar_maxTurbTerms !are gained from radar_aliasing_nyquist_interv and radar_nfft
+  integer(kind=long) :: radar_nfft_aliased !is calculated from radar_aliasing_nyquist_interv and radar_nfft
 
   integer(kind=long) :: randomseed !random seed, 0 means time dependence
 contains
@@ -221,7 +220,6 @@ contains
         radar_fwhr_beamwidth_deg, &
         liblapack, &
         radar_allow_negative_dD_dU
-
       err = 0
 
      if (verbose >= 3) print*,'Start of ', nameOfRoutine
@@ -420,7 +418,6 @@ contains
 
     !mix some variables to make new ones:
     radar_nfft_aliased = radar_nfft *(1+2*radar_aliasing_nyquist_interv)
-    radar_maxTurbTerms = radar_nfft_aliased * 12
 
     !in python some options are missing. The output levels have already been added by reScaleHeights module of pyPamtra
     if (in_python) add_obs_height_to_layer = .false.
@@ -547,7 +544,6 @@ contains
         radar_receiver_miscalibration(:)= floatNfreq
         radar_receiver_miscalibration_default =  0.d0 !dB
 
-
         radar_aliasing_nyquist_interv = 1
         radar_save_noise_corrected_spectra = .false.
         radar_use_hildebrand = .false.
@@ -652,7 +648,6 @@ contains
       print*, "radar_pol", radar_pol
       print*, "radar_npol", radar_npol
       print*, "radar_nfft_aliased", radar_nfft_aliased
-      print*, "radar_maxTurbTerms", radar_maxTurbTerms
       print*, "liblapack", liblapack
       print*, "radar_allow_negative_dD_dU", radar_allow_negative_dD_dU
 

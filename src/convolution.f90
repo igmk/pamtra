@@ -14,12 +14,12 @@ subroutine convolution(errorstatus,X,M,A,N,Y)
     real(kind=dbl), intent(out), dimension(M+N-1) :: Y ! Y result, length M+N-1
 
     integer(kind=long), intent(out) :: errorstatus ! error reported to report module
-    integer(kind=long) :: err = 0
+    integer(kind=long) :: err
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'convolution' 
     
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
-    
+    err = 0
 
     call assert_false(err,(ALL(X == 0)),&
       "all x values zero")

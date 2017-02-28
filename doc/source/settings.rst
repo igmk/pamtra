@@ -46,7 +46,7 @@ radar\_max\_v ( v_nyq )            float*                         -7.885 m/s    
 radar\_min\_v ( v_nyq )            float*                         7.885 m/s          Minimum Nyquist velocity
 radar_peak_min_bins                int*                           2                  Minimum peak width
 radar_peak_min_snr                 float*                         -10 dB             Minimal required SNR reqired for a peak. See radar_peak_min_snr for defintion
-radar_peak_snr_definition          linSpec | log                  log                log: radar_peak_min_snr describes snr of peak in dB. linSpec: radar_peak_min_snr descibes mean signal+noise to noise ratio (available for historical reasons)
+radar_peak_snr_definition          specLin | log                  log                log: radar_peak_min_snr describes snr of peak in dB. linSpec: radar_peak_min_snr descibes mean signal+noise to noise ratio (available for historical reasons)
 radar\_mode                        simple, spectrum, moments      simple             Use "simple" radar simulator provides only Z_e by integrating Eq. \label{eq:etaD} over  D. The advanced "spectrum" simulator simulates the complete radar Doppler spectrum and estimates all moments from the spectrum. "moments" is identical to "spectrum" but the full Doppler spectrum is discarded to save memory.
 radar\_nfft ( N_fft )              positive integer               256                Number of FFT points in the Doppler spectrum
 radar\_no\_Ave ( Nave )            positive integer*              150                Number of spectral averages

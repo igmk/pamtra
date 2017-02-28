@@ -114,7 +114,7 @@ class pyPamtra(object):
     self.nmlSet["radar_use_wider_peak"]=  False #
     self.nmlSet["radar_integration_time"] =  1.4 # MMCR Barrow during ISDAC
     self.nmlSet["radar_fwhr_beamwidth_deg"] = 0.31 # full width haalf radiation beam width MMCR Barrow 
-
+    
     self.nmlSet["liblapack"]=  True # use liblapack for matrix inversion
 
 

@@ -253,7 +253,7 @@ subroutine radar_spectrum(&
     end if
 
 
-    del_v_model(nbins) = del_v_model(nbins)
+    del_v_model(nbins) = del_v_model(nbins-1)
     back_vel_spec = back_spec_ref * ABS(dD_dU)  !non-SI: [mm⁶/m³/m * m/(m/s)]
     !get delta velocity
     del_v_radar = (radar_max_V(i_f)-radar_min_V(i_f))/radar_nfft ![m/s]
