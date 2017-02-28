@@ -10,7 +10,7 @@ module settings
 
     !!Global Stettings
     integer, parameter :: MAXV = 64,   &
-    MAXLAY = 600, &
+    MAXLAY = 3000, &
     maxleg = 200, &
     maxfreq = 200, &
     nummu = 16, & ! no. of observation angles
