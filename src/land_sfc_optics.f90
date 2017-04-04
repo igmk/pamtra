@@ -23,7 +23,6 @@ contains
         if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
         call telsem2(err,atmo_month(i_x,i_y),atmo_lon(i_x,i_y),atmo_lat(i_x,i_y),freq,land_emissivity)
-!        print*, land_emissivity(:,0)
 
         if (err /= 0) then
             print*, i_x, i_y,atmo_lon(i_x,i_y),atmo_lat(i_x,i_y),&
@@ -57,7 +56,6 @@ contains
         if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
         call land_emis_ssmi(err,atmo_month(i_x,i_y),atmo_lon(i_x,i_y),atmo_lat(i_x,i_y),freq,land_emissivity)
-        print*, land_emissivity
 
         if (land_emissivity < 0.01_dbl) then
             land_emissivity = 0.94_dbl

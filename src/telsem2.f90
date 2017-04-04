@@ -44,7 +44,13 @@ subroutine telsem2(errorstatus, month, lon, lat, freq, emissivity)
   end if
 
   read(month,'(I2)') imonth
-  lon_tmp = lon + 180.
+  ! the data in the database as a range in longitude from 0 to 360. therefore we need to transform 
+  ! negative longitudes to the range 180 to 359
+  if (lon < 0.) then
+    lon_tmp = lon + 360.
+  else
+    lon_tmp = lon
+  end if
   do i = 1,nummu
     theta = acos(mu_values(i))*rad2deg
     !====================================================
@@ -60,9 +66,7 @@ subroutine telsem2(errorstatus, month, lon, lat, freq, emissivity)
         return
     end if
     
-    print*, imonth,lat,lon_tmp,theta,freq
     call emis_interp_ind_sing(err,lat,lon_tmp,theta,freq,emissivity(1,i),emissivity(2,i))
-    print*, imonth,lat,lon_tmp,theta,freq,emissivity(1,i),emissivity(2,i)
     if (err /= 0) then
         msg = 'error in emis_interp_ind_sing'
         call report(err,msg, nameOfRoutine)

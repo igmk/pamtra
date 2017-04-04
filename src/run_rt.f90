@@ -80,6 +80,7 @@ subroutine run_rt(errorstatus)
   msg = "calculating: "// frq_str// " Y: "//ystr//" of "//nystr//" X: "//xstr//" of "//nxstr
 
   if (verbose >= 2) call report(info,msg, nameOfRoutine)
+  
   ! This GCE model format does not have all the fields expected by
   ! the radiative transfer code (i.e. total pressure, and water vapor
   ! pressure for this model).  Assign/compute the missing fields first

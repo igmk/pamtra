@@ -900,17 +900,21 @@ class pyPamtra(object):
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
+    self._shape3Dhyd = (self.p["ngridx"],self.p["ngridy"],self.df.nhydro)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
 
-    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","groundtemp","sfc_type","sfc_model","sfc_refl","sfc_salinity"]:
+    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","groundtemp","iwv","sfc_type","sfc_model","sfc_refl","sfc_salinity"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape2D)
 
     for key in ["obs_height"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3Dout)
-
+      
+    for key in ["hydro_wp","hydro_tn"]:
+      if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3Dhyd)
+      
     for key in ["hydro_q","hydro_n","hydro_reff"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape4D)
 
