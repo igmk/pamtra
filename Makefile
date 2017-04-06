@@ -18,10 +18,9 @@ CC=gcc
 FCFLAGS=-c -fPIC -Wunused  -cpp -J$(OBJDIR) -I$(OBJDIR)
 #FCFLAGS=-g -c -fPIC -Wunused -O0 -cpp -J$(OBJDIR) -I$(OBJDIR)
 
-NCFLAGS :=  $(shell $(NCCONF) --fflags)  -fbounds-check
-NCFLAGS_F2PY := -I$(shell $(NCCONF) --includedir) #f2py does not like -g and -O2
-LFLAGS := -L/usr/lib/ -llapack -L$(LIBDIR) -L../$(LIBDIR) -ldfftpack -lblas
-LDFLAGS := $(shell $(NCCONF) --flibs) -lz
+NCFLAGS :=  $(shell $(NCCONF) --fflags) 
+LFLAGS := -L/usr/lib/ -llapack -L$(LIBDIR) -L../$(LIBDIR) -ldfftpack -lblas -lz
+LDFLAGS := $(shell $(NCCONF) --flibs) 
 # it's messi but needed for ubuntu 16.04
 to_remove:=-Wl,-Bsymbolic-functions -Wl,-z,relro
 LDFLAGS := $(subst $(to_remove),,$(LDFLAGS))
@@ -120,14 +119,15 @@ OBJECTS=kinds.o \
 	versionNumber.auto.o \
 	smooth_savitzky_golay.o \
 	radar_hildebrand_sekhon.o \
-	write_nc_results.o \
 	tmatrix_amplq.lp.o \
 	deallocate_everything.o
+OBJECTS_NC=write_nc_results.o
+
+
 FOBJECTS=$(addprefix $(OBJDIR),$(OBJECTS))
+FOBJECTS_NC=$(addprefix $(OBJDIR),$(OBJECTS_NC))
 
 BIN=pamtra
-
-
 
 all: dfftpack pamtra py py_usStandard 
 
@@ -166,8 +166,8 @@ $(LIBDIR):
 $(BINDIR):
 	mkdir -p $(BINDIR)
 
-$(BINDIR)$(BIN): $(FOBJECTS) | $(BINDIR)
-	$(FC) -I$(OBJDIR) -o $(BINDIR)$(BIN) $(SRCDIR)pamtra.f90 $(FOBJECTS) $(LFLAGS) $(LDFLAGS)
+$(BINDIR)$(BIN): $(FOBJECTS) $(FOBJECTS_NC) | $(BINDIR)
+	$(FC) -I$(OBJDIR) -o $(BINDIR)$(BIN) $(SRCDIR)pamtra.f90 $(FOBJECTS) $(FOBJECTS_NC) $(LFLAGS) $(LDFLAGS)
 
 $(OBJDIR)scatdb.o:  $(SRCDIR)scatdb.c  | $(OBJDIR)
 	$(CC) -O  -fPIC -c $< -o $@
@@ -205,15 +205,15 @@ pamtraProfile: 	pamtra
 	@echo "gprof ./pamtra | gprof2dot.py | dot -Tpng -o output_old.png"
 	@echo "####################################################################################"
 
-pyProfile: NCFLAGS_F2PY += -DF2PY_REPORT_ATEXIT
+pyProfile: LFLAGS += -DF2PY_REPORT_ATEXIT
 pyProfile: 	py
 	@echo ""
 	@echo "####################################################################################"
 	@echo "performance report displayed at exit of python"
 	@echo "####################################################################################"
 
-pyDebug: FCFLAGS += -g -fbacktrace -fbounds-check
-pyDebug: NCFLAGS_F2PY += --debug-capi
+pyDebug: LFLAGS += -g -fbacktrace -fbounds-check
+pyDebug: LFLAGS += --debug-capi
 pyDebug: 	py
 	@echo ""
 	@echo "####################################################################################"
@@ -234,7 +234,7 @@ py: NCFLAGS += -O2
 py: $(PYTDIR)pyPamtraLib.so
 
 $(PYTDIR)pyPamtraLib.so:  $(SRCDIR)pyPamtraLib.f90 $(OBJDIR)pypamtralib.pyf $(FOBJECTS) | $(BINDIR)
-	cd $(OBJDIR) && $(F2PY) $(NCFLAGS_F2PY) $(LDFLAGS) $(LFLAGS) -c --fcompiler=gnu95  ../$(OBJDIR)pypamtralib.pyf $(OBJECTS) ../$(SRCDIR)pyPamtraLib.f90
+	cd $(OBJDIR) && $(F2PY) $(LFLAGS) -c --fcompiler=gnu95  ../$(OBJDIR)pypamtralib.pyf $(OBJECTS) ../$(SRCDIR)pyPamtraLib.f90
 	mv $(OBJDIR)/pyPamtraLib.so $(PYTDIR)
 	cp $(PYTDIR)/pamtra.py $(BINDIR)
 
