@@ -154,7 +154,7 @@ subroutine radtran4(errorstatus, max_delta_tau,&
   character*1  ground_type
 
   integer   maxv, maxm, maxlm
-  parameter (maxv=64, maxm=4096, maxlm=201 * (maxv)**2)!maxlm=201*256)
+  parameter (maxv=64, maxm=4096, maxlm=2001 * (maxv)**2)!maxlm=201*256) !maxlm=201 * (maxv)**2
 
   real*8    pi, twopi, zero
   parameter (pi = 3.1415926535897932384d0, twopi=2.0d0*pi)
