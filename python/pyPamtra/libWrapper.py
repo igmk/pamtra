@@ -43,7 +43,8 @@ def PamtraFortranWrapper(
   
   settings.in_python = True
   settings.nfrq = len(sets["freqs"])
-  settings.freqs[:len(sets["freqs"])] = sets["freqs"]
+  settings.freqs = sets["freqs"]
+  #settings.freqs[:len(sets["freqs"])] = sets["freqs"]
   
   settings.settings_fill_default()      
   
