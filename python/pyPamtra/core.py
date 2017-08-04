@@ -2029,7 +2029,7 @@ class pyPamtra(object):
     dim6d_pas = ("grid_x","grid_y","outlevels","angles","frequency","passive_polarisation")
 
 
-    attUnit = "dBz"
+    attUnit = "dB"
     zeUnit = "dBz"
 
     #create and write dim variables
