@@ -126,7 +126,13 @@ subroutine convolutionFFT(Xin,M,Ain,N,Yout)
 
     use kinds
     implicit none
-  
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    include 'fftw3.f' ! To be included in the same directory of this file. 
+                      ! Fortran compiler does not look into /usr/include/
+                      ! Copy it from /usr/include/ or provide -I $FFTW3_INC
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
     INTEGER, intent(in) :: M  ! Size of input vector X
     INTEGER, intent(in) :: N   ! Size of convolution filter A
 
@@ -138,6 +144,10 @@ subroutine convolutionFFT(Xin,M,Ain,N,Yout)
     REAL(kind=dbl) :: A, B, C, D
     REAL(kind=dbl),allocatable :: R1(:),R2(:),RF(:), &
     WSAVE(:)
+
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    integer*8 plan                                    ! We always need a plan!
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     !increase input to same length
     MN = M+N-1
@@ -155,10 +165,17 @@ subroutine convolutionFFT(Xin,M,Ain,N,Yout)
     R2(1:N) = Ain(:)
 
 
-    CALL DFFTI( MNext, WSAVE )
-    CALL DFFTF( MNext, R1, WSAVE )
-    CALL DFFTF( MNext, R2, WSAVE )
-
+!    CALL DFFTI( MNext, WSAVE )
+!    CALL DFFTF( MNext, R1, WSAVE )
+!    CALL DFFTF( MNext, R2, WSAVE )
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    call dfftw_plan_dft_1d(plan,MNext,R1,R1,FFTW_FORWARD,FFTW_ESTIMATE)
+    call dfftw_execute_dft(plan, R1, R1) !fftw3 allows inplace transform (doc)
+    call dfftw_destroy_plan(plan)
+    call dfftw_plan_dft_1d(plan,MNext,R2,R2,FFTW_FORWARD,FFTW_ESTIMATE)
+    call dfftw_execute_dft(plan, R2, R2)
+    call dfftw_destroy_plan(plan)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     !  Multiply the 2 transforms together. First multiply the zeroth term
     !  for which all imaginary parts are zero.
@@ -183,8 +200,12 @@ subroutine convolutionFFT(Xin,M,Ain,N,Yout)
     IF( MOD( MNext, 2 ) .EQ. 0 ) RF( MNext ) = R1( MNext ) * R2( MNext )
 
     !  Now take the inverse FFT.
-    CALL DFFTB( MNext, RF, WSAVE )
-
+!    CALL DFFTB( MNext, RF, WSAVE )
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    call dfftw_plan_dft_1d(plan,MNext,RF,RF,FFTW_BACKWARD,FFTW_ESTIMATE)
+    call dfftw_execute_dft(plan, RF, RF)
+    call dfftw_destroy_plan(plan)
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     !  Divide the results by MN to take account of the different
     !  normalisation of the FFTPACK results.
