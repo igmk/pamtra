@@ -38,13 +38,13 @@ subroutine convolution(errorstatus,X,M,A,N,Y)
 
 
     if (radar_convolution_fft) then
-        if (verbose > 2) print*, "Entering FFT-Comvolution"
+        if (verbose > 2) print*, "Entering FFT-Convolution"
         call convolutionFFT(X,M,A,N,Y)
-        if (verbose > 2) print*, "Done FFT-Comvolution"
+        if (verbose > 2) print*, "Done FFT-Convolution"
     else
-        if (verbose > 2) print*, "Entering Non-FFT-Comvolution"
+        if (verbose > 2) print*, "Entering Non-FFT-Convolution"
         call convolution_slow(X,M,A,N,Y)
-        if (verbose > 2) print*, "Done Non-FFT-Comvolution"
+        if (verbose > 2) print*, "Done Non-FFT-Convolution"
     end if
     
     call assert_false(err,(ALL(X == Y)),&
@@ -141,11 +141,12 @@ subroutine convolutionFFT(Xin,M,Ain,N,Yout)
     REAL(kind=dbl), intent(out), DIMENSION(M+N-1) :: Yout
     INTEGER :: MN, MNext
     INTEGER :: I
-    REAL(kind=dbl) :: A, B, C, D
+!    REAL(kind=dbl) :: A, B, C, D ! not needed with fftw3
     REAL(kind=dbl),allocatable :: R1(:),R2(:),RF(:), &
     WSAVE(:)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    double complex, allocatable :: R1F(:), R2F(:), RFF(:) ! intermidiate stage
     integer*8 plan                                    ! We always need a plan!
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
@@ -157,6 +158,9 @@ subroutine convolutionFFT(Xin,M,Ain,N,Yout)
     ! print*, M, N, MN, MNext
 
     allocate(R1(MNext),R2(MNext),RF(MNext), WSAVE(4*(MNext)+15))
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    allocate(R1F(MNext/2+1),R2F(MNext/2+1),RFF(MNext/2+1))
+!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    
 
     R1 = 0.d0
     R2 = 0.d0
@@ -169,50 +173,54 @@ subroutine convolutionFFT(Xin,M,Ain,N,Yout)
 !    CALL DFFTF( MNext, R1, WSAVE )
 !    CALL DFFTF( MNext, R2, WSAVE )
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    call dfftw_plan_dft_1d(plan,MNext,R1,R1,FFTW_FORWARD,FFTW_ESTIMATE)
-    call dfftw_execute_dft(plan, R1, R1) !fftw3 allows inplace transform (doc)
+    call dfftw_plan_dft_r2c_1d(plan, MNext, R1, R1F, FFTW_ESTIMATE)
+    call dfftw_execute_dft_r2c(plan,R1,R1F) !fftw3 allows inplace transform (doc)
     call dfftw_destroy_plan(plan)
-    call dfftw_plan_dft_1d(plan,MNext,R2,R2,FFTW_FORWARD,FFTW_ESTIMATE)
-    call dfftw_execute_dft(plan, R2, R2)
+
+    call dfftw_plan_dft_r2c_1d(plan, MNext, R2, R2F, FFTW_ESTIMATE)
+    call dfftw_execute_dft_r2c(plan, R2, R2F)
     call dfftw_destroy_plan(plan)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
-    !  Multiply the 2 transforms together. First multiply the zeroth term
-    !  for which all imaginary parts are zero.
-    RF( 1 ) = R1( 1 ) * R2( 1 )
+!    !  Multiply the 2 transforms together. First multiply the zeroth term
+!    !  for which all imaginary parts are zero.
+!    RF( 1 ) = R1( 1 ) * R2( 1 )
 
     !  Now do the remaining terms. Real and imaginary terms are stored in
     !  adjacent elements of the arrays.
-    DO I = 2, MNext - 1, 2
+!    DO I = 2, MNext - 1, 2
 
-        A = R1( I )
-        B = R1( I + 1 )
-        C = R2( I )
-        D = R2( I + 1 )
+!        A = R1( I )
+!        B = R1( I + 1 )
+!        C = R2( I )
+!        D = R2( I + 1 )
 
-        RF( I ) = A*C - B*D
-        RF( I + 1 ) = B*C + A*D
+!        RF( I ) = A*C - B*D
+!        RF( I + 1 ) = B*C + A*D
 
-    END DO
+!    END DO
 
     !  If there are an even number of elements, do the last term, for which
     !  the imaginary parts are again zero.
-    IF( MOD( MNext, 2 ) .EQ. 0 ) RF( MNext ) = R1( MNext ) * R2( MNext )
+!    IF( MOD( MNext, 2 ) .EQ. 0 ) RF( MNext ) = R1( MNext ) * R2( MNext )
 
     !  Now take the inverse FFT.
 !    CALL DFFTB( MNext, RF, WSAVE )
+
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    call dfftw_plan_dft_1d(plan,MNext,RF,RF,FFTW_BACKWARD,FFTW_ESTIMATE)
-    call dfftw_execute_dft(plan, RF, RF)
+    RFF = R1F*R2F ! complex vector arithmetics is cool !!
+
+    call dfftw_plan_dft_c2r_1d(plan,MNext,RFF,RF,FFTW_ESTIMATE)
+    call dfftw_execute_dft_c2r(plan, RFF, RF)
     call dfftw_destroy_plan(plan)
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
     !  Divide the results by MN to take account of the different
-    !  normalisation of the FFTPACK results.
+    !  normalization of the FFTPACK results.
     RF = RF/( DBLE( MNext ))
-
 
     Yout(:) = RF(1:MN)
     deallocate(R1,R2,RF, WSAVE)
+    
     return
 end subroutine convolutionFFT
