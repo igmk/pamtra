@@ -244,11 +244,12 @@ $(PYTDIR)pyPamtraLib.so:  $(SRCDIR)pyPamtraLib.f90 $(OBJDIR)pypamtralib.pyf $(FO
 py_usStandard:
 	cd tools/py_usStandard/ && $(MAKE) all
 
-pyinstall: warning dfftpack py py_usStandard
+pyinstall: warning py py_usStandard 
 	mkdir -p $(PYINSTDIR)
 	cp -r $(PYTDIR) $(PYINSTDIR)
 	cd tools/py_usStandard/ && $(MAKE) install
 	cp tools/pyRadarMoments/radarMoments.py	 $(PYINSTDIR)
+#dfftpack (was part of the warnings)
 
 clean:
 	-rm -f $(OBJDIR)*.o
