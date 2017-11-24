@@ -471,7 +471,7 @@ contains
 
     if (verbose >= 2) print*,'Start of ', nameOfRoutine
 
-    floatNfreq(:) = nan()
+    floatNfreq(:) = nan!()
     intNfreq(:) = missingInt
 
         !set namelist defaults!

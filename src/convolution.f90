@@ -142,8 +142,8 @@ subroutine convolutionFFT(Xin,M,Ain,N,Yout)
     INTEGER :: MN, MNext
     INTEGER :: I
 !    REAL(kind=dbl) :: A, B, C, D ! not needed with fftw3
-    REAL(kind=dbl),allocatable :: R1(:),R2(:),RF(:), &
-    WSAVE(:)
+    REAL(kind=dbl),allocatable :: R1(:),R2(:),RF(:)!, &
+!    WSAVE(:)
 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     double complex, allocatable :: R1F(:), R2F(:), RFF(:) ! intermidiate stage
@@ -157,7 +157,7 @@ subroutine convolutionFFT(Xin,M,Ain,N,Yout)
 
     ! print*, M, N, MN, MNext
 
-    allocate(R1(MNext),R2(MNext),RF(MNext), WSAVE(4*(MNext)+15))
+    allocate(R1(MNext),R2(MNext),RF(MNext))!, WSAVE(4*(MNext)+15))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     allocate(R1F(MNext/2+1),R2F(MNext/2+1),RFF(MNext/2+1))
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    
@@ -174,7 +174,7 @@ subroutine convolutionFFT(Xin,M,Ain,N,Yout)
 !    CALL DFFTF( MNext, R2, WSAVE )
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     call dfftw_plan_dft_r2c_1d(plan, MNext, R1, R1F, FFTW_ESTIMATE)
-    call dfftw_execute_dft_r2c(plan,R1,R1F) !fftw3 allows inplace transform (doc)
+    call dfftw_execute_dft_r2c(plan,R1,R1F)
     call dfftw_destroy_plan(plan)
 
     call dfftw_plan_dft_r2c_1d(plan, MNext, R2, R2F, FFTW_ESTIMATE)
@@ -220,7 +220,8 @@ subroutine convolutionFFT(Xin,M,Ain,N,Yout)
     RF = RF/( DBLE( MNext ))
 
     Yout(:) = RF(1:MN)
-    deallocate(R1,R2,RF, WSAVE)
+    deallocate(R1,R2,RF)!, WSAVE)
+    deallocate(R1F, R2F, RFF)
     
     return
 end subroutine convolutionFFT
