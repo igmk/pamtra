@@ -736,7 +736,8 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
       pam.df.addHydrometeor(df)
 
   pam.createProfile(**pamData)
-  del data
+
+  return pam
 
 def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",debug=False,verbosity=0,df_kind="default",maxLevel=0):
   '''
@@ -801,8 +802,8 @@ def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",deb
     print inst
     if debug: import pdb;pdb.set_trace()
 
-  shape3D = tuple(np.array([data["T"].shape[0],1,data["T"].shape[1]]))
-  shape3Dplus = shape3D + np.array([0,0,1])
+  shape3D = (data["T"].shape[0], 1, data["T"].shape[1])
+  shape3Dplus = (shape3D[0], shape3D[1], shape3D[2] + 1)
   shape2D = shape3D[:2]
 
   if maxLevel  == 0: maxLevel = data["HHL"].shape[1] - 1
@@ -843,14 +844,13 @@ def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",deb
   
   pam = pyPamtra()
   pam.set["pyVerbose"]= verbosity
-  if type(descriptorFile) == str:
+  if isinstance(descriptorFile, str):
     pam.df.readFile(descriptorFile)
   else:
     for df in descriptorFile:
       pam.df.addHydrometeor(df)
 
   pam.createProfile(**pamData)
-  del data
 
   return pam
 
