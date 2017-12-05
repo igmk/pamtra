@@ -296,7 +296,7 @@ contains
     integer, intent(out) :: ios
 
     logical :: advancing
-    integer :: ioerr, linlen, lsta, lpos
+    integer :: ioerr, lsta, lpos
     integer(c_int) :: blen, wlen
     type (c_ptr) :: buf = c_null_ptr
 

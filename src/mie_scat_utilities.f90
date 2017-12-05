@@ -97,12 +97,6 @@ module mie_scat_utilities
       complex(kind=dbl) :: a(*), b(*), sum3
       integer :: n
       real(kind=dbl) :: sum1, sum2
-
-
-      integer(kind=long) :: errorstatus
-      integer(kind=long) :: err = 0
-      character(len=80) :: msg
-      character(len=14) :: nameOfRoutine = 'miecross'
        
       
       sum1 = 0.0d0
@@ -137,12 +131,6 @@ module mie_scat_utilities
       real(kind=dbl) :: tmp, pin, pim, taun, c
       complex(kind=dbl) :: s1, s2
 
-
-      integer(kind=long) :: errorstatus
-      integer(kind=long) :: err = 0
-      character(len=80) :: msg
-      character(len=14) :: nameOfRoutine = 'mieangle'
-       
 
       s1 = cmplx(0.0, 0.0)
       s2 = cmplx(0.0, 0.0)

@@ -104,7 +104,6 @@
 
       integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0
-      character(len=80) :: msg
       character(len=14) :: nameOfRoutine = 'CHECK_NORM4'
       
     if (verbose >= 4) call report(info, 'Start of ', nameOfRoutine)

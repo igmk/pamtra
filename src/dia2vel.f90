@@ -35,7 +35,6 @@ module dia2vel
     area_size_b,&       !in
     velSpec)            !out
   !to be deleted after transition to pamtra v1.0
-      use settings, only: verbose
       use kinds
       use constants
       use report_module
@@ -50,8 +49,6 @@ module dia2vel
   
       integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0
-      character(len=80) :: msg
-      character(len=63) :: nameOfRoutine = 'dia2vel_heymsfield10_particles_ms_as'  
       
       mass = mass_size_a_SI * diaSpec_SI**mass_size_b
       area = area_size_a_SI * diaSpec_SI**area_size_b
@@ -115,7 +112,6 @@ module dia2vel
 
       integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0
-      character(len=80) :: msg
       character(len=33) :: nameOfRoutine = 'dia2vel_heymsfield10_particles'
 
       if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
@@ -182,12 +178,11 @@ module dia2vel
       real(kind=dbl), dimension(ndia), intent(out) :: velSpec
       real(kind=dbl) :: rho_air, g_cp, my
       real(kind=dbl) :: c1, delta0
-      real(kind=dbl), dimension(ndia):: X, bRe, aRe, Av, Bv
+      real(kind=dbl), dimension(ndia):: X, bRe, aRe!, Av, Bv
       real(kind=dbl), dimension(ndia)::diaSpec, mass, area
 
       integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0
-      character(len=80) :: msg
       character(len=33) :: nameOfRoutine = 'dia2vel_khvorostyanov01_particles'
 
 
@@ -279,7 +274,6 @@ module dia2vel
 
       integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0
-      character(len=80) :: msg
       character(len=31) :: nameOfRoutine = 'dia2vel_khvorostyanov01_particles'
 
       if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
@@ -523,7 +517,6 @@ module dia2vel
 
       integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0
-      character(len=80) :: msg
       character(len=20) :: nameOfRoutine = 'dia2vel_pavlos_cloud'
 
       if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
@@ -708,7 +701,6 @@ module dia2vel
 
       integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0
-      character(len=80) :: msg
       character(len=20) :: nameOfRoutine = 'dia2vel_rogers_graupel'
 
       if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
@@ -737,7 +729,6 @@ module dia2vel
       !velSpec: velocity spectrum [m/s]
 
       ! power law
-      use settings, only: verbose
       use kinds
       use constants
       use report_module
@@ -749,7 +740,7 @@ module dia2vel
       real(kind=dbl), dimension(ndia), intent(out) :: velSpec
       character(30) :: tokenized(3)
       integer :: pos1,nn,pos2
-      real(kind=dbl) ::fallvel_A, fallvel_B, rho0, Y
+      real(kind=dbl) ::fallvel_A, fallvel_B
       integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0
       character(len=80) :: msg
@@ -831,7 +822,6 @@ module dia2vel
       character(len=30),intent(in) :: vel_size_mod
       real(kind=dbl), dimension(ndia), intent(out) :: velSpec
       real(kind=dbl) :: Y, rho0
-      integer :: jj
 
       integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0

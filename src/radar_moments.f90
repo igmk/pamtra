@@ -51,7 +51,7 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
     integer :: spec_max_ii, spec_max_ii_a(1), right_edge,left_edge, &
     ii, jj, right_edge4slope, &
     left_edge4slope
-    real(kind=dbl), dimension(radar_nfft) :: spectra_velo, specLog
+    real(kind=dbl), dimension(radar_nfft) :: spectra_velo
     logical :: additionalPeaks
     integer :: nn, kk
 

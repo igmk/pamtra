@@ -30,7 +30,7 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
   integer, intent(in) :: nbins
   
   real(kind=dbl) :: wavelength, mass_eq_dia
-  real(kind=dbl) :: ad, bd, alpha, gamma 
+  !real(kind=dbl) :: ad, bd, alpha, gamma 
   complex(kind=dbl) :: mindex 
   real(kind=dbl) :: extinction, albedo, back_scatt
   real(kind=dbl) :: legen(maxnleg), legen2(maxnleg), legen3(maxnleg), legen4(maxnleg)
@@ -195,6 +195,12 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
      call scatdb(f_liu,t_liu,liu_type,dia_liu*1.e6,abs_liu,sca_liu,bsc_liu,g,p_liu,r_ice_eq,iret,is_loaded,&
           trim(data_path))
      if (verbose >= 3) print*, iret,f_liu,t_liu,liu_type,dia_liu*1.e6, abs_liu,sca_liu,bsc_liu
+     if ( iret /= 0 ) then
+       errorstatus = fatal
+       write(msg, '(A,I0)') 'mie: error in scatdb(). Returns:', iret
+       call report(errorstatus, msg, nameOfRoutine)
+       return
+     end if
 
      qext = (abs_liu+sca_liu)
      qscat = sca_liu

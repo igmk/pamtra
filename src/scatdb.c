@@ -74,7 +74,8 @@
  *   Extrapolation will be used for 10>iret>0                         *
  *      1000	- 	can not find suitable ice shape		      *
  *      	        No valid return values			      * 
- *      2000    -       cannot find scat_db2.dda file                  *
+ *      2000    - 	cannot find scat_db2.dda file		      *
+ *     >2000    - 	read errror in scat_db2.dda file	      *
  *								      *
  * In&Out:							      *
  *  is_loaded - indicator whether dda_database is loaded to memory,   *
@@ -185,39 +186,81 @@ void reverse(void *v, int n) {
 	
 		if(little_endian() == TRUE) big = FALSE;	
 
-		fread(&msh,4,1,fp); 
+		if(1!=fread(&msh,4,1,fp))	{
+			fprintf(stderr, "Error reading scat_db2.dda.\n");
+			return(iret=2001);
+		}
 		if(big) reverse(&msh,4);
-		fread(&mf,4,1,fp); 
+		if(1!=fread(&mf,4,1,fp))	{
+			fprintf(stderr, "Error reading scat_db2.dda.\n");
+			return(iret=2002);
+		}
 		if(big) reverse(&mf,4);
-		fread(&mt,4,1,fp); 
+		if(1!=fread(&mt,4,1,fp))	{
+			fprintf(stderr, "Error reading scat_db2.dda.\n");
+			return(iret=2003);
+		}
 		if(big) reverse(&mt,4);
 
 		for(i=0;i<msh;i++) {
-		        fread(&shs[i],4,1,fp); 
+			if(1!=fread(&shs[i],4,1,fp))	{
+				fprintf(stderr, "Error reading scat_db2.dda.\n");
+				return(iret=2004);
+			}
 			if(big) reverse(&shs[i],4);	
-			fread(&msz[i],4,1,fp); 
+			if(1!=fread(&msz[i],4,1,fp))	{
+				fprintf(stderr, "Error reading scat_db2.dda.\n");
+				return(iret=2005);
+			}
 			if(big) reverse(&msz[i],4); 
 				for(j=0;j<msz[i];j++) {
-					fread(&szs[j][shs[i]],4,1,fp);
+					if(1!=fread(&szs[j][shs[i]],4,1,fp))	{
+						fprintf(stderr, "Error reading scat_db2.dda.\n");
+						return(iret=2006);
+					}
 					if(big) reverse(&szs[j][shs[i]],4);
-					fread(&reff[j][shs[i]],4,1,fp);
+					if(1!=fread(&reff[j][shs[i]],4,1,fp))	{
+						fprintf(stderr, "Error reading scat_db2.dda.\n");
+						return(iret=2007);
+					}
 					if(big) reverse(&reff[j][shs[i]],4);
 					for(m=0;m<mf;m++) {
-						fread(&fs[m],4,1,fp);
+						if(1!=fread(&fs[m],4,1,fp))	{
+							fprintf(stderr, "Error reading scat_db2.dda.\n");
+							return(iret=2008);
+						}
 						if(big) reverse(&fs[m],4);
 						for(n=0;n<mt;n++) {
-							fread(&ts[n],4,1,fp);
+							if(1!=fread(&ts[n],4,1,fp))	{
+								fprintf(stderr, "Error reading scat_db2.dda.\n");
+								return(iret=2009);
+							}
 							if(big) reverse(&ts[n],4);
-							fread(&abss[m][n][shs[i]][j],4,1,fp);
+							if(1!=fread(&abss[m][n][shs[i]][j],4,1,fp))	{
+								fprintf(stderr, "Error reading scat_db2.dda.\n");
+								return(iret=2010);
+							}
 							if(big) reverse(&abss[m][n][shs[i]][j],4);
-							fread(&scas[m][n][shs[i]][j],4,1,fp);
+							if(1!=fread(&scas[m][n][shs[i]][j],4,1,fp))	{
+								fprintf(stderr, "Error reading scat_db2.dda.\n");
+								return(iret=2011);
+							}
 							if(big) reverse(&scas[m][n][shs[i]][j],4);
-							fread(&bscs[m][n][shs[i]][j],4,1,fp);
+							if(1!=fread(&bscs[m][n][shs[i]][j],4,1,fp))	{
+								fprintf(stderr, "Error reading scat_db2.dda.\n");
+								return(iret=2012);
+							}
 							if(big) reverse(&bscs[m][n][shs[i]][j],4);
- 							fread(&gs[m][n][shs[i]][j],4,1,fp);
+ 							if(1!=fread(&gs[m][n][shs[i]][j],4,1,fp))	{
+ 								fprintf(stderr, "Error reading scat_db2.dda.\n");
+ 								return(iret=2013);
+ 							}
 							if(big) reverse(&gs[m][n][shs[i]][j],4);
 							for(k=0;k<NQ;k++) {
-								fread(&pqs[m][n][shs[i]][j][k],4,1,fp);
+								if(1!=fread(&pqs[m][n][shs[i]][j][k],4,1,fp))	{
+									fprintf(stderr, "Error reading scat_db2.dda.\n");
+									return(iret=2014);
+								}
 								if(big) reverse(&pqs[m][n][shs[i]][j][k],4);
 							}
 						}
