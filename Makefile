@@ -20,13 +20,10 @@ FCFLAGS=-c -fPIC -Wunused  -cpp -J$(OBJDIR) -I$(OBJDIR)
 
 NCFLAGS :=  $(shell $(NCCONF) --fflags) 
 LFLAGS := -L/usr/lib/ -llapack -L$(LIBDIR) -L../$(LIBDIR) -lblas -lz -lfftw3
-#-ldfftpack 
 LDFLAGS := $(shell $(NCCONF) --flibs) 
 # it's messi but needed for ubuntu 16.04
 to_remove:=-Wl,-Bsymbolic-functions -Wl,-z,relro
 LDFLAGS := $(subst $(to_remove),,$(LDFLAGS))
-
-
 
 
 OBJECTS=kinds.o \
@@ -131,7 +128,6 @@ FOBJECTS_NC=$(addprefix $(OBJDIR),$(OBJECTS_NC))
 BIN=pamtra
 
 all: pamtra py py_usStandard
-#dfftpack
 
 warning:
 ifndef PAMTRA_DATADIR
@@ -142,14 +138,10 @@ endif
 
 print-%  : ; @echo $* = $($*)
 
-#dfftpack: | $(LIBDIR)
-#	cd tools/dfftpack && $(MAKE)
-#	cp tools/dfftpack/libdfftpack.a $(LIBDIR)
-
 pamtra: FCFLAGS += -O2
 pamtra: NCFLAGS += -O2
 pamtra: warning  $(FOBJECTS) $(BINDIR)$(BIN) | $(BINDIR) 
-#dfftpack
+
 $(OBJDIR)versionNumber.auto.o: .git/HEAD .git/index
 	echo "!edit in makefile only!" > $(SRCDIR)versionNumber.auto.f90
 	echo "subroutine versionNumber(gitVersion,gitHash)" >> $(SRCDIR)versionNumber.auto.f90
@@ -249,7 +241,6 @@ pyinstall: warning py py_usStandard
 	cp -r $(PYTDIR) $(PYINSTDIR)
 	cd tools/py_usStandard/ && $(MAKE) install
 	cp tools/pyRadarMoments/radarMoments.py	 $(PYINSTDIR)
-#dfftpack (was part of the warnings)
 
 clean:
 	-rm -f $(OBJDIR)*.o
