@@ -855,7 +855,7 @@ module dia2vel
       if (rho0 < rho_air) rho0 = rho_air*1.00001 !it's numeric, stupid!
 
       Y = 0.43d0*log10(rho0/rho_air)-0.4d0*(log10(rho0/rho_air))**2.5d0
-      velSpec = velSpec*10.d0**Y*(1d0+(0.0023d0*(1.1-(rho_air/rho_air))*(293.15d0-temp)))
+      velSpec = velSpec*10.d0**Y*(1d0+(0.0023d0*(1.1-(rho_air/rho0))*(293.15d0-temp)))
 
       errorstatus = err
       if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
