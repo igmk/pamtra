@@ -91,7 +91,6 @@ contains
          n_ds,&
          density2scat,&
          as_ratio, &
-         d_bound_ds, &
          pressure, &
          layer_t, &
          mass_ds, &
@@ -641,7 +640,7 @@ contains
   end subroutine calc_scatProperties
 
   subroutine finalize_rt3_scatProperties()
-    use vars_index, only: i_x, i_y, i_z, i_f, i_h
+    use vars_index, only: i_z
     use vars_rt, only: rt_kexttot
     implicit none
 

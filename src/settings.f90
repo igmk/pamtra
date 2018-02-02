@@ -371,7 +371,6 @@ contains
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
-    character(len=80) :: msg
     character(len=15) :: nameOfRoutine = 'add_settings'
 
     !additional variables derived from others go here

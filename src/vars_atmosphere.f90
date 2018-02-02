@@ -329,7 +329,6 @@ module vars_atmosphere
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err
-    character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'read_new_fill_variables'
 
 ! work variables
@@ -456,7 +455,6 @@ module vars_atmosphere
 !##################################################################################################################################
   subroutine add_obs_height(errorstatus)
 
-    use descriptor_file, only: moment_in_arr, n_hydro
     use constants, only: r_v, r_d
 
     implicit none
@@ -464,12 +462,10 @@ module vars_atmosphere
     real(kind=dbl) :: e_sat_gg_water
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err
-    character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'add_obs_height'
 
 ! work variables
-    real(kind=dbl), allocatable, dimension(:,:) :: work_xwc
-    real(kind=dbl) :: dum, derivative, dh, dh_1, var_newlev
+    real(kind=dbl) :: derivative, dh, dh_1, var_newlev
     integer(kind=long)  :: i, j, k, nz, lev_1, lev_2, lev_use, lay_use, ii
 
     err = 0
@@ -577,13 +573,11 @@ module vars_atmosphere
   subroutine read_classic_fill_variables(errorstatus)
 
     use settings, only: verbose, input_pathfile
-    use descriptor_file, only: moment_in_arr, n_hydro
 
     implicit none
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err
-    character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'read_classic_fill_variables'
 
 ! work variables

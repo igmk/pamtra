@@ -126,8 +126,6 @@ subroutine radtran4(errorstatus, max_delta_tau,&
      up_rad, down_rad)
 
   use kinds
-  use vars_atmosphere, only: atmo_wind10u, atmo_wind10v
-  use vars_index, only: i_x, i_y
   use vars_rt, only : &
        rt_hydros_present_reverse
   use settings, only: verbose, maxlay, &
@@ -179,15 +177,10 @@ subroutine radtran4(errorstatus, max_delta_tau,&
   real*8    gnd_radiance(maxv), sky_radiance(2*maxv)
   character*64 scat_file
 
-  real(kind=dbl) wind10,windratio,windangle
-  integer :: iquadrant
-  real(kind=dbl), parameter :: quadcof(4,2) =      &
-       & reshape((/0.0d0, 1.0d0, 1.0d0, 2.0d0, 1.0d0, -1.0d0, 1.0d0, -1.0d0/), (/4, 2/))
+  !real(kind=dbl), parameter :: quadcof(4,2) =      & ! (unused)
+  !     & reshape((/0.0d0, 1.0d0, 1.0d0, 2.0d0, 1.0d0, -1.0d0, 1.0d0, -1.0d0/), (/4, 2/))
 
   ! variables needed for fastem4
-
-  real(kind=dbl) :: rel_azimuth, salinity
-  real(kind=dbl), dimension(nummu) :: transmittance
 
   integer(kind=long), intent(out) :: errorstatus
   integer(kind=long) :: err = 0

@@ -82,10 +82,8 @@ use fileio
       integer :: azimuth_num
       integer :: azimuth0_num   
       integer :: ir
-      integer :: n_lines, work1
 integer :: ios
 type (ioport) :: port
-      character(len=60000)    :: work2
       character(1) :: quad
       character(15) ::db_file
       character(600) ::db_path

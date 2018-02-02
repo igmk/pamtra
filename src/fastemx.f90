@@ -275,13 +275,14 @@ module fastemx
     emissivity(iv_idx) = emissivity(iv_idx) + e_azimuth(iv_idx)
     emissivity(ih_idx) = emissivity(ih_idx) + e_azimuth(ih_idx)
     if (nstokes .gt. 2) then
-      emissivity(u_idx)  = e_azimuth(u_idx)
-      emissivity(v_idx)  = e_azimuth(v_idx)
+      emissivity(u_idx)  = e_azimuth(u_idx) ! knwon Warning: Array reference is out of bounds (3 > 2) in dimension 1
+      emissivity(v_idx)  = e_azimuth(v_idx) ! knwon Warning: Array reference is out of bounds (4 > 2) in dimension 1
     end if
     ! ...reflectivties
     reflectivity(iv_idx)      = rv_mod * (one-emissivity(iv_idx))
     reflectivity(ih_idx)      = rh_mod * (one-emissivity(ih_idx))
-    if (nstokes .gt. 2) reflectivity(u_idx:v_idx) = zero   ! 3rd, 4th stokes from atmosphere are not included.
+    if (nstokes .gt. 2) reflectivity(u_idx:v_idx) = zero   ! 3rd, 4th stokes from atmosphere are not included. ! knwon Warning: Lower array reference is out of bounds (3 > 2) in dimension 1
+
 
     if (verbose >= 3) call report(info,'end of ', nameofroutine)
 

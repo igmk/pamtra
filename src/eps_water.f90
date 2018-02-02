@@ -30,7 +30,6 @@ module eps_water
     complex(kind=dbl), intent(out) :: eps_water
     integer(kind=long), intent(out) :: errorstatus
 
-    integer(kind=long) :: err = 0
     character(len=80) :: msg
     character(len=30) :: nameOfRoutine = 'get_eps_water'
 

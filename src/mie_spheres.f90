@@ -68,14 +68,13 @@ module mie_spheres
     integer, parameter :: maxn  = 5000
     integer :: nterms, nquad, nmie, nleg 
     integer :: i, l, m, ir
-    real(kind=dbl) :: x, tmp,diameter_eff
+    real(kind=dbl) :: x, tmp
     real(kind=dbl) :: qext, qscat, qback, scatter 
     real(kind=dbl) :: mu(maxn), wts(maxn)
     real(kind=dbl) :: p1, pl, pl1, pl2, p2, p3, p4 
     real(kind=dbl) :: sumqe, sumqs, sumqback
     real(kind=dbl), dimension(maxn) :: sump1, coef1, sump2, coef2,   &
 	sump3, coef3, sump4, coef4          
-    real(kind=dbl) :: absind, abscof
     complex(kind=dbl), dimension(maxn) :: a, b
     complex(kind=dbl) :: msphere, eps_mix
 

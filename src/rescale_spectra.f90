@@ -316,7 +316,6 @@ contains
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
-    character(len=80) :: msg
     character(len=15) :: nameOfRoutine = 'interpolate_spectra'
 
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
