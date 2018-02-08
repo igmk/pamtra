@@ -5,9 +5,8 @@ subroutine check_print()
   use kinds, only: dbl, &      ! integer parameter specifying double precision
                    long        ! integer parameter specifying long integer
 
-  use drop_size_dist, only: dist_name, p_1, p_2, p_3, p_4, moment_in, n_0, lambda, gam, mu,  &
-                            n_t, sig, d_ln, d_mono, nbin, m_0, m_32, am_b, q_h, n_tot, r_eff,&
-                            d_ds, d_bound_ds, n_ds, f_ds, hydro_name
+  use drop_size_dist, only: dist_name, p_1, p_2, p_3, p_4, moment_in,  &
+                            m_0, m_32, am_b, q_h, n_tot, r_eff, hydro_name
   use vars_index, only: i_x,i_y, i_z, i_f, i_h
 
   implicit none

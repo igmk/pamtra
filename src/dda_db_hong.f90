@@ -30,7 +30,6 @@ subroutine dda_db_hong(errorstatus,f,t,hong_type,mindex,nbins, &
   integer, intent(in) :: nbins
   
   real(kind=dbl) :: wavelength
-  real(kind=dbl) :: ad, bd, alpha, gamma 
   complex(kind=dbl) :: mindex 
   real(kind=dbl) :: extinction, albedo, back_scatt
   real(kind=dbl) :: legen(200), legen2(200), legen3(200), legen4(200)
@@ -62,10 +61,9 @@ subroutine dda_db_hong(errorstatus,f,t,hong_type,mindex,nbins, &
   real(kind=dbl) :: del_d_eff, ndens_eff
   ! variables communicating with the database. need to be single precission !!!
 
-  integer :: iret
   integer, parameter :: nang_db = 181
   real(kind=dbl) :: dia
-  real(kind=dbl) :: abs_hong,ext_hong,bsc_hong,g, r_ice_eq
+  real(kind=dbl) :: abs_hong,ext_hong,bsc_hong,g
   real(kind=dbl), dimension(nang_db) :: p_hong
   real(kind=dbl), dimension(nang_db) :: ang_db
   real(kind=dbl), parameter, dimension(0:5) :: mass_eq_dia = (/514.71503,310.88101,897.64746,307.97501,344.20901,283.388/)*2.e-6

@@ -126,8 +126,6 @@ subroutine radtran4(errorstatus, max_delta_tau,&
      up_rad, down_rad)
 
   use kinds
-  use vars_atmosphere, only: atmo_wind10u, atmo_wind10v
-  use vars_index, only: i_x, i_y
   use vars_rt, only : &
        rt_hydros_present_reverse
   use settings, only: verbose, maxlay, &
@@ -154,7 +152,7 @@ subroutine radtran4(errorstatus, max_delta_tau,&
   character*1  ground_type
 
   integer   maxv, maxm, maxlm
-  parameter (maxv=64, maxm=4096, maxlm=201 * (maxv)**2)!maxlm=201*256)
+  parameter (maxv=64, maxm=4096, maxlm=2001 * (maxv)**2)!maxlm=201*256) !maxlm=201 * (maxv)**2
 
   real*8    pi, twopi, zero
   parameter (pi = 3.1415926535897932384d0, twopi=2.0d0*pi)
@@ -179,15 +177,10 @@ subroutine radtran4(errorstatus, max_delta_tau,&
   real*8    gnd_radiance(maxv), sky_radiance(2*maxv)
   character*64 scat_file
 
-  real(kind=dbl) wind10,windratio,windangle
-  integer :: iquadrant
-  real(kind=dbl), parameter :: quadcof(4,2) =      &
-       & reshape((/0.0d0, 1.0d0, 1.0d0, 2.0d0, 1.0d0, -1.0d0, 1.0d0, -1.0d0/), (/4, 2/))
+  !real(kind=dbl), parameter :: quadcof(4,2) =      & ! (unused)
+  !     & reshape((/0.0d0, 1.0d0, 1.0d0, 2.0d0, 1.0d0, -1.0d0, 1.0d0, -1.0d0/), (/4, 2/))
 
   ! variables needed for fastem4
-
-  real(kind=dbl) :: rel_azimuth
-  real(kind=dbl), dimension(nummu) :: transmittance
 
   integer(kind=long), intent(out) :: errorstatus
   integer(kind=long) :: err = 0
@@ -395,7 +388,7 @@ subroutine radtran4(errorstatus, max_delta_tau,&
         ks = 1 + 2*n*(l-1)
         if (l .eq. 1) then
            call mcopy (2*n,n, reflect(krt), upreflect)
-           call mcopy (2*n,n, trans(krt), uptrans) 
+           call mcopy (2*n,n, trans(krt), uptrans)
            call mcopy (2*n,1, source(ks), upsource)
         else
            call mcopy (2*n,n, upreflect, reflect1)
@@ -411,7 +404,7 @@ subroutine radtran4(errorstatus, max_delta_tau,&
         ks = 1 + 2*n*(l-1)
         if (l .eq. layer) then
            call mcopy (2*n,n, reflect(krt), downreflect)
-           call mcopy (2*n,n, trans(krt), downtrans) 
+           call mcopy (2*n,n, trans(krt), downtrans)
            call mcopy (2*n,1, source(ks), downsource)
         else
            call mcopy (2*n,n, downreflect, reflect1)
@@ -452,4 +445,3 @@ subroutine radtran4(errorstatus, max_delta_tau,&
 
   return
 end subroutine radtran4
-

@@ -9,7 +9,7 @@ subroutine parse_options(gitVersion,gitHash)
 
     implicit none
 
-    integer(kind=long) :: pos1, pos2, n, i
+    integer(kind=long) :: pos1, pos2, n
     integer(kind=long) :: ff
     character(40) :: gitHash, gitVersion
     type(option_s):: opts(7)

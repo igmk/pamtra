@@ -316,7 +316,6 @@ contains
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
-    character(len=80) :: msg
     character(len=15) :: nameOfRoutine = 'interpolate_spectra'
 
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
@@ -351,45 +350,45 @@ contains
   end subroutine interpolate_spectra
 end module rescale_spec
 
-!********************************************************************** 
-!    CALCULATION location for interpolation                           * 
-!    Copr. 1986-92 Numerical Recipes Software +>k-5V1`                * 
-!                                                                     * 
-!********************************************************************** 
-!                                                                       
-      SUBROUTINE locate (xx, n, x, j) 
+subroutine locate (xx, n, x, j) 
 !    Given an array xx(1:n) and given a value x, returns a value j such 
 !    that x is between xx(j) and xx(j+1) xx(1:n) must be monotonic, eith
 !  increasing or decreasing. j=0 or j=n is returned to indicate         
 !    that x is out of range                                             
-      use kinds                                                                 
-      INTEGER j, n 
-      REAL(kind=dbl) x, xx (n) 
-      INTEGER jl, jm, ju 
-                !initialise lower and                                   
-      jl = 0 
-                ! upper boundaries                                      
-      ju = n + 1 
-                           !if we are nmot yet done                     
-   10 IF (ju - jl.gt.1) then 
+    use kinds                                                                 
+    integer j, n 
+    real(kind=dbl) x, xx (n) 
+    integer jl, jm, ju 
+              !initialise lower and                                   
+    jl = 0 
+              ! upper boundaries                                      
+    ju = n + 1 
+                         !if we are nmot yet done     
+
+    do
+      if (ju - jl.gt.1) then 
                            !compute a midpoint                          
          jm = (ju + jl) / 2 
-         IF ( (xx (n) .ge.xx (1) ) .eqv. (x.ge.xx (jm) ) ) then 
+         if ( (xx (n) .ge.xx (1) ) .eqv. (x.ge.xx (jm) ) ) then 
                    !and replace either the lower                        
             jl = jm 
-         ELSE 
+         else 
                     !or the upper limit                                 
             ju = jm 
-         ENDIF 
-         GOTO 10 
-      ENDIF 
-      IF (x.eq.xx (1) ) then 
-         j = 1 
-      ELSEIF (x.eq.xx (n) ) then 
-         j = n - 1 
-      ELSE 
-         j = jl 
-      ENDIF 
-      RETURN 
-      END SUBROUTINE locate                         
+         end if 
+      else
+        exit
+      end if 
+    end do
+
+
+    if (x.eq.xx (1) ) then 
+       j = 1 
+    elseif (x.eq.xx (n) ) then 
+       j = n - 1 
+    else 
+       j = jl 
+    end if 
+    return 
+end subroutine locate              
 

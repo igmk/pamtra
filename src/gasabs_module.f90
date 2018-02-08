@@ -333,6 +333,11 @@ contains
     end function abh2o
     !*************************************************************
     function abliq(water,freq,tempK)
+        ! D.Ori - to me it seems this function is not called by anywhere else and could be dropped
+        ! from comparison with other routines it also seems that it does not return Np/km which would be inconsistent
+        ! with the other routines of this module and can cause confusion
+        ! It is even not gas absorption and does not really belong to this module
+
         !     COMPUTES ABSORPTION IN NEPERS/KM BY SUSPENDED WATER DROPLETS
         !     FROM EQUATIONS OF LIEBE, HUFFORD AND MANABE
         !     (INT. J. IR & MM WAVES V.12(17) JULY 1991

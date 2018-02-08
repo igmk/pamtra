@@ -2,8 +2,8 @@ subroutine write_nc_results
   use kinds
   use vars_output
   use vars_atmosphere, only: atmo_ngridx, atmo_ngridy, atmo_max_nlyrs,&
-       atmo_year, atmo_month, atmo_day, atmo_time, atmo_model_i,&
-       atmo_model_j, atmo_lfrac, atmo_lon, atmo_lat, atmo_iwv, atmo_obs_height
+       atmo_year, atmo_month, atmo_day, atmo_time,&  !atmo_model_j, atmo_model_i,
+       atmo_lfrac, atmo_lon, atmo_lat, atmo_iwv, atmo_obs_height
   use netcdf
   use settings, only: active, passive, creator, radar_mode, &
        radar_nfft, radar_mode, nfrq, freqs, noutlevels, nc_out_file, &
@@ -17,8 +17,8 @@ subroutine write_nc_results
   integer :: dlonID, dlatID, dangID, dfrqID, doutID, dstokesID, dlayerID,&
        dnfftID,dradpolID,dattpolID, dlenstrID, dradpeakID
 
-  integer :: isVarID, jsVarID, lonVarID, latVarID, lfracVarID, iwvVarID, cwpVarID,&
-       iwpVarID, rwpVarID, swpVarID, gwpVarID, hwpVarID, &
+  integer :: lonVarID, latVarID, lfracVarID, iwvVarID,& !isVarID, jsVarID, cwpVarID,
+       !iwpVarID, rwpVarID, swpVarID, gwpVarID, hwpVarID, &
        obsVarID, tbVarID, heightVarID, &
        ZeVarID,rQualVarID, &
        AttAtmoVarID, AttHydroVarID,&
@@ -33,7 +33,6 @@ subroutine write_nc_results
   integer, dimension(3) :: dim3d_obs
   integer, dimension(4) :: dim4d
   integer, dimension(5) :: dim5d_att
-  integer, dimension(5) :: dim5d_pas
   integer, dimension(6) :: dim6d_rad
   integer, dimension(6) :: dim6d_pas
 
@@ -42,9 +41,7 @@ subroutine write_nc_results
   character(300) :: timestring
   character(40) :: gitVersion,gitHash
 
-  integer(kind=long) :: errorstatus
   integer(kind=long) :: err
-  character(len=80) :: msg
   character(len=30) :: nameOfRoutine = 'write_nc_results'
 
   err = 0

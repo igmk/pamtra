@@ -118,7 +118,7 @@ subroutine run_rt(errorstatus)
 
   if (active) then
      out_att_atmo(i_x,i_y,:atmo_nlyrs(i_x,i_y),i_f)  = 10._dbl* &
-        log10(exp(rt_kextatmo(atmo_nlyrs(i_x,i_y))*atmo_delta_hgt_lev(i_x,i_y,:atmo_nlyrs(i_x,i_y))))
+        log10(exp(rt_kextatmo(:atmo_nlyrs(i_x,i_y))*atmo_delta_hgt_lev(i_x,i_y,:atmo_nlyrs(i_x,i_y))))
      out_radar_hgt(i_x,i_y,:atmo_nlyrs(i_x,i_y)) = atmo_hgt(i_x,i_y,:atmo_nlyrs(i_x,i_y))
   end if
 

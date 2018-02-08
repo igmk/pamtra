@@ -13,11 +13,11 @@ active                             bool                           True          
 conserve_mass_rescale_dsd          bool                           True               In case the mass mixing ratio for an hydrometeor calculated integrating the drop-size-distribution (DSD) doesn't correspond to the input value, rescale the DSD to account for the mass loss.
 creator                            str                            Pamtrauser         Netcdf file creator
 data_path                          str                            $PAMTRA_DATADIR    Path for emissivity files and other data, If value is $PAMTRA_DATADIR, the corresponding environment variable is used.
-emissivity                         positive float                 0.6                
-file_desc                          str                            ""                  
+emissivity                         positive float                 0.6
+file_desc                          str                            ""
 gas_mod                            L93, R98                       R98                Model for gas absorption. Either ROSENKRANZ (1998) or LIEBE (1993)
 ground_type                        L,                             L                  Lambertian or
-hydro_adaptive_grid                bool                           True                
+hydro_adaptive_grid                bool                           True
 hydro_fullspec                     bool                           False              For pyPamtra only: Do not estimate particle diameter, mass, area, number concentration, rho and aspect ratio directly from the descriptor file but pass them directly from python to Pamtra using numpy arrays. See also addFullSpectra() of pyPamtra's descriptorFile class.
 hydro_includehydroinrhoair         bool                           True               Include hydrometeors when estimating the density of wet air. Different models use different conventions here.
 hydro_limit_density_area           bool                           True               Change mass, cross section area and density of particles in case it is larger or smaller than possible. Min density is hydro_softsphere_min_density, max density is 917 kg/m3. max area is D**2
@@ -25,10 +25,11 @@ hydro_softsphere_min_density       positive float                 10.0          
 hydro_threshold                    positive float                 1e-10              minimum required hydrometeor concentration kg/m^3.
 lgas_extinction                    bool                           True               gas extinction desired
 lhyd_extinction                    bool                           True               hydrometeor extinction desired
-liq_mod                            str                            Ell                 
+liq_mod                            str                            Ell
 obs_height                         positive float                 833000.0           upper level output height [m] (> 100000. for satellite)
-outpol                             str                            VH                  
+outpol                             str                            VH
 passive                            bool                           True               estimate brightness temperatures
+radar_allow_negative_dD_dU         bool                           False              allow that particle velocity is decreasing with size. Should be usually set to false.
 radar\_airmotion                   boolean                        False              Consider air motion in direction of radar beam.
 radar\_airmotion\_linear\_steps    positive integer               30                 For linear function: number of discrete intervals.
 radar\_airmotion\_model            constant, linear, step         step               Model to describe vertical air motion: Either constant velocity, linear change from vmin to vmax or abrupt change using a step function.
@@ -43,7 +44,9 @@ radar_integration_time             float*                         1.4           
 radar\_K2 (|K_w^2|)                positive float*                0.93               Dielectric factor of water used to estimate radr reflectivity.
 radar\_max\_v ( v_nyq )            float*                         -7.885 m/s         Maximum Nyquist velocity (usually radar\_min\_V = -radar\_max\_V)
 radar\_min\_v ( v_nyq )            float*                         7.885 m/s          Minimum Nyquist velocity
-radar_min_spectral_snr             positive float*                1.2                Minimal required signal+noise to noise ratio required for a peak. Smaller peaks are discarded.
+radar_peak_min_bins                int*                           2                  Minimum peak width
+radar_peak_min_snr                 float*                         -10 dB             Minimal required SNR reqired for a peak. See radar_peak_min_snr for defintion
+radar_peak_snr_definition          specLin | log                  log                log: radar_peak_min_snr describes snr of peak in dB. linSpec: radar_peak_min_snr descibes mean signal+noise to noise ratio (available for historical reasons)
 radar\_mode                        simple, spectrum, moments      simple             Use "simple" radar simulator provides only Z_e by integrating Eq. \label{eq:etaD} over  D. The advanced "spectrum" simulator simulates the complete radar Doppler spectrum and estimates all moments from the spectrum. "moments" is identical to "spectrum" but the full Doppler spectrum is discarded to save memory.
 radar\_nfft ( N_fft )              positive integer               256                Number of FFT points in the Doppler spectrum
 radar\_no\_Ave ( Nave )            positive integer*              150                Number of spectral averages
@@ -51,7 +54,7 @@ radar_noise_distance_factor        positive float*                2.0           
 radar_npeaks                       1                              1                  Number of detected peaks in the Doppler spectrum. As of today fixed to 1.
 radar\_pnoise0 ( N_1000 )          float*                         -32.23 dBz         Radar noise at 1km in same unit as reflectivity Z_e (Eq.~\ref{eq:radarnoise})
 radar\_polarisation                NN, HV, VH, VV, HH             NN                 Radar polarisation. NN: no polarisation, HV: horizontal transmit, vertical receive, etc.. Can be a comma separated list.
-radar_receiver_miscalibration      float*                         0.0 dB             Radar calibration error 
+radar_receiver_miscalibration      float*                         0.0 dB             Radar calibration error
 radar_receiver_uncertainty_std     positive float*                0.0                Add Gaussian noise to radar noise level to simulate unstable receivers
 radar_save_noise_corrected_spectra boolean                        False              For debugging purposes: Save radar Doppler spectrum after noise is removed
 radar_smooth_spectrum              boolean                        True               smooth spectrum before estimating moments
@@ -67,4 +70,4 @@ tmatrix_db_path                    str                            database/     
 write_nc                           bool                           True               write netcdf or ascii output
 ================================== ============================== ================== =============================================================================================================================================================================================================================================================================================================================================================================
 
-\* These variables *can* be also provided as list to account for different instrument specifications. In this case, each entry corresponds to one frequency. 
+\* These variables *can* be also provided as list to account for different instrument specifications. In this case, each entry corresponds to one frequency.

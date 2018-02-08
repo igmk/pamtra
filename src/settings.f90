@@ -10,7 +10,7 @@ module settings
 
     !!Global Stettings
     integer, parameter :: MAXV = 64,   &
-    MAXLAY = 600, &
+    MAXLAY = 3000, &
     maxleg = 200, &
     maxfreq = 200, &
     nummu = 16, & ! no. of observation angles
@@ -54,8 +54,8 @@ module settings
     real(kind=dbl) :: radar_min_V_default !MaximumNyquistVelocity in m/sec
     real(kind=dbl), dimension(maxfreq) :: radar_pnoise0 !radar noise at 1km
     real(kind=dbl) :: radar_pnoise0_default !radar noise at 1km
-    real(kind=dbl), dimension(maxfreq) :: radar_min_spectral_snr !threshold for peak detection
-    real(kind=dbl) :: radar_min_spectral_snr_default !threshold for peak detection
+    real(kind=dbl), dimension(maxfreq) :: radar_peak_min_snr !threshold for peak detection
+    real(kind=dbl) :: radar_peak_min_snr_default !threshold for peak detection
     real(kind=dbl), dimension(maxfreq) :: radar_K2
     real(kind=dbl) :: radar_K2_default
     real(kind=dbl), dimension(maxfreq) :: radar_receiver_uncertainty_std
@@ -68,8 +68,8 @@ module settings
     real(kind=dbl) :: radar_fwhr_beamwidth_deg_default 
     real(kind=dbl), dimension(maxfreq) :: radar_integration_time 
     real(kind=dbl) :: radar_integration_time_default 
-
-
+    real(kind=dbl), dimension(maxfreq) :: radar_peak_min_bins
+    real(kind=dbl) :: radar_peak_min_bins_default 
 
     real(kind=dbl) :: radar_airmotion_vmin
     real(kind=dbl) :: radar_airmotion_vmax
@@ -104,8 +104,8 @@ module settings
        conserve_mass_rescale_dsd, & ! in case the total mass calculated integrating the DSD is different from q_h (mass mixing ratio given in input) rescale the DSD
        add_obs_height_to_layer, & ! if passive=.true. and the observation height don't correspond to a layer interface, add to the profile the observation height and interpolate all variables
        radar_use_wider_peak, & ! use wider peak inlcuding the found noise/peak border
-       liblapack ! use liblapack for matrix inversion which much faster
-
+       liblapack, & ! use liblapack for matrix inversion which much faster
+       radar_allow_negative_dD_dU !allow that particle velocity is decreasing with size
   character(3) :: gas_mod
   character(3) :: liq_mod
   character(20) :: moments_file,file_desc
@@ -115,6 +115,7 @@ module settings
   character(2) :: OUTPOL
   character(8) :: radar_airmotion_model, radar_mode
   character(10) :: radar_attenuation
+  character(7) :: radar_peak_snr_definition
   character(15) :: radar_polarisation
   character(2), dimension(5) :: radar_pol
   character(1), dimension(5) :: att_pol
@@ -132,7 +133,7 @@ module settings
   character(300) :: tmatrix_db_path
 
   integer(kind=long) :: noutlevels ! number of output levels per profile
-  integer(kind=long) :: radar_nfft_aliased, radar_maxTurbTerms !are gained from radar_aliasing_nyquist_interv and radar_nfft
+  integer(kind=long) :: radar_nfft_aliased !is calculated from radar_aliasing_nyquist_interv and radar_nfft
 
   integer(kind=long) :: randomseed !random seed, 0 means time dependence
 contains
@@ -198,7 +199,7 @@ contains
         radar_aliasing_nyquist_interv,&
         radar_save_noise_corrected_spectra,&
         radar_use_hildebrand,&
-        radar_min_spectral_snr,&
+        radar_peak_min_snr,&
         radar_convolution_fft,&
         radar_K2,&
         radar_noise_distance_factor,&
@@ -207,11 +208,13 @@ contains
         radar_nPeaks,&
         radar_smooth_spectrum,&
         radar_attenuation,&
+        radar_peak_snr_definition , &
         radar_polarisation, &
         radar_integration_time, &
+        radar_peak_min_bins, &
         radar_fwhr_beamwidth_deg, &
-        liblapack
-
+        liblapack, &
+        radar_allow_negative_dD_dU
       err = 0
 
      if (verbose >= 3) print*,'Start of ', nameOfRoutine
@@ -297,8 +300,8 @@ contains
          "too few values for radar_min_V")
     call assert_false(err,ANY(ISNAN(radar_pnoise0(1:nfrq))),&
          "too few values for radar_pnoise0")
-    call assert_false(err,ANY(ISNAN(radar_min_spectral_snr(1:nfrq))),&
-         "too few values for radar_min_spectral_snr")
+    call assert_false(err,ANY(ISNAN(radar_peak_min_snr(1:nfrq))),&
+         "too few values for radar_peak_min_snr")
     call assert_false(err,ANY(ISNAN(radar_K2(1:nfrq))),&
          "too few values for radar_K2")
     call assert_false(err,ANY(ISNAN(radar_noise_distance_factor(1:nfrq))),&
@@ -309,6 +312,10 @@ contains
          "too few values for radar_receiver_miscalibration")
     call assert_false(err,ANY(ISNAN(radar_integration_time(1:nfrq))),&
          "too few values for radar_integration_time")
+    call assert_false(err,ANY(ISNAN(radar_peak_min_bins(1:nfrq))),&
+         "too few values for radar_peak_min_bins")
+
+
     call assert_false(err,ANY(ISNAN(radar_fwhr_beamwidth_deg(1:nfrq))),&
          "too few values for radar_fwhr_beamwidth_deg")
     if (err /= 0) then
@@ -359,7 +366,6 @@ contains
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
-    character(len=80) :: msg
     character(len=15) :: nameOfRoutine = 'add_settings'
 
     !additional variables derived from others go here
@@ -370,12 +376,13 @@ contains
     call fillRealValues(radar_pnoise0,radar_pnoise0_default)
     call fillRealValues(radar_max_V,radar_max_V_default)
     call fillRealValues(radar_min_V,radar_min_V_default)
-    call fillRealValues(radar_min_spectral_snr,radar_min_spectral_snr_default)
+    call fillRealValues(radar_peak_min_snr,radar_peak_min_snr_default)
     call fillRealValues(radar_K2,radar_K2_default)
     call fillRealValues(radar_noise_distance_factor,radar_noise_distance_factor_default)
     call fillRealValues(radar_receiver_uncertainty_std,radar_receiver_uncertainty_std_default)
     call fillRealValues(radar_receiver_miscalibration,radar_receiver_miscalibration_default)
     call fillRealValues(radar_integration_time,radar_integration_time_default)
+    call fillRealValues(radar_peak_min_bins,radar_peak_min_bins_default)
     call fillRealValues(radar_fwhr_beamwidth_deg,radar_fwhr_beamwidth_deg_default)
     if (ALL(radar_no_Ave == missingInt)) then
       radar_no_Ave(:) = radar_no_Ave_default
@@ -405,7 +412,6 @@ contains
 
     !mix some variables to make new ones:
     radar_nfft_aliased = radar_nfft *(1+2*radar_aliasing_nyquist_interv)
-    radar_maxTurbTerms = radar_nfft_aliased * 12
 
     !in python some options are missing. The output levels have already been added by reScaleHeights module of pyPamtra
     if (in_python) add_obs_height_to_layer = .false.
@@ -459,7 +465,7 @@ contains
 
     if (verbose >= 2) print*,'Start of ', nameOfRoutine
 
-    floatNfreq(:) = nan()
+    floatNfreq(:) = nan!()
     intNfreq(:) = missingInt
 
         !set namelist defaults!
@@ -512,12 +518,15 @@ contains
         radar_pnoise0_default=  -32.23 ! mean value for BArrow MMCR during ISDAC
         radar_integration_time(:)= floatNfreq ! radar integration time
         radar_integration_time_default=  1.4 ! MMCR Barrow during ISDAC
+        radar_peak_min_bins(:) = intNfreq !minimum peak width in fft bins
+        radar_peak_min_bins_default=  2
+
         radar_fwhr_beamwidth_deg(:)= floatNfreq ! full width haalf radiation beam width
         radar_fwhr_beamwidth_deg_default=  0.31/2. ! MMCR Barrow during ISDAC
 
-
-        radar_min_spectral_snr(:)= floatNfreq
-        radar_min_spectral_snr_default = 1.2!threshold for peak detection. if radar_no_Ave >> 150, it can be set to 1.1
+        radar_peak_snr_definition = 'log'
+        radar_peak_min_snr(:)= floatNfreq
+        radar_peak_min_snr_default = -10!threshold for peak detection. 
         radar_K2(:)= floatNfreq
         radar_K2_default = 0.93 ! dielectric constant |K|² (always for liquid water by convention) for the radar equation
         radar_noise_distance_factor(:)= floatNfreq
@@ -526,7 +535,6 @@ contains
         radar_receiver_uncertainty_std_default = 0.d0 !dB
         radar_receiver_miscalibration(:)= floatNfreq
         radar_receiver_miscalibration_default =  0.d0 !dB
-
 
         radar_aliasing_nyquist_interv = 1
         radar_save_noise_corrected_spectra = .false.
@@ -543,6 +551,8 @@ contains
         radar_airmotion_vmax = +4.d0
         radar_airmotion_linear_steps = 30
         radar_airmotion_step_vmin = 0.5d0
+
+        radar_allow_negative_dD_dU = .false.
 
         liblapack = .true.
 
@@ -574,7 +584,7 @@ contains
       print*, 'radar_mode: ', radar_mode
       print*, 'radar_pnoise0: ', radar_pnoise0
       print*, 'data_path: ', data_path
-      print*, 'radar_min_spectral_snr: ', radar_min_spectral_snr
+      print*, 'radar_peak_min_snr: ', radar_peak_min_snr
       print*, 'radar_aliasing_nyquist_interv: ', radar_aliasing_nyquist_interv
       print*, 'radar_airmotion_linear_steps: ', radar_airmotion_linear_steps
       print*, 'radar_airmotion: ', radar_airmotion
@@ -605,6 +615,8 @@ contains
       print*, 'radar_convolution_fft: ', radar_convolution_fft
       print*, 'radar_smooth_spectrum', radar_smooth_spectrum
       print*, 'radar_attenuation', radar_attenuation
+      print*, "radar_peak_min_bins", radar_peak_min_bins
+      print*, 'radar_peak_snr_definition', radar_peak_snr_definition
       print*, 'radar_use_wider_peak', radar_use_wider_peak
       print*, 'active: ', active
       print*, 'radar_max_v: ', radar_max_v
@@ -626,8 +638,8 @@ contains
       print*, "radar_pol", radar_pol
       print*, "radar_npol", radar_npol
       print*, "radar_nfft_aliased", radar_nfft_aliased
-      print*, "radar_maxTurbTerms", radar_maxTurbTerms
       print*, "liblapack", liblapack
+      print*, "radar_allow_negative_dD_dU", radar_allow_negative_dD_dU
 
     end subroutine print_settings
 

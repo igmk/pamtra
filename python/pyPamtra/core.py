@@ -85,18 +85,21 @@ class pyPamtra(object):
     #: MaximumNyquistVelocity in m/sec
     self.nmlSet["radar_min_v"]= -7.885
     #: radar noise in 1km in same unit as Ze 10*log10(mm⁶/m³). noise is calculated with noise"]=  radar_pnoise0 + 20*log10(range/1000)
-    self.nmlSet["radar_pnoise0"]= -32.23 # mean value for Barrow MMCR during iSDAC
+    self.nmlSet["radar_pnoise0"]= -32.23 # mean value for BArrow MMCR during ISDAC
+    self.nmlSet['radar_allow_negative_dD_dU'] = False #allow that particle velocity is decreasing with size
     self.nmlSet["radar_airmotion"]=  False
     self.nmlSet["radar_airmotion_model"]=  "step" #: "constant","linear","step"
     self.nmlSet["radar_airmotion_vmin"]=  -4.e0
     self.nmlSet["radar_airmotion_vmax"]=  +4.e0
     self.nmlSet["radar_airmotion_linear_steps"]=  30
     self.nmlSet["radar_airmotion_step_vmin"]=  0.5e0
-
+    self.nmlSet["radar_airmotion_step_vmin"]=  0.5e0
+    self.nmlSet["radar_peak_min_bins"]=  2
     self.nmlSet["radar_aliasing_nyquist_interv"]=  1
     self.nmlSet["radar_save_noise_corrected_spectra"]=  False
     self.nmlSet["radar_use_hildebrand"]=  False
-    self.nmlSet["radar_min_spectral_snr"]=  1.2#threshold for peak detection. if radar_no_Ave >> 150, it can be set to 1.1
+    self.nmlSet["radar_peak_snr_definition"] = 'log'
+    self.nmlSet["radar_peak_min_snr"]=  -10#threshold for peak detection. if radar_no_Ave >> 150, it can be set to 1.1
     self.nmlSet["radar_convolution_fft"]=  True #use fft for convolution of spectrum. is alomst 10 times faster, but can introduce aretfacts for radars with *extremely* low noise levels or if noise is turned off at all.
     self.nmlSet["radar_smooth_spectrum"]=  True #smooth spectrum before moment estimation
     self.nmlSet["radar_k2"]=  0.93 # dielectric constant |K|² (always for liquid water by convention) for the radar equation
@@ -108,7 +111,7 @@ class pyPamtra(object):
     self.nmlSet["radar_polarisation"]=  "NN" #! comma separated
     self.nmlSet["radar_use_wider_peak"]=  False #
     self.nmlSet["radar_integration_time"] =  1.4 # MMCR Barrow during ISDAC
-    self.nmlSet["radar_fwhr_beamwidth_deg"] = 0.31 # full width haalf radiation beam width MMCR Barrow 
+    self.nmlSet["radar_fwhr_beamwidth_deg"] = 0.31 # full width haalf radiation beam width MMCR Barrow
 
     self.nmlSet["liblapack"]=  True # use liblapack for matrix inversion
 
@@ -157,12 +160,13 @@ class pyPamtra(object):
 
     self.dimensions["radar_hgt"] = ["ngridx","ngridy","max_nlyrs"]
     self.dimensions["radar_prop"] = ["ngridx","ngridy","2"]
+    self.dimensions["radar_spectra"] = ["gridx","gridy","lyr","frequency","radar_npol"]
 
     self.dimensions["Ze"] = ["gridx","gridy","lyr","frequency","radar_npol","radar_npeaks"]
     self.dimensions["Att_hydro"] = ["gridx","gridy","lyr","frequency","att_npol"]
     self.dimensions["Att_atmo"] = ["gridx","gridy","lyr","frequency"]
     self.dimensions["tb"] = ["gridx","gridy","outlevels","angles","frequency","passive_npol"]
-    
+
     self.dimensions["sfc_type"] = ["ngridx","ngridy"]
     self.dimensions["sfc_model"] = ["ngridx","ngridy"]
     self.dimensions["sfc_refl"] = ["ngridx","ngridy"]
@@ -206,10 +210,10 @@ class pyPamtra(object):
     self.units["Att_hydros"] = "dB"
     self.units["Att_atmo"] = "dB"
     self.units["tb"] = "K"
-    
-    self.units["sfc_type"] = "-" 
-    self.units["sfc_model"] = "-" 
-    self.units["sfc_refl"] = "-" 
+
+    self.units["sfc_type"] = "-"
+    self.units["sfc_model"] = "-"
+    self.units["sfc_refl"] = "-"
     self.units["sfc_salinity"] = "ppt"
 
     self._nstokes = 2
@@ -230,11 +234,11 @@ class pyPamtra(object):
   def writeNmlFile(self,nmlFile):
     """
     write classical Pamtra Namelist File from nmlSet
-    
+
     Parameter
     ---------
-    nmlFile: str 
-        filename with path    
+    nmlFile: str
+        filename with path
     """
     f = open(nmlFile,"w")
     f.write("&settings\n\r")
@@ -263,8 +267,8 @@ class pyPamtra(object):
 
     Parameter
     ---------
-    nmlFile: str 
-        filename with path    
+    nmlFile: str
+        filename with path
     """
 
     nmlFile = Namelist(inputFile)
@@ -292,11 +296,11 @@ class pyPamtra(object):
   def readPamtraProfile(self,inputFile):
     """
     read lay or lev pamtra profile from file. Descriptot file must be defined before
- 
+
     Parameter
     ---------
-    inputFile: str 
-        filename with path    
+    inputFile: str
+        filename with path
     """
     #make sure that a descriptor file was defined
     assert self.df.nhydro > 0
@@ -446,7 +450,7 @@ class pyPamtra(object):
     read classical pamtra profile from file
     Input:
 
-    inputFile: str filename with path    
+    inputFile: str filename with path
     """
 
     f = open(inputFile,"r")
@@ -577,12 +581,12 @@ class pyPamtra(object):
 
   def writePamtraProfile(self,profileFile):
     """
-    write lay or lev (depending on file extension) pamtra profile to file. 
+    write lay or lev (depending on file extension) pamtra profile to file.
 
     Parameter
     ---------
-    profileFile: str 
-        filename with path    
+    profileFile: str
+        filename with path
     """
 
     levLay = profileFile.split(".")[-1]
@@ -911,10 +915,10 @@ class pyPamtra(object):
 
     for key in ["obs_height"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3Dout)
-      
+
     for key in ["hydro_wp","hydro_tn"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3Dhyd)
-      
+
     for key in ["hydro_q","hydro_n","hydro_reff"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape4D)
 
@@ -949,7 +953,7 @@ class pyPamtra(object):
 
   def tileProfiles(self,rep2D):
     '''
-    repeat the profiles of Pamtra 
+    repeat the profiles of Pamtra
 
     Parameters
     ----------
@@ -1152,7 +1156,7 @@ class pyPamtra(object):
     Eddy dissipation rate (SI units)
   wind_uv : array
     horizontal wind field (SI units)
-  beamwidth_deg : float 
+  beamwidth_deg : float
     full-width half-radiated one-way (deg)
   integration_time : float
     radar integration time in s
@@ -1354,13 +1358,13 @@ class pyPamtra(object):
     self.p["sfc_model"] = sfc_model.reshape(self._shape2D)
     self.p["sfc_refl"] = sfc_refl.reshape(self._shape2D)
     self.p["sfc_salinity"] = sfc_salinity.reshape(self._shape2D)
-    
+
     return
 
 
   def runPamtra(self,freqs,checkData=True):
     '''
-    run Pamtra from python. Populates result dictionary 'r'. 
+    run Pamtra from python. Populates result dictionary 'r'.
 
     Parameters
     ----------
@@ -1373,7 +1377,7 @@ class pyPamtra(object):
 
 
     if type(freqs) in (int,np.int32,np.int64,float,np.float32,np.float64): freqs = [freqs]
-    
+
     assert np.array_equal(np.sort(freqs),freqs) # frequencies should be sorted to avoid strange things...
 
     self.set["freqs"] = freqs
@@ -1406,7 +1410,7 @@ class pyPamtra(object):
 
   def runParallelPamtra(self,freqs,pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0,checkData=True,timeout=None):
     '''
-    run Pamtra parallel from python. Populates result dictionary 'r'. 
+    run Pamtra parallel from python. Populates result dictionary 'r'.
 
     Parameters
     ----------
@@ -1512,7 +1516,7 @@ class pyPamtra(object):
 
   def runPicklePamtra(self,freqs,picklePath="pyPamJobs",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0,checkData=True,timeout=None,maxWait =3600):
     '''
-    Special variant of runParallelPamtra writing Pickles to picklePath which are processed by another job. 
+    Special variant of runParallelPamtra writing Pickles to picklePath which are processed by another job.
     '''
     import hashlib
 
@@ -1625,7 +1629,7 @@ class pyPamtra(object):
 
   def runPicklePamtraSFTP(self,freqs,host,user,localPicklePath="pyPamJobs",remotePicklePath="pyPamJobs",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0,checkData=True,timeout=None,maxWait =3600):
     '''
-    Special variant of runParallelPamtra writing Pickles to picklePath which are send by SFTP. 
+    Special variant of runParallelPamtra writing Pickles to picklePath which are send by SFTP.
     '''
     import hashlib
 
@@ -1914,7 +1918,7 @@ class pyPamtra(object):
     fname : str
         filename or - if seperateFiles - directory name
     seperateFiles : bool, optional
-        Write every variable to separate file. Required for very large data sets. 
+        Write every variable to separate file. Required for very large data sets.
     '''
 
     if not seperateFiles:
@@ -1951,7 +1955,7 @@ class pyPamtra(object):
   def loadResultsFromNumpy(self,fname):
     '''
     load complete pamtra object (profile,results,settings from (a) file(s)
- 
+
     Parameters
     ----------
 
@@ -2002,13 +2006,13 @@ class pyPamtra(object):
     Parameters
     ----------
 
-    fname : str 
+    fname : str
         filename with path
     profileVars : list of str or 'all', optional
         list of variables of the profile to be saved. "all" saves all implmented ones (default all)
     ncForm: str, optional
-        netcdf file format, possible values are NETCDF3_CLASSIC, NETCDF3_64BIT, NETCDF4_CLASSIC, and NETCDF4 
-        for the python-netcdf4 package (netcdf3 gives netcdf4 files for newer ubuntu versions!!") NETCDF3 takes 
+        netcdf file format, possible values are NETCDF3_CLASSIC, NETCDF3_64BIT, NETCDF4_CLASSIC, and NETCDF4
+        for the python-netcdf4 package (netcdf3 gives netcdf4 files for newer ubuntu versions!!") NETCDF3 takes
         the "old" Scientific.IO.NetCDF module, which is a bit more convinient (default NETCDF3_CLASSIC)
     wpNames: list of str, optional
         integrated values to be saved (default [])
@@ -2075,7 +2079,7 @@ class pyPamtra(object):
     dim6d_pas = ("grid_x","grid_y","outlevels","angles","frequency","passive_polarisation")
 
 
-    attUnit = "dBz"
+    attUnit = "dB"
     zeUnit = "dBz"
 
     #create and write dim variables
@@ -2352,13 +2356,13 @@ class pyPamtra(object):
 
   def averageResultTbs(self,translatorDict):
     """
-    average several frequencies of the passive observations to account for channel width. Replaces self.r["tb"]. As of know this works only in passive mode. 
+    average several frequencies of the passive observations to account for channel width. Replaces self.r["tb"]. As of know this works only in passive mode.
     Backups of teh original data are kept in self.r["not_averaged_tb"] and self.set["not_averaged_freqs"]
 
     Parameters
     ----------
 
-    translatorDict: dict 
+    translatorDict: dict
         with list of old and new frequencies. Note that the "new" frequency is only for naming of the channel. e.g.
             translatorDict = {
               90.0: [90.0],

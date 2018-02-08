@@ -90,6 +90,7 @@ subroutine radar_spectrum(&
     if (verbose >= 2) then
       call report(info,'Start of ', nameOfRoutine)
       print*, "i_x,i_y, i_z, i_f, i_h, i_p", i_x,i_y, i_z, i_f, i_h, i_p
+      print*, "back,temp, press, frequency, mass,nbins", back,temp, press, frequency, mass,nbins
     end if
     err = 0
 
@@ -99,7 +100,7 @@ subroutine radar_spectrum(&
         "nan or negative back_spec")
     call assert_true(err,nbins>1,&
         "nbins must be greater than 1 for the radar simulator!")
-    call assert_true(err,back>0,&
+    call assert_true(err,back>=0,&
         "nan or negative back")
     call assert_true(err,temp>0,&
         "nan or negative temperature")
@@ -121,6 +122,15 @@ subroutine radar_spectrum(&
       call report(errorstatus, msg, nameOfRoutine)
       return
     end if
+
+
+    if (back == 0) then 
+        if (verbose >= 2) call report(info,'Taking shortcut because of back==0', nameOfRoutine)
+        particle_spec(:) =0.d0
+        errorstatus = err
+        if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+        return
+    end if    
 
     !initialize
     back_vel_spec_ext(:) = 0.d0
@@ -227,8 +237,12 @@ subroutine radar_spectrum(&
     end do
     dD_dU(nbins) = dD_dU(nbins-1)
 
-    call assert_false(err,any(isnan(dD_dU) .or. all(dD_dU <= 0.d0)),&
-        "nan or negative  dD_dU")
+    call assert_false(err,any(isnan(dD_dU)),&
+        "nan  dD_dU")
+    if (.not. radar_allow_negative_dD_dU) then
+        call assert_false(err,any(dD_dU <= 0.d0),&
+            "negative  dD_dU")
+    end if
     call assert_false(err,any(vel_spec<0) .or. any(isnan(vel_spec)),&
         "nan or negative vel_spec")
     if (err /= 0) then
@@ -239,7 +253,7 @@ subroutine radar_spectrum(&
     end if
 
 
-    del_v_model(nbins) = del_v_model(nbins)
+    del_v_model(nbins) = del_v_model(nbins-1)
     back_vel_spec = back_spec_ref * ABS(dD_dU)  !non-SI: [mm⁶/m³/m * m/(m/s)]
     !get delta velocity
     del_v_radar = (radar_max_V(i_f)-radar_min_V(i_f))/radar_nfft ![m/s]
@@ -343,7 +357,7 @@ subroutine radar_spectrum(&
         "nan or negative particle_spec")
     if (err /= 0) then
     print*, i_x,i_y, i_z, i_f, i_h
-    print*, "particle_spec", particle_spec
+    print*, "SUM(particle_spec)", SUM(particle_spec)
       msg = 'error in transforming the spectrum to velocity space...'
       call report(err, msg, nameOfRoutine)
       errorstatus = err

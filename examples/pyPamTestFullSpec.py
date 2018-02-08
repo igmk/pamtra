@@ -17,12 +17,13 @@ freqs = [35.5]#,80,150]
 pam.set["verbose"] = 0
 pam.set["pyVerbose"] =0
 pam.nmlSet["passive"] = False
-pam.nmlSet["randomseed"] = 0
+pam.nmlSet["randomseed"] = 10
 pam.nmlSet["radar_mode"] = "spectrum"
 pam.nmlSet["radar_aliasing_nyquist_interv"] = 3
 pam.nmlSet["hydro_adaptive_grid"] = False
 pam.nmlSet["conserve_mass_rescale_dsd"] = False
-
+pam.nmlSet["radar_use_hildebrand"] = True
+pam.nmlSet["radar_noise_distance_factor"] = -2
 
 pam.p["hydro_q"][:] = 0.002
 pam.nmlSet["save_psd"] = True
@@ -47,17 +48,17 @@ pamFS.p["airturb"][:] = 0.2
 pamFS.set["verbose"] = 5
 pamFS.set["pyVerbose"] =0
 pamFS.nmlSet["passive"] = False
-pamFS.nmlSet["randomseed"] = 0
+pamFS.nmlSet["randomseed"] = 10
 pamFS.nmlSet["hydro_adaptive_grid"] = False
 pamFS.nmlSet["conserve_mass_rescale_dsd"] = False
 pamFS.nmlSet["radar_mode"] = "spectrum"
 pamFS.nmlSet["radar_use_hildebrand"] = True
+pamFS.nmlSet["radar_noise_distance_factor"] = -2
 
 
 pamFS.nmlSet["radar_aliasing_nyquist_interv"] = 3
 pamFS.p["hydro_q"][:] = 0.002
 
-pamFS.nmlSet["randomseed"] = 0
 pamFS.nmlSet["save_psd"] = True
 
 pamFS.nmlSet["hydro_fullspec"] = True

@@ -23,7 +23,6 @@ module vars_hydroFullSpec
     use vars_atmosphere, only: atmo_ngridx,atmo_ngridy, atmo_max_nlyrs
     use descriptor_file, only: n_hydro
 
-    real(kind=dbl) :: nan
     integer, intent(in) :: nbins
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
