@@ -63,7 +63,7 @@ contains
         elseif (sfc_model(i_x,i_y) == 1) then ! SSMI
             call land_sfc_optics_ssmi(err,freq)
         end if
-    else ! default sfc_type == -9999 and sfc_model == -9999
+    else ! default sfc_type == -9999, sfc_model == -9999 and sfc_refl == 'L'
         rt_sfc_emissivity(:,:) = emissivity
         rt_sfc_reflectivity(:,:) = 1._dbl - emissivity
     end if

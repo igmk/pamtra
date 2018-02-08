@@ -998,12 +998,12 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
   import time
   import datetime
   
-  variables2DC = ['rlat','rlon','fr_land']
-  variables3DC = ['hhl']
+  variables2DC = ['RLAT','RLON','lsm']
+  variables3DC = ['HHL']
 
-  variables2D = ['t_g','sp','10u','10v']
-  variables3D = ['t','pp','q']
-  variables4D = ['qc','qi','qr','qs']
+  variables2D = ['T_G','sp','10u','10v']
+  variables3D = ['t','PP','q']
+  variables4D = ['QC','QI','QR','QS']
 
   nhydro = len(variables4D)
   
@@ -1013,24 +1013,24 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
     # determine dimensions 
     constantFile = constantFields+'cosmo_cordex_lon'
     grbsC = pygrib.open(constantFile)
-    nLon = grbsC.select(shortName='rlon')[0]['Ni']
-    nLat = grbsC.select(shortName='rlon')[0]['Nj']
-    data['rlon'] = grbsC.select(shortName='rlon')[0].values
+    nLon = grbsC.select(shortName='RLON')[0]['Ni']
+    nLat = grbsC.select(shortName='RLON')[0]['Nj']
+    data['rlon'] = grbsC.select(shortName='RLON')[0].values
     grbsC.close()
 
     constantFile = constantFields+'cosmo_cordex_lat'
     grbsC = pygrib.open(constantFile)
-    data['rlat'] = grbsC.select(shortName='rlat')[0].values
+    data['rlat'] = grbsC.select(shortName='RLAT')[0].values
     grbsC.close()
 
     constantFile = constantFields+'fr_land_cordex'
     grbsC = pygrib.open(constantFile)
-    data['fr_land'] = grbsC.select(shortName='fr_land')[0].values
+    data['fr_land'] = grbsC.select(shortName='lsm')[0].values
     grbsC.close()
 
     constantFile = constantFields+'cosmo_cordex_HHL'
     grbsC = pygrib.open(constantFile)
-    selected_grbs = grbsC(shortName='hhl')
+    selected_grbs = grbsC(shortName='HHL')
     nLev = len(selected_grbs)
     shape2D = (nLat,nLon)
     shape3D = (nLat,nLon,nLev-1)
@@ -1042,7 +1042,6 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
 	data['hhl'][...,nLev-1-i] = selected_grbs[i].values
     grbsC.close()
 	
-    
     grbs = pygrib.open(fname)
 
     
@@ -1099,10 +1098,10 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
     return p0
 
   # some conversions and filling of needed variables
-  
+
   data['hfl'] = (data['hhl'][...,1:]+data['hhl'][...,:-1])/2.
   pref = calc_p0(data['hfl'])
-  data['press'] = pref + data['pp']*100.
+  data['press'] = pref + data['PP']*100.
   data['relhum'] = q2rh(data['q']/(1+data['q']),data['t'],data['press'])*100.
 
   data['timestamp'] = np.zeros(shape2D)
@@ -1111,7 +1110,7 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
   pam = pyPamtra()
   pam.df.readFile(descriptorFile)
   varPairs = [["timestamp","timestamp"],["rlat","lat"],["rlon","lon"],["10u","wind10u"],["10v","wind10v"],
-	      ["press","press"],["t","temp"],["relhum","relhum"],["t_g","groundtemp"],['hhl','hgt_lev'],['hydro_q','hydro_q']]    
+	      ["press","press"],["t","temp"],["relhum","relhum"],["T_G","groundtemp"],['hhl','hgt_lev'],['hydro_q','hydro_q']]    
 
   pamData = dict()
 
