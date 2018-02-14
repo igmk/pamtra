@@ -10,7 +10,7 @@ Dependencies on Ubuntu
 
 On Ubuntu, install the following packages in advance in order to compile the Fortran Pamtra version::
 
-    sudo apt-get install gcc gfortran libnetcdff5 netcdf-bin libnetcdf-dev liblapack-dev libzip-dev git gitk
+    sudo apt-get install gcc gfortran libnetcdff5 netcdf-bin libnetcdf-dev liblapack-dev libzip-dev git gitk libfftw3-dev libnetcdff-dev
 
 The model is tested with gcc version 4.8.2.
 
