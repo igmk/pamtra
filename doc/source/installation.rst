@@ -29,6 +29,7 @@ Dependencies on Mac OS X
 On Mac OS X, it is recommended to use brew (http://brew.sh) to install gfortran (via gcc) and netcdf ::
 
     brew install gcc
+    brew install fftw
     brew install netcdf --enable-fortran
 
 For the Python version, it is recommended not to use OS X's default python version,
