@@ -249,7 +249,6 @@ clean:
 	-rm -f $(OBJDIR)*.o
 	-rm -f $(OBJDIR)*.mod
 	-rm -f $(BINDIR)pamtra*
-	cd tools/dfftpack/ && $(MAKE) clean
 	cd tools/py_usStandard/ && $(MAKE) clean
 
 htmldoc:
