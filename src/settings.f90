@@ -459,18 +459,17 @@ contains
   subroutine settings_fill_default
 
     use kinds
-
+    use nan, only: nan_dbl
     implicit none
 
 
     real(kind=dbl), dimension(maxfreq) :: floatNfreq
     integer(kind=long), dimension(maxfreq) :: intNfreq
-    real(kind=dbl) :: nan
     character(len=14) :: nameOfRoutine = 'settings_fill_default'
 
     if (verbose >= 2) print*,'Start of ', nameOfRoutine
 
-    floatNfreq(:) = nan!()
+    floatNfreq(:) = nan_dbl()
     intNfreq(:) = missingInt
 
         !set namelist defaults!

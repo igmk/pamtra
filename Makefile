@@ -25,14 +25,15 @@ LDFLAGS := $(shell $(NCCONF) --flibs)
 to_remove:=-Wl,-Bsymbolic-functions -Wl,-z,relro
 LDFLAGS := $(subst $(to_remove),,$(LDFLAGS))
 
-
+# compilation depends on the order of objects in OBJECTS.
+# make sure that dependencies are listed first.
 OBJECTS=kinds.o \
+	nan.o \
 	vars_index.o \
 	report_module.o \
 	rt_utilities.o \
 	settings.o \
 	constants.o \
-	nan.o \
 	zlib_stuff.o \
 	mod_fastem4_coef.o \
 	gasabs_module.o \

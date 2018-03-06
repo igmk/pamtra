@@ -33,7 +33,6 @@ contains
 !!! internal "handle command line parameters" !!!
 
     integer(kind=long) :: inarg
-    real(kind=dbl) :: nan
 
 
 !!!loop variables

@@ -72,12 +72,12 @@ module vars_output
       radar_nfft, &
       radar_nPeaks
 
+    use nan, only: nan_dbl
     use mod_io_strings
     use descriptor_file, only: n_hydro, nbin_arr
 
     integer, intent(in) :: no_allocated_lyrs
     integer(kind=long)  :: max_nbin                                           ! maximum number of nbins+1
-    real(kind=dbl) :: nan
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
@@ -120,17 +120,17 @@ module vars_output
 !         swps(atmo_ngridy,atmo_ngridx),gwps(atmo_ngridy,atmo_ngridx),hwps(atmo_ngridy,atmo_ngridx))
       
 !         lons = 0.; lats = 0.; lfracs = 0.;
-        
-!         cwps(:,:) = nan()
-!         iwps(:,:)= nan()
-!         rwps(:,:)= nan()
-!         swps(:,:)= nan()
-!         gwps(:,:)= nan()
-!         hwps(:,:)= nan()     
+
+!         cwps(:,:) = nan_dbl()
+!         iwps(:,:)= nan_dbl()
+!         rwps(:,:)= nan_dbl()
+!         swps(:,:)= nan_dbl()
+!         gwps(:,:)= nan_dbl()
+!         hwps(:,:)= nan_dbl()
 !    end if
 
     allocate(out_angles_deg(2*nummu))
-    out_angles_deg = nan()
+    out_angles_deg = nan_dbl()
 !     if (write_nc .or. in_python) then
     if (passive) then
         allocate(out_tb(atmo_ngridx,atmo_ngridy,noutlevels,2*nummu,nfrq,nstokes))

@@ -135,8 +135,7 @@ module vars_atmosphere
   subroutine allocate_atmosphere_vars(errorstatus)
 
     use descriptor_file, only: n_hydro
-
-    real(kind=dbl) :: nan
+    use nan, only: nan_dbl
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err
@@ -217,50 +216,50 @@ module vars_atmosphere
     atmo_day(:,:) = "na"
     atmo_year(:,:) = "na"
     atmo_time(:,:) = "na"
-!     atmo_deltax(:,:) = nan()
-!     atmo_deltay(:,:) = nan()
+!     atmo_deltax(:,:) = nan_dbl()
+!     atmo_deltay(:,:) = nan_dbl()
     atmo_model_i(:,:) = -9999
     atmo_model_j(:,:) = -9999
-    atmo_lon(:,:) = nan()
-    atmo_lat(:,:) = nan()
-    atmo_lfrac(:,:) = nan()
-    atmo_wind10u(:,:) = nan()
-    atmo_wind10v(:,:) = nan()
-    atmo_obs_height(:,:,:) = nan()
+    atmo_lon(:,:) = nan_dbl()
+    atmo_lat(:,:) = nan_dbl()
+    atmo_lfrac(:,:) = nan_dbl()
+    atmo_wind10u(:,:) = nan_dbl()
+    atmo_wind10v(:,:) = nan_dbl()
+    atmo_obs_height(:,:,:) = nan_dbl()
 
-    atmo_relhum_lev(:,:,:) = nan()
-    atmo_press_lev(:,:,:) = nan()
-    atmo_temp_lev(:,:,:) = nan()
-    atmo_hgt_lev(:,:,:) = nan()
+    atmo_relhum_lev(:,:,:) = nan_dbl()
+    atmo_press_lev(:,:,:) = nan_dbl()
+    atmo_temp_lev(:,:,:) = nan_dbl()
+    atmo_hgt_lev(:,:,:) = nan_dbl()
 
-    atmo_groundtemp(:,:) = nan()
-    atmo_iwv(:,:) = nan()
+    atmo_groundtemp(:,:) = nan_dbl()
+    atmo_iwv(:,:) = nan_dbl()
 
 
-    atmo_relhum(:,:,:) = nan()
-    atmo_press(:,:,:) = nan()
-    atmo_temp(:,:,:) = nan()
-    atmo_vapor_pressure(:,:,:) = nan()
-    atmo_rho_vap(:,:,:) = nan()
-    atmo_q_hum(:,:,:) = nan()
-    atmo_hgt(:,:,:) = nan()
-    atmo_delta_hgt_lev(:,:,:) = nan()
-    atmo_airturb(:,:,:) = nan()
-    atmo_wind_uv(:,:,:) = nan()
-    atmo_turb_edr(:,:,:) = nan()
-    atmo_wind_w(:,:,:) =nan()
+    atmo_relhum(:,:,:) = nan_dbl()
+    atmo_press(:,:,:) = nan_dbl()
+    atmo_temp(:,:,:) = nan_dbl()
+    atmo_vapor_pressure(:,:,:) = nan_dbl()
+    atmo_rho_vap(:,:,:) = nan_dbl()
+    atmo_q_hum(:,:,:) = nan_dbl()
+    atmo_hgt(:,:,:) = nan_dbl()
+    atmo_delta_hgt_lev(:,:,:) = nan_dbl()
+    atmo_airturb(:,:,:) = nan_dbl()
+    atmo_wind_uv(:,:,:) = nan_dbl()
+    atmo_turb_edr(:,:,:) = nan_dbl()
+    atmo_wind_w(:,:,:) =nan_dbl()
 
-    atmo_hydro_q(:,:,:,:) = nan()
-    atmo_hydro_q_column(:,:,:) = nan()
-    atmo_hydro_reff(:,:,:,:) = nan()
-    atmo_hydro_reff_column(:,:,:) = nan()
-    atmo_hydro_n(:,:,:,:) = nan()
-    atmo_hydro_n_column(:,:,:) = nan()
+    atmo_hydro_q(:,:,:,:) = nan_dbl()
+    atmo_hydro_q_column(:,:,:) = nan_dbl()
+    atmo_hydro_reff(:,:,:,:) = nan_dbl()
+    atmo_hydro_reff_column(:,:,:) = nan_dbl()
+    atmo_hydro_n(:,:,:,:) = nan_dbl()
+    atmo_hydro_n_column(:,:,:) = nan_dbl()
 
     atmo_nlyrs(:,:) = -9999
     atmo_unixtime(:,:) = -9999
 
-    atmo_radar_prop(:,:,:) = nan()
+    atmo_radar_prop(:,:,:) = nan_dbl()
 
     errorstatus = err
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)

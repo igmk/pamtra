@@ -1,25 +1,28 @@
-function nan()
+module nan
+contains
+  function nan_dbl()
 
-  use kinds, only: dbl
+    use kinds, only: dbl
 
-  implicit none
+    implicit none
 
-  real(kind=dbl) :: b, nan
+    real(kind=dbl) :: b, nan_dbl
 
-  b = -1.
-  nan = set_nan(b)
+    b = -1.
+    nan_dbl = set_nan(b)
 
- contains
+   contains
 
-function set_nan(a)
+    function set_nan(a)
 
-  implicit none
+      implicit none
 
-  real(kind=dbl) :: a, set_nan
+      real(kind=dbl) :: a, set_nan
 
-  set_nan = sqrt(a)
+      set_nan = sqrt(a)
 
-  return
-end function set_nan
+      return
+    end function set_nan
 
-end function nan
+  end function nan_dbl
+end module nan
