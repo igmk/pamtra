@@ -1999,7 +1999,8 @@ class pyPamtra(object):
       return
 
 
-  def writeResultsToNetCDF(self,fname,profileVars="all",wpNames=[],ncForm="NETCDF3_CLASSIC"):
+  def writeResultsToNetCDF(self,fname,profileVars="all",wpNames=[],ncForm="NETCDF3_CLASSIC",
+    xarrayCompatibleOutput=False,ncCompression=False):
     '''
     write the results to a netcdf file
 
@@ -2016,6 +2017,14 @@ class pyPamtra(object):
         the "old" Scientific.IO.NetCDF module, which is a bit more convinient (default NETCDF3_CLASSIC)
     wpNames: list of str, optional
         integrated values to be saved (default [])
+    xarrayCompatibleOutput: bool, optional, default(False)
+        if True, make passive-only nc file xarray dataset compatible:
+            set passive_polarisation to H and V
+            rename dimension 'outlevels' to 'outlevel' and provide outlevel index vector
+        Otherwise passive_polarisation is filled with 'H' and 'H' and outlevel dimension is 'outlevels' (default)
+    ncCompression: bool, optional
+        If True, use netCDF4 compression. (NETCDF4 and NETCDF4_CLASSIC only).
+        Otherwise save with default settings (default, no compression)
     '''
 
     #most syntax is identical, but there is one nasty difference regarding the fillValue...
@@ -2057,7 +2066,10 @@ class pyPamtra(object):
 
     if (self.r["nmlSettings"]["passive"]):
       cdfFile.createDimension('angles',len(self.r["angles_deg"]))
-      cdfFile.createDimension('outlevels',int(self.p["noutlevels"]))
+      if xarrayCompatibleOutput:
+        cdfFile.createDimension('outlevel',int(self.p["noutlevels"]))
+      else:
+        cdfFile.createDimension('outlevels',int(self.p["noutlevels"]))
       cdfFile.createDimension('passive_polarisation',int(self._nstokes))
 
     if (self.r["nmlSettings"]["radar_mode"] in ["spectrum","moments"]):
@@ -2071,12 +2083,18 @@ class pyPamtra(object):
 
     dim2d = ("grid_x","grid_y",)
     dim3d = ("grid_x","grid_y","heightbins",)
-    dim3dout = ("grid_x","grid_y","outlevels",)
+    if xarrayCompatibleOutput:
+      dim3dout = ("grid_x","grid_y","outlevel",)
+    else:
+      dim3dout = ("grid_x","grid_y","outlevels",)
     dim4d = ("grid_x","grid_y","heightbins","frequency")
     dim5d_att = ("grid_x","grid_y","heightbins","frequency","attenuation_polarisation")
     dim6d_rad = ("grid_x","grid_y","heightbins","frequency","radar_polarisation","radar_peak_number")
     dim6d_rad_spec = ("grid_x","grid_y","heightbins","frequency","radar_polarisation","nfft")
-    dim6d_pas = ("grid_x","grid_y","outlevels","angles","frequency","passive_polarisation")
+    if xarrayCompatibleOutput:
+      dim6d_pas = ("grid_x","grid_y","outlevel","angles","frequency","passive_polarisation")
+    else:
+      dim6d_pas = ("grid_x","grid_y","outlevels","angles","frequency","passive_polarisation")
 
 
     attUnit = "dB"
@@ -2087,6 +2105,10 @@ class pyPamtra(object):
     fillVDict = dict()
     #little cheat to avoid hundreds of if, else...
     if pyNc: fillVDict["fill_value"] = missingNumber
+
+    if ncCompression and ncForm in ["NETCDF4_CLASSIC", "NETCDF4"]:
+      fillVDict['zlib'] = True # compression
+      fillVDict['fletcher32'] = True # HDF5 checksum algorithm
 
     nc_frequency = cdfFile.createVariable('frequency','f',('frequency',),**fillVDict)
     nc_frequency.units = 'GHz'
@@ -2137,7 +2159,16 @@ class pyPamtra(object):
 
       nc_stokes = cdfFile.createVariable('passive_polarisation', 'S1',("passive_polarisation",),**fillVDict)
       nc_stokes.units = "-"
-      nc_stokes[:] = "HV"
+      if xarrayCompatibleOutput:
+        nc_stokes[:] = ("H", "V")
+      else:
+        nc_stokes[:] = "HV"
+
+      if xarrayCompatibleOutput:
+        nc_outlevel = cdfFile.createVariable('outlevel','f',('outlevel',),**fillVDict)#= missingNumber)
+        nc_outlevel.units = '-'
+        nc_outlevel[:] = np.arange(self.p["noutlevels"],dtype="f")
+        if not pyNc: nc_outlevel._fillValue =missingNumber
 
       nc_out = cdfFile.createVariable('outlevels', 'f',dim3dout,**fillVDict)
       nc_out.units = "m over sea level"
