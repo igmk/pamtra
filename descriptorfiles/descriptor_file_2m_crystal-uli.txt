@@ -3,6 +3,6 @@
  cwc_q       -99.           1        -99.      -99.    -99.   -99.     -99.   13           100       mgamma          -99.    -99.     5.00   3.00    1.d-12    1.d-2         mie-sphere  khvorostyanov01_drops          -99.
  iwc_q       -99.          -1        -99.    7.08E-4  2.08    0.684    2.     13           100       mgamma          -99.    -99.     1.08   0.69    1.d-12    .2d-2         mie-sphere  heymsfield10_particles         -99.
  rwc_q       -99.           1        -99.      -99.    -99.   -99.     -99.   13           100       mgamma          -99.    -99.     2.00   1.00    1.d-12    1.d-2         mie-sphere  khvorostyanov01_drops          -99.
- swc_q       -99.          -1        -99.    1.46E-2  2.20    0.3971   1.88   13           100       mgamma          -99.    -99.     1.20   1.10    1.d-12    .8d-2         liudb10  heymsfield10_particles         -99.
+ swc_q       -99.          -1        -99.    1.46E-2  2.20    0.3971   1.88   13           100       mgamma          -99.    -99.     1.20   1.10    1.d-12    1.d-2         mie-sphere  heymsfield10_particles         -99.
  gwc_q       -99.          -1        -99.     500.86  3.18    -99.     -99.   13           100       mgamma          -99.    -99.     5.37   1.06    1.d-12    1.d-2         mie-sphere  khvorostyanov01_spheres        -99.
  hwc_q       -99.          -1        -99.     392.33   3.0    -99.     -99.   13           100       mgamma          -99.    -99.     5.00   1.00    1.d-12    1.d-2         mie-sphere  khvorostyanov01_spheres        -99.

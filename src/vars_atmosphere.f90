@@ -24,6 +24,10 @@ module vars_atmosphere
 
   real(kind=dbl), allocatable, dimension(:,:) :: atmo_groundtemp, atmo_iwv
 
+  integer(kind=long), allocatable, dimension(:,:) :: sfc_type, sfc_model
+  real(kind=dbl), allocatable, dimension(:,:) :: sfc_salinity
+  character(len=1), allocatable, dimension(:,:) ::  sfc_refl
+
   real(kind=dbl), allocatable, dimension(:,:,:) :: atmo_relhum_lev,&
        atmo_press_lev, &
        atmo_temp_lev, &
@@ -182,6 +186,12 @@ module vars_atmosphere
     allocate(atmo_groundtemp(atmo_ngridx,atmo_ngridy))
     allocate(atmo_iwv(atmo_ngridx,atmo_ngridy))
 
+    ! surface variables
+    allocate(sfc_type(atmo_ngridx,atmo_ngridy))
+    allocate(sfc_model(atmo_ngridx,atmo_ngridy))
+    allocate(sfc_refl(atmo_ngridx,atmo_ngridy))
+    allocate(sfc_salinity(atmo_ngridx,atmo_ngridy))
+
     allocate(atmo_relhum_lev(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs+1))
     allocate(atmo_press_lev(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs+1))
     allocate(atmo_temp_lev(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs+1))
@@ -235,6 +245,10 @@ module vars_atmosphere
     atmo_groundtemp(:,:) = nan_dbl()
     atmo_iwv(:,:) = nan_dbl()
 
+    sfc_type(:,:) = -9999
+    sfc_model(:,:) = -9999
+    sfc_refl(:,:) = "L"
+    sfc_salinity(:,:) = nan_dbl()
 
     atmo_relhum(:,:,:) = nan_dbl()
     atmo_press(:,:,:) = nan_dbl()
@@ -300,6 +314,10 @@ module vars_atmosphere
 
     if (allocated(atmo_groundtemp)) deallocate(atmo_groundtemp)
     if (allocated(atmo_iwv)) deallocate(atmo_iwv)
+    if (allocated(sfc_type)) deallocate(sfc_type)
+    if (allocated(sfc_model)) deallocate(sfc_model)
+    if (allocated(sfc_refl)) deallocate(sfc_refl)
+    if (allocated(sfc_salinity)) deallocate(sfc_salinity)
 
     if (allocated(atmo_month)) deallocate(atmo_month)
     if (allocated(atmo_day)) deallocate(atmo_day)
@@ -998,6 +1016,11 @@ module vars_atmosphere
     print*, "atmo_wind10v", atmo_wind10v
     print*, "atmo_obs_height", atmo_obs_height
     print*, "atmo_radar_prop", atmo_radar_prop
+
+    print*, "sfc_type", sfc_type
+    print*, "sfc_model", sfc_model
+    print*, "sfc_refl", sfc_refl
+    print*, "sfc_salinity", sfc_salinity
 
   end subroutine print_vars_atmosphere
 

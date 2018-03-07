@@ -183,7 +183,7 @@
 !
 
 subroutine rt4(errorstatus,out_file,&
-     ground_type,ground_albedo,sky_temp,&
+     ground_albedo,sky_temp,&
      wavelength,outlevels)
 
   use kinds
@@ -221,7 +221,6 @@ subroutine rt4(errorstatus,out_file,&
 
   !    real(kind=dbl), intent(in) ::  mu_values(maxv)
   character*64, intent(in) :: out_file
-  character, intent(in) ::  ground_type*1
   real(kind=dbl), intent(in) ::  ground_albedo
   real(kind=dbl), intent(in) ::  sky_temp
   real(kind=dbl), intent(in) ::   wavelength
@@ -236,6 +235,7 @@ subroutine rt4(errorstatus,out_file,&
   real(kind=dbl), dimension(maxv*(maxlay+1)) :: up_rad, down_rad
   real(kind=dbl), dimension(4*(maxlay+1)) :: up_flux, down_flux
 
+  character(len=1) ::  ground_type
   character(len=64) :: layer_file
 
 
@@ -253,8 +253,8 @@ subroutine rt4(errorstatus,out_file,&
   if (verbose >= 99) print*, "RT4 in"
   if (verbose >= 99) print*, "errorstatus,out_file"
   if (verbose >= 99) print*, errorstatus,out_file
-  if (verbose >= 99) print*, "ground_type,ground_albedo,sky_temp"
-  if (verbose >= 99) print*, ground_type,ground_albedo,sky_temp
+  if (verbose >= 99) print*, "ground_albedo,sky_temp"
+  if (verbose >= 99) print*, ground_albedo,sky_temp
   if (verbose >= 99) print*, "wavelength,outlevels"
   if (verbose >= 99) print*, wavelength,outlevels
 
@@ -268,13 +268,12 @@ subroutine rt4(errorstatus,out_file,&
   !scat_files = ''
   !scat_files(atmo_nlyrs(i_x,i_y)) = '1.txt'
 
-
   ground_temp = atmo_groundtemp(i_x,i_y)
+  ground_type = sfc_refl(i_x,i_y)
   num_layers = atmo_nlyrs(i_x,i_y)
   height(1:atmo_nlyrs(i_x,i_y)+1) = atmo_hgt_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1:1:-1)             ! [m]
   temperatures(1:atmo_nlyrs(i_x,i_y)+1) = atmo_temp_lev(i_x,i_y,atmo_nlyrs(i_x,i_y)+1:1:-1)      ! [k]
   gas_extinct(1:atmo_nlyrs(i_x,i_y)) = rt_kextatmo(atmo_nlyrs(i_x,i_y):1:-1)         ! [np/m]
-
 
   !do some tests
   call assert_true(err,(maxlay>=num_layers),&
@@ -442,7 +441,8 @@ subroutine output_file4(nstokes, nummu, &
   if (units .eq. 't') units_name = 'kelvins - ebb'
   if (units .eq. 'r') units_name = 'kelvins - rj'
   ground_name = 'lambertian'
-  if (ground_type .eq. 'f')  ground_name = 'fresnel'
+  if (ground_type .eq. 'F')  ground_name = 'fresnel'
+  if (ground_type .eq. 'S')  ground_name = 'specular'
 
   open (unit=3, file=out_file, status='unknown')
 
@@ -458,7 +458,7 @@ subroutine output_file4(nstokes, nummu, &
   write (3,'(a,f8.2,a,a16)')&
        'c  ground_temp=',   ground_temp,&
        '   ground_type=',   ground_name
-  if (ground_type(1:1) .eq. 'f') then
+  if (ground_type(1:1) .eq. 'F') then
      write (3,'(a,a,f8.2)')&
           'c  ground_index=XX',&
           '   sky_temp=',      sky_temp

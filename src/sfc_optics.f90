@@ -1,22 +1,23 @@
 module sfc_optics
 
   ! variables
-  use kinds, only: dbl
+  use kinds
   use report_module
-  use settings, only: ground_type, emissivity, nstokes, nummu
-  use vars_index, only: i_x, i_y
-  use vars_atmosphere, only : atmo_lfrac
+  use settings, only: emissivity!, nstokes, nummu
+  use vars_index, only: i_x, i_y, i_f
+  use vars_atmosphere, only : sfc_type, sfc_model
   use vars_rt, only: rt_sfc_emissivity, rt_sfc_reflectivity
+  use vars_output, only: out_emissivity
   ! routines
-  use ocean_sfc_optics, only: ocean_sfc_optics_fastemx
-  use land_sfc_optics, only: get_land_sfc_optics
+  use ocean_sfc_optics
+  use land_sfc_optics
   
   implicit none
   
 contains
   subroutine set_sfc_optics(errorstatus,freq)
     ! Description:
-    !   Within this routine the type of surface reflection is determined.
+    !   Within this routine the surface and the reflection type are determined.
     !
     ! Method:
     !   This detemination is done based on the land-sea fraction parameter.
@@ -29,6 +30,7 @@ contains
     ! Version   Date     Comment
     ! -------   ----     -------
     ! 0.1     24/02/15   Original code. Mario Mech
+    ! 0.9     27/10/16   Complete redesign
     !
     ! Code Description:
     !   Language:            Fortran 90.
@@ -36,7 +38,7 @@ contains
     !     Documenting Exchangeable Fortran 90 Code". 
     !
     ! Declarations:
-    ! Modules used: ocean_sfc_optics_fastem5, get_land_sfc_optics
+    ! Modules used: ocean_sfc_optics, land_sfc_optics
     
     real(dbl), intent(in) :: freq
 
@@ -48,28 +50,35 @@ contains
     character(len=14) :: nameOfRoutine = 'set_sfc_optics'
 
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
-    err = 0
-
-    if ((atmo_lfrac(i_x,i_y) >= 0._dbl) .and. (atmo_lfrac(i_x,i_y) < 0.5_dbl)) then
-      call ocean_sfc_optics_fastemx(err,freq)
-      ground_type = 'O'
-    elseif ((atmo_lfrac(i_x,i_y) >= 0.5_dbl) .and. (atmo_lfrac(i_x,i_y) <= 1.0_dbl)) then
-      call get_land_sfc_optics(err,freq)
-      ground_type = 'S'
-    else
-      rt_sfc_emissivity(:,:) = emissivity
-      rt_sfc_reflectivity(:,:) = 1._dbl - emissivity
-      ground_type = 'L'
+    
+    if (sfc_type(i_x,i_y) == 0) then ! water
+        if ((sfc_model(i_x,i_y) == 0) .or. (sfc_model(i_x,i_y) == -9999)) then ! TESSEM2
+            call ocean_sfc_optics_tessem2(err,freq)
+        elseif (sfc_model(i_x,i_y) == 1) then ! FASTEM
+            call ocean_sfc_optics_fastemx(err,freq)
+        end if
+    elseif (sfc_type(i_x,i_y) == 1) then ! land
+        if ((sfc_model(i_x,i_y) == 0) .or. (sfc_model(i_x,i_y) == -9999)) then ! TELSEM2
+            call land_sfc_optics_telsem2(err,freq)
+        elseif (sfc_model(i_x,i_y) == 1) then ! SSMI
+            call land_sfc_optics_ssmi(err,freq)
+        end if
+    else ! default sfc_type == -9999, sfc_model == -9999 and sfc_refl == 'L'
+        rt_sfc_emissivity(:,:) = emissivity
+        rt_sfc_reflectivity(:,:) = 1._dbl - emissivity
     end if
 
-    if (err > 0) then
+    if (err /= 0) then
       errorstatus = fatal
-      msg = "error in get_land_sfc_optics or ocean_sfc_optics_fastemx"
+      msg = "error in land_sfc_optics_xxx or ocean_sfc_optics_xxx"
       call report(errorstatus, msg, nameOfRoutine)
       return
-    end if 
+    end if
+    
+    out_emissivity(i_x,i_y,:,i_f,:) = rt_sfc_emissivity(:,:)
 
     errorstatus = err
+   
     if (verbose >= 1) call report(info,'End of ', nameOfRoutine)
     
   end subroutine set_sfc_optics

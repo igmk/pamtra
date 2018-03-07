@@ -359,7 +359,7 @@ subroutine radtran4(errorstatus, max_delta_tau,&
 
   if (verbose > 4) print*, "calculating surface emissivity ...."
 
-  call get_sfc_matrices(err,reflect(krt), trans(krt), gnd_radiance)
+  call get_sfc_matrices(err,ground_type, ground_temp, reflect(krt), trans(krt), gnd_radiance)
 
   if (verbose > 4) print*, ".... done!"
 
@@ -388,7 +388,7 @@ subroutine radtran4(errorstatus, max_delta_tau,&
         ks = 1 + 2*n*(l-1)
         if (l .eq. 1) then
            call mcopy (2*n,n, reflect(krt), upreflect)
-           call mcopy (2*n,n, trans(krt), uptrans) 
+           call mcopy (2*n,n, trans(krt), uptrans)
            call mcopy (2*n,1, source(ks), upsource)
         else
            call mcopy (2*n,n, upreflect, reflect1)
@@ -404,7 +404,7 @@ subroutine radtran4(errorstatus, max_delta_tau,&
         ks = 1 + 2*n*(l-1)
         if (l .eq. layer) then
            call mcopy (2*n,n, reflect(krt), downreflect)
-           call mcopy (2*n,n, trans(krt), downtrans) 
+           call mcopy (2*n,n, trans(krt), downtrans)
            call mcopy (2*n,1, source(ks), downsource)
         else
            call mcopy (2*n,n, downreflect, reflect1)
@@ -445,4 +445,3 @@ subroutine radtran4(errorstatus, max_delta_tau,&
 
   return
 end subroutine radtran4
-

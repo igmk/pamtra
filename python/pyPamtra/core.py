@@ -43,7 +43,7 @@ class pyPamtra(object):
     set setting default values
     """
 
-    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb","radar_prop","groundtemp","wind_w", "wind_uv","turb_edr"]
+    self.default_p_vars = ["timestamp","lat","lon","lfrac","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb","radar_prop","groundtemp","wind_w", "wind_uv","turb_edr","sfc_type","sfc_model","sfc_refl","sfc_salinity"]
     self.nmlSet = dict() #:settings which are required for the nml file. keeping the order is important for fortran
     #keys MUST be lowercase for f2py!
     self.nmlSet["hydro_threshold"]=  1.e-10   # [kg/kg]
@@ -62,8 +62,6 @@ class pyPamtra(object):
     self.nmlSet["passive"]= True
     self.nmlSet["radar_mode"]= "simple" #"splitted"|"moments"|"spectrum"
     self.nmlSet["randomseed"] = 0 #0 is real noise, other value gives always the same random numbers
-    self.nmlSet["ground_type"]= 'L'
-    self.nmlSet["salinity"]= 33.0
     self.nmlSet["emissivity"]= 0.6
     self.nmlSet["lgas_extinction"]= True
     self.nmlSet["gas_mod"]= 'R98'
@@ -113,8 +111,8 @@ class pyPamtra(object):
     self.nmlSet["radar_polarisation"]=  "NN" #! comma separated
     self.nmlSet["radar_use_wider_peak"]=  False #
     self.nmlSet["radar_integration_time"] =  1.4 # MMCR Barrow during ISDAC
-    self.nmlSet["radar_fwhr_beamwidth_deg"] = 0.31 # full width haalf radiation beam width MMCR Barrow 
-    
+    self.nmlSet["radar_fwhr_beamwidth_deg"] = 0.31 # full width haalf radiation beam width MMCR Barrow
+
     self.nmlSet["liblapack"]=  True # use liblapack for matrix inversion
 
 
@@ -169,6 +167,11 @@ class pyPamtra(object):
     self.dimensions["Att_atmo"] = ["gridx","gridy","lyr","frequency"]
     self.dimensions["tb"] = ["gridx","gridy","outlevels","angles","frequency","passive_npol"]
 
+    self.dimensions["sfc_type"] = ["ngridx","ngridy"]
+    self.dimensions["sfc_model"] = ["ngridx","ngridy"]
+    self.dimensions["sfc_refl"] = ["ngridx","ngridy"]
+    self.dimensions["sfc_salinity"] = ["ngridx","ngridy"]
+
     self.units = dict()
 
     self.units["unixtime"] = "seconds since 1970-01-01 00:00"
@@ -208,6 +211,11 @@ class pyPamtra(object):
     self.units["Att_atmo"] = "dB"
     self.units["tb"] = "K"
 
+    self.units["sfc_type"] = "-"
+    self.units["sfc_model"] = "-"
+    self.units["sfc_refl"] = "-"
+    self.units["sfc_salinity"] = "ppt"
+
     self._nstokes = 2
     self._nangles = 16
 
@@ -226,11 +234,11 @@ class pyPamtra(object):
   def writeNmlFile(self,nmlFile):
     """
     write classical Pamtra Namelist File from nmlSet
-    
+
     Parameter
     ---------
-    nmlFile: str 
-        filename with path    
+    nmlFile: str
+        filename with path
     """
     f = open(nmlFile,"w")
     f.write("&settings\n\r")
@@ -259,8 +267,8 @@ class pyPamtra(object):
 
     Parameter
     ---------
-    nmlFile: str 
-        filename with path    
+    nmlFile: str
+        filename with path
     """
 
     nmlFile = Namelist(inputFile)
@@ -288,11 +296,11 @@ class pyPamtra(object):
   def readPamtraProfile(self,inputFile):
     """
     read lay or lev pamtra profile from file. Descriptot file must be defined before
- 
+
     Parameter
     ---------
-    inputFile: str 
-        filename with path    
+    inputFile: str
+        filename with path
     """
     #make sure that a descriptor file was defined
     assert self.df.nhydro > 0
@@ -330,6 +338,11 @@ class pyPamtra(object):
     self.p["nlyrs"] = np.ones(self._shape2D,dtype=int) * missingIntNumber
     self.p["iwv"] = np.ones(self._shape2D) * np.nan
     self.p["radar_prop"] = np.ones(self._shape2D+tuple([2])) * np.nan
+
+    self.p["sfc_type"] = np.ones(self._shape2D,dtype=int) *missingIntNumber
+    self.p["sfc_model"] = np.ones(self._shape2D,dtype=int) *missingIntNumber
+    self.p["sfc_refl"] = np.chararray(self._shape2D)
+    self.p["sfc_salinity"] = np.ones(self._shape2D) * np.nan
 
     self.p["hydro_q"] = np.ones(self._shape4D)  * np.nan
     self.p["hydro_n"] = np.ones(self._shape4D) * np.nan
@@ -437,7 +450,7 @@ class pyPamtra(object):
     read classical pamtra profile from file
     Input:
 
-    inputFile: str filename with path    
+    inputFile: str filename with path
     """
 
     f = open(inputFile,"r")
@@ -568,12 +581,12 @@ class pyPamtra(object):
 
   def writePamtraProfile(self,profileFile):
     """
-    write lay or lev (depending on file extension) pamtra profile to file. 
+    write lay or lev (depending on file extension) pamtra profile to file.
 
     Parameter
     ---------
-    profileFile: str 
-        filename with path    
+    profileFile: str
+        filename with path
     """
 
     levLay = profileFile.split(".")[-1]
@@ -647,7 +660,7 @@ class pyPamtra(object):
     The following variables are mandatroy:
     hgt_lev, (temp_lev or temp), (press_lev or press) and (relhum_lev OR relhum)
 
-    The following variables are optional and guessed if not provided:  "timestamp","lat","lon","lfrac","wind10u","wind10v","hgt_lev","hydro_q","hydro_n","hydro_reff","obs_height"
+    The following variables are optional and guessed if not provided:  "timestamp","lat","lon","lfrac","wind10u","wind10v","hgt_lev","hydro_q","hydro_n","hydro_reff","obs_height","sfc_type","sfc_model","sfc_refl","sfc_salinity"
 
     hydro_q, hydro_reff and hydro_n can also provided as hydro_q+no001, hydro_q+no002 etc etc
 
@@ -659,6 +672,8 @@ class pyPamtra(object):
     for key in kwargs.keys():
       if type(kwargs[key]) == np.ma.core.MaskedArray:
         kwargs[key] = kwargs[key].filled(np.nan)
+      if type(kwargs[key]) == np.core.defchararray.chararray:
+          continue
       kwargs[key] = np.array(kwargs[key]) #in case its a list/tuple etc.
 
     #make sure that an descriptor file exists already!
@@ -767,13 +782,36 @@ class pyPamtra(object):
       else:
         raise TypeError("timestamp has to be int, float or datetime object")
 
-    for environment, preset in [["lat",50.938056],["lon",6.956944],["lfrac",1],["wind10u",0],["wind10v",0],["groundtemp",np.nan]]:
+    for environment, preset in [["lat",50.938056],["lon",6.956944],["lfrac",1],["wind10u",0],["wind10v",0],["groundtemp",np.nan],["sfc_salinity",33.]]:
       if environment not in kwargs.keys():
         self.p[environment] = np.ones(self._shape2D)*preset
         warnings.warn("%s set to %s"%(environment,preset,), Warning)
       else:
         if type(kwargs[environment]) in (int,np.int32,np.int64,float,np.float32,np.float64):
           self.p[environment] = np.ones(self._shape2D) * kwargs[environment]
+        else:
+          self.p[environment] = kwargs[environment].reshape(self._shape2D)
+
+    for environment, preset in [["sfc_type",-9999],["sfc_model",-9999]]:
+      if environment not in kwargs.keys():
+        self.p[environment] = np.ones(self._shape2D,dtype=int)*preset
+        warnings.warn("%s set to %s"%(environment,preset,), Warning)
+      else:
+        if type(kwargs[environment]) in (int,np.int32,np.int64,float,np.float32,np.float64):
+          self.p[environment] = np.ones(self._shape2D) * kwargs[environment]
+        else:
+          self.p[environment] = kwargs[environment].reshape(self._shape2D)
+
+    for environment, preset in [["sfc_refl",'L']]:
+      if environment not in kwargs.keys():
+        self.p[environment] = np.chararray(self._shape2D)
+        self.p[environment][:] = preset
+        warnings.warn("%s set to %s"%(environment,preset,), Warning)
+      else:
+#        if type(kwargs[environment]) in ('|S1'):
+        if type(kwargs[environment]) == str:
+          self.p[environment] = np.chararray(self._shape2D)
+          self.p[environment][:] = preset
         else:
           self.p[environment] = kwargs[environment].reshape(self._shape2D)
 
@@ -866,16 +904,20 @@ class pyPamtra(object):
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
     self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
+    self._shape3Dhyd = (self.p["ngridx"],self.p["ngridy"],self.df.nhydro)
     self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
 
-    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","groundtemp"]:
+    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","groundtemp","iwv","sfc_type","sfc_model","sfc_refl","sfc_salinity"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape2D)
 
     for key in ["obs_height"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3Dout)
+
+    for key in ["hydro_wp","hydro_tn"]:
+      if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3Dhyd)
 
     for key in ["hydro_q","hydro_n","hydro_reff"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape4D)
@@ -911,7 +953,7 @@ class pyPamtra(object):
 
   def tileProfiles(self,rep2D):
     '''
-    repeat the profiles of Pamtra 
+    repeat the profiles of Pamtra
 
     Parameters
     ----------
@@ -941,7 +983,7 @@ class pyPamtra(object):
     rep4D =  rep2D + (1,1,)
     rep5D =  rep2D + (1,1,1,)
 
-    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","obs_height","groundtemp"]:
+    for key in ["unixtime","nlyrs","lat","lon","lfrac","model_i","model_j","wind10u","wind10v","obs_height","groundtemp","sfc_type","sfc_model","sfc_refl","sfc_salinity"]:
       if key in self.p.keys(): self.p[key] = np.tile(self.p[key], rep2D)
 
     for key in ["hydro_q","hydro_n","hydro_reff"]:
@@ -1114,7 +1156,7 @@ class pyPamtra(object):
     Eddy dissipation rate (SI units)
   wind_uv : array
     horizontal wind field (SI units)
-  beamwidth_deg : float 
+  beamwidth_deg : float
     full-width half-radiated one-way (deg)
   integration_time : float
     radar integration time in s
@@ -1255,10 +1297,10 @@ class pyPamtra(object):
   def createFullProfile(self,timestamp,lat,lon,lfrac,wind10u,wind10v,
       obs_height,
       hgt_lev,press_lev,temp_lev,relhum_lev,
-      hydro_q,hydro_n,hydro_reff,radar_prop):
+      hydro_q,hydro_n,hydro_reff,radar_prop,sfc_type,sfc_model,sfc_refl,sfc_salinity):
 
     '''
-    create comple Pamtra Profile
+    create complete Pamtra Profile
 
     No Extras, no missing values are guessed. the Data is only reshaped
     '''
@@ -1311,12 +1353,18 @@ class pyPamtra(object):
     self.p["relhum_lev"] = relhum_lev.reshape(self._shape3Dplus)
 
     self.p["radar_prop"] = radar_prop.reshape(self._shape2D)
+
+    self.p["sfc_type"] = sfc_type.reshape(self._shape2D)
+    self.p["sfc_model"] = sfc_model.reshape(self._shape2D)
+    self.p["sfc_refl"] = sfc_refl.reshape(self._shape2D)
+    self.p["sfc_salinity"] = sfc_salinity.reshape(self._shape2D)
+
     return
 
 
   def runPamtra(self,freqs,checkData=True):
     '''
-    run Pamtra from python. Populates result dictionary 'r'. 
+    run Pamtra from python. Populates result dictionary 'r'.
 
     Parameters
     ----------
@@ -1362,7 +1410,7 @@ class pyPamtra(object):
 
   def runParallelPamtra(self,freqs,pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0,checkData=True,timeout=None):
     '''
-    run Pamtra parallel from python. Populates result dictionary 'r'. 
+    run Pamtra parallel from python. Populates result dictionary 'r'.
 
     Parameters
     ----------
@@ -1468,7 +1516,7 @@ class pyPamtra(object):
 
   def runPicklePamtra(self,freqs,picklePath="pyPamJobs",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0,checkData=True,timeout=None,maxWait =3600):
     '''
-    Special variant of runParallelPamtra writing Pickles to picklePath which are processed by another job. 
+    Special variant of runParallelPamtra writing Pickles to picklePath which are processed by another job.
     '''
     import hashlib
 
@@ -1581,7 +1629,7 @@ class pyPamtra(object):
 
   def runPicklePamtraSFTP(self,freqs,host,user,localPicklePath="pyPamJobs",remotePicklePath="pyPamJobs",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0,checkData=True,timeout=None,maxWait =3600):
     '''
-    Special variant of runParallelPamtra writing Pickles to picklePath which are send by SFTP. 
+    Special variant of runParallelPamtra writing Pickles to picklePath which are send by SFTP.
     '''
     import hashlib
 
@@ -1797,7 +1845,8 @@ class pyPamtra(object):
     self.r["radar_edges"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],self.nmlSet["radar_npeaks"],2,))*missingNumber
     self.r["radar_quality"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.set["nfreqs"],self.set["radar_npol"],self.nmlSet["radar_npeaks"],),dtype=int)*missingNumber
     self.r["radar_vel"] = np.ones((self.set["nfreqs"],radar_spectrum_length))*missingNumber
-    self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],self._nangles*2,self.set["nfreqs"],self._nstokes))*missingNumber
+    self.r["tb"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],self._nangles*2.,self.set["nfreqs"],self._nstokes))*missingNumber
+    self.r["emissivity"] = np.ones((self.p["ngridx"],self.p["ngridy"],self._nstokes,self.set["nfreqs"],self._nangles))*missingNumber
     if self.nmlSet["save_psd"]:
       self.r["psd_area"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
       self.r["psd_n"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
@@ -1840,6 +1889,7 @@ class pyPamtra(object):
     self.r["Att_atmo"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF] = results["Att_atmo"]
     self.r["radar_hgt"][pp_startX:pp_endX,pp_startY:pp_endY,:]= results["radar_hgt"]
     self.r["tb"][pp_startX:pp_endX,pp_startY:pp_endY,:,:,pp_startF:pp_endF,:]= results["tb"]
+    self.r["emissivity"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF,:]= results["emissivity"]
     if self.nmlSet["radar_mode"]=="spectrum":
       self.r["radar_spectra"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_spectra"]
     self.r["radar_snr"][pp_startX:pp_endX,pp_startY:pp_endY,:,pp_startF:pp_endF]= results["radar_snr"]
@@ -1868,7 +1918,7 @@ class pyPamtra(object):
     fname : str
         filename or - if seperateFiles - directory name
     seperateFiles : bool, optional
-        Write every variable to separate file. Required for very large data sets. 
+        Write every variable to separate file. Required for very large data sets.
     '''
 
     if not seperateFiles:
@@ -1905,7 +1955,7 @@ class pyPamtra(object):
   def loadResultsFromNumpy(self,fname):
     '''
     load complete pamtra object (profile,results,settings from (a) file(s)
- 
+
     Parameters
     ----------
 
@@ -1956,13 +2006,13 @@ class pyPamtra(object):
     Parameters
     ----------
 
-    fname : str 
+    fname : str
         filename with path
     profileVars : list of str or 'all', optional
         list of variables of the profile to be saved. "all" saves all implmented ones (default all)
     ncForm: str, optional
-        netcdf file format, possible values are NETCDF3_CLASSIC, NETCDF3_64BIT, NETCDF4_CLASSIC, and NETCDF4 
-        for the python-netcdf4 package (netcdf3 gives netcdf4 files for newer ubuntu versions!!") NETCDF3 takes 
+        netcdf file format, possible values are NETCDF3_CLASSIC, NETCDF3_64BIT, NETCDF4_CLASSIC, and NETCDF4
+        for the python-netcdf4 package (netcdf3 gives netcdf4 files for newer ubuntu versions!!") NETCDF3 takes
         the "old" Scientific.IO.NetCDF module, which is a bit more convinient (default NETCDF3_CLASSIC)
     wpNames: list of str, optional
         integrated values to be saved (default [])
@@ -2130,6 +2180,11 @@ class pyPamtra(object):
     nc_lfrac.units = "-"
     nc_lfrac[:] = np.array(self.p["lfrac"],dtype="f")
     if not pyNc: nc_lfrac._fillValue =missingNumber
+
+    nc_sfc_type = cdfFile.createVariable('sfc_type', 'i',dim2d,**fillVDict)
+    nc_sfc_type.units = "-"
+    nc_sfc_type[:] = np.array(self.p["sfc_type"],dtype="i")
+    if not pyNc: nc_sfc_type._fillValue =missingNumber
 
 
     if (self.r["nmlSettings"]["active"]):
@@ -2301,13 +2356,13 @@ class pyPamtra(object):
 
   def averageResultTbs(self,translatorDict):
     """
-    average several frequencies of the passive observations to account for channel width. Replaces self.r["tb"]. As of know this works only in passive mode. 
+    average several frequencies of the passive observations to account for channel width. Replaces self.r["tb"]. As of know this works only in passive mode.
     Backups of teh original data are kept in self.r["not_averaged_tb"] and self.set["not_averaged_freqs"]
 
     Parameters
     ----------
 
-    translatorDict: dict 
+    translatorDict: dict
         with list of old and new frequencies. Note that the "new" frequency is only for naming of the channel. e.g.
             translatorDict = {
               90.0: [90.0],

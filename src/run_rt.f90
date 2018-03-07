@@ -36,15 +36,14 @@ subroutine run_rt(errorstatus)
 
   interface
      subroutine RT4(errorstatus,out_file,&
-          ground_type,ground_albedo,sky_temp,&
+          ground_albedo,sky_temp,&
           wavelength,outlevels)
        use kinds
        use settings, only: noutlevels
        implicit none
        integer   maxv
        parameter (maxv=64)
-       character*64, intent(in) :: out_file
-       character, intent(in) ::  ground_type*1
+       character(len=64), intent(in) :: out_file
        real(kind=dbl), intent(in) ::  ground_albedo
        real(kind=dbl), intent(in) ::  sky_temp
        real(kind=dbl), intent(in) ::   wavelength
@@ -81,6 +80,7 @@ subroutine run_rt(errorstatus)
   msg = "calculating: "// frq_str// " Y: "//ystr//" of "//nystr//" X: "//xstr//" of "//nxstr
 
   if (verbose >= 2) call report(info,msg, nameOfRoutine)
+  
   ! This GCE model format does not have all the fields expected by
   ! the radiative transfer code (i.e. total pressure, and water vapor
   ! pressure for this model).  Assign/compute the missing fields first
@@ -188,7 +188,7 @@ subroutine run_rt(errorstatus)
      if (verbose >= 2) print*, i_x,i_y, "Entering rt4 ...."
 
      call rt4(err, out_file_pas,&
-          ground_type,ground_albedo,sky_temp,&
+          ground_albedo,sky_temp,&
           wavelength,outlevels)
 
      if (verbose >= 2) print*, i_x,i_y, "....rt4 finished"

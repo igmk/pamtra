@@ -18,9 +18,9 @@ CC=gcc
 FCFLAGS=-c -fPIC -Wunused  -cpp -J$(OBJDIR) -I$(OBJDIR)
 #FCFLAGS=-g -c -fPIC -Wunused -O0 -cpp -J$(OBJDIR) -I$(OBJDIR)
 
-NCFLAGS :=  $(shell $(NCCONF) --fflags) 
+NCFLAGS :=  $(shell $(NCCONF) --fflags)
 LFLAGS := -L/usr/lib/ -llapack -L$(LIBDIR) -L../$(LIBDIR) -lblas -lz -lfftw3
-LDFLAGS := $(shell $(NCCONF) --flibs) 
+LDFLAGS := $(shell $(NCCONF) --flibs)
 # it's messi but needed for ubuntu 16.04
 to_remove:=-Wl,-Bsymbolic-functions -Wl,-z,relro
 LDFLAGS := $(subst $(to_remove),,$(LDFLAGS))
@@ -59,7 +59,10 @@ OBJECTS=kinds.o \
 	liu.o \
 	fresnel.o \
 	fastemx.o \
+	tessem2.o \
 	ocean_sfc_optics.o \
+	mod_mwatlas_nt_bin.o \
+	telsem2.o \
 	land_sfc_optics.o \
 	sfc_optics.o \
 	sfc_matrices.o \
@@ -84,7 +87,7 @@ OBJECTS=kinds.o \
 	eps_ice.o \
 	eps_mix.o \
 	equcom.o \
-	land_emis.o \
+	land_emis_ssmi.o \
 	equare.o \
 	ref_water.o \
 	ref_ice.o \
@@ -141,7 +144,7 @@ print-%  : ; @echo $* = $($*)
 
 pamtra: FCFLAGS += -O2
 pamtra: NCFLAGS += -O2
-pamtra: warning  $(FOBJECTS) $(BINDIR)$(BIN) | $(BINDIR) 
+pamtra: warning  $(FOBJECTS) $(BINDIR)$(BIN) | $(BINDIR)
 
 $(OBJDIR)versionNumber.auto.o: .git/HEAD .git/index
 	echo "!edit in makefile only!" > $(SRCDIR)versionNumber.auto.f90
@@ -237,7 +240,7 @@ $(PYTDIR)pyPamtraLib.so:  $(SRCDIR)pyPamtraLib.f90 $(OBJDIR)pypamtralib.pyf $(FO
 py_usStandard:
 	cd tools/py_usStandard/ && $(MAKE) all
 
-pyinstall: warning py py_usStandard 
+pyinstall: warning py py_usStandard
 	mkdir -p $(PYINSTDIR)
 	cp -r $(PYTDIR) $(PYINSTDIR)
 	cd tools/py_usStandard/ && $(MAKE) install
@@ -247,7 +250,6 @@ clean:
 	-rm -f $(OBJDIR)*.o
 	-rm -f $(OBJDIR)*.mod
 	-rm -f $(BINDIR)pamtra*
-	cd tools/dfftpack/ && $(MAKE) clean
 	cd tools/py_usStandard/ && $(MAKE) clean
 
 htmldoc:

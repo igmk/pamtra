@@ -99,13 +99,14 @@ module large_scale_correction_module
     ! Setup
     zcoeff_invalid = .true.
     wsp_loc     = wind_speed
-    ! the large scale correction gives suspicious results for zenith angles
-    ! larger than 75 deg
-    if (cos_z < cos(deg2rad*75.)) then
-	sec_z = one/cos(75./180.*pi)
-    else
-	sec_z = one/cos_z
-    end if ! compute fitting coefficients for a given frequency
+    sec_z = one/cos_z
+!     ! the large scale correction gives suspicious results for zenith angles
+!     ! larger than 75 deg
+!     if (cos_z < cos(deg2rad*75.)) then
+! 	sec_z = one/cos(75./180.*pi)
+!     else
+! 	sec_z = one/cos_z
+!     end if ! compute fitting coefficients for a given frequency
     
     ! Compute the frequency polynomial coefficients
     call compute_zcoeff(lsccoeff(:,:,1), frequency, zcoeff_v)

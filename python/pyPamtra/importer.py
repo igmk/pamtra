@@ -10,7 +10,7 @@ import string
 import glob
 import warnings
 
-try: 
+try:
   import numexpr as ne
   neAvail = True
 except:
@@ -28,14 +28,14 @@ missingNumber =-9999.
 
 def readWrfDataset(fname,kind):
   import netCDF4
-  
+
   '''
   import wrf Dataset with fname of kind
   '''
-  
+
   if kind not in ["gce"]:
     raise TypeError("unknown wrf data type")
-  
+
   variables = ['XLONG', 'XLAT', 'U10', 'V10', 'TSK', 'PSFC', 'T', 'P', 'PB', 'QVAPOR', 'QCLOUD', 'QICE', 'QRAIN', 'QGRAUP', 'QSNOW', 'LANDMASK', 'PH', 'PHB']
 
   data = dict()
@@ -44,43 +44,52 @@ def readWrfDataset(fname,kind):
 
   timeStr = "".join(ncFile.variables["Times"][:].tolist()[0])
   data["Times"] = netCDF4.date2num(datetime.datetime.strptime(timeStr,"%Y-%m-%d_%H:%M:%S"),"seconds since 1970-01-01 00:00:00")
-  for var in variables:    
+  for var in variables:
     data[var] = ncFile.variables[var][0,:].T
   ncFile.close()
 
   data["PH"] = (data["PH"]+data["PHB"])/9.81 #now "real m
   del data["PHB"]
-  
+
   data["P"] = data["P"]+data["PB"] # now in Pa
   del data["PB"]
 
-  Cp = 7.*Rair/2. 
+  Cp = 7.*Rair/2.
   RdCp =  Rair/Cp
   p0 = 100000
   data["T"] = data["T"] + 300 # now in K
   data["T"] = data["T"]*(data["P"]/p0)**RdCp # potential temp to temp
-  
+
   #add surface data
   data["TSK"] = data["TSK"].reshape(np.append(list(np.shape(data["TSK"])),1))
   data["PSFC"] = data["PSFC"].reshape(np.append(list(np.shape(data["PSFC"])),1))
 
   data["T"] = np.concatenate((data["TSK"],data["T"]),axis=-1)
   data["P"] = np.concatenate((data["PSFC"],data["P"]),axis=-1)
-  
+
+
   #translate variables
-  varPairs = [["Times","timestamp"],["XLAT","lat"],["XLONG","lon"],["LANDMASK","lfrac"],["U10","wind10u"],["V10","wind10v"],["PH","hgt_lev"],["P","press_lev"],["T","temp_lev"],["QVAPOR","q"],["QCLOUD","cwc_q"],["QICE","iwc_q"],["QRAIN","rwc_q"],["QSNOW","swc_q"],["QGRAUP","gwc_q"]]
-  
+  varPairs = [["Times","timestamp"],["XLAT","lat"],["XLONG","lon"],["U10","wind10u"],["V10","wind10v"],["PH","hgt_lev"],["P","press_lev"],["T","temp_lev"],["QVAPOR","q"],["QCLOUD","cwc_q"],["QICE","iwc_q"],["QRAIN","rwc_q"],["QSNOW","swc_q"],["QGRAUP","gwc_q"]]
+
   pamData = dict()
+
+  # surface properties
+  pamData['sfc_type'] = np.zeros(data['PSFC'].shape)
+  pamData['sfc_type'] = np.around(data['LANDMASK'])
+  pamData['sfc_model'] = np.zeros(data['PSFC'].shape)
+  pamData['sfc_refl'] = np.chararray(data['PSFC'].shape)
+  pamData['sfc_refl'][:] = 'F'
+
   for wrfVar,pamVar in varPairs:
     pamData[pamVar] = data[wrfVar]
-  
+
   pam = pyPamtra()
   pam.createProfile(**pamData)
   del data
-  
+
   return pam
 
-  
+
 def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex=0,tmpDir="/tmp/",fnameInTar="",concatenateAxis=1,debug=False,verbosity=0,df_kind="default",constantFields=None,maxLevel=0,subGrid=None):
   '''
   convert cosmo 1-moment dataset with fname of kind to pamtra object
@@ -106,7 +115,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
   debug: bool optional
     stop and load debugger on exception (default False)
   verbosity : int, optional
-    verbosity level (default 0)  
+    verbosity level (default 0)
   constantFields : str, optional
     fiel with constant fields (default "")s
   subGrid : int array, optional
@@ -119,7 +128,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
 
   '''
   import netCDF4
-  
+
   if kind == "gop_collumn":
 
     variables1Dx = ["time1h"]
@@ -127,17 +136,17 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
     variables2D = [ "hfl","hhl"]
     variables3D = ["u_10m","v_10m","t_2m","surface_air_pressure","t_s"]
     variables4D = ["temperature","p","qv","qc","qi","qi","qr","qs","qg"]
-    
+
     nHydro = 5
-    
+
     data = dict()
-    
+
     files = np.sort(glob.glob(fnames))
     if len(files) == 0: raise RuntimeError( "no files found")
     files.sort()
-    
+
     ffOK = 0 #successfull runs
-    
+
     for ff, fname in enumerate(files):
       if verbosity>0: print fname
       try:
@@ -156,28 +165,28 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
           os.system("zcat "+gzFile+">"+tmpFile)
           if verbosity>1:print "created ", tmpFile
           ncFile = netCDF4.Dataset(tmpFile,"r")
-          if verbosity>1:print "opend ", tmpFile    
-        else:  
+          if verbosity>1:print "opend ", tmpFile
+        else:
           ncFile = netCDF4.Dataset(fname,"r")
           if verbosity>1:print "opend ", fname
 
         if maxLevel  == 0: maxLevel = ncFile.variables["hfl"].shape[1]
-          
+
         #import pdb;pdb.set_trace()
-        dataSingle = dict()  
-        for var in variables1Dx:  
+        dataSingle = dict()
+        for var in variables1Dx:
           dataSingle[var] = ncFile.variables[var][:]
-        for var in variables1Dy:  
+        for var in variables1Dy:
           dataSingle[var] = ncFile.variables[var][[colIndex]]
-        for var in [ "hfl"]:  
+        for var in [ "hfl"]:
           dataSingle[var] = ncFile.variables[var][[colIndex],::-1][...,:maxLevel] #reverse height order and cut heights
-        for var in [ "hhl"]:  
+        for var in [ "hhl"]:
           dataSingle[var] = ncFile.variables[var][[colIndex],::-1][...,:maxLevel+1] #reverse height order and cut heights
-        for var in variables3D:  
+        for var in variables3D:
           dataSingle[var] = ncFile.variables[var][[colIndex],forecastIndex,:]
         for var in variables4D:
-          dataSingle[var] = np.swapaxes(ncFile.variables[var][[colIndex],:,forecastIndex,:],1,2)[...,::-1][...,:maxLevel]#reverse height order  
-          
+          dataSingle[var] = np.swapaxes(ncFile.variables[var][[colIndex],:,forecastIndex,:],1,2)[...,::-1][...,:maxLevel]#reverse height order
+
         ncFile.close()
         if verbosity>1:print "closed nc"
         if fname.split(".")[-1]!="nc":
@@ -186,7 +195,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
         shape2D = (np.shape(dataSingle["latitude"])[0],np.shape(dataSingle["time1h"])[0],)
         shape3Dplus = (np.shape(dataSingle["latitude"])[0],np.shape(dataSingle["time1h"])[0],np.shape(dataSingle["temperature"])[2]+1)
         shape3D = (np.shape(dataSingle["latitude"])[0],np.shape(dataSingle["time1h"])[0],np.shape(dataSingle["temperature"])[2])
-        
+
         time1h = np.zeros(shape2D)
         time1h[:] = dataSingle["time1h"]
         latitude = np.zeros(shape2D)
@@ -200,31 +209,31 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
         for t in xrange(shape2D[1]):
           hfl[:,t,:] = dataSingle["hfl"]
           hhl[:,t,:] = dataSingle["hhl"]
-          
+
         dataSingle["time1h"] = time1h
         dataSingle["latitude"] = latitude
         dataSingle["longitude"] = longitude
         dataSingle["fr_land"] = fr_land
         dataSingle["hhl"] = hhl
         dataSingle["hfl"] = hfl
-        
+
         del time1h, longitude, latitude, fr_land, hhl, hfl
-        
-        
+
+
         if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
           data = deepcopy(dataSingle)
         else:
           for key in data.keys():
             data[key] = np.ma.concatenate((data[key],dataSingle[key],),axis=concatenateAxis)
-          
-        ffOK += 1  
-        
+
+        ffOK += 1
+
       #except IOError:
       except Exception as inst:
         if fname.split(".")[-1]!="nc":
           if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
           os.system("rm -f "+tmpFile+"*")
-        print "ERROR:", fname      
+        print "ERROR:", fname
         print type(inst)     # the exception instance
         print inst.args      # arguments stored in .args
         print inst
@@ -236,30 +245,30 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
     shape2D = np.shape(data["t_2m"])
     shape3Dplus = np.shape(data["hhl"])
     shape3D = np.shape(data["hfl"])
-      
+
     #data["p_hl"] = np.zeros(shape3Dplus)
     #data["t_hl"] = np.zeros(shape3Dplus)
-    
+
     #data["t_hl"][...,0] = data["t_2m"]
     #data["t_hl"][...,1:-1] = data["temperature"][...,0:-1]+0.5*np.diff(data["temperature"],axis=-1)
     #data["t_hl"][...,-1] = data["temperature"][...,-1] + 0.25*(data["temperature"][...,-1]-data["temperature"][...,-2])
-    
+
     #data["p_hl"][...,0] = data["surface_air_pressure"]
 
     #press1 = deepcopy(data["p"])
     #press1[press1==missingNumber]=1
-    
+
     #p0 = press1[...,0:-1]
-    #p1 = press1[...,1:]  
+    #p1 = press1[...,1:]
     #dz = np.diff(data["hfl"],axis=-1)
     #if neAvail: xp = ne.evaluate("-1.*log(p1/p0)/dz")
     #else: xp = -1.*np.log(p1/p0)/dz
-        
+
     #xp[xp==0] = 9999
-      
+
     #if neAvail: data["p_hl"][...,1:-1] = ne.evaluate("-1.*p0/xp*(exp(-xp*dz)-1.)/dz")
     #else: data["p_hl"][...,1:-1] = -1.*p0/xp*(np.exp(-xp*dz)-1.)/dz
-    
+
     #data["p_hl"][...,-1] = -1.*p1[...,-1]/xp[...,-1]*(np.exp(-xp[...,-1]*dz[...,-1])-1.)/dz[...,-1]  #check!
     #print "TO DO: check calculation of p half level!"
 
@@ -268,25 +277,25 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
     data["temp_lev"][...,0] = data["t_2m"]
     data["press_lev"] = np.zeros(shape3Dplus) + np.nan
     data["press_lev"][...,0] = data["surface_air_pressure"]
-    
+
     data["relhum"] = q2rh(data["qv"],data["temperature"],data["p"]) * 100.
-    
+
     data["hydro_q"] = np.zeros(data["qc"].shape + (nHydro,)) + np.nan
     data["hydro_q"][...,0] = data["qc"]
     data["hydro_q"][...,1] = data["qi"]
     data["hydro_q"][...,2] = data["qr"]
     data["hydro_q"][...,3] = data["qs"]
     data["hydro_q"][...,4] = data["qg"]
-    
+
     #translate variables
-    varPairs = [["time1h","timestamp"],["latitude","lat"],["longitude","lon"],["fr_land","lfrac"],["u_10m","wind10u"],["v_10m","wind10v"],["hhl","hgt_lev"],["p","press"],["temperature","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["t_s","groundtemp"],["temp_lev","temp_lev"],["press_lev","press_lev"]]
-  
+    varPairs = [["time1h","timestamp"],["latitude","lat"],["longitude","lon"],["u_10m","wind10u"],["v_10m","wind10v"],["hhl","hgt_lev"],["p","press"],["temperature","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["t_s","groundtemp"],["temp_lev","temp_lev"],["press_lev","press_lev"]]
+
   elif kind == "gop_fields_SynSatMic":
     assert constantFields
     forecastIndex = 0
     variables3D = ["U_10M","V_10M","T_G","surface_air_pressure"]
     variables4D = ["T","P","QV","QC","QI","QR","QS","QG"]
-   
+
     nHydro = 5
 
     conFields = ncToDict(constantFields)
@@ -295,9 +304,9 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
     files = np.sort(glob.glob(fnames))
     if len(files) == 0: raise RuntimeError( "no files found")
     files.sort()
-    
+
     ffOK = 0 #successfull runs
-    
+
     for ff, fname in enumerate(files):
       if verbosity>0: print fname
       try:
@@ -316,21 +325,21 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
           os.system("zcat "+gzFile+">"+tmpFile)
           if verbosity>1:print "created ", tmpFile
           ncFile = netCDF4.Dataset(tmpFile,"r")
-          if verbosity>1:print "opend ", tmpFile    
-        else:  
+          if verbosity>1:print "opend ", tmpFile
+        else:
           ncFile = netCDF4.Dataset(fname,"r")
           if verbosity>1:print "opend ", fname
 
         #import pdb;pdb.set_trace()
-        dataSingle = dict()  
-        for var in variables3D:  
+        dataSingle = dict()
+        for var in variables3D:
           if subGrid == None:
 	    dataSingle[var] = np.swapaxes(ncFile.variables[var][forecastIndex],0,1)
           else:
 	    dataSingle[var] = np.swapaxes(ncFile.variables[var][forecastIndex],0,1)[subGrid[0]:subGrid[1],subGrid[2]:subGrid[3]]
         for var in variables4D:
           if subGrid == None:
-	    dataSingle[var] = np.swapaxes(ncFile.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel]#reverse height order  
+	    dataSingle[var] = np.swapaxes(ncFile.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel]#reverse height order
           else:
 	    dataSingle[var] = np.swapaxes(ncFile.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
         timestamp =   ncFile.variables["time"][:]
@@ -343,10 +352,10 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
         shape3D = dataSingle["T"].shape
         shape2D = shape3D[:2]
 
-        
+
         dataSingle["timestamp"] = np.zeros(shape2D)
         dataSingle["timestamp"][:] = timestamp
-        
+
         for key in ["lon","lat"]:
 	  dataSingle[key]  = np.zeros(shape2D)
           if subGrid == None:
@@ -365,22 +374,22 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
 	    dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1]
           else:
 	    dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
-    
+
         if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
           data = deepcopy(dataSingle)
         else:
           for key in data.keys():
             data[key] = np.ma.concatenate((data[key],dataSingle[key],),axis=concatenateAxis)
-          
-        ffOK += 1  
-        
+
+        ffOK += 1
+
 
       #except IOError:
       except Exception as inst:
         if fname.split(".")[-1]!="nc":
           if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
           os.system("rm -f "+tmpFile+"*")
-        print "ERROR:", fname      
+        print "ERROR:", fname
         print type(inst)     # the exception instance
         print inst.args      # arguments stored in .args
         print inst
@@ -390,29 +399,35 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
     shape3Dplus = tuple(np.array(data["T"].shape) + np.array([0,0,1]))
     shape3D = data["T"].shape
     shape2D = shape3D[:2]
-    
+
     #we can also fill the arrays partly!
     data["press_lev"] = np.zeros(shape3Dplus) + np.nan
     data["press_lev"][...,0] = data["surface_air_pressure"]
-    
+
     data["relhum"] = q2rh(data["QV"],data["T"],data["P"]) * 100.
-    
+
     data["hydro_q"] = np.zeros(data["QC"].shape + (nHydro,)) + np.nan
     data["hydro_q"][...,0] = data["QC"]
     data["hydro_q"][...,1] = data["QI"]
     data["hydro_q"][...,2] = data["QR"]
     data["hydro_q"][...,3] = data["QS"]
     data["hydro_q"][...,4] = data["QG"]
-    
-    varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],["FR_LAND","lfrac"],["U_10M","wind10u"],["V_10M","wind10v"],["HHL","hgt_lev"],["P","press"],["T","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["T_G","groundtemp"],["press_lev","press_lev"]]    
-    
+
+    varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],["U_10M","wind10u"],["V_10M","wind10v"],["HHL","hgt_lev"],["P","press"],["T","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["T_G","groundtemp"],["press_lev","press_lev"]]
+
   else:
         raise TypeError("unknown Cosmo DE data type "+kind)
 
   pamData = dict()
   for cosmoVar,pamVar in varPairs:
     pamData[pamVar] = data[cosmoVar]
-   
+  # surface properties
+  pamData['sfc_type'] = np.zeros(shape2D)
+  pamData['sfc_type'] = np.around(data['FR_LAND'])
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][:] = 'F'
+
   pam = pyPamtra()
   pam.set["pyVerbose"]= verbosity
   if type(descriptorFile) == str:
@@ -430,7 +445,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
 def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',forecastIndex = 1,tmpDir="/tmp/",fnameInTar="",debug=False,verbosity=0,df_kind="default",constantFields=None,maxLevel=0,subGrid=None):
   '''
   import cosmo 2-moment dataset
-  
+
   fnamesA = str , fileNames of atmospheric variables, wildCards allowed! can be either nc file, nc,gz file or nc.gz file of name fnameInTar within tar file
   descriptorFile = Pamtra descriptor file
   fnamesN = str , fileNames of number concentrations, wildCards allowed! can be either nc file, nc,gz file or nc.gz file of name fnameInTar within tar file (only required for the old style of NARVAL cases)
@@ -441,12 +456,12 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
   subGrid: array with indices [lon_start,lon_end,lat_start,lat_end] ((1,1) in model corresponds to (0,0) in python!)
   '''
   import netCDF4
-  
+
   assert constantFields
   forecastIndex = 0
   nHydro = 6
   ffOK = 0 #successfull runs
-  
+
   conFields = ncToDict(constantFields)
   data = dict()
   if maxLevel  == 0: maxLevel = conFields["HHL"].shape[1] - 1
@@ -457,8 +472,8 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
   if kind == 'new':
     variables3D = ["T_G","PS","U_10M","V_10M"]
     variables4D = ["T","P","QV","QC","QI","QR","QS","QG","QH","QNCLOUD","QNICE","QNRAIN","QNSNOW","QNGRAUPEL","QNHAIL"]
-  
-  
+
+
     for ff, fnameA in enumerate(filesA):
       if verbosity>0: print fnameA
       try:
@@ -477,13 +492,13 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
 	  os.system("zcat "+gzFile+">"+tmpFile)
 	  if verbosity>1:print "created ", tmpFile
 	  ncFileA = netCDF4.Dataset(tmpFile,"r")
-	  if verbosity>1:print "opend ", tmpFile    
-	else:  
+	  if verbosity>1:print "opend ", tmpFile
+	else:
 	  ncFileA = netCDF4.Dataset(fnameA,"r")
 	  if verbosity>1:print "opend ", fnameA
-	  
+
 	#import pdb;pdb.set_trace()
-	dataSingle = dict()  
+	dataSingle = dict()
 	for var in variables3D:
 	  if subGrid == None:
 	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,1)
@@ -491,7 +506,7 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
 	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,1)[subGrid[0]:subGrid[1],subGrid[2]:subGrid[3]]
 	for var in variables4D:
 	  if subGrid == None:
-	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel]#reverse height order  
+	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel]#reverse height order
 	  else:
 	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
 	timestamp = ncFileA.variables["time"][:]
@@ -504,10 +519,10 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
 	shape3D = dataSingle["T"].shape
 	shape2D = shape3D[:2]
 
-	
+
 	dataSingle["timestamp"] = np.zeros(shape2D)
 	dataSingle["timestamp"][:] = timestamp
-	
+
 	for key in ["lon","lat"]:
 	  dataSingle[key]  = np.zeros(shape2D)
 	  if subGrid == None:
@@ -526,22 +541,22 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
 	    dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1]
 	  else:
 	    dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
-    
+
 	if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
 	  data = deepcopy(dataSingle)
 	else:
 	  for key in data.keys():
 	    data[key] = np.ma.concatenate((data[key],dataSingle[key],),axis=concatenateAxis)
-	  
-	ffOK += 1  
-	
+
+	ffOK += 1
+
 
       #except IOError:
       except Exception as inst:
 	if fnameA.split(".")[-1]!="nc":
 	  if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
 	  os.system("rm -f "+tmpFile+"*")
-	print "ERROR:", fnameA      
+	print "ERROR:", fnameA
 	print type(inst)     # the exception instance
 	print inst.args      # arguments stored in .args
 	print inst
@@ -556,19 +571,19 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
     data["hydro_n"][...,5] = data["QNHAIL"]
 
   elif kind == 'old':
-    
+
     filesN = np.sort(glob.glob(fnamesN))
     if len(filesN) == 0: raise RuntimeError( "no files found")
     filesN.sort()
-    
+
     if len(filesA) != len(filesN): raise RuntimeError("number of atmospheric files does not equal number of concentration files!")
 
     variables3D = ["T_G","PS"]
     variables3Dplus1 = ["U_10M","V_10M"]
     variables4D = ["T","P","QV","QC","QI","QR","QS","QG","QH"]
     variables4DN = ['QNC','QNI','QNR','QNS','QNG','QNH']
-    
-    
+
+
     for ff, fnameA in enumerate(filesA):
       fnameN = filesN[ff]
       if verbosity>0: print fnameA, fnameN
@@ -588,11 +603,11 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
 	  os.system("zcat "+gzFile+">"+tmpFile)
 	  if verbosity>1:print "created ", tmpFile
 	  ncFileA = netCDF4.Dataset(tmpFile,"r")
-	  if verbosity>1:print "opend ", tmpFile    
-	else:  
+	  if verbosity>1:print "opend ", tmpFile
+	else:
 	  ncFileA = netCDF4.Dataset(fnameA,"r")
 	  if verbosity>1:print "opend ", fnameA
-	  
+
 	# number density files
 	if fnameN.split(".")[-1]!="nc":
 	  tmpFile = tmpDir+"/pyPamtraImport_netcdf_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nc"
@@ -609,13 +624,13 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
 	  os.system("zcat "+gzFile+">"+tmpFile)
 	  if verbosity>1:print "created ", tmpFile
 	  ncFileN = netCDF4.Dataset(tmpFile,"r")
-	  if verbosity>1:print "opend ", tmpFile    
-	else:  
+	  if verbosity>1:print "opend ", tmpFile
+	else:
 	  ncFileN = netCDF4.Dataset(fnameN,"r")
 	  if verbosity>1:print "opend ", fnameN
 
 	#import pdb;pdb.set_trace()
-	dataSingle = dict()  
+	dataSingle = dict()
 	for var in variables3D:
 	  if subGrid == None:
 	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,1)
@@ -628,7 +643,7 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
 	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex,0],0,1)[subGrid[0]:subGrid[1],subGrid[2]:subGrid[3]]
 	for var in variables4D:
 	  if subGrid == None:
-	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel]#reverse height order  
+	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel]#reverse height order
 	  else:
 	    dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
 	timestamp = ncFileA.variables["time"][:]
@@ -639,7 +654,7 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
 	  os.system("rm -f "+tmpFile+"*")
 	for var in variables4DN:
 	  if subGrid == None:
-	    dataSingle[var] = np.swapaxes(ncFileN.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel]#reverse height order  
+	    dataSingle[var] = np.swapaxes(ncFileN.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel]#reverse height order
 	  else:
 	    dataSingle[var] = np.swapaxes(ncFileN.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
 	ncFileN.close()
@@ -651,10 +666,10 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
 	shape3D = dataSingle["T"].shape
 	shape2D = shape3D[:2]
 
-	
+
 	dataSingle["timestamp"] = np.zeros(shape2D)
 	dataSingle["timestamp"][:] = timestamp
-	
+
 	for key in ["lon","lat"]:
 	  dataSingle[key]  = np.zeros(shape2D)
 	  if subGrid == None:
@@ -673,22 +688,22 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
 	    dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1]
 	  else:
 	    dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
-    
+
 	if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
 	  data = deepcopy(dataSingle)
 	else:
 	  for key in data.keys():
 	    data[key] = np.ma.concatenate((data[key],dataSingle[key],),axis=concatenateAxis)
-	  
-	ffOK += 1  
-	
+
+	ffOK += 1
+
 
       #except IOError:
       except Exception as inst:
 	if fnameA.split(".")[-1]!="nc":
 	  if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
 	  os.system("rm -f "+tmpFile+"*")
-	print "ERROR:", fnameA      
+	print "ERROR:", fnameA
 	print type(inst)     # the exception instance
 	print inst.args      # arguments stored in .args
 	print inst
@@ -701,18 +716,18 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
     data["hydro_n"][...,3] = data["QNS"]
     data["hydro_n"][...,4] = data["QNG"]
     data["hydro_n"][...,5] = data["QNH"]
-    
+
   #shapes may have changed!
   shape3Dplus = tuple(np.array(data["T"].shape) + np.array([0,0,1]))
   shape3D = data["T"].shape
   shape2D = shape3D[:2]
-  
+
   #we can also fill the arrays partly!
   data["press_lev"] = np.zeros(shape3Dplus) + np.nan
   data["press_lev"][...,0] = data["PS"]
-  
+
   data["relhum"] = q2rh(data["QV"],data["T"],data["P"]) * 100.
-  
+
   data["hydro_q"] = np.zeros(data["QC"].shape + (nHydro,)) + np.nan
   data["hydro_q"][...,0] = data["QC"]
   data["hydro_q"][...,1] = data["QI"]
@@ -721,12 +736,19 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
   data["hydro_q"][...,4] = data["QG"]
   data["hydro_q"][...,5] = data["QH"]
 
-  varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],["FR_LAND","lfrac"],["U_10M","wind10u"],["V_10M","wind10v"],["HHL","hgt_lev"],["P","press"],["T","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["hydro_n","hydro_n"],["T_G","groundtemp"],["press_lev","press_lev"]]    
-    
+  varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],["U_10M","wind10u"],["V_10M","wind10v"],["HHL","hgt_lev"],["P","press"],["T","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["hydro_n","hydro_n"],["T_G","groundtemp"],["press_lev","press_lev"]]
+
   pamData = dict()
   for cosmoVar,pamVar in varPairs:
     pamData[pamVar] = data[cosmoVar]
-   
+
+  # surface properties
+  pamData['sfc_type'] = np.zeros(shape2D)
+  pamData['sfc_type'] = np.around(data['FR_LAND'])
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][:] = 'F'
+
   pam = pyPamtra()
   pam.set["pyVerbose"]= verbosity
   if type(descriptorFile) == str:
@@ -742,20 +764,20 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
 def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",debug=False,verbosity=0,df_kind="default",maxLevel=0):
   '''
   import cosmo 2-moment dataset extracted on a HALO flight track^
-  
+
   fnamesA = str , fileNames of atmospheric variables, wildCards allowed! can be either nc file, nc,gz file or nc.gz file
   descriptorFile = Pamtra descriptor file
   debug: stop and load debugger on exception
   '''
   import netCDF4
-  
+
   nHydro = 6
-  
+
 #  filesA = np.sort(glob.glob(fnamesA))
 #  if len(filesA) == 0: raise RuntimeError( "no files found")
 #  filesA.sort()
 
-  variables1D = ["T_G","PS","U_10M","V_10M"]
+  variables1D = ["T_G","PS","U_10M","V_10M","FR_LAND"]
   variables2D = ["T","P","QV","QC","QI","QR","QS","QG","QH","QNCLOUD","QNICE","QNRAIN","QNSNOW","QNGRAUPEL","QNHAIL"]
 
   if verbosity>0: print fnameA
@@ -766,22 +788,22 @@ def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",deb
       os.system("zcat "+gzFile+">"+tmpFile)
       if verbosity>1:print "created ", tmpFile
       data = ncToDict(tmpFile)
-      if verbosity>1:print "read ", tmpFile    
-    else:  
+      if verbosity>1:print "read ", tmpFile
+    else:
       data = ncToDict(fnameA)
       if verbosity>1:print "read ", fnameA
-          
+
     if debug: import pdb;pdb.set_trace()
-    #dataSingle = dict()  
+    #dataSingle = dict()
     #for var in variables1D:
       #data[var] = np.swapaxes(ncFileA.variables[var][0],0,1)
     #for var in variables2D:
-      #data[var] = np.swapaxes(ncFileA.variables[var][0],0,2)[...,::-1][...,:maxLevel]#reverse height order  
+      #data[var] = np.swapaxes(ncFileA.variables[var][0],0,2)[...,::-1][...,:maxLevel]#reverse height order
     if verbosity>1:print "closed nc"
     if fnameA.split(".")[-1]!="nc":
       if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
       os.system("rm -f "+tmpFile+"*")
-        
+
     #for key in ["cosmoTime","cosmoLon","cosmoLat"]:
       #dataSingle[key]  = np.zeros(shape2D)
       #dataSingle[key][:] = np.swapaxes(conFields[key],0,1)
@@ -796,7 +818,7 @@ def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",deb
     if fnameA.split(".")[-1]!="nc":
       if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
       os.system("rm -f "+tmpFile+"*")
-    print "ERROR:", fnameA      
+    print "ERROR:", fnameA
     print type(inst)     # the exception instance
     print inst.args      # arguments stored in .args
     print inst
@@ -825,23 +847,31 @@ def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",deb
   pamData["hydro_q"][...,3] = data["QS"][:,::-1]
   pamData["hydro_q"][...,4] = data["QG"][:,::-1]
   pamData["hydro_q"][...,5] = data["QH"][:,::-1]
-  
+
   #we can also fill the arrays partly!
   pamData["press_lev"] = np.zeros(shape3Dplus) + np.nan
   pamData["press_lev"][:,0,0] = data["PS"]
 
   pamData["relhum"] = np.expand_dims((q2rh(data["QV"],data["T"],data["P"]) * 100.)[:,::-1],axis=1)
 
-  varPairs = [["cosmoTime","timestamp"],["cosmoLat","lat"],["cosmoLon","lon"],["FR_LAND","lfrac"],["U_10M","wind10u"],["V_10M","wind10v"],["T_G","groundtemp"]]    
-    
+#  import pdb;pdb.set_trace()
+  # surface properties
+  pamData['sfc_type'] = np.zeros(shape2D)
+  pamData['sfc_type'] = np.around(data['FR_LAND'])
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][:] = 'F'
+
+  varPairs = [["cosmoTime","timestamp"],["cosmoLat","lat"],["cosmoLon","lon"],["sfc_type","sfc_type"],["sfc_model","sfc_model"],["U_10M","wind10u"],["V_10M","wind10v"],["T_G","groundtemp"]]
+
   for cosmoVar,pamVar in varPairs:
     pamData[pamVar] = np.expand_dims(data[cosmoVar],axis=1)
 
   varPairs = [["HHL","hgt_lev"],["P","press"],["T","temp"]]
-    
+
   for cosmoVar,pamVar in varPairs:
     pamData[pamVar] = np.expand_dims(data[cosmoVar][:,::-1],axis=1)
-  
+
   pam = pyPamtra()
   pam.set["pyVerbose"]= verbosity
   if isinstance(descriptorFile, str):
@@ -860,7 +890,7 @@ def readCosmoReAn2km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
   import os
   import time
   import datetime
-  
+
   variables2DC = ['rlat','rlon','fr_land','soiltyp']
   variables3DC = ['hhl']
 
@@ -869,13 +899,13 @@ def readCosmoReAn2km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
   variables4D = ['qc','qi','qr','qs','qg']
 
   nhydro = len(variables4D)
-  
+
   data = dict()
-  
+
   try:
     grbsC = pygrib.open(constantFields)
 
-    # determine dimensions 
+    # determine dimensions
     nLon = grbsC.select(shortName='rlon')[0]['Ni']
     nLat = grbsC.select(shortName='rlon')[0]['Nj']
     nLev = len(grbsC(shortName='hhl'))
@@ -886,50 +916,50 @@ def readCosmoReAn2km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
     shape4D = (nLat,nLon,nLev-1,nhydro)
 
     grbsC.seek(0)
-    
+
     data['hhl'] = np.zeros(shape3Dplus) + np.nan
-    
+
     for var in variables3DC:
       if verbosity>1: print var
       selected_grbs = grbsC(shortName=var)
       for i in range(nLev-maxLevel,nLev):
 	data[var][...,nLev-1-i] = selected_grbs[i].values
 
-    selected_grbs = grbsC(shortName=variables2DC)  
+    selected_grbs = grbsC(shortName=variables2DC)
     for var in selected_grbs:
       if verbosity>1: print var.shortName
       data[var.shortName] = var.values
-      
+
     grbsC.close()
-    
+
     grbs = pygrib.open(fname)
-    
-    selected_grbs = grbs(shortName=variables2D)  
+
+    selected_grbs = grbs(shortName=variables2D)
     for var in selected_grbs:
       if verbosity>1: print var.shortName
       data[var.shortName] = var.values
-    
+
     for var in variables3D:
       if verbosity>1: print var
       data[var] = np.zeros(shape3D) + np.nan
       selected_grbs = grbs(shortName=var)
       for i in range(nLev-maxLevel,nLev-1):
 	data[selected_grbs[i].shortName][...,nLev-2-i] = selected_grbs[i].values
-      
+
     data['hydro_q'] = np.zeros(shape4D) + np.nan
-    
+
     for j,var in enumerate(variables4D):
       if verbosity>1: print var
       selected_grbs = grbs(shortName=var)
       for i in range(nLev-maxLevel,nLev-1):
 	data['hydro_q'][...,nLev-2-i,j] = selected_grbs[i].values
-    
+
     grbs.close()
   except Exception as inst:
     if fname.split(".")[-1]!="nc":
       if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
       os.system("rm -f "+tmpFile+"*")
-    print "ERROR:", fname      
+    print "ERROR:", fname
     print type(inst)     # the exception instance
     print inst.args      # arguments stored in .args
     print inst
@@ -946,11 +976,11 @@ def readCosmoReAn2km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
 
     # calculate reference pressure (equation 4 in documentation for beta != 0)
     p0 = psl * np.exp(-tsl/beta*(1-np.sqrt(1-2*beta*g*height/(rd*tsl**2))))
-    
+
     return p0
 
   # some conversions and filling of needed variables
-  
+
   data['hfl'] = (data['hhl'][...,1:]+data['hhl'][...,:-1])/2.
   pref = calc_p0(data['hfl'])
   data['press'] = pref + data['pp']*100.
@@ -958,21 +988,27 @@ def readCosmoReAn2km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
 
   data['timestamp'] = np.zeros(shape2D)
   data['timestamp'][:,:] = time.mktime(datetime.datetime.strptime(os.path.basename(fname), "laf%Y%m%d%H%M0000").timetuple())
-  
+
   pam = pyPamtra()
   pam.df.readFile(descriptorFile)
-  varPairs = [["timestamp","timestamp"],["rlat","lat"],["rlon","lon"],["fr_land","lfrac"],["10u","wind10u"],["10v","wind10v"],
-	      ["press","press"],["t","temp"],["relhum","relhum"],["t_g","groundtemp"],['hhl','hgt_lev'],['hydro_q','hydro_q']]    
+  varPairs = [["timestamp","timestamp"],["rlat","lat"],["rlon","lon"],["10u","wind10u"],["10v","wind10v"],
+	      ["press","press"],["t","temp"],["relhum","relhum"],["t_g","groundtemp"],['hhl','hgt_lev'],['hydro_q','hydro_q']]
 
   pamData = dict()
 
   for dataVar,pamVar in varPairs:
     pamData[pamVar] = data[dataVar]
+  # surface properties
+  pamData['sfc_type'] = np.zeros(shape2D)
+  pamData['sfc_type'] = np.around(data['fr_land'])
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][:] = 'F'
 
   del data
-  
+
   pam.createProfile(**pamData)
-  
+
   return pam
 
 def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDir="/tmp/",fnameInTar="",debug=False,verbosity=0,df_kind="default",maxLevel=41,subGrid=None):
@@ -981,55 +1017,54 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
   import os
   import time
   import datetime
-  
-  variables2DC = ['rlat','rlon','fr_land']
-  variables3DC = ['hhl']
 
-  variables2D = ['t_g','sp','10u','10v']
-  variables3D = ['t','pp','q']
-  variables4D = ['qc','qi','qr','qs']
+  variables2DC = ['RLAT','RLON','lsm']
+  variables3DC = ['HHL']
+
+  variables2D = ['T_G','sp','10u','10v']
+  variables3D = ['t','PP','q']
+  variables4D = ['QC','QI','QR','QS']
 
   nhydro = len(variables4D)
-  
+
   data = dict()
-  
+
   try:
-    # determine dimensions 
+    # determine dimensions
     constantFile = constantFields+'cosmo_cordex_lon'
     grbsC = pygrib.open(constantFile)
-    nLon = grbsC.select(shortName='rlon')[0]['Ni']
-    nLat = grbsC.select(shortName='rlon')[0]['Nj']
-    data['rlon'] = grbsC.select(shortName='rlon')[0].values
+    nLon = grbsC.select(shortName='RLON')[0]['Ni']
+    nLat = grbsC.select(shortName='RLON')[0]['Nj']
+    data['rlon'] = grbsC.select(shortName='RLON')[0].values
     grbsC.close()
 
     constantFile = constantFields+'cosmo_cordex_lat'
     grbsC = pygrib.open(constantFile)
-    data['rlat'] = grbsC.select(shortName='rlat')[0].values
+    data['rlat'] = grbsC.select(shortName='RLAT')[0].values
     grbsC.close()
 
     constantFile = constantFields+'fr_land_cordex'
     grbsC = pygrib.open(constantFile)
-    data['fr_land'] = grbsC.select(shortName='fr_land')[0].values
+    data['fr_land'] = grbsC.select(shortName='lsm')[0].values
     grbsC.close()
 
     constantFile = constantFields+'cosmo_cordex_HHL'
     grbsC = pygrib.open(constantFile)
-    selected_grbs = grbsC(shortName='hhl')
+    selected_grbs = grbsC(shortName='HHL')
     nLev = len(selected_grbs)
     shape2D = (nLat,nLon)
     shape3D = (nLat,nLon,nLev-1)
     shape3Dplus = (nLat,nLon,nLev)
     shape4D = (nLat,nLon,nLev-1,nhydro)
-    
+
     data['hhl'] = np.zeros(shape3Dplus) + np.nan
     for i in range(nLev-maxLevel,nLev):
 	data['hhl'][...,nLev-1-i] = selected_grbs[i].values
     grbsC.close()
-	
-    
+
     grbs = pygrib.open(fname)
 
-    
+
     for var in variables3D:
       if verbosity>1: print var
       data[var] = np.zeros(shape3D) + np.nan
@@ -1038,31 +1073,31 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
 	data[selected_grbs[i].shortName][...,nLev-2-i] = selected_grbs[i].values
 
     data['hydro_q'] = np.zeros(shape4D) + np.nan
-    
+
     for j,var in enumerate(variables4D):
       if verbosity>1: print var
       selected_grbs = grbs(shortName=var)
       for i in range(nLev-maxLevel,nLev-1):
 	data['hydro_q'][...,nLev-2-i,j] = selected_grbs[i].values
-    
-      
+
+
     grbs.close()
 
     grbs = pygrib.open(fname+'00')
 
-    selected_grbs = grbs(shortName=variables2D)  
+    selected_grbs = grbs(shortName=variables2D)
     for var in selected_grbs:
       if verbosity>1: print var.shortName
       data[var.shortName] = var.values
-      
-    
+
+
     grbs.close()
 
   except Exception as inst:
     #if fname.split(".")[-1]!="nc":
       #if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
       #os.system("rm -f "+tmpFile+"*")
-    print "ERROR:", fname      
+    print "ERROR:", fname
     print type(inst)     # the exception instance
     print inst.args      # arguments stored in .args
     print inst
@@ -1079,29 +1114,36 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
 
     # calculate reference pressure (equation 4 in documentation for beta != 0)
     p0 = psl * np.exp(-tsl/beta*(1-np.sqrt(1-2*beta*g*height/(rd*tsl**2))))
-    
+
     return p0
 
   # some conversions and filling of needed variables
-  
+
   data['hfl'] = (data['hhl'][...,1:]+data['hhl'][...,:-1])/2.
   pref = calc_p0(data['hfl'])
-  data['press'] = pref + data['pp']*100.
+  data['press'] = pref + data['PP']*100.
   data['relhum'] = q2rh(data['q']/(1+data['q']),data['t'],data['press'])*100.
 
   data['timestamp'] = np.zeros(shape2D)
   data['timestamp'][:,:] = time.mktime(datetime.datetime.strptime(os.path.basename(fname), "laf%Y%m%d%H%M").timetuple())
-  
+
   pam = pyPamtra()
   pam.df.readFile(descriptorFile)
-  varPairs = [["timestamp","timestamp"],["rlat","lat"],["rlon","lon"],["fr_land","lfrac"],["10u","wind10u"],["10v","wind10v"],
-	      ["press","press"],["t","temp"],["relhum","relhum"],["t_g","groundtemp"],['hhl','hgt_lev'],['hydro_q','hydro_q']]    
+  varPairs = [["timestamp","timestamp"],["rlat","lat"],["rlon","lon"],["10u","wind10u"],["10v","wind10v"],
+	      ["press","press"],["t","temp"],["relhum","relhum"],["T_G","groundtemp"],['hhl','hgt_lev'],['hydro_q','hydro_q']]
 
   pamData = dict()
 
 
   for dataVar,pamVar in varPairs:
     pamData[pamVar] = data[dataVar]
+
+  # surface properties
+  pamData['sfc_type'] = np.zeros(shape2D)
+  pamData['sfc_type'] = np.around(data['fr_land'])
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][:] = 'F'
 
   del data
 
@@ -1490,7 +1532,7 @@ def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,d
 	      'SEATEMP','SNOW','SURFPRES','TEMP','TEMP2M','TEMPGRD','VAPOR','VAPOR2M','WINDLVLKB','ZSBIS']
   def vapor2rh(rv,t,p):
     rh = q2rh(rv/(1+rv),t,p)
-    
+
     return rh
 
   nhydro = 5
@@ -1500,7 +1542,7 @@ def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,d
   shape4D = (dimx,dimy,dimz,nhydro,)
   shape3DH = (dimx,dimy,nhydro+1,)
   shape3DM = (dimz,dimx,dimy,)
-  
+
   try:
     data_mesonh = dict()
     for name in variables:
@@ -1517,7 +1559,7 @@ def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,d
     data['timestamp'][:,:] = 1000922400
     # 2D variables
     #data[''] = data_mesonh['SEAPRES'].reshape(shape2D)
-    data['lfrac'] = np.zeros((shape2D)) 
+    data['lfrac'] = np.zeros((shape2D))
     seatemp_tmp = data_mesonh['SEATEMP'].reshape(shape2D)
     data['lfrac'][np.where(seatemp_tmp > 998.)] = 1.
     data['groundtemp'] = data_mesonh['TEMPGRD'].reshape(shape2D)
@@ -1531,7 +1573,7 @@ def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,d
     data['hgt'] = np.rollaxis(data_mesonh['ALTITUDE'].reshape(shape3DM),0,3)
     data['hgt_lev'][:,:,1:] = (data['hgt'][:,:,1:]+data['hgt'][:,:,:-1])*0.5
     data['hgt_lev'][:,:,dimz] = data['hgt'][:,:,-1]+0.25*(data['hgt'][:,:,-1]-data['hgt'][:,:,-2])
-    data['relhum'] = np.rollaxis(vapor2rh(data_mesonh['VAPOR'],data_mesonh['TEMP'],data_mesonh['PRESSURE']).reshape(shape3DM),0,3)*100.    
+    data['relhum'] = np.rollaxis(vapor2rh(data_mesonh['VAPOR'],data_mesonh['TEMP'],data_mesonh['PRESSURE']).reshape(shape3DM),0,3)*100.
     data['hydro_q'] = np.zeros(shape4D) + np.nan
     #data[''] = data_mesonh['RHO'].reshape(shape3DM)
     data['hydro_q'][...,0] = np.rollaxis(data_mesonh['CLOUD'].reshape(shape3DM),0,3)
@@ -1546,70 +1588,76 @@ def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,d
     if fname.split(".")[-1]!="nc":
       if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
       os.system("rm -f "+tmpFile+"*")
-    print "ERROR:", fname      
+    print "ERROR:", fname
     print type(inst)     # the exception instance
     print inst.args      # arguments stored in .args
     print inst
     if debug: import pdb;pdb.set_trace()
-  
+
   #data['hydro_wp'] = np.zeros(shape3DH) + np.nan
 
   pam = pyPamtra()
   pam.df.readFile("../descriptorfiles/descriptor_file_meso-nh.txt")
   #pam.df.readFile("../descriptorfiles/descriptor_file_COSMO_1mom.txt")
-  varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],["lfrac","lfrac"],["wind10u","wind10u"],["wind10v","wind10v"],
-	      ["press","press"],["temp","temp"],["relhum","relhum"],["groundtemp","groundtemp"],['hgt_lev','hgt_lev'],['hydro_q','hydro_q']]    
+  varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],["wind10u","wind10u"],["wind10v","wind10v"],
+	      ["press","press"],["temp","temp"],["relhum","relhum"],["groundtemp","groundtemp"],['hgt_lev','hgt_lev'],['hydro_q','hydro_q']]
 
   pamData = dict()
   for dataVar,pamVar in varPairs:
     pamData[pamVar] = data[dataVar]
+  # surface properties
+  pamData['sfc_type'] = np.zeros(shape2D)
+  pamData['sfc_type'] = np.around(data['lfrac'])
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][:] = 'F'
 
   del data
-  
+
   pam.createProfile(**pamData)
 
   return pam
-  
+
 def createUsStandardProfile(pam=pyPamtra(),**kwargs):
   '''
   Function to create clear sky US Standard Atmosphere.
-  
+
   hgt_lev is teh only mandatory variables
   humidity will be set to zero if not provided, all other variables are guessed by "createProfile"
-  
-  values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwritte us staandard if provided 
-  
-  '''    
-  
+
+  values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwritte us staandard if provided
+
+  '''
+
   pamData = _createUsStandardProfile(**kwargs)
-  
+
   pam.createProfile(**pamData)
   del kwargs
-  
+
   return pam
-  
+
 def _createUsStandardProfile(**kwargs):
   '''
   HELPER
   Function to create clear sky US Standard Atmosphere.
-  
+
   hgt_lev is the only mandatory variables
   humidity will be set to zero if not provided, all other variables are guessed by "createProfile"
-  
-  values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwritte us staandard if provided 
-  
-  '''    
-  
+
+  values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwritte us staandard if provided
+
+  '''
+
   import usStandard #see in tools
-  
+
   assert "hgt_lev" in kwargs.keys() #hgt_lev is mandatory
-  
+
   pamData = dict()
-  
+
   density = np.zeros_like(kwargs["hgt_lev"])
   pamData["press_lev"] = np.zeros_like(kwargs["hgt_lev"])
   pamData["temp_lev"] = np.zeros_like(kwargs["hgt_lev"])
-  
+
   if len(np.shape(kwargs["hgt_lev"]))==1:
     density[:], pamData["press_lev"][:], pamData["temp_lev"][:]  =  usStandard.usStandard(kwargs["hgt_lev"])
   elif  len(np.shape(kwargs["hgt_lev"]))==2:
@@ -1620,16 +1668,16 @@ def _createUsStandardProfile(**kwargs):
       for yy in range(np.shape(kwargs["hgt_lev"])[1]):
         density[xx,yy], pamData["press_lev"][xx,yy], pamData["temp_lev"][xx,yy]  =  usStandard.usStandard(kwargs["hgt_lev"][xx,yy])
   else: raise IOError("hgt_lev has wrong number of dimensions")
-  
+
   for kk in kwargs.keys():
         pamData[kk] = np.array(kwargs[kk])
-  
+
   if ("relhum_lev" not in kwargs.keys()) and ("q" not in kwargs.keys()):
     pamData["relhum_lev"] = np.zeros_like(kwargs["hgt_lev"])
-  
+
   return pamData
-      
-#helper function    
+
+#helper function
 def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='netCDF4',tmpDir="/tmp/",skipFiles=[]):
   '''
   load keys of netcdf file into dictionary
@@ -1662,7 +1710,7 @@ def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='net
     if ncFile.split("/")[-1] in skipFiles or ncFile in skipFiles:
       ncFiles.remove(ncFile)
       print "skipping:", ncFile
-    
+
   for nn, ncFile in enumerate(ncFiles):
     tmpFile=False
     if ncFile.split(".")[-1]=="gz":
