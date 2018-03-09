@@ -1345,7 +1345,7 @@ def readIconLem1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   data["hydro_q"][...,4] = data["qg"]
 
   varPairs = [["timestamp","timestamp"],["lat_2","lat"],["lon_2","lon"],
-    ["FR_LAND","lfrac"],["u_10m","wind10u"],["v_10m","wind10v"],
+    ["u_10m","wind10u"],["v_10m","wind10v"],
     ["z_ifc","hgt_lev"],["pres","press"],["temp","temp"],["relhum","relhum"],["hydro_q","hydro_q"],
     ["t_g","groundtemp"],["press_lev","press_lev"]]
 
@@ -1360,6 +1360,12 @@ def readIconLem1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   else:
     for df in descriptorFile:
       pam.df.addHydrometeor(df)
+
+  # surface properties
+  pamData['sfc_type'] = np.around(data['FR_LAND'])
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][:] = 'F'
 
   pam.createProfile(**pamData)
 
@@ -1502,7 +1508,7 @@ def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   pamData["hydro_n"][...,5] = data["qnh"]
 
   varPairs = [["timestamp","timestamp"],["lat_2","lat"],["lon_2","lon"],
-    ["FR_LAND","lfrac"],["u_10m","wind10u"],["v_10m","wind10v"],
+    ["u_10m","wind10u"],["v_10m","wind10v"],
     ["z_ifc","hgt_lev"],["pres","press"],["temp","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["hydro_n","hydro_n"],
     ["t_g","groundtemp"],["press_lev","press_lev"]]
 
@@ -1517,6 +1523,11 @@ def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   else:
     for df in descriptorFile:
       pam.df.addHydrometeor(df)
+
+  # surface properties
+  pamData['sfc_type'] = np.around(data['FR_LAND'])
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.full(shape2D, 'F', '|S1')
 
   pam.createProfile(**pamData)
 
