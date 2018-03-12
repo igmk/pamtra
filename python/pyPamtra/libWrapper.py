@@ -50,6 +50,11 @@ def PamtraFortranWrapper(
   #temporary fixes:
   settings.input_file[:] = "test_mie.dat"
 
+  if 'salinity' in nmlSets:
+    raise DeprecationWarning("nmlSets['salinity'] is deprecated. Use 2D profile 'sfc_salinity' instead.")
+  if 'ground_type' in nmlSets:
+    raise DeprecationWarning("nmlSets['ground_type'] is deprecated. Use 2D profile 'sfc_refl' instead.")
+
   #loop through settings
   for key in nmlSets.keys():
     isList = getattr(settings, key.lower()).size > 1

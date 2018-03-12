@@ -1363,9 +1363,11 @@ def readIconLem1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
 
   # surface properties
   pamData['sfc_type'] = np.around(data['FR_LAND'])
+  assert np.all(np.logical_or(0<=pamData['sfc_type'], pamData['sfc_type'] <=1))
   pamData['sfc_model'] = np.zeros(shape2D)
   pamData['sfc_refl'] = np.chararray(shape2D)
-  pamData['sfc_refl'][:] = 'F'
+  pamData['sfc_refl'][pamData['sfc_type'] == 0] = 'F' # ocean
+  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'L' # land
 
   pam.createProfile(**pamData)
 
@@ -1526,8 +1528,11 @@ def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
 
   # surface properties
   pamData['sfc_type'] = np.around(data['FR_LAND'])
+  assert np.all(np.logical_or(0<=pamData['sfc_type'], pamData['sfc_type'] <=1))
   pamData['sfc_model'] = np.zeros(shape2D)
-  pamData['sfc_refl'] = np.full(shape2D, 'F', '|S1')
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][pamData['sfc_type'] == 0] = 'F' # ocean
+  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'L' # land
 
   pam.createProfile(**pamData)
 

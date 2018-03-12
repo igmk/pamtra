@@ -26,7 +26,7 @@ DOWN_RAD,a,b,fi)
 
     !
     !       integer :: model_i, model_j
-    !       real lon,lat,lfrac,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp
+    !       real lon,lat,wind10u,wind10v,iwv,cwp,iwp,rwp,swp,gwp
 
     N = NUMMU * (AZIORDER + 1) * NOUTLEVELS
     CALL CONVERT_OUTPUT(UNITS, OUTPOL, NSTOKES, N, WAVELENGTH, 0,UP_RAD)
