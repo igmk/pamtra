@@ -172,6 +172,10 @@ subroutine radar_spectrum(&
       call dia2vel_power_law(err,nbins,diameter_spec_cp,vel_size_mod,vel_spec)
     else if (vel_size_mod(:11) .eq. "corPowerLaw") then
       call dia2vel_corrected_power_law(err,nbins,diameter_spec_cp,rho,temp,vel_size_mod,vel_spec)
+    else if (vel_size_mod(:5) .eq. "atlas") then
+      call dia2vel_atlas(err,nbins,mass,vel_size_mod,vel_spec)
+    else if (vel_size_mod(:8) .eq. "corAtlas") then
+      call dia2vel_corrected_atlas(err,nbins,mass,rho,temp,vel_size_mod,vel_spec)
     else
       errorstatus = fatal
       msg = 'Did not understand variable vel_size_mod: '//vel_size_mod
