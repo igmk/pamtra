@@ -25,8 +25,6 @@ program pamtra
   integer(kind=long) :: inarg
   character(40) :: gitHash, gitVersion
 
-  real(kind=dbl) :: nan
-
 
 !!!loop variables
   integer(kind=long) :: i

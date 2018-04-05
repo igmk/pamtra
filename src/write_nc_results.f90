@@ -3,7 +3,7 @@ subroutine write_nc_results
   use vars_output
   use vars_atmosphere, only: atmo_ngridx, atmo_ngridy, atmo_max_nlyrs,&
        atmo_year, atmo_month, atmo_day, atmo_time,&  !atmo_model_j, atmo_model_i,
-       atmo_lfrac, atmo_lon, atmo_lat, atmo_iwv, atmo_obs_height
+       atmo_lon, atmo_lat, atmo_iwv, atmo_obs_height ! atmo_lfrac
   use netcdf
   use settings, only: active, passive, creator, radar_mode, &
        radar_nfft, radar_mode, nfrq, freqs, noutlevels, nc_out_file, &
@@ -17,7 +17,7 @@ subroutine write_nc_results
   integer :: dlonID, dlatID, dangID, dfrqID, doutID, dstokesID, dlayerID,&
        dnfftID,dradpolID,dattpolID, dlenstrID, dradpeakID
 
-  integer :: lonVarID, latVarID, lfracVarID, iwvVarID,& !isVarID, jsVarID, cwpVarID,
+  integer :: lonVarID, latVarID, iwvVarID,& !lfracVarID, isVarID, jsVarID, cwpVarID,
        !iwpVarID, rwpVarID, swpVarID, gwpVarID, hwpVarID, &
        obsVarID, tbVarID, heightVarID, &
        ZeVarID,rQualVarID, &
@@ -133,9 +133,9 @@ subroutine write_nc_results
   call check(nf90_put_att(ncid, latVarID, "units", "deg.dec"))
   call check(nf90_put_att(ncid, latVarID, "missing_value", -9999))
 
-  call check(nf90_def_var(ncid,'lfrac', nf90_float,dim2d, lfracVarID))
-  call check(nf90_put_att(ncid, lfracVarID, "units", "-"))
-  call check(nf90_put_att(ncid, lfracVarID, "missing_value", -9999))
+!  call check(nf90_def_var(ncid,'lfrac', nf90_float,dim2d, lfracVarID))
+!  call check(nf90_put_att(ncid, lfracVarID, "units", "-"))
+!  call check(nf90_put_att(ncid, lfracVarID, "missing_value", -9999))
 
   call check(nf90_def_var(ncid,'iwv', nf90_float,dim2d, iwvVarID))
   call check(nf90_put_att(ncid, iwvVarID, "units", "kg/m^2"))
@@ -246,8 +246,8 @@ subroutine write_nc_results
        RESHAPE( atmo_lon, (/ atmo_ngridy, atmo_ngridx/), ORDER = (/2,1/))))
   call check(nf90_put_var(ncid, latVarID, &
        RESHAPE( atmo_lat, (/ atmo_ngridy, atmo_ngridx/), ORDER = (/2,1/))))
-  call check(nf90_put_var(ncid, lfracVarID, &
-       RESHAPE( atmo_lfrac, (/ atmo_ngridy, atmo_ngridx/), ORDER = (/2,1/))))
+!  call check(nf90_put_var(ncid, lfracVarID, &
+!       RESHAPE( atmo_lfrac, (/ atmo_ngridy, atmo_ngridx/), ORDER = (/2,1/))))
   call check(nf90_put_var(ncid, iwvVarID,  &
        RESHAPE( atmo_iwv, (/ atmo_ngridy, atmo_ngridx/), ORDER = (/2,1/))))
 

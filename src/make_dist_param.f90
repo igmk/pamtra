@@ -25,6 +25,8 @@ subroutine make_dist_params(errorstatus)
   use kinds, only: dbl, &      ! integer parameter specifying double precision
        long       ! integer parameter specifying long integer
 
+  use nan, only: nan_dbl ! function returning not-a-number
+
   use report_module
 
   use constants, only: pi, rho_water, delta_d_mono
@@ -56,20 +58,16 @@ subroutine make_dist_params(errorstatus)
   character(len=80) :: msg
   character(len=16) :: nameOfRoutine = 'make_dist_params'
 
-  ! Used functions
-
-  real(kind=dbl) :: nan
-
   if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
 
   ! Initialize output variables
   n_0 = -99.
   lambda = -99.
-  gam = nan()
-  mu = nan()
+  gam = nan_dbl()
+  mu = nan_dbl()
   n_t = -99.
   sig = -99.
-  d_ln = nan()
+  d_ln = nan_dbl()
   d_mono = -99.
   d_m = -99.
   n_0_star = -99.

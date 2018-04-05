@@ -74,8 +74,6 @@ module ocean_sfc_optics
   ! Error handling
 
   integer(kind=long), intent(out) :: errorstatus
-  integer(kind=long) :: err = 0
-  character(len=80) :: msg
   character(len=24) :: nameOfRoutine = 'ocean_sfc_optics_fastemx'
     
   errorstatus = 0

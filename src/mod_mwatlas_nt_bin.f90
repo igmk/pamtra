@@ -93,11 +93,10 @@ CONTAINS
     integer(kind=long)   :: ipos
     integer(kind=long)   :: j,i
     integer(kind=long)   :: iiin=21    ! unit for input
-    integer(kind=long)   :: ios, irec
+    integer(kind=long)   :: irec
     CHARACTER(len=2), intent(in) :: month
     integer(kind=long)   :: cellnum
     real(kind=sgl)      :: ssmi(7)
-    real(kind=sgl)      :: lat,lon
     integer(kind=long)   :: cur_class1,cur_class2
     integer(kind=long)   :: take ! flag to take or not the pixel atlas for location constrains
     ! data records within each monthly file
@@ -342,7 +341,6 @@ CONTAINS
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
-    character(len=80) :: msg    
     character(22) :: nameOfRoutine = 'emis_interp_ind_sing'
 
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)  

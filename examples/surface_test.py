@@ -13,9 +13,8 @@ pam = pyPamtra.importer.createUsStandardProfile(pam,hgt_lev=[100,200,300])
 pam.set["verbose"] = 3
 #pam.set["pyVerbose"] = 3
 #pam.nmlSet['ground_type'] = 'F'
-pam.p['lfrac'][:] = 0.
+pam.p['sfc_type'][:] = 0.
 pam.p['groundtemp'][:] = 277.
-#pam.p['lfrac'][:] = 0.
 #pam.p['wind10u'][:] = np.sqrt(25.)
 #pam.p['wind10v'][:] = np.sqrt(24.)
 

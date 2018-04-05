@@ -1151,6 +1151,396 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
 
   return pam
 
+__ICDN_regridding_remarks = """
+Remarks
+=======
+This importer is adjusted to read regridded ICON-LEM simulations as they where run by Daniel Klocke within the HErZ-NARVALII framework.
+The Output consists of a *_fg_* and a *_cloud_* netcdf file.
+From the *_fg_* file, which contains most atmospheric variables, we need data on grid 2.
+From the *_cloud_* file, which contains qg, we need data on grid 1.
+Also there is the extpar_narval_nestTropAtl_R1250m.nc file wich contains time constant parameter.
+
+Regridding
+----------
+Use cdo to regrid the unstructured ICON data on a latlon grid.
+Nearest neighbor interpolation is used for regridding.
+The interpolation is defined in a Grid file.
+Example (filename "test_grid"):
+
+```
+gridtype   = lonlat
+gridsize   = 8000
+xname      = lon
+xlongname  = longitude
+xunits     = degrees_east
+yname      = lat
+ylongname  = latitude
+yunits     = degree_north
+xsize      = 100
+ysize      = 80
+xfirst     = -59.0
+xinc       = 0.05
+yfirst     = 10.0
+yinc       = 0.05
+```
+
+Convert unstructured data to latlon in one cdo command:
+    cdo remapnn,test_grid -selgrid,2 -setgrid,narval_nestTropAtl_R1250m.nc /dei4_NARVALII_2016081700_fg_DOM02_ML_0016.nc dei4_NARVALII_2016081700_fg_DOM02_ML_0016_test_grid.nc
+
+Here, "narval_nestTropAtl_R1250m.nc" is the description of the unstructured data.
+Current location:
+/data/hamp/models/ICON/HErZ-NARVALII/GRIDS/narval_nestTropAtl_R1250m.nc
+
+The corresponding command for _cloud_ data is:
+    cdo remapnn,test_grid -selgrid,1 -setgrid,narval_nestTropAtl_R1250m.nc /dei4_NARVALII_2016081700_cloud_DOM02_ML_0016.nc dei4_NARVALII_2016081700_cloud_DOM02_ML_0016_test_grid.nc
+
+Optimized regridding
+--------------------
+To speedup the regridding of multiple ICON output one can save the interpolation weights in an intermediate netcdf file.
+All ICON output must be given on the same unstructured grid.
+
+Generate the weights:
+    cdo gennn,test_grid -selgrid,2 -setgrid,narval_nestTropAtl_R1250m.nc dei4_NARVALII_2016081700_fg_DOM02_ML_0016.nc test_grid_weights.nc
+
+The same weights can be used for _fg_ and _cloud_ (unconfirmed).
+Apply weights:
+    cdo remap,test_grid,test_grid_weights.nc -selgrid,2 -setgrid,narval_nestTropAtl_R1250m.nc dei4_NARVALII_2016081700_fg_DOM02_ML_0016.nc dei4_NARVALII_2016081700_fg_DOM02_ML_0016_test_grid.nc
+    cdo remap,test_grid,test_grid_weights.nc -selgrid,1 -setgrid,narval_nestTropAtl_R1250m.nc dei4_NARVALII_2016081700_cloud_DOM02_ML_0016.nc dei4_NARVALII_2016081700_cloud_DOM02_ML_0016_test_grid.nc
+    cdo remapnn,test_grid,test_grid_weights.nc -setgrid,narval_nestTropAtl_R1250m extpar_narval_nestTropAtl_R1250m.nc extpar_narval_nestTropAtl_R1250m_test_grid.nc
+"""
+
+def readIconLem1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,constantFields=None,maxLevel=0):
+  '''
+  import ICON LEM 1-moment dataset
+  It is Icon with cosmo physics
+
+  fname_fg = str , fileName of atmospheric variables ("_fg_" file, no wildCards allowed! must be nc file.
+              A corresponding "_cloud_" has do exist!
+  descriptorFile = Pamtra descriptor file
+  debug: stop and load debugger on exception
+  constantFields: str, file name of nc containing constant fields (ie. FR_LAND)
+  '''
+  import netCDF4
+
+  assert constantFields
+  forecastIndex = 0 # time step in forecast
+  nHydro = 5
+
+  data = dict()
+
+  variables2D_const = ["FR_LAND", 'lon_2', 'lat_2'] # 'topography_c' would be the ICON equivalent to the COSMO 'HSURF'
+  variables3D = ["t_g","pres_sfc"]
+  variables4D_10m = ["u_10m","v_10m"]
+  variables4D = ["temp","pres","qv","qc","qi","qr","qs"]
+  variables4D_cloud = ["qg"]
+
+  if verbosity>0: print fname_fg
+
+  if not fname_fg.endswith('.nc'):
+    raise IOError("fname_fg has to be .nc.", fname_fg)
+  if not '_fg_' in os.path.basename(fname_fg):
+    raise IOError("fname_fg has to contain '_fg_'.", fname_fg)
+
+  dataSingle = dict()
+  try:
+    ncFile_const = netCDF4.Dataset(constantFields, "r")
+    if verbosity > 1: print "opened ", constantFields
+
+    for var in variables2D_const:
+      # nc dimensions: lat, lon; target dimensions: lon, lat
+      assert ncFile_const.variables[var].dimensions == ('lat', 'lon')
+      dataSingle[var] = np.swapaxes(ncFile_const.variables[var],0,1)
+
+    ncFile_const.close()
+    if verbosity > 1: print "closed const nc"
+
+    ncFile_fg = netCDF4.Dataset(fname_fg, "r")
+    if verbosity > 1: print "opened ", fname_fg
+
+    fname_cloud = '_cloud_'.join(fname_fg.rsplit('_fg_',1)) # right-replace _fg_ with _cloud
+    ncFile_cloud = netCDF4.Dataset(fname_cloud, "r")
+    if verbosity > 1: print "opened ", fname_cloud
+
+    if maxLevel == 0:
+      assert ncFile_fg.variables["z_ifc"].dimensions == ('lat', 'height_3', 'lon')
+      assert ncFile_fg.dimensions['height'].size + 1 == ncFile_fg.dimensions['height_3'].size
+      maxLevel = ncFile_fg.variables["z_ifc"].shape[1] - 1
+
+    for var in variables3D:
+      # nc dimensions: time, lat, lon; target dimensions: lon, lat
+      assert ncFile_fg.variables[var].dimensions == ('time', 'lat', 'lon')
+      dataSingle[var] = np.swapaxes(ncFile_fg.variables[var][forecastIndex],0,1)
+
+    for var in variables4D_10m:
+      # nc dimensions: time, lat, height_5 lon; target dimensions: lon, lat
+      assert ncFile_fg.variables[var].dimensions == ('time', 'lat', 'height_5', 'lon')
+      assert ncFile_fg.dimensions['height_5'].size == 1
+      dataSingle[var] = np.swapaxes(ncFile_fg.variables[var][forecastIndex, :, 0, :],0,1)
+
+    for var in variables4D:
+      # nc dimensions: time, lat, height, lon; target dimensions: lon, lat, level
+      assert ncFile_fg.variables[var].dimensions == ('time', 'lat', 'height', 'lon')
+      dataSingle[var] = np.transpose(ncFile_fg.variables[var][forecastIndex], (2, 0, 1))[...,::-1][...,:maxLevel]#reverse height order
+
+    for var in variables4D_cloud:
+      # nc dimensions: time, lat, height, lon; target dimensions: lon, lat, level
+      assert ncFile_cloud.variables[var].dimensions == ('time', 'lat', 'height', 'lon')
+      dataSingle[var] = np.transpose(ncFile_cloud.variables[var][forecastIndex], (2, 0, 1))[...,::-1][...,:maxLevel]#reverse height order
+
+    shape3D = dataSingle["temp"].shape
+    shape3Dplus = (shape3D[0], shape3D[1], shape3D[2] + 1)
+    shape2D = shape3D[:2]
+
+    date_times = netCDF4.num2date(ncFile_fg.variables["time"][:], ncFile_fg.variables["time"].units) # convert from any given reference time
+    timestamp = netCDF4.date2num(date_times, "seconds since 1970-01-01 00:00:00") # to unix epoch timestamp
+
+    dataSingle["timestamp"] = np.zeros(shape2D)
+    dataSingle["timestamp"][:] = timestamp
+
+    # 1D variables, right angled lat-lon grid
+    #lat, lon = np.meshgrid(ncFile_fg.variables['lat'][:], ncFile_fg.variables['lon'][:])
+    #assert lat.shape == shape2D
+    #dataSingle['lat'] = lat
+    #dataSingle['lon'] = lon # use exact lon_2 and lat_2 from constantFields.(the coordinates found by nearest neighbor interpolation)
+
+    for key in ["z_ifc"]:
+      # nc dimensions: lat, height, lon; target dimensions: lon, lat, level
+      assert ncFile_fg.variables[key].dimensions == ('lat', 'height_3', 'lon')
+      dataSingle[key] = np.transpose(ncFile_fg[key],(2, 0, 1))[...,::-1][...,:maxLevel+1]#reverse height order
+      assert dataSingle[key].shape == shape3Dplus
+
+    ncFile_fg.close()
+    if verbosity > 1: print "closed fg nc"
+    ncFile_cloud.close()
+    if verbosity > 1: print "closed cloud nc"
+
+    data = dataSingle
+
+  #except IOError:
+  except Exception as inst:
+    print "ERROR:", fname_fg
+    print type(inst)     # the exception instance
+    print inst.args      # arguments stored in .args
+    print inst
+    if debug: import pdb;pdb.set_trace()
+    raise
+
+
+  #shapes may have changed!
+  shape3Dplus = tuple(np.array(data["temp"].shape) + np.array([0,0,1]))
+  shape3D = data["temp"].shape
+  shape2D = shape3D[:2]
+
+  #we can also fill the arrays partly!
+  data["press_lev"] = np.zeros(shape3Dplus) + np.nan
+  data["press_lev"][...,0] = data["pres_sfc"]
+
+  data["relhum"] = q2rh(data["qv"],data["temp"],data["pres"]) * 100.
+
+  data["hydro_q"] = np.zeros(data["qc"].shape + (nHydro,)) + np.nan
+  data["hydro_q"][...,0] = data["qc"]
+  data["hydro_q"][...,1] = data["qi"]
+  data["hydro_q"][...,2] = data["qr"]
+  data["hydro_q"][...,3] = data["qs"]
+  data["hydro_q"][...,4] = data["qg"]
+
+  varPairs = [["timestamp","timestamp"],["lat_2","lat"],["lon_2","lon"],
+    ["u_10m","wind10u"],["v_10m","wind10v"],
+    ["z_ifc","hgt_lev"],["pres","press"],["temp","temp"],["relhum","relhum"],["hydro_q","hydro_q"],
+    ["t_g","groundtemp"],["press_lev","press_lev"]]
+
+  pamData = dict()
+  for iconVar, pamVar in varPairs:
+    pamData[pamVar] = data[iconVar]
+
+  pam = pyPamtra()
+  pam.set["pyVerbose"]= verbosity
+  if isinstance(descriptorFile, str):
+    pam.df.readFile(descriptorFile)
+  else:
+    for df in descriptorFile:
+      pam.df.addHydrometeor(df)
+
+  # surface properties
+  pamData['sfc_type'] = np.around(data['FR_LAND'])
+  assert np.all(np.logical_or(0<=pamData['sfc_type'], pamData['sfc_type'] <=1))
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][pamData['sfc_type'] == 0] = 'F' # ocean
+  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'L' # land
+
+  pam.createProfile(**pamData)
+
+  return pam
+
+# Add regridding remarks
+readIconLem1MomDataset.__doc__ += __ICDN_regridding_remarks
+
+
+def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,constantFields=None,maxLevel=0):
+  '''
+  import ICON LEM 2-moment dataset
+  It is Icon with cosmo physics
+
+  fname_fg = str , fileName of atmospheric variables ("_fg_" file, no wildCards allowed! must be nc file.
+  descriptorFile = Pamtra descriptor file
+  debug: stop and load debugger on exception
+  constantFields: str, file name of nc containing constant fields (ie. FR_LAND)
+  '''
+  import netCDF4
+
+  assert constantFields
+  forecastIndex = 0 # time step in forecast
+  nHydro = 6
+
+  data = dict()
+
+  variables2D_const = ["FR_LAND", 'lon_2', 'lat_2'] # 'topography_c' would be the ICON equivalent to the COSMO 'HSURF'
+  variables3D = ["t_g","pres_sfc"]
+  variables4D_10m = ["u_10m","v_10m"]
+  variables4D = ["temp","pres","qv","qc","qi","qr","qs","qg","qh","qnc","qni","qnr","qns","qng","qnh"]
+
+  if verbosity>0: print fname_fg
+
+  if not fname_fg.endswith('.nc'):
+    raise IOError("fname_fg has to be .nc.", fname_fg)
+  if not '_fg_' in os.path.basename(fname_fg):
+    raise IOError("fname_fg has to contain '_fg_'.", fname_fg)
+
+  dataSingle = dict()
+  try:
+    ncFile_const = netCDF4.Dataset(constantFields, "r")
+    if verbosity > 1: print "opened ", constantFields
+
+    for var in variables2D_const:
+      # nc dimensions: lat, lon; target dimensions: lon, lat
+      assert ncFile_const.variables[var].dimensions == ('lat', 'lon')
+      dataSingle[var] = np.swapaxes(ncFile_const.variables[var],0,1)
+
+    ncFile_const.close()
+    if verbosity > 1: print "closed const nc"
+
+    ncFile_fg = netCDF4.Dataset(fname_fg, "r")
+    if verbosity > 1: print "opened ", fname_fg
+
+
+    if maxLevel == 0:
+      assert ncFile_fg.variables["z_ifc"].dimensions == ('lat', 'height_3', 'lon')
+      assert ncFile_fg.dimensions['height'].size + 1 == ncFile_fg.dimensions['height_3'].size
+      maxLevel = ncFile_fg.variables["z_ifc"].shape[1] - 1
+
+    for var in variables3D:
+      # nc dimensions: time, lat, lon; target dimensions: lon, lat
+      assert ncFile_fg.variables[var].dimensions == ('time', 'lat', 'lon')
+      dataSingle[var] = np.swapaxes(ncFile_fg.variables[var][forecastIndex],0,1)
+
+    for var in variables4D_10m:
+      # nc dimensions: time, lat, height_5 lon; target dimensions: lon, lat
+      assert ncFile_fg.variables[var].dimensions == ('time', 'lat', 'height_5', 'lon')
+      assert ncFile_fg.dimensions['height_5'].size == 1
+      dataSingle[var] = np.swapaxes(ncFile_fg.variables[var][forecastIndex, :, 0, :],0,1)
+
+    for var in variables4D:
+      # nc dimensions: time, lat, height, lon; target dimensions: lon, lat, level
+      assert ncFile_fg.variables[var].dimensions == ('time', 'lat', 'height', 'lon')
+      dataSingle[var] = np.transpose(ncFile_fg.variables[var][forecastIndex], (2, 0, 1))[...,::-1][...,:maxLevel]#reverse height order
+
+    shape3D = dataSingle["temp"].shape
+    shape3Dplus = (shape3D[0], shape3D[1], shape3D[2] + 1)
+    shape2D = shape3D[:2]
+
+    date_times = netCDF4.num2date(ncFile_fg.variables["time"][:], ncFile_fg.variables["time"].units) # convert from any given reference time
+    timestamp = netCDF4.date2num(date_times, "seconds since 1970-01-01 00:00:00") # to unix epoch timestamp
+
+    dataSingle["timestamp"] = np.zeros(shape2D)
+    dataSingle["timestamp"][:] = timestamp
+
+    # 1D variables, right angled lat-lon grid
+    #lat, lon = np.meshgrid(ncFile_fg.variables['lat'][:], ncFile_fg.variables['lon'][:])
+    #assert lat.shape == shape2D
+    #dataSingle['lat'] = lat
+    #dataSingle['lon'] = lon # use exact lon_2 and lat_2 from constantFields.(the coordinates found by nearest neighbor interpolation)
+
+    for key in ["z_ifc"]:
+      # nc dimensions: lat, height, lon; target dimensions: lon, lat, level
+      assert ncFile_fg.variables[key].dimensions == ('lat', 'height_3', 'lon')
+      dataSingle[key] = np.transpose(ncFile_fg[key],(2, 0, 1))[...,::-1][...,:maxLevel+1]#reverse height order
+      assert dataSingle[key].shape == shape3Dplus
+
+    ncFile_fg.close()
+    if verbosity > 1: print "closed fg nc"
+
+    data = dataSingle
+
+  #except IOError:
+  except Exception as inst:
+    print "ERROR:", fname_fg
+    print type(inst)     # the exception instance
+    print inst.args      # arguments stored in .args
+    print inst
+    if debug: import pdb;pdb.set_trace()
+    raise
+
+
+  #shapes may have changed!
+  shape3Dplus = tuple(np.array(data["temp"].shape) + np.array([0,0,1]))
+  shape3D = data["temp"].shape
+  shape2D = shape3D[:2]
+
+  #we can also fill the arrays partly!
+  data["press_lev"] = np.zeros(shape3Dplus) + np.nan
+  data["press_lev"][...,0] = data["pres_sfc"]
+
+  data["relhum"] = q2rh(data["qv"],data["temp"],data["pres"]) * 100.
+
+  data["hydro_q"] = np.zeros(data["qc"].shape + (nHydro,)) + np.nan
+  data["hydro_q"][...,0] = data["qc"]
+  data["hydro_q"][...,1] = data["qi"]
+  data["hydro_q"][...,2] = data["qr"]
+  data["hydro_q"][...,3] = data["qs"]
+  data["hydro_q"][...,4] = data["qg"]
+  data["hydro_q"][...,5] = data["qh"]
+
+  pamData["hydro_n"] = np.zeros(data["qnc"].shape + (nHydro,)) + np.nan
+  pamData["hydro_n"][...,0] = data["qnc"]
+  pamData["hydro_n"][...,1] = data["qni"]
+  pamData["hydro_n"][...,2] = data["qnr"]
+  pamData["hydro_n"][...,3] = data["qns"]
+  pamData["hydro_n"][...,4] = data["qng"]
+  pamData["hydro_n"][...,5] = data["qnh"]
+
+  varPairs = [["timestamp","timestamp"],["lat_2","lat"],["lon_2","lon"],
+    ["u_10m","wind10u"],["v_10m","wind10v"],
+    ["z_ifc","hgt_lev"],["pres","press"],["temp","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["hydro_n","hydro_n"],
+    ["t_g","groundtemp"],["press_lev","press_lev"]]
+
+  pamData = dict()
+  for iconVar,pamVar in varPairs:
+    pamData[pamVar] = data[iconVar]
+
+  pam = pyPamtra()
+  pam.set["pyVerbose"]= verbosity
+  if isinstance(descriptorFile, str):
+    pam.df.readFile(descriptorFile)
+  else:
+    for df in descriptorFile:
+      pam.df.addHydrometeor(df)
+
+  # surface properties
+  pamData['sfc_type'] = np.around(data['FR_LAND'])
+  assert np.all(np.logical_or(0<=pamData['sfc_type'], pamData['sfc_type'] <=1))
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][pamData['sfc_type'] == 0] = 'F' # ocean
+  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'L' # land
+
+  pam.createProfile(**pamData)
+
+  return pam
+
+# Add regridding remarks
+readIconLem2MomDataset.__doc__ += __ICDN_regridding_remarks
+
 
 def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,dimY=160,dimZ=25,subGrid=None):
 

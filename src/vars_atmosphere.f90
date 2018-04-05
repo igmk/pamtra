@@ -16,7 +16,7 @@ module vars_atmosphere
   character(len=4), allocatable, dimension(:,:) :: atmo_year, atmo_time
 !   real(kind=sgl), allocatable, dimension(:,:) :: atmo_deltax, atmo_deltay
   integer(kind=long), allocatable, dimension(:,:) :: atmo_model_i, atmo_model_j
-  real(kind=sgl), allocatable, dimension(:,:) :: atmo_lon,atmo_lat,atmo_lfrac,atmo_wind10u,atmo_wind10v
+  real(kind=sgl), allocatable, dimension(:,:) :: atmo_lon,atmo_lat,atmo_wind10u,atmo_wind10v
   real(kind=sgl), allocatable, dimension(:,:,:) :: atmo_obs_height
   !number of layer can vary (from python)
   integer(kind=long), allocatable, dimension(:,:) :: atmo_nlyrs, atmo_unixtime
@@ -27,7 +27,7 @@ module vars_atmosphere
   integer(kind=long), allocatable, dimension(:,:) :: sfc_type, sfc_model
   real(kind=dbl), allocatable, dimension(:,:) :: sfc_salinity
   character(len=1), allocatable, dimension(:,:) ::  sfc_refl
-  
+
   real(kind=dbl), allocatable, dimension(:,:,:) :: atmo_relhum_lev,&
        atmo_press_lev, &
        atmo_temp_lev, &
@@ -139,8 +139,7 @@ module vars_atmosphere
   subroutine allocate_atmosphere_vars(errorstatus)
 
     use descriptor_file, only: n_hydro
-
-    real(kind=dbl) :: nan
+    use nan, only: nan_dbl
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err
@@ -176,7 +175,6 @@ module vars_atmosphere
     allocate(atmo_model_j(atmo_ngridx,atmo_ngridy))
     allocate(atmo_lon(atmo_ngridx,atmo_ngridy))
     allocate(atmo_lat(atmo_ngridx,atmo_ngridy))
-    allocate(atmo_lfrac(atmo_ngridx,atmo_ngridy))
     allocate(atmo_wind10u(atmo_ngridx,atmo_ngridy))
     allocate(atmo_wind10v(atmo_ngridx,atmo_ngridy))
     allocate(atmo_obs_height(atmo_ngridx,atmo_ngridy,noutlevels))
@@ -192,7 +190,7 @@ module vars_atmosphere
     allocate(sfc_model(atmo_ngridx,atmo_ngridy))
     allocate(sfc_refl(atmo_ngridx,atmo_ngridy))
     allocate(sfc_salinity(atmo_ngridx,atmo_ngridy))
-    
+
     allocate(atmo_relhum_lev(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs+1))
     allocate(atmo_press_lev(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs+1))
     allocate(atmo_temp_lev(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs+1))
@@ -227,54 +225,53 @@ module vars_atmosphere
     atmo_day(:,:) = "na"
     atmo_year(:,:) = "na"
     atmo_time(:,:) = "na"
-!     atmo_deltax(:,:) = nan()
-!     atmo_deltay(:,:) = nan()
+!     atmo_deltax(:,:) = nan_dbl()
+!     atmo_deltay(:,:) = nan_dbl()
     atmo_model_i(:,:) = -9999
     atmo_model_j(:,:) = -9999
-    atmo_lon(:,:) = nan()
-    atmo_lat(:,:) = nan()
-    atmo_lfrac(:,:) = nan()
-    atmo_wind10u(:,:) = nan()
-    atmo_wind10v(:,:) = nan()
-    atmo_obs_height(:,:,:) = nan()
+    atmo_lon(:,:) = nan_dbl()
+    atmo_lat(:,:) = nan_dbl()
+    atmo_wind10u(:,:) = nan_dbl()
+    atmo_wind10v(:,:) = nan_dbl()
+    atmo_obs_height(:,:,:) = nan_dbl()
 
-    atmo_relhum_lev(:,:,:) = nan()
-    atmo_press_lev(:,:,:) = nan()
-    atmo_temp_lev(:,:,:) = nan()
-    atmo_hgt_lev(:,:,:) = nan()
+    atmo_relhum_lev(:,:,:) = nan_dbl()
+    atmo_press_lev(:,:,:) = nan_dbl()
+    atmo_temp_lev(:,:,:) = nan_dbl()
+    atmo_hgt_lev(:,:,:) = nan_dbl()
 
-    atmo_groundtemp(:,:) = nan()
-    atmo_iwv(:,:) = nan()
+    atmo_groundtemp(:,:) = nan_dbl()
+    atmo_iwv(:,:) = nan_dbl()
 
     sfc_type(:,:) = -9999
     sfc_model(:,:) = -9999
     sfc_refl(:,:) = "L"
-    sfc_salinity(:,:) = nan()
+    sfc_salinity(:,:) = nan_dbl()
 
-    atmo_relhum(:,:,:) = nan()
-    atmo_press(:,:,:) = nan()
-    atmo_temp(:,:,:) = nan()
-    atmo_vapor_pressure(:,:,:) = nan()
-    atmo_rho_vap(:,:,:) = nan()
-    atmo_q_hum(:,:,:) = nan()
-    atmo_hgt(:,:,:) = nan()
-    atmo_delta_hgt_lev(:,:,:) = nan()
-    atmo_airturb(:,:,:) = nan()
-    atmo_wind_uv(:,:,:) = nan()
-    atmo_turb_edr(:,:,:) = nan()
-    atmo_wind_w(:,:,:) =nan()
+    atmo_relhum(:,:,:) = nan_dbl()
+    atmo_press(:,:,:) = nan_dbl()
+    atmo_temp(:,:,:) = nan_dbl()
+    atmo_vapor_pressure(:,:,:) = nan_dbl()
+    atmo_rho_vap(:,:,:) = nan_dbl()
+    atmo_q_hum(:,:,:) = nan_dbl()
+    atmo_hgt(:,:,:) = nan_dbl()
+    atmo_delta_hgt_lev(:,:,:) = nan_dbl()
+    atmo_airturb(:,:,:) = nan_dbl()
+    atmo_wind_uv(:,:,:) = nan_dbl()
+    atmo_turb_edr(:,:,:) = nan_dbl()
+    atmo_wind_w(:,:,:) =nan_dbl()
 
-    atmo_hydro_q(:,:,:,:) = nan()
-    atmo_hydro_q_column(:,:,:) = nan()
-    atmo_hydro_reff(:,:,:,:) = nan()
-    atmo_hydro_reff_column(:,:,:) = nan()
-    atmo_hydro_n(:,:,:,:) = nan()
-    atmo_hydro_n_column(:,:,:) = nan()
+    atmo_hydro_q(:,:,:,:) = nan_dbl()
+    atmo_hydro_q_column(:,:,:) = nan_dbl()
+    atmo_hydro_reff(:,:,:,:) = nan_dbl()
+    atmo_hydro_reff_column(:,:,:) = nan_dbl()
+    atmo_hydro_n(:,:,:,:) = nan_dbl()
+    atmo_hydro_n_column(:,:,:) = nan_dbl()
 
     atmo_nlyrs(:,:) = -9999
     atmo_unixtime(:,:) = -9999
 
-    atmo_radar_prop(:,:,:) = nan()
+    atmo_radar_prop(:,:,:) = nan_dbl()
 
     errorstatus = err
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
@@ -330,7 +327,6 @@ module vars_atmosphere
     if (allocated(atmo_model_j)) deallocate(atmo_model_j)
     if (allocated(atmo_lon)) deallocate(atmo_lon)
     if (allocated(atmo_lat)) deallocate(atmo_lat)
-    if (allocated(atmo_lfrac)) deallocate(atmo_lfrac)
     if (allocated(atmo_wind10u)) deallocate(atmo_wind10u)
     if (allocated(atmo_wind10v)) deallocate(atmo_wind10v)
     if (allocated(atmo_obs_height)) deallocate(atmo_obs_height)
@@ -352,6 +348,7 @@ module vars_atmosphere
 ! work variables
     real(kind=dbl), allocatable, dimension(:) :: work_xwp
     real(kind=dbl), allocatable, dimension(:,:) :: work_xwc
+    real(kind=sgl) :: lfrac
     integer(kind=long) :: i, j, n_tot_moment, i_hydro, index_hydro
 
     err = 0
@@ -378,11 +375,12 @@ module vars_atmosphere
           read(14,*) atmo_obs_height(i,j,:)         ! output heights [m]
           read(14,*) atmo_lat(i,j),       &         ! latitude [degree]
                      atmo_lon(i,j),       &         ! longitude [degree]
-                     atmo_lfrac(i,j),     &         ! land sea fraction 1=land 0=ocean
+                     lfrac,               &         ! land sea fraction 1=land 0=ocean
                      atmo_wind10u(i,j),   &         ! 10 meter wind u comp. [m/s]
                      atmo_wind10v(i,j),   &         ! 10 meter wind v comp. [m/s]
                      atmo_groundtemp(i,j),&         ! ground temp. used for ground emission only [K]
                      atmo_hgt_lev(i,j,1)            ! ground height [m]
+          sfc_type(i,j) = NINT(lfrac, long)
 
 ! READ column integrated water vapor and hydrometeors properties
           read(14,*) work_xwp
@@ -602,6 +600,7 @@ module vars_atmosphere
     real(kind=dbl), allocatable, dimension(:,:) :: work_xwc
     real(kind=dbl) :: dum
     integer(kind=long)  :: i, j
+    real(kind=sgl) :: lfrac
 
     err = 0
 
@@ -626,9 +625,10 @@ module vars_atmosphere
           read(14,*) atmo_model_i(i,j), atmo_model_j(i,j)
           read(14,*) atmo_lat(i,j),       &         ! latitude [degree]
                      atmo_lon(i,j),       &         ! longitude [degree]
-                     atmo_lfrac(i,j),     &         ! land sea fraction 1=land 0=ocean
+                     lfrac,               &         ! land sea fraction 1=land 0=ocean
                      atmo_wind10u(i,j),   &         ! 10 meter wind u comp. [m/s]
                      atmo_wind10v(i,j)              ! 10 meter wind v comp. [m/s]
+          sfc_type(i,j) = NINT(lfrac, long)
 
 ! READ column integrated water vapor and hydrometeors properties
           read(14,*) atmo_iwv(i,j), atmo_hydro_q_column(i,j,:)
@@ -868,8 +868,6 @@ module vars_atmosphere
         "found nan in atmo_lon")
     call assert_false(err,ANY(ISNAN(atmo_lat(:,:))),&
         "found nan in atmo_lat")
-    call assert_false(err,ANY(ISNAN(atmo_lfrac(:,:))),&
-        "found nan in atmo_lfrac")
     call assert_false(err,ANY(ISNAN(atmo_wind10u(:,:))),&
         "found nan in atmo_wind10u")
     call assert_false(err,ANY(ISNAN(atmo_wind10v(:,:))),&
@@ -909,7 +907,7 @@ module vars_atmosphere
     write(6,*) 'atmo_obs_height'
     write(6,*) atmo_obs_height(i,j,:)
     write(6,'(8a12)') 'lat', 'lon','lfrac','wind10u','wind10v','groundtemp','ground_hgt'
-    write(6,'(7f12.4)') atmo_lat(i,j), atmo_lon(i,j),atmo_lfrac(i,j),atmo_wind10u(i,j),atmo_wind10v(i,j),&
+    write(6,'(7f12.4)') atmo_lat(i,j), atmo_lon(i,j),REAL(sfc_type(i,j)),atmo_wind10u(i,j),atmo_wind10v(i,j),&
                         atmo_groundtemp(i,j),atmo_hgt_lev(i,j,1)
     write(6,'(6a12)') 'lay_number','height','pressure','temp.','RH','air_turb'
     do nz=1,atmo_nlyrs(i,j)
@@ -946,7 +944,7 @@ module vars_atmosphere
     write(6,*) 'atmo_obs_height'
     write(6,*) atmo_obs_height(i,j,:)
     write(6,'(8a12)') 'lat', 'lon','lfrac','wind10u','wind10v','groundtemp','ground_hgt'
-    write(6,'(8f12.4)') atmo_lat(i,j), atmo_lon(i,j),atmo_lfrac(i,j),atmo_wind10u(i,j),atmo_wind10v(i,j),&
+    write(6,'(8f12.4)') atmo_lat(i,j), atmo_lon(i,j),REAL(sfc_type(i,j)),atmo_wind10u(i,j),atmo_wind10v(i,j),&
                         atmo_groundtemp(i,j),atmo_hgt_lev(i,j,1)
     write(6,'(5a12)') 'lev_number','height','pressure','temp.','RH'
     do nz=1,atmo_nlyrs(i,j)+1
@@ -1012,12 +1010,11 @@ module vars_atmosphere
     print*, "atmo_model_j", atmo_model_j
     print*, "atmo_lon", atmo_lon
     print*, "atmo_lat", atmo_lat
-    print*, "atmo_lfrac", atmo_lfrac
     print*, "atmo_wind10u", atmo_wind10u
     print*, "atmo_wind10v", atmo_wind10v
     print*, "atmo_obs_height", atmo_obs_height
     print*, "atmo_radar_prop", atmo_radar_prop
-    
+
     print*, "sfc_type", sfc_type
     print*, "sfc_model", sfc_model
     print*, "sfc_refl", sfc_refl

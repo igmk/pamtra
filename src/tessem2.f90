@@ -9,6 +9,7 @@ subroutine tessem2(errorstatus,freq,zenith_angle,wind_speed,temperature,salinity
 
     use kinds
     use report_module
+    use nan, only: nan_dbl
     
     implicit none
 
@@ -26,8 +27,6 @@ subroutine tessem2(errorstatus,freq,zenith_angle,wind_speed,temperature,salinity
     real(kind=dbl), dimension(2) :: y
     real(kind=dbl), dimension(2,15) :: trans, new_x, new_y
 
-    real(kind=dbl) :: nan
-
     ! Error handling
 
     integer(kind=long), intent(out) :: errorstatus
@@ -35,8 +34,8 @@ subroutine tessem2(errorstatus,freq,zenith_angle,wind_speed,temperature,salinity
     character(len=80) :: msg
     character(len=14) :: nameOfRoutine = 'tessem2'
 
-    nn_params = nan()
-    w_params = nan()
+    nn_params = nan_dbl()
+    w_params = nan_dbl()
     
     nn_params(1,1,1:15) = (/-4.425637,-9.833792,1.338131,-1.688713,0.121844,&
                         -0.020075,0.983048,-5.365536,0.759206,1.705090,&
