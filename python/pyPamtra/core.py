@@ -368,6 +368,10 @@ class pyPamtra(object):
         self.p["lat"][xx,yy], self.p["lon"][xx,yy], lfrac,self.p["wind10u"][xx,yy],self.p["wind10v"][xx,yy],self.p["groundtemp"][xx,yy],self.p["hgt_lev"][xx,yy,0]  = np.array(np.array(g.next()[:7]),dtype=float)
 
         self.p["sfc_type"][xx,yy] = np.around(lfrac) # lfrac is deprecated
+        if self.p["sfc_type"][xx,yy] == 0:
+            self.p["sfc_refl"][xx,yy] = 'F'
+        else:
+            self.p["sfc_refl"][xx,yy] = 'L'
 
         self.p["iwv"][xx,yy] = np.array(np.array(g.next()[0]),dtype=float)
 
