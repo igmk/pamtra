@@ -280,7 +280,7 @@ subroutine make_dist_params(errorstatus)
      endif
      ! ! Field et al. (2005 QJRM, end of page 2008 + end of page 2009 for the relation between N_0 and N_0,23) n_0 = n_0(T)
      if (trim(dist_name) == 'exp_field_t') then
-        n_0 = 7.628d6 * exp(0.107_dbl * (273.15_dbl - layer_t))
+        n_0 = 7.628d6 * exp(-0.107_dbl * (273.15_dbl - layer_t))
         if (moment_in == 3) lambda = (a_ms * n_0 * dgamma(b_ms+1._dbl) / q_h)**(1._dbl /(b_ms+1._dbl))
         if (moment_in == 2) lambda = 3._dbl / r_eff
      endif
