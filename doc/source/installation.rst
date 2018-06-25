@@ -18,9 +18,30 @@ To get the Python version, the following packages are additionally required::
 
     sudo apt-get install python-pandas python-numpy python-matplotlib python-scipy python-netcdf python-pip
 
-The Netcdf4 python package is not in the repositories, install with::
+More recent Ubuntu versions have `python-netcdf4` instead of `python-netcdf`. For older versions use pip ::
 
     sudo pip install netcdf4
+
+If the system's numpy version is tto recent, use pip ::
+
+    pip install --user netcdf4
+
+Not all numpy versions work with Pamtra, 1.11.3 and 1.12.1 are confirmed to work. 1.13.3 and 1.14.3 do not work. You can check the numpy version in python ::
+
+    import numpy
+    print(numpy.__version__
+
+  or ::
+
+    sudo pip install numpy==1.12.1
+
+if you do not have root permissions you can also use instead of the last line::
+
+    pip install --user numpy==1.12.1
+
+.. warning::
+    As of June 2018, do NOT use conda for Ubuntu because the provided libgfortran 
+    library does not work with Pamtra.
 
 
 Dependencies on Mac OS X
@@ -37,11 +58,11 @@ but to install an independent one, e.g. with brew or conda
 (https://www.continuum.io/downloads). Note that pyPamtra does not support Python3 yet.
 In addition, the following packages are required::
 
-    pip install pandas numpy scipy matplotlib netcdf4
+    pip install pandas numpy==1.12.1 scipy matplotlib netcdf4
 
 Please note that netcdf4 must be installed using pip even if you use the conda
 package manager. The reason is that conda brings its own netcdf library, but without
-the fortran libraries which are required by the fortran part of PAMTRA.
+the fortran libraries which are required by the fortran part of PAMTRA. Similar to Ubuntu teh most recent numpy versions do not work with Pamtra. 
 
 Get model from git repository
 *****************************
