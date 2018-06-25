@@ -73,10 +73,6 @@ The version control system git (http://git-scm.com/) is used to keep track of th
 The very basics of git can be found here https://try.github.io/levels/1/challenges/1 .
 "--recursive" is required because gut submodules are used.
 
-Currently github doesn't host the most recent version. Therefore, one has to synchronize against the gop repository.
-
-    git clone --recursive ssh://username@gop.meteo.uni-koeln.de/srv/git_repos/pamtra.git
-
 
 Build Pamtra
 *******************
