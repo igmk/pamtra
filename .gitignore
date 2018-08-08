@@ -2,6 +2,7 @@ bin
 *.o
 *.a
 *.mod
+out
 pamtra
 .cproject
 .project

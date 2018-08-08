@@ -1,17 +1,16 @@
 # test the adaption of McSnow
 
 import numpy as np
-import sys
+import sys #for some debugging
 import pyPamtra
-
+import re #for selecting numbers from file-string
 
 # Initialize PyPAMTRA instance
 pam = pyPamtra.pyPamtra()
 #define hydrometeor properties
 n_bins = 100 #bins for PAMTRA calculation
-n_heights = 100 #heigts for PAMTRA calculation
+n_heights = 50 #heights for PAMTRA calculation
 pam.df.addHydrometeor(('ice_nonspher',  -999,           -1,        -99.,      -99.,    -99.,   -99.,     -99.,   13,           n_bins,       'dummy',          -99.,    -99.,     -99.,   -99.,  -99.,    -99.        ,'ss-rayleigh-gans',  'dummy',        0.))
-
 
 '''
 set namelist parameter
@@ -25,13 +24,13 @@ pam.nmlSet["radar_attenuation"] = "disabled" #"bottom-up"
 pam.nmlSet["hydro_adaptive_grid"] = False    # uncomment this line before changing max and min diameter of size distribution
 pam.nmlSet["conserve_mass_rescale_dsd"] = False    #necessary because of separating into m-D-relationship regions
 pam.nmlSet["hydro_fullspec"] = True #use full-spectra as input
-pam.nmlSet["radar_allow_negative_dD_dU"] = True #allow negative dU dD which can happen at the threshold between different particle species
+#pam.nmlSet["radar_allow_negative_dD_dU"] = True #allow negative dU dD which can happen at the threshold between different particle species
 
 #show some messages
 debugging = False
 if debugging:
     print 'debugging'
-    pam.set["verbose"] = 5
+    pam.set["verbose"] = 8
 else:
     pam.set["verbose"] = 0
 pam.set["pyVerbose"] = 0
@@ -39,7 +38,12 @@ pam.set["pyVerbose"] = 0
 
 
 #load asci with all timesteps and all SPs
-allSPalltimesteps = np.loadtxt("/home/mkarrer/Dokumente/McSnow/MCSNOW/experiments/1d_xi100000_nz5000_lwc20_ncl0_dtc5_nrp30_rm10_rt2_vt2_h10-20_ba500/mass2fr.dat")
+filestring = "/home/mkarrer/Dokumente/McSnow/MCSNOW/experiments/1d_xi100000_nz5000_lwc20_ncl0_dtc5_nrp30_rm10_rt2_vt2_h10-20_ba500/mass2fr.dat"
+allSPalltimesteps = np.loadtxt(filestring)
+
+#read box area from string
+box_area = float(re.search('ba(.*)/mass2fr', filestring).group(1)) *1./100. #this line gets the values after ba and before /mass2fr ; 1/100m^2 is the specification of the unit in the McSnow runscripts
+
 
 #TODO: select timesteps
 allSP = allSPalltimesteps
@@ -49,31 +53,32 @@ sp_height = allSP[:,2]
 diam = allSP[:,9] #diameter
 multipl = allSP[:,-1] #multiplicity
 
-
-#seperate by height
-model_top = 5000 #top of model / m
-heightvec = np.linspace(0,5000,n_heights+1)
-
-
-
+'''
+seperate by height
+'''
+#create height vector
+model_top = 5000. #top of model / m
+z_res = model_top/n_heights #vertical resolution
+heightvec = np.linspace(z_res,model_top,n_heights) #start with 0+z_res and go n_heigts step up to model_top
 #define arrays with diam
 d_bound_ds = np.logspace(-12,0,n_bins+1)
 d_ds = d_bound_ds[:-1] + 0.5*np.diff(d_bound_ds)
-d_counts = np.zeros([n_bins,n_heights])
+d_counts = np.zeros([n_heights,n_bins])
 #d_counts_no_mult = np.zeros(n_bins)
 #get the number of particles (SP*multiplicity) at each bin (binned by height and diameter)
-for i in range(0,n_heights):
+for i in range(0,n_heights-1):
     for j in range(0,n_bins):
-                d_counts[j,i] = np.sum(np.where(np.logical_and(
+                d_counts[i,j] = np.sum(np.where(np.logical_and(
                                 np.logical_and(d_bound_ds[j]<=diam,diam<d_bound_ds[j+1]),
                                 np.logical_and(heightvec[i]<=sp_height,sp_height<heightvec[i+1]),
                                 ),multipl,0))
                 #d_counts_no_mult[i] = np.sum(np.where(np.logical_and(d_bound_ds[i]<diam,diam<d_bound_ds[i+1]),1,0))
-
+#convert number per height bin [#] to numper per volume [#/m3]
+d_counts = d_counts/box_area/z_res
 
 #output SP and RP counts per bin
 print 'diameter       counts:  RP, SP'
-for j in range(0,n_heights):
+for j in range(0,n_heights-1):
     print heightvec[j],d_counts[j,:]#,d_counts_no_mult[i]
 
 
@@ -95,7 +100,7 @@ pamData["timestamp"] =  0 #unixtime #TODO: not randomly set here 80%
 #pamData["wind10v"] = iconData["v"][0,1]
 #pamData["groundtemp"] = iconData["t_g"][0]
 
-pamData["hgt"] = np.ones(vec_shape)*heightvec[:-1] #np.arange(0.,12000.,(12000.-0.)/(vec_shape[1])) #height in m  #TODO: not randomly set here 80%
+pamData["hgt"] = np.ones(vec_shape)*heightvec #np.arange(0.,12000.,(12000.-0.)/(vec_shape[1])) #height in m  #TODO: not randomly set here 80%
 pamData["temp"] = np.ones(vec_shape)*263.15 #T in K   #TODO: not randomly set here -10C
 pamData["hydro_q"] = np.zeros([1,n_heights,1]) #TODO: not just one category (last number)
 pamData["hydro_n"] = np.zeros([1,n_heights,1]) #TODO: not just one category (last number)
@@ -122,8 +127,8 @@ pam.df.dataFullSpec["n_ds"][0,0,:,0,:] = d_counts
 b_agg=2.1;a_agg = 2.8*10**(2*b_agg-6)
 pam.df.dataFullSpec["mass_ds"][0,0,:,0,:] = a_agg*pam.df.dataFullSpec["d_ds"][0,0,:,0,:]**b_agg #TODO: quick and dirty: m-D coefficients for aggregates
 #area of middle of bin
-d_agg=1.88;a_agg = 2.285*10**(2*d_agg-5)
-pam.df.dataFullSpec["area_ds"][0,0,:,0,:] = pam.df.dataFullSpec["d_ds"][0,0,:,0,:]**b_agg #TODO: quick and dirty: m-D coefficients for aggregates
+c_agg=1.88;d_agg = 2.285*10**(2*d_agg-5)
+pam.df.dataFullSpec["area_ds"][0,0,:,0,:] = c_agg*pam.df.dataFullSpec["d_ds"][0,0,:,0,:]**d_agg #TODO: quick and dirty: m-D coefficients for aggregates
 #aspect ratio
 pam.df.dataFullSpec["as_ratio"][0,0,:,0,:] = 0.6
 
