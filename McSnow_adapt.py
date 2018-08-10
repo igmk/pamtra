@@ -1,16 +1,21 @@
-# test the adaption of McSnow
-
+'''
+adaption of McSnow to PAMTRA
+'''
+#import modules
 import numpy as np
 import sys #for some debugging
 import pyPamtra
 import re #for selecting numbers from file-string
+import subprocess #for using shell commands with subprocess.call()
+
+import __postprocess_McSnow
 
 # Initialize PyPAMTRA instance
 pam = pyPamtra.pyPamtra()
 #define hydrometeor properties
 n_bins = 100 #bins for PAMTRA calculation
-n_heights = 50 #heights for PAMTRA calculation
-pam.df.addHydrometeor(('ice_nonspher',  -999,           -1,        -99.,      -99.,    -99.,   -99.,     -99.,   13,           n_bins,       'dummy',          -99.,    -99.,     -99.,   -99.,  -99.,    -99.        ,'ss-rayleigh-gans',  'dummy',        0.))
+n_heights = 51 #heights for PAMTRA calculation
+pam.df.addHydrometeor(('ice_nonspher',  -999,           -1,        -99.,      -99.,    -99.,   -99.,     -99.,   13,           n_bins,       'dummy',          -99.,    -99.,     -99.,   -99.,  -99.,    -99.        ,'ss-rayleigh-gans',  'khvorostyanov01_particles',        0.))
 
 '''
 set namelist parameter
@@ -21,7 +26,7 @@ pam.nmlSet["active"] = True    # Activate this for Cloud radar
 pam.nmlSet["radar_mode"] = "simple"
 pam.nmlSet["save_psd"] = False    # save particle size distribution
 pam.nmlSet["radar_attenuation"] = "disabled" #"bottom-up"
-pam.nmlSet["hydro_adaptive_grid"] = False    # uncomment this line before changing max and min diameter of size distribution
+pam.nmlSet["hydro_adaptive_grid"] = False    # uncomment this line before changing max and min sp_diameter of size distribution
 pam.nmlSet["conserve_mass_rescale_dsd"] = False    #necessary because of separating into m-D-relationship regions
 pam.nmlSet["hydro_fullspec"] = True #use full-spectra as input
 #pam.nmlSet["radar_allow_negative_dD_dU"] = True #allow negative dU dD which can happen at the threshold between different particle species
@@ -35,51 +40,36 @@ else:
     pam.set["verbose"] = 0
 pam.set["pyVerbose"] = 0
 
+#directory of experiments
+directory = "/home/mkarrer/Dokumente/McSnow/MCSNOW/experiments/"
+#experiment name (this also contains a lot of information about the run
+experiment="1d_xi100000_nz5000_lwc20_ncl0_dtc5_nrp30_rm10_rt2_vt2_h10-20_ba500"
 
-
-#load asci with all timesteps and all SPs
-filestring = "/home/mkarrer/Dokumente/McSnow/MCSNOW/experiments/1d_xi100000_nz5000_lwc20_ncl0_dtc5_nrp30_rm10_rt2_vt2_h10-20_ba500/mass2fr.dat"
-allSPalltimesteps = np.loadtxt(filestring)
-
-#read box area from string
-box_area = float(re.search('ba(.*)/mass2fr', filestring).group(1)) *1./100. #this line gets the values after ba and before /mass2fr ; 1/100m^2 is the specification of the unit in the McSnow runscripts
-
-
-#TODO: select timesteps
-allSP = allSPalltimesteps
-#read individual properties of the SPs
-m_tot = allSP[:,0] #read mass of all particles
-sp_height = allSP[:,2]
-diam = allSP[:,9] #diameter
-multipl = allSP[:,-1] #multiplicity
+#read mass2fr.dat file and get SP-dictionary
+SP = __postprocess_McSnow.read_mass2frdat(experiment)
 
 '''
 seperate by height
 '''
 #create height vector
 model_top = 5000. #top of model / m
-z_res = model_top/n_heights #vertical resolution
-heightvec = np.linspace(z_res,model_top,n_heights) #start with 0+z_res and go n_heigts step up to model_top
-#define arrays with diam
-d_bound_ds = np.logspace(-12,0,n_bins+1)
-d_ds = d_bound_ds[:-1] + 0.5*np.diff(d_bound_ds)
-d_counts = np.zeros([n_heights,n_bins])
-#d_counts_no_mult = np.zeros(n_bins)
-#get the number of particles (SP*multiplicity) at each bin (binned by height and diameter)
-for i in range(0,n_heights-1):
-    for j in range(0,n_bins):
-                d_counts[i,j] = np.sum(np.where(np.logical_and(
-                                np.logical_and(d_bound_ds[j]<=diam,diam<d_bound_ds[j+1]),
-                                np.logical_and(heightvec[i]<=sp_height,sp_height<heightvec[i+1]),
-                                ),multipl,0))
-                #d_counts_no_mult[i] = np.sum(np.where(np.logical_and(d_bound_ds[i]<diam,diam<d_bound_ds[i+1]),1,0))
-#convert number per height bin [#] to numper per volume [#/m3]
-d_counts = d_counts/box_area/z_res
+heightvec = np.linspace(0,model_top,n_heights) #start with 0+z_res and go n_heigts step up to model_top
 
-#output SP and RP counts per bin
-print 'diameter       counts:  RP, SP'
-for j in range(0,n_heights-1):
-    print heightvec[j],d_counts[j,:]#,d_counts_no_mult[i]
+#calculate values binned to here defined h-D bins
+binned_val,heightvec,d_bound_ds,d_ds,zres = __postprocess_McSnow.seperate_by_height_and_diam(SP,nbins=100,diamrange=[-9,0],nheights=51,model_top=5000)
+
+#calculate volume of box
+Vbox = __postprocess_McSnow.calculate_Vbox(experiment,zres)
+#divide by box volume to acchieve [#]->[#/m3]
+binned_val["d_counts"] = __postprocess_McSnow.conv_num2numpm3(binned_val["d_counts"],Vbox)
+binned_val["d_counts_no_mult"] = __postprocess_McSnow.conv_num2numpm3(binned_val["d_counts"],Vbox)
+
+
+#output RP/m3 counts per bin
+#print 'sp_diameter       counts:  RP/m3 SP/m3'
+#print 'Volume of bin: V=' + str(Vbox)
+#for j in range(0,n_heights-1):
+#    print heightvec[j],binned_val["d_counts"][j,:]#,binned_val["d_counts_no_mult"]_no_mult[j,:]
 
 
 '''
@@ -115,27 +105,27 @@ pam.df.addFullSpectra()
 
 
 #print pam.df.dataFullSpec["d_bound_ds"].shape #dimensions are x,y,z,category,bins
-#generate diameter arrays
-pam.df.dataFullSpec["d_bound_ds"][0,0,:,0,:],dum =  np.meshgrid(d_bound_ds,np.arange(0,n_heights))#2D-grid dimension:(height,bins); matrix with diameters which is repeted N_height times
+#generate sp_diameter arrays
+pam.df.dataFullSpec["d_bound_ds"][0,0,:,0,:],dum =  np.meshgrid(d_bound_ds,np.arange(0,n_heights))#2D-grid dimension:(height,bins); matrix with sp_diameters which is repeted N_height times
 pam.df.dataFullSpec["d_ds"][0,0,:,0,:] = pam.df.dataFullSpec["d_bound_ds"][0,0,:,0,:-1] + 0.5 * np.diff(pam.df.dataFullSpec["d_bound_ds"][0,0,:,0,:])#center of the bins defined by d_bound_ds
 ################################
 #'feed' PAMTRA with hydrometeors
 ################################
 #number per bin
-pam.df.dataFullSpec["n_ds"][0,0,:,0,:] = d_counts
+pam.df.dataFullSpec["n_ds"][0,0,:,0,:] = binned_val["d_counts"]
 #mass at middle of bin
 b_agg=2.1;a_agg = 2.8*10**(2*b_agg-6)
 pam.df.dataFullSpec["mass_ds"][0,0,:,0,:] = a_agg*pam.df.dataFullSpec["d_ds"][0,0,:,0,:]**b_agg #TODO: quick and dirty: m-D coefficients for aggregates
 #area of middle of bin
-c_agg=1.88;d_agg = 2.285*10**(2*d_agg-5)
+d_agg=1.88;c_agg = 2.285*10**(2*d_agg-5)
 pam.df.dataFullSpec["area_ds"][0,0,:,0,:] = c_agg*pam.df.dataFullSpec["d_ds"][0,0,:,0,:]**d_agg #TODO: quick and dirty: m-D coefficients for aggregates
 #aspect ratio
 pam.df.dataFullSpec["as_ratio"][0,0,:,0,:] = 0.6
 
 
 #run PAMTRA
-pam.runPamtra(35.5)
+pam.runPamtra([9.6,35.5,95])
 # Write output to NetCDF4 file
-pam.writeResultsToNetCDF('output/McSnow_test.nc')
-
-
+pam.writeResultsToNetCDF("output/McSnow_test.nc")
+subprocess.call(["cp","output/McSnow_test.nc",directory + experiment + "/" + "pamtra_output.nc"])
+print "check results at: " + directory + experiment
