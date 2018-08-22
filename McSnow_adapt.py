@@ -7,8 +7,14 @@ import sys #for some debugging
 import pyPamtra
 import re #for selecting numbers from file-string
 import subprocess #for using shell commands with subprocess.call()
+import os #import environment variables
 
+#self written
 import __postprocess_McSnow
+
+#read variables passed by shell script
+tstep = os.environ["tstep"]
+experiment = os.environ["experiment"] #experiment name (this also contains a lot of information about the run)
 
 # Initialize PyPAMTRA instance
 pam = pyPamtra.pyPamtra()
@@ -43,10 +49,14 @@ pam.set["pyVerbose"] = 0
 #directory of experiments
 directory = "/home/mkarrer/Dokumente/McSnow/MCSNOW/experiments/"
 #experiment name (this also contains a lot of information about the run
-experiment="1d_xi100000_nz5000_lwc20_ncl0_dtc5_nrp30_rm10_rt2_vt2_h10-20_ba500"
+#experiment="1d_xi100000_nz5000_lwc20_ncl0_dtc5_nrp30_rm10_rt0_vt2_h10-20_ba500"
+#choose file (including timestep)
+filestring = directory + experiment + "/mass2fr_" + tstep + ".dat"
 
 #read mass2fr.dat file and get SP-dictionary
-SP = __postprocess_McSnow.read_mass2frdat(experiment)
+SP = __postprocess_McSnow.read_mass2frdat(experiment,filestring)
+
+from IPython.core.debugger import Tracer ; Tracer()()
 
 '''
 seperate by height
@@ -126,6 +136,6 @@ pam.df.dataFullSpec["as_ratio"][0,0,:,0,:] = 0.6
 #run PAMTRA
 pam.runPamtra([9.6,35.5,95])
 # Write output to NetCDF4 file
-pam.writeResultsToNetCDF("output/McSnow_test.nc")
-subprocess.call(["cp","output/McSnow_test.nc",directory + experiment + "/" + "pamtra_output.nc"])
-print "check results at: " + directory + experiment
+pam.writeResultsToNetCDF("output/adaptv1_" + experiment + "_t" + tstep + ".nc")
+subprocess.call(["cp","output/adaptv1_" + experiment + "_t" + tstep + ".nc",directory + experiment + "/" + "adaptv1" + "_t" + tstep + ".nc"])
+print "check results at: " + directory + experiment + "/" + "adaptv1" + "_t" + tstep + ".nc"

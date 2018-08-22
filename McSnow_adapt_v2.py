@@ -10,6 +10,7 @@ import pyPamtra
 import re #for selecting numbers from file-string
 import subprocess #for using shell commands with subprocess.call()
 import os #import environment variables
+from netCDF4 import Dataset
 
 #self written #these files are linked here from the pythoncode/functions directory
 import __postprocess_McSnow
@@ -18,6 +19,8 @@ import __general_utilities
 #read variables passed by shell script
 tstep = os.environ["tstep"]
 experiment = os.environ["experiment"] #experiment name (this also contains a lot of information about the run)
+testcase = os.environ["testcase"] #"more readable" string of the experiment specifications
+av_tstep = int(os.environ["av_tstep"]) #average window for the McSnow output
 
 # Initialize PyPAMTRA instance
 pam = pyPamtra.pyPamtra()
@@ -38,7 +41,7 @@ pam.nmlSet["radar_attenuation"] = "disabled" #"bottom-up"
 #pam.nmlSet["hydro_adaptive_grid"] = True    # uncomment this line before changing max and min sp_diameter of size distribution
 pam.nmlSet["conserve_mass_rescale_dsd"] = False    #necessary because of separating into m-D-relationship regions
 pam.nmlSet["hydro_fullspec"] = True #use full-spectra as input
-#pam.nmlSet["radar_allow_negative_dD_dU"] = True #allow negative dU dD which can happen at the threshold between different particle species
+pam.nmlSet["radar_allow_negative_dD_dU"] = True #allow negative dU dD which can happen at the threshold between different particle species
 #pam.nmlSet["radar_nfft"] = 4 #4096
 #pam.nmlSet["radar_max_V"] = 3.
 #pam.nmlSet["radar_min_V"] = -3.
@@ -56,13 +59,25 @@ deact='1111' #set values to zero to deactivate particle types; order: small ice,
 
 #directory of experiments
 directory = "/home/mkarrer/Dokumente/McSnow/MCSNOW/experiments/"
+
+#load file
+SP_file = Dataset(directory + experiment + '/mass2fr_' + tstep + '_avtstep_' + str(av_tstep) + '.ncdf',mode='r')
+#create dictionary for all variables from PAMTRA
+SP = dict()
+#print pam_file.variables.keys() 
+
+#if necessary change name of variables
+varlist = SP_file.variables
+#read PAMTRA variables to pamData dictionary
+for var in varlist:#read files and write it with different names in Data
+    SP[var] = np.squeeze(SP_file.variables[var])
+
 #choose file (including timestep)
-filestring = directory + experiment + "/mass2fr_" + tstep + ".dat"
+filestring_mass2fr = directory + experiment + "/mass2fr_" + tstep + ".dat"
 
 #read mass2fr.dat file and get SP-dictionary
-SP = __postprocess_McSnow.read_mass2frdat(experiment,filestring)
-
-
+#SP = __postprocess_McSnow.read_mass2frdat(experiment,filestring_mass2fr)
+atmo = __postprocess_McSnow.read_atmo(experiment)
 '''
 seperate by height
 '''
@@ -70,6 +85,8 @@ seperate by height
 model_top = 5000. #top of model / m
 heightvec = np.linspace(model_top/n_heights,model_top,n_heights) #start with 0+z_res and go n_heigts step up to model_top
 zres = heightvec[1]-heightvec[0]
+#interpolate athmospheric variables to heightvec
+atmo_interpolated = __postprocess_McSnow.interpolate_atmo(atmo,heightvec)
 
 #calculate volume of box
 Vbox = __postprocess_McSnow.calculate_Vbox(experiment,zres)
@@ -81,8 +98,9 @@ set up PAMTRA with some arbitrary values
 pamData = dict()
 vec_shape = [1,n_heights]
 ## Copy data to PAMTRA dictonary
-pamData["press"]  =  np.ones(vec_shape)*80000 # Pressure Pa #TODO: not randomly; set here to 800hPa
-pamData["relhum"] =  np.ones(vec_shape)*80  # Relative Humidity in  #TODO: not randomly; set here to 80%
+#TODO: interpolate atmo if not a multiple of 5m should be used for vertical spacing
+pamData["press"]  =  atmo_interpolated["p"] # Pressure Pa #TODO: not randomly; set here to 800hPa
+pamData["relhum"] =  atmo_interpolated["rh"]  # Relative Humidity in  #TODO: not randomly; set here to 80%
 pamData["timestamp"] =  0 #unixtime #TODO: not randomly set here
 #pamData["lat"] = 0
 #pamData["lon"] = 0
@@ -92,8 +110,8 @@ pamData["timestamp"] =  0 #unixtime #TODO: not randomly set here
 #pamData["wind10v"] = iconData["v"][0,1]
 #pamData["groundtemp"] = iconData["t_g"][0]
 
-pamData["hgt"] = np.ones(vec_shape)*heightvec #np.arange(0.,12000.,(12000.-0.)/(vec_shape[1])) #height in m  #TODO: not randomly set here 80%
-pamData["temp"] = np.ones(vec_shape)*263.15 #T in K   #TODO: not randomly set here -10C
+pamData["hgt"] = atmo_interpolated["z"] #np.arange(0.,12000.,(12000.-0.)/(vec_shape[1])) #height in m  #TODO: not randomly set here 80%
+pamData["temp"] = atmo_interpolated["T"] #T in K   #TODO: not randomly set here -10C
 
 #determine number of SP to get number of necessary categories
 number_ofSP = SP['m_tot'].shape[0]
@@ -118,7 +136,13 @@ no_dupl_str = __general_utilities.gen_shortest_strings_without_duplicate(count_l
 
 #get necessary parameter of m-D and A-D relationship
 mth,unr_alf,unr_bet,rhoi,rhol = __postprocess_McSnow.return_parameter_mD_AD_rel()
-print SP.keys()
+#print SP.keys()
+
+#selecting fallspeed model from testcase string
+if "HW" in testcase:
+    fallsp_model='heymsfield10_particles'
+else:
+    fallsp_model='khvorostyanov01_particles'
 
 nbins=2 #we give always just one SP per category, but for PAMTRA-internal reasons (calculating dD) we have to pass 2 bins
 for i in range(0,number_ofSP): #number_ofSP):
@@ -133,7 +157,7 @@ for i in range(0,number_ofSP): #number_ofSP):
     if SP["m_i"][i]<mth: #small ice
         if debug:
             print "smallice", SP["Frim"][i],SP["V_r"][i], SP["diam"][i],SP["proj_A"][i],SP["m_tot"][i]
-        pam.df.addHydrometeor((no_dupl_str[i] + '_' + str(int(SP["Frim"][i]*10000)).zfill(5) + '_' + str(int(SP["vt"][i]*1000)).zfill(5),  1.0,           -1,      -99,        -99,      -99,    -99,   -99,     13,              nbins,       'dummy',          -99.,    -99.,     -99.,   -99.,  -99.,    -99.        ,'mie-sphere',  'khvorostyanov01_particles',        0.))
+        pam.df.addHydrometeor((no_dupl_str[i] + '_' + str(int(SP["Frim"][i]*10000)).zfill(5) + '_' + str(int(SP["vt"][i]*1000)).zfill(5),  1.0,           -1,      -99,        -99,      -99,    -99,   -99,     13,              nbins,       'dummy',          -99.,    -99.,     -99.,   -99.,  -99.,    -99.        ,'mie-sphere',  fallsp_model,        0.))
     else: #all other than small ice
         d_unrimed = (SP["m_i"][i]/unr_alf)**(1./unr_bet) #volume of the unrimed aggregate
         
@@ -144,21 +168,20 @@ for i in range(0,number_ofSP): #number_ofSP):
         if Fr==0.: #aggregates
             if debug:
                 print "aggregates",Fr, SP["Frim"][i],SP["V_r"][i], SP["diam"][i],SP["proj_A"][i],SP["m_tot"][i]
-            pam.df.addHydrometeor((no_dupl_str[i] + '_' + str(int(SP["Frim"][i]*10000)).zfill(5) + '_' + str(int(SP["vt"][i]*1000)).zfill(5),  0.6,           -1,      -99,        -99,      -99,     -99,   -99,     13,              nbins,       'dummy',          -99.,    -99.,     -99.,   -99.,  -99.,    -99.        ,'ss-rayleigh-gans',  'khvorostyanov01_particles',        0.))
+            pam.df.addHydrometeor((no_dupl_str[i] + '_' + str(int(SP["Frim"][i]*10000)).zfill(5) + '_' + str(int(SP["vt"][i]*1000)).zfill(5),  0.6,           -1,      -99,        -99,      -99,     -99,   -99,     13,              nbins,       'dummy',          -99.,    -99.,     -99.,   -99.,  -99.,    -99.        ,'ss-rayleigh-gans',  fallsp_model,        0.))
         elif 0<Fr<1: #partially rimed (for now just use same properties as for aggregates)
             if debug:
                 print "partially-rimed",Fr, SP["Frim"][i],SP["V_r"][i], SP["diam"][i],SP["proj_A"][i],SP["m_tot"][i]
-            pam.df.addHydrometeor((no_dupl_str[i] + '_' + str(int(SP["Frim"][i]*10000)).zfill(5) + '_' + str(int(SP["vt"][i]*1000)).zfill(5),  -99.,           -1,      -99,        -99,      -99,     -99,   -99,     13,              nbins,       'dummy',          -99.,    -99.,     -99.,   -99.,  -99.,    -99.        ,'ss-rayleigh-gans',  'khvorostyanov01_particles',        0.))
+            pam.df.addHydrometeor((no_dupl_str[i] + '_' + str(int(SP["Frim"][i]*10000)).zfill(5) + '_' + str(int(SP["vt"][i]*1000)).zfill(5),  -99.,           -1,      -99,        -99,      -99,     -99,   -99,     13,              nbins,       'dummy',          -99.,    -99.,     -99.,   -99.,  -99.,    -99.        ,'ss-rayleigh-gans',  fallsp_model,        0.))
 
         elif 1<=Fr: #graupel
             if debug:
                 print "graupel",Fr, SP["Frim"][i],SP["V_r"][i], SP["diam"][i],SP["proj_A"][i],SP["m_tot"][i]
-            pam.df.addHydrometeor((no_dupl_str[i] + '_' + str(int(SP["Frim"][i]*10000)).zfill(5) + '_' + str(int(SP["vt"][i]*1000)).zfill(5),  1.0,           -1,      -99,        -99,      -99,    -99.,   -99.,     13,              nbins,       'dummy',          -99.,    -99.,     -99.,   -99.,  -99.,    -99.        ,'mie-sphere',  'khvorostyanov01_particles',        0.))
+            pam.df.addHydrometeor((no_dupl_str[i] + '_' + str(int(SP["Frim"][i]*10000)).zfill(5) + '_' + str(int(SP["vt"][i]*1000)).zfill(5),  1.0,           -1,      -99,        -99,      -99,    -99.,   -99.,     13,              nbins,       'dummy',          -99.,    -99.,     -99.,   -99.,  -99.,    -99.        ,'mie-sphere',  fallsp_model,        0.))
         else:
             print "something wrong with the seperation of the categories?"
             print Fr, SP["Frim"][i],SP["V_r"][i], SP["diam"][i],np.maximum(SP["V_r"][i],SP["m_rime"][i]*1./rhoi+SP["m_wat"][i]*1./rhol),v_crit
             sys.exit(1)
-#from IPython.core.debugger import Tracer ; Tracer()()
 
 # Add them to pamtra object and create profile
 pam.createProfile(**pamData)
@@ -236,6 +259,7 @@ for i in range(0,number_ofSP): #number_ofSP):
 #run PAMTRA
 pam.runPamtra([9.6,35.5,95])
 # Write output to NetCDF4 file
-pam.writeResultsToNetCDF("output/adaptv2_" + experiment + "_t" + tstep + ".nc")
-subprocess.call(["cp","output/adaptv2_" + experiment + "_t" + tstep + ".nc",directory + experiment + "/adaptv2" + "_t" + tstep + ".nc"])
-print "check results at: " + directory + experiment + "/adaptv2" + "_t" + tstep + ".nc"
+out_filename = "adaptv2_" + testcase + '_av_' + str(av_tstep) + '_' + experiment + "_t" + tstep
+pam.writeResultsToNetCDF("output/" + out_filename + ".nc")
+subprocess.call(["cp","output/" + out_filename + ".nc",directory + experiment + '/' + out_filename + ".nc"])
+print "check results at: " + directory + experiment + "/" + out_filename + ".nc"
