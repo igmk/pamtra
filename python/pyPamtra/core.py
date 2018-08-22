@@ -821,7 +821,7 @@ class pyPamtra(object):
         else:
           self.p[environment] = kwargs[environment].reshape(self._shape2D)
 
-    for environment, preset in [["sfc_refl",'L']]:
+    for environment, preset in [["sfc_refl",'S']]:
       if environment not in kwargs.keys():
         self.p[environment] = np.chararray(self._shape2D)
         self.p[environment][:] = preset

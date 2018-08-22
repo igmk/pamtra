@@ -38,15 +38,18 @@ module ocean_sfc_optics
 
   do i = 1, nummu
     zenith_angle = acos(mu_values(i))*rad2deg
-  
-  call tessem2(err,&
-    freq,&
-    zenith_angle,&
-    wind_speed,&
-    atmo_groundtemp(i_x,i_y),&
-    sfc_salinity(i_x,i_y),&
-    rt_sfc_emissivity(:,i),&
-    rt_sfc_reflectivity(:,i))
+    call tessem2(err,&
+      freq,&
+      zenith_angle,&
+      wind_speed,&
+      atmo_groundtemp(i_x,i_y),&
+      sfc_salinity(i_x,i_y),&
+      rt_sfc_emissivity(:,i),&
+      rt_sfc_reflectivity(:,i))
+      if (i == nummu) then
+          rt_sfc_emissivity(:,i) = (rt_sfc_emissivity(1,i) + rt_sfc_emissivity(2,i)) / 2.
+          rt_sfc_reflectivity(:,i) = (rt_sfc_reflectivity(1,i) + rt_sfc_reflectivity(2,i)) / 2.
+      end if
   end do
   
   if (err /= 0) then
@@ -93,6 +96,10 @@ module ocean_sfc_optics
       rt_sfc_reflectivity(:,i))!, & ! Output
 !      Azimuth_Angle, & ! Optional input
 !      Transmittance  ) ! Optional input
+      if (i == nummu) then
+          rt_sfc_emissivity(:,i) = (rt_sfc_emissivity(1,i) + rt_sfc_emissivity(2,i)) / 2.
+          rt_sfc_reflectivity(:,i) = (rt_sfc_reflectivity(1,i) + rt_sfc_reflectivity(2,i)) / 2.
+      end if
   end do
   
   if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
