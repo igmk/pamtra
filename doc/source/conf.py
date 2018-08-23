@@ -31,7 +31,7 @@ import os
 extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.autosummary', 'numpydoc',
-    'sphinxfortran.fortran_autodoc','sphinxfortran.fortran_domain'
+    # 'sphinxfortran.fortran_autodoc','sphinxfortran.fortran_domain'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
