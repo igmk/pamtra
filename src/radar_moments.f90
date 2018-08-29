@@ -232,7 +232,13 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
       moments(2,nn) = SQRT(SUM(radar_spectrum_4mom * (spectra_velo-moments(1,nn))**2)/moments(0,nn)) ! m/s
       moments(3,nn) = SUM(radar_spectrum_4mom * (spectra_velo-moments(1,nn))**3)/(moments(0,nn)*moments(2,nn)**3) ![-]
       moments(4,nn) = SUM(radar_spectrum_4mom * (spectra_velo-moments(1,nn))**4)/(moments(0,nn)*moments(2,nn)**4) ![-]
-
+      
+      !MK workaround for 0 spectral width
+      if ((moments(2,nn) == 0) .OR. (moments(2,nn) /= moments(2,nn))) then ! second one checks for nans
+        moments(2,nn) = 0
+        moments(3,nn) = 0
+        moments(4,nn) = 3
+      endif
       edge(1,nn) = spectra_velo(left_edge+1)
       edge(2,nn) = spectra_velo(right_edge-1)      
 
