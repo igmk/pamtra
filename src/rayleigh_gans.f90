@@ -79,7 +79,7 @@ module rayleigh_gans
     integer, intent(in) :: nbins
     real(kind=dbl), intent(in), dimension(nbins) :: diameter
     real(kind=dbl), intent(in), dimension(nbins) :: del_d    
-    real(kind=dbl), intent(in), dimension(nbins) ::  ndens
+    real(kind=dbl), intent(in), dimension(nbins) :: ndens
     real(kind=dbl), intent(in), dimension(nbins) :: mass
     real(kind=dbl), intent(in), dimension(nbins) :: as_ratio
     real(kind=dbl), intent(in), dimension(nbins) :: canting
