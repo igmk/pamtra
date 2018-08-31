@@ -29,13 +29,13 @@ module mie_spheres
                       extinct_matrix,&
                       emis_vector,&
                       back_spec )    
-    !    computing the scattering properties according to                  
-    !    ice sphere model, i.e. the electromagnetic properties of the      
-    !     particle are computed by assuming that they are the same          
-    !     as the equivalent mass sphere
+    !    computing the scattering properties according to
+    !    ice sphere model, i.e. the electromagnetic properties of the
+    !    particle are computed by assuming that they are the same
+    !    as the sphere with equal volume and size (soft-sphere)
     !                                     
     ! note that mindex has the convention with negative imaginary part      
-    !out
+    !OUT: ???
     !diameter: diameter spectrum [m]
     !back_spec: backscattering cross section per volume per del_d [m²/m⁴]
 
@@ -57,10 +57,11 @@ module mie_spheres
     real(kind=dbl), intent(out), dimension(nstokes,nummu) :: emis_vector
     real(kind=dbl), intent(out), dimension(nbins) :: back_spec
 
-    real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
-    real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
-    real(kind=dbl), intent(out), dimension(nstokes,nummu) :: emis_vector
-    real(kind=dbl), intent(out), dimension(nbins) :: back_spec
+    ! I need to temporary store things in matrices specific of each size before integration
+    real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix_D
+    real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix_D
+    real(kind=dbl), intent(out), dimension(nstokes,nummu) :: emis_vector_D
+    real(kind=dbl), intent(out), dimension(nbins) :: back_spec_D
 
 
     real(kind=dbl) :: wavelength
@@ -77,7 +78,7 @@ module mie_spheres
     
     real(kind=dbl) :: absind, abscof
     complex(kind=dbl), dimension(maxn) :: a, b ! Mie expansion coefficients
-    complex(kind=dbl) :: msphere, eps_mix ! eps_mix should be a function, why it is here???
+    complex(kind=dbl) :: msphere, eps_mix ! eps_mix is a function
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
@@ -136,7 +137,8 @@ module mie_spheres
         msphere = refre-im*refim
       end if
       
-!!!! I do not have any idea why the mie_calc is invoked here for the last particle
+!!!! miecalc is invoked here for the last particle just to get nquad which is needed for gausquad
+!!!! probably we do not need it since we skip the legendre stuff
 !!!! and nterms = 0
       ! x = pi * diameter(nbins) / wavelength
       ! nterms = 0 
@@ -212,12 +214,14 @@ module mie_spheres
       ! Compute RT4 matrices 
 
       ! Compute forward scattering out of the loop
-      mieangle_amplScatMat (nterms, a, b, 1.0d0, s1, s2)
-      amplScatMat_to_scatMat(s1,s2,scatMat)
-      amplScatMat_to_extinctionMatrix(s1,s2,f,extinctionMatrix)
+      call mieangle_amplScatMat (nterms, a, b, 1.0d0, s1, s2)
+      call amplScatMat_to_scatMat(s1,s2,scatMat)
+      call amplScatMat_to_extinctionMatrix(s1,s2,f,extinctionMatrix)
 
       do ia = 2, 2*nummu ! I only need to cover the 0-pi scattering angles
-        mieangle_amplScatMat (nterms, a, b, mu, s1, s2)
+        call mieangle_amplScatMat (nterms, a, b, mu, s1, s2)
+        call amplScatMat_to_scatMat(s1,s2,scatMat)
+        
       end do
 
       !! somehow compute emission vector !!
