@@ -1,8 +1,8 @@
 module mie_spheres
 
   use kinds
-  use constants, only: pi,c, Im
-  use settings, only: lphase_flag, maxnleg, lhyd_absorption
+  use constants, only: pi, c, Im
+  use settings, only: lphase_flag, maxnleg, lhyd_absorption, nummu, nstokes
   use report_module
   use mie_scat_utilities  
   use vars_index, only: i_x,i_y, i_z, i_h
@@ -57,19 +57,22 @@ module mie_spheres
     real(kind=dbl), intent(out), dimension(nstokes,nummu) :: emis_vector
     real(kind=dbl), intent(out), dimension(nbins) :: back_spec
 
-    ! I need to temporary store things in matrices specific of each size before integration
-    real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix_D
-    real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix_D
-    real(kind=dbl), intent(out), dimension(nstokes,nummu) :: emis_vector_D
-    real(kind=dbl), intent(out), dimension(nbins) :: back_spec_D
+    ! I need to temporary store things in matrices specific of each size before
+    ! integration over the solid sphere (scattering angles)
+    real(kind=dbl), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix_D
+    real(kind=dbl), dimension(nstokes,nstokes,nummu) :: extinct_matrix_D
+    real(kind=dbl), dimension(nstokes,nummu) :: emis_vector_D
+    real(kind=dbl), dimension(nbins) :: back_spec_D
 
+    real(kind=dbl), dimension(nummu) :: mu90, wquad90 ! cosines (from 0 to 1) of scatt angle (from 90 to 0) and weights
+    real(kind=dbl), dimension(2*nummu) :: mu180, wquad180 ! cosines (from 1 to -1) of scatt angle (from 0 to 180) and weights
 
     real(kind=dbl) :: wavelength
     complex(kind=dbl) :: m_ice
     real(kind=dbl) :: del_d_eff, ndens_eff, n_tot
-    
-    integer :: nquad, nmie, nleg !,nterms
-    integer :: i, l, m, ir
+    integer, parameter :: maxn  = 5000
+    integer :: nquad, nmie, nleg, nterms
+    integer :: i, l, m, ir, ia
     real(kind=dbl) :: x, tmp,diameter_eff
     real(kind=dbl) :: qext, qscat, qback, scatter 
     real(kind=dbl) :: mu(maxn), wts(maxn)
@@ -79,6 +82,8 @@ module mie_spheres
     real(kind=dbl) :: absind, abscof
     complex(kind=dbl), dimension(maxn) :: a, b ! Mie expansion coefficients
     complex(kind=dbl) :: msphere, eps_mix ! eps_mix is a function
+    complex(kind=dbl) :: s1, s2 ! diagonal elements of the amplitude matrix
+    real(kind=dbl), dimension(nstokes,nstokes) :: scatMat
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
@@ -163,14 +168,21 @@ module mie_spheres
     !   call gausquad(nquad, mu, wts) 
 
 
-      sumqe = 0.0d0 
-      sumqs = 0.0d0 
-      sumqback = 0.0d0 
-      sump1 (:) = 0.0d0 
-      sump2 (:) = 0.0d0 
-      sump3 (:) = 0.0d0 
-      sump4 (:) = 0.0d0 
+!      sumqe = 0.0d0 
+!      sumqs = 0.0d0 
+!      sumqback = 0.0d0 
+!      sump1 (:) = 0.0d0 
+!      sump2 (:) = 0.0d0 
+!      sump3 (:) = 0.0d0 
+!      sump4 (:) = 0.0d0 
 
+    ! Get the cosines values and weights for the first quadrant
+    ! and then rearrange to get the full range of scatt angles
+    call lobatto_quadrature(nummu, mu90, wquad90)
+    mu180(1:nummu) = mu90(nummu:1:-1)
+    wquad180(1:nummu) = wquad90(nummu:1:-1)
+    mu180(nummu+1:2*nummu) = -mu90
+    wquad180(nummu+1:2*nummu) = wquad90
 
     do ir = 1, nbins ! cycle over PSD
       if (ndens(ir) <= 0) CYCLE !Do not process if no particles present
@@ -215,13 +227,12 @@ module mie_spheres
 
       ! Compute forward scattering out of the loop
       call mieangle_amplScatMat (nterms, a, b, 1.0d0, s1, s2)
-      call amplScatMat_to_scatMat(s1,s2,scatMat)
-      call amplScatMat_to_extinctionMatrix(s1,s2,f,extinctionMatrix)
+      call amplScatMat_to_scatMat(s1, s2, scatter_Matrix_D)
+      call amplScatMat_to_extinctionMatrix(s1, s2, freq, extinct_Matrix_D)
 
       do ia = 2, 2*nummu ! I only need to cover the 0-pi scattering angles
-        call mieangle_amplScatMat (nterms, a, b, mu, s1, s2)
-        call amplScatMat_to_scatMat(s1,s2,scatMat)
-        
+        call mieangle_amplScatMat (nterms, a, b, 1.0d0, s1, s2)
+        call amplScatMat_to_scatMat(s1, s2, scatter_Matrix_D)
       end do
 
       !! somehow compute emission vector !!
@@ -246,16 +257,16 @@ module mie_spheres
       if (verbose >= 4) print*, diameter(ir), ndens_eff, del_d_eff, n_tot, sumqback , sumqs, sumqe
       back_spec(ir) =  qback   ! volumetric backscattering cross section for radar simulator in backscat per volume per del_d[m²/m⁴]
 
-      if (lphase_flag) then 
-    nmie = min0(nmie, nterms) 
-    do i = 1, nquad 
-      call mieangle (nmie, a, b, mu (i), p1, p2, p3, p4) 
-      sump1 (i) = sump1 (i) + p1 * ndens_eff * del_d_eff ! = M11 = M22
-      sump2 (i) = sump2 (i) + p2 * ndens_eff * del_d_eff ! = M12 = M21
-      sump3 (i) = sump3 (i) + p3 * ndens_eff * del_d_eff ! = M33 = M44
-      sump4 (i) = sump4 (i) + p4 * ndens_eff * del_d_eff ! = M34 = -M43
-    end do
-      end if
+!      if (lphase_flag) then 
+!        nmie = min0(nmie, nterms) 
+!          do i = 1, nquad 
+!            call mieangle (nmie, a, b, mu (i), p1, p2, p3, p4) 
+!            sump1 (i) = sump1 (i) + p1 * ndens_eff * del_d_eff ! = M11 = M22
+!            sump2 (i) = sump2 (i) + p2 * ndens_eff * del_d_eff ! = M12 = M21
+!            sump3 (i) = sump3 (i) + p3 * ndens_eff * del_d_eff ! = M33 = M44
+!            sump4 (i) = sump4 (i) + p4 * ndens_eff * del_d_eff ! = M34 = -M43
+!          end do
+!      end if
     end do
 
     !           multiply the sums by the integration delta and other constan
@@ -265,71 +276,71 @@ module mie_spheres
 
         
         
-    if (lhyd_absorption) then
-        extinction = sumqe 
-    else
-        extinction = sumqe - sumqs !remove scattering from extinction
-    end if
-    scatter = sumqs 
-    back_scatt = sumqback 
-    albedo = scatter / extinction 
+!    if (lhyd_absorption) then
+!        extinction = sumqe 
+!    else
+!        extinction = sumqe - sumqs !remove scattering from extinction
+!    end if
+!    scatter = sumqs 
+!    back_scatt = sumqback 
+!    albedo = scatter / extinction 
 
-    if (verbose >= 4) print*, "extinction, scatter, back_scatt, albedo"
-    if (verbose >= 4) print*,  extinction, scatter, back_scatt, albedo       
+!    if (verbose >= 4) print*, "extinction, scatter, back_scatt, albedo"
+!    if (verbose >= 4) print*,  extinction, scatter, back_scatt, albedo       
     
     ! if the liq_ice function is not desired then leave now           
-    if ( .not. lphase_flag) return 
+!    if ( .not. lphase_flag) return 
 
-    tmp = (wavelength**2 / (pi * scatter) ) 
-    do i = 1, nquad 
-      sump1 (i) = tmp * sump1 (i) * wts (i) 
-      sump2 (i) = tmp * sump2 (i) * wts (i) 
-      sump3 (i) = tmp * sump3 (i) * wts (i) 
-      sump4 (i) = tmp * sump4 (i) * wts (i) 
-    end do
+!    tmp = (wavelength**2 / (pi * scatter) ) 
+!    do i = 1, nquad 
+!      sump1 (i) = tmp * sump1 (i) * wts (i) 
+!      sump2 (i) = tmp * sump2 (i) * wts (i) 
+!      sump3 (i) = tmp * sump3 (i) * wts (i) 
+!      sump4 (i) = tmp * sump4 (i) * wts (i) 
+!    end do
 
     !           integrate the angular scattering functions times legendre   
     !             polynomials to find the legendre coefficients             
-    do m = 1, nlegen + 1 
-      coef1 (m) = 0.0d0 
-      coef2 (m) = 0.0d0 
-      coef3 (m) = 0.0d0 
-      coef4 (m) = 0.0d0 
-    end do
+!    do m = 1, nlegen + 1 
+!      coef1 (m) = 0.0d0 
+!      coef2 (m) = 0.0d0 
+!      coef3 (m) = 0.0d0 
+!      coef4 (m) = 0.0d0 
+!    end do
     !           use upward recurrence to find legendre polynomials          
-    do i = 1, nquad 
-      pl1 = 1.0d0 
-      pl = 1.0d0 
-      do l = 0, nlegen 
-    m = l + 1 
-    if (l .gt. 0) pl = (2*l-1)*mu(i)*pl1/l-(l-1)*pl2/l                                                                 
-    coef1 (m) = coef1 (m) + sump1 (i) * pl 
-    coef2 (m) = coef2 (m) + sump2 (i) * pl 
-    coef3 (m) = coef3 (m) + sump3 (i) * pl 
-    coef4 (m) = coef4 (m) + sump4 (i) * pl 
-    pl2 = pl1 
-    pl1 = pl 
-      end do
-    end do
-    nleg = nlegen 
-    do l = 0, nleg 
-      m = l + 1 
-      legen (m) = (2 * l + 1) / 2.0 * coef1 (m) 
-      legen2 (m) = (2 * l + 1) / 2.0 * coef2 (m) 
-      legen3 (m) = (2 * l + 1) / 2.0 * coef3 (m) 
-      legen4 (m) = (2 * l + 1) / 2.0 * coef4 (m) 
-      if (legen (m) .gt. 1.0e-7) nlegen = l 
-    end do
+!    do i = 1, nquad 
+!      pl1 = 1.0d0 
+!      pl = 1.0d0 
+!      do l = 0, nlegen 
+!    m = l + 1 
+!    if (l .gt. 0) pl = (2*l-1)*mu(i)*pl1/l-(l-1)*pl2/l                                                                 
+!    coef1 (m) = coef1 (m) + sump1 (i) * pl 
+!    coef2 (m) = coef2 (m) + sump2 (i) * pl 
+!    coef3 (m) = coef3 (m) + sump3 (i) * pl 
+!    coef4 (m) = coef4 (m) + sump4 (i) * pl 
+!    pl2 = pl1 
+!    pl1 = pl 
+!      end do
+!    end do
+!    nleg = nlegen 
+!    do l = 0, nleg 
+!      m = l + 1 
+!      legen (m) = (2 * l + 1) / 2.0 * coef1 (m) 
+!      legen2 (m) = (2 * l + 1) / 2.0 * coef2 (m) 
+!      legen3 (m) = (2 * l + 1) / 2.0 * coef3 (m) 
+!      legen4 (m) = (2 * l + 1) / 2.0 * coef4 (m) 
+!      if (legen (m) .gt. 1.0e-7) nlegen = l 
+!    end do
 
 
-      call assert_false(err,any(isnan(back_spec)),&
-          "nan in back_spec")   
-      call assert_true(err,(extinction>0),&
-          "extinction must be positive")   
+!      call assert_false(err,any(isnan(back_spec)),&
+!          "nan in back_spec")   
+!      call assert_true(err,(extinction>0),&
+!          "extinction must be positive")   
       call assert_true(err,(scatter>0),&
           "scatter must be positive") 
-      call assert_true(err,(back_scatt>0),&
-          "back_scatt must be positive") 
+!      call assert_true(err,(back_scatt>0),&
+!          "back_scatt must be positive") 
 
       if (err > 0) then
           errorstatus = fatal

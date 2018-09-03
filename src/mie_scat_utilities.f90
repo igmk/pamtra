@@ -171,11 +171,9 @@ module mie_scat_utilities
   end subroutine mieangle
 
   subroutine mieangle_amplScatMat (nterms, a, b, mu, s1, s2) 
-    !  mieangle calculates the intensity scattering matrix elements
-    !  (p1,p2,p3,p4) for a particular value of mu (cos(theta)) from the
-    !  mie coefficients an's and bn's. the matrix elements are for the
-    !  stokes intensity vector (i,q,u,v) and are calculated from the
-    !  complex scattering amplitudes s1 and s2.
+    !  mieangle_amplScatMat calculates the complex scattering amplitudes
+    !  s1 and s2 for a particular value of mu (cos(theta)) from the
+    !  mie coefficients an's and bn's.
 
     implicit none
     integer :: nterms

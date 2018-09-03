@@ -163,8 +163,12 @@ END SUBROUTINE DOUBLE_GAUSS_QUADRATURE
 
 
 SUBROUTINE LOBATTO_QUADRATURE(NUM, ABSCISSAS, WEIGHTS)
-  !        Generates the abscissas and weights for an even 2*NUM point
-  !      Gauss-Legendre quadrature.  Only the NUM positive points are retu
+  ! Generates the abscissas and weights for an even 2*NUM point
+  ! Gauss-Legendre quadrature.  Only the NUM positive points are returned
+  ! and they are sorted in increasing value of the abscissas (from something
+  ! close to 0 to 1), the specular part must be constructed by reflection if
+  ! needed
+
   use kinds
   INTEGER NUM
   REAL(kind=dbl) ABSCISSAS ( * ), WEIGHTS ( * )
