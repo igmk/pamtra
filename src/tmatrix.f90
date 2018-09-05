@@ -489,96 +489,96 @@ module tmatrix
     character(len=30) :: nameOfRoutine = 'tmatrix_clac_single'
 
   	if (verbose >= 3) call report(info,'Start of ', nameOfRoutine) 
-      if (verbose >= 5) print*, "quad,qua_num,frequency,ref_index,axi, nstokes,as_ratio, alpha, beta, azimuth_num, azimuth0_num"
-      if (verbose >= 5) print*, quad,qua_num,frequency,ref_index,axi, nstokes,as_ratio, alpha, beta, azimuth_num, azimuth0_num
+    if (verbose >= 5) print*, "quad,qua_num,frequency,ref_index,axi, nstokes,as_ratio, alpha, beta, azimuth_num, azimuth0_num"
+    if (verbose >= 5) print*, quad,qua_num,frequency,ref_index,axi, nstokes,as_ratio, alpha, beta, azimuth_num, azimuth0_num
 
-      np = -1
-      rat = 1.e0
-      
-      LAM = c/(frequency)
+    np = -1
+    rat = 1.e0
+    
+    LAM = c/(frequency)
 
-      wave_num = 2.0_dbl*pi/LAM
-      
-      err = 0
-      call assert_true(err,as_ratio> 0.d0,"nan or negative in as_ratio")    
-      call assert_true(err,axi> 0.d0,"nan or negative in axi")    
-      call assert_true(err,frequency> 0.d0,"nan or negative in frequency")   
-      call assert_true(err,(wave_num > 0.d0),"nan or <= 0 in wave-num")
-      call assert_true(err,(LAM > 0.d0),"nan or <= 0 in LAM")
-      call assert_true(err,(AS_RATIO > 0.d0),"nan or <= 0 in AS_RATIO")
+    wave_num = 2.0_dbl*pi/LAM
+    
+    err = 0
+    call assert_true(err,as_ratio> 0.d0,"nan or negative in as_ratio")    
+    call assert_true(err,axi> 0.d0,"nan or negative in axi")    
+    call assert_true(err,frequency> 0.d0,"nan or negative in frequency")   
+    call assert_true(err,(wave_num > 0.d0),"nan or <= 0 in wave-num")
+    call assert_true(err,(LAM > 0.d0),"nan or <= 0 in LAM")
+    call assert_true(err,(AS_RATIO > 0.d0),"nan or <= 0 in AS_RATIO")
 
-      if (err > 0) then
-        errorstatus = fatal
-        msg = "assertation error"
-        call report(errorstatus, msg, nameOfRoutine)
-        return
-      end if
-      
-  !     axi = axi!*1.e6
-      mrr = REAL(ref_index)
-      mri = abs(IMAG(ref_index))
-
-      if ((active .eqv. .true.) .and. (passive .eqv. .false.)) then
-        qua_start = 16
-      else
-        qua_start = 1
-      end if
-
-      if (verbose >= 5) print*,"lam, mrr,mri, AXI, AS_RATIO, RAT, NP"
-      if (verbose >= 5) print*,lam, mrr,mri, AXI, AS_RATIO, RAT, NP
-  ! call the tmatrix routine amplq -> fills common block /TMAT/
-      call tmatrix_amplq(err,lam, mrr,mri, AXI, AS_RATIO, RAT, NP,nmax)
-      if (err /= 0) then
-        msg = 'error in tmatrix_amplq!'
-        call report(err, msg, nameOfRoutine)
-        errorstatus = err
-        return
-      end if          
-
-      extinct_matrix = 0.d0
-      scatter_matrix = 0.d0
-      emis_vector = 0.d0
-      emis_vector_tmp2_11 = 0.d0
-      emis_vector_tmp2_12 = 0.d0
-      ! if the particle is rotationally-symmetric, reduce calculation time for orientation-averaging
-      ! if not, do orientation averaging for incident and scatterred directions
-
-      !      write(*,*)wave_num
-
-      fact_sca = 0.5e0/(wave_num**2)
-      fact_ext = 2.0e0*pi*cmplx(0.,1.)/wave_num**2.e0
-      ! calculate the quadrature angle, number and weight according to quadrature method
-      ! subroutine lobatto_quadrature and gauss_legendre_quadrature in the file named 'refractive_index.f'
-      if (quad(1:1).eq.'l'.or.quad(1:1).eq.'L') then
-        call lobatto_quadrature(qua_num,qua_angle,qua_weights)
-      else
+    if (err > 0) then
       errorstatus = fatal
-      msg = "did not understand 'quad'="//quad
+      msg = "assertation error"
       call report(errorstatus, msg, nameOfRoutine)
       return
-      end if
+    end if
+    
+!     axi = axi!*1.e6
+    mrr = REAL(ref_index)
+    mri = abs(IMAG(ref_index))
 
-      ! for each quadrature angle
-      ii = 1
-      do 1241 jj = qua_start, qua_num
-        thet0=acos(qua_angle(jj)*(-1.)**(real(ii)-1))*180.d0/pi
-        thet0_weights = qua_weights(jj)
-    	  if(thet0.gt.179.9999)thet0=180.0d0
-        ! initializing the emis vector summation
-        emis_vector_tmp1_11 = 0.d0
-        emis_vector_tmp1_12 = 0.d0
+    if ((active .eqv. .true.) .and. (passive .eqv. .false.)) then
+      qua_start = 16
+    else
+      qua_start = 1
+    end if
 
-        do 1242 kk = 1, 2
-          kkk1 = kk
-	      do 1243 ll = qua_start, qua_num
+    if (verbose >= 5) print*,"lam, mrr,mri, AXI, AS_RATIO, RAT, NP"
+    if (verbose >= 5) print*,lam, mrr,mri, AXI, AS_RATIO, RAT, NP
+! call the tmatrix routine amplq -> fills common block /TMAT/
+    call tmatrix_amplq(err,lam, mrr,mri, AXI, AS_RATIO, RAT, NP,nmax)
+    if (err /= 0) then
+      msg = 'error in tmatrix_amplq!'
+      call report(err, msg, nameOfRoutine)
+      errorstatus = err
+      return
+    end if          
+
+    extinct_matrix = 0.d0
+    scatter_matrix = 0.d0
+    emis_vector = 0.d0
+    emis_vector_tmp2_11 = 0.d0
+    emis_vector_tmp2_12 = 0.d0
+    ! if the particle is rotationally-symmetric, reduce calculation time for orientation-averaging
+    ! if not, do orientation averaging for incident and scatterred directions
+
+    !      write(*,*)wave_num
+
+    fact_sca = 0.5e0/(wave_num**2)
+    fact_ext = 2.0e0*pi*cmplx(0.,1.)/wave_num**2.e0
+    ! calculate the quadrature angle, number and weight according to quadrature method
+    ! subroutine lobatto_quadrature and gauss_legendre_quadrature in the file named 'refractive_index.f'
+    if (quad(1:1).eq.'l'.or.quad(1:1).eq.'L') then
+      call lobatto_quadrature(qua_num,qua_angle,qua_weights)
+    else
+    errorstatus = fatal
+    msg = "did not understand 'quad'="//quad
+    call report(errorstatus, msg, nameOfRoutine)
+    return
+    end if
+
+    ! for each quadrature angle
+    ii = 1
+    do 1241 jj = qua_start, qua_num
+      thet0=acos(qua_angle(jj)*(-1.)**(real(ii)-1))*180.d0/pi
+      thet0_weights = qua_weights(jj)
+  	  if(thet0.gt.179.9999)thet0=180.0d0
+      ! initializing the emis vector summation
+      emis_vector_tmp1_11 = 0.d0
+      emis_vector_tmp1_12 = 0.d0
+
+      do 1242 kk = 1, 2
+        kkk1 = kk
+        do 1243 ll = qua_start, qua_num
           thet=acos(qua_angle(ll)*(-1.)**(real(kk)-1))*180.d0/pi
           thet_weights=qua_weights(ll)
-  		    if(thet.gt.179.9999)thet=180.d0
+		      if(thet.gt.179.9999)thet=180.d0
 
-  		    do 1244 m = 1, azimuth0_num ! 1
+		      do 1244 m = 1, azimuth0_num ! 1
             phi0 = 360.0d0/(real(azimuth0_num))*(real(m)-1.d0)
-            phi0_weights = 1.d0/360.d0*(360.d0/azimuth0_num)
-            !		     if(azimuth0_num.eq.1)phi0 = 0.0
+            phi0_weights = 1.d0/360.d0*(360.d0/azimuth0_num) ! this is = 1.0
+          !		     if(azimuth0_num.eq.1)phi0 = 0.0
 
             scatt_matrix_tmp1_11 = 0.d0
             scatt_matrix_tmp1_12 = 0.d0
@@ -610,32 +610,32 @@ module tmatrix
               scatt_matrix_tmp1_22 = scatt_matrix_tmp1_22 + (fact_sca*&
                 (s11*dconjg(s11)-s12*dconjg(s12)-s21*dconjg(s21)+s22*dconjg(s22)))*phi_weights
 
-      			  if ((phi0 .eq. phi) .and. (thet0 .eq. thet)) then
+      			  if ((phi0 .eq. phi) .and. (thet0 .eq. thet)) then ! forward scattering
                 extinct_matrix(1,1,jj) = extinct_matrix(1,1,jj)+phi0_weights*(-real((s11 + s22)*fact_ext))
                 extinct_matrix(1,2,jj) = extinct_matrix(1,2,jj)+phi0_weights*(-real((s11 - s22)*fact_ext))
                 extinct_matrix(2,1,jj) = extinct_matrix(2,1,jj)+phi0_weights*(-real((s11 - s22)*fact_ext))
                 extinct_matrix(2,2,jj) = extinct_matrix(2,2,jj)+phi0_weights*(-real((s11 + s22)*fact_ext))
       			  end if
-  1245                    continue   ! phi
+1245                    continue   ! phi
 
             scatter_matrix(1,ll,1,jj,kkk1) = scatter_matrix(1,ll,1,jj,kkk1) + scatt_matrix_tmp1_11*phi0_weights
             scatter_matrix(1,ll,2,jj,kkk1) = scatter_matrix(1,ll,2,jj,kkk1) + scatt_matrix_tmp1_12*phi0_weights
             scatter_matrix(2,ll,1,jj,kkk1) = scatter_matrix(2,ll,1,jj,kkk1) + scatt_matrix_tmp1_21*phi0_weights
             scatter_matrix(2,ll,2,jj,kkk1) = scatter_matrix(2,ll,2,jj,kkk1) + scatt_matrix_tmp1_22*phi0_weights
 
-  1244                continue  ! phi0
+1244                continue  ! phi0
 
           ! calculate the summation of the scattering matrix in the whole sphere
           emis_vector_tmp1_11(ll+(kk-1)*qua_num) = scatter_matrix(1,ll,1,jj,kkk1)*thet_weights*2.*pi
           emis_vector_tmp1_12(ll+(kk-1)*qua_num) = scatter_matrix(1,ll,2,jj,kkk1)*thet_weights*2.*pi
 
-  1243            continue ! thet ll
-  1242        continue
+1243            continue ! thet ll
+1242        continue
 
       emis_vector(1,jj) = extinct_matrix(1,1,jj) - sum(emis_vector_tmp1_11)
       emis_vector(2,jj) = extinct_matrix(1,2,jj) - sum(emis_vector_tmp1_12)
 
-  1241    continue ! thet0 jj
+1241    continue ! thet0 jj
 
     errorstatus = err
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine) 

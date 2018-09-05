@@ -3,6 +3,7 @@ module mie_spheres
   use kinds
   use constants, only: pi, c, Im
   use settings, only: lphase_flag, maxnleg, lhyd_absorption, nummu, nstokes
+  use rt_utilities, only: lobatto_quadrature
   use report_module
   use mie_scat_utilities  
   use vars_index, only: i_x,i_y, i_z, i_h
@@ -59,31 +60,32 @@ module mie_spheres
 
     ! I need to temporary store things in matrices specific of each size before
     ! integration over the solid sphere (scattering angles)
-    real(kind=dbl), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix_D
     real(kind=dbl), dimension(nstokes,nstokes,nummu) :: extinct_matrix_D
-    real(kind=dbl), dimension(nstokes,nummu) :: emis_vector_D
-    real(kind=dbl), dimension(nbins) :: back_spec_D
 
     real(kind=dbl), dimension(nummu) :: mu90, wquad90 ! cosines (from 0 to 1) of scatt angle (from 90 to 0) and weights
-    real(kind=dbl), dimension(2*nummu) :: mu180, wquad180 ! cosines (from 1 to -1) of scatt angle (from 0 to 180) and weights
+    !real(kind=dbl), dimension(2*nummu) :: mu180, wquad180 ! cosines (from 1 to -1) of scatt angle (from 0 to 180) and weights
+    real(kind=dbl) :: scat_angle, cos_scat_ang
 
     real(kind=dbl) :: wavelength
     complex(kind=dbl) :: m_ice
     real(kind=dbl) :: del_d_eff, ndens_eff, n_tot
     integer, parameter :: maxn  = 5000
-    integer :: nquad, nmie, nleg, nterms
-    integer :: i, l, m, ir, ia
+    integer :: nmie!, nterms,nquad, nleg
+    integer :: ir, ia0, ia, iemisphere!, i, l, m
     real(kind=dbl) :: x, tmp,diameter_eff
-    real(kind=dbl) :: qext, qscat, qback, scatter 
-    real(kind=dbl) :: mu(maxn), wts(maxn)
-    real(kind=dbl) :: p1, pl, pl1, pl2, p2, p3, p4 
-    real(kind=dbl) :: sumqe, sumqs, sumqback
+    !real(kind=dbl) :: qext, qscat, qback, scatter
+    !real(kind=dbl) :: mu(maxn), wts(maxn)
+    !real(kind=dbl) :: p1, pl, pl1, pl2, p2, p3, p4
+    !real(kind=dbl) :: sumqe, sumqs, sumqback
     
-    real(kind=dbl) :: absind, abscof
+    !real(kind=dbl) :: absind, abscof
     complex(kind=dbl), dimension(maxn) :: a, b ! Mie expansion coefficients
     complex(kind=dbl) :: msphere, eps_mix ! eps_mix is a function
+    
     complex(kind=dbl) :: s1, s2 ! diagonal elements of the amplitude matrix
-    real(kind=dbl), dimension(nstokes,nstokes) :: scatMat
+    real(kind=dbl), dimension(nstokes,nstokes) :: mat4 ! for inner computations
+    real(kind=dbl), dimension(nstokes,nstokes) :: scatMatInt ! angular integrated
+
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
@@ -133,7 +135,7 @@ module mie_spheres
           return
       end if
 
-      wavelength = c/(freq) !
+      wavelength = c/(freq) ! meters
 
       if ((liq_ice == -1) .and. (density(1) /= 917.d0)) then
         m_ice = refre-Im*refim  ! mimicking a
@@ -146,7 +148,7 @@ module mie_spheres
 !!!! probably we do not need it since we skip the legendre stuff
 !!!! and nterms = 0
       ! x = pi * diameter(nbins) / wavelength
-      ! nterms = 0 
+      !nterms = 0 
       n_tot = 0.d0
     !   call miecalc (err,nterms, x, msphere, a, b)
     !   if (err /= 0) then
@@ -179,10 +181,14 @@ module mie_spheres
     ! Get the cosines values and weights for the first quadrant
     ! and then rearrange to get the full range of scatt angles
     call lobatto_quadrature(nummu, mu90, wquad90)
-    mu180(1:nummu) = mu90(nummu:1:-1)
-    wquad180(1:nummu) = wquad90(nummu:1:-1)
-    mu180(nummu+1:2*nummu) = -mu90
-    wquad180(nummu+1:2*nummu) = wquad90
+    !mu180(1:nummu) = mu90(nummu:1:-1)
+    !wquad180(1:nummu) = wquad90(nummu:1:-1)
+    !mu180(nummu+1:2*nummu) = -mu90
+    !wquad180(nummu+1:2*nummu) = wquad90
+
+    emis_vector = 0.0d0
+    scatter_matrix = 0.0d0
+    extinct_matrix = 0.0d0
 
     do ir = 1, nbins ! cycle over PSD
       if (ndens(ir) <= 0) CYCLE !Do not process if no particles present
@@ -204,7 +210,7 @@ module mie_spheres
       x = pi * diameter(ir) / wavelength
       call miecalc (err, nmie, x, msphere, a, b)
       if (err /= 0) then
-        msg = 'error in mieclac!'
+        msg = 'error in miecalc!'
         call report(err, msg, nameOfRoutine)
         errorstatus = err
         return
@@ -213,68 +219,63 @@ module mie_spheres
       if (verbose >= 4) print*, "ir, density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x"
       if (verbose >= 4) print*, ir, density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x 
       
-      call miecross (nmie, x, a, b, qext, qscat, qback)
+      !call miecross (nmie, x, a, b, qext, qscat, qback)
       
-      if (verbose >= 4) print*, "qext, qscat, qback"
-      if (verbose >= 4) print*, qext, qscat, qback
+      !if (verbose >= 4) print*, "qext, qscat, qback"
+      !if (verbose >= 4) print*, qext, qscat, qback
       !from efficiencies cross sections
-      qext =   qext   * (diameter(ir)/2.d0)**2 *pi  ! [m²]!
-      qscat =  qscat  * (diameter(ir)/2.d0)**2 *pi  ! [m²]!
-      qback =  qback  * (diameter(ir)/2.d0)**2 *pi  ! [m²]! cross section
+      !qext =   qext   * (diameter(ir)/2.d0)**2 *pi  ! [m²]!
+      !qscat =  qscat  * (diameter(ir)/2.d0)**2 *pi  ! [m²]!
+      !qback =  qback  * (diameter(ir)/2.d0)**2 *pi  ! [m²]! cross section
 
       !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-      ! Compute RT4 matrices 
+      ! Compute RT4 matrices  
 
-      ! Compute forward scattering out of the loop
-      call mieangle_amplScatMat (nterms, a, b, 1.0d0, s1, s2)
-      call amplScatMat_to_scatMat(s1, s2, scatter_Matrix_D)
-      call amplScatMat_to_extinctionMatrix(s1, s2, freq, extinct_Matrix_D)
-
-      do ia = 2, 2*nummu ! I only need to cover the 0-pi scattering angles
-        call mieangle_amplScatMat (nterms, a, b, 1.0d0, s1, s2)
-        call amplScatMat_to_scatMat(s1, s2, scatter_Matrix_D)
-      end do
-
-      !! somehow compute emission vector !!
-      !! probably need to integrate within the angle loop !!
-
-      !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-
-      ! apply bin weights
-      qext =   qext  * ndens_eff      ! [m²/m⁴]!
-      qscat =  qscat * ndens_eff      ! [m²/m⁴]!
-      qback =  qback * ndens_eff      ! [m²/m⁴]! cross section per volume
-  
-      if (verbose >= 4) print*, "qback* del_d_eff, ndens_eff , (diameter(ir)/2.d0), pi, del_d_eff"
-      if (verbose >= 4) print*, qback * del_d_eff, ndens_eff ,(diameter(ir)/2.d0), pi, del_d_eff
-  
-      !integrate=sum up . del_d is already included in ndens, since ndens is not normed!
-      sumqe = sumqe + ( qext * del_d_eff)
-      sumqs = sumqs + ( qscat * del_d_eff)
-      sumqback = sumqback + ( qback * del_d_eff)
-
-      if (verbose >= 4) print*, "NEW: diameter(ir), ndens_eff, del_d_eff, n_tot, sumqback, sumqs, sumqe"
-      if (verbose >= 4) print*, diameter(ir), ndens_eff, del_d_eff, n_tot, sumqback , sumqs, sumqe
-      back_spec(ir) =  qback   ! volumetric backscattering cross section for radar simulator in backscat per volume per del_d[m²/m⁴]
-
-!      if (lphase_flag) then 
-!        nmie = min0(nmie, nterms) 
-!          do i = 1, nquad 
-!            call mieangle (nmie, a, b, mu (i), p1, p2, p3, p4) 
-!            sump1 (i) = sump1 (i) + p1 * ndens_eff * del_d_eff ! = M11 = M22
-!            sump2 (i) = sump2 (i) + p2 * ndens_eff * del_d_eff ! = M12 = M21
-!            sump3 (i) = sump3 (i) + p3 * ndens_eff * del_d_eff ! = M33 = M44
-!            sump4 (i) = sump4 (i) + p4 * ndens_eff * del_d_eff ! = M34 = -M43
-!          end do
-!      end if
-    end do
+      do ia0 = 1, nummu ! loop over incident directions
+        extinct_matrix_D = 0.0d0
+        scatMatInt = 0.0d0
+        do iemisphere = 1, 2 ! consider upwelling and downwelling radiation separately
+          do ia = 1, nummu ! loop over scattering directions
+            scat_angle = acos(mu90(ia0)) - acos(mu90(ia))*(-1)**(real(iemisphere)-1.0d0)
+            cos_scat_ang = cos(scat_angle)
+            call mieangle_amplScatMat (nmie, a, b, cos_scat_ang, s1, s2)
+            call amplScatMat_to_scatMat(s1, s2, mat4)
+            scatMatInt = scatMatInt + mat4*wquad90(ia) ! for angular integration
+            scatter_matrix(1,ia0,1,ia,iemisphere) = scatter_matrix(1,ia0,1,ia,iemisphere) + mat4(1,1)*ndens_eff*del_d_eff
+            scatter_matrix(1,ia0,2,ia,iemisphere) = scatter_matrix(1,ia0,2,ia,iemisphere) + mat4(1,2)*ndens_eff*del_d_eff
+            scatter_matrix(2,ia0,1,ia,iemisphere) = scatter_matrix(2,ia0,1,ia,iemisphere) + mat4(2,1)*ndens_eff*del_d_eff
+            scatter_matrix(2,ia0,2,ia,iemisphere) = scatter_matrix(2,ia0,2,ia,iemisphere) + mat4(2,2)*ndens_eff*del_d_eff
+            if((ia0 .eq. 16) .and. (ia .eq. 16) .and. (iemisphere .eq. 2) ) then ! backward scattering
+              !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, sc
+              back_spec(ir) = 4*pi*ndens_eff*mat4(1,1)
+              ! We might want to include also the other polarizations.
+              ! Even though for spherical targets polarization dependet results are trivial, this will give consistency
+            end if
+            if(scat_angle .eq. 0.0d0) then ! forward scattering
+              print*, ia0, ia, iemisphere, scat_angle
+              call amplScatMat_to_extinctionMatrix(s1, s2, freq*1.0d-9, mat4)
+              ! Copy to temporary size dependent variable I need for calculating emission vector
+              extinct_Matrix_D(1,1,ia0) = mat4(1,1)
+              extinct_Matrix_D(1,2,ia0) = mat4(1,2)
+              extinct_Matrix_D(2,1,ia0) = mat4(2,1)
+              extinct_Matrix_D(2,2,ia0) = mat4(2,2)
+              ! Sum up over the PSD
+              extinct_matrix(1,1,ia0) = extinct_matrix(1,1,ia0) + extinct_Matrix_D(1,1,ia0)*ndens_eff*del_d_eff
+              extinct_matrix(1,2,ia0) = extinct_matrix(1,2,ia0) + extinct_Matrix_D(1,2,ia0)*ndens_eff*del_d_eff
+              extinct_matrix(2,1,ia0) = extinct_matrix(2,1,ia0) + extinct_Matrix_D(2,1,ia0)*ndens_eff*del_d_eff
+              extinct_matrix(2,2,ia0) = extinct_matrix(2,2,ia0) + extinct_Matrix_D(2,2,ia0)*ndens_eff*del_d_eff
+            end if ! forward scattering
+          end do ! scattering direction
+        end do ! emispheres
+        emis_vector(1,ia0) = emis_vector(1,ia0) + (extinct_Matrix_D(1,1,ia0) - scatMatInt(1,1))*ndens_eff*del_d_eff
+        emis_vector(2,ia0) = emis_vector(2,ia0) + (extinct_Matrix_D(1,2,ia0) - scatMatInt(1,2))*ndens_eff*del_d_eff
+      end do ! incident directions
+    end do ! loop over PSD bins 
 
     !           multiply the sums by the integration delta and other constan
     !             put quadrature weights in angular array for later         
 
     if (verbose >= 4) print*, "ntot", n_tot
-
-        
         
 !    if (lhyd_absorption) then
 !        extinction = sumqe 
@@ -337,8 +338,8 @@ module mie_spheres
 !          "nan in back_spec")   
 !      call assert_true(err,(extinction>0),&
 !          "extinction must be positive")   
-      call assert_true(err,(scatter>0),&
-          "scatter must be positive") 
+!      call assert_true(err,(scatter>0),&
+!          "scatter must be positive") 
 !      call assert_true(err,(back_scatt>0),&
 !          "back_scatt must be positive") 
 
@@ -423,8 +424,8 @@ module mie_spheres
     real(kind=dbl) :: sumqe, sumqs, sumqback
     real(kind=dbl), dimension(maxn) :: sump1, coef1, sump2, coef2,   &
                                        sump3, coef3, sump4, coef4          
-    real(kind=dbl) :: absind, abscof
-    complex(kind=dbl), dimension(maxn) :: a, b
+    real(kind=dbl) :: absind, abscof ! never used???
+    complex(kind=dbl), dimension(maxn) :: a, b ! mie expansion coefficients
     complex(kind=dbl) :: msphere, eps_mix
 
     integer(kind=long), intent(out) :: errorstatus
