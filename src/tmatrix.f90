@@ -51,7 +51,7 @@ module tmatrix
       !       back_spec       double  backscattering spectrum [nbins]
 
       use vars_index, only: i_p
-use fileio
+      use fileio
       implicit none
 
       real(kind=dbl), intent(in) :: frequency
@@ -416,7 +416,6 @@ call close_port(port, ios)
       scatter_matrix = scatter_matrix + scatter_matrix_part * ndens_eff * del_d_eff
       extinct_matrix = extinct_matrix + extinct_matrix_part * ndens_eff * del_d_eff
       emis_vector = emis_vector + emis_vector_part * ndens_eff * del_d_eff
-    
     end do !nbins
 
     call assert_false(err,any(isnan(scatter_matrix)),&
@@ -426,13 +425,13 @@ call close_port(port, ios)
     call assert_false(err,any(isnan(emis_vector)),&
         "nan in emis_vector")
     call assert_false(err,any(isnan(back_spec)),&
-        "nan in back_spec")	  
+        "nan in back_spec")  
     if (err > 0) then
         errorstatus = fatal
         msg = "assertation error"
         call report(errorstatus, msg, nameOfRoutine)
         return
-    end if   	
+    end if   
 
     errorstatus = err
     if (verbose >= 2) call report(info,'End of ', nameOfRoutine) 
