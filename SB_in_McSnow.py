@@ -22,6 +22,7 @@ tstep = int(os.environ["tstep"])
 experiment = os.environ["experiment"] #experiment name (this also contains a lot of information about the run)
 testcase = os.environ["testcase"] #"more readable" string of the experiment specifications
 av_tstep = int(os.environ["av_tstep"]) #average window for the McSnow output
+MC_dir = os.environ["MC"]
 
 # Initialize PyPAMTRA instance
 pam = pyPamtra.pyPamtra()
@@ -51,9 +52,8 @@ pam.nmlSet["conserve_mass_rescale_dsd"] = True    #necessary because of separati
 
 #choose descriptor file
 #desc_pamtra_file = 'descriptorfiles/descriptor_file_2m_crystal_ssrg.txt'
-desc_pamtra_file = 'descriptorfiles/descriptor_file_2m_crystal_ssrg.txt'
-#desc_pamtra_file = 'descriptorfiles/descriptor_file_2m_crystal-uli_modified.txt'
-#desc_pamtra_file = 'descriptorfiles/descriptor_file_2m_icon.txt'
+desc_pamtra_file = 'descriptorfiles/descriptor_file_2m_ssrgNEWpowerLaw.txt'
+
 #load descriptor file
 pam.df.readFile(desc_pamtra_file)
 
@@ -69,11 +69,11 @@ pam.set["pyVerbose"] = 0
 if "deact" in os.environ:
     deact = os.environ["deact"]
 else:
-    deact='111111' #set values to zero to deactivate particle types; order: c,i,r,s,g,h
+    deact='111111' #set values to zero to deactivate particle types; order: c,i,r,s,g,h #ATTENTION: changes here do not have an effect; use contributions_and_spectr_of_SB.sh
 print "using the following categories (c,i,r,s,g,h): ", deact
 
 #directory of experiments
-directory = "/home/mkarrer/Dokumente/McSnow/MCSNOW/experiments/"
+directory = MC_dir + "/experiments/"
 
 #load file
 twomom_file = Dataset(directory + experiment + '/twomom_d.ncdf',mode='r')
@@ -93,12 +93,16 @@ for var in varlist:#read files and write it with different names in Data
 
 
 #read atmospheric variables
-atmo = __postprocess_McSnow.read_atmo(experiment)
+filestring_atmo = directory + experiment + "/atmo.dat"
+atmo = __postprocess_McSnow.read_atmo(experiment,filestring_atmo)
 '''
 seperate by height
 '''
+
 #create height vector
-model_top = 5000. #top of model / m
+#get heighest level
+model_top = np.nanmax(twomom["heights"])
+#model_top = 5000. #top of model / m
 heightvec = np.linspace(model_top/n_heights,model_top,n_heights) #[::-1] #start with 0+z_res and go n_heigts step up to model_top
 zres = heightvec[1]-heightvec[0]
 
@@ -141,7 +145,6 @@ for i_hydro,hydromet in enumerate(["qnc","qni","qnr","qns","qng","qnh"]):
     if deact[i_hydro]=='1':
         hydro_num_cmpl[0,0,:,i_hydro]		=	twomom[hydromet]
         print hydromet,twomom[hydromet]
-
     elif deact[i_hydro]=='0':
         hydro_num_cmpl[0,0,:,i_hydro]		=	np.zeros(twomom[hydromet].shape)
 

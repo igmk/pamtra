@@ -15,13 +15,19 @@ import __postprocess_McSnow
 #read variables passed by shell script
 tstep = os.environ["tstep"]
 experiment = os.environ["experiment"] #experiment name (this also contains a lot of information about the run)
+testcase = os.environ["testcase"] #"more readable" string of the experiment specifications
 
+#selecting fallspeed model from testcase string
+if "HW" in testcase:
+    fallsp_model='heymsfield10_particles'
+else:
+    fallsp_model='khvorostyanov01_particles'
 # Initialize PyPAMTRA instance
 pam = pyPamtra.pyPamtra()
 #define hydrometeor properties
 n_bins = 100 #bins for PAMTRA calculation
-n_heights = 51 #heights for PAMTRA calculation
-pam.df.addHydrometeor(('ice_nonspher',  -999,           -1,        -99.,      -99.,    -99.,   -99.,     -99.,   13,           n_bins,       'dummy',          -99.,    -99.,     -99.,   -99.,  -99.,    -99.        ,'ss-rayleigh-gans',  'khvorostyanov01_particles',        0.))
+n_heights = 50+1 #heights for PAMTRA calculation #+1 is because we loose one while binning in __postprocess_McSnow.separate_by...
+pam.df.addHydrometeor(('ice_nonspher',  -999,           -1,        -99.,      -99.,    -99.,   -99.,     -99.,   13,           n_bins,       'dummy',          -99.,    -99.,     -99.,   -99.,  -99.,    -99.        ,'ss-rayleigh-gans',  fallsp_model,        0.))
 
 '''
 set namelist parameter
@@ -29,7 +35,7 @@ set namelist parameter
 #turn off passive calculations
 pam.nmlSet["passive"] = False  # Activate this for Microwave radiometer
 pam.nmlSet["active"] = True    # Activate this for Cloud radar
-pam.nmlSet["radar_mode"] = "simple"
+pam.nmlSet["radar_mode"] = "spectrum"
 pam.nmlSet["save_psd"] = False    # save particle size distribution
 pam.nmlSet["radar_attenuation"] = "disabled" #"bottom-up"
 pam.nmlSet["hydro_adaptive_grid"] = False    # uncomment this line before changing max and min sp_diameter of size distribution
@@ -51,12 +57,12 @@ directory = "/home/mkarrer/Dokumente/McSnow/MCSNOW/experiments/"
 #experiment name (this also contains a lot of information about the run
 #experiment="1d_xi100000_nz5000_lwc20_ncl0_dtc5_nrp30_rm10_rt0_vt2_h10-20_ba500"
 #choose file (including timestep)
-filestring = directory + experiment + "/mass2fr_" + tstep + ".dat"
+filestring = directory + experiment + "/mass2fr_" + tstep + "min_00s.dat"
 
 #read mass2fr.dat file and get SP-dictionary
 SP = __postprocess_McSnow.read_mass2frdat(experiment,filestring)
 
-from IPython.core.debugger import Tracer ; Tracer()()
+#from IPython.core.debugger import Tracer ; Tracer()()
 
 '''
 seperate by height
@@ -66,7 +72,7 @@ model_top = 5000. #top of model / m
 heightvec = np.linspace(0,model_top,n_heights) #start with 0+z_res and go n_heigts step up to model_top
 
 #calculate values binned to here defined h-D bins
-binned_val,heightvec,d_bound_ds,d_ds,zres = __postprocess_McSnow.seperate_by_height_and_diam(SP,nbins=100,diamrange=[-9,0],nheights=51,model_top=5000)
+binned_val,heightvec,d_bound_ds,d_ds,zres = __postprocess_McSnow.separate_by_height_and_diam(SP,nbins=n_bins,diamrange=[-9,0],nheights=n_heights,model_top=5000)
 
 #calculate volume of box
 Vbox = __postprocess_McSnow.calculate_Vbox(experiment,zres)
@@ -87,7 +93,7 @@ set up PAMTRA with some default values
 '''
 # Generate PAMTRA data dictonary
 pamData = dict()
-vec_shape = [1,n_heights]
+vec_shape = [1,n_heights-1] #-1 because we lost one height while binning
 ## Copy data to PAMTRA dictonary
 pamData["press"]  =  np.ones(vec_shape)*80000 # Pressure Pa #TODO: not randomly set here 800hPa
 pamData["relhum"] =  np.ones(vec_shape)*80  # Relative Humidity in  #TODO: not randomly set here 80%
@@ -99,11 +105,10 @@ pamData["timestamp"] =  0 #unixtime #TODO: not randomly set here 80%
 #pamData["wind10u"] = iconData["u"][0,1]
 #pamData["wind10v"] = iconData["v"][0,1]
 #pamData["groundtemp"] = iconData["t_g"][0]
-
-pamData["hgt"] = np.ones(vec_shape)*heightvec #np.arange(0.,12000.,(12000.-0.)/(vec_shape[1])) #height in m  #TODO: not randomly set here 80%
+pamData["hgt"] = np.ones(vec_shape)*heightvec[:-1]+ 0.5 * np.diff(heightvec) #np.arange(0.,12000.,(12000.-0.)/(vec_shape[1])) #height in m  #TODO: not randomly set here 80%
 pamData["temp"] = np.ones(vec_shape)*263.15 #T in K   #TODO: not randomly set here -10C
-pamData["hydro_q"] = np.zeros([1,n_heights,1]) #TODO: not just one category (last number)
-pamData["hydro_n"] = np.zeros([1,n_heights,1]) #TODO: not just one category (last number)
+pamData["hydro_q"] = np.zeros([1,n_heights-1,1]) #TODO: not just one category (last number)
+pamData["hydro_n"] = np.zeros([1,n_heights-1,1]) #TODO: not just one category (last number)
 
 # Add them to pamtra object and create profile
 pam.createProfile(**pamData)
@@ -116,13 +121,16 @@ pam.df.addFullSpectra()
 
 #print pam.df.dataFullSpec["d_bound_ds"].shape #dimensions are x,y,z,category,bins
 #generate sp_diameter arrays
-pam.df.dataFullSpec["d_bound_ds"][0,0,:,0,:],dum =  np.meshgrid(d_bound_ds,np.arange(0,n_heights))#2D-grid dimension:(height,bins); matrix with sp_diameters which is repeted N_height times
+pam.df.dataFullSpec["d_bound_ds"][0,0,:,0,:],dum =  np.meshgrid(d_bound_ds,np.arange(0,n_heights-1))#2D-grid dimension:(height,bins); matrix with sp_diameters which is repeted N_height times
 pam.df.dataFullSpec["d_ds"][0,0,:,0,:] = pam.df.dataFullSpec["d_bound_ds"][0,0,:,0,:-1] + 0.5 * np.diff(pam.df.dataFullSpec["d_bound_ds"][0,0,:,0,:])#center of the bins defined by d_bound_ds
 ################################
 #'feed' PAMTRA with hydrometeors
 ################################
 #number per bin
 pam.df.dataFullSpec["n_ds"][0,0,:,0,:] = binned_val["d_counts"]
+
+print "pam.df.dataFullSpec[n_ds] at", pamData["hgt"][0,20],"m"
+print pam.df.dataFullSpec["n_ds"][0,0,20,0,:]
 #mass at middle of bin
 b_agg=2.1;a_agg = 2.8*10**(2*b_agg-6)
 pam.df.dataFullSpec["mass_ds"][0,0,:,0,:] = a_agg*pam.df.dataFullSpec["d_ds"][0,0,:,0,:]**b_agg #TODO: quick and dirty: m-D coefficients for aggregates
@@ -132,6 +140,13 @@ pam.df.dataFullSpec["area_ds"][0,0,:,0,:] = c_agg*pam.df.dataFullSpec["d_ds"][0,
 #aspect ratio
 pam.df.dataFullSpec["as_ratio"][0,0,:,0,:] = 0.6
 
+import matplotlib.pyplot as plt
+fig, axes = plt.subplots(nrows=4, ncols=1,)
+axes[0].plot(pam.df.dataFullSpec["n_ds"][0,0,0,0,:])
+axes[1].semilogy(pam.df.dataFullSpec["mass_ds"][0,0,0,0,:])
+axes[2].semilogy(pam.df.dataFullSpec["area_ds"][0,0,0,0,:])
+axes[3].plot(pam.df.dataFullSpec["as_ratio"][0,0,0,0,:])
+plt.show()
 
 #run PAMTRA
 pam.runPamtra([9.6,35.5,95])

@@ -21,7 +21,7 @@ tstep = int(os.environ["tstep"])
 experiment = os.environ["experiment"] #experiment name (this also contains a lot of information about the run)
 testcase = os.environ["testcase"] #"more readable" string of the experiment specifications
 av_tstep = int(os.environ["av_tstep"]) #average window for the McSnow output
-
+MC_dir = os.environ["MC"]
 # Initialize PyPAMTRA instance
 pam = pyPamtra.pyPamtra() #load pyPamtra class (in core.py)
 
@@ -40,6 +40,7 @@ pam.nmlSet["save_psd"] = False    # save particle size distribution
 pam.nmlSet["radar_attenuation"] = "disabled" #"bottom-up"
 pam.nmlSet["hydro_fullspec"] = True #use full-spectra as input
 pam.nmlSet["radar_allow_negative_dD_dU"] = True #allow negative dU dD which can happen at the threshold between different particle species
+pam.nmlSet["conserve_mass_rescale_dsd"] = False
 #pam.nmlSet["radar_nfft"] = 8192 #1024
 #pam.nmlSet["radar_max_V"] = 3.
 #pam.nmlSet["radar_min_V"] = -3.
@@ -56,7 +57,7 @@ pam.set["pyVerbose"] = 0
 deact='1111' #set values to zero to deactivate particle types; order: small ice, unrimed aggregates, partially rimed, graupel
 
 #directory of experiments
-directory = "/home/mkarrer/Dokumente/McSnow/MCSNOW/experiments/"
+directory = MC_dir + "/experiments/"
 
 #load file with superparticles (SP)
 SP_file = Dataset(directory + experiment + '/mass2fr_' + str(tstep).zfill(4) + 'min_avtstep_' + str(av_tstep) + '.ncdf',mode='r')
@@ -69,10 +70,13 @@ for var in SP_file.variables:#read files and write it with different names in Da
     SP[var] = np.squeeze(SP_file.variables[var])
 
 #read atmospheric variables
-atmo = __postprocess_McSnow.read_atmo(experiment)
+filestring_atmo = directory + experiment + "/atmo.dat"
+atmo = __postprocess_McSnow.read_atmo(experiment,filestring_atmo)
 
 #create height vector
-model_top = 5000. #top of model / m #TODO: flexible input for model_top
+#get Sp with maximum height for upper limit
+model_top = np.nanmax(SP['height'])
+#model_top = 5000. #top of model / m #TODO: flexible input for model_top
 heightvec = np.linspace(model_top/n_heights,model_top,n_heights) #start with 0+z_res and go n_heigts step up to model_top
 zres = heightvec[1]-heightvec[0]
 #interpolate atmospheric variables to heightvec
@@ -119,7 +123,6 @@ no_dupl_str = __general_utilities.gen_shortest_strings_without_duplicate(count_l
 
 #get necessary parameter of m-D and A-D relationship
 mth,unr_alf,unr_bet,rhoi,rhol = __postprocess_McSnow.return_parameter_mD_AD_rel()
-
 #selecting fallspeed model from testcase string
 if "HW" in testcase:
     fallsp_model='heymsfield10_particles'
@@ -215,7 +218,10 @@ while i<number_ofSP: #number_ofSP):
     #'feed' PAMTRA with hydrometeors
     ################################
     #number per bin
-    pam.df.dataFullSpec["n_ds"][0,0,idx_height,i_active,0] = SP["xi"][i]/Vbox #just the first of the two bins is filled; nevertheless mass_ds and area_ds is needed at both bins to calculate dU_dD in rescale_spectrum.f90 correctly
+    if SP["diam"][i]<1.0: #set upper threshold [in m]
+        pam.df.dataFullSpec["n_ds"][0,0,idx_height,i_active,0] = SP["xi"][i]/Vbox #just the first of the two bins is filled; nevertheless mass_ds and area_ds is needed at both bins to calculate dU_dD in rescale_spectrum.f90 correctly
+    else:
+        pam.df.dataFullSpec["n_ds"][0,0,idx_height,i_active,0] = 0
     #area of middle of bin
     pam.df.dataFullSpec["area_ds"][0,0,idx_height,i_active,:] = SP["proj_A"][i]
     if particle_type[i]==1: #small ice
