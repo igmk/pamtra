@@ -94,7 +94,7 @@ module rayleigh_gans
 
     real(kind=dbl) :: wavelength
     real(kind=dbl) :: volume !volume of solid ice with same mass
-    real(kind=dbl) :: K, K2 !dielectric variable and it's square norm
+    real(kind=dbl) :: K2 !dielectric variable square norm
     real(kind=dbl) :: wave_num !wavenumber
     real(kind=dbl) :: x !electrical size
     real(kind=dbl) :: term1, term2
@@ -110,7 +110,7 @@ module rayleigh_gans
     integer(kind=long) :: ia1
     integer(kind=long) :: ia2
 
-    complex(kind=dbl) :: dielectric_const
+    complex(kind=dbl) :: dielectric_const, K
 
     real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
     real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
@@ -177,8 +177,8 @@ module rayleigh_gans
       angles_rad(ia) = acos(mu_values(ia))
       angles_rad(ia+nummu) = acos(-1.*mu_values(ia))
     end do 
-
-    dielectric_const = (refre-im*refim)**2 !solid ice
+    print*,refre,' +j ',refim
+    dielectric_const = (refre+im*refim)**2 !solid ice
     K = (dielectric_const-1.0d0)/(dielectric_const+2.0d0)
     ! K2 = abs(((dielectric_const-1.0d0)/(dielectric_const+2.0d0)))**2
     fact_sca = 0.5e0/(wave_num**2)
@@ -203,7 +203,7 @@ module rayleigh_gans
         scattering_integral_12 = 0.
         do ia2 = 1, 2*nummu
           ! scattering angle [rad]
-          scat_angle_rad = angles_rad(ia1) - angles_rad(ia2)
+          scat_angle_rad = abs(angles_rad(ia1) - angles_rad(ia2))
 
           ! Electrical size
           x = k*d_wave * sin(scat_angle_rad/2.)
@@ -222,21 +222,22 @@ module rayleigh_gans
             term2 = term2 + (2.d0*jj)**(-rg_gamma) * sin(x)**2 &
                   *(1.d0/(2.d0*(x+pi*jj))**2 + 1.d0/(2.d0*(x-pi*jj))**2)
           end do
-
-          s11 = 3./8. * wave_num**2 * K * volume * (term1 + rg_beta*term2)**0.5
-          s22 = s11 * cos(scat_angle_rad)
-
+          s22 = 3./8. * wave_num**2 * K * volume * (term1 + rg_beta*term2)**0.5
+          s22 = s22*wave_num
+          s11 = s22*cos(scat_angle_rad) ! 
+          print*,scat_angle_rad,'  ',s11,' ssrg ',s22
           ! Put the terms together
-          scatter_matrix_tmp(1,ia2,1,ia1) = (s11*dconjg(s11)+s22*dconjg(s22))*2*pi*fact_sca
-          scatter_matrix_tmp(1,ia2,2,ia1) = (s11*dconjg(s11)-s22*dconjg(s22))*2*pi*fact_sca
-          scatter_matrix_tmp(2,ia2,1,ia1) = (s11*dconjg(s11)-s22*dconjg(s22))*2*pi*fact_sca
-          scatter_matrix_tmp(2,ia2,2,ia1) = (s11*dconjg(s11)+s22*dconjg(s22))*2*pi*fact_sca
+          scatter_matrix_tmp(1,ia2,1,ia1) = (s11*dconjg(s11)+s22*dconjg(s22))*2.0d0*pi*fact_sca
+          scatter_matrix_tmp(1,ia2,2,ia1) = (s11*dconjg(s11)-s22*dconjg(s22))*2.0d0*pi*fact_sca
+          scatter_matrix_tmp(2,ia2,1,ia1) = (s11*dconjg(s11)-s22*dconjg(s22))*2.0d0*pi*fact_sca
+          scatter_matrix_tmp(2,ia2,2,ia1) = (s11*dconjg(s11)+s22*dconjg(s22))*2.0d0*pi*fact_sca
 
           if (scat_angle_rad .eq. 0.) then
             extinct_matrix_tmp(1,1,ia1) = -real((s11 + s22)*fact_ext)
             extinct_matrix_tmp(1,2,ia1) = -real((s11 - s22)*fact_ext)
             extinct_matrix_tmp(2,1,ia1) = -real((s11 - s22)*fact_ext)
             extinct_matrix_tmp(2,2,ia1) = -real((s11 + s22)*fact_ext)
+            print*,extinct_matrix_tmp(1,1,ia1)
           end if
         ! End loop scattering angles
           scattering_integral_11 = scattering_integral_11 + scatter_matrix_tmp(1,ia2,1,ia1)*2.*pi*quad_weights(ia1)
