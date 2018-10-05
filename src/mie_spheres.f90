@@ -50,7 +50,7 @@ module mie_spheres
     integer, intent(in) :: nbins
     real(kind=dbl), intent(in), dimension(nbins) :: diameter
     real(kind=dbl), intent(in), dimension(nbins) :: del_d    
-    real(kind=dbl), intent(in), dimension(nbins) ::  ndens
+    real(kind=dbl), intent(in), dimension(nbins) :: ndens
     real(kind=dbl), intent(in), dimension(nbins) :: density
     real(kind=dbl), intent(in) :: refre
     real(kind=dbl), intent(in) :: refim !positive(?)
@@ -148,19 +148,19 @@ module mie_spheres
       n_tot = 0.d0
       call miecalc (err,nterms, x, msphere, a, b) 
       if (err /= 0) then
-	  msg = 'error in mieclac!'
-	  call report(err, msg, nameOfRoutine)
-	  errorstatus = err
-	  return
+        msg = 'error in miecalc!'
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
+        return
       end if         
       nlegen = 2 * nterms 
       nlegen = min(maxnleg-1, nlegen) 
       nquad = (nlegen + 2 * nterms + 2) / 2 
       if (nquad.gt.maxn) then
-	  errorstatus = fatal
-	  msg = 'mie: maxn exceeded' 
-	  call report(errorstatus, msg, nameOfRoutine)
-	  return
+        errorstatus = fatal
+        msg = 'mie: maxn exceeded' 
+        call report(errorstatus, msg, nameOfRoutine)
+        return
       end if
     !           get the gauss-legendre quadrature abscissas and weights     
       call gausquad(nquad, mu, wts) 
@@ -185,10 +185,10 @@ module mie_spheres
       n_tot = n_tot + (ndens_eff * del_d_eff)
 
       if ((liq_ice == -1) .and. (density(ir) /= 917.d0)) then
-	  m_ice = refre-Im*refim  ! mimicking a
-	  msphere = eps_mix((1.d0,0.d0),m_ice,density(ir))
+        m_ice = refre-Im*refim  ! mimicking a
+        msphere = eps_mix((1.d0,0.d0),m_ice,density(ir))
       else
-		msphere = refre-im*refim
+        msphere = refre-im*refim
       end if
   
       nmie = 0 
@@ -197,10 +197,10 @@ module mie_spheres
 
       call miecalc (err,nmie, x, msphere, a, b) 
       if (err /= 0) then
-	  msg = 'error in mieclac!'
-	  call report(err, msg, nameOfRoutine)
-	  errorstatus = err
-	  return
+        msg = 'error in mieclac!'
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
+        return
       end if         
       
       if (verbose >= 4) print*, "ir, density(ir), diameter(ir), ndens_eff, del_d_eff, msphere, x"
@@ -233,14 +233,14 @@ module mie_spheres
       back_spec(ir) =  qback   ! volumetric backscattering cross section for radar simulator in backscat per volume per del_d[m²/m⁴]
 
       if (lphase_flag) then 
-	  nmie = min0(nmie, nterms) 
-	  do i = 1, nquad 
-	    call mieangle (nmie, a, b, mu (i), p1, p2, p3, p4) 
-	    sump1 (i) = sump1 (i) + p1 * ndens_eff * del_d_eff ! = M11 = M22
-	    sump2 (i) = sump2 (i) + p2 * ndens_eff * del_d_eff ! = M12 = M21
-	    sump3 (i) = sump3 (i) + p3 * ndens_eff * del_d_eff ! = M33 = M44
-	    sump4 (i) = sump4 (i) + p4 * ndens_eff * del_d_eff ! = M34 = -M43
-	  end do
+        nmie = min0(nmie, nterms) 
+	      do i = 1, nquad 
+          call mieangle (nmie, a, b, mu (i), p1, p2, p3, p4) 
+          sump1 (i) = sump1 (i) + p1 * ndens_eff * del_d_eff ! = M11 = M22
+          sump2 (i) = sump2 (i) + p2 * ndens_eff * del_d_eff ! = M12 = M21
+          sump3 (i) = sump3 (i) + p3 * ndens_eff * del_d_eff ! = M33 = M44
+          sump4 (i) = sump4 (i) + p4 * ndens_eff * del_d_eff ! = M34 = -M43
+    	  end do
       end if
     end do
 
@@ -274,8 +274,8 @@ module mie_spheres
       sump4 (i) = tmp * sump4 (i) * wts (i) 
     end do
 
-    !           integrate the angular scattering functions times legendre   
-    !             polynomials to find the legendre coefficients             
+    ! integrate the angular scattering functions times legendre   
+    ! polynomials to find the legendre coefficients             
     do m = 1, nlegen + 1 
       coef1 (m) = 0.0d0 
       coef2 (m) = 0.0d0 
@@ -287,14 +287,14 @@ module mie_spheres
       pl1 = 1.0d0 
       pl = 1.0d0 
       do l = 0, nlegen 
-	  m = l + 1 
-	  if (l .gt. 0) pl = (2*l-1)*mu(i)*pl1/l-(l-1)*pl2/l                                                                 
-	  coef1 (m) = coef1 (m) + sump1 (i) * pl 
-	  coef2 (m) = coef2 (m) + sump2 (i) * pl 
-	  coef3 (m) = coef3 (m) + sump3 (i) * pl 
-	  coef4 (m) = coef4 (m) + sump4 (i) * pl 
-	  pl2 = pl1 
-	  pl1 = pl 
+        m = l + 1 
+        if (l .gt. 0) pl = (2*l-1)*mu(i)*pl1/l-(l-1)*pl2/l                                                                 
+        coef1 (m) = coef1 (m) + sump1 (i) * pl 
+        coef2 (m) = coef2 (m) + sump2 (i) * pl 
+        coef3 (m) = coef3 (m) + sump3 (i) * pl 
+        coef4 (m) = coef4 (m) + sump4 (i) * pl 
+        pl2 = pl1 
+        pl1 = pl 
       end do
     end do
     nleg = nlegen 

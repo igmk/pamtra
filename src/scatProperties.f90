@@ -120,12 +120,12 @@ contains
     real(kind=dbl), dimension(nbin) :: num_density
     real(kind=dbl), dimension(radar_npol) :: back_hydro
     real(kind=dbl), dimension(radar_npol,radar_nfft_aliased) :: back_spec_dia
-    real(kind=dbl), dimension(radar_nfft_aliased) :: back_spec_mie, back_spec_liu, back_spec_hong
+    real(kind=dbl), dimension(radar_nfft_aliased) :: back_spec_mie, back_spec_liu, back_spec_hong, back_spec_ssrg
     real(kind=dbl), dimension(radar_nfft_aliased) :: back_spec_rg
     real(kind=dbl), allocatable, dimension(:) :: as_ratio_list, canting_list
     real(kind=dbl) :: kext_hydro
     real(kind=dbl) :: salb_hydro
-    real(kind=dbl) :: back_hydro_mie, back_hydro_liu, back_hydro_hong
+    real(kind=dbl) :: back_hydro_mie, back_hydro_liu, back_hydro_hong, back_hydro_ssrg
     real(kind=dbl) :: back_hydro_rg
     real(kind=dbl) :: refre
     real(kind=dbl) :: refim
@@ -535,7 +535,7 @@ contains
         legen_coef4_hydro,&
         back_spec_mie)    
 
-      ! for mie polarisation does not matter
+      ! for mie polarisation does not matter at forward or backward scattering
       do i_p=1, radar_npol
         back_spec_dia(i_p,:) = back_spec_mie(:)
         back_hydro(i_p) = back_hydro_mie
@@ -547,6 +547,44 @@ contains
         errorstatus = err
         return
       end if
+
+      else if (TRIM(scat_name) == "ssrg-rt3") then
+
+      call calc_self_similar_rayleigh_gans_rt3(err,&
+        freq*1d9,&
+        layer_t,& ! temperature ?
+        liq_ice,&
+        nbin,&
+        diameter2scat,& ! noidea... but, input, so who cares?
+        delta_d_ds, &
+        num_density,&
+        density2scat, & ! noidea... but, input, so who cares?
+        refre, &
+        refim, & !positive(?)
+        !OUT
+        kext_hydro,&
+        salb_hydro,&
+        back_hydro_ssrg,&
+        nlegen_coef_hydro,&
+        legen_coef1_hydro,&
+        legen_coef2_hydro,&
+        legen_coef3_hydro,&
+        legen_coef4_hydro,&
+        back_spec_ssrg)
+
+      ! for ssrg polarisation does not matter at forward or backward scattering
+      do i_p=1, radar_npol
+        back_spec_dia(i_p,:) = back_spec_ssrg(:) ! spectrum??
+        back_hydro(i_p) = back_hydro_ssrg        ! total ??
+      end do
+      nlegen_coef = max(nlegen_coef,nlegen_coef_hydro)
+      if (err /= 0) then
+        msg = 'error in calc_self_similar_rayleigh_gans_rt3!'
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
+        return
+      end if
+
     else if (scat_name(:5) == "liudb") then
       read(scat_name(7:8),*) liu_type
       call dda_db_liu(err,freq, layer_t, liu_type, refre-Im*refim,nbin,&
