@@ -154,8 +154,8 @@ module rayleigh_gans
           "Not yet implemented: canting must be zero or 90deg")   
       call assert_true(err,all(as_ratio > 0.d0),&
           "nan or negative as_ratio")
-      call assert_false(err,active,&
-          "'active' must be turned off")   
+!      call assert_false(err,active,&
+!          "'active' must be turned off")
       if (err > 0) then
           errorstatus = fatal
           msg = "assertation error"
@@ -174,107 +174,87 @@ module rayleigh_gans
     back_spec(:) = 0.0d0
     nlegen = 0
 
+    ! initialize partial inner results with 0
+    sumqe = 0.0d0
+    sumqs = 0.0d0
+    sumqback = 0.0d0
+    sump1(:) = 0.0d0
+    sump2(:) = 0.0d0
+    sump3(:) = 0.0d0
+    sump4(:) = 0.0d0
+    n_tot = 0.d0 ! total number density of particles
+
     wavelength = c/(freq) ! meters
-    wave_num = 2.d0*pi/wavelength 
+    wave_num = 2.d0*pi/wavelength
 
-    ! build angles
-
-    do ia = 1,nummu
-      angles_rad(ia) = acos(mu_values(ia))
-      angles_rad(ia+nummu) = acos(-1.*mu_values(ia))
-    end do 
-    print*,refre,' +j ',refim
+    ! Complex dielectric factor
     dielectric_const = (refre+im*refim)**2 !solid ice
     K = (dielectric_const-1.0d0)/(dielectric_const+2.0d0)
-    ! K2 = abs(((dielectric_const-1.0d0)/(dielectric_const+2.0d0)))**2
-    fact_sca = 0.5e0/(wave_num**2)
-    fact_ext = 2.0e0*pi*im/wave_num**2.e0 
-    ! back_spec(:) = 0.d0
-    ! sumqback = 0.d0
+    K2 = abs(K)**2
+
+    !!! build angles - here I copy from the Mie routine
+    ! I am quite sure there is a generic method to derive the
+    ! the number of angles to be used to sample scattering properties
+    ! in order to get the Legendre series - Davide
+    x = pi * diameter(nbins) / wavelength
+    nterms = 0
+    call miecalc (err,nterms, x, refre+im*refim, a, b)
+    if (err /= 0) then
+      msg = 'error in miecalc 4 ssrg!'
+      call report(err, msg, nameOfRoutine)
+      errorstatus = err
+      return
+    end if         
+    nlegen = 2 * nterms 
+    nlegen = min(maxnleg-1, nlegen) 
+    nquad = (nlegen + 2 * nterms + 2) / 2 
+    if (nquad.gt.maxn) then
+      errorstatus = fatal
+      msg = 'ssrg: maxn exceeded' 
+      call report(errorstatus, msg, nameOfRoutine)
+      return
+    end if
+    call gausquad(nquad, mu, wts) ! got angles and weights
+
     
+
+    ! Begin loop over sizes   
     do ii = 1, nbins
+      
+      !Do not process if no particles present
+      if (ndens(ii) <= 0) CYCLE
+
+      ndens_eff = ndens(ii)
+      del_d_eff = del_d(ii)
+      n_tot = n_tot + (ndens_eff * del_d_eff) ! sum up particle number concentration
 
       if (canting(ii) == 0) then
         d_wave = diameter(ii) * as_ratio(ii)
       else if (canting(ii) == 90) then
         d_wave = diameter(ii)
       end if
+      volume = mass(ii) / rho_ice       !volume of pure ice in particle
+      prefactor = 9.d0*wave_num**4*K2*volume**2/(4.d0*pi)
+      Cabs = 3.d0*wave_num*volume*dimag(K)
+      
+      ! Integrate phase function over scattering angles to get Csca
 
-      !volume of pure ice in particle
-      volume = mass(ii) / rho_ice 
+      ! scattering angle [rad]
+      !scat_angle_rad = abs(angles_rad(ia1) - angles_rad(ia2))
 
-      ! Loop over scattering angles
-      do ia1 = 1, nummu
-        scattering_integral_11 = 0.
-        scattering_integral_12 = 0.
-        do ia2 = 1, 2*nummu
-          ! scattering angle [rad]
-          scat_angle_rad = abs(angles_rad(ia1) - angles_rad(ia2))
+      ! Electrical size
+      x = k*d_wave * sin(scat_angle_rad/2.)
+      call shape_factor(x, rg_kappa, rg_beta, rg_gamma, shape_fact)
 
-          ! Electrical size
-          x = k*d_wave * sin(scat_angle_rad/2.)
+      
+      s22 = 3./8. * wave_num**2 * K * volume * (term1 + rg_beta*term2)**0.5
+      s22 = s22*wave_num
+      s11 = s22*cos(scat_angle_rad) ! 
+          
+    end do ! end loop sizes
 
-          term1=(cos(x)*((1.0d0+rg_kappa/3.0d0)*(1.0d0/(2.0d0*x+pi)-1.0d0/(2.0d0*x-pi)) &
-                  - rg_kappa*(1.0d0/(2.0d0*x+3.0d0*pi)-1.0d0/(2.0d0*x-3.0d0*pi))))**2
 
-          ! Initialize the summation in the second term in the braces of Eq. 12
-          term2 = 0.0d0
 
-          ! Decide how many terms are needed
-          jmax = floor(5.d0*x/pi + 1.d0)
-
-          ! Evaluate summation
-          do jj = 1, jmax
-            term2 = term2 + (2.d0*jj)**(-rg_gamma) * sin(x)**2 &
-                  *(1.d0/(2.d0*(x+pi*jj))**2 + 1.d0/(2.d0*(x-pi*jj))**2)
-          end do
-          s22 = 3./8. * wave_num**2 * K * volume * (term1 + rg_beta*term2)**0.5
-          s22 = s22*wave_num
-          s11 = s22*cos(scat_angle_rad) ! 
-          print*,scat_angle_rad,'  ',s11,' ssrg ',s22
-          ! Put the terms together
-          scatter_matrix_tmp(1,ia2,1,ia1) = (s11*dconjg(s11)+s22*dconjg(s22))*2.0d0*pi*fact_sca
-          scatter_matrix_tmp(1,ia2,2,ia1) = (s11*dconjg(s11)-s22*dconjg(s22))*2.0d0*pi*fact_sca
-          scatter_matrix_tmp(2,ia2,1,ia1) = (s11*dconjg(s11)-s22*dconjg(s22))*2.0d0*pi*fact_sca
-          scatter_matrix_tmp(2,ia2,2,ia1) = (s11*dconjg(s11)+s22*dconjg(s22))*2.0d0*pi*fact_sca
-
-          if (scat_angle_rad .eq. 0.) then
-            extinct_matrix_tmp(1,1,ia1) = -real((s11 + s22)*fact_ext)
-            extinct_matrix_tmp(1,2,ia1) = -real((s11 - s22)*fact_ext)
-            extinct_matrix_tmp(2,1,ia1) = -real((s11 - s22)*fact_ext)
-            extinct_matrix_tmp(2,2,ia1) = -real((s11 + s22)*fact_ext)
-            print*,extinct_matrix_tmp(1,1,ia1)
-          end if
-        ! End loop scattering angles
-          scattering_integral_11 = scattering_integral_11 + scatter_matrix_tmp(1,ia2,1,ia1)*2.*pi*quad_weights(ia1)
-          scattering_integral_12 = scattering_integral_12 + scatter_matrix_tmp(1,ia2,2,ia1)*2.*pi*quad_weights(ia1)
-        end do
-        emis_vector_tmp(1,ia1) = extinct_matrix_tmp(1,1,ia1) - scattering_integral_11
-        emis_vector_tmp(2,ia1) = extinct_matrix_tmp(1,2,ia1) - scattering_integral_12
-      end do
-
-      !Apply psd
-
-      scatter_matrix(1,:,1,:,1) = scatter_matrix(1,:,1,:,1) &
-        + scatter_matrix_tmp(1,1:nummu,1,1:nummu)*ndens(ii) * del_d(ii)
-      scatter_matrix(1,:,2,:,1) = scatter_matrix(1,:,2,:,1) &
-        + scatter_matrix_tmp(1,1:nummu,2,1:nummu)*ndens(ii) * del_d(ii)
-      scatter_matrix(2,:,1,:,1) = scatter_matrix(2,:,1,:,1) &
-        + scatter_matrix_tmp(2,1:nummu,1,1:nummu)*ndens(ii) * del_d(ii)
-      scatter_matrix(2,:,2,:,1) = scatter_matrix(2,:,2,:,1) &
-        + scatter_matrix_tmp(2,1:nummu,2,1:nummu)*ndens(ii) * del_d(ii)
-      scatter_matrix(1,:,1,:,2) = scatter_matrix(1,:,1,:,2) &
-        + scatter_matrix_tmp(1,nummu+1:2*nummu,1,1:nummu)*ndens(ii) * del_d(ii)
-      scatter_matrix(1,:,2,:,2) = scatter_matrix(1,:,2,:,2) &
-        + scatter_matrix_tmp(1,nummu+1:2*nummu,2,1:nummu)*ndens(ii) * del_d(ii)
-      scatter_matrix(2,:,1,:,2) = scatter_matrix(2,:,1,:,2) &
-        + scatter_matrix_tmp(2,nummu+1:2*nummu,1,1:nummu)*ndens(ii) * del_d(ii)
-      scatter_matrix(2,:,2,:,2) = scatter_matrix(2,:,2,:,2) &
-        + scatter_matrix_tmp(2,nummu+1:2*nummu,2,1:nummu)*ndens(ii) * del_d(ii)
-
-      extinct_matrix(:,:,:) = extinct_matrix(:,:,:) + extinct_matrix_tmp(:,:,:) * ndens(ii) * del_d(ii)
-      emis_vector(:,:) = emis_vector(:,:) + emis_vector_tmp(:,:) * ndens(ii) * del_d(ii)
-    end do
 
 
     errorstatus = err    
@@ -282,6 +262,31 @@ module rayleigh_gans
     return 
 
   end subroutine calc_self_similar_rayleigh_gans_rt3
+
+  subroutine shape_factor(x, kappa, beta, gamma, shape)
+    real(kind=dbl), intent(in) :: x, kappa, beta, gamma!, zeta1 ! this routine should also include an additional term zeta1 as input
+    real(kind=dbl) :: scale, summ, xang
+    integer :: jmax, jj
+
+    !xang = x*sin(theta*0.5d0)
+
+    ! Compute the first term in braces Eq.4 Hogan et al. (2017)
+    scale = (cos(x)*((1.0d0+kappa/3.0d0)*(1.0d0/(2.0d0*x+pi)-1.0d0/(2.0d0*x-pi)) &
+            - kappa*(1.0d0/(2.0d0*x+3.0d0*pi)-1.0d0/(2.0d0*x-3.0d0*pi))))**2
+    
+    ! Compute the summation component of the phi shape function for ssrga
+    summ = 0.0d0
+    ! Decide how many terms are needed
+    jmax = floor(5.d0*x/pi + 1.d0)
+    ! Evaluate summation
+    do jj = 1, jmax
+      summ = summ + (2.d0*jj)**(-gamma) * sin(x)**2 &
+              *(1.d0/(2.d0*(x+pi*jj))**2 + 1.d0/(2.d0*(x-pi*jj))**2)
+    end do
+    summ = summ*beta*sin(x)**2
+    shape = pi**2*0.25d0*(scale+summ)
+  end subroutine shape_factor
+
 
   subroutine calc_self_similar_rayleigh_gans_passive(&
       errorstatus, &

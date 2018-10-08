@@ -307,29 +307,29 @@ module mie_spheres
       if (legen (m) .gt. 1.0e-7) nlegen = l 
     end do
 
-      call assert_false(err,any(isnan(legen)),&
-          "nan in legen")
-      call assert_false(err,any(isnan(legen2)),&
-          "nan in legen2")
-      call assert_false(err,any(isnan(legen3)),&
-          "nan in legen3")
-      call assert_false(err,any(isnan(legen4)),&
-          "nan in legen4")
-      call assert_false(err,any(isnan(back_spec)),&
-          "nan in back_spec")   
-      call assert_true(err,(extinction>0),&
-          "extinction must be positive")   
-      call assert_true(err,(scatter>0),&
-          "scatter must be positive") 
-      call assert_true(err,(back_scatt>0),&
-          "back_scatt must be positive") 
+    call assert_false(err,any(isnan(legen)),&
+        "nan in legen")
+    call assert_false(err,any(isnan(legen2)),&
+        "nan in legen2")
+    call assert_false(err,any(isnan(legen3)),&
+        "nan in legen3")
+    call assert_false(err,any(isnan(legen4)),&
+        "nan in legen4")
+    call assert_false(err,any(isnan(back_spec)),&
+        "nan in back_spec")   
+    call assert_true(err,(extinction>0),&
+        "extinction must be positive")   
+    call assert_true(err,(scatter>0),&
+        "scatter must be positive") 
+    call assert_true(err,(back_scatt>0),&
+        "back_scatt must be positive") 
 
-      if (err > 0) then
-          errorstatus = fatal
-          msg = "assertation error"
-          call report(errorstatus, msg, nameOfRoutine)
-          return
-      end if    
+    if (err > 0) then
+        errorstatus = fatal
+        msg = "assertation error"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+    end if    
 
     errorstatus = err    
     if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
