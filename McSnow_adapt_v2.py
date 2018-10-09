@@ -122,7 +122,7 @@ elif 14776336<number_ofSP:
 no_dupl_str = __general_utilities.gen_shortest_strings_without_duplicate(count_len=count_len)
 
 #get necessary parameter of m-D and A-D relationship
-mth,unr_alf,unr_bet,rhoi,rhol = __postprocess_McSnow.return_parameter_mD_AD_rel()
+mth,unr_alf,unr_bet,rhoi,rhol,Dth = __postprocess_McSnow.return_parameter_mD_AD_rel()
 #selecting fallspeed model from testcase string
 if "HW" in testcase:
     fallsp_model='heymsfield10_particles'
