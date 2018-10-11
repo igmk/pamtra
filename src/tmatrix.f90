@@ -630,7 +630,7 @@ call close_port(port, ios)
 			  s12 = s12*wave_num
 			  s21 = s21*wave_num
 			  s22 = s22*wave_num
-        print*,s11,' tmm ',s22
+        !print*,s11,' tmm ',s22
 			  scatt_matrix_tmp1_11 = scatt_matrix_tmp1_11 + (fact_sca*&
 			      (s11*dconjg(s11)+s12*dconjg(s12)+s21*dconjg(s21)+s22*dconjg(s22)))*phi_weights
 

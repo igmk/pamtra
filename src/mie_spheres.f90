@@ -74,7 +74,7 @@ module mie_spheres
     real(kind=dbl) :: p1, pl, pl1, pl2, p2, p3, p4 
     real(kind=dbl) :: sumqe, sumqs, sumqback
     real(kind=dbl), dimension(maxn) :: sump1, coef1, sump2, coef2,   &
-	sump3, coef3, sump4, coef4          
+                                       sump3, coef3, sump4, coef4
     complex(kind=dbl), dimension(maxn) :: a, b
     complex(kind=dbl) :: msphere, eps_mix
 

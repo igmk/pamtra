@@ -77,6 +77,7 @@ contains
     use tmatrix, only: calc_tmatrix
     use rayleigh_gans, only: calc_self_similar_rayleigh_gans, &
       calc_self_similar_rayleigh_gans_passive, &
+      calc_self_similar_rayleigh_gans_rt3, &
       calc_rayleigh_gans, &
       calc_rayleigh
     use vars_rt, only: rt_kexttot,&
@@ -548,19 +549,45 @@ contains
         return
       end if
 
-      else if (TRIM(scat_name) == "ssrg-rt3") then
+    else if (TRIM(scat_name) == "ssrg-rt3") then
+      if (len(trim(scat_name)) > 16) then
+        pos1 = 1
+        nn = 0
+        do
+          pos2 = index(scat_name(pos1:), "_")
+          if (pos2 == 0) then
+            nn = nn + 1
+            tokenized(nn) = scat_name(pos1:)
+            exit
+          end if
+          nn = nn + 1
+          tokenized(nn) = scat_name(pos1:pos1+pos2-2)
+          pos1 = pos2+pos1
+        end do
+        read(tokenized(2),*) rg_kappa
+        read(tokenized(3),*) rg_beta
+      else
+        !take default values for aggregates of bullet rosettes or columns from Hogan and Westbrook 2014
+        rg_kappa = 0.19d0
+        rg_beta = 0.23d0
+      end if
+      rg_gamma = 5.d0/3.d0 
 
       call calc_self_similar_rayleigh_gans_rt3(err,&
         freq*1d9,&
-        layer_t,& ! temperature ?
         liq_ice,&
         nbin,&
         diameter2scat,& ! noidea... but, input, so who cares?
         delta_d_ds, &
         num_density,&
-        density2scat, & ! noidea... but, input, so who cares?
+        mass_ds, &
+        as_ratio_list, &
+        canting_list, &
         refre, &
         refim, & !positive(?)
+        rg_kappa, &
+        rg_beta, &
+        rg_gamma, &
         !OUT
         kext_hydro,&
         salb_hydro,&

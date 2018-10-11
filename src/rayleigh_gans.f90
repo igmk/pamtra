@@ -2,7 +2,7 @@ module rayleigh_gans
 
   use kinds
   use constants, only: pi,c, Im, rho_ice
-  use settings, only: active,passive, nummu, mu_values, nstokes, quad_weights
+  use settings, only: active,passive, nummu, mu_values, nstokes, quad_weights, maxnleg, lhyd_absorption, lphase_flag
   use report_module
   use mie_scat_utilities  
   use vars_index, only: i_x,i_y, i_z, i_h
@@ -13,8 +13,7 @@ module rayleigh_gans
 
   subroutine calc_self_similar_rayleigh_gans_rt3(&
       errorstatus, &
-      freq, & ! frequency [Hz]
-      t, ! not sure if temperature is needed here
+      freq, & 
       liq_ice, & ! again... not sure
       nbins, &
       diameter, &
@@ -83,7 +82,7 @@ module rayleigh_gans
     implicit none
 
     real(kind=dbl), intent(in) :: freq  ! frequency [Hz]
-    real(kind=dbl), intent(in) :: t    ! temperature [K]
+    !real(kind=dbl), intent(in) :: t    ! temperature [K]
     integer, intent(in) :: liq_ice
     integer, intent(in) :: nbins
     real(kind=dbl), intent(in), dimension(nbins) :: diameter
@@ -101,7 +100,11 @@ module rayleigh_gans
     real(kind=dbl), intent(out) :: extinction
     real(kind=dbl), intent(out) :: albedo
     real(kind=dbl), intent(out) :: back_scatt
-    real(kind=dbl), intent(out), dimension(maxnleg) :: legen1, legen2, legen3, legen4 
+    integer, parameter :: maxn  = 5000
+    real(kind=dbl), intent(out), dimension(maxnleg) :: legen1, legen2, legen3, legen4
+    real(kind=dbl), dimension(maxn) :: sump1, coef1, sump2, coef2,   &
+                                       sump3, coef3, sump4, coef4
+    complex(kind=dbl), dimension(maxn) :: a, b
     real(kind=dbl), intent(out), dimension(nbins) :: back_spec
     integer, intent(out) :: nlegen
 
@@ -112,16 +115,22 @@ module rayleigh_gans
     real(kind=dbl) :: x !electrical size
     real(kind=dbl) :: term1, term2 ! partial terms in the ssrg formula
     real(kind=dbl) :: d_wave !size along beam propagation
+    real(kind=dbl) :: prefactor, shape_fact, phas_func
+    real(kind=dbl) :: pl, pl1, pl2
+    real(kind=dbl) :: qext, qscat, qback, cabs, scatter, n_tot, del_d_eff, ndens_eff
+    real(kind=dbl) :: sumqe, sumqs, sumqback, tmp
+    real(kind=dbl) :: mu(maxn), wts(maxn)
 
     real(kind=dbl) :: angular_dep, scat_angle_rad
-    real(kind=dbl), dimension(2*nummu) :: angles_rad, phas_func
+    !real(kind=dbl), dimension(2*nummu) :: angles_rad, phas_func
 
-    integer(kind=long) :: ii
+    integer(kind=long) :: ii, i, l, m
     integer(kind=long) :: jj
     integer(kind=long) :: jmax
     integer(kind=long) :: ia
-    integer(kind=long) :: ia1
-    integer(kind=long) :: ia2
+    integer(kind=long) :: nterms, nleg, nquad
+    !integer(kind=long) :: ia1
+    !integer(kind=long) :: ia2
 
     complex(kind=dbl) :: dielectric_const, K
     complex(kind=dbl) :: s11,s22 ! elements of amplitude matrix
@@ -178,10 +187,10 @@ module rayleigh_gans
     sumqe = 0.0d0
     sumqs = 0.0d0
     sumqback = 0.0d0
-    sump1(:) = 0.0d0
-    sump2(:) = 0.0d0
-    sump3(:) = 0.0d0
-    sump4(:) = 0.0d0
+    sump1 (:) = 0.0d0
+    sump2 (:) = 0.0d0
+    sump3 (:) = 0.0d0
+    sump4 (:) = 0.0d0
     n_tot = 0.d0 ! total number density of particles
 
     wavelength = c/(freq) ! meters
@@ -214,9 +223,7 @@ module rayleigh_gans
       call report(errorstatus, msg, nameOfRoutine)
       return
     end if
-    call gausquad(nquad, mu, wts) ! got angles and weights
-
-    
+    call gausquad(nquad, mu, wts) ! got angles and weights    
 
     ! Begin loop over sizes   
     do ii = 1, nbins
@@ -238,24 +245,116 @@ module rayleigh_gans
       Cabs = 3.d0*wave_num*volume*dimag(K)
       
       ! Integrate phase function over scattering angles to get Csca
+      scatter = 0.0d0
+      do ia = 1, 360
+        scat_angle_rad = (ia-1)*pi/(360-1)
+        ! Electrical size
+        x = k*d_wave * sin(scat_angle_rad/2.)
+        call calc_shape_factor(x, rg_kappa, rg_beta, rg_gamma, shape_fact)
+        phas_func = prefactor*shape_fact*(1.d0 + cos(scat_angle_rad)**2)*0.5
+        scatter = scatter + phas_func*sin(scat_angle_rad)
+      end do
+      scatter = scatter/pi ! divide by domain after summation in the integral
+      qext = scatter + Cabs
+      qback = phas_func ! last phase function corresponds to backscattering
 
-      ! scattering angle [rad]
-      !scat_angle_rad = abs(angles_rad(ia1) - angles_rad(ia2))
 
-      ! Electrical size
-      x = k*d_wave * sin(scat_angle_rad/2.)
-      call shape_factor(x, rg_kappa, rg_beta, rg_gamma, shape_fact)
-
-      
-      s22 = 3./8. * wave_num**2 * K * volume * (term1 + rg_beta*term2)**0.5
-      s22 = s22*wave_num
-      s11 = s22*cos(scat_angle_rad) ! 
-          
+      do ia = 1, nquad
+        x = k*d_wave * sin(scat_angle_rad/2.)
+        call calc_shape_factor(x, rg_kappa, rg_beta, rg_gamma, shape_fact)
+        s22 = 3. * wave_num**2 * K * volume * shape_fact**0.5 /(4.d0*pi)
+        s11 = s22*cos(scat_angle_rad)
+        sump1(i) = sump1(i) + 0.5*(abs(s11)**2 + abs(s22)**2)*ndens_eff*del_d_eff
+        sump2(i) = sump2(i) + 0.5*(abs(s11)**2 - abs(s22)**2)*ndens_eff*del_d_eff
+        sump3(i) = sump3(i) + dreal(dconjg(s11)*s22)*ndens_eff*del_d_eff
+        sump4(i) = sump4(i) + dimag(dconjg(s22)*s11)*ndens_eff*del_d_eff
+      end do
     end do ! end loop sizes
 
+!           multiply the sums by the integration delta and other constan
+    !             put quadrature weights in angular array for later         
 
+    if (verbose >= 4) print*, "ntot", n_tot        
+        
+    if (lhyd_absorption) then
+        extinction = sumqe 
+    else
+        extinction = sumqe - sumqs !remove scattering from extinction
+    end if
+    scatter = sumqs 
+    back_scatt = sumqback 
+    albedo = scatter / extinction 
 
+    if (verbose >= 4) print*, "extinction, scatter, back_scatt, albedo"
+    if (verbose >= 4) print*,  extinction, scatter, back_scatt, albedo       
+    
+    ! if the liq_ice function is not desired then leave now           
+    if ( .not. lphase_flag) return 
 
+    tmp = (wavelength**2 / (pi * scatter) ) 
+    do i = 1, nquad 
+      sump1 (i) = tmp * sump1 (i) * wts (i) 
+      sump2 (i) = tmp * sump2 (i) * wts (i) 
+      sump3 (i) = tmp * sump3 (i) * wts (i) 
+      sump4 (i) = tmp * sump4 (i) * wts (i) 
+    end do
+
+    ! integrate the angular scattering functions times legendre   
+    ! polynomials to find the legendre coefficients             
+    do m = 1, nlegen + 1 
+      coef1 (m) = 0.0d0 
+      coef2 (m) = 0.0d0 
+      coef3 (m) = 0.0d0 
+      coef4 (m) = 0.0d0 
+    end do
+    !           use upward recurrence to find legendre polynomials          
+    do i = 1, nquad 
+      pl1 = 1.0d0 
+      pl = 1.0d0 
+      do l = 0, nlegen 
+        m = l + 1 
+        if (l .gt. 0) pl = (2*l-1)*mu(i)*pl1/l-(l-1)*pl2/l                                                                 
+        coef1 (m) = coef1 (m) + sump1 (i) * pl 
+        coef2 (m) = coef2 (m) + sump2 (i) * pl 
+        coef3 (m) = coef3 (m) + sump3 (i) * pl 
+        coef4 (m) = coef4 (m) + sump4 (i) * pl 
+        pl2 = pl1 
+        pl1 = pl 
+      end do
+    end do
+    nleg = nlegen 
+    do l = 0, nleg 
+      m = l + 1 
+      legen1 (m) = (2 * l + 1) / 2.0 * coef1 (m) 
+      legen2 (m) = (2 * l + 1) / 2.0 * coef2 (m) 
+      legen3 (m) = (2 * l + 1) / 2.0 * coef3 (m) 
+      legen4 (m) = (2 * l + 1) / 2.0 * coef4 (m) 
+      if (legen1 (m) .gt. 1.0e-7) nlegen = l 
+    end do
+
+    call assert_false(err,any(isnan(legen1)),&
+        "nan in legen1")
+    call assert_false(err,any(isnan(legen2)),&
+        "nan in legen2")
+    call assert_false(err,any(isnan(legen3)),&
+        "nan in legen3")
+    call assert_false(err,any(isnan(legen4)),&
+        "nan in legen4")
+    call assert_false(err,any(isnan(back_spec)),&
+        "nan in back_spec")   
+    call assert_true(err,(extinction>0),&
+        "extinction must be positive")   
+    call assert_true(err,(scatter>0),&
+        "scatter must be positive") 
+    call assert_true(err,(back_scatt>0),&
+        "back_scatt must be positive") 
+
+    if (err > 0) then
+      errorstatus = fatal
+      msg = "assertation error"
+      call report(errorstatus, msg, nameOfRoutine)
+      return
+    end if    
 
     errorstatus = err    
     if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
@@ -263,8 +362,9 @@ module rayleigh_gans
 
   end subroutine calc_self_similar_rayleigh_gans_rt3
 
-  subroutine shape_factor(x, kappa, beta, gamma, shape)
+  subroutine calc_shape_factor(x, kappa, beta, gamma, shape)
     real(kind=dbl), intent(in) :: x, kappa, beta, gamma!, zeta1 ! this routine should also include an additional term zeta1 as input
+    real(kind=dbl), intent(out) :: shape
     real(kind=dbl) :: scale, summ, xang
     integer :: jmax, jj
 
@@ -285,7 +385,7 @@ module rayleigh_gans
     end do
     summ = summ*beta*sin(x)**2
     shape = pi**2*0.25d0*(scale+summ)
-  end subroutine shape_factor
+  end subroutine calc_shape_factor
 
 
   subroutine calc_self_similar_rayleigh_gans_passive(&
@@ -502,7 +602,7 @@ module rayleigh_gans
           s22 = 3./8. * wave_num**2 * K * volume * (term1 + rg_beta*term2)**0.5
           s22 = s22*wave_num
           s11 = s22*cos(scat_angle_rad) ! 
-          print*,scat_angle_rad,'  ',s11,' ssrg ',s22
+          !print*,scat_angle_rad,'  ',s11,' ssrg ',s22
           ! Put the terms together
           scatter_matrix_tmp(1,ia2,1,ia1) = (s11*dconjg(s11)+s22*dconjg(s22))*2.0d0*pi*fact_sca
           scatter_matrix_tmp(1,ia2,2,ia1) = (s11*dconjg(s11)-s22*dconjg(s22))*2.0d0*pi*fact_sca
