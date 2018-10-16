@@ -225,7 +225,8 @@ module rayleigh_gans
     end if
     call gausquad(nquad, mu, wts) ! got angles and weights    
 
-    ! Begin loop over sizes   
+    ! Begin loop over sizes
+    sumqs = 0.0d0
     do ii = 1, nbins
       
       !Do not process if no particles present
@@ -243,47 +244,62 @@ module rayleigh_gans
       volume = mass(ii) / rho_ice       !volume of pure ice in particle
       prefactor = 9.d0*wave_num**4*K2*volume**2/(4.d0*pi)
       Cabs = 3.d0*wave_num*volume*dimag(K)
-      
+      print*,"diam ",diameter(ii)," volume ",volume," freq ",freq," n",refre," j",refim
+      print*,"Cabs ",Cabs
       ! Integrate phase function over scattering angles to get Csca
-      scatter = 0.0d0
-      do ia = 1, 360
-        scat_angle_rad = (ia-1)*pi/(360-1)
+      jmax=360
+      qscat = 0.0d0
+      do ia = 2, jmax ! every half degree, 0 and pi gives 0 contribution, but I need pi for back
+        scat_angle_rad = dble(ia-1)*pi/dble(jmax-1)
         ! Electrical size
-        x = k*d_wave * sin(scat_angle_rad/2.)
+        x = wave_num * d_wave * sin(scat_angle_rad*0.5d0)
         call calc_shape_factor(x, rg_kappa, rg_beta, rg_gamma, shape_fact)
-        phas_func = prefactor*shape_fact*(1.d0 + cos(scat_angle_rad)**2)*0.5
-        scatter = scatter + phas_func*sin(scat_angle_rad)
+        phas_func = prefactor*shape_fact*(1.d0 + cos(scat_angle_rad)**2)*0.5d0
+        qscat = qscat + phas_func*sin(scat_angle_rad)
       end do
-      scatter = scatter/pi ! divide by domain after summation in the integral
-      qext = scatter + Cabs
       qback = phas_func ! last phase function corresponds to backscattering
+      qscat = 0.5*pi*qscat/dble(jmax) ! divide by domain after summation in the integral and coefficient 0.5
 
+      print*,"ssrg qscat ", qscat
+      qext = scatter + Cabs
+      print*,"ssrg qback", qback
+
+      !integrate=sum up . del_d is already included in ndens, since ndens is not normed!
+      sumqe = sumqe + ( qext * ndens_eff * del_d_eff)
+      sumqs = sumqs + ( qscat *ndens_eff * del_d_eff)
+      sumqback = sumqback + ( qback * ndens_eff * del_d_eff)
 
       do ia = 1, nquad
-        x = k*d_wave * sin(scat_angle_rad/2.)
+        scat_angle_rad = acos(mu(ia))
+        x = wave_num * d_wave * sin(scat_angle_rad*0.5d0)
         call calc_shape_factor(x, rg_kappa, rg_beta, rg_gamma, shape_fact)
-        s22 = 3. * wave_num**2 * K * volume * shape_fact**0.5 /(4.d0*pi)
+        s22 = -im * 3. * wave_num**3 * K * volume * shape_fact**0.5d0 / (4.d0*pi) ! here I have multiplied by -j*wave_num because of mie_sphere convention
         s11 = s22*cos(scat_angle_rad)
-        sump1(i) = sump1(i) + 0.5*(abs(s11)**2 + abs(s22)**2)*ndens_eff*del_d_eff
-        sump2(i) = sump2(i) + 0.5*(abs(s11)**2 - abs(s22)**2)*ndens_eff*del_d_eff
-        sump3(i) = sump3(i) + dreal(dconjg(s11)*s22)*ndens_eff*del_d_eff
-        sump4(i) = sump4(i) + dimag(dconjg(s22)*s11)*ndens_eff*del_d_eff
+        !print*,"s11 ",s11,"    s22 ",s22
+        sump1(ia) = sump1(ia) + 0.5*(abs(s11)**2 + abs(s22)**2)*ndens_eff*del_d_eff
+        sump2(ia) = sump2(ia) + 0.5*(abs(s11)**2 - abs(s22)**2)*ndens_eff*del_d_eff
+        sump3(ia) = sump3(ia) + dreal(dconjg(s11)*s22)*ndens_eff*del_d_eff
+        sump4(ia) = sump4(ia) + dimag(dconjg(s22)*s11)*ndens_eff*del_d_eff
+        !print*,"sump1", sump1(ia)
       end do
     end do ! end loop sizes
-
+    
 !           multiply the sums by the integration delta and other constan
     !             put quadrature weights in angular array for later         
 
     if (verbose >= 4) print*, "ntot", n_tot        
         
     if (lhyd_absorption) then
-        extinction = sumqe 
+        extinction = sumqe
     else
         extinction = sumqe - sumqs !remove scattering from extinction
     end if
-    scatter = sumqs 
+    scatter = sumqs
+    print*,"ssrg scatter ", scatter 
     back_scatt = sumqback 
+    print*,"backscatt ", back_scatt
     albedo = scatter / extinction 
+    print*,"ssrg albedo ", albedo
 
     if (verbose >= 4) print*, "extinction, scatter, back_scatt, albedo"
     if (verbose >= 4) print*,  extinction, scatter, back_scatt, albedo       
@@ -325,12 +341,14 @@ module rayleigh_gans
     nleg = nlegen 
     do l = 0, nleg 
       m = l + 1 
+      !print*, m, coef1(m), coef2(m), coef3(m), coef4(m)
       legen1 (m) = (2 * l + 1) / 2.0 * coef1 (m) 
       legen2 (m) = (2 * l + 1) / 2.0 * coef2 (m) 
       legen3 (m) = (2 * l + 1) / 2.0 * coef3 (m) 
       legen4 (m) = (2 * l + 1) / 2.0 * coef4 (m) 
       if (legen1 (m) .gt. 1.0e-7) nlegen = l 
     end do
+    !print*,legen1
 
     call assert_false(err,any(isnan(legen1)),&
         "nan in legen1")
@@ -554,7 +572,7 @@ module rayleigh_gans
       angles_rad(ia) = acos(mu_values(ia))
       angles_rad(ia+nummu) = acos(-1.*mu_values(ia))
     end do 
-    print*,refre,' +j ',refim
+    !print*,refre,' +j ',refim
     dielectric_const = (refre+im*refim)**2 !solid ice
     K = (dielectric_const-1.0d0)/(dielectric_const+2.0d0)
     ! K2 = abs(((dielectric_const-1.0d0)/(dielectric_const+2.0d0)))**2
@@ -614,7 +632,7 @@ module rayleigh_gans
             extinct_matrix_tmp(1,2,ia1) = -real((s11 - s22)*fact_ext)
             extinct_matrix_tmp(2,1,ia1) = -real((s11 - s22)*fact_ext)
             extinct_matrix_tmp(2,2,ia1) = -real((s11 + s22)*fact_ext)
-            print*,extinct_matrix_tmp(1,1,ia1)
+            !print*,extinct_matrix_tmp(1,1,ia1)
           end if
         ! End loop scattering angles
           scattering_integral_11 = scattering_integral_11 + scatter_matrix_tmp(1,ia2,1,ia1)*2.*pi*quad_weights(ia1)

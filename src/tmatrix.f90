@@ -549,7 +549,7 @@ call close_port(port, ios)
   !     axi = axi!*1.e6
       mrr = REAL(ref_index)
       mri = abs(IMAG(ref_index))
-      print*,mrr,' +j ',mri
+      !print*,mrr,' +j ',mri
 
       if ((active .eqv. .true.) .and. (passive .eqv. .false.)) then
         qua_start = 16

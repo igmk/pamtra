@@ -214,11 +214,14 @@ module mie_spheres
       qext =   qext   * (diameter(ir)/2.d0)**2 *pi        ! [m²]!
       qscat =  qscat  * (diameter(ir)/2.d0)**2 *pi       ! [m²]!
       qback =  qback  * (diameter(ir)/2.d0)**2 *pi       !  [m²]! cross section
+      print*,"Mie cscat ", qscat
+      print*,"Mie back ", qback
    
       ! apply bin weights
       qext =   qext  * ndens_eff      ! [m²/m⁴]!
       qscat =  qscat * ndens_eff      ! [m²/m⁴]!
       qback =  qback * ndens_eff      !  [m²/m⁴]! cross section per volume
+      print*,"Mie cs*ndens ", qscat
   
       if (verbose >= 4) print*, "qback* del_d_eff, ndens_eff , (diameter(ir)/2.d0), pi, del_d_eff"
       if (verbose >= 4) print*, qback * del_d_eff, ndens_eff ,(diameter(ir)/2.d0), pi, del_d_eff
@@ -240,6 +243,7 @@ module mie_spheres
           sump2 (i) = sump2 (i) + p2 * ndens_eff * del_d_eff ! = M12 = M21
           sump3 (i) = sump3 (i) + p3 * ndens_eff * del_d_eff ! = M33 = M44
           sump4 (i) = sump4 (i) + p4 * ndens_eff * del_d_eff ! = M34 = -M43
+          !print*,"sump1", sump1(i)
     	  end do
       end if
     end do
@@ -256,9 +260,12 @@ module mie_spheres
     else
         extinction = sumqe - sumqs !remove scattering from extinction
     end if
-    scatter = sumqs 
+    scatter = sumqs
+    print*,"Mie scatter ", scatter 
     back_scatt = sumqback 
-    albedo = scatter / extinction 
+    print*,"backscatt ", back_scatt
+    albedo = scatter / extinction
+    print*,"Mie albedo ", albedo
 
     if (verbose >= 4) print*, "extinction, scatter, back_scatt, albedo"
     if (verbose >= 4) print*,  extinction, scatter, back_scatt, albedo       
@@ -300,12 +307,14 @@ module mie_spheres
     nleg = nlegen 
     do l = 0, nleg 
       m = l + 1 
+      !print*, m, coef1(m), coef2(m), coef3(m), coef4(m)
       legen (m) = (2 * l + 1) / 2.0 * coef1 (m) 
       legen2 (m) = (2 * l + 1) / 2.0 * coef2 (m) 
       legen3 (m) = (2 * l + 1) / 2.0 * coef3 (m) 
       legen4 (m) = (2 * l + 1) / 2.0 * coef4 (m) 
       if (legen (m) .gt. 1.0e-7) nlegen = l 
     end do
+    !print*,legen
 
     call assert_false(err,any(isnan(legen)),&
         "nan in legen")
