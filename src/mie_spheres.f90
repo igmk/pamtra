@@ -214,14 +214,14 @@ module mie_spheres
       qext =   qext   * (diameter(ir)/2.d0)**2 *pi        ! [m²]!
       qscat =  qscat  * (diameter(ir)/2.d0)**2 *pi       ! [m²]!
       qback =  qback  * (diameter(ir)/2.d0)**2 *pi       !  [m²]! cross section
-      print*,"Mie cscat ", qscat
-      print*,"Mie back ", qback
+      !print*,"Mie cscat ", qscat
+      !print*,"Mie back ", qback
    
       ! apply bin weights
       qext =   qext  * ndens_eff      ! [m²/m⁴]!
       qscat =  qscat * ndens_eff      ! [m²/m⁴]!
       qback =  qback * ndens_eff      !  [m²/m⁴]! cross section per volume
-      print*,"Mie cs*ndens ", qscat
+      !print*,"Mie cs*ndens ", qscat
   
       if (verbose >= 4) print*, "qback* del_d_eff, ndens_eff , (diameter(ir)/2.d0), pi, del_d_eff"
       if (verbose >= 4) print*, qback * del_d_eff, ndens_eff ,(diameter(ir)/2.d0), pi, del_d_eff
@@ -251,9 +251,7 @@ module mie_spheres
     !           multiply the sums by the integration delta and other constan
     !             put quadrature weights in angular array for later         
 
-    if (verbose >= 4) print*, "ntot", n_tot
-
-        
+    if (verbose >= 4) print*, "ntot", n_tot        
         
     if (lhyd_absorption) then
         extinction = sumqe 
@@ -261,11 +259,11 @@ module mie_spheres
         extinction = sumqe - sumqs !remove scattering from extinction
     end if
     scatter = sumqs
-    print*,"Mie scatter ", scatter 
+    !print*,"Mie scatter ", scatter 
     back_scatt = sumqback 
-    print*,"backscatt ", back_scatt
+    !print*,"backscatt ", back_scatt
     albedo = scatter / extinction
-    print*,"Mie albedo ", albedo
+    !print*,"Mie albedo ", albedo
 
     if (verbose >= 4) print*, "extinction, scatter, back_scatt, albedo"
     if (verbose >= 4) print*,  extinction, scatter, back_scatt, albedo       

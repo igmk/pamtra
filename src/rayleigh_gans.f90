@@ -244,8 +244,8 @@ module rayleigh_gans
       volume = mass(ii) / rho_ice       !volume of pure ice in particle
       prefactor = 9.d0*wave_num**4*K2*volume**2/(4.d0*pi)
       Cabs = 3.d0*wave_num*volume*dimag(K)
-      print*,"diam ",diameter(ii)," volume ",volume," freq ",freq," n",refre," j",refim
-      print*,"Cabs ",Cabs
+      !print*,"diam ",diameter(ii)," volume ",volume," freq ",freq," n",refre," j",refim
+      !print*,"Cabs ",Cabs
       ! Integrate phase function over scattering angles to get Csca
       jmax=360
       qscat = 0.0d0
@@ -260,14 +260,19 @@ module rayleigh_gans
       qback = phas_func ! last phase function corresponds to backscattering
       qscat = 0.5*pi*qscat/dble(jmax) ! divide by domain after summation in the integral and coefficient 0.5
 
-      print*,"ssrg qscat ", qscat
-      qext = scatter + Cabs
-      print*,"ssrg qback", qback
+      !print*,"ssrg qscat ", qscat
+      qext = qscat + Cabs
+      !print*,"ssrg qback", qback
 
       !integrate=sum up . del_d is already included in ndens, since ndens is not normed!
       sumqe = sumqe + ( qext * ndens_eff * del_d_eff)
       sumqs = sumqs + ( qscat *ndens_eff * del_d_eff)
       sumqback = sumqback + ( qback * ndens_eff * del_d_eff)
+
+      if (verbose >= 4) print*, "NEW: diameter(ii), ndens_eff, del_d_eff, n_tot, sumqback, sumqs, sumqe"
+      if (verbose >= 4) print*, diameter(ii), ndens_eff, del_d_eff, n_tot, sumqback , sumqs, sumqe
+      back_spec(ii) =  qback   ! volumetric backscattering cross section for radar simulator in backscat per volume per del_d[m²/m⁴]
+
 
       do ia = 1, nquad
         scat_angle_rad = acos(mu(ia))
@@ -289,17 +294,17 @@ module rayleigh_gans
 
     if (verbose >= 4) print*, "ntot", n_tot        
         
-    if (lhyd_absorption) then
+    if (lhyd_absorption) then ! this might be the problem with negative extinction
         extinction = sumqe
     else
         extinction = sumqe - sumqs !remove scattering from extinction
     end if
     scatter = sumqs
-    print*,"ssrg scatter ", scatter 
+    !print*,"ssrg scatter ", scatter 
     back_scatt = sumqback 
-    print*,"backscatt ", back_scatt
+    !print*,"backscatt ", back_scatt
     albedo = scatter / extinction 
-    print*,"ssrg albedo ", albedo
+    !print*,"ssrg albedo ", albedo
 
     if (verbose >= 4) print*, "extinction, scatter, back_scatt, albedo"
     if (verbose >= 4) print*,  extinction, scatter, back_scatt, albedo       
