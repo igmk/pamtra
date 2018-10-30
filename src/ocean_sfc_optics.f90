@@ -47,6 +47,10 @@ module ocean_sfc_optics
     sfc_salinity(i_x,i_y),&
     rt_sfc_emissivity(:,i),&
     rt_sfc_reflectivity(:,i))
+        if (i == nummu) then
+           rt_sfc_emissivity(:,i) = (rt_sfc_emissivity(1,i) + rt_sfc_emissivity(2,i)) / 2.
+           rt_sfc_reflectivity(:,i) = (rt_sfc_reflectivity(1,i) + rt_sfc_reflectivity(2,i)) / 2.
+       end if
   end do
   
   if (err /= 0) then

@@ -273,6 +273,7 @@ subroutine make_dist(errorstatus)
 
   do i=1,nbin
      n_ds(i) = (f_ds(i) + f_ds(i+1)) / 2._dbl * delta_d_ds(i)  ! Trapezoidal approximation of the integral
+!     print*, d_ds(i), f_ds(i),delta_d_ds(i), n_ds(i)
   enddo
 
   !remove numerical instabilities

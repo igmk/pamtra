@@ -67,14 +67,14 @@ module sfc_matrices
           errorstatus = err
           return
       end if
-!     else if (ground_type .eq. 'S') then
-!       call specular_matrices(ground_temp,reflect, trans, radiance)
-!       if (err /= 0) then
-!           msg = 'error in surface reflection calculation'
-!           call report(err,msg, nameOfRoutine)
-!           errorstatus = err
-!           return
-!       end if
+    else if (ground_type .eq. 'S') then
+      call specular_matrices(ground_temp,reflect, trans, radiance)
+      if (err /= 0) then
+          msg = 'error in surface reflection calculation'
+          call report(err,msg, nameOfRoutine)
+          errorstatus = err
+          return
+      end if
     else
       msg = 'Wrong or no ground_type selected'
       call report(err,msg, nameOfRoutine)
@@ -137,8 +137,8 @@ module sfc_matrices
     ! and completely unpolarizes the radiation                  
     do j1 = 1, nummu 
       do j2 = 1, nummu 
-	  reflect(1,j1,1,j2,2) = 2.0 * rt_sfc_reflectivity(1,1) * mu_values(  &
-	      j2) * quad_weights(j2)                                        
+        reflect(1,j1,1,j2,2) = 2.0 * rt_sfc_reflectivity(1,1) * mu_values(  &
+          j2) * quad_weights(j2)                                        
       end do
     end do
 
@@ -150,39 +150,49 @@ module sfc_matrices
     
   end subroutine lambert_matrices
 
-!   subroutine specular_matrices(ground_temp,reflect, trans,radiance)
-! 
-!     integer :: j
-!     real(kind=dbl), intent(in) :: ground_temp
-!     real(kind=dbl), intent(out) :: reflect(nstokes, nummu, nstokes, nummu, 2) 
-!     real(kind=dbl), intent(out) :: trans(nstokes, nummu, nstokes, nummu, 2) 
-!     real(kind=dbl), intent(out) :: radiance(nstokes, nummu)
-!     
-!     character(len=16) :: nameOfRoutine = 'specular_matrices'
-!     
-!     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
-!     
-!     call midentity(n, trans(1, 1, 1, 1, 1)) 
-!     call midentity(n, trans(1, 1, 1, 1, 2)) 
-! 
-!     do j = 1, nummu 
-!       r1 = rt_sfc_reflectivity(1,1)
-!       reflect(1, j, 1, j, 2) = r1 
-!       r2 = 0.
-!       if (nstokes .gt. 1) then 
-! 	  reflect(1, j, 2, j, 2) = r2 
-! 	  reflect(2, j, 1, j, 2) = r2 
-! 	  reflect(2, j, 2, j, 2) = r1 
-!       end if
-!     end do
-!     
-!     call planck_function(ground_temp, 'r', wavelength, planck) 
-!     do j = 1, nummu 
-!       radiance (1, j) = rt_sfc_emissivity(1,1) * planck 
-!     end do
-!     
-!     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
-!     
-!   end subroutine specular_matrices
+  subroutine specular_matrices(ground_temp,reflect, trans,radiance)
+
+    integer :: j
+    real(kind=dbl), intent(in) :: ground_temp
+    real(kind=dbl), intent(out) :: reflect(nstokes, nummu, nstokes, nummu, 2) 
+    real(kind=dbl), intent(out) :: trans(nstokes, nummu, nstokes, nummu, 2) 
+    real(kind=dbl), intent(out) :: radiance(nstokes, nummu)
+    
+    character(len=16) :: nameOfRoutine = 'specular_matrices'
+    
+    if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
+    
+    call midentity(n, trans(1, 1, 1, 1, 1)) 
+    call midentity(n, trans(1, 1, 1, 1, 2)) 
+
+    ! the code has been changed according to Xinxin Xie suggestion. It is now identical with Fresnel.
+    do j = 1, nummu 
+      rv = rt_sfc_reflectivity(1,j) ! The square of the vertical abs value
+      rh = rt_sfc_reflectivity(2,j) ! The square of the horizontal abs value
+      r1 = (rv+rh)/2.0d0
+      r2 = (rv-rh)/2.0d0
+      reflect(1, j, 1, j, 2) = r1 
+      reflect(1, j, 2, j, 2) = r2 
+      reflect(2, j, 1, j, 2) = r2 
+      reflect(2, j, 2, j, 2) = r1 
+      ! r1 = rt_sfc_reflectivity(1,1)
+      ! reflect(1, j, 1, j, 2) = r1 
+      ! r2 = 0.
+      ! if (nstokes .gt. 1) then 
+      !   reflect(1, j, 2, j, 2) = r2 
+      !   reflect(2, j, 1, j, 2) = r2 
+      !   reflect(2, j, 2, j, 2) = r1 
+      ! end if
+    end do
+    
+    call planck_function(ground_temp, 'r', wavelength, planck) 
+    do j = 1, nummu 
+      radiance(1, j) = (1.0 - r1) * planck 
+      radiance(2, j) = - r2 * planck 
+    end do
+    
+    if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
+    
+  end subroutine specular_matrices
 
 end module sfc_matrices
