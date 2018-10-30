@@ -1822,20 +1822,28 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   vals = ICON_file.variables
 
   ## THIS PART IS TROUBLESOME, BUT PEOPLE MIGHT NEED STATION DETAILS ##
-  station = ICON_file.station.split()
-  lon = float([s for s in station if '_lon' in s][0].split('=')[-1])
-  lat = float([s for s in station if '_lat' in s][0].split('=')[-1])
-  height = float([s for s in station if '_hsurf' in s][0].split('=')[-1])
-  name = [s for s in station if '_name' in s][0].split('=')[-1]
-  frland = float([s for s in station if '_frland' in s][0].split('=')[-1])
-  fc = float([s for s in station if '_fc' in s][0].split('=')[-1])
-  soiltype = int([s for s in station if '_soiltype' in s][0].split('=')[-1])
+#  station = ICON_file.station.split()
+#  lon = float([s for s in station if '_lon' in s][0].split('=')[-1])
+#  lat = float([s for s in station if '_lat' in s][0].split('=')[-1])
+#  height = float([s for s in station if '_hsurf' in s][0].split('=')[-1])
+#  name = [s for s in station if '_name' in s][0].split('=')[-1]
+#  frland = float([s for s in station if '_frland' in s][0].split('=')[-1])
+#  fc = float([s for s in station if '_fc' in s][0].split('=')[-1])
+#  soiltype = int([s for s in station if '_soiltype' in s][0].split('=')[-1])
 #  tile_frac=[',  u'1.]',
 #  tile_luclass=[4]
   
   pamData = dict() # empty dictionary to store pamtra Data
+
+  hgt_key = 'height_2'
+  if vals.has_key(hgt_key):
+    continue
+  elif vals.has_key('heights_2'):
+    hgt_key = heights_2
+  else:
+    raise AttributeError('ICON file does not have a valid height label (I know only height_2 and heights_2)')
   
-  Nh = len(vals['height_2'])
+  Nh = len(vals[hgt_key])
   Nt = len(vals['time'])
   nhydros = 6
   if timeidx is None:
@@ -1851,7 +1859,7 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
 #  variables3D_10m = ["u_10m","v_10m"]
 #  variables3D = ["temp","pres","qv","qc","qi","qr","qs","qg","qh","qnc","qni","qnr","qns","qng","qnh"]
   
-  pamData['hgt'] = np.tile(np.flip(vals['height_2'],0),(len(timeidx),1)) # heights at which fields are defined
+  pamData['hgt'] = np.tile(np.flip(vals[hgt_key],0),(len(timeidx),1)) # heights at which fields are defined
 
   pamData['press']    = np.flip(vals['P'][timeidx],1)    # pressure 
   pamData['temp']     = np.flip(vals['T'][timeidx],1)    # temperature
