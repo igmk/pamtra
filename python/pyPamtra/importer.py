@@ -1541,6 +1541,170 @@ def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
 # Add regridding remarks
 readIconLem2MomDataset.__doc__ += __ICDN_regridding_remarks
 
+def readHIRHAM(dataFile,singleLevelFile,topoFile,descriptorFile,grid=[0,200,0,218],timestep=0,debug=False,verbosity=0):
+
+  import netCDF4
+
+  data = dict() #  this will hold the data before we create the pamtra object data
+
+  a = grid[0]     # 0 # 70
+  b = grid[1]     #150 # 82
+  # y-axis 0:218
+  c = grid[2]     #80 # 50
+  d = grid[3]    #218 # 70
+  # time
+  t = timestep
+
+  fo = netCDF4.Dataset(dataFile, 'r')
+
+  data['lon'] = fo['XLONG'][a:b,c:d]
+  data['lat'] = fo['XLAT'][a:b,c:d]
+  ts = (datetime.datetime.strptime(str(fo['DateTime'][t]),'%Y%m%d%H')- datetime.datetime(1970,1,1)).total_seconds()
+  data['hgt'] = np.moveaxis(fo['GHT'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1] # geopotnetial height [m] used as hgt
+  data['temp'] = np.moveaxis(fo['TT'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1] # temperature [K]
+  data['relhum'] = np.moveaxis(fo['RH'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1] # relative humidity [%]
+  Frain_ls = np.moveaxis(fo['LSRAIN'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]     # Flux large scale cloud rain in kg m^-2 s^ 
+  Frain_c = np.moveaxis(fo['CCRAIN'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]      # Flux convective cloud rain in kg m^-2 s^
+  Fsnow_ls = np.moveaxis(fo['LSSNOW'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]     # Flux large scale cloud snow in kg m^-2 s^
+  Fsnow_c = np.moveaxis(fo['CCSNOW'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]      # Flux convective cloud snow in kg m^-2 s^
+  qvapor = np.moveaxis(fo['QVAPOR'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1] #[:,:,c:d,g:h]         # Water vapor mixing ratio in kg kg-1
+  qcloud = np.moveaxis(fo['QCLOUD'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]              # Cloud water mixing ratio in kg kg-1
+  qice = np.moveaxis(fo['QICE'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]                  # Ice mixing ratio in kg kg-1
+  LANDMASK = (fo['LANDKASK'][t,...])[a:b,c:d]            # 0 for water 1 for land (more detailed variable in /data/mod/hirham/5/3hr/topo_lsm.nc)
+  data['groundtemp']= (fo['SKINTEMP'][t,...])[a:b,c:d]             # Surface skin  temperature (time, lat,lon)
+  data['wind10u'] = (fo['U10M'][t,...])[a:b,c:d] # 10 m windspeed zonal component [m/s]
+  data['wind10v'] = (fo['V10M'][t,...])[a:b,c:d] # 10 m windspeed meridional component [m/s]
+  a_mid = (fo['hyam'][:])[::-1]  # A coefficients at layer midpoint [Pa]
+  b_mid = (fo['hybm'][:])[::-1]  # B coefficients at layer midpoints [1]
+
+  fo.close()
+
+  # loading additional files needed for PAMTRA simulations
+  # surface pressure
+  fo2 = netCDF4.Dataset(singleLevelFile,'r')
+  ps = (fo2['ps'][0,...])[a:b,c:d]
+  fo2.close()
+
+  # surf_geopotential
+  fo_inv = netCDF4.Dataset(topoFile,'r')
+  surf_geopotential = fo_inv['fis'][a:b,c:d]#[c:d,g:h] # surface geopotential (orography) in m^2/s^2
+  fo_inv.close()
+
+  # construct all shapes needed for PAMTRA
+  shape2D = ps.shape
+  shape3D = data['hgt'].shape
+  shape3Dplus = (shape3D[0],shape3D[1],shape3D[2]+1)
+  shape4D = (shape3D[0],shape3D[1],shape3D[2],4)
+
+  # let's set the time for each profile
+  data['timestamp'] = np.zeros(shape2D)
+  data['timestamp'][:] = ts
+
+  # Calculating pressure variable from a and b hybrid coefficients:
+  data['press'] = np.zeros(shape3D)
+
+  for i in range(shape3D[2]): 
+      if i == 0:
+          data['press'][:,:,i] = a_mid[i] + b_mid[i]*ps
+      else:
+          data['press'][:,:,i] = a_mid[i-1]*0.5 + (b_mid[i-1]*0.5)*ps
+
+  Rspec = 8.31432e3 # [Nm/kmol K]
+  rho_dry =  data['press']/(Rspec * data['temp']) # IGL: P = rho*Rspec*T
+
+  # calculate height of levels
+  data['hgt_lev'] = np.zeros(shape3Dplus)
+  data['hgt_lev'][...,0] = surf_geopotential/9.81
+
+  for i in range(shape3D[2]-1):
+    data['hgt_lev'][...,i+1] = (data['hgt'][...,i+1] + data['hgt'][...,i])*0.5
+
+  data['hgt_lev'][...,-1] = data['hgt'][...,-1] + (data['hgt'][...,-1] - data['hgt'][...,-2])*0.5
+
+  ################################################################################################################
+  #               Calculate mixing ratios from fluxes from HIRHAM5. Scheme is like in HIRLAM
+  ################################################################################################################
+
+  # Constants:
+  R = 287.05 # [J/kg K] specific gas constant of dry air
+  # snow:
+  Cpr = 1. # assumtion that we have snow/ice/rain in the whole grid cell
+  rho = 1000. # density of water [kg/m^3] 
+  a11 = 3.29
+  b10 = 0.16
+
+  #rain:
+  a10 = 90.8
+  n0r = 8.e6 # [m^-4] intercept parameter
+  n0s = 3.e6 # [m^-4] intercept parameter
+
+  # ice - same constants as for snow
+
+  # Mass mixing ratio of snow within the fraction Cpr of the grid cell covered with snow is obtained from the snow fall rate:
+
+  # rho - air density --> calculate from IGL: rho_dry = P/R*T = 1.225 kg/m^3 (P -sea level and T at standard atmosp pressure)
+  rho0 = 1.3          # rho0 - reference density of air: 1.3 kg/m^3
+  rho_i = 500.         # rhoi - density of cloud ice: 500 kg/m^3
+  rho_s = 100.         # rhos - bulk density of snow: 100 kg/m^3
+  rho_r = 1000.        # rhow - density of water: 1000 kg/m^3
+
+  # rs - mass mixing ratio of snow
+  # rr - mass mixing ratio of rain
+  # ri - mas mixing ratio of falling ice
+  # Fsnow - snow flux 
+  # Frain - rain flux
+  # Fitop - grid cell mean sedimantation flux
+  # Cpr - fraction of the grid cell covered with snow
+
+  ## 1.) snow:
+  #rs = ((Fsnow_ls + Fsnow_c)/Cpr * a11)**(1/(1 + b10))
+
+  rs = ((Fsnow_ls)/Cpr * a11)**(1./(1. + b10))
+  qsnow = rho_dry * rs
+
+  ##2.) rain;
+  ## vr - mass-weighted fall velocity of rain drops parameterized according to Kessler (1969)
+
+  rr = ( (Frain_ls) / ( (Cpr*a10) * ( n0r**(-1./8.) ) * np.sqrt(rho0) ) )**(8./9.)
+  qrain = rho_dry*rr
+
+  #-------------------------------------------------------------------------------------------------
+
+  data['hydro_q'] = np.zeros(shape4D)
+
+  data['hydro_q'][...,0] = qcloud
+  data['hydro_q'][...,1] = qice
+  data['hydro_q'][...,2] = qrain
+  data['hydro_q'][...,3] = qsnow
+
+  pamData = dict()  # Creating pamtra dictionary where all variables will be added
+
+  varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],["wind10u","wind10u"],["wind10v","wind10v"],["hgt","hgt"],
+    ["hgt_lev","hgt_lev"],["press","press"],["temp","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["groundtemp","groundtemp"]]
+
+  for hirhamVar,pamVar in varPairs:
+      pamData[pamVar] = data[hirhamVar]
+
+  # surface properties
+  pamData['sfc_type'] = np.zeros(shape2D)
+  pamData['sfc_type'] = np.around(LANDMASK)
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][:] = 'F'
+
+  pamData['sfc_refl'][(pamData['sfc_type'] == 1)] = 'S'
+  pamData['sfc_model'][(pamData['sfc_type'] == 1)] = 0.
+  pamData['sfc_type'][(pamData['sfc_type'] == 0.) & (pamData['groundtemp'] < 270.)] = 2.
+
+  pam = pyPamtra()
+  if isinstance(descriptorFile, str):
+    pam.df.readFile(descriptorFile)
+  else:
+    for df in descriptorFile:
+      pam.df.addHydrometeor(df)
+  pam.createProfile(**pamData)
+
+  return pam
 
 def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,dimY=160,dimZ=25,subGrid=None):
 

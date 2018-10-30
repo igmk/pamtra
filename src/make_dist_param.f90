@@ -31,7 +31,7 @@ subroutine make_dist_params(errorstatus)
 
   use constants, only: pi, rho_water, delta_d_mono
 
-  use drop_size_dist, only: dist_name, p_1, p_2, p_3, p_4, a_ms, b_ms, d_1, d_2, moment_in, & ! IN
+  use drop_size_dist, only: dist_name, rho_ms, p_1, p_2, p_3, p_4, a_ms, b_ms, d_1, d_2, moment_in, & ! IN
        q_h, n_tot, r_eff, layer_t, nbin,                            & ! IN
        n_0, lambda, mu, gam, n_t, sig, d_ln, d_mono, d_m, n_0_star ! OUT
 
@@ -118,7 +118,8 @@ subroutine make_dist_params(errorstatus)
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! MONODISPERSE distribution   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if ((trim(dist_name) == 'mono') .or. (trim(dist_name) == 'mono_cosmo_ice')) then
+  if ((trim(dist_name) == 'mono') .or. (trim(dist_name) == 'mono_cosmo_ice') .or. &
+    (trim(dist_name) == 'mono_echam_cl') .or. (trim(dist_name) == 'mono_echam_ice')) then
      ! Set parameter for the Gamma dist. to get a monodisperse dist.
      lambda = 0._dbl
      mu = 0._dbl
@@ -158,6 +159,22 @@ subroutine make_dist_params(errorstatus)
            n_0 = q_h / (a_ms * d_mono**b_ms) / delta_d_mono
         endif
      endif
+     if (trim(dist_name) == 'mono_echam_cl') then
+        ! mono disperse distribution coherent with ECHAM6 1 moment scheme for liquid clouds
+        !
+        ! the number concentration is set to the boundary layer value for now. In fututer it should be set
+        ! height dependent in the free troposphere
+        n_0 = 80. *1.d6
+        d_mono = 2.*(q_h*3./(4.*pi*n_0*rho_water))**(1./3.)
+     endif
+     if (trim(dist_name) == 'mono_echam_ice') then
+        ! mono disperse distribution coherent with ECHAM6 1 moment scheme for liquid clouds
+        !
+        ! the number concentration is set to the boundary layer value for now. In fututer it should be set
+        ! height dependent in the free troposphere
+        d_mono = 2.d-6*(sqrt(2809.*(83.8*(1.d3*q_h)**0.216)**3.+5113188)-2261.)**(1./3.) ! mean ice crystal volume diameter
+        n_0 = q_h / (delta_d_mono * rho_ms * (pi/6.) * d_mono**3.)
+     endif
      ! ! Check that the variables have been filled in
      if ((lambda /= 0._dbl) .or. (mu /= 0._dbl) .or. (gam /= 0._dbl) .or. &
           (n_0 <= 0._dbl) .or. (d_mono <= 0._dbl) ) then
@@ -192,7 +209,7 @@ subroutine make_dist_params(errorstatus)
      if ((trim(dist_name) == 'const_cosmo_ice') .and. (moment_in == 3) &
           .and. (nbin == 2)) then
         ! ! Monodisperse size distribution coherent with COSMO-de 1-moment scheme
-        ! Number_concentration of activated ice ctystal is temperature dependent
+        ! Number_concentration of activated ice crystal is temperature dependent
         ! from COSMO-de code src_gscp.f90 routine: hydci_pp_gr
         ! Radius is derived from mass-size relation m=aD^3
         ! a=130 kg/m^3 (hexagonal plates with aspect ratio of 0.2 -> thickness=0.2*Diameter)

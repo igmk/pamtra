@@ -701,11 +701,11 @@ class pyPamtra(object):
         raise DeprecationWarning('Using lfrac and sfc_refl at the same time is not allowed. lfrac is deprecated.')
       else:
         warnings.warn("lfrac is deprecated. Set sfc_model and sfc_refl directly. "+
-          "For compatibility sfc_model is set to numpy.around(lfrac), sfc_refl is L on land and F on ocean.", Warning)
+          "For compatibility sfc_model is set to numpy.around(lfrac), sfc_refl is S on land and F on ocean.", Warning)
         kwargs['sfc_type'] = np.around(kwargs['lfrac']) # use lfrac as sfc_type
         kwargs['sfc_refl'] = np.chararray(kwargs['sfc_type'].shape)
         kwargs['sfc_refl'][kwargs['sfc_type'] == 0] = 'F' # ocean
-        kwargs['sfc_refl'][kwargs['sfc_type'] == 1] = 'L' # land
+        kwargs['sfc_refl'][kwargs['sfc_type'] == 1] = 'S' # land
         kwargs.pop('lfrac') # remove lfrac from kwargs
 
     allVars = self.default_p_vars

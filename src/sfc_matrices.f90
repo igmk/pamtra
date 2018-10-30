@@ -154,35 +154,45 @@ module sfc_matrices
 
     integer :: j
     real(kind=dbl), intent(in) :: ground_temp
-    real(kind=dbl), intent(out) :: reflect(nstokes, nummu, nstokes, nummu, 2)
-    real(kind=dbl), intent(out) :: trans(nstokes, nummu, nstokes, nummu, 2)
+    real(kind=dbl), intent(out) :: reflect(nstokes, nummu, nstokes, nummu, 2) 
+    real(kind=dbl), intent(out) :: trans(nstokes, nummu, nstokes, nummu, 2) 
     real(kind=dbl), intent(out) :: radiance(nstokes, nummu)
-
+    
     character(len=16) :: nameOfRoutine = 'specular_matrices'
-
+    
     if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
+    
+    call midentity(n, trans(1, 1, 1, 1, 1)) 
+    call midentity(n, trans(1, 1, 1, 1, 2)) 
 
-    call midentity(n, trans(1, 1, 1, 1, 1))
-    call midentity(n, trans(1, 1, 1, 1, 2))
-
-    do j = 1, nummu
-      r1 = rt_sfc_reflectivity(1,1)
-      reflect(1, j, 1, j, 2) = r1
-      r2 = 0.
-      if (nstokes .gt. 1) then
-        reflect(1, j, 2, j, 2) = r2
-        reflect(2, j, 1, j, 2) = r2
-        reflect(2, j, 2, j, 2) = r1
-      end if
+    ! the code has been changed according to Xinxin Xie suggestion. It is now identical with Fresnel.
+    do j = 1, nummu 
+      rv = rt_sfc_reflectivity(1,j) ! The square of the vertical abs value
+      rh = rt_sfc_reflectivity(2,j) ! The square of the horizontal abs value
+      r1 = (rv+rh)/2.0d0
+      r2 = (rv-rh)/2.0d0
+      reflect(1, j, 1, j, 2) = r1 
+      reflect(1, j, 2, j, 2) = r2 
+      reflect(2, j, 1, j, 2) = r2 
+      reflect(2, j, 2, j, 2) = r1 
+      ! r1 = rt_sfc_reflectivity(1,1)
+      ! reflect(1, j, 1, j, 2) = r1 
+      ! r2 = 0.
+      ! if (nstokes .gt. 1) then 
+      !   reflect(1, j, 2, j, 2) = r2 
+      !   reflect(2, j, 1, j, 2) = r2 
+      !   reflect(2, j, 2, j, 2) = r1 
+      ! end if
     end do
-
-    call planck_function(ground_temp, 'r', wavelength, planck)
-    do j = 1, nummu
-      radiance (1, j) = rt_sfc_emissivity(1,1) * planck
+    
+    call planck_function(ground_temp, 'r', wavelength, planck) 
+    do j = 1, nummu 
+      radiance(1, j) = (1.0 - r1) * planck 
+      radiance(2, j) = - r2 * planck 
     end do
-
+    
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
-
+    
   end subroutine specular_matrices
 
 end module sfc_matrices
