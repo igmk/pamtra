@@ -368,6 +368,10 @@ class pyPamtra(object):
         self.p["lat"][xx,yy], self.p["lon"][xx,yy], lfrac,self.p["wind10u"][xx,yy],self.p["wind10v"][xx,yy],self.p["groundtemp"][xx,yy],self.p["hgt_lev"][xx,yy,0]  = np.array(np.array(g.next()[:7]),dtype=float)
 
         self.p["sfc_type"][xx,yy] = np.around(lfrac) # lfrac is deprecated
+        if self.p["sfc_type"][xx,yy] == 0:
+            self.p["sfc_refl"][xx,yy] = 'F'
+        else:
+            self.p["sfc_refl"][xx,yy] = 'L'
 
         self.p["iwv"][xx,yy] = np.array(np.array(g.next()[0]),dtype=float)
 
@@ -697,11 +701,11 @@ class pyPamtra(object):
         raise DeprecationWarning('Using lfrac and sfc_refl at the same time is not allowed. lfrac is deprecated.')
       else:
         warnings.warn("lfrac is deprecated. Set sfc_model and sfc_refl directly. "+
-          "For compatibility sfc_model is set to numpy.around(lfrac), sfc_refl is L on land and F on ocean.", Warning)
+          "For compatibility sfc_model is set to numpy.around(lfrac), sfc_refl is S on land and F on ocean.", Warning)
         kwargs['sfc_type'] = np.around(kwargs['lfrac']) # use lfrac as sfc_type
         kwargs['sfc_refl'] = np.chararray(kwargs['sfc_type'].shape)
         kwargs['sfc_refl'][kwargs['sfc_type'] == 0] = 'F' # ocean
-        kwargs['sfc_refl'][kwargs['sfc_type'] == 1] = 'L' # land
+        kwargs['sfc_refl'][kwargs['sfc_type'] == 1] = 'S' # land
         kwargs.pop('lfrac') # remove lfrac from kwargs
 
     allVars = self.default_p_vars
@@ -817,7 +821,7 @@ class pyPamtra(object):
         else:
           self.p[environment] = kwargs[environment].reshape(self._shape2D)
 
-    for environment, preset in [["sfc_refl",'L']]:
+    for environment, preset in [["sfc_refl",'S']]:
       if environment not in kwargs.keys():
         self.p[environment] = np.chararray(self._shape2D)
         self.p[environment][:] = preset

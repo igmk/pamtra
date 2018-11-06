@@ -952,6 +952,7 @@ module dia2vel
     
       !in
       !nDia: no of diameters
+      !mass: mass spectrum of the particles [kg]
       !out
       !velSpec: velocity spectrum [m/s]
 
@@ -1007,7 +1008,9 @@ module dia2vel
       call assert_false(err,(tokenized(2) == "NAN"),&
           "tokenized(2) must not be NAN") 
       call assert_false(err,(tokenized(3) == "NAN"),&
-          "tokenized(3) must not be NAN") 
+          "tokenized(3) must not be NAN")
+      call assert_false(err,(tokenized(4) == "NAN"),&
+          "tokenized(4) must not be NAN")
       if (err > 0) then
         errorstatus = fatal
         msg = "assertation error"
@@ -1015,7 +1018,8 @@ module dia2vel
         return
       end if  
       !finally apply coefficients
-      velSpec(:) = fallvel_A - fallvel_B*DEXP(-fallvel_C * (6.0*mass(:)/(pi*rho_ice))**(1.0/3.0)) 
+      velSpec(:) = fallvel_A-fallvel_B*DEXP(-fallvel_C*(6.0d0*mass(:)/(pi*rho_ice))**(1.0d0/3.0d0))
+      !velSpec(:) = (velSpec(:) + DABS(velSpec(:)))*0.5d0 ! replace possible initial negative values with 0.0
 
       return
   end subroutine dia2vel_atlas
