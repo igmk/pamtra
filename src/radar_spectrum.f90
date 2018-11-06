@@ -166,6 +166,9 @@ subroutine radar_spectrum(&
     else if (vel_size_mod == "khvorostyanov01_particles") then
         call dia2vel_khvorostyanov01_particles(err,nbins,diameter_spec_cp,rho,nu,&
             mass,area,vel_spec)
+    else if (vel_size_mod == "khvorostyanov05_particles") then
+        call dia2vel_khvorostyanov05_particles(err,nbins,diameter_spec_cp,rho,nu,&
+            mass,area,rho_particle,vel_spec)
     else if (vel_size_mod .eq. "rogers_graupel") then
       call dia2vel_rogers_graupel(err,nbins,diameter_spec_cp,vel_spec)
     else if (vel_size_mod(:8) .eq. "powerLaw") then
