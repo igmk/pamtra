@@ -1820,8 +1820,8 @@ class pyPamtra(object):
 
     profilePart = dict()
     for key in self.p.keys():
-      #import pdb;pdb.set_trace()
-      if type(self.p[key]) is not np.ndarray:
+      # import pdb;pdb.set_trace()
+      if type(self.p[key]) is not np.ndarray and type(self.p[key]) is not np.core.defchararray.chararray:
         profilePart[key] = self.p[key]
       else:
         profilePart[key] = self.p[key][pp_startX:pp_endX,pp_startY:pp_endY]
