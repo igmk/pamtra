@@ -60,6 +60,14 @@ contains
     elseif (sfc_type(i_x,i_y) == 1) then ! land
         if ((sfc_model(i_x,i_y) == 0) .or. (sfc_model(i_x,i_y) == -9999)) then ! TELSEM2
             call land_sfc_optics_telsem2(err,freq)
+            if (rt_sfc_emissivity(1,1) == 0.) then
+              call  land_sfc_optics_ssmi(err,freq)
+              errorstatus = warning
+              if (verbose >= 1) then
+                msg = "TELSEM2 has no value for this coordinates!"
+                call report(errorstatus, msg, nameOfRoutine)
+              end if
+            end if
         elseif (sfc_model(i_x,i_y) == 1) then ! SSMI
             call land_sfc_optics_ssmi(err,freq)
         end if
@@ -79,7 +87,6 @@ contains
       call report(errorstatus, msg, nameOfRoutine)
       return
     end if
-    
     out_emissivity(i_x,i_y,:,i_f,:) = rt_sfc_emissivity(:,:)
 
     errorstatus = err
