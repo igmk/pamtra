@@ -43,7 +43,7 @@ class pyPamtra(object):
     set setting default values
     """
 
-    self.default_p_vars = ["timestamp","lat","lon","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb","radar_prop","groundtemp","wind_w", "wind_uv","turb_edr","sfc_type","sfc_model","sfc_refl","sfc_salinity"]
+    self.default_p_vars = ["timestamp","lat","lon","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb","radar_prop","groundtemp","wind_w", "wind_uv","turb_edr","sfc_type","sfc_model","sfc_refl","sfc_salinity"]
     self.nmlSet = dict() #:settings which are required for the nml file. keeping the order is important for fortran
     #keys MUST be lowercase for f2py!
     self.nmlSet["hydro_threshold"]=  1.e-10   # [kg/kg]
