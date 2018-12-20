@@ -1798,7 +1798,7 @@ def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,d
 
   return pam
 
-def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timeidx=None):
+def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timeidx=None, hydro_content=[1.,1.,1.,1.,1.,1.]):
   '''
   import ICON LEM 2-moment dataset output cross section over a site (Meteogram)
   
@@ -1863,30 +1863,30 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
 
   pamData['press']  = np.flip(vals['P'][timeidx],1)    # pressure 
   pamData['temp']   = np.flip(vals['T'][timeidx],1)    # temperature
-  wind_u = np.flip(vals['U'][timeidx],1)    # zonal wind speed
-  wind_v = np.flip(vals['V'][timeidx],1)    # meridional wind speed
+  wind_u = np.flip(vals['U'][timeidx],1)               # zonal wind speed
+  wind_v = np.flip(vals['V'][timeidx],1)               # meridional wind speed
   pamData['wind_uv'] = np.hypot(wind_u, wind_v)
-  wind_w = np.flip(vals['W'][timeidx],1)    # vertical wind speed
+  wind_w = np.flip(vals['W'][timeidx],1)               # vertical wind speed
   pamData['wind_w'] = 0.5*(wind_w[:,:-1]+wind_w[:,1:])
   pamData['relhum'] = np.flip(vals['REL_HUM'][timeidx],1)
 
   # Read hydrometeors content
   hydro_cmpl = np.zeros((len(timeidx),Nh,nhydros))
-  hydro_cmpl[...,0] = np.flip(vals['QC'][timeidx],1)   # specific cloud water content
-  hydro_cmpl[...,1] = np.flip(vals['QI'][timeidx],1)   # specific cloud ice content
-  hydro_cmpl[...,2] = np.flip(vals['QR'][timeidx],1)   # rain mixing ratio
-  hydro_cmpl[...,3] = np.flip(vals['QS'][timeidx],1)   # snow mixing ratio
-  hydro_cmpl[...,4] = np.flip(vals['QG'][timeidx],1)   # graupel mixing ratio
-  hydro_cmpl[...,5] = np.flip(vals['QH'][timeidx],1)   # graupel mixing ratio # TODO report probably error encoding long name ...  should be hail mixing ratio
+  hydro_cmpl[...,0] = hydro_content[0]*np.flip(vals['QC'][timeidx],1)   # specific cloud water content
+  hydro_cmpl[...,1] = hydro_content[1]*np.flip(vals['QI'][timeidx],1)   # specific cloud ice content
+  hydro_cmpl[...,2] = hydro_content[2]*np.flip(vals['QR'][timeidx],1)   # rain mixing ratio
+  hydro_cmpl[...,3] = hydro_content[3]*np.flip(vals['QS'][timeidx],1)   # snow mixing ratio
+  hydro_cmpl[...,4] = hydro_content[4]*np.flip(vals['QG'][timeidx],1)   # graupel mixing ratio
+  hydro_cmpl[...,5] = hydro_content[5]*np.flip(vals['QH'][timeidx],1)   # graupel mixing ratio # TODO report probably error encoding long name ...  should be hail mixing ratio
 
   # Read hydrometeors number concentration
   hydro_num_cmpl = np.zeros((len(timeidx),Nh,nhydros))
-  hydro_num_cmpl[...,0] = np.flip(vals['QNC'][timeidx],1)  # number concentration of cloud water
-  hydro_num_cmpl[...,1] = np.flip(vals['QNI'][timeidx],1)  # number concentration ice
-  hydro_num_cmpl[...,2] = np.flip(vals['QNR'][timeidx],1)  # number concentration droplets
-  hydro_num_cmpl[...,3] = np.flip(vals['QNS'][timeidx],1)  # number concentration snow
-  hydro_num_cmpl[...,4] = np.flip(vals['QNG'][timeidx],1)  # number concentration graupel
-  hydro_num_cmpl[...,5] = np.flip(vals['QNH'][timeidx],1)  # number concentration hail 
+  hydro_num_cmpl[...,0] = hydro_content[0]*np.flip(vals['QNC'][timeidx],1)  # number concentration of cloud water
+  hydro_num_cmpl[...,1] = hydro_content[1]*np.flip(vals['QNI'][timeidx],1)  # number concentration ice
+  hydro_num_cmpl[...,2] = hydro_content[2]*np.flip(vals['QNR'][timeidx],1)  # number concentration droplets
+  hydro_num_cmpl[...,3] = hydro_content[3]*np.flip(vals['QNS'][timeidx],1)  # number concentration snow
+  hydro_num_cmpl[...,4] = hydro_content[4]*np.flip(vals['QNG'][timeidx],1)  # number concentration graupel
+  hydro_num_cmpl[...,5] = hydro_content[5]*np.flip(vals['QNH'][timeidx],1)  # number concentration hail 
 
   pamData["hydro_q"] = hydro_cmpl
   pamData["hydro_n"] = hydro_num_cmpl
