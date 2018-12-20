@@ -170,7 +170,7 @@ subroutine make_dist_params(errorstatus)
      if (trim(dist_name) == 'mono_echam_ice') then
         ! mono disperse distribution coherent with ECHAM6 1 moment scheme for liquid clouds
         !
-        ! the number concentration is set to the boundary layer value for now. In fututer it should be set
+        ! the number concentration is set to the boundary layer value for now. In future it should be set
         ! height dependent in the free troposphere
         d_mono = 2.d-6*(sqrt(2809.*(83.8*(1.d3*q_h)**0.216)**3.+5113188)-2261.)**(1./3.) ! mean ice crystal volume diameter
         n_0 = q_h / (delta_d_mono * rho_ms * (pi/6.) * d_mono**3.)
