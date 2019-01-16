@@ -409,6 +409,7 @@ def adiab(i,T,P,z):
 
 def mod_ad(T_cloud, p_cloud, z_cloud, fak):
    
+   # after Karstens et al 1994 Volume 54, Issue 1–4, pp 157–171,  Meteorology and Atmospheric Physics
    #;IN: T_cloud, p_cloud, z_cloud
    #;OUT: lwc 
    
