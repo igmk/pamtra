@@ -25,7 +25,7 @@ module vars_atmosphere
   real(kind=dbl), allocatable, dimension(:,:) :: atmo_groundtemp, atmo_iwv
 
   integer(kind=long), allocatable, dimension(:,:) :: sfc_type, sfc_model
-  real(kind=dbl), allocatable, dimension(:,:) :: sfc_salinity
+  real(kind=dbl), allocatable, dimension(:,:) :: sfc_salinity, sfc_slf, sfc_sif
   character(len=1), allocatable, dimension(:,:) ::  sfc_refl
 
   real(kind=dbl), allocatable, dimension(:,:,:) :: atmo_relhum_lev,&
@@ -190,6 +190,8 @@ module vars_atmosphere
     allocate(sfc_model(atmo_ngridx,atmo_ngridy))
     allocate(sfc_refl(atmo_ngridx,atmo_ngridy))
     allocate(sfc_salinity(atmo_ngridx,atmo_ngridy))
+    allocate(sfc_slf(atmo_ngridx,atmo_ngridy))
+    allocate(sfc_sif(atmo_ngridx,atmo_ngridy))
 
     allocate(atmo_relhum_lev(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs+1))
     allocate(atmo_press_lev(atmo_ngridx,atmo_ngridy,atmo_max_nlyrs+1))
@@ -247,6 +249,8 @@ module vars_atmosphere
     sfc_model(:,:) = -9999
     sfc_refl(:,:) = "L"
     sfc_salinity(:,:) = nan_dbl()
+    sfc_slf(:,:) = nan_dbl()
+    sfc_sif(:,:) = nan_dbl()
 
     atmo_relhum(:,:,:) = nan_dbl()
     atmo_press(:,:,:) = nan_dbl()
@@ -316,6 +320,8 @@ module vars_atmosphere
     if (allocated(sfc_model)) deallocate(sfc_model)
     if (allocated(sfc_refl)) deallocate(sfc_refl)
     if (allocated(sfc_salinity)) deallocate(sfc_salinity)
+    if (allocated(sfc_slf)) deallocate(sfc_slf)
+    if (allocated(sfc_sif)) deallocate(sfc_sif)
 
     if (allocated(atmo_month)) deallocate(atmo_month)
     if (allocated(atmo_day)) deallocate(atmo_day)
@@ -1019,6 +1025,8 @@ module vars_atmosphere
     print*, "sfc_model", sfc_model
     print*, "sfc_refl", sfc_refl
     print*, "sfc_salinity", sfc_salinity
+    print*, "sfc_slf", sfc_slf
+    print*, "sfc_sif", sfc_sif
 
   end subroutine print_vars_atmosphere
 

@@ -35,6 +35,10 @@ subroutine make_dist_params(errorstatus)
        q_h, n_tot, r_eff, layer_t, nbin,                            & ! IN
        n_0, lambda, mu, gam, n_t, sig, d_ln, d_mono, d_m, n_0_star ! OUT
 
+  ! variables used for surface and height dependent parameters (ECHAM/HIRHAM)
+  use vars_index, only: i_x, i_y, i_z
+  use vars_atmosphere, only: sfc_type, sfc_slf, sfc_sif, atmo_press, atmo_temp, atmo_hgt
+
   ! Imported Scalar Variables with intent (in):
 
   implicit none
@@ -43,13 +47,17 @@ subroutine make_dist_params(errorstatus)
 
   ! Local scalars:
 
-  real(kind=dbl) :: work1, work2, work3, delta_d_const
+  real(kind=dbl) :: work1, work2, work3, delta_d_const, rho_dry, true_lf
   real(kind=dbl) :: ztc, hlp, alf, bet, m2s, m3s
   integer(kind=long) :: nn
 
   ! Local arrays:
 
   real(kind=dbl), dimension(10) :: mma, mmb
+
+  ! functions
+
+  real(kind=dbl) :: rho_air
 
   ! Error handling
 
@@ -161,19 +169,25 @@ subroutine make_dist_params(errorstatus)
      endif
      if (trim(dist_name) == 'mono_echam_cl') then
         ! mono disperse distribution coherent with ECHAM6 1 moment scheme for liquid clouds
-        !
-        ! the number concentration is set to the boundary layer value for now. In fututer it should be set
-        ! height dependent in the free troposphere
-        n_0 = 80. *1.d6
-        d_mono = 2.*(q_h*3./(4.*pi*n_0*rho_water))**(1./3.)
+        if (sfc_type(i_x,i_y) == 1) then
+          n_0 = 220.d6
+        else
+          true_lf = sfc_slf(i_x,i_y) + (1._dbl -sfc_slf(i_x,i_y)) * sfc_sif(i_x,i_y)
+          n_0 = (80._dbl * (1._dbl - true_lf) + 220._dbl * true_lf) * 1.d6 ! fractional land/ocean
+        end if
+        if (atmo_hgt(i_x,i_y,i_z) > 1.d3) then
+          n_0 = n_0 * exp(log(50._dbl/n_0)/10.d3*atmo_hgt(i_x,i_y,i_z))
+        end if
+        rho_dry = rho_air(atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z))
+        d_mono = 2._dbl*(q_h*rho_dry*3._dbl/(4._dbl*pi*n_0*rho_water))**(1._dbl/3._dbl)
+!        print*, i_z, atmo_hgt(i_x,i_y,i_z), n_0, d_mono
      endif
      if (trim(dist_name) == 'mono_echam_ice') then
         ! mono disperse distribution coherent with ECHAM6 1 moment scheme for liquid clouds
-        !
-        ! the number concentration is set to the boundary layer value for now. In future it should be set
-        ! height dependent in the free troposphere
-        d_mono = 2.d-6*(sqrt(2809.*(83.8*(1.d3*q_h)**0.216)**3.+5113188)-2261.)**(1./3.) ! mean ice crystal volume diameter
-        n_0 = q_h / (delta_d_mono * rho_ms * (pi/6.) * d_mono**3.)
+
+        rho_dry = rho_air(atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z))
+        d_mono = 2.d-6*(sqrt(2809._dbl*(83.8_dbl*(1.d3*q_h*rho_dry)**0.216_dbl)**3.+5113188._dbl)-2261._dbl)**(1._dbl/3._dbl) ! mean ice crystal volume diameter
+        n_0 = q_h*rho_dry / (delta_d_mono * rho_ms * (pi/6._dbl) * d_mono**3._dbl)
      endif
      ! ! Check that the variables have been filled in
      if ((lambda /= 0._dbl) .or. (mu /= 0._dbl) .or. (gam /= 0._dbl) .or. &
