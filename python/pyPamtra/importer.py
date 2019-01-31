@@ -1837,15 +1837,9 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   
   pamData = dict() # empty dictionary to store pamtra Data
 
-  # hgt_key = 'height_2'
-  # if vals.has_key(hgt_key):
-  #   continue
-  # elif vals.has_key('heights_2'):
-  #   hgt_key = heights_2
-  # else:
-  #   raise AttributeError('ICON file does not have a valid height label (I know only height_2 and heights_2)')
-  if vals.has_key('height_2'):
-    hgt_key = 'height_2'
+  hgt_key = 'height_2'
+  if vals.has_key(hgt_key):
+    hgt_key = hgt_key
   elif vals.has_key('heights_2'):
     hgt_key = heights_2
   else:
@@ -1869,10 +1863,11 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   
   pamData['hgt'] = np.tile(np.flip(vals[hgt_key],0),(len(timeidx),1)) # heights at which fields are defined
 
-  pamData['press']    = np.flip(vals['P'][timeidx],1)    # pressure 
-  pamData['temp']     = np.flip(vals['T'][timeidx],1)    # temperature
-  #pamData['wind_u']  = np.flip(vals['U'][timeidx],1)    # zonal wind speed
-  #pamData['wind_v']  = np.flip(vals['V'][timeidx],1)    # meridional wind speed
+  pamData['press']  = np.flip(vals['P'][timeidx],1)    # pressure 
+  pamData['temp']   = np.flip(vals['T'][timeidx],1)    # temperature
+  wind_u = np.flip(vals['U'][timeidx],1)    # zonal wind speed
+  wind_v = np.flip(vals['V'][timeidx],1)    # meridional wind speed
+  pamData['wind_uv'] = np.hypot(wind_u, wind_v)
   wind_w = np.flip(vals['W'][timeidx],1)    # vertical wind speed
   pamData['wind_w'] = 0.5*(wind_w[:,:-1]+wind_w[:,1:])
   pamData['relhum'] = np.flip(vals['REL_HUM'][timeidx],1)
@@ -1898,29 +1893,23 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   pamData["hydro_q"] = hydro_cmpl
   pamData["hydro_n"] = hydro_num_cmpl
   
-  #pamData["lfrac"] = np.array([1]) ####
-  #pamData["groundtemp"] = pamData['temp'][149]
-  #pamData['phalf'] = vals['PHALF'][:]# pressure on the half levels
-
-  pam = pyPamtra()
-  pam.set['pyVerbose'] = verbosity
-  
   # surface properties
-  pamData['lat'] = lat*np.ones(shapeSFC)
-#  pamData['lon'] = lon
   pamData['wind10u'] = vals['U10M'][timeidx]
   pamData['wind10v'] = vals['V10M'][timeidx]
   pamData['groundtemp'] = vals['T_S'][timeidx]
-#  pamData['sfc_type'] = np.around(frland*np.ones(shapeSFC))
-#  assert np.all(np.logical_or(0<=pamData['sfc_type'], pamData['sfc_type'] <=1))
-#  pamData['sfc_model'] = np.zeros(shapeSFC)
-#  pamData['sfc_refl'] = np.chararray(shapeSFC)
-#  pamData['sfc_refl'][pamData['sfc_type'] == 0] = 'F' # ocean
-#  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'L' # land
-  
+
+# surface properties
+  pamData['sfc_type']  = np.ones(pamData['groundtemp'].shape)
+  pamData['sfc_model'] = np.zeros(pamData['groundtemp'].shape)
+  pamData['sfc_refl']  = np.chararray(pamData['groundtemp'].shape)
+  pamData['sfc_refl'][:] = 'S' # land  'F' # ocean 'L' lambertian, land
+
+  pam = pyPamtra()
+  pam.set['pyVerbose'] = verbosity
+
   if isinstance(descriptorFile, str):
     pam.df.readFile(descriptorFile)
-  else:
+  else: # is an iterable containing arrays
     for df in descriptorFile:
       pam.df.addHydrometeor(df)
   
