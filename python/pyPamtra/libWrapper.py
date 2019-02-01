@@ -133,7 +133,7 @@ def PamtraFortranWrapper(
     elif key in ["noutlevels"]:
       if sets["pyVerbose"] > 3: print("settings."+key +" = profile['"+key+"']")
       setattr(settings, key, profile[key])
-    elif key in ["sfc_type","sfc_model","sfc_salinity"]:
+    elif key in ["sfc_type","sfc_model","sfc_salinity","sfc_slf","sfc_sif"]:
       if sets["pyVerbose"] > 3: print("vars_atmosphere."+key +" = profile['"+key+"']")
       setattr(vars_atmosphere, key, profile[key])
     elif key in ["sfc_refl"]:

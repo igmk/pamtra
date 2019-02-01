@@ -1541,7 +1541,7 @@ def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
 # Add regridding remarks
 readIconLem2MomDataset.__doc__ += __ICDN_regridding_remarks
 
-def readHIRHAM(dataFile,singleLevelFile,topoFile,descriptorFile,grid=[0,200,0,218],timestep=0,debug=False,verbosity=0):
+def readHIRHAM(dataFile,additionalFile,topoFile,descriptorFile,grid=[0,200,0,218],timestep=0,debug=False,verbosity=0):
 
   import netCDF4
 
@@ -1570,7 +1570,7 @@ def readHIRHAM(dataFile,singleLevelFile,topoFile,descriptorFile,grid=[0,200,0,21
   qvapor = np.moveaxis(fo['QVAPOR'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1] #[:,:,c:d,g:h]         # Water vapor mixing ratio in kg kg-1
   qcloud = np.moveaxis(fo['QCLOUD'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]              # Cloud water mixing ratio in kg kg-1
   qice = np.moveaxis(fo['QICE'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]                  # Ice mixing ratio in kg kg-1
-  LANDMASK = (fo['LANDKASK'][t,...])[a:b,c:d]            # 0 for water 1 for land (more detailed variable in /data/mod/hirham/5/3hr/topo_lsm.nc)
+  # LANDMASK = (fo['LANDKASK'][t,...])[a:b,c:d]            # 0 for water 1 for land (more detailed variable in /data/mod/hirham/5/3hr/topo_lsm.nc)
   data['groundtemp']= (fo['SKINTEMP'][t,...])[a:b,c:d]             # Surface skin  temperature (time, lat,lon)
   data['wind10u'] = (fo['U10M'][t,...])[a:b,c:d] # 10 m windspeed zonal component [m/s]
   data['wind10v'] = (fo['V10M'][t,...])[a:b,c:d] # 10 m windspeed meridional component [m/s]
@@ -1581,8 +1581,10 @@ def readHIRHAM(dataFile,singleLevelFile,topoFile,descriptorFile,grid=[0,200,0,21
 
   # loading additional files needed for PAMTRA simulations
   # surface pressure
-  fo2 = netCDF4.Dataset(singleLevelFile,'r')
+  fo2 = netCDF4.Dataset(additionalFile,'r')
   ps = (fo2['ps'][0,...])[a:b,c:d]
+  seaicefraction = (fo2['seaice'][0,...])[a:b,c:d] # [0,1] 0 = ocean, 1 = seaice
+  sealandfraction = (fo2['slf'][0,...])[a:b,c:d] # [0,1] 0 = sea/water, 1 = land; compared to LANDMASk it is a continuous value
   fo2.close()
 
   # surf_geopotential
@@ -1643,7 +1645,7 @@ def readHIRHAM(dataFile,singleLevelFile,topoFile,descriptorFile,grid=[0,200,0,21
   # Mass mixing ratio of snow within the fraction Cpr of the grid cell covered with snow is obtained from the snow fall rate:
 
   # rho - air density --> calculate from IGL: rho_dry = P/R*T = 1.225 kg/m^3 (P -sea level and T at standard atmosp pressure)
-  rho0 = 1.3          # rho0 - reference density of air: 1.3 kg/m^3
+  rho0 = 1.3           # rho0 - reference density of air: 1.3 kg/m^3
   rho_i = 500.         # rhoi - density of cloud ice: 500 kg/m^3
   rho_s = 100.         # rhos - bulk density of snow: 100 kg/m^3
   rho_r = 1000.        # rhow - density of water: 1000 kg/m^3
@@ -1657,16 +1659,14 @@ def readHIRHAM(dataFile,singleLevelFile,topoFile,descriptorFile,grid=[0,200,0,21
   # Cpr - fraction of the grid cell covered with snow
 
   ## 1.) snow:
-  #rs = ((Fsnow_ls + Fsnow_c)/Cpr * a11)**(1/(1 + b10))
+  qsnow = ((Fsnow_ls + np.abs(Fsnow_c))/(Cpr * a11))**(1/(1 + b10))
 
-  rs = ((Fsnow_ls)/Cpr * a11)**(1./(1. + b10))
-  qsnow = rho_dry * rs
+  # rs = ((Fsnow_ls)/Cpr * a11)**(1./(1. + b10))
 
   ##2.) rain;
   ## vr - mass-weighted fall velocity of rain drops parameterized according to Kessler (1969)
 
-  rr = ( (Frain_ls) / ( (Cpr*a10) * ( n0r**(-1./8.) ) * np.sqrt(rho0) ) )**(8./9.)
-  qrain = rho_dry*rr
+  qrain = ( (Frain_ls + np.abs(Frain_c)) / ( Cpr*a10 *  n0r**(-1./8.)  * np.sqrt(rho0/rho_dry) ) )**(8./9.)
 
   #-------------------------------------------------------------------------------------------------
 
@@ -1687,14 +1687,16 @@ def readHIRHAM(dataFile,singleLevelFile,topoFile,descriptorFile,grid=[0,200,0,21
 
   # surface properties
   pamData['sfc_type'] = np.zeros(shape2D)
-  pamData['sfc_type'] = np.around(LANDMASK)
+  pamData['sfc_type'] = np.around(sealandfraction)
   pamData['sfc_model'] = np.zeros(shape2D)
   pamData['sfc_refl'] = np.chararray(shape2D)
   pamData['sfc_refl'][:] = 'F'
 
   pamData['sfc_refl'][(pamData['sfc_type'] == 1)] = 'S'
   pamData['sfc_model'][(pamData['sfc_type'] == 1)] = 0.
-  pamData['sfc_type'][(pamData['sfc_type'] == 0.) & (pamData['groundtemp'] < 270.)] = 2.
+  # pamData['sfc_type'][(pamData['sfc_type'] == 0.) & (pamData['groundtemp'] < 270.)] = 2.
+  pamData['sfc_slf'] = sealandfraction
+  pamData['sfc_sif'] = seaicefraction
 
   pam = pyPamtra()
   if isinstance(descriptorFile, str):

@@ -96,7 +96,7 @@ subroutine make_dist(errorstatus)
      skip = .true.
   endif
 
-  ! Fisrt loop:
+  ! First loop:
   ! -uses a very large number of bin and wide range of diameters to found where f_ds_work(D) is smaller than thres_n
   ! Second loop:
   ! -uses the user defined nbin BUT the nre defined diameter range
