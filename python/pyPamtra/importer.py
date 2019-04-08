@@ -1839,13 +1839,13 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
 
   hgt_key = 'height_2'
   if vals.has_key(hgt_key):
-    hgt_key = hgt_key
+    hgt_key = 'height'
   elif vals.has_key('heights_2'):
-    hgt_key = heights_2
+    hgt_key = 'heights'
   else:
     raise AttributeError('ICON file does not have a valid height label (I know only height_2 and heights_2)')
   
-  Nh = len(vals[hgt_key])
+  Nh = len(vals[hgt_key])-1
   Nt = len(vals['time'])
   nhydros = 6
   if timeidx is None:
@@ -1861,7 +1861,7 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
 #  variables3D_10m = ["u_10m","v_10m"]
 #  variables3D = ["temp","pres","qv","qc","qi","qr","qs","qg","qh","qnc","qni","qnr","qns","qng","qnh"]
   
-  pamData['hgt'] = np.tile(np.flip(vals[hgt_key],0),(len(timeidx),1)) # heights at which fields are defined
+  pamData['hgt_lev'] = np.tile(np.flip(vals[hgt_key],0),(len(timeidx),1)) # heights at which fields are defined
 
   pamData['press']  = np.flip(vals['P'][timeidx],1)    # pressure 
   pamData['temp']   = np.flip(vals['T'][timeidx],1)    # temperature
@@ -2024,7 +2024,7 @@ def createUsStandardProfile(pam=pyPamtra(),**kwargs):
   '''
   Function to create clear sky US Standard Atmosphere.
 
-  hgt_lev is teh only mandatory variables
+  hgt_lev is the only mandatory variables
   humidity will be set to zero if not provided, all other variables are guessed by "createProfile"
 
   values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwritte us staandard if provided
