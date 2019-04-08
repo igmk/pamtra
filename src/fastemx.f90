@@ -247,9 +247,10 @@ module fastemx
     call small_scale_correction(frequency, cos_z, wind_speed, f_small)
 
     ! Compute the first two Stokes components of the emissivity
-    ! For angles larger 70 we use only Fresnel + foan cover correction
+    ! For angles larger 70 we use only Fresnel + foam cover correction
     ! Large and small scale corrections are not parameterized for such 
     ! large angles
+
     if (zenith_angle < 70.) then
         Rv = rv_fresnel*f_small -rv_large
         Rh = rh_fresnel*f_small -rh_large

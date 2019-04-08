@@ -230,6 +230,94 @@ module dia2vel
 
   end subroutine dia2vel_khvorostyanov01_particles
 
+  subroutine dia2vel_khvorostyanov05_particles &
+    (errorstatus,&     	! out
+    nDia,& 		!in
+    diaSpec_SI,&	!in
+    rho_air_SI,&	!in
+    nu_SI,&		!in
+    mass_SI,&	!in
+    area_SI,&	!in
+    rho_particle,& 	! in
+    velSpec)		!out
+
+      !in
+      !nDia: no of diameters
+      !diaSpec_SI = diameter spectrum [m]
+      !rho_air_SI = density of air [kg/m³]
+      !nu_SI = kinematic viscosity of air [m²/s]
+      !mass_size_a_SI,mass_size_b parameters of mass size relation m = a*D_max^b [SI]
+      !area_size_a_SI,area_size_b parameters of mass area relation A = a*D_max^b [SI]
+      !out
+      !velSpec: velocity spectrum [m/s]
+
+      ! Khvorostyanov, V. I. & Curry, J. A. Terminal Velocities of Droplets and Crystals:
+      ! Power Laws with Continuous Parameters over the Size Spectrum.
+      ! Journal of the Atmospheric Sciences 59, 1872–1884 (2002).
+      ! equation 3.3
+
+
+      ! Modules used:
+      use settings, only: verbose
+      use kinds
+      use constants
+      use report_module
+      implicit none
+
+      integer, intent(in) :: nDia
+      real(kind=dbl), intent(in), dimension(ndia)::diaSpec_SI, mass_SI, area_SI, rho_particle
+      real(kind=dbl), dimension(ndia):: Cd, psi, Re, bracket
+      real(kind=dbl), intent(in) :: rho_air_SI, nu_SI
+      real(kind=dbl), dimension(ndia), intent(out) :: velSpec
+      real(kind=dbl) :: delta0
+      real(kind=dbl), dimension(ndia):: X, bRe, aRe, Vb , Fb!, Av, Bv
+	  real(kind=dbl) :: do_i
+	  real(kind=dbl) :: co_i
+	  real(kind=dbl) :: Ct
+	  real(kind=dbl) :: X0_i
+	  real(kind=dbl) :: c1
+	  real(kind=dbl) :: c2
+	  real(kind=dbl) :: rhoi
+      integer(kind=long), intent(out) :: errorstatus
+      integer(kind=long) :: err = 0
+      character(len=33) :: nameOfRoutine = 'dia2vel_khvorostyanov05_particles'
+
+      if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+
+      ! no check for boundaries due to different possible particle types
+      err = success
+
+
+      do_i = 5.83
+      co_i = 0.6
+      Ct = 1.6
+      X0_i = .35714285714285714285e-6 !1.0_wp/2.8e6_wp
+	  ! derived constants
+      c1 = 4.0 / ( do_i**2 * SQRT(co_i) )
+      c2 = 0.25 * do_i**2
+      rhoi  = 919.0
+
+      Vb = mass_SI/rhoi
+      Fb = rho_air_SI * Vb * g
+      X = 2 * (mass_SI * g - Fb)  * diaSpec_SI**2 /(area_SI * rho_air_SI* nu_SI**2)!eq. 3 of Mitchell et al 1996
+
+      ! Re-X eq. (2.5)
+      bracket = SQRT(1.0 + c1*SQRT(X)) - 1.0
+      ! turbulent Reynold's number, eq (3.3)
+      psi = (1+(X*X0_i)**2) / (1+Ct*(X*X0_i)**2)
+      Re  = c2*bracket**2 ! * SQRT(psi) ! TODO remove psi in Re?
+
+      ! eq. (2.1) from KC05 with (3.2)
+      Cd = co_i * (1. + do_i/SQRT(Re))**2 / psi
+
+      velSpec = SQRT( 2*ABS(mass_SI * g - Fb)/(rho_air_SI * area_Si * Cd) )
+
+      errorstatus = err
+      if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+
+      return
+
+  end subroutine dia2vel_khvorostyanov05_particles
 
   subroutine dia2vel_khvorostyanov01_spheres &
     (errorstatus,&     	! out
@@ -864,6 +952,7 @@ module dia2vel
     
       !in
       !nDia: no of diameters
+      !mass: mass spectrum of the particles [kg]
       !out
       !velSpec: velocity spectrum [m/s]
 
@@ -919,7 +1008,9 @@ module dia2vel
       call assert_false(err,(tokenized(2) == "NAN"),&
           "tokenized(2) must not be NAN") 
       call assert_false(err,(tokenized(3) == "NAN"),&
-          "tokenized(3) must not be NAN") 
+          "tokenized(3) must not be NAN")
+      call assert_false(err,(tokenized(4) == "NAN"),&
+          "tokenized(4) must not be NAN")
       if (err > 0) then
         errorstatus = fatal
         msg = "assertation error"
@@ -927,7 +1018,8 @@ module dia2vel
         return
       end if  
       !finally apply coefficients
-      velSpec(:) = fallvel_A - fallvel_B*DEXP(-fallvel_C * (6.0*mass(:)/(pi*rho_ice))**(1.0/3.0)) 
+      velSpec(:) = fallvel_A-fallvel_B*DEXP(-fallvel_C*(6.0d0*mass(:)/(pi*rho_water))**(1.0d0/3.0d0))
+      !velSpec(:) = (velSpec(:) + DABS(velSpec(:)))*0.5d0 ! replace possible initial negative values with 0.0
 
       return
   end subroutine dia2vel_atlas

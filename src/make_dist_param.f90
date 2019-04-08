@@ -31,9 +31,13 @@ subroutine make_dist_params(errorstatus)
 
   use constants, only: pi, rho_water, delta_d_mono
 
-  use drop_size_dist, only: dist_name, p_1, p_2, p_3, p_4, a_ms, b_ms, d_1, d_2, moment_in, & ! IN
+  use drop_size_dist, only: dist_name, rho_ms, p_1, p_2, p_3, p_4, a_ms, b_ms, d_1, d_2, moment_in, & ! IN
        q_h, n_tot, r_eff, layer_t, nbin,                            & ! IN
        n_0, lambda, mu, gam, n_t, sig, d_ln, d_mono, d_m, n_0_star ! OUT
+
+  ! variables used for surface and height dependent parameters (ECHAM/HIRHAM)
+  use vars_index, only: i_x, i_y, i_z
+  use vars_atmosphere, only: sfc_type, sfc_slf, sfc_sif, atmo_press, atmo_temp, atmo_hgt
 
   ! Imported Scalar Variables with intent (in):
 
@@ -43,13 +47,17 @@ subroutine make_dist_params(errorstatus)
 
   ! Local scalars:
 
-  real(kind=dbl) :: work1, work2, work3, delta_d_const
+  real(kind=dbl) :: work1, work2, work3, delta_d_const, rho_dry, true_lf
   real(kind=dbl) :: ztc, hlp, alf, bet, m2s, m3s
   integer(kind=long) :: nn
 
   ! Local arrays:
 
   real(kind=dbl), dimension(10) :: mma, mmb
+
+  ! functions
+
+  real(kind=dbl) :: rho_air
 
   ! Error handling
 
@@ -118,7 +126,8 @@ subroutine make_dist_params(errorstatus)
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! MONODISPERSE distribution   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-  if ((trim(dist_name) == 'mono') .or. (trim(dist_name) == 'mono_cosmo_ice')) then
+  if ((trim(dist_name) == 'mono') .or. (trim(dist_name) == 'mono_cosmo_ice') .or. &
+    (trim(dist_name) == 'mono_echam_cl') .or. (trim(dist_name) == 'mono_echam_ice')) then
      ! Set parameter for the Gamma dist. to get a monodisperse dist.
      lambda = 0._dbl
      mu = 0._dbl
@@ -158,6 +167,28 @@ subroutine make_dist_params(errorstatus)
            n_0 = q_h / (a_ms * d_mono**b_ms) / delta_d_mono
         endif
      endif
+     if (trim(dist_name) == 'mono_echam_cl') then
+        ! mono disperse distribution coherent with ECHAM6 1 moment scheme for liquid clouds
+        if (sfc_type(i_x,i_y) == 1) then
+          n_0 = 220.d6
+        else
+          true_lf = sfc_slf(i_x,i_y) + (1._dbl -sfc_slf(i_x,i_y)) * sfc_sif(i_x,i_y)
+          n_0 = (80._dbl * (1._dbl - true_lf) + 220._dbl * true_lf) * 1.d6 ! fractional land/ocean
+        end if
+        if (atmo_hgt(i_x,i_y,i_z) > 1.d3) then
+          n_0 = n_0 * exp(log(50._dbl/n_0)/10.d3*atmo_hgt(i_x,i_y,i_z))
+        end if
+        rho_dry = rho_air(atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z))
+        d_mono = 2._dbl*(q_h*rho_dry*3._dbl/(4._dbl*pi*n_0*rho_water))**(1._dbl/3._dbl)
+!        print*, i_z, atmo_hgt(i_x,i_y,i_z), n_0, d_mono
+     endif
+     if (trim(dist_name) == 'mono_echam_ice') then
+        ! mono disperse distribution coherent with ECHAM6 1 moment scheme for liquid clouds
+
+        rho_dry = rho_air(atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z))
+        d_mono = 2.d-6*(sqrt(2809._dbl*(83.8_dbl*(1.d3*q_h*rho_dry)**0.216_dbl)**3.+5113188._dbl)-2261._dbl)**(1._dbl/3._dbl) ! mean ice crystal volume diameter
+        n_0 = q_h*rho_dry / (delta_d_mono * rho_ms * (pi/6._dbl) * d_mono**3._dbl)
+     endif
      ! ! Check that the variables have been filled in
      if ((lambda /= 0._dbl) .or. (mu /= 0._dbl) .or. (gam /= 0._dbl) .or. &
           (n_0 <= 0._dbl) .or. (d_mono <= 0._dbl) ) then
@@ -192,7 +223,7 @@ subroutine make_dist_params(errorstatus)
      if ((trim(dist_name) == 'const_cosmo_ice') .and. (moment_in == 3) &
           .and. (nbin == 2)) then
         ! ! Monodisperse size distribution coherent with COSMO-de 1-moment scheme
-        ! Number_concentration of activated ice ctystal is temperature dependent
+        ! Number_concentration of activated ice crystal is temperature dependent
         ! from COSMO-de code src_gscp.f90 routine: hydci_pp_gr
         ! Radius is derived from mass-size relation m=aD^3
         ! a=130 kg/m^3 (hexagonal plates with aspect ratio of 0.2 -> thickness=0.2*Diameter)

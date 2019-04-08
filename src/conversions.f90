@@ -29,8 +29,8 @@ contains
         use constants, only: r_d, r_v
 
         implicit none
-	
-	real(kind=dbl) :: abs2spec
+
+    real(kind=dbl) :: abs2spec
         real(kind=dbl), intent(in) :: t,&
         p
 
@@ -55,7 +55,7 @@ contains
         !     ZTEMP air temperature in K
         !     XRM water vapor mass mixing ratio kg/kg
 
-	real(kind=dbl) :: vapor2rh
+    real(kind=dbl) :: vapor2rh
         real, intent(in) :: temp_p,pres_p,hum_massmix
 
         REAL(kind=dbl) :: XCPV               ! Cpv (vapor)

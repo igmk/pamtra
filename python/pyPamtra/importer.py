@@ -1541,6 +1541,172 @@ def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
 # Add regridding remarks
 readIconLem2MomDataset.__doc__ += __ICDN_regridding_remarks
 
+def readHIRHAM(dataFile,additionalFile,topoFile,descriptorFile,grid=[0,200,0,218],timestep=0,debug=False,verbosity=0):
+
+  import netCDF4
+
+  data = dict() #  this will hold the data before we create the pamtra object data
+
+  a = grid[0]     # 0 # 70
+  b = grid[1]     #150 # 82
+  # y-axis 0:218
+  c = grid[2]     #80 # 50
+  d = grid[3]    #218 # 70
+  # time
+  t = timestep
+
+  fo = netCDF4.Dataset(dataFile, 'r')
+
+  data['lon'] = fo['XLONG'][a:b,c:d]
+  data['lat'] = fo['XLAT'][a:b,c:d]
+  ts = (datetime.datetime.strptime(str(fo['DateTime'][t]),'%Y%m%d%H')- datetime.datetime(1970,1,1)).total_seconds()
+  data['hgt'] = np.moveaxis(fo['GHT'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1] # geopotnetial height [m] used as hgt
+  data['temp'] = np.moveaxis(fo['TT'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1] # temperature [K]
+  data['relhum'] = np.moveaxis(fo['RH'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1] # relative humidity [%]
+  Frain_ls = np.moveaxis(fo['LSRAIN'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]     # Flux large scale cloud rain in kg m^-2 s^ 
+  Frain_c = np.moveaxis(fo['CCRAIN'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]      # Flux convective cloud rain in kg m^-2 s^
+  Fsnow_ls = np.moveaxis(fo['LSSNOW'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]     # Flux large scale cloud snow in kg m^-2 s^
+  Fsnow_c = np.moveaxis(fo['CCSNOW'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]      # Flux convective cloud snow in kg m^-2 s^
+  qvapor = np.moveaxis(fo['QVAPOR'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1] #[:,:,c:d,g:h]         # Water vapor mixing ratio in kg kg-1
+  qcloud = np.moveaxis(fo['QCLOUD'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]              # Cloud water mixing ratio in kg kg-1
+  qice = np.moveaxis(fo['QICE'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]                  # Ice mixing ratio in kg kg-1
+  # LANDMASK = (fo['LANDKASK'][t,...])[a:b,c:d]            # 0 for water 1 for land (more detailed variable in /data/mod/hirham/5/3hr/topo_lsm.nc)
+  data['groundtemp']= (fo['SKINTEMP'][t,...])[a:b,c:d]             # Surface skin  temperature (time, lat,lon)
+  data['wind10u'] = (fo['U10M'][t,...])[a:b,c:d] # 10 m windspeed zonal component [m/s]
+  data['wind10v'] = (fo['V10M'][t,...])[a:b,c:d] # 10 m windspeed meridional component [m/s]
+  a_mid = (fo['hyam'][:])[::-1]  # A coefficients at layer midpoint [Pa]
+  b_mid = (fo['hybm'][:])[::-1]  # B coefficients at layer midpoints [1]
+
+  fo.close()
+
+  # loading additional files needed for PAMTRA simulations
+  # surface pressure
+  fo2 = netCDF4.Dataset(additionalFile,'r')
+  ps = (fo2['ps'][0,...])[a:b,c:d]
+  seaicefraction = (fo2['seaice'][0,...])[a:b,c:d] # [0,1] 0 = ocean, 1 = seaice
+  sealandfraction = (fo2['slf'][0,...])[a:b,c:d] # [0,1] 0 = sea/water, 1 = land; compared to LANDMASk it is a continuous value
+  fo2.close()
+
+  # surf_geopotential
+  fo_inv = netCDF4.Dataset(topoFile,'r')
+  surf_geopotential = fo_inv['fis'][a:b,c:d]#[c:d,g:h] # surface geopotential (orography) in m^2/s^2
+  fo_inv.close()
+
+  # construct all shapes needed for PAMTRA
+  shape2D = ps.shape
+  shape3D = data['hgt'].shape
+  shape3Dplus = (shape3D[0],shape3D[1],shape3D[2]+1)
+  shape4D = (shape3D[0],shape3D[1],shape3D[2],4)
+
+  # let's set the time for each profile
+  data['timestamp'] = np.zeros(shape2D)
+  data['timestamp'][:] = ts
+
+  # Calculating pressure variable from a and b hybrid coefficients:
+  data['press'] = np.zeros(shape3D)
+
+  for i in range(shape3D[2]): 
+      if i == 0:
+          data['press'][:,:,i] = a_mid[i] + b_mid[i]*ps
+      else:
+          data['press'][:,:,i] = a_mid[i-1]*0.5 + (b_mid[i-1]*0.5)*ps
+
+  Rspec = 8.31432e3 # [Nm/kmol K]
+  rho_dry =  data['press']/(Rspec * data['temp']) # IGL: P = rho*Rspec*T
+
+  # calculate height of levels
+  data['hgt_lev'] = np.zeros(shape3Dplus)
+  data['hgt_lev'][...,0] = surf_geopotential/9.81
+
+  for i in range(shape3D[2]-1):
+    data['hgt_lev'][...,i+1] = (data['hgt'][...,i+1] + data['hgt'][...,i])*0.5
+
+  data['hgt_lev'][...,-1] = data['hgt'][...,-1] + (data['hgt'][...,-1] - data['hgt'][...,-2])*0.5
+
+  ################################################################################################################
+  #               Calculate mixing ratios from fluxes from HIRHAM5. Scheme is like in HIRLAM
+  ################################################################################################################
+
+  # Constants:
+  R = 287.05 # [J/kg K] specific gas constant of dry air
+  # snow:
+  Cpr = 1. # assumtion that we have snow/ice/rain in the whole grid cell
+  rho = 1000. # density of water [kg/m^3] 
+  a11 = 3.29
+  b10 = 0.16
+
+  #rain:
+  a10 = 90.8
+  n0r = 8.e6 # [m^-4] intercept parameter
+  n0s = 3.e6 # [m^-4] intercept parameter
+
+  # ice - same constants as for snow
+
+  # Mass mixing ratio of snow within the fraction Cpr of the grid cell covered with snow is obtained from the snow fall rate:
+
+  # rho - air density --> calculate from IGL: rho_dry = P/R*T = 1.225 kg/m^3 (P -sea level and T at standard atmosp pressure)
+  rho0 = 1.3           # rho0 - reference density of air: 1.3 kg/m^3
+  rho_i = 500.         # rhoi - density of cloud ice: 500 kg/m^3
+  rho_s = 100.         # rhos - bulk density of snow: 100 kg/m^3
+  rho_r = 1000.        # rhow - density of water: 1000 kg/m^3
+
+  # rs - mass mixing ratio of snow
+  # rr - mass mixing ratio of rain
+  # ri - mas mixing ratio of falling ice
+  # Fsnow - snow flux 
+  # Frain - rain flux
+  # Fitop - grid cell mean sedimantation flux
+  # Cpr - fraction of the grid cell covered with snow
+
+  ## 1.) snow:
+  qsnow = ((Fsnow_ls + np.abs(Fsnow_c))/(Cpr * a11))**(1/(1 + b10))
+
+  # rs = ((Fsnow_ls)/Cpr * a11)**(1./(1. + b10))
+
+  ##2.) rain;
+  ## vr - mass-weighted fall velocity of rain drops parameterized according to Kessler (1969)
+
+  qrain = ( (Frain_ls + np.abs(Frain_c)) / ( Cpr*a10 *  n0r**(-1./8.)  * np.sqrt(rho0/rho_dry) ) )**(8./9.)
+
+  #-------------------------------------------------------------------------------------------------
+
+  data['hydro_q'] = np.zeros(shape4D)
+
+  data['hydro_q'][...,0] = qcloud
+  data['hydro_q'][...,1] = qice
+  data['hydro_q'][...,2] = qrain
+  data['hydro_q'][...,3] = qsnow
+
+  pamData = dict()  # Creating pamtra dictionary where all variables will be added
+
+  varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],["wind10u","wind10u"],["wind10v","wind10v"],["hgt","hgt"],
+    ["hgt_lev","hgt_lev"],["press","press"],["temp","temp"],["relhum","relhum"],["hydro_q","hydro_q"],["groundtemp","groundtemp"]]
+
+  for hirhamVar,pamVar in varPairs:
+      pamData[pamVar] = data[hirhamVar]
+
+  # surface properties
+  pamData['sfc_type'] = np.zeros(shape2D)
+  pamData['sfc_type'] = np.around(sealandfraction)
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][:] = 'F'
+
+  pamData['sfc_refl'][(pamData['sfc_type'] == 1)] = 'S'
+  pamData['sfc_model'][(pamData['sfc_type'] == 1)] = 0.
+  # pamData['sfc_type'][(pamData['sfc_type'] == 0.) & (pamData['groundtemp'] < 270.)] = 2.
+  pamData['sfc_slf'] = sealandfraction
+  pamData['sfc_sif'] = seaicefraction
+
+  pam = pyPamtra()
+  if isinstance(descriptorFile, str):
+    pam.df.readFile(descriptorFile)
+  else:
+    for df in descriptorFile:
+      pam.df.addHydrometeor(df)
+  pam.createProfile(**pamData)
+
+  return pam
 
 def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,dimY=160,dimZ=25,subGrid=None):
 
@@ -1634,7 +1800,7 @@ def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,d
 
   return pam
 
-def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timeidx=None):
+def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timeidx=None, hydro_content=[1.,1.,1.,1.,1.,1.]):
   '''
   import ICON LEM 2-moment dataset output cross section over a site (Meteogram)
   
@@ -1659,19 +1825,27 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
 
   ## THIS PART IS TROUBLESOME, BUT PEOPLE MIGHT NEED STATION DETAILS ##
   station = ICON_file.station.split()
-  lon = float([s for s in station if '_lon' in s][0].split('=')[-1])
+#  lon = float([s for s in station if '_lon' in s][0].split('=')[-1])
   lat = float([s for s in station if '_lat' in s][0].split('=')[-1])
-  height = float([s for s in station if '_hsurf' in s][0].split('=')[-1])
-  name = [s for s in station if '_name' in s][0].split('=')[-1]
-  frland = float([s for s in station if '_frland' in s][0].split('=')[-1])
-  fc = float([s for s in station if '_fc' in s][0].split('=')[-1])
-  soiltype = int([s for s in station if '_soiltype' in s][0].split('=')[-1])
+#  height = float([s for s in station if '_hsurf' in s][0].split('=')[-1])
+#  name = [s for s in station if '_name' in s][0].split('=')[-1]
+#  frland = float([s for s in station if '_frland' in s][0].split('=')[-1])
+#  fc = float([s for s in station if '_fc' in s][0].split('=')[-1])
+#  soiltype = int([s for s in station if '_soiltype' in s][0].split('=')[-1])
 #  tile_frac=[',  u'1.]',
 #  tile_luclass=[4]
   
   pamData = dict() # empty dictionary to store pamtra Data
+
+  hgt_key = 'height_2'
+  if vals.has_key(hgt_key):
+    hgt_key = hgt_key
+  elif vals.has_key('heights_2'):
+    hgt_key = heights_2
+  else:
+    raise AttributeError('ICON file does not have a valid height label (I know only height_2 and heights_2)')
   
-  Nh = len(vals['height_2'])
+  Nh = len(vals[hgt_key])
   Nt = len(vals['time'])
   nhydros = 6
   if timeidx is None:
@@ -1687,33 +1861,129 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
 #  variables3D_10m = ["u_10m","v_10m"]
 #  variables3D = ["temp","pres","qv","qc","qi","qr","qs","qg","qh","qnc","qni","qnr","qns","qng","qnh"]
   
-  pamData['hgt'] = np.tile(np.flip(vals['height_2'],0),(len(timeidx),1)) # heights at which fields are defined
+  pamData['hgt'] = np.tile(np.flip(vals[hgt_key],0),(len(timeidx),1)) # heights at which fields are defined
 
-  pamData['press']    = np.flip(vals['P'][timeidx],1)    # pressure 
-  pamData['temp']     = np.flip(vals['T'][timeidx],1)    # temperature
-  #pamData['wind_u']  = np.flip(vals['U'][timeidx],1)    # zonal wind speed
-  #pamData['wind_v']  = np.flip(vals['V'][timeidx],1)    # meridional wind speed
-  wind_w = np.flip(vals['W'][timeidx],1)    # vertical wind speed
+  pamData['press']  = np.flip(vals['P'][timeidx],1)    # pressure 
+  pamData['temp']   = np.flip(vals['T'][timeidx],1)    # temperature
+  wind_u = np.flip(vals['U'][timeidx],1)               # zonal wind speed
+  wind_v = np.flip(vals['V'][timeidx],1)               # meridional wind speed
+  pamData['wind_uv'] = np.hypot(wind_u, wind_v)
+  wind_w = np.flip(vals['W'][timeidx],1)               # vertical wind speed
   pamData['wind_w'] = 0.5*(wind_w[:,:-1]+wind_w[:,1:])
   pamData['relhum'] = np.flip(vals['REL_HUM'][timeidx],1)
 
   # Read hydrometeors content
   hydro_cmpl = np.zeros((len(timeidx),Nh,nhydros))
-  hydro_cmpl[...,0] = np.flip(vals['QC'][timeidx],1)   # specific cloud water content
-  hydro_cmpl[...,1] = np.flip(vals['QI'][timeidx],1)   # specific cloud ice content
-  hydro_cmpl[...,2] = np.flip(vals['QR'][timeidx],1)   # rain mixing ratio
-  hydro_cmpl[...,3] = np.flip(vals['QS'][timeidx],1)   # snow mixing ratio
-  hydro_cmpl[...,4] = np.flip(vals['QG'][timeidx],1)   # graupel mixing ratio
-  hydro_cmpl[...,5] = np.flip(vals['QH'][timeidx],1)   # graupel mixing ratio # TODO report probably error encoding long name ...  should be hail mixing ratio
+  hydro_cmpl[...,0] = hydro_content[0]*np.flip(vals['QC'][timeidx],1)   # specific cloud water content
+  hydro_cmpl[...,1] = hydro_content[1]*np.flip(vals['QI'][timeidx],1)   # specific cloud ice content
+  hydro_cmpl[...,2] = hydro_content[2]*np.flip(vals['QR'][timeidx],1)   # rain mixing ratio
+  hydro_cmpl[...,3] = hydro_content[3]*np.flip(vals['QS'][timeidx],1)   # snow mixing ratio
+  hydro_cmpl[...,4] = hydro_content[4]*np.flip(vals['QG'][timeidx],1)   # graupel mixing ratio
+  hydro_cmpl[...,5] = hydro_content[5]*np.flip(vals['QH'][timeidx],1)   # graupel mixing ratio # TODO report probably error encoding long name ...  should be hail mixing ratio
 
   # Read hydrometeors number concentration
   hydro_num_cmpl = np.zeros((len(timeidx),Nh,nhydros))
-  hydro_num_cmpl[...,0] = np.flip(vals['QNC'][timeidx],1)  # number concentration of cloud water
-  hydro_num_cmpl[...,1] = np.flip(vals['QNI'][timeidx],1)  # number concentration ice
-  hydro_num_cmpl[...,2] = np.flip(vals['QNR'][timeidx],1)  # number concentration droplets
-  hydro_num_cmpl[...,3] = np.flip(vals['QNS'][timeidx],1)  # number concentration snow
-  hydro_num_cmpl[...,4] = np.flip(vals['QNG'][timeidx],1)  # number concentration graupel
-  hydro_num_cmpl[...,5] = np.flip(vals['QNH'][timeidx],1)  # number concentration hail 
+  hydro_num_cmpl[...,0] = hydro_content[0]*np.flip(vals['QNC'][timeidx],1)  # number concentration of cloud water
+  hydro_num_cmpl[...,1] = hydro_content[1]*np.flip(vals['QNI'][timeidx],1)  # number concentration ice
+  hydro_num_cmpl[...,2] = hydro_content[2]*np.flip(vals['QNR'][timeidx],1)  # number concentration droplets
+  hydro_num_cmpl[...,3] = hydro_content[3]*np.flip(vals['QNS'][timeidx],1)  # number concentration snow
+  hydro_num_cmpl[...,4] = hydro_content[4]*np.flip(vals['QNG'][timeidx],1)  # number concentration graupel
+  hydro_num_cmpl[...,5] = hydro_content[5]*np.flip(vals['QNH'][timeidx],1)  # number concentration hail 
+
+  pamData["hydro_q"] = hydro_cmpl
+  pamData["hydro_n"] = hydro_num_cmpl
+  
+  # surface properties
+  pamData['wind10u'] = vals['U10M'][timeidx]
+  pamData['wind10v'] = vals['V10M'][timeidx]
+  pamData['groundtemp'] = vals['T_S'][timeidx]
+
+# surface properties
+  pamData['sfc_type']  = np.ones(pamData['groundtemp'].shape)
+  pamData['sfc_model'] = np.zeros(pamData['groundtemp'].shape)
+  pamData['sfc_refl']  = np.chararray(pamData['groundtemp'].shape)
+  pamData['sfc_refl'][:] = 'S' # land  'F' # ocean 'L' lambertian, land
+
+  pam = pyPamtra()
+  pam.set['pyVerbose'] = verbosity
+
+  if isinstance(descriptorFile, str):
+    pam.df.readFile(descriptorFile)
+  else: # is an iterable containing arrays
+    for df in descriptorFile:
+      pam.df.addHydrometeor(df)
+  
+  pam.createProfile(**pamData)
+  
+  return pam
+
+def readIcon2momOnFlightTrack(fname, descriptorFile, debug=False, verbosity=0):
+  '''
+  import ICON LEM 2-moment dataset output along a flight track
+  
+  WARNING: This importer has been designed upon Icon output generated by Dr. Vera Schemann
+  Might not work on other files.
+  
+  fname = filename of the Icon output
+  descriptorFile = pyPamtra descriptorFile object or filename of a proper formatted descriptorFile
+  debug = flag causing stop and load of debugger upon raised exception
+  verbosity = pyPamtra.pyVerbose verbosity level
+
+  Pamtra assumes that the apart from height, the first given dimension is latitude, here coordinates do not change across the dimension, but time does, thus generating a meteogram
+  
+  16/05/2018 - Mario Mech - mario.mech@uni-koeln.de based on readIcon2momMeteogram by Davide Ori
+  '''
+  
+  import netCDF4
+  
+  ICON_file = netCDF4.Dataset(fname, mode='r')
+  vals = ICON_file.variables
+
+  pamData = dict() # empty dictionary to store pamtra Data
+  
+  Nh = len(vals['height_2d'])
+  Nx = len(vals['lat'])
+  nhydros = 6
+  # if timeidx is None:
+  latidx = np.arange(0,Nx)
+  # shapeSFC = (len(timeidx),)
+    
+  # date_times = netCDF4.num2date(vals["time"][timeidx], vals["time"].units) # datetime autoconversion
+  # timestamp = netCDF4.date2num(date_times, "seconds since 1970-01-01 00:00:00") # to unix epoch timestamp (python uses nanoseconds int64 internally)
+  # pamData['timestamp'] = timestamp
+  
+#  variables1D_const = ["FR_LAND", 'lon_2', 'lat_2'] # 'topography_c' would be the ICON equivalent to the COSMO 'HSURF'
+#  variables2D = ["t_g","pres_sfc"]
+#  variables3D_10m = ["u_10m","v_10m"]
+#  variables3D = ["temp","pres","qv","qc","qi","qr","qs","qg","qh","qnc","qni","qnr","qns","qng","qnh"]
+  
+  pamData['hgt'] = np.swapaxes(np.flip(vals['height_2d'],0),0,1) # heights at which fields are defined
+
+  pamData['press'] = np.swapaxes(np.flip(vals['P'],0),0,1)    # pressure 
+  pamData['temp'] = np.swapaxes(np.flip(vals['T'],0),0,1)    # temperature
+  #pamData['wind_u']  = np.flip(vals['U'][timeidx],1)    # zonal wind speed
+  #pamData['wind_v']  = np.flip(vals['V'][timeidx],1)    # meridional wind speed
+  # wind_w = np.flip(vals['W'][timeidx],1)    # vertical wind speed
+  # pamData['wind_w'] = 0.5*(wind_w[:,:-1]+wind_w[:,1:])
+  pamData['relhum'] = np.swapaxes(np.flip(vals['REL_HUM'],0),0,1)
+
+  # Read hydrometeors content
+  hydro_cmpl = np.zeros((len(latidx),Nh,nhydros))
+  hydro_cmpl[...,0] = np.swapaxes(np.flip(vals['QC'],0),0,1)   # specific cloud water content
+  hydro_cmpl[...,1] = np.swapaxes(np.flip(vals['QI'],0),0,1)   # specific cloud ice content
+  hydro_cmpl[...,2] = np.swapaxes(np.flip(vals['QR'],0),0,1)   # rain mixing ratio
+  hydro_cmpl[...,3] = np.swapaxes(np.flip(vals['QS'],0),0,1)   # snow mixing ratio
+  hydro_cmpl[...,4] = np.swapaxes(np.flip(vals['QG'],0),0,1)   # graupel mixing ratio
+  hydro_cmpl[...,5] = np.swapaxes(np.flip(vals['QH'],0),0,1)   # graupel mixing ratio # TODO report probably error encoding long name ...  should be hail mixing ratio
+
+  # Read hydrometeors number concentration
+  hydro_num_cmpl = np.zeros((len(latidx),Nh,nhydros))
+  hydro_num_cmpl[...,0] = np.swapaxes(np.flip(vals['QNC'],0),0,1)  # number concentration of cloud water
+  hydro_num_cmpl[...,1] = np.swapaxes(np.flip(vals['QNI'],0),0,1)  # number concentration ice
+  hydro_num_cmpl[...,2] = np.swapaxes(np.flip(vals['QNR'],0),0,1)  # number concentration droplets
+  hydro_num_cmpl[...,3] = np.swapaxes(np.flip(vals['QNS'],0),0,1)  # number concentration snow
+  hydro_num_cmpl[...,4] = np.swapaxes(np.flip(vals['QNG'],0),0,1)  # number concentration graupel
+  hydro_num_cmpl[...,5] = np.swapaxes(np.flip(vals['QNH'],0),0,1)  # number concentration hail 
 
   pamData["hydro_q"] = hydro_cmpl
   pamData["hydro_n"] = hydro_num_cmpl
@@ -1726,11 +1996,11 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   pam.set['pyVerbose'] = verbosity
   
   # surface properties
-  pamData['lat'] = lat*np.ones(shapeSFC)
+  pamData['lat'] = vals['lat'][:]
 #  pamData['lon'] = lon
-  pamData['wind10u'] = vals['U10M'][timeidx]
-  pamData['wind10v'] = vals['V10M'][timeidx]
-  pamData['groundtemp'] = vals['T_S'][timeidx]
+  # pamData['wind10u'] = vals['U10M'][Nx]
+  # pamData['wind10v'] = vals['V10M'][Nx]
+  # pamData['groundtemp'] = vals['T_S'][Nx]
 #  pamData['sfc_type'] = np.around(frland*np.ones(shapeSFC))
 #  assert np.all(np.logical_or(0<=pamData['sfc_type'], pamData['sfc_type'] <=1))
 #  pamData['sfc_model'] = np.zeros(shapeSFC)
@@ -1747,6 +2017,7 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   pam.createProfile(**pamData)
   
   return pam
+  
   
 
 def createUsStandardProfile(pam=pyPamtra(),**kwargs):

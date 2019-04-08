@@ -85,7 +85,8 @@ subroutine make_dist(errorstatus)
   max_d = 2.d-2
 
   ! Monodisperse distribution
-  if ((trim(dist_name) == 'mono')  .or. (trim(dist_name) == 'mono_cosmo_ice')) then
+  if ((trim(dist_name) == 'mono')  .or. (trim(dist_name) == 'mono_cosmo_ice') &
+     .or. (trim(dist_name) == 'mono_echam_cl') .or. (trim(dist_name) == 'mono_echam_ice')) then
      d_bound_ds(1) = d_mono - delta_d_mono*.5_dbl
      d_bound_ds(2) = d_mono
      d_bound_ds(3) = d_mono + delta_d_mono*.5_dbl
@@ -95,7 +96,7 @@ subroutine make_dist(errorstatus)
      skip = .true.
   endif
 
-  ! Fisrt loop:
+  ! First loop:
   ! -uses a very large number of bin and wide range of diameters to found where f_ds_work(D) is smaller than thres_n
   ! Second loop:
   ! -uses the user defined nbin BUT the nre defined diameter range
@@ -203,8 +204,9 @@ subroutine make_dist(errorstatus)
         enddo
 
      else if ((trim(dist_name) /= 'mono')  .and. (trim(dist_name) /= 'mono_cosmo_ice') .and. &
-          (trim(dist_name) /= 'const') .and. (trim(dist_name) /= 'const_cosmo_ice')) then 
-        msg = 'did not undestand drop size name'
+          (trim(dist_name) /= 'const') .and. (trim(dist_name) /= 'const_cosmo_ice') .and. &
+          (trim(dist_name) /= 'mono_echam_cl') .and. (trim(dist_name) /= 'mono_echam_ice')) then 
+        msg = 'did not understand drop size name'
         errorstatus = fatal
         call report(errorstatus, msg, nameOfRoutine)
         return
@@ -271,6 +273,7 @@ subroutine make_dist(errorstatus)
 
   do i=1,nbin
      n_ds(i) = (f_ds(i) + f_ds(i+1)) / 2._dbl * delta_d_ds(i)  ! Trapezoidal approximation of the integral
+!     print*, d_ds(i), f_ds(i),delta_d_ds(i), n_ds(i)
   enddo
 
   !remove numerical instabilities

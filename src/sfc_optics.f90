@@ -5,7 +5,7 @@ module sfc_optics
   use report_module
   use settings, only: emissivity!, nstokes, nummu
   use vars_index, only: i_x, i_y, i_f
-  use vars_atmosphere, only : sfc_type, sfc_model
+  use vars_atmosphere, only : sfc_type, sfc_model, sfc_refl
   use vars_rt, only: rt_sfc_emissivity, rt_sfc_reflectivity
   use vars_output, only: out_emissivity
   ! routines
@@ -60,8 +60,21 @@ contains
     elseif (sfc_type(i_x,i_y) == 1) then ! land
         if ((sfc_model(i_x,i_y) == 0) .or. (sfc_model(i_x,i_y) == -9999)) then ! TELSEM2
             call land_sfc_optics_telsem2(err,freq)
+            if (rt_sfc_emissivity(1,1) == 0.) then
+              call  land_sfc_optics_ssmi(err,freq)
+              errorstatus = warning
+              if (verbose >= 1) then
+                msg = "TELSEM2 has no value for this coordinates!"
+                call report(errorstatus, msg, nameOfRoutine)
+              end if
+            end if
         elseif (sfc_model(i_x,i_y) == 1) then ! SSMI
             call land_sfc_optics_ssmi(err,freq)
+        end if
+        if (sfc_refl(i_x,i_y) .ne. 'S') then
+          errorstatus = warning
+          msg = "Only specular reflection makes sense for land surfaces"
+          call report(errorstatus, msg, nameOfRoutine)
         end if
     else ! default sfc_type == -9999, sfc_model == -9999 and sfc_refl == 'L'
         rt_sfc_emissivity(:,:) = emissivity
@@ -74,7 +87,6 @@ contains
       call report(errorstatus, msg, nameOfRoutine)
       return
     end if
-    
     out_emissivity(i_x,i_y,:,i_f,:) = rt_sfc_emissivity(:,:)
 
     errorstatus = err

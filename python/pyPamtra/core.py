@@ -46,7 +46,7 @@ class pyPamtra(object):
     set setting default values
     """
 
-    self.default_p_vars = ["timestamp","lat","lon","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb","radar_prop","groundtemp","wind_w", "wind_uv","turb_edr","sfc_type","sfc_model","sfc_refl","sfc_salinity"]
+    self.default_p_vars = ["timestamp","lat","lon","wind10u","wind10v","hgt","press","temp","relhum","hgt_lev","press_lev","temp_lev","relhum_lev","q","hydro_q","hydro_n","hydro_reff","wind10u","wind10v","obs_height", "ngridy","ngridx","max_nlyrs","nlyrs","model_i","model_j","unixtime","airturb","radar_prop","groundtemp","wind_w", "wind_uv","turb_edr","sfc_type","sfc_model","sfc_refl","sfc_salinity","sfc_slf","sfc_sif"]
     self.nmlSet = dict() #:settings which are required for the nml file. keeping the order is important for fortran
     #keys MUST be lowercase for f2py!
     self.nmlSet["hydro_threshold"]=  1.e-10   # [kg/kg]
@@ -173,6 +173,8 @@ class pyPamtra(object):
     self.dimensions["sfc_model"] = ["ngridx","ngridy"]
     self.dimensions["sfc_refl"] = ["ngridx","ngridy"]
     self.dimensions["sfc_salinity"] = ["ngridx","ngridy"]
+    self.dimensions["sfc_slf"] = ["ngridx","ngridy"]
+    self.dimensions["sfc_sif"] = ["ngridx","ngridy"]
 
     self.units = dict()
 
@@ -216,6 +218,8 @@ class pyPamtra(object):
     self.units["sfc_model"] = "-"
     self.units["sfc_refl"] = "-"
     self.units["sfc_salinity"] = "ppt"
+    self.units["sfc_slf"] = "-"
+    self.units["sfc_sif"] = "-"
 
     self._nstokes = 2
     self._nangles = 16
@@ -343,6 +347,8 @@ class pyPamtra(object):
     self.p["sfc_model"] = np.ones(self._shape2D,dtype=int) *missingIntNumber
     self.p["sfc_refl"] = np.chararray(self._shape2D)
     self.p["sfc_salinity"] = np.ones(self._shape2D) * np.nan
+    self.p["sfc_slf"] = np.ones(self._shape2D) * np.nan
+    self.p["sfc_sif"] = np.ones(self._shape2D) * np.nan
 
     self.p["hydro_q"] = np.ones(self._shape4D)  * np.nan
     self.p["hydro_n"] = np.ones(self._shape4D) * np.nan
@@ -371,6 +377,10 @@ class pyPamtra(object):
         self.p["lat"][xx,yy], self.p["lon"][xx,yy], lfrac,self.p["wind10u"][xx,yy],self.p["wind10v"][xx,yy],self.p["groundtemp"][xx,yy],self.p["hgt_lev"][xx,yy,0]  = np.array(np.array(g.next()[:7]),dtype=float)
 
         self.p["sfc_type"][xx,yy] = np.around(lfrac) # lfrac is deprecated
+        if self.p["sfc_type"][xx,yy] == 0:
+            self.p["sfc_refl"][xx,yy] = 'F'
+        else:
+            self.p["sfc_refl"][xx,yy] = 'L'
 
         self.p["iwv"][xx,yy] = np.array(np.array(g.next()[0]),dtype=float)
 
@@ -700,11 +710,11 @@ class pyPamtra(object):
         raise DeprecationWarning('Using lfrac and sfc_refl at the same time is not allowed. lfrac is deprecated.')
       else:
         warnings.warn("lfrac is deprecated. Set sfc_model and sfc_refl directly. "+
-          "For compatibility sfc_model is set to numpy.around(lfrac), sfc_refl is L on land and F on ocean.", Warning)
+          "For compatibility sfc_model is set to numpy.around(lfrac), sfc_refl is S on land and F on ocean.", Warning)
         kwargs['sfc_type'] = np.around(kwargs['lfrac']) # use lfrac as sfc_type
         kwargs['sfc_refl'] = np.chararray(kwargs['sfc_type'].shape)
         kwargs['sfc_refl'][kwargs['sfc_type'] == 0] = 'F' # ocean
-        kwargs['sfc_refl'][kwargs['sfc_type'] == 1] = 'L' # land
+        kwargs['sfc_refl'][kwargs['sfc_type'] == 1] = 'S' # land
         kwargs.pop('lfrac') # remove lfrac from kwargs
 
     allVars = self.default_p_vars
@@ -800,7 +810,7 @@ class pyPamtra(object):
       else:
         raise TypeError("timestamp has to be int, float or datetime object")
 
-    for environment, preset in [["lat",50.938056],["lon",6.956944],["wind10u",0],["wind10v",0],["groundtemp",np.nan],["sfc_salinity",33.]]:
+    for environment, preset in [["lat",50.938056],["lon",6.956944],["wind10u",0],["wind10v",0],["groundtemp",np.nan],["sfc_salinity",33.],["sfc_slf",1.],["sfc_sif",0.]]:
       if environment not in kwargs.keys():
         self.p[environment] = np.ones(self._shape2D)*preset
         warnings.warn("%s set to %s"%(environment,preset,), Warning)
@@ -820,7 +830,7 @@ class pyPamtra(object):
         else:
           self.p[environment] = kwargs[environment].reshape(self._shape2D)
 
-    for environment, preset in [["sfc_refl",'L']]:
+    for environment, preset in [["sfc_refl",'S']]:
       if environment not in kwargs.keys():
         self.p[environment] = np.chararray(self._shape2D)
         self.p[environment][:] = preset
@@ -934,7 +944,7 @@ class pyPamtra(object):
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
 
-    for key in ["unixtime","nlyrs","lat","lon","model_i","model_j","wind10u","wind10v","groundtemp","iwv","sfc_type","sfc_model","sfc_refl","sfc_salinity"]:
+    for key in ["unixtime","nlyrs","lat","lon","model_i","model_j","wind10u","wind10v","groundtemp","iwv","sfc_type","sfc_model","sfc_refl","sfc_salinity","sfc_slf","sfc_sif"]:
       if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape2D)
 
     for key in ["obs_height"]:
@@ -1007,7 +1017,7 @@ class pyPamtra(object):
     rep4D =  rep2D + (1,1,)
     rep5D =  rep2D + (1,1,1,)
 
-    for key in ["unixtime","nlyrs","lat","lon","model_i","model_j","wind10u","wind10v","obs_height","groundtemp","sfc_type","sfc_model","sfc_refl","sfc_salinity"]:
+    for key in ["unixtime","nlyrs","lat","lon","model_i","model_j","wind10u","wind10v","obs_height","groundtemp","sfc_type","sfc_model","sfc_refl","sfc_salinity","sfc_slf","sfc_sif"]:
       if key in self.p.keys(): self.p[key] = np.tile(self.p[key], rep2D)
 
     for key in ["hydro_q","hydro_n","hydro_reff"]:
@@ -1321,7 +1331,7 @@ class pyPamtra(object):
   def createFullProfile(self,timestamp,lat,lon,wind10u,wind10v,
       obs_height,
       hgt_lev,press_lev,temp_lev,relhum_lev,
-      hydro_q,hydro_n,hydro_reff,radar_prop,sfc_type,sfc_model,sfc_refl,sfc_salinity):
+      hydro_q,hydro_n,hydro_reff,radar_prop,sfc_type,sfc_model,sfc_refl,sfc_salinity,sfc_slf,sfc_sif):
 
     '''
     create complete Pamtra Profile
@@ -1381,6 +1391,8 @@ class pyPamtra(object):
     self.p["sfc_model"] = sfc_model.reshape(self._shape2D)
     self.p["sfc_refl"] = sfc_refl.reshape(self._shape2D)
     self.p["sfc_salinity"] = sfc_salinity.reshape(self._shape2D)
+    self.p["sfc_slf"] = sfc_slf.reshape(self._shape2D)
+    self.p["sfc_sif"] = sfc_sif.reshape(self._shape2D)
 
     return
 
@@ -1819,8 +1831,8 @@ class pyPamtra(object):
 
     profilePart = dict()
     for key in self.p.keys():
-      #import pdb;pdb.set_trace()
-      if type(self.p[key]) is not np.ndarray:
+      # import pdb;pdb.set_trace()
+      if type(self.p[key]) is not np.ndarray and type(self.p[key]) is not np.core.defchararray.chararray:
         profilePart[key] = self.p[key]
       else:
         profilePart[key] = self.p[key][pp_startX:pp_endX,pp_startY:pp_endY]
