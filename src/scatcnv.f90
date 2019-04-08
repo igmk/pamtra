@@ -143,8 +143,8 @@ subroutine transform_scatter(CONST,MU_VALUES, NLEGEN, COEF,scatter_matrix)
   NUMPTS = 2* 2**INT(LOG(FLOAT(NLEGEN+4))/LOG(2.0d0)+1.0d0)
   IF (AZIORDER .EQ. 0)  NUMPTS = 2*INT((NLEGEN+1)/2) + 4
 
-!           Find how many Legendre series must be summed
-  CALL NUMBER_SUMS (NSTOKES, NLEGEN, COEF, DOSUM)
+! Find how many Legendre series must be summed
+  CALL NUMBER_SUMS(NSTOKES, NLEGEN, COEF, DOSUM)
 
   DO I = 1, NLEGEN+1
     DO K = 1, 6
@@ -158,31 +158,31 @@ subroutine transform_scatter(CONST,MU_VALUES, NLEGEN, COEF,scatter_matrix)
       MU1 = MU_VALUES(J1)
       IF (L1 .EQ. 2)  MU1 = -MU1
       DO L2 = 1, 2
-	L = 2*(L2-1)+L1
-	DO J2 = 1, NUMMU
-	  MU2 = MU_VALUES(J2)
-	  IF (L2 .EQ. 2)  MU2 = -MU2
-!                   Only need to calculate phase matrix for half of
-!                     the delphi's, the rest come from symmetry.
-	  DO K = 1, NUMPTS/2 + 1
-	    DELPHI = (TWOPI*(K-1))/NUMPTS
-	    COS_SCAT = MU1*MU2 + DSQRT((1.-MU1**2)*(1.-MU2**2))*&
-			      DCOS(DELPHI)
-	    CALL SUM_LEGENDRE(NLEGEN, COEF, COS_SCAT,&
-			    DOSUM, PHASE_MATRIX)
-	    CALL ROTATE_PHASE_MATRIX (PHASE_MATRIX, MU1, MU2,&
-		  DELPHI, COS_SCAT, SCAT_MATRIX(1,1,K), NSTOKES)
-	    CALL MATRIX_SYMMETRY (NSTOKES, SCAT_MATRIX(1,1,K),&
-				SCAT_MATRIX(1,1,NUMPTS-K+2) )
-	end do
-	CALL FOURIER_MATRIX (AZIORDER, NUMPTS, NSTOKES,&
-		    SCAT_MATRIX, BASIS_MATRIX)
-	  do i2 = 1, nstokes
-	    do i1 = 1, nstokes
-	      scatter_matrix(i2,j2,i1,j1,l) = BASIS_MATRIX(I2,I1,1)
-	    end do
-	  end do
-	end do
+        L = 2*(L2-1)+L1
+        DO J2 = 1, NUMMU
+          MU2 = MU_VALUES(J2)
+          IF (L2 .EQ. 2)  MU2 = -MU2
+!  Only need to calculate phase matrix for half of
+!  the delphi's, the rest come from symmetry.
+          DO K = 1, NUMPTS/2 + 1
+            DELPHI = (TWOPI*(K-1))/NUMPTS
+            COS_SCAT = MU1*MU2 + DSQRT((1.-MU1**2)&
+              *(1.-MU2**2))*DCOS(DELPHI)
+            CALL SUM_LEGENDRE(NLEGEN, COEF, COS_SCAT,&
+              DOSUM, PHASE_MATRIX)
+            CALL ROTATE_PHASE_MATRIX (PHASE_MATRIX, MU1, MU2,&
+              DELPHI, COS_SCAT, SCAT_MATRIX(1,1,K), NSTOKES)
+            CALL MATRIX_SYMMETRY (NSTOKES, SCAT_MATRIX(1,1,K),&
+              SCAT_MATRIX(1,1,NUMPTS-K+2) )
+          end do
+          CALL FOURIER_MATRIX (AZIORDER, NUMPTS, NSTOKES,&
+            SCAT_MATRIX, BASIS_MATRIX)
+          do i2 = 1, nstokes
+            do i1 = 1, nstokes
+              scatter_matrix(i2,j2,i1,j1,l) = BASIS_MATRIX(I2,I1,1)
+            end do
+          end do
+        end do
       end do
     end do
   end do
