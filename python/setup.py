@@ -150,7 +150,7 @@ def configuration(parent_package='', top_path=None):
 if __name__ == "__main__":
 
     setup(configuration=configuration,
-          package_dir = {'pyPamtra': 'pyPamtra'},
+          # package_dir = {'pyPamtra': 'pyPamtra'},
           packages=['pyPamtra',
                     # 'pyPamtra.pyPamtraLib'
                     ],
