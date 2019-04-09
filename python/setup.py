@@ -152,6 +152,7 @@ if __name__ == "__main__":
     setup(configuration=configuration,
           # package_dir = {'pyPamtra': 'pyPamtra'},
           packages=['pyPamtra',
+          'pyPamtra.fortranNamelist',
                     # 'pyPamtra.pyPamtraLib'
                     ],
           platforms=['any'],
