@@ -26,7 +26,7 @@ def configuration(parent_package='', top_path=None):
         python_requires='2.7',
         # url='https://github.com/maahn/pyPamtraRadarSimulator',
         # download_url='https://github.com/maahn/pyPamtraRadarSimulator/releases/download/0.1/pyPamtraRadarSimulator-0.1.zip',
-        long_description=read('readme.md'),
+        long_description=read('../readme.md'),
         classifiers=[
            "Development Status :: 3 - Alpha",
            "License :: OSI Approved :: MIT License",
