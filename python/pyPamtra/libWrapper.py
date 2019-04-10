@@ -9,7 +9,10 @@ import numpy# as np
 #import string
 import copy
 
-from .pyPamtraLib import *
+try:
+    from .pyPamtraLib import *
+except ImportError:
+    print('PAMTRA FORTRAN LIBRARY NOT AVAILABLE!')
 
 
 #logging.basicConfig(filename='/tmp/pyPamtraLibWrapper.log',level=logging.WARNING) #change WARNING to INFO or DEBUG if needed

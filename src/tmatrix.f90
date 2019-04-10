@@ -51,7 +51,7 @@ module tmatrix
       !       back_spec       double  backscattering spectrum [nbins]
 
       use vars_index, only: i_p
-use fileio
+      use fileio
       implicit none
 
       real(kind=dbl), intent(in) :: frequency
@@ -416,7 +416,6 @@ call close_port(port, ios)
       scatter_matrix = scatter_matrix + scatter_matrix_part * ndens_eff * del_d_eff
       extinct_matrix = extinct_matrix + extinct_matrix_part * ndens_eff * del_d_eff
       emis_vector = emis_vector + emis_vector_part * ndens_eff * del_d_eff
-    
     end do !nbins
 
     call assert_false(err,any(isnan(scatter_matrix)),&
@@ -426,13 +425,13 @@ call close_port(port, ios)
     call assert_false(err,any(isnan(emis_vector)),&
         "nan in emis_vector")
     call assert_false(err,any(isnan(back_spec)),&
-        "nan in back_spec")	  
+        "nan in back_spec")  
     if (err > 0) then
         errorstatus = fatal
         msg = "assertation error"
         call report(errorstatus, msg, nameOfRoutine)
         return
-    end if   	
+    end if   
 
     errorstatus = err
     if (verbose >= 2) call report(info,'End of ', nameOfRoutine) 
@@ -550,6 +549,7 @@ call close_port(port, ios)
   !     axi = axi!*1.e6
       mrr = REAL(ref_index)
       mri = abs(IMAG(ref_index))
+      !print*,mrr,' +j ',mri
 
       if ((active .eqv. .true.) .and. (passive .eqv. .false.)) then
         qua_start = 16
@@ -630,7 +630,7 @@ call close_port(port, ios)
 			  s12 = s12*wave_num
 			  s21 = s21*wave_num
 			  s22 = s22*wave_num
-
+        !print*,s11,' tmm ',s22
 			  scatt_matrix_tmp1_11 = scatt_matrix_tmp1_11 + (fact_sca*&
 			      (s11*dconjg(s11)+s12*dconjg(s12)+s21*dconjg(s21)+s22*dconjg(s22)))*phi_weights
 

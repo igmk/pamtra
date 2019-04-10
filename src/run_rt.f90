@@ -172,12 +172,12 @@ subroutine run_rt(errorstatus)
       out_search: do nz = 1, atmo_nlyrs(i_x,i_y)
 	  if (atmo_hgt_lev(i_x,i_y,nz+1) >= atmo_obs_height(i_x,i_y,i_o)) then
 	    if (abs(atmo_hgt_lev(i_x,i_y,nz+1) - atmo_obs_height(i_x,i_y,i_o)) <= &
-		  abs(atmo_hgt_lev(i_x,i_y,nz) - atmo_obs_height(i_x,i_y,i_o))) then
-		outlevels(i_o) = atmo_nlyrs(i_x,i_y)-nz+1
+        abs(atmo_hgt_lev(i_x,i_y,nz) - atmo_obs_height(i_x,i_y,i_o))) then
+        outlevels(i_o) = atmo_nlyrs(i_x,i_y)-nz+1
 	    else
-		outlevels(i_o) = atmo_nlyrs(i_x,i_y)-nz+2
+        outlevels(i_o) = atmo_nlyrs(i_x,i_y)-nz+2
 	    end if
-	    exit out_search
+      exit out_search
 	  end if
       end do out_search
     end if

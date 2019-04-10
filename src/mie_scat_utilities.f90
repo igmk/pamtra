@@ -34,10 +34,10 @@ module mie_scat_utilities
       nstop = int(x + 4.0 * x**0.3334 + 2)
       if (nterms .le. 0) nterms = nstop
       if (nterms .gt. maxterms) then
-	  errorstatus = fatal
-	  msg = 'mie calculation requires more terms than available.'
-	  call report(errorstatus, msg, nameOfRoutine)
-	  return
+        errorstatus = fatal
+        msg = 'mie calculation requires more terms than available.'
+        call report(errorstatus, msg, nameOfRoutine)
+        return
       end if
 
       !  generate the dn's by down recurrence  d = d(log(psi(y)))/dy
@@ -46,7 +46,7 @@ module mie_scat_utilities
       nn = nterms + 15
       d(nn) = cmplx(0.0d0, 0.0d0)
       do n = nn, 2, - 1
-	  d(n - 1) = n / y - 1.0 / (d(n) + n / y)
+        d(n - 1) = n / y - 1.0 / (d(n) + n / y)
       end do
 
       !  generate the psin's and xin's by upward recurrence
@@ -57,18 +57,18 @@ module mie_scat_utilities
       chim = - sin(x)
       chin = cos(x)
       do n = 1, nterms
-	  tmp = psin
-	  psin = (2 * n - 1) / x * psin - psim
-	  psim = tmp
-	  tmp = chin
-	  chin = (2 * n - 1) / x * chin - chim
-	  chim = tmp
-	  xin = cmplx(psin, - chin)
-	  xim = cmplx(psim, - chim)
-	  ctmp = d(n) / m + n / x
-	  a(n) = (ctmp * psin - psim) / (ctmp * xin - xim)
-	  ctmp = m * d (n) + n / x
-	  b(n) = (ctmp * psin - psim) / (ctmp * xin - xim)
+        tmp = psin
+        psin = (2 * n - 1) / x * psin - psim
+        psim = tmp
+        tmp = chin
+        chin = (2 * n - 1) / x * chin - chim
+        chim = tmp
+        xin = cmplx(psin, - chin)
+        xim = cmplx(psim, - chim)
+        ctmp = d(n) / m + n / x
+        a(n) = (ctmp * psin - psim) / (ctmp * xin - xim)
+        ctmp = m * d (n) + n / x
+        b(n) = (ctmp * psin - psim) / (ctmp * xin - xim)
       end do
       errorstatus = err    
       return
@@ -103,10 +103,10 @@ module mie_scat_utilities
       sum2 = 0.0d0
       sum3 = 0.0d0
       do n = 1, nterms
-	  sum1 = sum1 + (2 * n + 1) * (real(a(n)) + real(b(n)))
-	  sum2 = sum2 + (2 * n + 1) * (real(a(n) * conjg(a(n)))     &
-	  + real(b(n) * conjg(b(n))))
-	  sum3 = sum3 + (2 * n + 1) * ( - 1.0) **n *(a(n) - b(n))
+        sum1 = sum1 + (2 * n + 1) * (real(a(n)) + real(b(n)))
+        sum2 = sum2 + (2 * n + 1) * (real(a(n) * conjg(a(n)))     &
+        + real(b(n) * conjg(b(n))))
+        sum3 = sum3 + (2 * n + 1) * ( - 1.0) **n *(a(n) - b(n))
       end do
       qext = 2.0d0 / x**2 * sum1
       qscat = 2.0d0 / x**2 * sum2
@@ -138,17 +138,18 @@ module mie_scat_utilities
       pin = 1.0d0
       pim = 0.0d0
       do n = 1, nterms
-	  taun = n * mu * pin - (n + 1) * pim
-	  ! calculate the scattering functions at +mu and -mu
-	  ! using the pin's and the taun's.
-	  c = (2 * n + 1) / real(n * (n + 1) )
-	  s1 = s1 + c * (a(n) * pin + b(n) * taun)
-	  s2 = s2 + c * (b(n) * pin + a(n) * taun)
-	  ! calculate the angular function pin by up recurrence
-	  tmp = pin
-	  pin = ((2 * n + 1) * mu * pin - (n + 1) * pim) / n
-	  pim = tmp
+        taun = n * mu * pin - (n + 1) * pim
+        ! calculate the scattering functions at +mu and -mu
+        ! using the pin's and the taun's.
+        c = (2 * n + 1) / real(n * (n + 1) )
+        s1 = s1 + c * (a(n) * pin + b(n) * taun)
+        s2 = s2 + c * (b(n) * pin + a(n) * taun)
+        ! calculate the angular function pin by up recurrence
+        tmp = pin
+        pin = ((2 * n + 1) * mu * pin - (n + 1) * pim) / n
+        pim = tmp
       end do
+      !print*,"s1 ",s1,"    s2 ",s2
       ! calculate the first stokes parameter scattering matrix element
       p1 = 0.5 * (abs(s2) **2 + abs(s1) **2) ! =M11 = M22
       p2 = 0.5 * (abs(s2) **2 - abs(s1) **2)  !=M12 = M21
@@ -181,16 +182,16 @@ module mie_scat_utilities
       pin = 1.0d0
       pim = 0.0d0
       do n = 1, nterms
-	  taun = n * mu * pin - (n + 1) * pim
-	  ! calculate the scattering functions at +mu and -mu
-	  ! using the pin's and the taun's.
-	  c = (2 * n + 1) / real(n * (n + 1) )
-	  s1 = s1 + c * (a(n) * pin + b(n) * taun)
-	  s2 = s2 + c * (b(n) * pin + a(n) * taun)
-	  ! calculate the angular function pin by up recurrence
-	  tmp = pin
-	  pin = ((2 * n + 1) * mu * pin - (n + 1) * pim) / n
-	  pim = tmp
+        taun = n * mu * pin - (n + 1) * pim
+        ! calculate the scattering functions at +mu and -mu
+        ! using the pin's and the taun's.
+        c = (2 * n + 1) / real(n * (n + 1) )
+        s1 = s1 + c * (a(n) * pin + b(n) * taun)
+        s2 = s2 + c * (b(n) * pin + a(n) * taun)
+        ! calculate the angular function pin by up recurrence
+        tmp = pin
+        pin = ((2 * n + 1) * mu * pin - (n + 1) * pim) / n
+        pim = tmp
       end do
       !   ! calculate the first stokes parameter scattering matrix element
       !   p1 = 0.5 * (abs(s2) **2 + abs(s1) **2) ! =M11 = M22

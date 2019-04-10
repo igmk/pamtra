@@ -161,10 +161,10 @@ subroutine dda_db_hong(errorstatus,f,t,hong_type,mindex,nbins, &
      if (verbose >= 3) print*, ir, ' with: ',f,t,hong_type,dia
      call hongdb(err,f,t,hong_type,dia,abs_hong,ext_hong,bsc_hong,g,p_hong)
      if (err /= 0) then
-	msg = 'error in hongdb!'
-	call report(err, msg, nameOfRoutine)
-	errorstatus = err
-	return
+      msg = 'error in hongdb!'
+      call report(err, msg, nameOfRoutine)
+      errorstatus = err
+      return
      end if
      if (verbose >= 3) print*, f,t,hong_type,dia, abs_hong,ext_hong,bsc_hong,p_hong
 
