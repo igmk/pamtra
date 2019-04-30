@@ -9,7 +9,7 @@ Virtual Machine
 ***************
 
 For testing, a virtual machine is provided. You have to install the following software in order to 
-run the virtual machine owith Pamtra n your computer:
+run the virtual machine with Pamtra on your computer:
 
 * Virtualbox https://www.virtualbox.org/
 * Vagrant https://www.vagrantup.com/
