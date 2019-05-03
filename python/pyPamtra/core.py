@@ -1223,7 +1223,7 @@ class pyPamtra(object):
       self.p['hydro_wp'] = np.zeros(self._shape3Dhyd)
     else:
       for i in range(self.df.nhydro):
-	self.p['hydro_wp'][...,i] = np.nansum(self.p['hydro_q'][...,i]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
+        self.p['hydro_wp'][...,i] = np.nansum(self.p['hydro_q'][...,i]*self._helperP["rho_moist"]*self._helperP["dz"],axis=-1)
 
     return
 

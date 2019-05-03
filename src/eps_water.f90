@@ -746,7 +746,7 @@ module eps_water
       ! Compute the imaginary permittivitity coefficient (Eq 5)
       eps2 = 2.d0*pi*frq * (term1_p1 + term2_p1)
  
-      eps = complex(eps1, eps2)
+      eps = cmplx(eps1, eps2)
 
 !       ! Compute the mass absorption coefficient (Eq 1)
 !       RE = (epsilon-1)/(epsilon+2)

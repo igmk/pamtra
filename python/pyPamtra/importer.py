@@ -1609,7 +1609,8 @@ def readHIRHAM(dataFile,additionalFile,topoFile,descriptorFile,grid=[0,200,0,218
       if i == 0:
           data['press'][:,:,i] = a_mid[i] + b_mid[i]*ps
       else:
-          data['press'][:,:,i] = a_mid[i-1]*0.5 + (b_mid[i-1]*0.5)*ps
+          # data['press'][:,:,i] = a_mid[i-1]*0.5 + (b_mid[i-1]*0.5)*ps
+          data['press'][:,:,i] = a_mid[i] + (b_mid[i])*ps
 
   Rspec = 8.31432e3 # [Nm/kmol K]
   rho_dry =  data['press']/(Rspec * data['temp']) # IGL: P = rho*Rspec*T
@@ -2083,7 +2084,8 @@ def _createUsStandardProfile(**kwargs):
 def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='netCDF4',tmpDir="/tmp/",skipFiles=[]):
   '''
   load keys of netcdf file into dictionary
-  by using wildcards in ncFiles, multiple files are possible, they are joint using joinDimension, offsets of e.g. time vector can be corrected by offsetKeys with value to be corrected as key as correction key in value
+  by using wildcards in ncFiles, multiple files are possible, they are joint using joinDimension, 
+  offsets of e.g. time vector can be corrected by offsetKeys with value to be corrected as key as correction key in value
   gzip compressed netcdf with extension .gz are possible
   '''
   if ncLib == 'netCDF4':
