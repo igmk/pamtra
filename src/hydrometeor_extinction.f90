@@ -252,20 +252,19 @@ subroutine hydrometeor_extinction(errorstatus)
 
         ! Convert specific quantities [kg/kg] in absolute ones [kg/m3]
       	if (hydro_includeHydroInRhoAir .and. .not.(isnan(sum(atmo_hydro_q(i_x,i_y,i_z, :))))) then
-          q_h        = q2abs(atmo_hydro_q(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
+          q_h = q2abs(atmo_hydro_q(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
             atmo_q_hum(i_x,i_y,i_z),sum(atmo_hydro_q(i_x,i_y,i_z, :)))
-          n_tot      = q2abs(atmo_hydro_n(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
+          n_tot = q2abs(atmo_hydro_n(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
             atmo_q_hum(i_x,i_y,i_z),sum(atmo_hydro_q(i_x,i_y,i_z, :)))
       	else
-          q_h        = q2abs(atmo_hydro_q(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
+          q_h = q2abs(atmo_hydro_q(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
             atmo_q_hum(i_x,i_y,i_z),0._dbl)
-          n_tot      = q2abs(atmo_hydro_n(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
+          n_tot = q2abs(atmo_hydro_n(i_x,i_y,i_z, i_h),atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z),&
             atmo_q_hum(i_x,i_y,i_z),0._dbl)
       	end if
         r_eff      = atmo_hydro_reff(i_x,i_y,i_z, i_h)
         layer_t    = atmo_temp(i_x,i_y,i_z)
         pressure   = atmo_press(i_x,i_y,i_z)
-
 
 ! In case moment_in = 13 (number_concentration (#/kg) and mass_mixing ratio (kg/kg))
 ! if number_concentration is less than 1 particle per kg, cycle.
@@ -329,12 +328,12 @@ subroutine hydrometeor_extinction(errorstatus)
     !convert rt3 to rt4 input
     if (nlegen_coef>0) then
       call scatcnv(err,nlegen_coef,legen_coef,rt_kexttot(i_z),salbedo,&
-	scatter_matrix_scatcnv,extinct_matrix_scatcnv,emis_vector_scatcnv)
+        scatter_matrix_scatcnv,extinct_matrix_scatcnv,emis_vector_scatcnv)
       if (err /= 0) then
-	  msg = 'error in scatcnv!'
-	  call report(err, msg, nameOfRoutine)
-	  errorstatus = err
-	  return
+        msg = 'error in scatcnv!'
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
+        return
       end if
 
       rt_scattermatrix(i_z,:,:,:,:,:) = rt_scattermatrix(i_z,:,:,:,:,:) + scatter_matrix_scatcnv
@@ -348,12 +347,12 @@ subroutine hydrometeor_extinction(errorstatus)
 
     if (active .and. rt_hydros_present(i_z)) then
       call radar_simulator(err,radar_spec, rt_back(i_z,:), rt_kexttot(i_z),&
-	atmo_delta_hgt_lev(i_x,i_y,i_z))
+        atmo_delta_hgt_lev(i_x,i_y,i_z))
       if (err /= 0) then
-	  msg = 'error in radar_simulator!'
-	  call report(err, msg, nameOfRoutine)
-	  errorstatus = err
-	  return
+        msg = 'error in radar_simulator!'
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
+        return
       end if
     else
       if (verbose >= 5) print*, "Skipped radar simulator because of active .and. rt_hydros_present(i_z)", &
