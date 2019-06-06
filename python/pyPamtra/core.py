@@ -17,7 +17,10 @@ import logging
 import glob
 import warnings
 
-from .libWrapper import PamtraFortranWrapper, parallelPamtraFortranWrapper
+try:
+    from .libWrapper import PamtraFortranWrapper, parallelPamtraFortranWrapper
+except ImportError:
+    print('PAMTRA FORTRAN LIBRARY NOT AVAILABLE!')
 from .descriptorFile import pamDescriptorFile
 from .tools import sftp2Cluster, formatExceptionInfo
 from .meteoSI import detect_liq_cloud, mod_ad, moist_rho_rh,rh2q
