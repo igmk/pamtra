@@ -1824,9 +1824,9 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   vals = ICON_file.variables
 
   ## THIS PART IS TROUBLESOME, BUT PEOPLE MIGHT NEED STATION DETAILS ##
-  station = ICON_file.station.split()
+#  station = ICON_file.station.split()
 #  lon = float([s for s in station if '_lon' in s][0].split('=')[-1])
-  lat = float([s for s in station if '_lat' in s][0].split('=')[-1])
+#  lat = float([s for s in station if '_lat' in s][0].split('=')[-1])
 #  height = float([s for s in station if '_hsurf' in s][0].split('=')[-1])
 #  name = [s for s in station if '_name' in s][0].split('=')[-1]
 #  frland = float([s for s in station if '_frland' in s][0].split('=')[-1])
@@ -1837,13 +1837,13 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   
   pamData = dict() # empty dictionary to store pamtra Data
 
-  hgt_key = 'height_2'
+  hgt_key = 'height'
   if vals.has_key(hgt_key):
     hgt_key = 'height'
-  elif vals.has_key('heights_2'):
+  elif vals.has_key('heights'):
     hgt_key = 'heights'
   else:
-    raise AttributeError('ICON file does not have a valid height label (I know only height_2 and heights_2)')
+    raise AttributeError('ICON file does not have a valid height label (I know only height, heights, height_2 and heights_2)')
   
   Nh = len(vals[hgt_key])-1
   Nt = len(vals['time'])

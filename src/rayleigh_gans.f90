@@ -197,7 +197,7 @@ module rayleigh_gans
     wave_num = 2.d0*pi/wavelength
 
     ! Complex dielectric factor
-    dielectric_const = (refre+im*refim)**2 !solid ice
+    dielectric_const = (refre+im*refim)**2 !solid ice ! TODO this sign + is suspicious!!!
     K = (dielectric_const-1.0d0)/(dielectric_const+2.0d0)
     K2 = abs(K)**2
 
@@ -271,7 +271,7 @@ module rayleigh_gans
 
       if (verbose >= 4) print*, "NEW: diameter(ii), ndens_eff, del_d_eff, n_tot, sumqback, sumqs, sumqe"
       if (verbose >= 4) print*, diameter(ii), ndens_eff, del_d_eff, n_tot, sumqback , sumqs, sumqe
-      back_spec(ii) =  qback   ! volumetric backscattering cross section for radar simulator in backscat per volume per del_d[m²/m⁴]
+      back_spec(ii) =  qback * ndens_eff  ! volumetric backscattering cross section for radar simulator in backscat per volume per del_d[m²/m⁴]
 
 
       do ia = 1, nquad
@@ -403,7 +403,7 @@ module rayleigh_gans
     jmax = floor(5.d0*x/pi + 1.d0)
     ! Evaluate summation
     do jj = 1, jmax
-      summ = summ + (2.d0*jj)**(-gamma) * sin(x)**2 &
+      summ = summ + (2.d0*jj)**(-gamma) &!* sin(x)**2 &
               *(1.d0/(2.d0*(x+pi*jj))**2 + 1.d0/(2.d0*(x-pi*jj))**2)
     end do
     summ = summ*beta*sin(x)**2
@@ -555,7 +555,9 @@ module rayleigh_gans
       call assert_true(err,all(as_ratio > 0.d0),&
           "nan or negative as_ratio")
       call assert_false(err,active,&
-          "'active' must be turned off")   
+          "'active' must be turned off")
+      call assert_false(err,passive,&
+          "This routine is not implemented yet. use ssrg-rt3 for active/passive calculations using self similar rayleigh gans") 
       if (err > 0) then
           errorstatus = fatal
           msg = "assertation error"
