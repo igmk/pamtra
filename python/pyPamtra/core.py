@@ -71,7 +71,7 @@ class pyPamtra(object):
     self.nmlSet["lhyd_absorption"]= True
     self.nmlSet["lhyd_scattering"]= True
     self.nmlSet["lhyd_emission"]= True
-    self.nmlSet["liq_mod"]= "Ell"
+    self.nmlSet["liq_mod"]= "TKC"#"Ell"
     self.nmlSet["hydro_includehydroinrhoair"] = True
     self.nmlSet["hydro_fullspec"] = False
     self.nmlSet["hydro_limit_density_area"] = True
