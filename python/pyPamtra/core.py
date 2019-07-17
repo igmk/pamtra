@@ -1887,11 +1887,13 @@ class pyPamtra(object):
       self.r["psd_n"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
       self.r["psd_d"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
       self.r["psd_mass"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
+      self.r["psd_bscat"] = np.ones((self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,maxNBin))*missingNumber
     else: #save memory
       self.r["psd_area"] = np.array([missingNumber])
       self.r["psd_n"] = np.array([missingNumber])
       self.r["psd_d"] = np.array([missingNumber])
       self.r["psd_mass"] =np.array([missingNumber])
+      self.r["psd_bscat"] =np.array([missingNumber])
     if self.nmlSet["save_ssp"]:
       self.r["kextatmo"] = np.ones((self.p["max_nlyrs"]))*missingNumber
       self.r["scatter_matrix"] = np.ones((self.p["max_nlyrs"],self._nstokes,self._nangles,self._nstokes,self._nangles,4))*missingNumber
@@ -1935,7 +1937,7 @@ class pyPamtra(object):
     self.r["radar_vel"][pp_startF:pp_endF]= results["radar_vel"]
     self.r["angles_deg"]= results["angles_deg"]
     if self.nmlSet["save_psd"]:
-      for key in ["psd_d","psd_n","psd_mass","psd_area"]:
+      for key in ["psd_d","psd_n","psd_mass","psd_area","psd_bscat"]:
         self.r[key][pp_startX:pp_endX,pp_startY:pp_endY] = results[key]
     if self.nmlSet["save_ssp"]:
       for key in ["kextatmo","scatter_matrix","extinct_matrix","emission_vector"]:
