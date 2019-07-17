@@ -135,8 +135,9 @@ contains
     real(kind=dbl) :: rg_kappa
     real(kind=dbl) :: rg_beta
     real(kind=dbl) :: rg_gamma
+    real(kind=dbl) :: rg_zeta
 
-    character(30) :: tokenized(3)
+    character(30) :: tokenized(4)
 
     integer(kind=long) :: pos1, pos2, nn 
 
@@ -549,29 +550,35 @@ contains
         return
       end if
 
-    else if (TRIM(scat_name) == "ssrg-rt3") then
-      if (len(trim(scat_name)) > 16) then
-        pos1 = 1
+    else if (TRIM(scat_name(:8)) == "ssrg-rt3") then
+      if (len(trim(scat_name)) > 8) then
+        pos1 = 10
         nn = 0
+        tokenized(4) = '1.0' ! default value for rg_zeta
+        pos2 = index(scat_name(pos1:), "_")
         do
-          pos2 = index(scat_name(pos1:), "_")
-          if (pos2 == 0) then
-            nn = nn + 1
+          nn = nn + 1
+          if (pos2 == 0) then ! no more _
             tokenized(nn) = scat_name(pos1:)
             exit
           end if
-          nn = nn + 1
+          !print*, scat_name(pos1:pos1+pos2-2), nn
           tokenized(nn) = scat_name(pos1:pos1+pos2-2)
           pos1 = pos2+pos1
+          pos2 = index(scat_name(pos1:), "_")
         end do
-        read(tokenized(2),*) rg_kappa
-        read(tokenized(3),*) rg_beta
+        read(tokenized(1),*) rg_kappa
+        read(tokenized(2),*) rg_beta
+        read(tokenized(3),*) rg_gamma
+        read(tokenized(4),*) rg_zeta
       else
         !take default values for aggregates of bullet rosettes or columns from Hogan and Westbrook 2014
         rg_kappa = 0.19d0
         rg_beta = 0.23d0
+        rg_gamma = 5.d0/3.d0
+        rg_zeta = 1.0d0
       end if
-      rg_gamma = 5.d0/3.d0 
+      !print*, rg_kappa, rg_beta, rg_gamma, rg_zeta
 
       call calc_self_similar_rayleigh_gans_rt3(err,&
         freq*1d9,&
@@ -588,6 +595,7 @@ contains
         rg_kappa, &
         rg_beta, &
         rg_gamma, &
+        rg_zeta, &
         !OUT
         kext_hydro,&
         salb_hydro,&
