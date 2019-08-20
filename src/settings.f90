@@ -496,7 +496,7 @@ contains
         hydro_softsphere_min_density = 10. !kg/m^3
         hydro_adaptive_grid = .true.
         conserve_mass_rescale_dsd = .true.
-        liq_mod = "Ell"
+        liq_mod = "TKC"!"Ell"
         tmatrix_db = "none" ! none or file
         tmatrix_db_path = "database/"
         radar_polarisation = "NN" ! comma spearated list "NN,HV,VH,VV,HH", translated into radar_pol array
