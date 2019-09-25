@@ -215,7 +215,7 @@ module rayleigh_gans
       return
     end if         
     nlegen = 2 * nterms 
-    nlegen = min(maxnleg-1, nlegen) 
+    nlegen = min(maxnleg-1, nlegen)
     nquad = (nlegen + 2 * nterms + 2) / 2 
     if (nquad.gt.maxn) then
       errorstatus = fatal
