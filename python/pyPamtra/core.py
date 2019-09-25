@@ -670,7 +670,7 @@ class pyPamtra(object):
 
     Everything is needed in SI units, relhum is in %
 
-    The following variables are mandatroy:
+    The following variables are mandatory:
     hgt_lev, (temp_lev or temp), (press_lev or press) and (relhum_lev OR relhum)
 
     The following variables are optional and guessed if not provided:  "timestamp","lat","lon","wind10u","wind10v","hgt_lev","hydro_q","hydro_n","hydro_reff","obs_height","sfc_type","sfc_model","sfc_refl","sfc_salinity"
@@ -1068,7 +1068,7 @@ class pyPamtra(object):
 
   def rescaleHeights(self,new_hgt_lev, new_hgt=[]):
     """
-    Rescale Pamtra pofile to new height grid
+    Rescale Pamtra profile to new height grid
 
     Parameters
     ----------
