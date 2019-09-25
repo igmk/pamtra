@@ -27,6 +27,7 @@ module rayleigh_gans
       rg_kappa, &
       rg_beta, &
       rg_gamma, &
+      rg_zeta, &
       extinction, &
       albedo, &
       back_scatt, &
@@ -55,7 +56,7 @@ module rayleigh_gans
 !     rg_beta                 Prefactor of power-law describing fluctuations
 !     rg_gamma                Exponent of power-law describing fluctuations
 !
-!   The input variables rg_beta and rg_gamma must be scalars, but any of the others
+!   The input variables rg_beta, rg_gamma, rg_kappa and rg_zeta must be scalars, but any of the others
 !   may be vectors or scalars, provided that any vectors are the same
 !   length, and D is also a vector. The output backscatter cross section
 !   will have the same size as D.
@@ -96,6 +97,7 @@ module rayleigh_gans
     real(kind=dbl), intent(in) :: rg_kappa
     real(kind=dbl), intent(in) :: rg_beta
     real(kind=dbl), intent(in) :: rg_gamma
+    real(kind=dbl), intent(in) :: rg_zeta
 
     real(kind=dbl), intent(out) :: extinction
     real(kind=dbl), intent(out) :: albedo
@@ -197,7 +199,7 @@ module rayleigh_gans
     wave_num = 2.d0*pi/wavelength
 
     ! Complex dielectric factor
-    dielectric_const = (refre+im*refim)**2 !solid ice
+    dielectric_const = (refre+im*refim)**2 !solid ice ! TODO this sign + is suspicious!!!
     K = (dielectric_const-1.0d0)/(dielectric_const+2.0d0)
     K2 = abs(K)**2
 
@@ -253,7 +255,7 @@ module rayleigh_gans
         scat_angle_rad = dble(ia-1)*pi/dble(jmax-1)
         ! Electrical size
         x = wave_num * d_wave * sin(scat_angle_rad*0.5d0)
-        call calc_shape_factor(x, rg_kappa, rg_beta, rg_gamma, shape_fact)
+        call calc_shape_factor(x, rg_kappa, rg_beta, rg_gamma, rg_zeta, shape_fact)
         phas_func = prefactor*shape_fact*(1.d0 + cos(scat_angle_rad)**2)*0.5d0
         qscat = qscat + phas_func*sin(scat_angle_rad)
       end do
@@ -271,13 +273,13 @@ module rayleigh_gans
 
       if (verbose >= 4) print*, "NEW: diameter(ii), ndens_eff, del_d_eff, n_tot, sumqback, sumqs, sumqe"
       if (verbose >= 4) print*, diameter(ii), ndens_eff, del_d_eff, n_tot, sumqback , sumqs, sumqe
-      back_spec(ii) =  qback   ! volumetric backscattering cross section for radar simulator in backscat per volume per del_d[m²/m⁴]
+      back_spec(ii) =  qback * ndens_eff  ! volumetric backscattering cross section for radar simulator in backscat per volume per del_d[m²/m⁴]
 
 
       do ia = 1, nquad
         scat_angle_rad = acos(mu(ia))
         x = wave_num * d_wave * sin(scat_angle_rad*0.5d0)
-        call calc_shape_factor(x, rg_kappa, rg_beta, rg_gamma, shape_fact)
+        call calc_shape_factor(x, rg_kappa, rg_beta, rg_gamma, rg_zeta, shape_fact)
         s22 = -im * 3. * wave_num**3 * K * volume * shape_fact**0.5d0 / (4.d0*pi) ! here I have multiplied by -j*wave_num because of mie_sphere convention
         s11 = s22*cos(scat_angle_rad)
         !print*,"s11 ",s11,"    s22 ",s22
@@ -385,8 +387,8 @@ module rayleigh_gans
 
   end subroutine calc_self_similar_rayleigh_gans_rt3
 
-  subroutine calc_shape_factor(x, kappa, beta, gamma, shape)
-    real(kind=dbl), intent(in) :: x, kappa, beta, gamma!, zeta1 ! this routine should also include an additional term zeta1 as input
+  subroutine calc_shape_factor(x, kappa, beta, gamma, zeta, shape)
+    real(kind=dbl), intent(in) :: x, kappa, beta, gamma, zeta
     real(kind=dbl), intent(out) :: shape
     real(kind=dbl) :: scale, summ, xang
     integer :: jmax, jj
@@ -398,12 +400,13 @@ module rayleigh_gans
             - kappa*(1.0d0/(2.0d0*x+3.0d0*pi)-1.0d0/(2.0d0*x-3.0d0*pi))))**2
     
     ! Compute the summation component of the phi shape function for ssrga
-    summ = 0.0d0
     ! Decide how many terms are needed
     jmax = floor(5.d0*x/pi + 1.d0)
     ! Evaluate summation
-    do jj = 1, jmax
-      summ = summ + (2.d0*jj)**(-gamma) * sin(x)**2 &
+    ! summ = 0.0d0 ! not needed anymore, initialized by the first term with rg_zeta
+    summ = zeta*(2.d0)**(-gamma)*(1.d0/(2.d0*(x+pi))**2 + 1.d0/(2.d0*(x-pi))**2)
+    do jj = 2, jmax
+      summ = summ + (2.d0*jj)**(-gamma) &!* sin(x)**2 &
               *(1.d0/(2.d0*(x+pi*jj))**2 + 1.d0/(2.d0*(x-pi*jj))**2)
     end do
     summ = summ*beta*sin(x)**2
@@ -555,7 +558,9 @@ module rayleigh_gans
       call assert_true(err,all(as_ratio > 0.d0),&
           "nan or negative as_ratio")
       call assert_false(err,active,&
-          "'active' must be turned off")   
+          "'active' must be turned off")
+      call assert_false(err,passive,&
+          "This routine is not implemented yet. use ssrg-rt3 for active/passive calculations using self similar rayleigh gans") 
       if (err > 0) then
           errorstatus = fatal
           msg = "assertation error"

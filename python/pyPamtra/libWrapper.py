@@ -197,7 +197,7 @@ def PamtraFortranWrapper(
 
   ##process the results!
   results = dict()
-  for key in ["tb","Ze","emissivity","Att_hydro","Att_atmo","radar_hgt","radar_moments","radar_edges","radar_slopes","radar_quality","radar_snr", "radar_spectra","radar_vel","psd_d","psd_deltad","psd_n","psd_mass","psd_area","kextatmo","scatter_matrix","extinct_matrix","emis_vector","angles_deg"]:
+  for key in ["tb","Ze","emissivity","Att_hydro","Att_atmo","radar_hgt","radar_moments","radar_edges","radar_slopes","radar_quality","radar_snr", "radar_spectra","radar_vel","psd_d","psd_deltad","psd_n","psd_mass","psd_area","psd_bscat","kextatmo","scatter_matrix","extinct_matrix","emis_vector","angles_deg"]:
     if sets["pyVerbose"] > 3: print("allocTest = vars_output.out_"+key.lower()+" is None")
     allocTest = getattr(vars_output, "out_"+key.lower()) is None
     if not allocTest:

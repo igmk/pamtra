@@ -72,7 +72,8 @@ contains
       freqs, &
       hydro_fullSpec, &
       radar_pol, &
-      radar_npol
+      radar_npol, &
+      save_psd
     use mie_spheres, only: calc_mie_spheres
     use tmatrix, only: calc_tmatrix
     use rayleigh_gans, only: calc_self_similar_rayleigh_gans, &
@@ -86,6 +87,7 @@ contains
       rt_extmatrix, &
       rt_emisvec, &
       rt_hydros_present
+    use vars_output, only: out_psd_bscat
     use report_module
     use drop_size_dist, only: liq_ice,&
       nbin,&
@@ -120,9 +122,9 @@ contains
     real(kind=dbl), dimension(radar_nfft_aliased) :: radar_spec_hydro
     real(kind=dbl), dimension(nbin) :: num_density
     real(kind=dbl), dimension(radar_npol) :: back_hydro
-    real(kind=dbl), dimension(radar_npol,radar_nfft_aliased) :: back_spec_dia
-    real(kind=dbl), dimension(radar_nfft_aliased) :: back_spec_mie, back_spec_liu, back_spec_hong, back_spec_ssrg
-    real(kind=dbl), dimension(radar_nfft_aliased) :: back_spec_rg
+    real(kind=dbl), dimension(radar_npol,nbin) :: back_spec_dia
+    real(kind=dbl), dimension(nbin) :: back_spec_mie, back_spec_liu, back_spec_hong
+    real(kind=dbl), dimension(nbin) :: back_spec_rg, back_spec_ssrg
     real(kind=dbl), allocatable, dimension(:) :: as_ratio_list, canting_list
     real(kind=dbl) :: kext_hydro
     real(kind=dbl) :: salb_hydro
@@ -135,8 +137,9 @@ contains
     real(kind=dbl) :: rg_kappa
     real(kind=dbl) :: rg_beta
     real(kind=dbl) :: rg_gamma
+    real(kind=dbl) :: rg_zeta
 
-    character(30) :: tokenized(3)
+    character(30) :: tokenized(4)
 
     integer(kind=long) :: pos1, pos2, nn 
 
@@ -549,29 +552,35 @@ contains
         return
       end if
 
-    else if (TRIM(scat_name) == "ssrg-rt3") then
-      if (len(trim(scat_name)) > 16) then
-        pos1 = 1
+    else if (TRIM(scat_name(:8)) == "ssrg-rt3") then
+      if (len(trim(scat_name)) > 8) then
+        pos1 = 10
         nn = 0
+        tokenized(4) = '1.0' ! default value for rg_zeta
+        pos2 = index(scat_name(pos1:), "_")
         do
-          pos2 = index(scat_name(pos1:), "_")
-          if (pos2 == 0) then
-            nn = nn + 1
+          nn = nn + 1
+          if (pos2 == 0) then ! no more _
             tokenized(nn) = scat_name(pos1:)
             exit
           end if
-          nn = nn + 1
+          !print*, scat_name(pos1:pos1+pos2-2), nn
           tokenized(nn) = scat_name(pos1:pos1+pos2-2)
           pos1 = pos2+pos1
+          pos2 = index(scat_name(pos1:), "_")
         end do
-        read(tokenized(2),*) rg_kappa
-        read(tokenized(3),*) rg_beta
+        read(tokenized(1),*) rg_kappa
+        read(tokenized(2),*) rg_beta
+        read(tokenized(3),*) rg_gamma
+        read(tokenized(4),*) rg_zeta
       else
         !take default values for aggregates of bullet rosettes or columns from Hogan and Westbrook 2014
         rg_kappa = 0.19d0
         rg_beta = 0.23d0
+        rg_gamma = 5.d0/3.d0
+        rg_zeta = 1.0d0
       end if
-      rg_gamma = 5.d0/3.d0 
+      !print*, rg_kappa, rg_beta, rg_gamma, rg_zeta
 
       call calc_self_similar_rayleigh_gans_rt3(err,&
         freq*1d9,&
@@ -588,6 +597,7 @@ contains
         rg_kappa, &
         rg_beta, &
         rg_gamma, &
+        rg_zeta, &
         !OUT
         kext_hydro,&
         salb_hydro,&
@@ -659,6 +669,12 @@ contains
       call report(errorstatus, msg, nameOfRoutine)
       return
     end if
+
+    if (save_psd .eqv. .true.) then
+      ! only for polrization one!
+      out_psd_bscat(i_x,i_y,i_z,i_h,1:nbin) =  back_spec_dia(1,:)/num_density(:)
+    end if
+
 
     !sum up
     rt_kexttot(i_z) = rt_kexttot(i_z) + kext_hydro

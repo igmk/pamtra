@@ -39,6 +39,7 @@ module vars_output
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_n
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_mass
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_area
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: out_psd_bscat
 
   real(kind=dbl), allocatable, dimension(:) :: out_kextatmo
   real(kind=dbl), allocatable, dimension(:,:,:,:,:,:) :: out_scatter_matrix
@@ -181,13 +182,15 @@ module vars_output
           out_psd_deltad(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin),&
           out_psd_n(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin),&
           out_psd_mass(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin),&
-          out_psd_area(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin))
+          out_psd_area(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin),&
+          out_psd_bscat(atmo_ngridx,atmo_ngridy,no_allocated_lyrs,n_hydro,max_nbin))
 
           out_psd_d = -9999.d0
           out_psd_deltad = -9999.d0
           out_psd_n = -9999.d0
           out_psd_mass = -9999.d0
           out_psd_area = -9999.d0
+          out_psd_bscat = -9999.d0
 
     end if
 
@@ -261,6 +264,7 @@ module vars_output
     if (allocated(out_psd_n)) deallocate(out_psd_n)
     if (allocated(out_psd_mass)) deallocate(out_psd_mass)
     if (allocated(out_psd_area)) deallocate(out_psd_area)
+    if (allocated(out_psd_bscat)) deallocate(out_psd_bscat)
     if (allocated(out_kextatmo)) deallocate(out_kextatmo)
     if (allocated(out_scatter_matrix)) deallocate(out_scatter_matrix)
     if (allocated(out_extinct_matrix)) deallocate(out_extinct_matrix)
