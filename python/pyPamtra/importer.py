@@ -1367,7 +1367,7 @@ def readIconLem1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   pamData['sfc_model'] = np.zeros(shape2D)
   pamData['sfc_refl'] = np.chararray(shape2D)
   pamData['sfc_refl'][pamData['sfc_type'] == 0] = 'F' # ocean
-  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'L' # land
+  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'S' # land
 
   pam.createProfile(**pamData)
 
@@ -1532,7 +1532,7 @@ def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   pamData['sfc_model'] = np.zeros(shape2D)
   pamData['sfc_refl'] = np.chararray(shape2D)
   pamData['sfc_refl'][pamData['sfc_type'] == 0] = 'F' # ocean
-  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'L' # land
+  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'S' # land
 
   pam.createProfile(**pamData)
 
@@ -1998,6 +1998,7 @@ def readIcon2momOnFlightTrack(fname, descriptorFile, debug=False, verbosity=0):
   
   # surface properties
   pamData['lat'] = vals['lat'][:]
+  pamData['lon'] = vals['lon'][:]
 #  pamData['lon'] = lon
   # pamData['wind10u'] = vals['U10M'][Nx]
   # pamData['wind10v'] = vals['V10M'][Nx]
