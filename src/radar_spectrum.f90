@@ -191,8 +191,8 @@ subroutine radar_spectrum(&
       vel_spec = 0.d0
     end where
 
-    call assert_true(err,all(vel_spec>=0) .and. (MAXVAL(vel_spec) < HUGE(vel_spec)),&
-        "nan or negative vel_spec")
+    call assert_true(err, (MAXVAL(vel_spec) < HUGE(vel_spec)),&
+        "nan vel_spec")
     if (err /= 0) then
       msg = 'error in dia2vel_XX!'
       call report(err, msg, nameOfRoutine)
@@ -250,8 +250,8 @@ subroutine radar_spectrum(&
         call assert_false(err,any(dD_dU <= 0.d0),&
             "negative  dD_dU")
     end if
-    call assert_false(err,any(vel_spec<0) .or. any(isnan(vel_spec)),&
-        "nan or negative vel_spec")
+    call assert_false(err, any(isnan(vel_spec)),&
+        "nan vel_spec")
     if (err /= 0) then
       msg = 'error in radar_spectrum!'
       call report(err, msg, nameOfRoutine)

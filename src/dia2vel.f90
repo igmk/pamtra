@@ -1018,8 +1018,9 @@ module dia2vel
         return
       end if  
       !finally apply coefficients
-      velSpec(:) = fallvel_A-fallvel_B*DEXP(-fallvel_C*(6.0d0*mass(:)/(pi*rho_water))**(1.0d0/3.0d0))
-      !velSpec(:) = (velSpec(:) + DABS(velSpec(:)))*0.5d0 ! replace possible initial negative values with 0.0
+      velSpec(:) = fallvel_A-fallvel_B*DEXP(-fallvel_C*(6.0d0*mass(:)/(pi*rho_water))**(1.0d0/3.0d0))     
+      !velSpec(:) = (velSpec(:) + DABS(velSpec(:)) )*0.5d0 ! replace possible initial negative values with 0.0
+      ! This hack works but than you will get infinite dD/dU at the beginning
 
       return
   end subroutine dia2vel_atlas

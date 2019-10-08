@@ -575,10 +575,10 @@ contains
         read(tokenized(4),*) rg_zeta
       else
         !take default values for aggregates of bullet rosettes or columns from Hogan and Westbrook 2014
-        rg_kappa = 0.19d0
-        rg_beta = 0.23d0
-        rg_gamma = 5.d0/3.d0
-        rg_zeta = 1.0d0
+        rg_kappa = 0.25d0 !0.19d0 1.00_1.66_0.04
+        rg_beta = 1.0d0   !0.23d0
+        rg_gamma = 1.66d0 !5.d0/3.d0
+        rg_zeta = 0.04 !1.0d0
       end if
       !print*, rg_kappa, rg_beta, rg_gamma, rg_zeta
 
