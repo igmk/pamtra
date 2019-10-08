@@ -35,9 +35,9 @@ subroutine make_dist_params(errorstatus)
        q_h, n_tot, r_eff, layer_t, nbin,                            & ! IN
        n_0, lambda, mu, gam, n_t, sig, d_ln, d_mono, d_m, n_0_star ! OUT
 
-  ! variables used for surface and height dependent parameters (ECHAM/HIRHAM)
+  ! variables used for surface and pressure dependent parameters (ECHAM/HIRHAM)
   use vars_index, only: i_x, i_y, i_z
-  use vars_atmosphere, only: sfc_type, sfc_slf, sfc_sif, atmo_press, atmo_temp, atmo_hgt
+  use vars_atmosphere, only: sfc_type, atmo_press, atmo_temp
 
   ! Imported Scalar Variables with intent (in):
 
@@ -47,7 +47,7 @@ subroutine make_dist_params(errorstatus)
 
   ! Local scalars:
 
-  real(kind=dbl) :: work1, work2, work3, delta_d_const, rho_dry, true_lf
+  real(kind=dbl) :: work1, work2, work3, delta_d_const, rho_dry, kappa
   real(kind=dbl) :: ztc, hlp, alf, bet, m2s, m3s
   integer(kind=long) :: nn
 
@@ -169,18 +169,24 @@ subroutine make_dist_params(errorstatus)
      endif
      if (trim(dist_name) == 'mono_echam_cl') then
         ! mono disperse distribution coherent with ECHAM6 1 moment scheme for liquid clouds
-        if (sfc_type(i_x,i_y) == 1) then
-          n_0 = 220.d6
+        if (sfc_type(i_x,i_y) > 0.5) then ! land
+          n_0 = 220.d6  ! per m^-3
+          kappa = 1.143
         else
-          true_lf = sfc_slf(i_x,i_y) + (1._dbl -sfc_slf(i_x,i_y)) * sfc_sif(i_x,i_y)
-          n_0 = (80._dbl * (1._dbl - true_lf) + 220._dbl * true_lf) * 1.d6 ! fractional land/ocean
+          n_0 = 80.d6 ! per m^-3
+          kappa = 1.077
         end if
-        if (atmo_hgt(i_x,i_y,i_z) > 1.d3) then
-          n_0 = n_0 * exp(log(50._dbl/n_0)/10.d3*atmo_hgt(i_x,i_y,i_z))
+        if (atmo_press(i_x,i_y,i_z) < 8.d4) then
+!        if (atmo_hgt(i_x,i_y,i_z) > 1.d3) then
+         ! n_0 = n_0 * exp(log(50._dbl/n_0)/10.d3*atmo_hgt(i_x,i_y,i_z))
+          n_0 = (50._dbl + (n_0/1.d6 - 50._dbl) * exp(1-(8.d4/max(1.d4,atmo_press(i_x,i_y,i_z)))**2))* 1.d6
         end if
         rho_dry = rho_air(atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z))
-        d_mono = 2._dbl*(q_h*rho_dry*3._dbl/(4._dbl*pi*n_0*rho_water))**(1._dbl/3._dbl)
-!        print*, i_z, atmo_hgt(i_x,i_y,i_z), n_0, d_mono
+        d_mono = kappa*2._dbl*(q_h*rho_dry*3._dbl/(4._dbl*pi*n_0*rho_water))**(1._dbl/3._dbl)
+        if (d_mono > 48.d-6) then
+          d_mono = 48.d-6
+          n_0 = 6.*q_h*rho_dry/(pi*d_mono**3)
+        end if 
      endif
      if (trim(dist_name) == 'mono_echam_ice') then
         ! mono disperse distribution coherent with ECHAM6 1 moment scheme for liquid clouds
@@ -264,10 +270,15 @@ subroutine make_dist_params(errorstatus)
      mu = 0._dbl
      if (trim(dist_name) == 'exp') then
         ! !  everything fixed 
-        if ((p_1 /= -99.) .and. (p_2 /= -99.) .and. (moment_in ==0)) then
+        if ((p_1 /= -99.) .and. (p_2 /= -99.) .and. (moment_in == 0)) then
            lambda = p_1
            n_0 = p_2
         end if
+        ! !  inverse expenonetial like ecmwf/ifs: p_1 := n_ax, p_2 := n_bx 
+        if ((p_1 /= -99.) .and. (p_2 /= -99.) .and. (moment_in == 3)) then
+           lambda = (p_1 * a_ms * dgamma(b_ms+1._dbl) / q_h)**(1._dbl / (b_ms + 1 - p_2))
+           n_0 = p_1 * lambda ** p_2
+        end if        
         ! ! fixed n_tot (via p_1)
         if ((p_1 /= -99.) .and. (p_2 == -99.) .and. (p_3 == -99.)) then
            if (moment_in == 3)  lambda = (p_1 * a_ms * dgamma(b_ms+1._dbl) / q_h)**(1._dbl / b_ms)

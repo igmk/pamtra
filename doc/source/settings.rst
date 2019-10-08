@@ -13,10 +13,10 @@ active                             bool                           True          
 conserve_mass_rescale_dsd          bool                           True               In case the mass mixing ratio for an hydrometeor calculated integrating the drop-size-distribution (DSD) doesn't correspond to the input value, rescale the DSD to account for the mass loss.
 creator                            str                            Pamtrauser         Netcdf file creator
 data_path                          str                            $PAMTRA_DATADIR    Path for emissivity files and other data, If value is $PAMTRA_DATADIR, the corresponding environment variable is used.
-emissivity                         positive float                 0.6
+emissivity                         positive float                 0.6                Surface emissivity in the range 0..1
 file_desc                          str                            ""
 gas_mod                            L93, R98                       R98                Model for gas absorption. Either ROSENKRANZ (1998) or LIEBE (1993)
-ground_type                        L,                             L                  Lambertian or
+sfc_refl                           S,L,F                          L                  Specular, Lambertian, or Fresnel
 hydro_adaptive_grid                bool                           True
 hydro_fullspec                     bool                           False              For pyPamtra only: Do not estimate particle diameter, mass, area, number concentration, rho and aspect ratio directly from the descriptor file but pass them directly from python to Pamtra using numpy arrays. See also addFullSpectra() of pyPamtra's descriptorFile class.
 hydro_includehydroinrhoair         bool                           True               Include hydrometeors when estimating the density of wet air. Different models use different conventions here.

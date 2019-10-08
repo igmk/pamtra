@@ -149,7 +149,6 @@ subroutine hydrometeor_extinction(errorstatus)
           ! not neccesary to set rt_hydros_present to false - its default value is false!
           CYCLE
         end if
-
       else
         moment_in  = moment_in_arr(i_h)
         dist_name  = dist_name_arr(i_h)

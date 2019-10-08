@@ -92,11 +92,6 @@ subroutine make_mass_size(errorstatus)
      errorstatus = fatal
      call report(errorstatus, msg, nameOfRoutine)
      return
-  elseif ((liq_ice == -1) .and. (a_ms < 0.0) .and. (b_ms < 0.0) .and. (rho_ms < 0.0)) then
-     msg = 'Need to specify a & b or rho to calculate the mass-size relation parameters!'
-     errorstatus = fatal
-     call report(errorstatus, msg, nameOfRoutine)
-     return
   elseif (((a_ms < 0.) .and. (b_ms >= 0.0)) .or. ((a_ms > 0.0) .and. (b_ms < 0.0))) then
      msg = 'When a is specified then also b need to be specified and vice versa'
      errorstatus = fatal
