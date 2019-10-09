@@ -1114,7 +1114,7 @@ class pyPamtra(object):
         #save new array
         self.p[key] = newP
         #and mark all entries below -1 as missing Number!
-        self.p[key][self.p[key]<-1] = missingNumber
+        self.p[key][self.p[key]<-1.e-6] = missingNumber
 
     for key in self.df.data4D:
       #make new array
@@ -1128,7 +1128,7 @@ class pyPamtra(object):
       self.df.data4D[key] = newP
 
 
-    for key in ["hgt_lev","temp_lev","relhum_lev"]:
+    for key in ["hgt_lev","temp_lev", "relhum_lev"]:
       if key in self.p.keys():
         newP = np.ones(self._shape3Dplus) * missingNumber
         for x in xrange(self._shape2D[0]):
@@ -1137,9 +1137,29 @@ class pyPamtra(object):
 #            newP[x,y] = np.interp(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
             newP[x,y] = extrap(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
         self.p[key] = newP
-        if key != "hgt_lev": self.p[key][self.p[key]<-1] = missingNumber
+        if key != "hgt_lev": self.p[key][self.p[key]<-1.e-6] = missingNumber
 
-    for key in ["airturb","wind_w","hgt","temp","relhum",'wind_uv','turb_edr']:
+#     for key in ["relhum_lev"]:
+#       if key in self.p.keys():
+#         newP = np.ones(self._shape3Dplus) * missingNumber
+#         for x in xrange(self._shape2D[0]):
+#           for y in xrange(self._shape2D[1]):
+# #            newP[x,y] = np.interp(new_hgt_lev,old_hgt_lev[x,y],self.p[key][x,y])
+# #            newP[x,y] = np.interp(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
+#             newP[x,y] = extrap(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
+#         self.p[key] = newP
+#         if key != "hgt_lev" and self.p[key][self.p[key]<0]: print "Somethings wrong. Rel. humidity below 0!"
+
+    # for key in ["relhum"]:
+    #   if key in self.p.keys():
+    #     newP = np.ones(self._shape3D) * missingNumber
+    #     for x in xrange(self._shape2D[0]):
+    #       for y in xrange(self._shape2D[1]):
+    #         newP[x,y] = np.interp(new_hgt[x,y],old_hgt[x,y],self.p[key][x,y])
+    #     self.p[key] = newP
+    #     if key != "hgt" and self.p[key][self.p[key]<0]: print "Somethings wrong. Rel. humidity below 0!"
+
+    for key in ["airturb","hgt","temp","relhum","wind_uv","turb_edr"]:
       if key in self.p.keys():
         newP = np.ones(self._shape3D) * missingNumber
         for x in xrange(self._shape2D[0]):
@@ -1148,7 +1168,7 @@ class pyPamtra(object):
 #            newP[x,y] = np.interp(new_hgt[x,y],old_hgt[x,y],self.p[key][x,y])
             newP[x,y] = extrap(new_hgt[x,y],old_hgt[x,y],self.p[key][x,y])
         self.p[key] = newP
-        if key != "hgt": self.p[key][self.p[key]<-1] = missingNumber
+        if key != "hgt": self.p[key][self.p[key]<-1.e-6] = missingNumber
 
 
     for key in ["press_lev"]:
@@ -1160,7 +1180,7 @@ class pyPamtra(object):
 #            newP[x,y] = np.exp(np.interp(new_hgt_lev[x,y],old_hgt_lev[x,y],np.log(self.p[key][x,y])))
             newP[x,y] = np.exp(extrap(new_hgt_lev[x,y],old_hgt_lev[x,y],np.log(self.p[key][x,y])))
         self.p[key] = newP
-        self.p[key][self.p[key]<-1] = missingNumber
+        self.p[key][self.p[key]<-1.e-6] = missingNumber
 
     for key in ["press"]:
       if key in self.p.keys():
@@ -1171,7 +1191,7 @@ class pyPamtra(object):
 #            newP[x,y] = np.exp(np.interp(new_hgt[x,y],old_hgt[x,y],np.log(self.p[key][x,y])))
             newP[x,y] = np.exp(extrap(new_hgt[x,y],old_hgt[x,y],np.log(self.p[key][x,y])))
         self.p[key] = newP
-        self.p[key][self.p[key]<-1] = missingNumber
+        self.p[key][self.p[key]<-1.e-6] = missingNumber
 
 
 
@@ -2123,15 +2143,16 @@ class pyPamtra(object):
       cdfFile.createDimension('radar_peak_number',int(self.nmlSet["radar_npeaks"]))
 
     dim2d = ("grid_x","grid_y",)
-    dim3d = ("grid_x","grid_y","heightbins",)
     if xarrayCompatibleOutput:
       dim3dout = ("grid_x","grid_y","outlevel",)
     else:
       dim3dout = ("grid_x","grid_y","outlevels",)
-    dim4d = ("grid_x","grid_y","heightbins","frequency")
-    dim5d_att = ("grid_x","grid_y","heightbins","frequency","attenuation_polarisation")
-    dim6d_rad = ("grid_x","grid_y","heightbins","frequency","radar_polarisation","radar_peak_number")
-    dim6d_rad_spec = ("grid_x","grid_y","heightbins","frequency","radar_polarisation","nfft")
+    if (self.r["nmlSettings"]["active"]):
+      dim3d = ("grid_x","grid_y","heightbins",)
+      dim4d = ("grid_x","grid_y","heightbins","frequency")
+      dim5d_att = ("grid_x","grid_y","heightbins","frequency","attenuation_polarisation")
+      dim6d_rad = ("grid_x","grid_y","heightbins","frequency","radar_polarisation","radar_peak_number")
+      dim6d_rad_spec = ("grid_x","grid_y","heightbins","frequency","radar_polarisation","nfft")
     if xarrayCompatibleOutput:
       dim6d_pas = ("grid_x","grid_y","outlevel","angles","frequency","passive_polarisation")
     else:
