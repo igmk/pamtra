@@ -1114,7 +1114,7 @@ class pyPamtra(object):
         #save new array
         self.p[key] = newP
         #and mark all entries below -1 as missing Number!
-        self.p[key][self.p[key]<-1.d-6] = missingNumber
+        self.p[key][self.p[key]<-1.e-6] = missingNumber
 
     for key in self.df.data4D:
       #make new array
@@ -1137,7 +1137,7 @@ class pyPamtra(object):
 #            newP[x,y] = np.interp(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
             newP[x,y] = extrap(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
         self.p[key] = newP
-        if key != "hgt_lev": self.p[key][self.p[key]<-1.d-6] = missingNumber
+        if key != "hgt_lev": self.p[key][self.p[key]<-1.e-6] = missingNumber
 
 #     for key in ["relhum_lev"]:
 #       if key in self.p.keys():
@@ -1168,7 +1168,7 @@ class pyPamtra(object):
 #            newP[x,y] = np.interp(new_hgt[x,y],old_hgt[x,y],self.p[key][x,y])
             newP[x,y] = extrap(new_hgt[x,y],old_hgt[x,y],self.p[key][x,y])
         self.p[key] = newP
-        if key != "hgt": self.p[key][self.p[key]<-1.d-6] = missingNumber
+        if key != "hgt": self.p[key][self.p[key]<-1.e-6] = missingNumber
 
 
     for key in ["press_lev"]:
@@ -1180,7 +1180,7 @@ class pyPamtra(object):
 #            newP[x,y] = np.exp(np.interp(new_hgt_lev[x,y],old_hgt_lev[x,y],np.log(self.p[key][x,y])))
             newP[x,y] = np.exp(extrap(new_hgt_lev[x,y],old_hgt_lev[x,y],np.log(self.p[key][x,y])))
         self.p[key] = newP
-        self.p[key][self.p[key]<-1.d-6] = missingNumber
+        self.p[key][self.p[key]<-1.e-6] = missingNumber
 
     for key in ["press"]:
       if key in self.p.keys():
@@ -1191,7 +1191,7 @@ class pyPamtra(object):
 #            newP[x,y] = np.exp(np.interp(new_hgt[x,y],old_hgt[x,y],np.log(self.p[key][x,y])))
             newP[x,y] = np.exp(extrap(new_hgt[x,y],old_hgt[x,y],np.log(self.p[key][x,y])))
         self.p[key] = newP
-        self.p[key][self.p[key]<-1.d-6] = missingNumber
+        self.p[key][self.p[key]<-1.e-6] = missingNumber
 
 
 
