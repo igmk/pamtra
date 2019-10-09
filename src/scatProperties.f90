@@ -285,28 +285,34 @@ contains
 
       do i_p= 1, radar_npol
         if (radar_pol(i_p) == "NN") then
-           back_hydro(i_p) = scatter_matrix_hydro(1,16,1,16,2) 
+          back_hydro(i_p) = scatter_matrix_hydro(1,16,1,16,2) 
            ! scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), 
            ! in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). 
            ! this definition is looking from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
         else if (radar_pol(i_p) == "HH") then
           !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
-          back_hydro(i_p) = + scatter_matrix_hydro(1,16,1,16,2) &
-            - scatter_matrix_hydro(1,16,2,16,2) & 
-            - scatter_matrix_hydro(2,16,1,16,2) & 
-            + scatter_matrix_hydro(2,16,2,16,2) 
+          back_hydro(i_p) = ( scatter_matrix_hydro(1,16,1,16,2) &
+                            - scatter_matrix_hydro(1,16,2,16,2) & 
+                            - scatter_matrix_hydro(2,16,1,16,2) & 
+                            + scatter_matrix_hydro(2,16,2,16,2))!*0.5 
         else if (radar_pol(i_p) == "VV") then
           !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
-          back_hydro(i_p) = + scatter_matrix_hydro(1,16,1,16,2) &
-            + scatter_matrix_hydro(1,16,2,16,2) & 
-            + scatter_matrix_hydro(2,16,1,16,2) & 
-            + scatter_matrix_hydro(2,16,2,16,2) 
+          back_hydro(i_p) = ( scatter_matrix_hydro(1,16,1,16,2) &
+                            + scatter_matrix_hydro(1,16,2,16,2) & 
+                            + scatter_matrix_hydro(2,16,1,16,2) & 
+                            + scatter_matrix_hydro(2,16,2,16,2))!*0.5
         else if (radar_pol(i_p) == "HV") then
           !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
-          back_hydro(i_p) = + scatter_matrix_hydro(1,16,1,16,2) &
-            - scatter_matrix_hydro(1,16,2,16,2) & 
-            + scatter_matrix_hydro(2,16,1,16,2) & 
-            - scatter_matrix_hydro(2,16,2,16,2) 
+          back_hydro(i_p) = ( scatter_matrix_hydro(1,16,1,16,2) &
+                            + scatter_matrix_hydro(1,16,2,16,2) & ! Changed sign according to Mishcheko first book
+                            - scatter_matrix_hydro(2,16,1,16,2) & ! but it doesn't matter, these two should be equal
+                            - scatter_matrix_hydro(2,16,2,16,2))!*0.5 ! and should cancel out
+        else if (radar_pol(i_p) == "VH") then
+          !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
+          back_hydro(i_p) = ( scatter_matrix_hydro(1,16,1,16,2) &
+                            - scatter_matrix_hydro(1,16,2,16,2) & 
+                            + scatter_matrix_hydro(2,16,1,16,2) & 
+                            - scatter_matrix_hydro(2,16,2,16,2))!*0.5 
         else
           errorstatus = fatal
           msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)
@@ -391,10 +397,21 @@ contains
         kext_hydro = 0.d0
         salb_hydro = 0.d0
 
-        ! for mie polarisatuion does not matter
+        ! for back Rayleigh HH and VV polarisatuion does not matter and cross-pol is null
         do i_p=1, radar_npol
-          back_spec_dia(i_p,:) = back_spec_rg(:)
-          back_hydro(i_p) = back_hydro_rg
+          if ((radar_pol(i_p) == "NN").or.(radar_pol(i_p) == "HH").or.(radar_pol(i_p) == "VV")) then
+            back_spec_dia(i_p,:) = back_spec_rg(:)
+            back_hydro(i_p) = back_hydro_rg
+          else if ((radar_pol(i_p) == "HV").or.(radar_pol(i_p) == "VH")) then
+            back_spec_dia(i_p,:) = 0.0d0
+            back_hydro(i_p) = 0.0d0
+          else
+            msg = 'do not understand radar_pol(i_p):'//radar_pol(i_p)
+            err = fatal
+            call report(err, msg, nameOfRoutine)
+            errorstatus = err
+            return
+          end if
         end do
 
       else if (passive) then
@@ -464,10 +481,21 @@ contains
       if (allocated(as_ratio_list)) deallocate(as_ratio_list)
       if (allocated(canting_list)) deallocate(canting_list)
 
-      ! for mie polarisatuion does not matter
+      ! for back Rayleigh HH and VV polarisatuion does not matter and cross-pol is null
       do i_p=1, radar_npol
-        back_spec_dia(i_p,:) = back_spec_rg(:)
-        back_hydro(i_p) = back_hydro_rg
+        if ((radar_pol(i_p) == "NN").or.(radar_pol(i_p) == "HH").or.(radar_pol(i_p) == "VV")) then
+          back_spec_dia(i_p,:) = back_spec_rg(:)
+          back_hydro(i_p) = back_hydro_rg
+        else if ((radar_pol(i_p) == "HV").or.(radar_pol(i_p) == "VH")) then
+          back_spec_dia(i_p,:) = 0.0d0
+          back_hydro(i_p) = 0.0d0
+        else
+          msg = 'do not understand radar_pol(i_p):'//radar_pol(i_p)
+          err = fatal
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+        end if
       end do
 
       if (err /= 0) then
@@ -500,10 +528,21 @@ contains
       if (allocated(as_ratio_list)) deallocate(as_ratio_list)
       if (allocated(canting_list)) deallocate(canting_list)
 
-      ! for mie polarisatuion does not matter
+      ! for back Rayleigh HH and VV polarisatuion does not matter and cross-pol is null
       do i_p=1, radar_npol
-        back_spec_dia(i_p,:) = back_spec_rg(:)
-        back_hydro(i_p) = back_hydro_rg
+        if ((radar_pol(i_p) == "NN").or.(radar_pol(i_p) == "HH").or.(radar_pol(i_p) == "VV")) then
+          back_spec_dia(i_p,:) = back_spec_rg(:)
+          back_hydro(i_p) = back_hydro_rg
+        else if ((radar_pol(i_p) == "HV").or.(radar_pol(i_p) == "VH")) then
+          back_spec_dia(i_p,:) = 0.0d0
+          back_hydro(i_p) = 0.0d0
+        else
+          msg = 'do not understand radar_pol(i_p):'//radar_pol(i_p)
+          err = fatal
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+        end if
       end do
 
       if (err /= 0) then
@@ -539,11 +578,23 @@ contains
         legen_coef4_hydro,&
         back_spec_mie)    
 
-      ! for mie polarisation does not matter at forward or backward scattering
+      ! for back mie HH and VV polarisatuion does not matter and cross-pol is null
       do i_p=1, radar_npol
-        back_spec_dia(i_p,:) = back_spec_mie(:)
-        back_hydro(i_p) = back_hydro_mie
+        if ((radar_pol(i_p) == "NN").or.(radar_pol(i_p) == "HH").or.(radar_pol(i_p) == "VV")) then
+          back_spec_dia(i_p,:) = back_spec_mie(:)
+          back_hydro(i_p) = back_hydro_mie
+        else if ((radar_pol(i_p) == "HV").or.(radar_pol(i_p) == "VH")) then
+          back_spec_dia(i_p,:) = 0.0d0
+          back_hydro(i_p) = 0.0d0
+        else
+          msg = 'do not understand radar_pol(i_p):'//radar_pol(i_p)
+          err = fatal
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+        end if
       end do
+
       nlegen_coef = max(nlegen_coef,nlegen_coef_hydro)
       if (err /= 0) then
         msg = 'error in calc_mie_spheres!'
@@ -609,11 +660,23 @@ contains
         legen_coef4_hydro,&
         back_spec_ssrg)
 
-      ! for ssrg polarisation does not matter at forward or backward scattering
+      ! for back SSRGA HH and VV polarisatuion does not matter and cross-pol is null
       do i_p=1, radar_npol
-        back_spec_dia(i_p,:) = back_spec_ssrg(:) ! spectrum??
-        back_hydro(i_p) = back_hydro_ssrg        ! total ??
+        if ((radar_pol(i_p) == "NN").or.(radar_pol(i_p) == "HH").or.(radar_pol(i_p) == "VV")) then
+          back_spec_dia(i_p,:) = back_spec_ssrg(:)
+          back_hydro(i_p) = back_hydro_ssrg
+        else if ((radar_pol(i_p) == "HV").or.(radar_pol(i_p) == "VH")) then
+          back_spec_dia(i_p,:) = 0.0d0
+          back_hydro(i_p) = 0.0d0
+        else
+          msg = 'do not understand radar_pol(i_p):'//radar_pol(i_p)
+          err = fatal
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+        end if
       end do
+
       nlegen_coef = max(nlegen_coef,nlegen_coef_hydro)
       if (err /= 0) then
         msg = 'error in calc_self_similar_rayleigh_gans_rt3!'

@@ -374,8 +374,8 @@ module tmatrix
         back_spec(i_p,ir) = 4*pi*ndens_eff* &
                           + scatter_matrix_part(1,16,1,16,2) &
                           + scatter_matrix_part(1,16,2,16,2) & ! Changed sign according to Mishcheko first book
-                          - scatter_matrix_part(2,16,1,16,2) & ! Changed sign according to Mishcheko first book
-                          - scatter_matrix_part(2,16,2,16,2) 
+                          - scatter_matrix_part(2,16,1,16,2) & ! but it doesn't matter, these two should be equal
+                          - scatter_matrix_part(2,16,2,16,2)   ! and should cancel out
       else if (radar_pol(i_p) == "VH") then
         back_spec(i_p,ir) = 4*pi*ndens_eff* &
                           + scatter_matrix_part(1,16,1,16,2) &
@@ -383,11 +383,11 @@ module tmatrix
                           + scatter_matrix_part(2,16,1,16,2) & 
                           - scatter_matrix_part(2,16,2,16,2) 
       else
-          msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)
-          err = fatal
-          call report(err, msg, nameOfRoutine)
-          errorstatus = err
-          return
+        msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)
+        err = fatal
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
+        return
       end if
     end do 
     scatter_matrix = scatter_matrix + scatter_matrix_part * ndens_eff * del_d_eff
