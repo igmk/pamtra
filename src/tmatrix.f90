@@ -26,7 +26,8 @@ module tmatrix
     scatter_matrix,&
     extinct_matrix,&
     emis_vector,&
-    back_spec)
+    back_spec,&
+    Sback)
     
     !  calculate the matrix and vectors, for spectrum
     !
@@ -68,6 +69,7 @@ module tmatrix
     real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
     real(kind=dbl), intent(out), dimension(nstokes,nummu) :: emis_vector
     real(kind=dbl), intent(out), dimension(radar_npol,nbins) :: back_spec
+    real(kind=dbl), intent(out), dimension(2,2) :: Sback
     complex(kind=dbl) :: mMix
     complex(kind=dbl) :: eps_mix 
     complex(kind=ext) :: mindex
@@ -90,6 +92,7 @@ module tmatrix
     real(kind=dbl), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix_part
     real(kind=dbl), dimension(nstokes,nstokes,nummu) :: extinct_matrix_part
     real(kind=dbl), dimension(nstokes,nummu) :: emis_vector_part
+    real(kind=dbl), dimension(2,2) :: Sback_part
   
     real(kind=dbl), dimension(nstokes*nummu*nstokes*nummu*2) :: scatter_matrix_flat
     real(kind=dbl), dimension(nstokes*nstokes*nummu) :: extinct_matrix_flat
@@ -181,7 +184,7 @@ module tmatrix
       if (tmatrix_db == "none") then
         call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
                                  as_ratio(ir), alpha, beta, azimuth_num, azimuth0_num,&
-                                 scatter_matrix_part,extinct_matrix_part,emis_vector_part)
+                                 scatter_matrix_part,extinct_matrix_part,emis_vector_part, Sback_part)
         if (err /= 0) then
           msg = 'error in calc_single_tmatrix!'
           call report(err, msg, nameOfRoutine)
@@ -284,7 +287,7 @@ module tmatrix
           if (verbose .gt. 20) then
             call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
                 as_ratio(ir), alpha, beta, azimuth_num, azimuth0_num,&
-                scatter_matrix_part,extinct_matrix_part,emis_vector_part)
+                scatter_matrix_part,extinct_matrix_part,emis_vector_part, Sback_part)
             if (err /= 0) then
                 msg = 'error in calc_single_tmatrix!'
                 call report(err, msg, nameOfRoutine)
@@ -312,7 +315,7 @@ module tmatrix
         
         call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
               as_ratio(ir), alpha, beta, azimuth_num, azimuth0_num,&
-              scatter_matrix_part,extinct_matrix_part,emis_vector_part)
+              scatter_matrix_part,extinct_matrix_part,emis_vector_part, Sback_part)
         if (err /= 0) then
           msg = 'error in calc_single_tmatrix!'
           call report(err, msg, nameOfRoutine)
@@ -356,32 +359,63 @@ module tmatrix
     do i_p= 1, radar_npol
       if (radar_pol(i_p) == "NN") then
         !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is locking from BELOW, sc
-        back_spec(i_p,ir) = 4*pi*ndens_eff*scatter_matrix_part(1,16,1,16,2)
+        !back_spec(i_p,ir) = 4*pi*ndens_eff*scatter_matrix_part(1,16,1,16,2)
+        back_spec(i_p,ir) = 4*pi*ndens_eff*Sback_part(1,1)
       else if (radar_pol(i_p) == "HH") then
         !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
-        back_spec(i_p,ir) = 4*pi*ndens_eff* &
-                          + scatter_matrix_part(1,16,1,16,2) &
-                          - scatter_matrix_part(1,16,2,16,2) & 
-                          - scatter_matrix_part(2,16,1,16,2) & 
-                          + scatter_matrix_part(2,16,2,16,2) 
+        ! back_spec(i_p,ir) = 2*pi*ndens_eff* &
+        !                   + scatter_matrix_part(1,16,1,16,2) &
+        !                   - scatter_matrix_part(1,16,2,16,2) & 
+        !                   - scatter_matrix_part(2,16,1,16,2) & 
+        !                   + scatter_matrix_part(2,16,2,16,2)
+        back_spec(i_p,ir) = 2*pi*ndens_eff*( &
+                          + Sback_part(1,1) &
+                          - Sback_part(1,2) & 
+                          - Sback_part(2,1) & 
+                          + Sback_part(2,2))
       else if (radar_pol(i_p) == "VV") then
-        back_spec(i_p,ir) = 4*pi*ndens_eff* &
-                          + scatter_matrix_part(1,16,1,16,2) &
-                          + scatter_matrix_part(1,16,2,16,2) & 
-                          + scatter_matrix_part(2,16,1,16,2) & 
-                          + scatter_matrix_part(2,16,2,16,2) 
+        ! back_spec(i_p,ir) = 2*pi*ndens_eff* &
+        !                   + scatter_matrix_part(1,16,1,16,2) &
+        !                   + scatter_matrix_part(1,16,2,16,2) & 
+        !                   + scatter_matrix_part(2,16,1,16,2) & 
+        !                   + scatter_matrix_part(2,16,2,16,2) 
+        back_spec(i_p,ir) = 2*pi*ndens_eff*( &
+                          + Sback_part(1,1) &
+                          + Sback_part(1,2) & 
+                          + Sback_part(2,1) & 
+                          + Sback_part(2,2))
       else if (radar_pol(i_p) == "HV") then
-        back_spec(i_p,ir) = 4*pi*ndens_eff* &
-                          + scatter_matrix_part(1,16,1,16,2) &
-                          + scatter_matrix_part(1,16,2,16,2) & ! Changed sign according to Mishcheko first book
-                          - scatter_matrix_part(2,16,1,16,2) & ! but it doesn't matter, these two should be equal
-                          - scatter_matrix_part(2,16,2,16,2)   ! and should cancel out
+        ! back_spec(i_p,ir) = 2*pi*ndens_eff* &
+        !                   + scatter_matrix_part(1,16,1,16,2) &
+        !                   - scatter_matrix_part(1,16,2,16,2) & ! Changed sign according to Mishcheko first book
+        !                   + scatter_matrix_part(2,16,1,16,2) & ! but it doesn't matter, these two should be equal
+        !                   - scatter_matrix_part(2,16,2,16,2)   ! and should cancel out
+        ! back_spec(i_p,ir) = 2*pi*ndens_eff*( &
+        !                   + Sback_part(1,1) &
+        !                   - Sback_part(1,2) & 
+        !                   + Sback_part(2,1) & 
+        !                   - Sback_part(2,2))
+        back_spec(i_p,ir) = 2*pi*ndens_eff*( & !avoid massive cancellation error
+                          + (Sback_part(1,1)**2-Sback_part(2,2)**2) &
+                          / (Sback_part(1,1)+Sback_part(2,2)) & 
+                          + (Sback_part(2,1)**2-Sback_part(1,2)**2) &
+                          / (Sback_part(2,1)+Sback_part(1,2)) )
       else if (radar_pol(i_p) == "VH") then
-        back_spec(i_p,ir) = 4*pi*ndens_eff* &
-                          + scatter_matrix_part(1,16,1,16,2) &
-                          - scatter_matrix_part(1,16,2,16,2) & 
-                          + scatter_matrix_part(2,16,1,16,2) & 
-                          - scatter_matrix_part(2,16,2,16,2) 
+        ! back_spec(i_p,ir) = 2*pi*ndens_eff* &
+        !                   + scatter_matrix_part(1,16,1,16,2) &
+        !                   + scatter_matrix_part(1,16,2,16,2) & 
+        !                   - scatter_matrix_part(2,16,1,16,2) & 
+        !                   - scatter_matrix_part(2,16,2,16,2)
+        !back_spec(i_p,ir) = 2*pi*ndens_eff*( &
+        !                  + Sback_part(1,1) &
+        !                  + Sback_part(1,2) & 
+        !                  - Sback_part(2,1) & 
+        !                  - Sback_part(2,2))
+        back_spec(i_p,ir) = 2*pi*ndens_eff*( & !avoid massive cancellation error
+                          + (Sback_part(1,1)**2-Sback_part(2,2)**2) &
+                          / (Sback_part(1,1)+Sback_part(2,2)) &
+                          + (Sback_part(1,2)**2-Sback_part(2,1)**2) &
+                          / (Sback_part(1,2)+Sback_part(2,1)) )
       else
         msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)
         err = fatal
@@ -389,10 +423,13 @@ module tmatrix
         errorstatus = err
         return
       end if
+      ! print*,'Sback_part ',Sback_part(1,1), Sback_part(1,2), Sback_part(2,1), Sback_part(2,2)
+      ! print*, radar_pol(i_p), back_spec(i_p,ir)
     end do 
     scatter_matrix = scatter_matrix + scatter_matrix_part * ndens_eff * del_d_eff
     extinct_matrix = extinct_matrix + extinct_matrix_part * ndens_eff * del_d_eff
     emis_vector = emis_vector + emis_vector_part * ndens_eff * del_d_eff
+    Sback = Sback + Sback_part * ndens_eff * del_d_eff
     end do !nbins
 
     call assert_false(err,any(isnan(scatter_matrix)),&
@@ -420,7 +457,7 @@ module tmatrix
   subroutine calc_single_tmatrix(errorstatus,quad,qua_num,frequency,ref_index,&
       axi, nstokes,&
       as_ratio, alpha, beta, azimuth_num, azimuth0_num,&
-      scatter_matrix,extinct_matrix,emis_vector)
+      scatter_matrix,extinct_matrix,emis_vector, Sback)
 
 
       !  calculate the matrix and vectors, for a single particle with a single orientation
@@ -462,6 +499,7 @@ module tmatrix
       real(kind=dbl), intent(out), dimension(nstokes,qua_num,nstokes,qua_num,2) :: scatter_matrix
       real(kind=dbl), intent(out), dimension(nstokes,nstokes,qua_num) :: extinct_matrix
       real(kind=dbl), intent(out), dimension(nstokes,qua_num) :: emis_vector
+      real(kind=dbl), intent(out), dimension(2,2) :: Sback
 
       real(kind=dbl) :: wave_num
       real(kind=dbl) ::thet0, thet, phi, phi0,&
@@ -491,7 +529,7 @@ module tmatrix
       character(len=80) :: msg
       character(len=30) :: nameOfRoutine = 'tmatrix_clac_single'
 
-	if (verbose >= 3) call report(info,'Start of ', nameOfRoutine) 
+	  if (verbose >= 3) call report(info,'Start of ', nameOfRoutine) 
     if (verbose >= 5) print*, "quad,qua_num,frequency,ref_index,axi, nstokes,as_ratio, alpha, beta, azimuth_num, azimuth0_num"
     if (verbose >= 5) print*, quad,qua_num,frequency,ref_index,axi, nstokes,as_ratio, alpha, beta, azimuth_num, azimuth0_num
     np = -1
@@ -599,7 +637,17 @@ module tmatrix
 			  s12 = s12*wave_num
 			  s21 = s21*wave_num
 			  s22 = s22*wave_num
-        !print*,s11,' tmm ',s22
+        ! print*,s11,'S tmm ',s22, s12, s21
+        ! print*,'Z0 tmm ', scatt_matrix_tmp1_11, scatt_matrix_tmp1_22, scatt_matrix_tmp1_12, scatt_matrix_tmp1_21
+        ! print*, "angles ",THET0,THET,PHI0,PHI,alpha,beta
+        if ((thet .eq. 180.0d0) .and. (phi .eq. phi0)) then ! this condition for backscattering is ok as long as the tmatrix routin sample that point
+          Sback(1,1) = s11*dconjg(s11)+s12*dconjg(s12)+s21*dconjg(s21)+s22*dconjg(s22)
+          Sback(1,2) = s11*dconjg(s11)-s12*dconjg(s12)+s21*dconjg(s21)-s22*dconjg(s22)
+          Sback(2,1) = s11*dconjg(s11)+s12*dconjg(s12)-s21*dconjg(s21)-s22*dconjg(s22)
+          Sback(2,2) = s11*dconjg(s11)-s12*dconjg(s12)-s21*dconjg(s21)+s22*dconjg(s22)
+          Sback = fact_sca*Sback
+          ! print*,"backscattering ", Sback, fact_sca, phi_weights
+        end if
 			  scatt_matrix_tmp1_11 = scatt_matrix_tmp1_11 + (fact_sca*&
 			      (s11*dconjg(s11)+s12*dconjg(s12)+s21*dconjg(s21)+s22*dconjg(s22)))*phi_weights
 
@@ -611,8 +659,8 @@ module tmatrix
 
 			  scatt_matrix_tmp1_22 = scatt_matrix_tmp1_22 + (fact_sca*&
 			      (s11*dconjg(s11)-s12*dconjg(s12)-s21*dconjg(s21)+s22*dconjg(s22)))*phi_weights
-
-			  if ((phi0 .eq. phi) .and. (thet0 .eq. thet)) then
+        !print*,'Z1 tmm ',scatt_matrix_tmp1_11,scatt_matrix_tmp1_22, scatt_matrix_tmp1_12, scatt_matrix_tmp1_21
+			  if ((phi0 .eq. phi) .and. (thet0 .eq. thet)) then ! forward scattering
 			      extinct_matrix(1,1,jj) = extinct_matrix(1,1,jj)+phi0_weights*(-real((s11 + s22)*fact_ext))
 			      extinct_matrix(1,2,jj) = extinct_matrix(1,2,jj)+phi0_weights*(-real((s11 - s22)*fact_ext))
 			      extinct_matrix(2,1,jj) = extinct_matrix(2,1,jj)+phi0_weights*(-real((s11 - s22)*fact_ext))

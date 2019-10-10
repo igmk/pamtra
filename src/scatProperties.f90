@@ -120,6 +120,7 @@ contains
     real(kind=dbl), dimension(nstokes,nstokes,nummu,2) :: extinct_matrix_hydro
     real(kind=dbl), dimension(nstokes,nummu,2) :: emis_vector_hydro
     real(kind=dbl), dimension(radar_nfft_aliased) :: radar_spec_hydro
+    real(kind=dbl), dimension(2,2) :: Sback_hydro
     real(kind=dbl), dimension(nbin) :: num_density
     real(kind=dbl), dimension(radar_npol) :: back_hydro
     real(kind=dbl), dimension(radar_npol,nbin) :: back_spec_dia
@@ -200,6 +201,7 @@ contains
     extinct_matrix_hydro(:,:,:,:)   = 0.d0
     scatter_matrix_hydro(:,:,:,:,:) = 0.d0
     radar_spec_hydro(:) = 0.d0
+    Sback_hydro(:,:)    = 0.d0
 
     legen_coef1_hydro(:)   = 0.d0
     legen_coef2_hydro(:)  = 0.d0
@@ -265,7 +267,8 @@ contains
         scatter_matrix_hydro(:,:,:,:,1:2),&
         extinct_matrix_hydro(:,:,:,1),&
         emis_vector_hydro(:,:,1),&
-        back_spec_dia)
+        back_spec_dia,&
+        Sback_hydro)
 
       if (allocated(as_ratio_list)) deallocate(as_ratio_list)
       if (allocated(canting_list)) deallocate(canting_list)
@@ -285,34 +288,51 @@ contains
 
       do i_p= 1, radar_npol
         if (radar_pol(i_p) == "NN") then
-          back_hydro(i_p) = scatter_matrix_hydro(1,16,1,16,2) 
+          !back_hydro(i_p) = scatter_matrix_hydro(1,16,1,16,2) 
+          back_hydro(i_p) = Sback_hydro(1,1)
            ! scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), 
            ! in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). 
            ! this definition is looking from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
         else if (radar_pol(i_p) == "HH") then
           !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
-          back_hydro(i_p) = ( scatter_matrix_hydro(1,16,1,16,2) &
-                            - scatter_matrix_hydro(1,16,2,16,2) & 
-                            - scatter_matrix_hydro(2,16,1,16,2) & 
-                            + scatter_matrix_hydro(2,16,2,16,2))!*0.5 
+          ! back_hydro(i_p) = ( scatter_matrix_hydro(1,16,1,16,2) &
+          !                   - scatter_matrix_hydro(1,16,2,16,2) & 
+          !                   - scatter_matrix_hydro(2,16,1,16,2) & 
+          !                   + scatter_matrix_hydro(2,16,2,16,2))*0.5
+          back_hydro(i_p) = ( Sback_hydro(1,1) &
+                            - Sback_hydro(1,2) & 
+                            - Sback_hydro(2,1) & 
+                            + Sback_hydro(2,2))*0.5
         else if (radar_pol(i_p) == "VV") then
           !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
-          back_hydro(i_p) = ( scatter_matrix_hydro(1,16,1,16,2) &
-                            + scatter_matrix_hydro(1,16,2,16,2) & 
-                            + scatter_matrix_hydro(2,16,1,16,2) & 
-                            + scatter_matrix_hydro(2,16,2,16,2))!*0.5
+          ! back_hydro(i_p) = ( scatter_matrix_hydro(1,16,1,16,2) &
+          !                   + scatter_matrix_hydro(1,16,2,16,2) & 
+          !                   + scatter_matrix_hydro(2,16,1,16,2) & 
+          !                   + scatter_matrix_hydro(2,16,2,16,2))*0.5
+          back_hydro(i_p) = ( Sback_hydro(1,1) &
+                            + Sback_hydro(1,2) & 
+                            + Sback_hydro(2,1) & 
+                            + Sback_hydro(2,2))*0.5
         else if (radar_pol(i_p) == "HV") then
           !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
-          back_hydro(i_p) = ( scatter_matrix_hydro(1,16,1,16,2) &
-                            + scatter_matrix_hydro(1,16,2,16,2) & ! Changed sign according to Mishcheko first book
-                            - scatter_matrix_hydro(2,16,1,16,2) & ! but it doesn't matter, these two should be equal
-                            - scatter_matrix_hydro(2,16,2,16,2))!*0.5 ! and should cancel out
+          ! back_hydro(i_p) = ( scatter_matrix_hydro(1,16,1,16,2) &
+          !                   - scatter_matrix_hydro(1,16,2,16,2) & 
+          !                   + scatter_matrix_hydro(2,16,1,16,2) & 
+          !                   - scatter_matrix_hydro(2,16,2,16,2))*0.5
+          back_hydro(i_p) = ( Sback_hydro(1,1) &
+                            - Sback_hydro(1,2) & 
+                            + Sback_hydro(2,1) & 
+                            - Sback_hydro(2,2))*0.5
         else if (radar_pol(i_p) == "VH") then
           !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
-          back_hydro(i_p) = ( scatter_matrix_hydro(1,16,1,16,2) &
-                            - scatter_matrix_hydro(1,16,2,16,2) & 
-                            + scatter_matrix_hydro(2,16,1,16,2) & 
-                            - scatter_matrix_hydro(2,16,2,16,2))!*0.5 
+          ! back_hydro(i_p) = ( scatter_matrix_hydro(1,16,1,16,2) &
+          !                   + scatter_matrix_hydro(1,16,2,16,2) & 
+          !                   - scatter_matrix_hydro(2,16,1,16,2) & 
+          !                   - scatter_matrix_hydro(2,16,2,16,2))*0.5
+          back_hydro(i_p) = ( Sback_hydro(1,1) &
+                            + Sback_hydro(1,2) & 
+                            - Sback_hydro(2,1) & 
+                            - Sback_hydro(2,2))*0.5 
         else
           errorstatus = fatal
           msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)
@@ -327,25 +347,8 @@ contains
         print*, "S22",scatter_matrix_hydro(2,16,2,16,2) 
       end if
 
-      back_hydro(:) = 4*pi*back_hydro(:)!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squard entries!
+      back_hydro(:) = 4*pi*back_hydro(:)!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squared entries!
       kext_hydro = extinct_matrix_hydro(1,1,16,1) !11 of extinction matrix (=not polarized), at 0°, first quadrature. equal to extinct_matrix(1,1,16,2)
-
-      !       back_hydro(1) = scatter_matrix_hydro(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
-      !       !hh
-      !       back_hydro(2) = (scatter_matrix_hydro(1,16,1,16,2) &
-      !            - scatter_matrix_hydro(1,16,2,16,2) &
-      !            - scatter_matrix_hydro(2,16,1,16,2) &
-      !            + scatter_matrix_hydro(2,16,2,16,2) ) /2.d0
-      !       !vv
-      !       back_hydro(3) = (scatter_matrix_hydro(1,16,1,16,2) &
-      !            + scatter_matrix_hydro(1,16,2,16,2) &
-      !            + scatter_matrix_hydro(2,16,1,16,2) &
-      !            + scatter_matrix_hydro(2,16,2,16,2) ) /2.d0
-      !       !vh 
-      !       back_hydro(4) = (scatter_matrix_hydro(1,16,1,16,2) &
-      !            - scatter_matrix_hydro(1,16,2,16,2) &
-      !            + scatter_matrix_hydro(2,16,1,16,2) &
-      !            - scatter_matrix_hydro(2,16,2,16,2) ) /2.d0
 
       ! rayleigh gans only for active!
     else if (scat_name(:16) == "ss-rayleigh-gans") then
