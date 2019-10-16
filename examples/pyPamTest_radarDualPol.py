@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 pam = pyPamtra.pyPamtra()
 #pam.df.addHydrometeor(('ice', 1.0, -1, 917,917 *  np.pi / 6., 3, np.pi/4., 2, 0, 100, 'exp', 3000, 3e8, -99.0, -99.0, 100e-6,  1000e-6, 'mie-sphere', 'heymsfield10_particles', 90.0))
 pam.df.addHydrometeor(('ice', 0.3, -1, 917,917 *  np.pi / 6., 3, np.pi/4., 2, 0, 100, 'exp', 3000, 3e8, -99.0, -99.0, 100e-6,  1000e-6, 'tmatrix', 'heymsfield10_particles', 90.0))
+#pam.df.addHydrometeor(('ice', 1.0, -1, 917,917 *  np.pi / 6., 3, np.pi/4., 2, 0, 100, 'exp', 3000, 3e8, -99.0, -99.0, 100e-6,  1000e-6, 'ssrg-rt3', 'heymsfield10_particles', 90.0))
 
 pam = pyPamtra.importer.createUsStandardProfile(pam,hgt_lev=np.arange(1000,1300,200))
 

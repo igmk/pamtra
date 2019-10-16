@@ -709,6 +709,7 @@ contains
         errorstatus = err
         return
       end if
+
     else if (scat_name(:6) == "hongdb") then
       read(scat_name(8:8),*) hong_type
       call dda_db_hong(err,freq, layer_t, hong_type, refre-Im*refim,nbin,&
@@ -729,6 +730,7 @@ contains
         errorstatus = err
         return
       end if
+    
     else
       msg = 'do not understand scat_name: '//scat_name
       errorstatus = fatal

@@ -374,48 +374,23 @@ module tmatrix
                           - Sback_part(2,1) & 
                           + Sback_part(2,2))
       else if (radar_pol(i_p) == "VV") then
-        ! back_spec(i_p,ir) = 2*pi*ndens_eff* &
-        !                   + scatter_matrix_part(1,16,1,16,2) &
-        !                   + scatter_matrix_part(1,16,2,16,2) & 
-        !                   + scatter_matrix_part(2,16,1,16,2) & 
-        !                   + scatter_matrix_part(2,16,2,16,2) 
         back_spec(i_p,ir) = 2*pi*ndens_eff*( &
                           + Sback_part(1,1) &
                           + Sback_part(1,2) & 
                           + Sback_part(2,1) & 
                           + Sback_part(2,2))
       else if (radar_pol(i_p) == "HV") then
-        ! back_spec(i_p,ir) = 2*pi*ndens_eff* &
-        !                   + scatter_matrix_part(1,16,1,16,2) &
-        !                   - scatter_matrix_part(1,16,2,16,2) & ! Changed sign according to Mishcheko first book
-        !                   + scatter_matrix_part(2,16,1,16,2) & ! but it doesn't matter, these two should be equal
-        !                   - scatter_matrix_part(2,16,2,16,2)   ! and should cancel out
-        ! back_spec(i_p,ir) = 2*pi*ndens_eff*( &
-        !                   + Sback_part(1,1) &
-        !                   - Sback_part(1,2) & 
-        !                   + Sback_part(2,1) & 
-        !                   - Sback_part(2,2))
-        back_spec(i_p,ir) = 2*pi*ndens_eff*( & !avoid massive cancellation error
-                          + (Sback_part(1,1)**2-Sback_part(2,2)**2) &
-                          / (Sback_part(1,1)+Sback_part(2,2)) & 
-                          + (Sback_part(2,1)**2-Sback_part(1,2)**2) &
-                          / (Sback_part(2,1)+Sback_part(1,2)) )
+        back_spec(i_p,ir) = 2*pi*ndens_eff*DABS( & !avoid massive cancellation error
+                          + Sback_part(1,1) &
+                          - Sback_part(1,2) &
+                          + Sback_part(2,1) &
+                          - Sback_part(2,2)) 
       else if (radar_pol(i_p) == "VH") then
-        ! back_spec(i_p,ir) = 2*pi*ndens_eff* &
-        !                   + scatter_matrix_part(1,16,1,16,2) &
-        !                   + scatter_matrix_part(1,16,2,16,2) & 
-        !                   - scatter_matrix_part(2,16,1,16,2) & 
-        !                   - scatter_matrix_part(2,16,2,16,2)
-        !back_spec(i_p,ir) = 2*pi*ndens_eff*( &
-        !                  + Sback_part(1,1) &
-        !                  + Sback_part(1,2) & 
-        !                  - Sback_part(2,1) & 
-        !                  - Sback_part(2,2))
-        back_spec(i_p,ir) = 2*pi*ndens_eff*( & !avoid massive cancellation error
-                          + (Sback_part(1,1)**2-Sback_part(2,2)**2) &
-                          / (Sback_part(1,1)+Sback_part(2,2)) &
-                          + (Sback_part(1,2)**2-Sback_part(2,1)**2) &
-                          / (Sback_part(1,2)+Sback_part(2,1)) )
+        back_spec(i_p,ir) = 2*pi*ndens_eff*DABS( & !avoid massive cancellation error
+                          + Sback_part(1,1) &
+                          + Sback_part(1,2) &
+                          - Sback_part(2,1) &
+                          - Sback_part(2,2))
       else
         msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)
         err = fatal
@@ -439,11 +414,14 @@ module tmatrix
     call assert_false(err,any(isnan(emis_vector)),&
         "nan in emis_vector")
     call assert_false(err,any(isnan(back_spec)),&
-        "nan in back_spec")  
+        "nan in back_spec")
     if (err > 0) then
       errorstatus = fatal
       msg = "assertation error"
       call report(errorstatus, msg, nameOfRoutine)
+      print*, radar_pol(i_p), back_spec
+      print*, '###################'
+      print*, radar_pol(i_p), Sback_part
       return
     end if   
 
