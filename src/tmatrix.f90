@@ -381,15 +381,11 @@ module tmatrix
                           + Sback_part(2,2))
       else if (radar_pol(i_p) == "HV") then
         back_spec(i_p,ir) = 2*pi*ndens_eff*DABS( & !avoid massive cancellation error
-                          + Sback_part(1,1) &
-                          - Sback_part(1,2) &
-                          + Sback_part(2,1) &
+                          + Sback_part(1,1) & ! The off diagonal terms are equal in backscattering
                           - Sback_part(2,2)) 
       else if (radar_pol(i_p) == "VH") then
         back_spec(i_p,ir) = 2*pi*ndens_eff*DABS( & !avoid massive cancellation error
-                          + Sback_part(1,1) &
-                          + Sback_part(1,2) &
-                          - Sback_part(2,1) &
+                          + Sback_part(1,1) & ! The off diagonal terms are equal in backscattering
                           - Sback_part(2,2))
       else
         msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)

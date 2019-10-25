@@ -113,7 +113,7 @@ subroutine hydrometeor_extinction(errorstatus)
 
     hydros: do i_h = 1,n_hydro
 
-      !these ones are fore sure 1D
+      !these ones are for sure 1D
       hydro_name = hydro_name_arr(i_h)
       liq_ice    = liq_ice_arr(i_h)
       scat_name  = TRIM(scat_name_arr(i_h))

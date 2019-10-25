@@ -40,7 +40,7 @@ subroutine make_soft_spheroid(errorstatus)
   use constants, only: pi, rho_ice
 
   use drop_size_dist, only: rho_ms, as_ratio, d_ds, nbin, mass_ds,  &    ! IN
-		     soft_rho_eff, soft_d_eff,liq_ice                                     ! OUT
+     soft_rho_eff, soft_d_eff,liq_ice                                     ! OUT
   use settings, only: hydro_limit_density_area, hydro_softsphere_min_density, freqs
   use vars_index, only: i_f
 
@@ -70,7 +70,6 @@ subroutine make_soft_spheroid(errorstatus)
 
   soft_rho_eff(:) = 0.
   soft_d_eff(:) = 0.
-  
 ! Particle mass
   mass = mass_ds
 
