@@ -2131,7 +2131,7 @@ def createUsStandardProfile(pam=pyPamtra(),**kwargs):
   hgt_lev is the only mandatory variables
   humidity will be set to zero if not provided, all other variables are guessed by "createProfile"
 
-  values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwritte us staandard if provided
+  values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwrite us standard if provided
 
   '''
 
@@ -2150,7 +2150,7 @@ def _createUsStandardProfile(**kwargs):
   hgt_lev is the only mandatory variables
   humidity will be set to zero if not provided, all other variables are guessed by "createProfile"
 
-  values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwritte us staandard if provided
+  values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwrite us standard if provided
 
   '''
 

@@ -37,7 +37,7 @@ radar\_airmotion\_step\_vmin       positive float                 0.5           
 radar\_airmotion\_vmin             float                          -4 m/s             Minimal air motion of for step and linear function. Also used for constant air motion.
 radar\_airmotion\_vmax             float                          4 m/s              Maximal air motion of for step and linear function.
 radar_aliasing_nyquist_interv      positive integer               1                  Consider aliasing effects for overspending the nyquist range radar_aliasing_nyquist_interv times.
-radar\_attenuation                 disabled, bottom-up, top-down  disabled           Attenuate radar spectrum and  Z_e  depending on measurement geometry
+radar\_attenuation                 disabled, bottom-up, top-down  disabled           Attenuate radar spectrum and  Z_e  depending on measurement geometry (bottom-up for upward looking, top-down for downward-looking).
 radar_convolution_fft              boolean                        True               Use FFT for convolution. FFt is much faster, but can have numerical issues in rare cases.
 radar_fwhr_beamwidth_deg           float*                         0.3                radar full width half radiation beamwidth (required for spectral broadening estimation)
 radar_integration_time             float*                         1.4                radar beamwidth (required for spectral broadening estimation)
