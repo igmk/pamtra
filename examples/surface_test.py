@@ -20,5 +20,6 @@ pam.p['groundtemp'][:] = 277.
 
 pam.runPamtra(35)
 
+import matplotlib.pyplot as plt
 plt.figure()
 pyPamtra.plot.plotTB(pam,levels=[1,400])
