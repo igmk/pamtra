@@ -21,6 +21,30 @@ try:
     from .libWrapper import PamtraFortranWrapper, parallelPamtraFortranWrapper
 except ImportError:
     print('PAMTRA FORTRAN LIBRARY NOT AVAILABLE!')
+try:
+    pamdata =  os.environ['PAMTRA_DATADIR']
+except KeyError:
+    data_message = """
+        Environment variable PAMTRA_DATADIR not set.
+
+        This is required to make use of all features of PAMTRA (scattering databases, surface reflection catalogues).
+
+        You can get the data by ftp
+        ftp gop.meteo.uni-koeln.de
+        user: pamdata
+        passwd: paM1Data_01
+        get pam_data.tar.bz2
+        bye
+        
+        Once downloaded and unpacked in a arbitrary directory you need to set the environment variables PAMTRA_DATADIR in ~/.profile or directly in your python script by
+
+        import os
+
+        os.environ['PAMTRA_DATADIR'] = path_where_the_data_is
+
+        If you're absolutely sure what you do, you can set omit the data download and set the variable to an empty location.
+        """
+    raise RuntimeError(data_message)
 from .descriptorFile import pamDescriptorFile
 from .tools import sftp2Cluster, formatExceptionInfo
 from .meteoSI import detect_liq_cloud, mod_ad, moist_rho_rh,rh2q
