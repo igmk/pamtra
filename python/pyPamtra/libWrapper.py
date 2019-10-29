@@ -11,8 +11,9 @@ import copy
 
 try:
     from pyPamtra.pyPamtraLib import *
-except ImportError:
-    print('PAMTRA FORTRAN LIBRARY NOT AVAILABLE!')
+except ImportError as IE:
+    print('libWrapper: PAMTRA FORTRAN LIBRARY NOT AVAILABLE!')
+    print(IE)
 
 
 #logging.basicConfig(filename='/tmp/pyPamtraLibWrapper.log',level=logging.WARNING) #change WARNING to INFO or DEBUG if needed

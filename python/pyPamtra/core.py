@@ -26,8 +26,9 @@ import warnings
 
 try:
     from pyPamtra.libWrapper import PamtraFortranWrapper, parallelPamtraFortranWrapper
-except ImportError:
-    print('PAMTRA FORTRAN libWrapper LIBRARY NOT AVAILABLE!')
+except ImportError as IE:
+    print('core: PAMTRA FORTRAN libWrapper LIBRARY NOT AVAILABLE!')
+    print(IE)
 from pyPamtra.descriptorFile import pamDescriptorFile
 from pyPamtra.tools import sftp2Cluster, formatExceptionInfo
 from pyPamtra.meteoSI import detect_liq_cloud, mod_ad, moist_rho_rh,rh2q
