@@ -74,7 +74,7 @@ def PamtraFortranWrapper(
 
   #see whether it worked:
   if sets["pyVerbose"] > 3:
-    print "Fortran view on settings variables"
+    print("Fortran view on settings variables")
     settings.print_settings()
 
 
@@ -109,7 +109,7 @@ def PamtraFortranWrapper(
 
   #see whether it worked:
   if sets["pyVerbose"] > 3:
-    print "Fortran view on descriptor_file variables"
+    print("Fortran view on descriptor_file variables")
     descriptor_file.printdescriptorvars()
 
 
@@ -123,7 +123,7 @@ def PamtraFortranWrapper(
   if sets["pyVerbose"] > 8:
     for key in profile.keys():
       if key not in ["noutlevels"]:
-        print key, getattr(vars_atmosphere, "atmo_"+key), profile[key]
+        print(key, getattr(vars_atmosphere, "atmo_"+key), profile[key])
 
   #return  dict(),pyPamtraLib
   #deal with the atmospheric input_file
@@ -155,10 +155,10 @@ def PamtraFortranWrapper(
   if sets["pyVerbose"] > 8:
     for key in profile.keys():
       if key not in ["noutlevels"]:
-        print key, getattr(vars_atmosphere, "atmo_"+key, profile[key])
+        print(key, getattr(vars_atmosphere, "atmo_"+key, profile[key]))
   #see whether it worked:
   if sets["pyVerbose"] > 3:
-    print "Fortran view on vars_atmosphere variables"
+    print("Fortran view on vars_atmosphere variables")
     vars_atmosphere.print_vars_atmosphere()
 
 
@@ -167,7 +167,7 @@ def PamtraFortranWrapper(
 
   #see whether it worked:
   if sets["pyVerbose"] > 3:
-    print "Fortran view on vars_atmosphere variables"
+    print("Fortran view on vars_atmosphere variables")
     vars_atmosphere.print_vars_atmosphere()
 
 
@@ -185,7 +185,7 @@ def PamtraFortranWrapper(
       setattr(vars_hydrofullspec, "hydrofs_"+key, descriptorFileFS[key].tolist())
 
     if sets["pyVerbose"] > 3:
-      print "Fortran view on hydro_fullspec variables"
+      print("Fortran view on hydro_fullspec variables")
       vars_hydrofullspec.print_hydrofs_vars()
 
 
@@ -204,7 +204,7 @@ def PamtraFortranWrapper(
       if sets["pyVerbose"] > 3: print("results['"+key+"'] = copy.deepcopy(vars_output.out_"+key.lower()+")")
       results[key] = copy.deepcopy(getattr(vars_output, "out_"+key.lower()))
     else:
-      if sets["pyVerbose"] > 3: print "filling key", key
+      if sets["pyVerbose"] > 3: print("filling key", key)
       if key in ["radar_quality"]: results[key] = -9999
       else: results[key] = -9999.
 
@@ -255,7 +255,7 @@ def setFortranStrList(fortranList,pythonList,charLength=None):
   return
 
 def parallelPamtraFortranWrapper(indices, *args, **kwargs):
-  if args[0]["pyVerbose"] > 1: print 'starting', __name__, 'parent process:', os.getppid(), 'process id:', os.getpid()
+  if args[0]["pyVerbose"] > 1: print('starting', __name__, 'parent process:', os.getppid(), 'process id:', os.getpid())
   results, pamError = PamtraFortranWrapper(*args, **kwargs)
   host = os.uname()[1]
   return indices, results, pamError, host
