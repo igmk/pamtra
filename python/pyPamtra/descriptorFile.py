@@ -16,7 +16,7 @@ class pamDescriptorFile(object):
   def __init__(self,parent):
     self.names = np.array(["hydro_name", "as_ratio", "liq_ice", "rho_ms", "a_ms", "b_ms", "alpha_as", "beta_as", "moment_in", "nbin", "dist_name", "p_1", "p_2", "p_3", "p_4", "d_1", "d_2", "scat_name", "vel_size_mod","canting"])
     self.types = ["S15",float,int,float,float,float,float,float,int,int,"S15",float,float,float,float,float,float, "S30", "S30",float]  
-    self.data = np.recarray((0,),dtype=zip(self.names, self.types))
+    self.data = np.recarray((0,),dtype=[i for i in zip(self.names, self.types)])
     self.data4D = dict()
     self.nhydro = 0
     self.parent = parent
@@ -82,7 +82,7 @@ class pamDescriptorFile(object):
     assert hydroTuple[0] not in self.data["hydro_name"]
     assert len(self.dataFullSpec.keys()) == 0
     
-    self.data = np.append(self.data,np.array(tuple(hydroTuple),dtype=zip(self.names,self.types)))
+    self.data = np.append(self.data,np.array(tuple(hydroTuple),dtype=[i for i in zip(self.names, self.types)]))
     self.nhydro += 1
     self.parent._shape4D = (self.parent.p["ngridx"],self.parent.p["ngridy"],self.parent.p["max_nlyrs"],self.nhydro)
     for key in ["hydro_q","hydro_reff","hydro_n"]:
@@ -106,7 +106,7 @@ class pamDescriptorFile(object):
       return
     removed = False#
     hydroIndex = np.where(self.parent.df.data["hydro_name"]==hydroName)[0][0]
-    self.dataNew = np.recarray((0,),dtype=zip(self.names, self.types))
+    self.dataNew = np.recarray((0,),dtype=[i for i in zip(self.names, self.types)])
     for ii in range(self.data.shape[0]):
       if self.data[ii][0] == hydroName:
         removed = True
