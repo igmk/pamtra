@@ -27,7 +27,7 @@ def PamtraFortranWrapper(
   profile,
   returnModule=True
   ):
-  import pyPamtraLib
+  from pyPamtra import pyPamtraLib
 
   report_module.verbose = sets["verbose"]
 

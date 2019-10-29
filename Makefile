@@ -250,7 +250,7 @@ py: $(PYTDIR)pyPamtraLib.so
 
 $(PYTDIR)pyPamtraLib.so:  $(SRCDIR)pyPamtraLib.f90 $(OBJDIR)pypamtralib.pyf $(FOBJECTS) | $(BINDIR)
 	cd $(OBJDIR) && $(F2PY3) $(LFLAGS) -c --fcompiler=gnu95  ../$(OBJDIR)pypamtralib.pyf $(OBJECTS) ../$(SRCDIR)pyPamtraLib.f90
-	mv $(OBJDIR)/*.so $(PYTDIR)pyPamtraLib.so
+	mv $(OBJDIR)/*.so $(PYTDIR)
 	cp $(PYTDIR)/pamtra.py $(BINDIR)
 
 
@@ -267,8 +267,8 @@ clean:
 	-rm -f $(OBJDIR)*.o
 	-rm -f $(OBJDIR)*.mod
 	-rm -f $(BINDIR)pamtra*
-	-rm -f $(PYTDIR)pyPamtraLib.so
-	-rm -f $(PYINSTDIR)pyPamtra/pyPamtraLib.so
+	-rm -f $(PYTDIR)*.so
+	-rm -f $(PYINSTDIR)pyPamtra/*.so
 	cd tools/py_usStandard/ && $(MAKE) clean
 
 htmldoc:
