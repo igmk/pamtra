@@ -3,7 +3,7 @@
 from __future__ import division
 
 
-from .core import pyPamtra
+from pyPamtra.core import pyPamtra
 
 
 # import subpackages

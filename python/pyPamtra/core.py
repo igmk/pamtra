@@ -25,13 +25,13 @@ import warnings
 #dill._dill._reverse_typemap['ObjectType'] = object
 
 try:
-    from .libWrapper import PamtraFortranWrapper, parallelPamtraFortranWrapper
+    from pyPamtra.libWrapper import PamtraFortranWrapper, parallelPamtraFortranWrapper
 except ImportError:
-    print('PAMTRA FORTRAN LIBRARY NOT AVAILABLE!')
-from .descriptorFile import pamDescriptorFile
-from .tools import sftp2Cluster, formatExceptionInfo
-from .meteoSI import detect_liq_cloud, mod_ad, moist_rho_rh,rh2q
-from .fortranNamelist import Namelist
+    print('PAMTRA FORTRAN libWrapper LIBRARY NOT AVAILABLE!')
+from pyPamtra.descriptorFile import pamDescriptorFile
+from pyPamtra.tools import sftp2Cluster, formatExceptionInfo
+from pyPamtra.meteoSI import detect_liq_cloud, mod_ad, moist_rho_rh,rh2q
+from pyPamtra.fortranNamelist import Namelist
 
 missingNumber=-9999.
 missingIntNumber=int(missingNumber)

@@ -10,7 +10,7 @@ import numpy# as np
 import copy
 
 try:
-    from .pyPamtraLib import *
+    from pyPamtra.pyPamtraLib import *
 except ImportError:
     print('PAMTRA FORTRAN LIBRARY NOT AVAILABLE!')
 

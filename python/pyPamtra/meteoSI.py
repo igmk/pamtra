@@ -297,14 +297,14 @@ def detect_liq_cloud(z, t, rh):#, rh_thres, t_thres):
    t_thres = 253.15 #K
    #import pdb; pdb.set_trace()
    n = len(z)
-   #print "!",n
+   #print("!",n)
    #***determine cloud boundaries
    #--> layers where mean rh GT rh_thres
    
    cloud_bound_ind = np.zeros(n,dtype=int)
    for i in np.arange(0, (n - 1)):
-      #print ((rh[i + 1] + rh[i]) / 2. > rh_thres)
-      #print ((t[i + 1] + t[i]) / 2. > t_thres)
+      #print(((rh[i + 1] + rh[i]) / 2. > rh_thres))
+      #print(((t[i + 1] + t[i]) / 2. > t_thres))
       if ((rh[i + 1] + rh[i]) / 2. > rh_thres)  and  ((t[i + 1] + t[i]) / 2. > t_thres):   
          cloud_bound_ind[i] = np.bitwise_or(1, cloud_bound_ind[i])
          cloud_bound_ind[i + 1] = np.bitwise_or(2, cloud_bound_ind[i + 1])
@@ -332,7 +332,7 @@ def detect_liq_cloud(z, t, rh):#, rh_thres, t_thres):
       n_base = len(i_base)
       n_top = len(i_top)
       if n_top != n_base:   
-         print 'something wrong, number of bases NE number of cloud tops!'
+         print('something wrong, number of bases NE number of cloud tops!')
          return [],[],[]
       # end if
    # end if

@@ -37,7 +37,7 @@ class Settings(dict):
         Remove leading and trailing blanks, comments/empty lines from a list of strings
         mystringlist = foo.clean(mystringlist,spacemerge=0,commentline=r"^[\s\t]*\#",cleancharlist="")
             commentline: definition of commentline
-            spacemerge: if <>0, merge/collapse multi space
+            spacemerge: if !=0, merge/collapse multi space
             cleancomma: Remove leading and trailing commas
         """
         aa = mystringlist
@@ -46,9 +46,9 @@ class Settings(dict):
         if commentexpr:
             aa = [re.sub(commentexpr,"",item).strip() for item in aa]
         if spacemerge:
-            aa = [re.sub("[\s\t]+"," ",item).strip() for item in aa if len(item.strip()) <> 0]
+            aa = [re.sub("[\s\t]+"," ",item).strip() for item in aa if len(item.strip()) != 0]
         else:
-            aa = [item.strip() for item in aa if len(item.strip()) <> 0]
+            aa = [item.strip() for item in aa if len(item.strip()) != 0]
         return aa
 
     def splitstring(self,mystr):
@@ -61,7 +61,7 @@ class Settings(dict):
         squote=r"(^[^\"\']*)(\'[^']*\')(.*$)"
         mystrarr = re.sub(dquote,r"\1\n\2\n\3",re.sub(squote,r"\1\n\2\n\3",mystr)).split("\n")
         #remove zerolenght items
-        mystrarr = [item for item in mystrarr if len(item) <> 0]
+        mystrarr = [item for item in mystrarr if len(item) != 0]
         if len(mystrarr) > 1:
             mystrarr2 = []
             for item in mystrarr:

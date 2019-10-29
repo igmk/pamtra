@@ -3,5 +3,5 @@
 from __future__ import division
 
 # import subpackages
-from .namelist import Namelist
-from .namelist import Settings
+from pyPamtra.fortranNamelist.namelist import Namelist
+from pyPamtra.fortranNamelist.namelist import Settings

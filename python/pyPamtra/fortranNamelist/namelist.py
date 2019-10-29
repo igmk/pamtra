@@ -48,7 +48,7 @@ import sys
 
 import re
 
-from namelist_settings import Settings
+from pyPamtra.fortranNamelist.namelist_settings import Settings
 
 # import sys
 # import getopt
