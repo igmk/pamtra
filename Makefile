@@ -5,14 +5,16 @@ OBJDIR := src/
 SRCDIR := src/
 BINDIR := bin/
 LIBDIR := lib/
-PYTDIR := python/pyPamtra
+PYTDIR := python/pyPamtra/
 PYINSTDIR := ~/lib/python/
+#PYINSTDIR := ~/lib/python3/
 
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 NCCONF = $(shell which nf-config || which nc-config) # on newer Ubuntu version C and Fortran libraries have their own configure scripts
-F2PY := $(shell which f2py2.7 || which f2py) # on newer Ubuntu systems, only f2py2.7 is available
+F2PY := $(shell which f2py2.7 || which f2py) # on newer Ubuntu systems, only f2py2.7 is available # (Davide) on my Ubuntu 18.04 I have both...
+F2PY3 := $(shell which f2py3 || which f2py3.6)
 FC=gfortran
 CC=gcc
 FCFLAGS=-c -fPIC -Wunused  -cpp -J$(OBJDIR) -I$(OBJDIR)
@@ -220,20 +222,35 @@ pyDebug: 	py
 
 
 
+#$(OBJDIR)pypamtralib.pyf:  $(FOBJECTS)
+#	@echo "####################################################################################"
+#	@echo "Note there is a bug in numpy 1.10.1, intent in or out is not recognized"
+#	@echo "Note there is a bug in numpy 1.12.0, length of arrays is not recognized by f2py"
+#	@echo "####################################################################################"
+#	$(F2PY) --overwrite-signature -m pyPamtraLib -h $(OBJDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)vars_index.f90 $(SRCDIR)viscosity_air.f90 $(SRCDIR)convolution.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)radar_moments.f90 $(SRCDIR)eps_water.f90  $(SRCDIR)radar_hildebrand_sekhon.f90 $(SRCDIR)dia2vel.f90 $(SRCDIR)pyPamtraLib.f90
+
+
 $(OBJDIR)pypamtralib.pyf:  $(FOBJECTS)
 	@echo "####################################################################################"
-	@echo "Note there is a bug in numpy 1.10.1, intent in or out is not recognized"
-	@echo "Note there is a bug in numpy 1.12.0, length of arrays is not recognized by f2py"
+	@echo "Note there is a bug in numpy XXXXXX, intent in or out is not recognized"
+	@echo "Note there is a bug in numpy XXXXXX, length of arrays is not recognized by f2py"
 	@echo "####################################################################################"
-	$(F2PY) --overwrite-signature -m pyPamtraLib -h $(OBJDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)vars_index.f90 $(SRCDIR)viscosity_air.f90 $(SRCDIR)convolution.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)radar_moments.f90 $(SRCDIR)eps_water.f90  $(SRCDIR)radar_hildebrand_sekhon.f90 $(SRCDIR)dia2vel.f90 $(SRCDIR)pyPamtraLib.f90
+	$(F2PY3) --overwrite-signature -m pyPamtraLib -h $(OBJDIR)pypamtralib.pyf $(SRCDIR)report_module.f90 $(SRCDIR)vars_index.f90 $(SRCDIR)viscosity_air.f90 $(SRCDIR)convolution.f90 $(SRCDIR)deallocate_everything.f90 $(SRCDIR)vars_output.f90 $(SRCDIR)vars_atmosphere.f90 $(SRCDIR)settings.f90 $(SRCDIR)descriptor_file.f90 $(SRCDIR)vars_hydroFullSpec.f90 $(SRCDIR)radar_moments.f90 $(SRCDIR)eps_water.f90  $(SRCDIR)radar_hildebrand_sekhon.f90 $(SRCDIR)dia2vel.f90 $(SRCDIR)pyPamtraLib.f90
+
 
 py: FCFLAGS += -O2
 py: NCFLAGS += -O2
 py: $(PYTDIR)pyPamtraLib.so
 
+#$(PYTDIR)pyPamtraLib.so:  $(SRCDIR)pyPamtraLib.f90 $(OBJDIR)pypamtralib.pyf $(FOBJECTS) | $(BINDIR)
+#	cd $(OBJDIR) && $(F2PY) $(LFLAGS) -c --fcompiler=gnu95  ../$(OBJDIR)pypamtralib.pyf $(OBJECTS) ../$(SRCDIR)pyPamtraLib.f90
+#	mv $(OBJDIR)/pyPamtraLib.so $(PYTDIR)
+#	cp $(PYTDIR)/pamtra.py $(BINDIR)
+
+
 $(PYTDIR)pyPamtraLib.so:  $(SRCDIR)pyPamtraLib.f90 $(OBJDIR)pypamtralib.pyf $(FOBJECTS) | $(BINDIR)
-	cd $(OBJDIR) && $(F2PY) $(LFLAGS) -c --fcompiler=gnu95  ../$(OBJDIR)pypamtralib.pyf $(OBJECTS) ../$(SRCDIR)pyPamtraLib.f90
-	mv $(OBJDIR)/pyPamtraLib.so $(PYTDIR)
+	cd $(OBJDIR) && $(F2PY3) $(LFLAGS) -c --fcompiler=gnu95  ../$(OBJDIR)pypamtralib.pyf $(OBJECTS) ../$(SRCDIR)pyPamtraLib.f90
+	#mv $(OBJDIR)/pyPamtraLib.so $(PYTDIR)
 	cp $(PYTDIR)/pamtra.py $(BINDIR)
 
 
