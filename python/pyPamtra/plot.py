@@ -62,19 +62,19 @@ def plotTB(data,polarisation="H",angle=180.,outlevel="space",frequency=0,xgrid="
     else: cdfFile = nc.NetCDFFile(data,"r")
     
     try:
-	angleIndex = np.where(angle==cdfFile.variables["angle"][:])[0][0]
+      angleIndex = np.where(angle==cdfFile.variables["angle"][:])[0][0]
     except IndexError: 
-	raise ValueError("angle was not found")
+      raise ValueError("angle was not found")
     if type(frequency) in [int,np.int32,np.int64]:
       if frequency < len(cdfFile.variables["frequency"][:]):
-	frequencyIndex=frequency
+        frequencyIndex=frequency
       else:
-	raise ValueError("frequencyIndex was not found. Use integer number to specify frequency index, use real to specify frequency directly.")
+        raise ValueError("frequencyIndex was not found. Use integer number to specify frequency index, use real to specify frequency directly.")
     elif type(frequency) in [float,np.float32,np.float64]:
       try:
-	frequencyIndex = np.where(cdfFile.variables["frequency"][:]==frequency)[0][0]
+        frequencyIndex = np.where(cdfFile.variables["frequency"][:]==frequency)[0][0]
       except IndexError: 
-	raise ValueError("frequency was not found. Use integer number to specify frequency index, use real to specify frequency directly.")
+        raise ValueError("frequency was not found. Use integer number to specify frequency index, use real to specify frequency directly.")
     else:
       raise ValueError("frequency type not understood! Use integer number to specify frequency index, use real to specify frequency directly.")
     
@@ -103,14 +103,14 @@ def plotTB(data,polarisation="H",angle=180.,outlevel="space",frequency=0,xgrid="
       raise ValueError("angle was not found")
     if type(frequency) in [int,np.int32,np.int64]:
       if frequency < len(data.set["freqs"]):
-	frequencyIndex=frequency
+        frequencyIndex=frequency
       else:
-	raise ValueError("frequencyIndex was not found. Use integer number to specify frequency index, use real to specify frequency directly.")
+        raise ValueError("frequencyIndex was not found. Use integer number to specify frequency index, use real to specify frequency directly.")
     elif type(frequency) in [float,np.float32,np.float64]:
       try:
-	frequencyIndex = np.where(data.set["freqs"]==frequency)[0][0]
+        frequencyIndex = np.where(data.set["freqs"]==frequency)[0][0]
       except IndexError: 
-	raise ValueError("frequency was not found. Use integer number to specify frequency index, use real to specify frequency directly.")
+        raise ValueError("frequency was not found. Use integer number to specify frequency index, use real to specify frequency directly.")
     else:
       raise ValueError("frequency type not understood! Use integer number to specify frequency index, use real to specify frequency directly.")
     
