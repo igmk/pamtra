@@ -70,6 +70,7 @@ On Ubuntu, install the following packages in advance in order to compile the For
 
     sudo apt-get install gcc gfortran libnetcdff5 netcdf-bin libnetcdf-dev liblapack-dev libzip-dev git gitk libfftw3-dev libnetcdff-dev
 
+For some packages like libnetcdff5 in Ubuntu 16.04 you might have to use the `universe` repository.
 The model is tested with gcc version 4.8.2.
 
 To get the Python version, the following packages are additionally required::
@@ -80,14 +81,14 @@ More recent Ubuntu versions have `python-netcdf4` instead of `python-netcdf`. Fo
 
     sudo pip install netcdf4
 
-If the system's numpy version is tto recent, use pip ::
+If the system's numpy version is to recent, use pip ::
 
     pip install --user netcdf4
 
 Not all numpy versions work with Pamtra, 1.11.3 and 1.12.1 are confirmed to work. 1.13.3 and 1.14.3 do not work. You can check the numpy version in python ::
 
     import numpy
-    print(numpy.__version__
+    print numpy.__version__
 
   or ::
 
