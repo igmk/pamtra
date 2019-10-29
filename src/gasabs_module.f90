@@ -331,49 +331,6 @@ contains
         return
 
     end function abh2o
-    !*************************************************************
-    function abliq(water,freq,tempK)
-        ! D.Ori - to me it seems this function is not called by anywhere else and could be dropped
-        ! from comparison with other routines it also seems that it does not return Np/km which would be inconsistent
-        ! with the other routines of this module and can cause confusion
-        ! It is even not gas absorption and does not really belong to this module
-
-        !     COMPUTES ABSORPTION IN NEPERS/KM BY SUSPENDED WATER DROPLETS
-        !     FROM EQUATIONS OF LIEBE, HUFFORD AND MANABE
-        !     (INT. J. IR & MM WAVES V.12(17) JULY 1991
-        !     water IN G/M^3
-        !     freq  IN GHZ     (VALID FROM 0 TO 1000 GHZ)
-        !     tempK IN KELVIN
-        !        PWR 8/3/92
-        !
-
-        use kinds, only: dbl
-
-        implicit none
-
-        real(kind=dbl) :: water, freq, tempK
-        real(kind=dbl) :: abliq
-        real(kind=dbl) :: theta1, eps0, eps1, eps2, fp, fs
-        complex(kind=dbl) :: eps,re
-
-        if(water <= 0.) then
-            abliq = 0._dbl
-            return
-        endif
-        theta1 = 1._dbl-300._dbl/tempK
-        eps0 = 77.66_dbl - 103.3_dbl*theta1
-        eps1 = 0.0671_dbl*eps0
-        eps2 = 3.52_dbl + 7.52_dbl*theta1
-        fp = (316._dbl*theta1 + 146.4_dbl)*theta1 +20.20_dbl
-        fs = 39.8_dbl*fp
-        eps = (eps0-eps1)/cmplx(1._dbl,freq/fp) +&
-          (eps1-eps2)/cmplx(1._dbl,freq/fs) +eps2
-        re = (eps-1._dbl)/(eps+2._dbl)
-        abliq = -0.06286_dbl*aimag(re)*freq*water
-
-        return
-
-    end function abliq
 
 end module gasabs_module 
  

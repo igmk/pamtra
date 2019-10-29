@@ -1709,6 +1709,154 @@ def readHIRHAM(dataFile,additionalFile,topoFile,descriptorFile,grid=[0,200,0,218
 
   return pam
 
+def readECMWF(fname,constantFile,descriptorFile,landseamask,tmpDir="/tmp/",debug=False,verbosity=0,grid=[0,-1,0,-1],df_kind="default",maxLevel=0):
+
+  import netCDF4
+
+  nHydro = 4
+  """
+  Q          specific humidity                   kg/kg
+  LWC    specific liquid water content    kg/kg
+  IWC    specific ice water content        kg/kg
+  RWC    specific rain water content      kg/kg
+  SWC     specific snow water content   kg/kg
+  T            temperature                           K    -
+  U            u wind component                m/s
+  V            v wind component                m/s
+  PS          surface pressure                 Pa
+  SLP        mean sea level pressure      Pa
+  P            pressure                              Pa
+  SKT        skin temperature                  K
+  u_wind_10m  10 meter wind u component  m/s
+  v_wind_10m  10 meter wind v component  m/s
+  lsm   land-sea-mask            0-1   (0=sea, 1=land)
+  """
+
+  variables1D = ["SKT","SLP","U_10M","V_10M","lsm"]
+  variables2D = ["T","P","Q","LWC","IWC","RWC","SWC"]
+
+  if verbosity>0: print fname
+
+  dataTmp = ncToDict(fname)
+  dataC = ncToDict(constantFile,keys=['aklev','bklev','aklay','bklay'])
+  pamData = dict()
+
+  a = grid[0]  
+  b = grid[1]  
+  c = grid[2]  
+  d = grid[3]  
+
+  if df_kind == 'track':
+    shapeTmp = (data["T"].shape)
+    shape3Dplus = (shapeTmp[0], 1, shapeTmp[1])
+    shape3D = (shape3Dplus[0], shape3Dplus[1], shape3Dplus[2] - 1)
+    shape2D = shape3D[:2]
+
+    # calculate pressure on half-levels and levels with PS as level 0
+    pamData['press_lev'] = np.empty(shape3Dplus)
+    pamData['press'] = np.empty(shape3D)
+    pamData['hgt_lev'] = np.empty(shape3Dplus)
+
+    pamData['temp_lev'] = np.empty(shape3Dplus)
+    pamData['temp_lev'][:,0,:] = data['T'][:,::-1]
+
+    pamData['temp'] = np.empty(shape3D)
+    pamData['temp'] = (pamData['temp_lev'][...,1::] + pamData['temp_lev'][...,:-1]) * 0.5
+
+    pamData['press_lev'][:,0,0] = data['PS'][:]
+
+    for i in range(data['PS'].shape[0]):
+      pamData['press_lev'][i,0,1::] = data['PS'][i]*dataC['bklev']+dataC['aklev']
+      pamData['press'][i,0,:] = data['PS'][i]*dataC['bklay']+dataC['aklay']
+      pamData['hgt_lev'][i,0,:] = (((data['PS'][i]/pamData['press_lev'][i,0,:])**(1./5.257)-1.)* pamData['temp_lev'][i,0,:])/0.0065
+
+
+    pamData["hydro_q"] = np.zeros(shape3D + (nHydro,)) + np.nan
+    pamData["hydro_q"][:,0,:,0] = data["LWC"][:,::-1]
+    pamData["hydro_q"][:,0,:,1] = data["IWC"][:,::-1]
+    pamData["hydro_q"][:,0,:,2] = data["RWC"][:,::-1]
+    pamData["hydro_q"][:,0,:,3] = data["SWC"][:,::-1]
+
+    # pdb.set_trace()
+    pamData['relhum'] = np.empty(shape3D)
+    pamData["relhum"][:,0,:] = (q2rh(data["Q"][:,::-1],pamData["temp"][:,0,:],pamData["press"][:,0,:]) * 100.)#[:,-2::-1]
+
+    varPairs = [["u_wind_10m","wind10u"],["v_wind_10m","wind10v"],["SKT","groundtemp"]]
+
+    for ecmwfVar,pamVar in varPairs:
+      pamData[pamVar] = data[ecmwfVar]
+
+  elif df_kind == 'field':
+
+    data = dict()
+    data['T'] = dataTmp['T'][0,:,c:d,a:b] + 273.15 # -> K
+
+    shape3D = (data['T'].shape[2],data['T'].shape[1],data['T'].shape[0])
+    shape3Dplus = (shape3D[0],shape3D[1],shape3D[2]+1)
+    shape2D = shape3D[:2]
+
+    dataLSM = ncToDict(landseamask)
+    data['LSM'] = dataLSM['LSM'][0,0,c:d,a:b]
+
+    # bring everything to desired units
+    data['PS'] = dataTmp['PS'][0,0,c:d,a:b] * 100. # -> Pa
+
+    # calculate pressure on half-levels with SLP as level 0
+    pamData['press_lev'] = np.empty(shape3Dplus)
+    pamData['press'] = np.empty(shape3D)
+    pamData['hgt_lev'] = np.empty(shape3Dplus)
+
+    pamData['press_lev'][:,:,0] = np.swapaxes(data['PS'][...],0,1)
+
+    pamData['temp'] = np.empty(shape3D)
+    pamData['temp'] = np.swapaxes(data['T'][:,:,:],0,2)
+    pamData['temp_lev'] = np.empty(shape3Dplus)
+    pamData['temp_lev'][...,1:-1] = (pamData['temp'][...,1:] + pamData['temp'][...,0:-1])*0.5
+    pamData['temp_lev'][...,-1] = pamData['temp_lev'][...,-2]
+    pamData['temp_lev'][...,0] = np.swapaxes(dataTmp['SKT'][0,0,c:d,a:b],0,1)
+
+    for i in range(shape2D[0]):
+      for j in range(shape2D[1]):
+        pamData['press_lev'][i,j,1::] = data['PS'][j,i]*dataC['bklev']+dataC['aklev']*100.
+        pamData['press'][i,j,:] = data['PS'][j,i]*dataC['bklay']+dataC['aklay']*100.
+        # pamData['hgt_lev'][i,j,:] = (10**(np.log10(pamData['press_lev'][i,j,:]/data['PS'][0,0,j,i])/5.2558797)-1.)/-6.8755856e-6
+        pamData['hgt_lev'][i,j,:] = (((data['PS'][j,i]/pamData['press_lev'][i,j,:])**(1./5.257)-1.)* pamData['temp_lev'][i,j,:])/0.0065# (10**(np.log10(pamData['press_lev'][i,j,:]/data['PS'][0,0,j,i])/5.2558797)-1.)/-6.8755856e-6
+
+    pamData['relhum'] = np.empty(shape3D)
+    pamData["relhum"][:,:,:] = (q2rh(np.swapaxes(dataTmp["Q"][0,:,c:d,a:b],0,2),pamData["temp"][:,:,:],pamData["press"][:,:,:]) * 100.)#[:,-2::-1]
+
+    pamData["hydro_q"] = np.zeros(shape3D + (nHydro,)) + np.nan
+    pamData["hydro_q"][:,:,:,0] = np.swapaxes(dataTmp["LWC"][0,:,c:d,a:b],0,2)
+    pamData["hydro_q"][:,:,:,1] = np.swapaxes(dataTmp["IWC"][0,:,c:d,a:b],0,2)
+    pamData["hydro_q"][:,:,:,2] = np.swapaxes(dataTmp["RWC"][0,:,c:d,a:b],0,2)
+    pamData["hydro_q"][:,:,:,3] = np.swapaxes(dataTmp["SWC"][0,:,c:d,a:b],0,2)
+
+    varPairs = [["U10","wind10u"],["V10","wind10v"],["SKT","groundtemp"]]
+
+    for ecmwfVar,pamVar in varPairs:
+      pamData[pamVar] = np.swapaxes(dataTmp[ecmwfVar][0,0,c:d,a:b],0,1)
+
+
+  # surface properties
+  pamData['sfc_type'] = np.around(np.swapaxes(data['LSM'],0,1))
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][:] = 'F'
+  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'S'
+
+  pam = pyPamtra()
+  pam.set["pyVerbose"]= verbosity
+
+  if isinstance(descriptorFile, str):
+    pam.df.readFile(descriptorFile)
+  else:
+    for df in descriptorFile:
+      pam.df.addHydrometeor(df)
+
+  pam.createProfile(**pamData)
+
+  return pam
+
 def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,dimY=160,dimZ=25,subGrid=None):
 
   variables = ['ALTITUDE','CLOUD','GEO','GRAUPEL','ICE','PRESSURE','RAIN','RHO','SEAPRES',
