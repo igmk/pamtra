@@ -15,7 +15,7 @@ import sys
 
 import re
 
-from openanything import openAnything
+from pyPamtra.fortranNamelist.openanything import openAnything
 
 
 class Settings(dict):
@@ -131,4 +131,4 @@ class Settings(dict):
             return ''
 
 if __name__ == '__main__':
-    print __doc__
+    print(__doc__)

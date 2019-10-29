@@ -7,9 +7,9 @@ from pyPamtra.core import pyPamtra
 
 
 # import subpackages
-from . import meteoSI
-from . import importer
-from . import plot
-from . import fortranNamelist
-from . import tools
-from . import descriptorFile
+from pyPamtra import meteoSI
+from pyPamtra import importer
+from pyPamtra import plot
+from pyPamtra import fortranNamelist
+from pyPamtra import tools
+from pyPamtra import descriptorFile

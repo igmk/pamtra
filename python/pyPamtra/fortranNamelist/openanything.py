@@ -11,8 +11,19 @@ __date__ = '$Date: 2004/04/16 21:16:24 $'
 __copyright__ = 'Copyright (c) 2004 Mark Pilgrim'
 __license__ = 'Python'
 
-import urllib2, urlparse, gzip
-from StringIO import StringIO
+try: # (Davide) Apparently urrlib is one of the hardest libraries to port from py2 to py3, do we really need this?
+    import urllib2
+    import urlparse
+except ImportError:
+    import urllib.request as urllib2
+    import urllib.parse as urlparse
+
+import gzip
+
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO, BytesIO
 
 USER_AGENT = 'OpenAnything/%s +http://diveintopython.org/http_web_services/' % __version__
 
@@ -82,7 +93,7 @@ def openAnything(source, etag=None, lastmodified=None, agent=USER_AGENT):
         pass
 
     # treat source as string
-    return StringIO(str(source))
+    return StringIO(str(source)) # This might cause a problem in py3 if the caller expects a byte string
 
 def fetch(source, etag=None, lastmodified=None, agent=USER_AGENT):
     '''Fetch data and metadata from a URL, file, stream, or string'''
