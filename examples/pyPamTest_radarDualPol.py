@@ -40,6 +40,8 @@ for i_p in range(pam.set["radar_npol"]):
 plt.legend(loc="upper left")  
 plt.title(pam.df.data["canting"])
 
+plt.show()
+
 #print "ZDR, LDR", pam.r["zdr"], pam.r["ldr"]
 #print "Ze", pam.r["Ze"]
 

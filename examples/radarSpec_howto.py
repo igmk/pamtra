@@ -41,7 +41,7 @@ velocity = pam.fortObject.vars_output.out_debug_radarvel
 
 eta_wo_turb[eta_wo_turb<= 0.0] = 1e-8
 
-matplotlib.rcParams.update({'font.size': 18})
+matplotlib.rcParams.update({'font.size': 14})
 
 
 plt.figure()
@@ -90,4 +90,6 @@ plt.ylabel("Backscattering [dB]")
 plt.ylim(-60,0)
 plt.xlim(-7.5,7.5)
 plt.title("applying noise")
+
 plt.savefig("radar_howto_4.png")
+plt.show()

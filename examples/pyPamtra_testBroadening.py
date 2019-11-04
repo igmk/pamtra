@@ -29,7 +29,7 @@ pam.nmlSet["save_psd"] = True
 pam.p["hydro_q"][:] = 0.00001
 
 pam.runPamtra(freqs,checkData=False)
-plt.figure()
+#plt.figure()
 plt.plot(pam.r['radar_vel'].ravel(),pam.r['radar_spectra'].ravel())
 
 pam2 = pyPamtra.pyPamtra()

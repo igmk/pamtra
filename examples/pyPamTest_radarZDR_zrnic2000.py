@@ -92,6 +92,7 @@ for tt in xrange(nT):
 plt.ylim(0,10)  
 plt.ylabel("ZDR [dB]")
 
+plt.show()
 #plt.figure()
 #plt.title("LDR")
 #for tt in xrange(nT):
