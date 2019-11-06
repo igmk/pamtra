@@ -468,7 +468,7 @@ contains
     intNfreq(:) = missingInt
 
         !set namelist defaults!
-        hydro_threshold = 1.d-20   ! [kg/kg]
+        hydro_threshold = 1.d-10   ! kg/m^3
         write_nc=.true.
         data_path='$PAMTRA_DATADIR'
         save_psd=.false.

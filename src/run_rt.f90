@@ -129,7 +129,7 @@ subroutine run_rt(errorstatus)
 
   if (err == 2) then
      !	msg = 'Error in run_drop_size_dist'
-     write(msg,'(A30,I3,A1,I3)') 'error in run_drop_size_dist!', atmo_model_i(i_x,i_y),' ',atmo_model_j(i_x,i_y)
+     write(msg,'(A30,I5,A1,I5)') 'error in run_drop_size_dist!', atmo_model_i(i_x,i_y),' ',atmo_model_j(i_x,i_y)
      call report(err, msg, nameOfRoutine)
      errorstatus = err
      return

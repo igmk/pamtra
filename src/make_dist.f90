@@ -247,7 +247,6 @@ subroutine make_dist(errorstatus)
            return
         endif
      endif
-
      !Fill f_ds and d_bound_ds only at the last cycle
      if (skip) then 
         f_ds(:) = f_ds_work(:)
@@ -279,17 +278,6 @@ subroutine make_dist(errorstatus)
   !remove numerical instabilities
   n_tot = SUM(n_ds)  
   WHERE (n_ds < n_tot/nbin * 1d-60) n_ds = 0.d0
-
-  ! print*, "lambda", lambda, "mu", mu, "n_0", n_0, "gam", gam
-  ! print*, n_ds
-  ! print*,'d_ds',d_ds
-  ! print*,'d_bound_ds',d_bound_ds
-  ! print*,'delta_d_ds',delta_d_ds
-  ! print*,'f_ds',f_ds
-  ! print*,'n_ds',n_ds
-  !    do i=1,nbin+1
-  !    print*,i,f_ds(i),d_bound_ds(i)!,n_ds(i)
-  !    enddo
 
   errorstatus = success
 
