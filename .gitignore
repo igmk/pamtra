@@ -60,3 +60,4 @@ nml/
 .DS_Store
 doc/tutorials/
 tools/virtual_machine/.vagrant
+examples/scatfiles/*
