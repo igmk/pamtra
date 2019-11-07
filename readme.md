@@ -12,3 +12,4 @@ See https://pamtra.readthedocs.io/ for documentation.
 ## Mailing list
 
 If you want to join the mailing list you can find it here https://lists.uni-koeln.de/mailman/listinfo/meteo-pamtra. There you can ask any question related to the usage of PAMTRA.
+
