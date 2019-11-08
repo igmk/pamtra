@@ -61,3 +61,5 @@ nml/
 doc/tutorials/
 tools/virtual_machine/.vagrant
 examples/scatfiles/*
+examples/.ipynb_checkpoints/
+examples/data/
