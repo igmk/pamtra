@@ -122,7 +122,7 @@
         ENDDO
       ENDDO
 
-      IF (MAXSUM .GT. 1.0D-4) THEN ! 1.0D-6
+      IF (MAXSUM .GT. 1.0D-6) THEN ! 1.0D-6
           WRITE (*,*) 'Scattering function not normalized:', MAXSUM
           call report(fatal, 'Scattering function not normalized', nameOfRoutine)
           err = fatal
