@@ -66,37 +66,37 @@ and the data provided on the FTP server if they get updated.
 Dependencies on Ubuntu
 **********************
 
-On Ubuntu, install the following packages in advance in order to compile the Fortran Pamtra version::
+On fresh Ubuntu 16.04 installation, the following packages need to be installed to get PAMTRA from github repository and to compile and install PAMTRA::
 
-    sudo apt-get install gcc gfortran libnetcdff5 netcdf-bin libnetcdf-dev liblapack-dev libzip-dev git gitk libfftw3-dev libnetcdff-dev
+    sudo apt install git gfortran libnetcdf-dev libnetcdff-dev liblapack-dev libfftw3-dev python-dev python-numpy 
 
-For some packages like libnetcdff5 in Ubuntu 16.04 you might have to use the `universe` repository.
 The model is tested with gcc version 4.8.2.
-
-To get the Python version, the following packages are additionally required::
-
-    sudo apt-get install python-pandas python-numpy python-matplotlib python-scipy python-netcdf python-pip
-
-More recent Ubuntu versions have `python-netcdf4` instead of `python-netcdf`. For older versions use pip ::
-
-    sudo pip install netcdf4
-
-If the system's numpy version is to recent, use pip ::
-
-    pip install --user netcdf4
 
 Not all numpy versions work with Pamtra, 1.11.3 and 1.12.1 are confirmed to work. 1.13.3 and 1.14.3 do not work. You can check the numpy version in python ::
 
     import numpy
     print numpy.__version__
 
-  or ::
+To ensure to have the correct version installed, do::
 
     sudo pip install numpy==1.12.1
 
 if you do not have root permissions you can also use instead of the last line::
 
     pip install --user numpy==1.12.1
+
+Although not required for comppilation and installation, to use PAMTRA, some additional python packages need to be installed on your system or python environemnt.::
+
+    sudo apt install python-matplotlib python-pandas python-scipy python-netcdf
+
+More recent Ubuntu versions have `python-netcdf4` instead of `python-netcdf`. For older versions use pip ::
+
+    sudo apt install python-pip
+    sudo pip install netcdf4
+
+If the system's numpy version is to recent, use pip ::
+
+    pip install --user netcdf4
 
 .. warning::
     As of June 2018, do NOT use conda for Ubuntu because the provided libgfortran 

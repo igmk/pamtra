@@ -29,12 +29,9 @@ except KeyError:
 
         This is required to make use of all features of PAMTRA (scattering databases, surface reflection catalogues).
 
-        You can get the data by ftp
-        ftp gop.meteo.uni-koeln.de
-        user: pamdata
-        passwd: paM1Data_01
-        get pam_data.tar.bz2
-        bye
+        You can get the data from University of Cologne
+
+        https://uni-koeln.sciebo.de/s/As5fqDdPCOx4JbS
         
         Once downloaded and unpacked in a arbitrary directory you need to set the environment variables PAMTRA_DATADIR in ~/.profile or directly in your python script by
 
