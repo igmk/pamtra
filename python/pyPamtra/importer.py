@@ -9,6 +9,7 @@ import sys
 import string
 import glob
 import warnings
+import pdb
 
 try:
   import numexpr as ne
@@ -2209,16 +2210,17 @@ def readIcon2momOnFlightTrack(fname, descriptorFile, debug=False, verbosity=0):
   pamData['lat'] = vals['lat'][:]
   pamData['lon'] = vals['lon'][:]
 #  pamData['lon'] = lon
-  # pamData['wind10u'] = vals['U10M'][Nx]
-  # pamData['wind10v'] = vals['V10M'][Nx]
-  # pamData['groundtemp'] = vals['T_S'][Nx]
+  # pdb.set_trace()  
+  pamData['wind10u'] = vals['u10'][:]
+  pamData['wind10v'] = vals['v10'][:]
+  pamData['groundtemp'] = vals['TS'][:]
 #  pamData['sfc_type'] = np.around(frland*np.ones(shapeSFC))
 #  assert np.all(np.logical_or(0<=pamData['sfc_type'], pamData['sfc_type'] <=1))
 #  pamData['sfc_model'] = np.zeros(shapeSFC)
 #  pamData['sfc_refl'] = np.chararray(shapeSFC)
 #  pamData['sfc_refl'][pamData['sfc_type'] == 0] = 'F' # ocean
 #  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'L' # land
-  
+
   if isinstance(descriptorFile, str):
     pam.df.readFile(descriptorFile)
   else:
