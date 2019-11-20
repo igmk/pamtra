@@ -4,7 +4,7 @@
 Settings/Nml-File
 =================
 
-This file defines general settings of the PAMTRA run (e.g. whether active or passive simulations, just radar moments or full spectrum, paths for in- and output, etc.). The full information of available options can be found in settings.f90
+This file defines general settings of the PAMTRA run (e.g. whether active or passive simulations, just radar moments or full spectrum, paths for in- and output, etc.). The full information of available options can be found in *settings.f90* in the PAMTRA source directory
 
 ================================== ============================== ================== =============================================================================================================================================================================================================================================================================================================================================================================
 Variable                           Values                         Default            Description
@@ -20,7 +20,7 @@ sfc_refl                           S,L,F                          L             
 hydro_adaptive_grid                bool                           True
 hydro_fullspec                     bool                           False              For pyPamtra only: Do not estimate particle diameter, mass, area, number concentration, rho and aspect ratio directly from the descriptor file but pass them directly from python to Pamtra using numpy arrays. See also addFullSpectra() of pyPamtra's descriptorFile class.
 hydro_includehydroinrhoair         bool                           True               Include hydrometeors when estimating the density of wet air. Different models use different conventions here.
-hydro_limit_density_area           bool                           True               Change mass, cross section area and density of particles in case it is larger or smaller than possible. Min density is hydro_softsphere_min_density, max density is 917 kg/m3. max area is D**2
+hydro_limit_density_area           bool                           True               Change mass, cross section area and density of particles in case it is larger or smaller than possible. Min density is hydro_softsphere_min_density, max density is 917 kg/m\ :sup:`3`. max area is D\ :sup:`2`
 hydro_softsphere_min_density       positive float                 10.0               If hydro_limit_density_area=True, limit minimal density to this value.
 hydro_threshold                    positive float                 1e-10              minimum required hydrometeor concentration kg/m^3.
 lgas_extinction                    bool                           True               gas extinction desired
