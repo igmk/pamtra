@@ -6,7 +6,6 @@ Settings/Nml-File
 
 
 This file defines general settings of the PAMTRA run (e.g., whether active or passive simulations, just radar moments or full spectrum, paths for in- and output, etc.). These settings are stored in a dictionary *nmlSet* of the pyPamtra object. In addition, some low level settings, like verbosity of FORTRAN and python, are stored in the *set* dictionary. The full information of available options can be found in *settings.f90* in the PAMTRA source directory.
-=======
 
 nmlSet() settings
 *****************
