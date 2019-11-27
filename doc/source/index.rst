@@ -20,7 +20,7 @@ Contents:
    descriptorFile
    inputFile
    settings
-   pamtra
+   PAMTRA
    pyPamtra
 
 
