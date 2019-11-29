@@ -1,6 +1,6 @@
 ..  _pamtra:
 
-pamtra
+PAMTRA
 ======
 
 .. toctree::
