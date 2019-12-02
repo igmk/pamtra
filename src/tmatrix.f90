@@ -363,11 +363,6 @@ module tmatrix
         back_spec(i_p,ir) = 4*pi*ndens_eff*Sback_part(1,1)
       else if (radar_pol(i_p) == "HH") then
         !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
-        ! back_spec(i_p,ir) = 2*pi*ndens_eff* &
-        !                   + scatter_matrix_part(1,16,1,16,2) &
-        !                   - scatter_matrix_part(1,16,2,16,2) & 
-        !                   - scatter_matrix_part(2,16,1,16,2) & 
-        !                   + scatter_matrix_part(2,16,2,16,2)
         back_spec(i_p,ir) = 2*pi*ndens_eff*( &
                           + Sback_part(1,1) &
                           - Sback_part(1,2) & 
@@ -396,7 +391,7 @@ module tmatrix
       end if
       ! print*,'Sback_part ',Sback_part(1,1), Sback_part(1,2), Sback_part(2,1), Sback_part(2,2)
       ! print*, radar_pol(i_p), back_spec(i_p,ir)
-    end do 
+    end do ! radar_npol cycle
     scatter_matrix = scatter_matrix + scatter_matrix_part * ndens_eff * del_d_eff
     extinct_matrix = extinct_matrix + extinct_matrix_part * ndens_eff * del_d_eff
     emis_vector = emis_vector + emis_vector_part * ndens_eff * del_d_eff
