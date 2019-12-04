@@ -247,7 +247,7 @@ module vars_atmosphere
 
     sfc_type(:,:) = -9999
     sfc_model(:,:) = -9999
-    sfc_refl(:,:) = "L"
+    sfc_refl(:,:) = "S"
     sfc_salinity(:,:) = nan_dbl()
     sfc_slf(:,:) = nan_dbl()
     sfc_sif(:,:) = nan_dbl()
