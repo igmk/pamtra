@@ -404,7 +404,7 @@ class pyPamtra(object):
         if self.p["sfc_type"][xx,yy] == 0:
             self.p["sfc_refl"][xx,yy] = 'F'
         else:
-            self.p["sfc_refl"][xx,yy] = 'L'
+            self.p["sfc_refl"][xx,yy] = 'S'
 
         self.p["iwv"][xx,yy] = np.array(np.array(g.next()[0]),dtype=float)
 
