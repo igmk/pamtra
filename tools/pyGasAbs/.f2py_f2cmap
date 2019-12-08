@@ -1,0 +1,3 @@
+#This file maps fortran kinds to C/python types, see http://cens.ioc.ee/projects/f2py2e/FAQ.html#q-what-if-fortran-90-code-uses-type-spec-kind-kind
+dict(real = dict(dbl="double",sql="float"),integer = dict(long="int",long_bn="int"))
+
