@@ -1,0 +1,108 @@
+!    -*- f90 -*-
+! Note: the context of this file is case sensitive.
+
+python module rosen98_gasabs ! in 
+    interface  ! in :rosen98_gasabs
+        subroutine rosen98_gasabs(errorstatus,freq,tempk,rhowv,pres,absair,abswv) ! in :rosen98_gasabs:../../src/rosen98_gasabs.f90
+            use kinds, only: dbl,long
+            use gasabs_module
+            use report_module
+            integer(kind=long_bn) intent(out) :: errorstatus
+            real(kind=dbl) intent(in) :: freq
+            real(kind=dbl) intent(in) :: tempk
+            real(kind=dbl) intent(in) :: rhowv
+            real(kind=dbl) intent(in) :: pres
+            real(kind=dbl) intent(out) :: absair
+            real(kind=dbl) intent(out) :: abswv
+        end subroutine rosen98_gasabs
+        module kinds ! in :rosen98_gasabs:../../src/kinds.f90
+            integer, parameter,optional :: short_bn=selected_int_kind(3)
+            integer, parameter,optional :: long_bn=selected_int_kind(9)
+            integer, parameter,optional :: sgl=selected_real_kind(6,37)
+            integer, parameter,optional :: dbl=selected_real_kind(13,200)
+            integer, parameter,optional :: ext=selected_real_kind(25)
+        end module kinds
+        module constants ! in :rosen98_gasabs:../../src/constants.f90
+            use kinds, only: dbl
+            real(kind=8), parameter,optional :: c=299792458
+            real(kind=8), parameter,optional :: pi=3.141592653589793_dbl
+            real(kind=8), parameter,optional :: t_abs=273.15_dbl
+            real(kind=8), parameter,optional :: g=9.80665_dbl
+            real(kind=8), parameter,optional :: sky_temp=2.73_dbl
+            real(kind=8), parameter,optional :: rho_water=1000
+            real(kind=8), parameter,optional :: rho_ice=917._dbl
+            real(kind=8), parameter,optional :: tpt=273.16_dbl
+            real(kind=8), parameter,optional :: estpt=611.14_dbl
+            real(kind=8), parameter,optional :: mmd=28.9644d-3
+            real(kind=8), parameter,optional :: mmv=18.0153d-3
+            real(kind=8), parameter,optional :: k_b=1.380658d-23
+            real(kind=8), parameter,optional :: n_a=6.0221367d+23
+            real(kind=8), parameter,optional :: r_d=287.0596736665907_dbl
+            real(kind=8), parameter,optional :: r_v=461.5249933083879_dbl
+            real(kind=8), parameter,optional :: vapor_hc=2.5008d+6
+            real(kind=8), parameter,optional :: sublim_hc=2.8345d+6
+            real(kind=8), public,parameter,optional,depend(pi) :: mu0=pi*4.0e-07_dbl
+            real(kind=8), public,parameter,optional,depend(c,mu0,pi) :: eps0=1._dbl/(mu0*c**2)
+            real(kind=8), parameter,optional :: delta_d_mono=1.d-8
+            real(kind=8), parameter,optional,depend(pi) :: deg2rad=pi/180.0_dbl
+            real(kind=8), parameter,optional,depend(pi) :: rad2deg=180.0_dbl/pi
+            complex(kind=8), parameter,optional :: im=(0.0_dbl, 1.0_dbl)
+            real(kind=8), parameter,optional :: almostzero=1d-20
+        end module constants
+        module gasabs_module ! in :rosen98_gasabs:../../src/gasabs_module.f90
+            function absn2(tempk,pres,freq) ! in :rosen98_gasabs:../../src/gasabs_module.f90:gasabs_module
+                use kinds, only: dbl
+                real(kind=8) intent(in) :: tempk
+                real(kind=8) intent(in) :: pres
+                real(kind=8) intent(in) :: freq
+                real(kind=8) :: absn2
+            end function absn2
+            function o2abs(tempk,pres,vapden,freq) ! in :rosen98_gasabs:../../src/gasabs_module.f90:gasabs_module
+                use kinds, only: dbl,long
+                use constants, only: pi
+                real(kind=8) intent(in) :: tempk
+                real(kind=8) intent(in) :: pres
+                real(kind=8) intent(in) :: vapden
+                real(kind=8) intent(in) :: freq
+                real(kind=8) :: o2abs
+            end function o2abs
+            function abh2o(tempk,pres,rho,freq) ! in :rosen98_gasabs:../../src/gasabs_module.f90:gasabs_module
+                use kinds, only: dbl,long
+                real(kind=8) intent(in) :: tempk
+                real(kind=8) intent(in) :: pres
+                real(kind=8) intent(in) :: rho
+                real(kind=8) intent(in) :: freq
+                real(kind=8) :: abh2o
+            end function abh2o
+        end module gasabs_module
+        module report_module ! in :rosen98_gasabs:../../src/report_module.f90
+            use kinds
+            use vars_index, only: i_x,i_y,i_z,i_f,i_h
+            integer(kind=4), optional :: verbose=0
+            integer(kind=4), parameter,optional :: nstatus=3
+            integer(kind=4), parameter,optional :: success=0
+            integer(kind=4), parameter,optional :: warning=1
+            integer(kind=4), parameter,optional :: fatal=2
+            integer(kind=4), parameter,optional :: info=3
+            character(len=7), parameter,optional,dimension(4),depend(success,warning,fatal,info) :: status_text=(/'success','warning','fatal','info'/)
+            subroutine report(status,message,nameofroutine) ! in :rosen98_gasabs:../../src/report_module.f90:report_module
+                integer(kind=4) intent(in) :: status
+                character*(*) intent(in) :: message
+                character*(*) intent(in) :: nameofroutine
+            end subroutine report
+            subroutine assert_true(error,logic,message) ! in :rosen98_gasabs:../../src/report_module.f90:report_module
+                integer intent(inout) :: error
+                logical intent(in) :: logic
+                character*(*) intent(in) :: message
+            end subroutine assert_true
+            subroutine assert_false(error,logic,message) ! in :rosen98_gasabs:../../src/report_module.f90:report_module
+                integer intent(inout) :: error
+                logical intent(in) :: logic
+                character*(*) intent(in) :: message
+            end subroutine assert_false
+        end module report_module
+    end interface 
+end python module rosen98_gasabs
+
+! This file was auto-generated with f2py (version:2).
+! See http://cens.ioc.ee/projects/f2py2e/
