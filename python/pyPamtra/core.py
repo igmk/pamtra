@@ -112,7 +112,7 @@ class pyPamtra(object):
     self.nmlSet["radar_pnoise0"]= -32.23 # mean value for BArrow MMCR during ISDAC
     self.nmlSet['radar_allow_negative_dD_dU'] = False #allow that particle velocity is decreasing with size
     self.nmlSet["radar_airmotion"]=  False
-    self.nmlSet["radar_airmotion_model"]=  "step" #: "constant","linear","step"
+    self.nmlSet["radar_airmotion_model"]=  "constant" #: "constant","linear","step"
     self.nmlSet["radar_airmotion_vmin"]=  -4.e0
     self.nmlSet["radar_airmotion_vmax"]=  +4.e0
     self.nmlSet["radar_airmotion_linear_steps"]=  30
