@@ -1,30 +1,24 @@
 !    -*- f90 -*-
 ! Note: the context of this file is case sensitive.
 
-python module refWater ! in 
-    interface  ! in :refWater
-        subroutine ref_water(errorstatus,s,t,f,refre,refim,absind,abscoef) ! in :refWater:../../src/ref_water.f90
-            use report_module
-            use eps_water, only: get_eps_water
+python module refIce ! in 
+    interface  ! in :refIce
+        subroutine ref_ice(t,f,refre,refim) ! in :refIce:../../src/ref_ice.f90
             use kinds
             use constants, only: c,pi
-            integer(kind=long_bn) intent(out) :: errorstatus
-            real(kind=dbl) intent(in) :: s
             real(kind=dbl) intent(in) :: t
             real(kind=dbl) intent(in) :: f
             real(kind=dbl) intent(out) :: refre
             real(kind=dbl) intent(out) :: refim
-            real(kind=dbl) intent(out) :: absind
-            real(kind=dbl) intent(out) :: abscoef
-        end subroutine ref_water
-        module kinds ! in :refWater:../../src/kinds.f90
+        end subroutine ref_ice
+        module kinds ! in :refIce:../../src/kinds.f90
             integer, parameter,optional :: short_bn=selected_int_kind(3)
             integer, parameter,optional :: long_bn=selected_int_kind(9)
             integer, parameter,optional :: dbl=selected_real_kind(13,200)
             integer, parameter,optional :: ext=selected_real_kind(25)
             integer, parameter,optional :: sgl=selected_real_kind(6,37)
         end module kinds
-        module settings ! in :refWater:../../src/settings.f90
+        module settings ! in :refIce:../../src/settings.f90
             use report_module
             use kinds
             real(kind=8) dimension(16) :: mu_values
@@ -141,32 +135,32 @@ python module refWater ! in
             logical :: hydro_fullspec
             real(kind=8) :: emissivity
             real(kind=8) dimension(200) :: radar_integration_time
-            subroutine settings_read(errorstatus) ! in :refWater:../../src/settings.f90:settings
+            subroutine settings_read(errorstatus) ! in :refIce:../../src/settings.f90:settings
                 use kinds
                 integer(kind=4) intent(out) :: errorstatus
             end subroutine settings_read
-            subroutine test_settings(errorstatus) ! in :refWater:../../src/settings.f90:settings
+            subroutine test_settings(errorstatus) ! in :refIce:../../src/settings.f90:settings
                 use kinds
                 integer(kind=4) intent(out) :: errorstatus
             end subroutine test_settings
-            subroutine fillrealvalues(setarray,default_bn) ! in :refWater:../../src/settings.f90:settings
+            subroutine fillrealvalues(setarray,default_bn) ! in :refIce:../../src/settings.f90:settings
                 use kinds
                 real(kind=8) dimension(*),intent(inout) :: setarray
                 real(kind=8) intent(in) :: default_bn
             end subroutine fillrealvalues
-            subroutine add_settings(errorstatus) ! in :refWater:../../src/settings.f90:settings
+            subroutine add_settings(errorstatus) ! in :refIce:../../src/settings.f90:settings
                 use rt_utilities, only: lobatto_quadrature,gauss_legendre_quadrature,double_gauss_quadrature
                 use kinds
                 integer(kind=4) intent(out) :: errorstatus
             end subroutine add_settings
-            subroutine settings_fill_default ! in :refWater:../../src/settings.f90:settings
+            subroutine settings_fill_default ! in :refIce:../../src/settings.f90:settings
                 use nan, only: nan_dbl
                 use kinds
             end subroutine settings_fill_default
-            subroutine print_settings ! in :refWater:../../src/settings.f90:settings
+            subroutine print_settings ! in :refIce:../../src/settings.f90:settings
             end subroutine print_settings
         end module settings
-        module report_module ! in :refWater:../../src/report_module.f90
+        module report_module ! in :refIce:../../src/report_module.f90
             use vars_index, only: i_f,i_h,i_z,i_y,i_x
             use kinds
             integer(kind=4), parameter,optional :: info=3
@@ -176,71 +170,29 @@ python module refWater ! in
             integer(kind=4), parameter,optional :: success=0
             character(len=7), parameter,optional,dimension(4),depend(info,fatal,success,warning) :: status_text=(/'success','warning','fatal','info'/)
             integer(kind=4), parameter,optional :: warning=1
-            subroutine report(status,message,nameofroutine) ! in :refWater:../../src/report_module.f90:report_module
+            subroutine report(status,message,nameofroutine) ! in :refIce:../../src/report_module.f90:report_module
                 integer(kind=4) intent(in) :: status
                 character*(*) intent(in) :: message
                 character*(*) intent(in) :: nameofroutine
             end subroutine report
-            subroutine assert_true(error,logic,message) ! in :refWater:../../src/report_module.f90:report_module
+            subroutine assert_true(error,logic,message) ! in :refIce:../../src/report_module.f90:report_module
                 integer intent(inout) :: error
                 logical intent(in) :: logic
                 character*(*) intent(in) :: message
             end subroutine assert_true
-            subroutine assert_false(error,logic,message) ! in :refWater:../../src/report_module.f90:report_module
+            subroutine assert_false(error,logic,message) ! in :refIce:../../src/report_module.f90:report_module
                 integer intent(inout) :: error
                 logical intent(in) :: logic
                 character*(*) intent(in) :: message
             end subroutine assert_false
         end module report_module
-        module eps_water ! in :refWater:../../src/eps_water.f90
-            use kinds
-            subroutine get_eps_water(errorstatus,s,t,f,eps_water) ! in :refWater:../../src/eps_water.f90:eps_water
-                use report_module
-                use kinds
-                use settings, only: liq_mod
-                integer(kind=4) intent(out) :: errorstatus
-                real(kind=8) intent(in) :: s
-                real(kind=8) intent(in) :: t
-                real(kind=8) intent(in) :: f
-                complex(kind=8) intent(out) :: eps_water
-            end subroutine get_eps_water
-            subroutine eps_water_ellison(s,t,f,eps) ! in :refWater:../../src/eps_water.f90:eps_water
-                use kinds
-                real(kind=8) intent(in) :: s
-                real(kind=8) intent(in) :: t
-                real(kind=8) intent(in) :: f
-                complex(kind=8) intent(out) :: eps
-            end subroutine eps_water_ellison
-            subroutine eps_water_liebe(s,t,f,eps) ! in :refWater:../../src/eps_water.f90:eps_water
-                use kinds
-                real(kind=8) intent(in) :: s
-                real(kind=8) intent(in) :: t
-                real(kind=8) intent(in) :: f
-                complex(kind=8) intent(out) :: eps
-            end subroutine eps_water_liebe
-            subroutine eps_water_ray(s,t,f,eps) ! in :refWater:../../src/eps_water.f90:eps_water
-                use kinds
-                real(kind=8) intent(in) :: s
-                real(kind=8) intent(in) :: t
-                real(kind=8) intent(in) :: f
-                complex(kind=8) intent(out) :: eps
-            end subroutine eps_water_ray
-            subroutine eps_water_stogryn(s,t,f,eps) ! in :refWater:../../src/eps_water.f90:eps_water
-                use kinds
-                real(kind=8) intent(in) :: s
-                real(kind=8) intent(in) :: t
-                real(kind=8) intent(in) :: f
-                complex(kind=8) intent(out) :: eps
-            end subroutine eps_water_stogryn
-            subroutine eps_water_tkc(t,f,eps) ! in :refWater:../../src/eps_water.f90:eps_water
-                use kinds
-                use constants, only: c,pi
-                real(kind=8) intent(in) :: t
-                real(kind=8) intent(in) :: f
-                complex(kind=8) intent(out) :: eps
-            end subroutine eps_water_tkc
-        end module eps_water
-        module constants ! in :refWater:../../src/constants.f90
+        function eps_ice(t,f) ! in :refIce:../../src/eps_ice.f90
+            use kinds, only: dbl
+            real(kind=8) intent(in) :: t
+            real(kind=8) intent(in) :: f
+            complex(kind=8) :: eps_ice
+        end function eps_ice
+        module constants ! in :refIce:../../src/constants.f90
             use kinds, only: dbl
             real(kind=8), parameter,optional :: estpt=611.14_dbl
             real(kind=8), parameter,optional :: almostzero=1d-20
@@ -267,47 +219,47 @@ python module refWater ! in
             real(kind=8), parameter,optional :: r_d=287.0596736665907_dbl
             real(kind=8), parameter,optional :: vapor_hc=2.5008d+6
         end module constants
-        module nan ! in :refWater:../../src/nan.f90
-            function nan_dbl() ! in :refWater:../../src/nan.f90:nan
+        module nan ! in :refIce:../../src/nan.f90
+            function nan_dbl() ! in :refIce:../../src/nan.f90:nan
                 use kinds, only: dbl
                 real(kind=8) :: nan_dbl
             end function nan_dbl
         end module nan
-        module rt_utilities ! in :refWater:../../src/rt_utilities.f90
+        module rt_utilities ! in :refIce:../../src/rt_utilities.f90
             use kinds, only: dbl,long
-            subroutine planck_function(temp,units,wavelength,planck) ! in :refWater:../../src/rt_utilities.f90:rt_utilities
+            subroutine planck_function(temp,units,wavelength,planck) ! in :refIce:../../src/rt_utilities.f90:rt_utilities
                 use kinds
                 real(kind=8) :: temp
                 character*1 :: units
                 real(kind=8) :: wavelength
                 real(kind=8) :: planck
             end subroutine planck_function
-            subroutine gauss_legendre_quadrature(num,abscissas,weights) ! in :refWater:../../src/rt_utilities.f90:rt_utilities
+            subroutine gauss_legendre_quadrature(num,abscissas,weights) ! in :refIce:../../src/rt_utilities.f90:rt_utilities
                 use kinds
                 integer :: num
                 real(kind=8) dimension(1) :: abscissas
                 real(kind=8) dimension(1) :: weights
             end subroutine gauss_legendre_quadrature
-            subroutine double_gauss_quadrature(num,abscissas,weights) ! in :refWater:../../src/rt_utilities.f90:rt_utilities
+            subroutine double_gauss_quadrature(num,abscissas,weights) ! in :refIce:../../src/rt_utilities.f90:rt_utilities
                 use kinds
                 integer :: num
                 real(kind=8) dimension(*) :: abscissas
                 real(kind=8) dimension(*) :: weights
             end subroutine double_gauss_quadrature
-            subroutine lobatto_quadrature(num,abscissas,weights) ! in :refWater:../../src/rt_utilities.f90:rt_utilities
+            subroutine lobatto_quadrature(num,abscissas,weights) ! in :refIce:../../src/rt_utilities.f90:rt_utilities
                 use kinds
                 integer :: num
                 real(kind=8) dimension(*) :: abscissas
                 real(kind=8) dimension(*) :: weights
             end subroutine lobatto_quadrature
-            subroutine number_sums(nstokes,nlegen,coef,dosum) ! in :refWater:../../src/rt_utilities.f90:rt_utilities
+            subroutine number_sums(nstokes,nlegen,coef,dosum) ! in :refIce:../../src/rt_utilities.f90:rt_utilities
                 use kinds
                 integer :: nstokes
                 integer :: nlegen
                 real(kind=8) dimension(6,*) :: coef
                 integer dimension(6) :: dosum
             end subroutine number_sums
-            subroutine sum_legendre(nlegen,coef,x,dosum,phase_matrix) ! in :refWater:../../src/rt_utilities.f90:rt_utilities
+            subroutine sum_legendre(nlegen,coef,x,dosum,phase_matrix) ! in :refIce:../../src/rt_utilities.f90:rt_utilities
                 use kinds
                 integer :: nlegen
                 real(kind=8) dimension(6,*) :: coef
@@ -315,7 +267,7 @@ python module refWater ! in
                 integer dimension(6) :: dosum
                 real(kind=8) dimension(4,4) :: phase_matrix
             end subroutine sum_legendre
-            subroutine rotate_phase_matrix(phase_matrix1,mu1,mu2,delphi,cos_scat,phase_matrix2,nstokes) ! in :refWater:../../src/rt_utilities.f90:rt_utilities
+            subroutine rotate_phase_matrix(phase_matrix1,mu1,mu2,delphi,cos_scat,phase_matrix2,nstokes) ! in :refIce:../../src/rt_utilities.f90:rt_utilities
                 use kinds
                 real(kind=8) dimension(4,4) :: phase_matrix1
                 real(kind=8) :: mu1
@@ -325,13 +277,13 @@ python module refWater ! in
                 real(kind=8) dimension(4,4) :: phase_matrix2
                 integer :: nstokes
             end subroutine rotate_phase_matrix
-            subroutine matrix_symmetry(nstokes,matrix1,matrix2) ! in :refWater:../../src/rt_utilities.f90:rt_utilities
+            subroutine matrix_symmetry(nstokes,matrix1,matrix2) ! in :refIce:../../src/rt_utilities.f90:rt_utilities
                 use kinds
                 integer :: nstokes
                 real(kind=8) dimension(4,4) :: matrix1
                 real(kind=8) dimension(4,4) :: matrix2
             end subroutine matrix_symmetry
-            subroutine fourier_matrix(aziorder,numpts,nstokes,real_matrix,basis_matrix) ! in :refWater:../../src/rt_utilities.f90:rt_utilities
+            subroutine fourier_matrix(aziorder,numpts,nstokes,real_matrix,basis_matrix) ! in :refIce:../../src/rt_utilities.f90:rt_utilities
                 use kinds
                 integer :: aziorder
                 integer :: numpts
@@ -339,7 +291,7 @@ python module refWater ! in
                 real(kind=8) dimension(4,4,*) :: real_matrix
                 real(kind=8) dimension(4,4,*) :: basis_matrix
             end subroutine fourier_matrix
-            subroutine fourier_basis(numbasis,order,numpts,direction,basis_vector,real_vector) ! in :refWater:../../src/rt_utilities.f90:rt_utilities
+            subroutine fourier_basis(numbasis,order,numpts,direction,basis_vector,real_vector) ! in :refIce:../../src/rt_utilities.f90:rt_utilities
                 use kinds
                 integer :: numbasis
                 integer :: order
@@ -348,24 +300,24 @@ python module refWater ! in
                 real(kind=8) dimension(*) :: basis_vector
                 real(kind=8) dimension(*) :: real_vector
             end subroutine fourier_basis
-            subroutine fft1dr(data,n,isign) ! in :refWater:../../src/rt_utilities.f90:rt_utilities
+            subroutine fft1dr(data,n,isign) ! in :refIce:../../src/rt_utilities.f90:rt_utilities
                 use kinds
                 real(kind=8) dimension(*) :: data
                 integer :: n
                 integer :: isign
             end subroutine fft1dr
-            subroutine fftc(data,n,phase) ! in :refWater:../../src/rt_utilities.f90:rt_utilities
+            subroutine fftc(data,n,phase) ! in :refIce:../../src/rt_utilities.f90:rt_utilities
                 use kinds
                 real(kind=8) dimension(*) :: data
                 integer :: n
                 real(kind=8) dimension(*) :: phase
             end subroutine fftc
-            subroutine makephase(phase,nmax) ! in :refWater:../../src/rt_utilities.f90:rt_utilities
+            subroutine makephase(phase,nmax) ! in :refIce:../../src/rt_utilities.f90:rt_utilities
                 use kinds
                 real(kind=8) dimension(*) :: phase
                 integer :: nmax
             end subroutine makephase
-            subroutine fixreal(data,nyquist,n,isign,phase) ! in :refWater:../../src/rt_utilities.f90:rt_utilities
+            subroutine fixreal(data,nyquist,n,isign,phase) ! in :refIce:../../src/rt_utilities.f90:rt_utilities
                 use kinds
                 real(kind=8) dimension(*) :: data
                 real(kind=8) dimension(2) :: nyquist
@@ -373,7 +325,7 @@ python module refWater ! in
                 integer :: isign
                 real(kind=8) dimension(*) :: phase
             end subroutine fixreal
-            subroutine convert_output(units,outpol,nstokes,nout,wavelen,fluxcode,output) ! in :refWater:../../src/rt_utilities.f90:rt_utilities
+            subroutine convert_output(units,outpol,nstokes,nout,wavelen,fluxcode,output) ! in :refIce:../../src/rt_utilities.f90:rt_utilities
                 use kinds
                 character*1 :: units
                 character*2 :: outpol
@@ -385,7 +337,7 @@ python module refWater ! in
             end subroutine convert_output
         end module rt_utilities
     end interface 
-end python module refWater
+end python module refIce
 
 ! This file was auto-generated with f2py (version:2).
 ! See http://cens.ioc.ee/projects/f2py2e/

@@ -87,7 +87,7 @@ module settings
        lhyd_scattering, &    ! hydrometeor scattering desired
        lhyd_emission, &    ! hydrometeor emission desired
        write_nc, &  ! write netcdf or ascii output
-       active, &  	   ! calculate active stuff
+       active, &    ! calculate active stuff
        passive, &     ! calculate passive stuff (with RT4)
        read_turbulence_ascii, & ! if .true. turbulence need to be included in the ascii input_file, rightmost column. Not relevant for PyPamtra and for passive simulations.
        radar_airmotion, &   ! apply vertical air motion
@@ -545,7 +545,7 @@ contains
         radar_use_wider_peak = .false.
 
         radar_airmotion = .false.
-        radar_airmotion_model = "step" !"constant","linear","step"
+        radar_airmotion_model = "constant" !"constant","linear","step"
         radar_airmotion_vmin = -4.d0
         radar_airmotion_vmax = +4.d0
         radar_airmotion_linear_steps = 30

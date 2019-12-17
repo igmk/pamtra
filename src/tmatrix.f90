@@ -181,6 +181,8 @@ module tmatrix
         axi = 0.5_dbl*dmax(ir)/as_ratio(ir)**(2.0_dbl/3.0_dbl) 
       end if
 
+      ! calc tmatrix for a single orientation of the scatterer, but average over a number of
+      ! scattering azimuths
       if (tmatrix_db == "none") then
         call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
                                  as_ratio(ir), alpha, beta, azimuth_num, azimuth0_num,&
@@ -496,13 +498,13 @@ module tmatrix
       integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0
       character(len=80) :: msg
-      character(len=30) :: nameOfRoutine = 'tmatrix_clac_single'
+      character(len=30) :: nameOfRoutine = 'tmatrix_calc_single'
 
 	  if (verbose >= 3) call report(info,'Start of ', nameOfRoutine) 
     if (verbose >= 5) print*, "quad,qua_num,frequency,ref_index,axi, nstokes,as_ratio, alpha, beta, azimuth_num, azimuth0_num"
     if (verbose >= 5) print*, quad,qua_num,frequency,ref_index,axi, nstokes,as_ratio, alpha, beta, azimuth_num, azimuth0_num
-    np = -1
-    rat = 1.e0
+    np = -1    ! tmatrix parameter -1 means spheroids
+    rat = 1.e0 ! tmatrix parameter 1 means equal-volume-sphere radius used
       
     LAM = c/(frequency)
 
@@ -528,7 +530,7 @@ module tmatrix
     mri = abs(IMAG(ref_index))
     !print*,mrr,' +j ',mri
     if ((active .eqv. .true.) .and. (passive .eqv. .false.)) then
-      qua_start = 16
+      qua_start = 16 ! avoid all angles computations if only backscattering is needed? but than how to calculate extinction?
     else
       qua_start = 1
     end if
@@ -567,100 +569,98 @@ module tmatrix
       return
     end if
 
-      ! for each quadrature angle
-      ii = 1
-      do 1241 jj = qua_start, qua_num
-	  thet0=acos(qua_angle(jj)*(-1.)**(real(ii)-1))*180.d0/pi
-	  thet0_weights = qua_weights(jj)
-	  if(thet0.gt.179.9999)thet0=180.0d0
-	  ! initializing the emis vector summation
-	  emis_vector_tmp1_11 = 0.d0
-	  emis_vector_tmp1_12 = 0.d0
+    ! for each quadrature angle
+    ii = 1
+    do 1241 jj = qua_start, qua_num
+      thet0=acos(qua_angle(jj)*(-1.)**(real(ii)-1))*180.d0/pi
+      thet0_weights = qua_weights(jj)
+	    if(thet0.gt.179.9999)thet0=180.0d0
+      ! initializing the emis vector summation
+      emis_vector_tmp1_11 = 0.d0
+      emis_vector_tmp1_12 = 0.d0
 
-	  do 1242 kk = 1, 2
-	      kkk1 = kk
+	    do 1242 kk = 1, 2
+        kkk1 = kk
 	      do 1243 ll = qua_start, qua_num
-		  thet=acos(qua_angle(ll)*(-1.)**(real(kk)-1))*180.d0/pi
-		  thet_weights=qua_weights(ll)
-		  if(thet.gt.179.9999)thet=180.d0
+          thet=acos(qua_angle(ll)*(-1.)**(real(kk)-1))*180.d0/pi
+          thet_weights=qua_weights(ll)
+		      if(thet.gt.179.9999)thet=180.d0
 
-		  do 1244 m = 1, azimuth0_num ! 1
-		      phi0 = 360.0d0/(real(azimuth0_num))*(real(m)-1.d0)
-		      phi0_weights = 1.d0/360.d0*(360.d0/azimuth0_num)
-		      !		     if(azimuth0_num.eq.1)phi0 = 0.0
+		      do 1244 m = 1, azimuth0_num ! 1
+            phi0 = 360.0d0/(real(azimuth0_num))*(real(m)-1.d0)
+            phi0_weights = 1.d0/360.d0*(360.d0/azimuth0_num)
+            !		     if(azimuth0_num.eq.1)phi0 = 0.0
+            scatt_matrix_tmp1_11 = 0.d0
+            scatt_matrix_tmp1_12 = 0.d0
 
-		      scatt_matrix_tmp1_11 = 0.d0
-		      scatt_matrix_tmp1_12 = 0.d0
+            scatt_matrix_tmp1_21 = 0.d0
+            scatt_matrix_tmp1_22 = 0.d0
 
-		      scatt_matrix_tmp1_21 = 0.d0
-		      scatt_matrix_tmp1_22 = 0.d0
+		        do 1245 n = 1, azimuth_num ! 30
+              phi = 360.d0/real(azimuth_num)*(real(n)-1.d0)
+              phi_weights = 1.d0/360.d0*(360.d0/azimuth_num)
 
-		      do 1245 n = 1, azimuth_num ! 30
-			  phi = 360.d0/real(azimuth_num)*(real(n)-1.d0)
-			  phi_weights = 1.d0/360.d0*(360.d0/azimuth_num)
+              CALL tmatrix_AMPL(NMAX,dble(LAM),THET0,THET,PHI0,PHI,ALPHA,BETA,&
+                                S11,S12,S21,S22)
 
-		  CALL tmatrix_AMPL(NMAX,dble(LAM),THET0,THET,PHI0,PHI,ALPHA,BETA,&
-		    S11,S12,S21,S22)
+              s11 = s11*wave_num
+              s12 = s12*wave_num
+              s21 = s21*wave_num
+              s22 = s22*wave_num
+              ! print*,s11,'S tmm ',s22, s12, s21
+              ! print*,'Z0 tmm ', scatt_matrix_tmp1_11, scatt_matrix_tmp1_22, scatt_matrix_tmp1_12, scatt_matrix_tmp1_21
+              ! print*, "angles ",THET0,THET,PHI0,PHI,alpha,beta
+              if ((thet .eq. 180.0d0) .and. (phi .eq. phi0)) then ! this condition for backscattering is ok as long as the tmatrix routin sample that point
+                Sback(1,1) = s11*dconjg(s11)+s12*dconjg(s12)+s21*dconjg(s21)+s22*dconjg(s22)
+                Sback(1,2) = s11*dconjg(s11)-s12*dconjg(s12)+s21*dconjg(s21)-s22*dconjg(s22)
+                Sback(2,1) = s11*dconjg(s11)+s12*dconjg(s12)-s21*dconjg(s21)-s22*dconjg(s22)
+                Sback(2,2) = s11*dconjg(s11)-s12*dconjg(s12)-s21*dconjg(s21)+s22*dconjg(s22)
+                Sback = fact_sca*Sback
+                ! print*,"backscattering ", Sback, fact_sca, phi_weights
+              end if
+              scatt_matrix_tmp1_11 = scatt_matrix_tmp1_11 + (fact_sca*&
+                  (s11*dconjg(s11)+s12*dconjg(s12)+s21*dconjg(s21)+s22*dconjg(s22)))*phi_weights
+            
+              scatt_matrix_tmp1_12 = scatt_matrix_tmp1_12 + (fact_sca*&
+                  (s11*dconjg(s11)-s12*dconjg(s12)+s21*dconjg(s21)-s22*dconjg(s22)))*phi_weights
+            
+              scatt_matrix_tmp1_21 = scatt_matrix_tmp1_21 + (fact_sca*&
+                  (s11*dconjg(s11)+s12*dconjg(s12)-s21*dconjg(s21)-s22*dconjg(s22)))*phi_weights
+            
+              scatt_matrix_tmp1_22 = scatt_matrix_tmp1_22 + (fact_sca*&
+                  (s11*dconjg(s11)-s12*dconjg(s12)-s21*dconjg(s21)+s22*dconjg(s22)))*phi_weights
+                    !print*,'Z1 tmm ',scatt_matrix_tmp1_11,scatt_matrix_tmp1_22, scatt_matrix_tmp1_12, scatt_matrix_tmp1_21
+            	if ((phi0 .eq. phi) .and. (thet0 .eq. thet)) then ! forward scattering
+                extinct_matrix(1,1,jj) = extinct_matrix(1,1,jj)+phi0_weights*(-real((s11 + s22)*fact_ext))
+                extinct_matrix(1,2,jj) = extinct_matrix(1,2,jj)+phi0_weights*(-real((s11 - s22)*fact_ext))
+                extinct_matrix(2,1,jj) = extinct_matrix(2,1,jj)+phi0_weights*(-real((s11 - s22)*fact_ext))
+                extinct_matrix(2,2,jj) = extinct_matrix(2,2,jj)+phi0_weights*(-real((s11 + s22)*fact_ext))
+			        end if
+            1245 continue   ! phi
 
-			  s11 = s11*wave_num
-			  s12 = s12*wave_num
-			  s21 = s21*wave_num
-			  s22 = s22*wave_num
-        ! print*,s11,'S tmm ',s22, s12, s21
-        ! print*,'Z0 tmm ', scatt_matrix_tmp1_11, scatt_matrix_tmp1_22, scatt_matrix_tmp1_12, scatt_matrix_tmp1_21
-        ! print*, "angles ",THET0,THET,PHI0,PHI,alpha,beta
-        if ((thet .eq. 180.0d0) .and. (phi .eq. phi0)) then ! this condition for backscattering is ok as long as the tmatrix routin sample that point
-          Sback(1,1) = s11*dconjg(s11)+s12*dconjg(s12)+s21*dconjg(s21)+s22*dconjg(s22)
-          Sback(1,2) = s11*dconjg(s11)-s12*dconjg(s12)+s21*dconjg(s21)-s22*dconjg(s22)
-          Sback(2,1) = s11*dconjg(s11)+s12*dconjg(s12)-s21*dconjg(s21)-s22*dconjg(s22)
-          Sback(2,2) = s11*dconjg(s11)-s12*dconjg(s12)-s21*dconjg(s21)+s22*dconjg(s22)
-          Sback = fact_sca*Sback
-          ! print*,"backscattering ", Sback, fact_sca, phi_weights
-        end if
-			  scatt_matrix_tmp1_11 = scatt_matrix_tmp1_11 + (fact_sca*&
-			      (s11*dconjg(s11)+s12*dconjg(s12)+s21*dconjg(s21)+s22*dconjg(s22)))*phi_weights
+            scatter_matrix(1,ll,1,jj,kkk1) = scatter_matrix(1,ll,1,jj,kkk1) + scatt_matrix_tmp1_11*phi0_weights
+            scatter_matrix(1,ll,2,jj,kkk1) = scatter_matrix(1,ll,2,jj,kkk1) + scatt_matrix_tmp1_12*phi0_weights
+            scatter_matrix(2,ll,1,jj,kkk1) = scatter_matrix(2,ll,1,jj,kkk1) + scatt_matrix_tmp1_21*phi0_weights
+            scatter_matrix(2,ll,2,jj,kkk1) = scatter_matrix(2,ll,2,jj,kkk1) + scatt_matrix_tmp1_22*phi0_weights
 
-			  scatt_matrix_tmp1_12 = scatt_matrix_tmp1_12 + (fact_sca*&
-			      (s11*dconjg(s11)-s12*dconjg(s12)+s21*dconjg(s21)-s22*dconjg(s22)))*phi_weights
+          1244 continue  ! phi0
 
-			  scatt_matrix_tmp1_21 = scatt_matrix_tmp1_21 + (fact_sca*&
-			      (s11*dconjg(s11)+s12*dconjg(s12)-s21*dconjg(s21)-s22*dconjg(s22)))*phi_weights
+          ! calculate the summation of the scattering matrix in the whole sphere
+          emis_vector_tmp1_11(ll+(kk-1)*qua_num) = scatter_matrix(1,ll,1,jj,kkk1)*thet_weights*2.*pi
+          emis_vector_tmp1_12(ll+(kk-1)*qua_num) = scatter_matrix(1,ll,2,jj,kkk1)*thet_weights*2.*pi
 
-			  scatt_matrix_tmp1_22 = scatt_matrix_tmp1_22 + (fact_sca*&
-			      (s11*dconjg(s11)-s12*dconjg(s12)-s21*dconjg(s21)+s22*dconjg(s22)))*phi_weights
-        !print*,'Z1 tmm ',scatt_matrix_tmp1_11,scatt_matrix_tmp1_22, scatt_matrix_tmp1_12, scatt_matrix_tmp1_21
-			  if ((phi0 .eq. phi) .and. (thet0 .eq. thet)) then ! forward scattering
-			      extinct_matrix(1,1,jj) = extinct_matrix(1,1,jj)+phi0_weights*(-real((s11 + s22)*fact_ext))
-			      extinct_matrix(1,2,jj) = extinct_matrix(1,2,jj)+phi0_weights*(-real((s11 - s22)*fact_ext))
-			      extinct_matrix(2,1,jj) = extinct_matrix(2,1,jj)+phi0_weights*(-real((s11 - s22)*fact_ext))
-			      extinct_matrix(2,2,jj) = extinct_matrix(2,2,jj)+phi0_weights*(-real((s11 + s22)*fact_ext))
-			  end if
-  1245                    continue   ! phi
+        1243 continue ! thet ll
 
-  
-		      scatter_matrix(1,ll,1,jj,kkk1) = scatter_matrix(1,ll,1,jj,kkk1) + scatt_matrix_tmp1_11*phi0_weights
-		      scatter_matrix(1,ll,2,jj,kkk1) = scatter_matrix(1,ll,2,jj,kkk1) + scatt_matrix_tmp1_12*phi0_weights
-		      scatter_matrix(2,ll,1,jj,kkk1) = scatter_matrix(2,ll,1,jj,kkk1) + scatt_matrix_tmp1_21*phi0_weights
-		      scatter_matrix(2,ll,2,jj,kkk1) = scatter_matrix(2,ll,2,jj,kkk1) + scatt_matrix_tmp1_22*phi0_weights
+      1242 continue ! emispheres
 
-  1244                continue  ! phi0
+      emis_vector(1,jj) = extinct_matrix(1,1,jj) - sum(emis_vector_tmp1_11)
+      emis_vector(2,jj) = extinct_matrix(1,2,jj) - sum(emis_vector_tmp1_12)
 
-		  ! calculate the summation of the scattering matrix in the whole sphere
-		  emis_vector_tmp1_11(ll+(kk-1)*qua_num) = scatter_matrix(1,ll,1,jj,kkk1)*thet_weights*2.*pi
-		  emis_vector_tmp1_12(ll+(kk-1)*qua_num) = scatter_matrix(1,ll,2,jj,kkk1)*thet_weights*2.*pi
-
-  1243            continue ! thet ll
-  1242        continue
-
-	  emis_vector(1,jj) = extinct_matrix(1,1,jj) - sum(emis_vector_tmp1_11)
-	  emis_vector(2,jj) = extinct_matrix(1,2,jj) - sum(emis_vector_tmp1_12)
-
-  1241    continue ! thet0 jj
-      
-
-      errorstatus = err
-      if (verbose >= 3) call report(info,'End of ', nameOfRoutine) 
-      return
+    1241 continue ! thet0 jj
+    
+    errorstatus = err
+    if (verbose >= 3) call report(info,'End of ', nameOfRoutine) 
+    return
 
   end subroutine calc_single_tmatrix
 
