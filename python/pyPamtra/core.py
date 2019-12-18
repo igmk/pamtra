@@ -400,6 +400,7 @@ class pyPamtra(object):
         self.p["sfc_type"][xx,yy] = np.around(lfrac) # lfrac is deprecated
         if self.p["sfc_type"][xx,yy] == 0:
             self.p["sfc_refl"][xx,yy] = 'F'
+            self.p["sfc_salinity"][xx,yy] = 33.0
         else:
             self.p["sfc_refl"][xx,yy] = 'S'
 
