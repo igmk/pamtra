@@ -6,8 +6,6 @@ import numpy as np
 
 fig1 = plt.figure()
 
-
-
 for miscalibration in [-10,-5,0,5,10]:
 
   pam = pyPamtra.pyPamtra()
@@ -25,8 +23,6 @@ for miscalibration in [-10,-5,0,5,10]:
   pam.nmlSet["radar_aliasing_nyquist_interv"] = 3
   pam.nmlSet["hydro_adaptive_grid"] = False
   pam.nmlSet["radar_receiver_miscalibration"] = miscalibration
-
-
 
   pam.p["hydro_q"][:] = 0.002
   pam.nmlSet["save_psd"] = True
@@ -67,5 +63,5 @@ for miscalibration in [-10,-5,0,5,10]:
   plt.plot(pam.r["radar_vel"][0],pam.r["radar_spectra"][0,0,0,0,0])
 
   print miscalibration, "Ze", pam.r["Ze"].ravel()[0], "W", pam.r["radar_moments"].ravel()[0], "SW", pam.r["radar_moments"].ravel()[1], "Sk", pam.r["radar_moments"].ravel()[2], "Ku", pam.r["radar_moments"].ravel()[3], "lS", pam.r["radar_slopes"].ravel()[0], "rS", pam.r["radar_slopes"].ravel()[1]
-
+  plt.show()
 

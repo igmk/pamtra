@@ -247,6 +247,7 @@ def q2rh(q, T, p):
 
 
 def e_sat_gg_water(T):
+<<<<<<< HEAD
     '''
     Calculates the saturation pressure over water after Goff and Gratch (1946).
     It is the most accurate that you can get for a temperture range from -90°C to +80°C.
@@ -355,6 +356,116 @@ def detect_liq_cloud(z, t, rh):  # , rh_thres, t_thres):
     #z_base = z[i_base]
 
     return i_top, i_base, i_cloud
+=======
+	'''
+	Calculates the saturation pressure over water after Goff and Gratch (1946).
+	It is the most accurate that you can get for a temperture range from -90°C to +80°C.
+	Source: Smithsonian Tables 1984, after Goff and Gratch 1946
+	http://cires.colorado.edu/~voemel/vp.html
+	http://hurri.kean.edu/~yoh/calculations/satvap/satvap.html
+
+	Input:
+	T in Kelvin.
+	Output:
+	e_sat_gg_water in Pa.
+	'''
+	if neAvail: e_sat_gg_water = ne.evaluate("100 * 1013.246 * 10**( -7.90298*(373.16/T-1) + 5.02808*log10(373.16/T) - 1.3816e-7*(10**(11.344*(1-T/373.16))-1) + 8.1328e-3 * (10**(-3.49149*(373.16/T-1))-1) )")
+	else: e_sat_gg_water = 100 * 1013.246 * 10**( -7.90298*(373.16/T-1) + 5.02808*np.log10(373.16/T) - 1.3816e-7*(10**(11.344*(1-T/373.16))-1) + 8.1328e-3 * (10**(-3.49149*(373.16/T-1))-1) )
+	return e_sat_gg_water
+
+def rh_to_iwv(relhum_lev,temp_lev,press_lev,hgt_lev):
+	'''
+	Calculate the integrated water vapour
+
+	Input:
+	T is in K
+	rh is in Pa/Pa
+	p is in Pa
+	z is in m
+	
+	Output
+	iwv in kg/m^2
+	'''
+	dz = np.diff(hgt_lev,axis=-1)
+	relhum = (relhum_lev[...,0:-1] + relhum_lev[...,1:])/2.
+	temp = (temp_lev[...,0:-1] + temp_lev[...,1:])/2.
+
+	xp = -1.*np.log(press_lev[...,1:]/press_lev[...,0:-1])/dz
+	press = -1.*press_lev[...,0:-1]/xp*(np.exp(-xp*dz)-1.)/dz
+
+	q = rh2q(relhum,temp,press)
+	rho_moist = moist_rho_q(press,temp,q)
+
+	return np.sum(q*rho_moist*dz)
+		
+def detect_liq_cloud(z, t, rh):#, rh_thres, t_thres):
+   
+   #UL NOV 2007
+   #tranlated to python by mx 2011
+   #***********
+   #INPUT
+   #z: height grid
+   #T: temperature on z
+   #rh: relative humidty on z
+   #rh_thres: relative humidity threshold for the detection on liquid clouds on z
+   #T_thres: don not detect liquid water clouds below this value (scalar)
+   #***********
+   #OUTPUT
+   #z_top: array of cloud tops
+   #z_base: array of cloud bases
+   #z_cloud: array of cloudy height levels
+   #***********
+   
+   rh_thres = 0.95 #1
+   t_thres = 253.15 #K
+   #import pdb; pdb.set_trace()
+   n = len(z)
+   #print "!",n
+   #***determine cloud boundaries
+   #--> layers where mean rh GT rh_thres
+   
+   cloud_bound_ind = np.zeros(n,dtype=int)
+   for i in np.arange(0, (n - 1)):
+      #print ((rh[i + 1] + rh[i]) / 2. > rh_thres)
+      #print ((t[i + 1] + t[i]) / 2. > t_thres)
+      if ((rh[i + 1] + rh[i]) / 2. > rh_thres)  and  ((t[i + 1] + t[i]) / 2. > t_thres):   
+         cloud_bound_ind[i] = np.bitwise_or(1, cloud_bound_ind[i])
+         cloud_bound_ind[i + 1] = np.bitwise_or(2, cloud_bound_ind[i + 1])
+      # end if
+   # end for
+   #import pdb; pdb.set_trace()
+   
+   i_cloud = np.where(cloud_bound_ind != 0)[0]
+   
+   #***determine z_base & z_top arrays
+   
+   #z_top = -99.
+   #z_base = -99.
+   #z_cloud = -99
+   
+   i_top = []
+   i_base = []
+   
+   if len(i_cloud) != 0:   
+      
+      #z_cloud = z[i_cloud]
+      i_base = np.where(cloud_bound_ind == 1)[0]
+      i_top = np.where(cloud_bound_ind == 2)[0]
+      
+      n_base = len(i_base)
+      n_top = len(i_top)
+      if n_top != n_base:   
+         print 'something wrong, number of bases NE number of cloud tops!'
+         return [],[],[]
+      # end if
+   # end if
+   #z_top = z[i_top]
+   #z_base = z[i_base]
+   
+   
+  
+   return i_top, i_base, i_cloud
+>>>>>>> 6106779a700a318c7fc955896984212388eb29fb
 # end def detect_liq_cloud
 
 

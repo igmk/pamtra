@@ -112,7 +112,7 @@ subroutine run_drop_size_dist(errorstatus)
   integer(kind=long)  :: errorstatus, ibin
   integer(kind=long)  :: err
   character(len=80)   :: msg
-  character(len=14)   :: nameOfRoutine = 'make_hydro'
+  character(len=14)   :: nameOfRoutine = 'run_drop_size_dist'
 
   err = 0
 

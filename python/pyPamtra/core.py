@@ -21,6 +21,27 @@ try:
     from .libWrapper import PamtraFortranWrapper, parallelPamtraFortranWrapper
 except ImportError:
     print('PAMTRA FORTRAN LIBRARY NOT AVAILABLE!')
+try:
+    pamdata =  os.environ['PAMTRA_DATADIR']
+except KeyError:
+    data_message = """
+        Environment variable PAMTRA_DATADIR not set.
+
+        This is required to make use of all features of PAMTRA (scattering databases, surface reflection catalogues).
+
+        You can get the data from University of Cologne
+
+        https://uni-koeln.sciebo.de/s/As5fqDdPCOx4JbS
+        
+        Once downloaded and unpacked in a arbitrary directory you need to set the environment variables PAMTRA_DATADIR in ~/.profile or directly in your python script by
+
+        import os
+
+        os.environ['PAMTRA_DATADIR'] = path_where_the_data_is
+
+        If you're absolutely sure what you do, you can set omit the data download and set the variable to an empty location.
+        """
+    raise RuntimeError(data_message)
 from .descriptorFile import pamDescriptorFile
 from .tools import sftp2Cluster, formatExceptionInfo
 from .meteoSI import detect_liq_cloud, mod_ad, moist_rho_rh,rh2q
@@ -91,7 +112,7 @@ class pyPamtra(object):
     self.nmlSet["radar_pnoise0"]= -32.23 # mean value for BArrow MMCR during ISDAC
     self.nmlSet['radar_allow_negative_dD_dU'] = False #allow that particle velocity is decreasing with size
     self.nmlSet["radar_airmotion"]=  False
-    self.nmlSet["radar_airmotion_model"]=  "step" #: "constant","linear","step"
+    self.nmlSet["radar_airmotion_model"]=  "constant" #: "constant","linear","step"
     self.nmlSet["radar_airmotion_vmin"]=  -4.e0
     self.nmlSet["radar_airmotion_vmax"]=  +4.e0
     self.nmlSet["radar_airmotion_linear_steps"]=  30
@@ -379,8 +400,9 @@ class pyPamtra(object):
         self.p["sfc_type"][xx,yy] = np.around(lfrac) # lfrac is deprecated
         if self.p["sfc_type"][xx,yy] == 0:
             self.p["sfc_refl"][xx,yy] = 'F'
+            self.p["sfc_salinity"][xx,yy] = 33.0
         else:
-            self.p["sfc_refl"][xx,yy] = 'L'
+            self.p["sfc_refl"][xx,yy] = 'S'
 
         self.p["iwv"][xx,yy] = np.array(np.array(g.next()[0]),dtype=float)
 
@@ -670,7 +692,7 @@ class pyPamtra(object):
 
     Everything is needed in SI units, relhum is in %
 
-    The following variables are mandatroy:
+    The following variables are mandatory:
     hgt_lev, (temp_lev or temp), (press_lev or press) and (relhum_lev OR relhum)
 
     The following variables are optional and guessed if not provided:  "timestamp","lat","lon","wind10u","wind10v","hgt_lev","hydro_q","hydro_n","hydro_reff","obs_height","sfc_type","sfc_model","sfc_refl","sfc_salinity"
@@ -1068,7 +1090,7 @@ class pyPamtra(object):
 
   def rescaleHeights(self,new_hgt_lev, new_hgt=[]):
     """
-    Rescale Pamtra pofile to new height grid
+    Rescale Pamtra profile to new height grid
 
     Parameters
     ----------
@@ -1114,7 +1136,7 @@ class pyPamtra(object):
         #save new array
         self.p[key] = newP
         #and mark all entries below -1 as missing Number!
-        self.p[key][self.p[key]<-1] = missingNumber
+        self.p[key][self.p[key]<-1.e-6] = missingNumber
 
     for key in self.df.data4D:
       #make new array
@@ -1128,7 +1150,7 @@ class pyPamtra(object):
       self.df.data4D[key] = newP
 
 
-    for key in ["hgt_lev","temp_lev","relhum_lev"]:
+    for key in ["hgt_lev","temp_lev", "relhum_lev"]:
       if key in self.p.keys():
         newP = np.ones(self._shape3Dplus) * missingNumber
         for x in xrange(self._shape2D[0]):
@@ -1137,9 +1159,29 @@ class pyPamtra(object):
 #            newP[x,y] = np.interp(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
             newP[x,y] = extrap(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
         self.p[key] = newP
-        if key != "hgt_lev": self.p[key][self.p[key]<-1] = missingNumber
+        if key != "hgt_lev": self.p[key][self.p[key]<-1.e-6] = missingNumber
 
-    for key in ["airturb","wind_w","hgt","temp","relhum",'wind_uv','turb_edr']:
+#     for key in ["relhum_lev"]:
+#       if key in self.p.keys():
+#         newP = np.ones(self._shape3Dplus) * missingNumber
+#         for x in xrange(self._shape2D[0]):
+#           for y in xrange(self._shape2D[1]):
+# #            newP[x,y] = np.interp(new_hgt_lev,old_hgt_lev[x,y],self.p[key][x,y])
+# #            newP[x,y] = np.interp(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
+#             newP[x,y] = extrap(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
+#         self.p[key] = newP
+#         if key != "hgt_lev" and self.p[key][self.p[key]<0]: print "Somethings wrong. Rel. humidity below 0!"
+
+    # for key in ["relhum"]:
+    #   if key in self.p.keys():
+    #     newP = np.ones(self._shape3D) * missingNumber
+    #     for x in xrange(self._shape2D[0]):
+    #       for y in xrange(self._shape2D[1]):
+    #         newP[x,y] = np.interp(new_hgt[x,y],old_hgt[x,y],self.p[key][x,y])
+    #     self.p[key] = newP
+    #     if key != "hgt" and self.p[key][self.p[key]<0]: print "Somethings wrong. Rel. humidity below 0!"
+
+    for key in ["airturb","hgt","temp","relhum","wind_uv","turb_edr"]:
       if key in self.p.keys():
         newP = np.ones(self._shape3D) * missingNumber
         for x in xrange(self._shape2D[0]):
@@ -1148,7 +1190,7 @@ class pyPamtra(object):
 #            newP[x,y] = np.interp(new_hgt[x,y],old_hgt[x,y],self.p[key][x,y])
             newP[x,y] = extrap(new_hgt[x,y],old_hgt[x,y],self.p[key][x,y])
         self.p[key] = newP
-        if key != "hgt": self.p[key][self.p[key]<-1] = missingNumber
+        if key != "hgt": self.p[key][self.p[key]<-1.e-6] = missingNumber
 
 
     for key in ["press_lev"]:
@@ -1160,7 +1202,7 @@ class pyPamtra(object):
 #            newP[x,y] = np.exp(np.interp(new_hgt_lev[x,y],old_hgt_lev[x,y],np.log(self.p[key][x,y])))
             newP[x,y] = np.exp(extrap(new_hgt_lev[x,y],old_hgt_lev[x,y],np.log(self.p[key][x,y])))
         self.p[key] = newP
-        self.p[key][self.p[key]<-1] = missingNumber
+        self.p[key][self.p[key]<-1.e-6] = missingNumber
 
     for key in ["press"]:
       if key in self.p.keys():
@@ -1171,7 +1213,7 @@ class pyPamtra(object):
 #            newP[x,y] = np.exp(np.interp(new_hgt[x,y],old_hgt[x,y],np.log(self.p[key][x,y])))
             newP[x,y] = np.exp(extrap(new_hgt[x,y],old_hgt[x,y],np.log(self.p[key][x,y])))
         self.p[key] = newP
-        self.p[key][self.p[key]<-1] = missingNumber
+        self.p[key][self.p[key]<-1.e-6] = missingNumber
 
 
 
@@ -2123,15 +2165,16 @@ class pyPamtra(object):
       cdfFile.createDimension('radar_peak_number',int(self.nmlSet["radar_npeaks"]))
 
     dim2d = ("grid_x","grid_y",)
-    dim3d = ("grid_x","grid_y","heightbins",)
     if xarrayCompatibleOutput:
       dim3dout = ("grid_x","grid_y","outlevel",)
     else:
       dim3dout = ("grid_x","grid_y","outlevels",)
-    dim4d = ("grid_x","grid_y","heightbins","frequency")
-    dim5d_att = ("grid_x","grid_y","heightbins","frequency","attenuation_polarisation")
-    dim6d_rad = ("grid_x","grid_y","heightbins","frequency","radar_polarisation","radar_peak_number")
-    dim6d_rad_spec = ("grid_x","grid_y","heightbins","frequency","radar_polarisation","nfft")
+    if (self.r["nmlSettings"]["active"]):
+      dim3d = ("grid_x","grid_y","heightbins",)
+      dim4d = ("grid_x","grid_y","heightbins","frequency")
+      dim5d_att = ("grid_x","grid_y","heightbins","frequency","attenuation_polarisation")
+      dim6d_rad = ("grid_x","grid_y","heightbins","frequency","radar_polarisation","radar_peak_number")
+      dim6d_rad_spec = ("grid_x","grid_y","heightbins","frequency","radar_polarisation","nfft")
     if xarrayCompatibleOutput:
       dim6d_pas = ("grid_x","grid_y","outlevel","angles","frequency","passive_polarisation")
     else:

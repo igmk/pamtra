@@ -1,5 +1,13 @@
 # -*- coding: utf-8 -*-
 
+"""
+Collection of importer modules for the different input types.
+
+They all return a pyPamtra object that holds the profile information in the .p object.
+
+In addition ncToDict is provide to easily read necdf files into a dictionary.
+""" 
+
 from __future__ import division
 import numpy as np
 import datetime
@@ -9,6 +17,7 @@ import sys
 import string
 import glob
 import warnings
+import pdb
 
 try:
   import numexpr as ne
@@ -27,11 +36,27 @@ from copy import deepcopy
 missingNumber =-9999.
 
 def readWrfDataset(fname,kind):
-  import netCDF4
+  """
+  
+  read WRF data set
 
-  '''
-  import wrf Dataset with fname of kind
-  '''
+  Parameters
+  ----------
+  fname : {str}
+    path and name of file  atmospheric variables
+  kind : {str}
+    kind of data file (up to now only gce is implemented)
+  
+  Returns
+  -------
+  pam : pyPamtra Object
+
+  Raises
+  ------
+  TypeError
+  """
+
+  import netCDF4
 
   if kind not in ["gce"]:
     raise TypeError("unknown wrf data type")
@@ -91,42 +116,50 @@ def readWrfDataset(fname,kind):
 
 
 def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex=0,tmpDir="/tmp/",fnameInTar="",concatenateAxis=1,debug=False,verbosity=0,df_kind="default",constantFields=None,maxLevel=0,subGrid=None):
-  '''
-  convert cosmo 1-moment dataset with fname of kind to pamtra object
+  """
+  read COMSO one moment data set
 
   Parameters
   ----------
-  fname : str
+  fnames : {str}
     file name, wildCards allowed! can be either nc, nc and gz, or nc.gz files of name fnameInTar within tar file
-  kind : str
-    kind of Cosmo file, right now only collum and synsat netcdf files are implemented.
-  descriptorFile : str or pyPamtra descriptorFile object
-    Pamtra descriptor file
-  forecastIndex : int, optional
-    e.g. 1 means take the forecast being between 3 and 5.75 hours old (default 1).
-  colIndex: list or int, optional
-    which collum should be taken? list allowed! (default 0)
-  tmpDir : str, optional
-    temporary directory (default "/tmp/")
-  fnameInTar : str, optional
-    if nc.gz file in tar file, name of nc.gz file (wildcards allowed!) (default "")
-  concatenateAxis : in,t optional
-    axis to concatenate the grids (default 1)
-  debug: bool optional
-    stop and load debugger on exception (default False)
-  verbosity : int, optional
-    verbosity level (default 0)
-  constantFields : str, optional
-    fiel with constant fields (default "")s
-  subGrid : int array, optional
-    array with indices [lon_start,lon_end,lat_start,lat_end] ((1,1) in model corresponds to (0,0) in python!) (default None)
-
+  kind : {str}
+    kind of COSMO file, right now only collum and synsat netcdf files are implemented
+  descriptorFile : {str}
+    path and name of descriptor file
+  forecastIndex : {int}, optional
+    index of forecast to be read (the default is 1)
+  colIndex : {int or list of int}, optional
+    which collum should be taken? list allowed! (the default is 0)
+  tmpDir : {str}, optional
+    [description] (the default is "/tmp/")
+  fnameInTar : {str}, optional
+    [description] (the default is "")
+  concatenateAxis : {int}, optional
+    concatenation along which axis (the default is 1)
+  debug : {bool}, optional
+    stop and load debugger on exception (the default is False) (the default is False)
+  verbosity : {int}, optional
+    verbosity of the module (the default is 0) (the default is 0)
+  df_kind : {str}, optional
+    kind of data set. This defines the name of variables and dimensions. (the default is "default")
+  constantFields : {str}, optional
+    path and name of file with constant fields (the default is None)
+  maxLevel : {int}, optional
+    Number of maximum levels to consider. (the default is 0)
+  subGrid : {[int,int,int,int]}, optional
+    array with indices [lon_start,lon_end,lat_start,lat_end] ((1,1) in model corresponds to (0,0) in python!) (the default is None)
+ 
   Returns
-  --------
-
+  -------
   pam : pyPamtra Object
 
-  '''
+  Raises
+  ------
+  IOError
+  TypeError
+  """
+
   import netCDF4
 
   if kind == "gop_collumn":
@@ -245,32 +278,6 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
     shape2D = np.shape(data["t_2m"])
     shape3Dplus = np.shape(data["hhl"])
     shape3D = np.shape(data["hfl"])
-
-    #data["p_hl"] = np.zeros(shape3Dplus)
-    #data["t_hl"] = np.zeros(shape3Dplus)
-
-    #data["t_hl"][...,0] = data["t_2m"]
-    #data["t_hl"][...,1:-1] = data["temperature"][...,0:-1]+0.5*np.diff(data["temperature"],axis=-1)
-    #data["t_hl"][...,-1] = data["temperature"][...,-1] + 0.25*(data["temperature"][...,-1]-data["temperature"][...,-2])
-
-    #data["p_hl"][...,0] = data["surface_air_pressure"]
-
-    #press1 = deepcopy(data["p"])
-    #press1[press1==missingNumber]=1
-
-    #p0 = press1[...,0:-1]
-    #p1 = press1[...,1:]
-    #dz = np.diff(data["hfl"],axis=-1)
-    #if neAvail: xp = ne.evaluate("-1.*log(p1/p0)/dz")
-    #else: xp = -1.*np.log(p1/p0)/dz
-
-    #xp[xp==0] = 9999
-
-    #if neAvail: data["p_hl"][...,1:-1] = ne.evaluate("-1.*p0/xp*(exp(-xp*dz)-1.)/dz")
-    #else: data["p_hl"][...,1:-1] = -1.*p0/xp*(np.exp(-xp*dz)-1.)/dz
-
-    #data["p_hl"][...,-1] = -1.*p1[...,-1]/xp[...,-1]*(np.exp(-xp[...,-1]*dz[...,-1])-1.)/dz[...,-1]  #check!
-    #print "TO DO: check calculation of p half level!"
 
     #we can also fill the arrays partly!
     data["temp_lev"] = np.zeros(shape3Dplus) + np.nan
@@ -443,18 +450,49 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
   return pam
 
 def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',forecastIndex = 1,tmpDir="/tmp/",fnameInTar="",debug=False,verbosity=0,df_kind="default",constantFields=None,maxLevel=0,subGrid=None):
-  '''
-  import cosmo 2-moment dataset
+  """
+  import COSMO 2-moment dataset
+  
+  Parameters
+  ----------
+  fnamesA : {str}
+    path and names of files with atmospheric variables. wildCards allowed! can be either nc file, nc,gz file or nc.gz file of name fnameInTar within tar file
+  descriptorFile : {str}
+    path and name of descriptor file
+  fnamesN : {str}, optional
+    path and names of files with total numbers.  wildCards allowed! can be either nc file, nc,gz file or nc.gz file of name fnameInTar within tar file (the default is None)
+  kind : {str}, optional
+    can be either new (default, new NARVAL calculations) or old (old NARVAL calculations) (the default is 'new')
+  forecastIndex : {int}, optional
+    index of forecast to be read (the default is 1)
+  tmpDir : {str}, optional
+    [description] (the default is "/tmp/")
+  fnameInTar : {str}, optional
+    [description] (the default is "")
+  debug : {bool}, optional
+    stop and load debugger on exception (the default is False) (the default is False)
+  verbosity : {int}, optional
+    verbosity of the module (the default is 0) (the default is 0)
+  df_kind : {str}, optional
+    kind of data set. This defines the name of variables and dimensions. (the default is "default")
+  constantFields : {str}, optional
+    path and name of file with constant fields (the default is None)
+  maxLevel : {int}, optional
+    Number of maximum levels to consider. (the default is 0)
+  subGrid : {[int,int,int,int]}, optional
+    array with indices [lon_start,lon_end,lat_start,lat_end] ((1,1) in model corresponds to (0,0) in python!) (the default is None)
+  
+  Returns
+  -------
+  pam : pyPamtra Object
 
-  fnamesA = str , fileNames of atmospheric variables, wildCards allowed! can be either nc file, nc,gz file or nc.gz file of name fnameInTar within tar file
-  descriptorFile = Pamtra descriptor file
-  fnamesN = str , fileNames of number concentrations, wildCards allowed! can be either nc file, nc,gz file or nc.gz file of name fnameInTar within tar file (only required for the old style of NARVAL cases)
-  kind = str, can be either new (default, new NARVAL calculations) or old (old NARVAL calculations)
-  forecastIndex = 1 #take the forecast being between 3 and 5.75 hours old.
-  fnameInTar = if nc.gz file in tar file, name of nc.gz file (wildcards allowed!)
-  debug: stop and load debugger on exception
-  subGrid: array with indices [lon_start,lon_end,lat_start,lat_end] ((1,1) in model corresponds to (0,0) in python!)
-  '''
+  Raises
+  ------
+  IOError
+    on file error
+
+  """
+
   import netCDF4
 
   assert constantFields
@@ -761,21 +799,33 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
 
   return pam
 
-def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",debug=False,verbosity=0,df_kind="default",maxLevel=0):
-  '''
-  import cosmo 2-moment dataset extracted on a HALO flight track^
+def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",debug=False,verbosity=0,maxLevel=0):
+  """  
+  import COSMO 2-moment dataset extracted on a HALO flight track
+  
+  Parameters
+  ----------
+  fnameA : {str}
+    path and names of file with atmospheric variables, wildCards allowed! can be either nc file, nc,gz file or nc.gz file of name fnameInTar within tar file
+  descriptorFile : {str}
+    path and name of descriptor file
+  tmpDir : {str}, optional
+    directory to unpack temporary files (the default is "/tmp/")
+  debug : {bool}, optional
+    stop and load debugger on exception (the default is False)
+  verbosity : {int}, optional
+    verbosity of the module (the default is 0)
+  maxLevel : {int}, optional
+    Number of maximum levels to consider. (the default is 0)
 
-  fnamesA = str , fileNames of atmospheric variables, wildCards allowed! can be either nc file, nc,gz file or nc.gz file
-  descriptorFile = Pamtra descriptor file
-  debug: stop and load debugger on exception
-  '''
+  Returns
+  --------
+  pam : pyPamtra Object
+
+  """
   import netCDF4
 
   nHydro = 6
-
-#  filesA = np.sort(glob.glob(fnamesA))
-#  if len(filesA) == 0: raise RuntimeError( "no files found")
-#  filesA.sort()
 
   variables1D = ["T_G","PS","U_10M","V_10M","FR_LAND"]
   variables2D = ["T","P","QV","QC","QI","QR","QS","QG","QH","QNCLOUD","QNICE","QNRAIN","QNSNOW","QNGRAUPEL","QNHAIL"]
@@ -794,26 +844,11 @@ def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",deb
       if verbosity>1:print "read ", fnameA
 
     if debug: import pdb;pdb.set_trace()
-    #dataSingle = dict()
-    #for var in variables1D:
-      #data[var] = np.swapaxes(ncFileA.variables[var][0],0,1)
-    #for var in variables2D:
-      #data[var] = np.swapaxes(ncFileA.variables[var][0],0,2)[...,::-1][...,:maxLevel]#reverse height order
     if verbosity>1:print "closed nc"
     if fnameA.split(".")[-1]!="nc":
       if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
       os.system("rm -f "+tmpFile+"*")
 
-    #for key in ["cosmoTime","cosmoLon","cosmoLat"]:
-      #dataSingle[key]  = np.zeros(shape2D)
-      #dataSingle[key][:] = np.swapaxes(conFields[key],0,1)
-    #for key in ["FR_LAND","HSURF"]:
-      #dataSingle[key]  = np.zeros(shape2D)
-      #dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,1)
-    #for key in ["HHL"]:
-      #dataSingle[key]  = np.zeros(shape3Dplus)
-      #dataSingle[key][:] = np.swapaxes(conFields[key][forecastIndex],0,2)[...,::-1][...,:maxLevel+1]
-    #data = deepcopy(dataSingle)
   except Exception as inst:
     if fnameA.split(".")[-1]!="nc":
       if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
@@ -854,7 +889,6 @@ def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",deb
 
   pamData["relhum"] = np.expand_dims((q2rh(data["QV"],data["T"],data["P"]) * 100.)[:,::-1],axis=1)
 
-#  import pdb;pdb.set_trace()
   # surface properties
   pamData['sfc_type'] = np.zeros(shape2D)
   pamData['sfc_type'] = np.around(data['FR_LAND'])
@@ -884,7 +918,37 @@ def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",deb
 
   return pam
 
-def readCosmoReAn2km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDir="/tmp/",fnameInTar="",debug=False,verbosity=0,df_kind="default",maxLevel=51,subGrid=None):
+def readCosmoReAn2km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDir="/tmp/",fnameInTar="",debug=False,verbosity=0,maxLevel=51,subGrid=None):
+  """
+  reads COSMO 2 km Re-Analyses
+   
+  Parameters
+  ----------
+  constantFields : {str}
+    path and file name of constant file
+  fname : {str}
+    path and file name of data file
+  descriptorFile : {str}
+    path and name of descriptor file
+  forecastIndex : {int}, optional
+    index of forecast to be read (the default is 1)
+  tmpDir : {str}, optional
+    temporary directory to unpack data (the default is "/tmp/", which [default_description])
+  fnameInTar : {str}, optional
+    file name within tar file (the default is "")
+  debug : {bool}, optional
+    switch on debugging mode(the default is False)
+  verbosity : {int}, optional
+    [description] (the default is 0)
+  maxLevel : {int}, optional
+    index of maximum level (the default is 51)
+  subGrid : {[int,int,int,int]}, optional
+    read subgrid of whole field (the default is None)
+  
+  Returns
+  -------
+  pyPamtra object
+  """
 
   import pygrib
   import os
@@ -1210,16 +1274,34 @@ Apply weights:
 """
 
 def readIconLem1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,constantFields=None,maxLevel=0):
-  '''
+  """
   import ICON LEM 1-moment dataset
-  It is Icon with cosmo physics
 
-  fname_fg = str , fileName of atmospheric variables ("_fg_" file, no wildCards allowed! must be nc file.
-              A corresponding "_cloud_" has do exist!
-  descriptorFile = Pamtra descriptor file
-  debug: stop and load debugger on exception
-  constantFields: str, file name of nc containing constant fields (ie. FR_LAND)
-  '''
+  It is Icon with cosmo physics
+  
+  Parameters
+  ----------
+  fname_fg : {str}
+    path and name of file with atmospheric variables.
+  descriptorFile : {str}
+    path and name of descriptor file
+  debug : {bool}, optional
+    stop and load debugger on exception (the default is False) (the default is False)
+  verbosity : {int}, optional
+    verbosity of the module (the default is 0) (the default is 0)
+  constantFields : {str}, optional
+    path and name of file with constant fields (the default is None)
+  maxLevel : {int}, optional
+    Number of maximum levels to consider. (the default is 0)
+  
+  Returns
+  -------
+  pam : pyPamtra Object
+  
+  Raises
+  ------
+  IOError
+  """
   import netCDF4
 
   assert constantFields
@@ -1367,7 +1449,7 @@ def readIconLem1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   pamData['sfc_model'] = np.zeros(shape2D)
   pamData['sfc_refl'] = np.chararray(shape2D)
   pamData['sfc_refl'][pamData['sfc_type'] == 0] = 'F' # ocean
-  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'L' # land
+  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'S' # land
 
   pam.createProfile(**pamData)
 
@@ -1378,15 +1460,34 @@ readIconLem1MomDataset.__doc__ += __ICDN_regridding_remarks
 
 
 def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,constantFields=None,maxLevel=0):
-  '''
+  """
   import ICON LEM 2-moment dataset
-  It is Icon with cosmo physics
 
-  fname_fg = str , fileName of atmospheric variables ("_fg_" file, no wildCards allowed! must be nc file.
-  descriptorFile = Pamtra descriptor file
-  debug: stop and load debugger on exception
-  constantFields: str, file name of nc containing constant fields (ie. FR_LAND)
-  '''
+  It is ICON with cosmo physics
+  
+  Parameters
+  ----------
+  fname_fg : {str}
+    path and name of file with atmospheric variables.
+  descriptorFile : {str}
+    path and name of descriptor file
+  debug : {bool}, optional
+    stop and load debugger on exception (the default is False) (the default is False)
+  verbosity : {int}, optional
+    verbosity of the module (the default is 0) (the default is 0)
+  constantFields : {str}, optional
+    path and name of file with constant fields (the default is None)
+  maxLevel : {int}, optional
+    Number of maximum levels to consider. (the default is 0)
+  
+  Returns
+  -------
+  pam : pyPamtra Object
+  
+  Raises
+  ------
+  IOError
+  """
   import netCDF4
 
   assert constantFields
@@ -1532,7 +1633,7 @@ def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   pamData['sfc_model'] = np.zeros(shape2D)
   pamData['sfc_refl'] = np.chararray(shape2D)
   pamData['sfc_refl'][pamData['sfc_type'] == 0] = 'F' # ocean
-  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'L' # land
+  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'S' # land
 
   pam.createProfile(**pamData)
 
@@ -1542,7 +1643,34 @@ def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
 readIconLem2MomDataset.__doc__ += __ICDN_regridding_remarks
 
 def readHIRHAM(dataFile,additionalFile,topoFile,descriptorFile,grid=[0,200,0,218],timestep=0,debug=False,verbosity=0):
+  """  
+  read  HIRHAM output into PAMTRA
 
+  it reads the output produce by Ines Haberstedt at the AWI in Potsdam
+  
+  Parameters
+  ----------
+  dataFile : {str}
+    path and name of data file
+  additionalFile : {str}
+    path and name of additional file
+  topoFile : {str}
+    path and name of file with topography information
+  descriptorFile : {str}
+    path and name of descriptor file
+  grid : {[int,int,int,int]}, optional
+    subgrid to read (the default is [0,200,0,218] the full grid)
+  timestep : {int}, optional
+    whcih if the 8 available time steps should be read (the default is 0, max is 7)
+  debug : {bool}, optional
+    stop and load debugger on exception (the default is False) (the default is False)
+  verbosity : {int}, optional
+    verbosity of the module (the default is 0) (the default is 0)
+  
+  Returns
+  -------
+  pam : pyPamtra Object
+  """
   import netCDF4
 
   data = dict() #  this will hold the data before we create the pamtra object data
@@ -1609,7 +1737,8 @@ def readHIRHAM(dataFile,additionalFile,topoFile,descriptorFile,grid=[0,200,0,218
       if i == 0:
           data['press'][:,:,i] = a_mid[i] + b_mid[i]*ps
       else:
-          data['press'][:,:,i] = a_mid[i-1]*0.5 + (b_mid[i-1]*0.5)*ps
+          # data['press'][:,:,i] = a_mid[i-1]*0.5 + (b_mid[i-1]*0.5)*ps
+          data['press'][:,:,i] = a_mid[i] + (b_mid[i])*ps
 
   Rspec = 8.31432e3 # [Nm/kmol K]
   rho_dry =  data['press']/(Rspec * data['temp']) # IGL: P = rho*Rspec*T
@@ -1708,8 +1837,167 @@ def readHIRHAM(dataFile,additionalFile,topoFile,descriptorFile,grid=[0,200,0,218
 
   return pam
 
-def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,dimY=160,dimZ=25,subGrid=None):
+def readECMWF(fname,constantFile,descriptorFile,landseamask,debug=False,verbosity=0,grid=[0,-1,0,-1]):
+  """
+  read ECMWF IFS data
 
+  reads the data produced for the NAWDEX campaign by Heini Wernli at ETH Zuerich
+  
+  Q          specific humidity                   kg/kg
+  LWC    specific liquid water content    kg/kg
+  IWC    specific ice water content        kg/kg
+  RWC    specific rain water content      kg/kg
+  SWC     specific snow water content   kg/kg
+  T            temperature                           K    -
+  U            u wind component                m/s
+  V            v wind component                m/s
+  PS          surface pressure                 Pa
+  SLP        mean sea level pressure      Pa
+  P            pressure                              Pa
+  SKT        skin temperature                  K
+  u_wind_10m  10 meter wind u component  m/s
+  v_wind_10m  10 meter wind v component  m/s
+  lsm   land-sea-mask            0-1   (0=sea, 1=land)
+  
+  Parameters
+  ----------
+  fname : {str}
+    path and name of data file
+  constantFile : {str}
+    path and name of constant fields
+  descriptorFile : {str}
+    path and name of descriptor file
+  landseamask : {str}
+    path and name of landseamask file
+  debug : {bool}, optional
+    stop and load debugger on exception (the default is False) (the default is False)
+  verbosity : {int}, optional
+    verbosity of the module (the default is 0) (the default is 0)
+  grid : {[int,int,int,int]}, optional
+    read only subgrid of whole model field
+  
+  Returns
+  -------
+  pam : pyPamtra Object
+  """
+  import netCDF4
+
+  nHydro = 4
+
+  variables1D = ["SKT","SLP","U_10M","V_10M","lsm"]
+  variables2D = ["T","P","Q","LWC","IWC","RWC","SWC"]
+
+  if verbosity>0: print fname
+  if debug: import pdb;pdb.set_trace()
+
+  dataTmp = ncToDict(fname)
+  dataC = ncToDict(constantFile,keys=['aklev','bklev','aklay','bklay'])
+  pamData = dict()
+
+  a = grid[0]  
+  b = grid[1]  
+  c = grid[2]  
+  d = grid[3]  
+
+
+  data = dict()
+  data['T'] = dataTmp['T'][0,:,c:d,a:b] + 273.15 # -> K
+
+  shape3D = (data['T'].shape[2],data['T'].shape[1],data['T'].shape[0])
+  shape3Dplus = (shape3D[0],shape3D[1],shape3D[2]+1)
+  shape2D = shape3D[:2]
+
+  dataLSM = ncToDict(landseamask)
+  data['LSM'] = dataLSM['LSM'][0,0,c:d,a:b]
+
+  # bring everything to desired units
+  data['PS'] = dataTmp['PS'][0,0,c:d,a:b] * 100. # -> Pa
+
+  # calculate pressure on half-levels with SLP as level 0
+  pamData['press_lev'] = np.empty(shape3Dplus)
+  pamData['press'] = np.empty(shape3D)
+  pamData['hgt_lev'] = np.empty(shape3Dplus)
+
+  pamData['press_lev'][:,:,0] = np.swapaxes(data['PS'][...],0,1)
+
+  pamData['temp'] = np.empty(shape3D)
+  pamData['temp'] = np.swapaxes(data['T'][:,:,:],0,2)
+  pamData['temp_lev'] = np.empty(shape3Dplus)
+  pamData['temp_lev'][...,1:-1] = (pamData['temp'][...,1:] + pamData['temp'][...,0:-1])*0.5
+  pamData['temp_lev'][...,-1] = pamData['temp_lev'][...,-2]
+  pamData['temp_lev'][...,0] = np.swapaxes(dataTmp['SKT'][0,0,c:d,a:b],0,1)
+
+  for i in range(shape2D[0]):
+    for j in range(shape2D[1]):
+      pamData['press_lev'][i,j,1::] = data['PS'][j,i]*dataC['bklev']+dataC['aklev']*100.
+      pamData['press'][i,j,:] = data['PS'][j,i]*dataC['bklay']+dataC['aklay']*100.
+      # pamData['hgt_lev'][i,j,:] = (10**(np.log10(pamData['press_lev'][i,j,:]/data['PS'][0,0,j,i])/5.2558797)-1.)/-6.8755856e-6
+      pamData['hgt_lev'][i,j,:] = (((data['PS'][j,i]/pamData['press_lev'][i,j,:])**(1./5.257)-1.)* pamData['temp_lev'][i,j,:])/0.0065# (10**(np.log10(pamData['press_lev'][i,j,:]/data['PS'][0,0,j,i])/5.2558797)-1.)/-6.8755856e-6
+
+  pamData['relhum'] = np.empty(shape3D)
+  pamData["relhum"][:,:,:] = (q2rh(np.swapaxes(dataTmp["Q"][0,:,c:d,a:b],0,2),pamData["temp"][:,:,:],pamData["press"][:,:,:]) * 100.)#[:,-2::-1]
+
+  pamData["hydro_q"] = np.zeros(shape3D + (nHydro,)) + np.nan
+  pamData["hydro_q"][:,:,:,0] = np.swapaxes(dataTmp["LWC"][0,:,c:d,a:b],0,2)
+  pamData["hydro_q"][:,:,:,1] = np.swapaxes(dataTmp["IWC"][0,:,c:d,a:b],0,2)
+  pamData["hydro_q"][:,:,:,2] = np.swapaxes(dataTmp["RWC"][0,:,c:d,a:b],0,2)
+  pamData["hydro_q"][:,:,:,3] = np.swapaxes(dataTmp["SWC"][0,:,c:d,a:b],0,2)
+
+  varPairs = [["U10","wind10u"],["V10","wind10v"],["SKT","groundtemp"]]
+
+  for ecmwfVar,pamVar in varPairs:
+    pamData[pamVar] = np.swapaxes(dataTmp[ecmwfVar][0,0,c:d,a:b],0,1)
+
+
+  # surface properties
+  pamData['sfc_type'] = np.around(np.swapaxes(data['LSM'],0,1))
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][:] = 'F'
+  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'S'
+
+  pam = pyPamtra()
+  pam.set["pyVerbose"]= verbosity
+
+  if isinstance(descriptorFile, str):
+    pam.df.readFile(descriptorFile)
+  else:
+    for df in descriptorFile:
+      pam.df.addHydrometeor(df)
+
+  pam.createProfile(**pamData)
+
+  return pam
+
+def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,dimY=160,dimZ=25,subGrid=None):
+  """
+  read MesoNH output as produced by Jean-Pierre Chaboureau for the SIMGEO study
+
+  Parameters
+  ----------
+  fnameBase : {str}
+    base name of file name
+  fnameExt : {str}
+    extension of file name
+  dataDir : {str}, optional
+    path to data directory (the default is ".")
+  debug : {bool}, optional
+    stop and load debugger on exception (the default is False) (the default is False)
+  verbosity : {int}, optional
+    verbosity of the module (the default is 0) (the default is 0)
+  dimX : {int}, optional
+    dimension in x (the default is 160)
+  dimY : {int}, optional
+    dimension in y (the default is 160)
+  dimZ : {int}, optional
+    dimension in z (the default is 25)
+  subGrid : {[int,int,int,int]}, optional
+    only read subgrid (the default is None)
+  
+  Returns
+  -------
+  pam : pyPamtra Object
+  """
   variables = ['ALTITUDE','CLOUD','GEO','GRAUPEL','ICE','PRESSURE','RAIN','RHO','SEAPRES',
               'SEATEMP','SNOW','SURFPRES','TEMP','TEMP2M','TEMPGRD','VAPOR','VAPOR2M','WINDLVLKB','ZSBIS']
   def vapor2rh(rv,t,p):
@@ -1717,6 +2005,7 @@ def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,d
 
     return rh
 
+  if debug: import pdb;pdb.set_trace()
   nhydro = 5
   shape2D = (dimx,dimy,)
   shape3D = (dimx,dimy,dimz,)
@@ -2099,17 +2388,19 @@ def readIcon2momOnFlightTrack(fname, descriptorFile, debug=False, verbosity=0):
   
   # surface properties
   pamData['lat'] = vals['lat'][:]
+  pamData['lon'] = vals['lon'][:]
 #  pamData['lon'] = lon
-  # pamData['wind10u'] = vals['U10M'][Nx]
-  # pamData['wind10v'] = vals['V10M'][Nx]
-  # pamData['groundtemp'] = vals['T_S'][Nx]
+  # pdb.set_trace()  
+  pamData['wind10u'] = vals['u10'][:]
+  pamData['wind10v'] = vals['v10'][:]
+  pamData['groundtemp'] = vals['TS'][:]
 #  pamData['sfc_type'] = np.around(frland*np.ones(shapeSFC))
 #  assert np.all(np.logical_or(0<=pamData['sfc_type'], pamData['sfc_type'] <=1))
 #  pamData['sfc_model'] = np.zeros(shapeSFC)
 #  pamData['sfc_refl'] = np.chararray(shapeSFC)
 #  pamData['sfc_refl'][pamData['sfc_type'] == 0] = 'F' # ocean
 #  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'L' # land
-  
+
   if isinstance(descriptorFile, str):
     pam.df.readFile(descriptorFile)
   else:
@@ -2129,7 +2420,7 @@ def createUsStandardProfile(pam=pyPamtra(),**kwargs):
   hgt_lev is the only mandatory variables
   humidity will be set to zero if not provided, all other variables are guessed by "createProfile"
 
-  values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwritte us staandard if provided
+  values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwrite us standard if provided
 
   '''
 
@@ -2148,7 +2439,7 @@ def _createUsStandardProfile(**kwargs):
   hgt_lev is the only mandatory variables
   humidity will be set to zero if not provided, all other variables are guessed by "createProfile"
 
-  values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwritte us staandard if provided
+  values provided in kwargs will be passed to "createProfile", however, press_lev and temp_lev will overwrite us standard if provided
 
   '''
 
@@ -2184,9 +2475,10 @@ def _createUsStandardProfile(**kwargs):
 #helper function
 def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='netCDF4',tmpDir="/tmp/",skipFiles=[]):
   '''
-  load keys of netcdf file into dictionary
-  by using wildcards in ncFiles, multiple files are possible, they are joint using joinDimension, offsets of e.g. time vector can be corrected by offsetKeys with value to be corrected as key as correction key in value
-  gzip compressed netcdf with extension .gz are possible
+  Load keys of netcdf file into dictionary that is returned.
+  By using wildcards in ncFilePath, multiple files are possible. They are joint using joinDimension. 
+  Offsets of e.g.,, time vector can be corrected by offsetKeys with value to be corrected as key as correction key in value.
+  gzip compressed netcdf with extension .gz are possible.
   '''
   if ncLib == 'netCDF4':
     import netCDF4 as nc

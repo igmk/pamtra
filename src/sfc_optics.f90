@@ -76,7 +76,7 @@ contains
           msg = "Only specular reflection makes sense for land surfaces"
           call report(errorstatus, msg, nameOfRoutine)
         end if
-    else ! default sfc_type == -9999, sfc_model == -9999 and sfc_refl == 'L'
+    else ! default sfc_type == -9999, sfc_model == -9999 and sfc_refl == 'S'
         rt_sfc_emissivity(:,:) = emissivity
         rt_sfc_reflectivity(:,:) = 1._dbl - emissivity
     end if

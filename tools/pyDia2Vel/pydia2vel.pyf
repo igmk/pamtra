@@ -3,12 +3,11 @@
 
 python module pyDia2vel ! in 
     interface  ! in :pyDia2vel
-        module dia2vel ! in :pyDia2vel:dia2vel.f90
-            subroutine dia2vel_heymsfield10_particles_ms_as(errorstatus,ndia,diaspec_si,rho_air_si,nu_si,mass_size_a_si,mass_size_b,area_size_a_si,area_size_b,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+        module dia2vel ! in :pyDia2vel:../../src/dia2vel.f90
+            subroutine dia2vel_heymsfield10_particles_ms_as(errorstatus,ndia,diaspec_si,rho_air_si,nu_si,mass_size_a_si,mass_size_b,area_size_a_si,area_size_b,velspec) ! in :pyDia2vel:../../src/dia2vel.f90:dia2vel
                 use report_module
                 use kinds
                 use constants
-                use settings, only: verbose
                 integer(kind=long_bn) intent(out) :: errorstatus
                 integer, optional,intent(in),check(len(diaspec_si)>=ndia),depend(diaspec_si) :: ndia=len(diaspec_si)
                 real(kind=dbl) dimension(ndia),intent(in) :: diaspec_si
@@ -20,7 +19,7 @@ python module pyDia2vel ! in
                 real(kind=dbl) intent(in) :: area_size_b
                 real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
             end subroutine dia2vel_heymsfield10_particles_ms_as
-            subroutine dia2vel_heymsfield10_particles(errorstatus,ndia,diaspec_si,rho_air_si,nu_si,mass,area,k,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+            subroutine dia2vel_heymsfield10_particles(errorstatus,ndia,diaspec_si,rho_air_si,nu_si,mass,area,k,velspec) ! in :pyDia2vel:../../src/dia2vel.f90:dia2vel
                 use report_module
                 use kinds
                 use constants
@@ -35,7 +34,7 @@ python module pyDia2vel ! in
                 real(kind=dbl) intent(in) :: k
                 real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
             end subroutine dia2vel_heymsfield10_particles
-            subroutine dia2vel_khvorostyanov01_particles(errorstatus,ndia,diaspec_si,rho_air_si,nu_si,mass_si,area_si,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+            subroutine dia2vel_khvorostyanov01_particles(errorstatus,ndia,diaspec_si,rho_air_si,nu_si,mass_si,area_si,velspec) ! in :pyDia2vel:../../src/dia2vel.f90:dia2vel
                 use report_module
                 use kinds
                 use constants
@@ -49,7 +48,22 @@ python module pyDia2vel ! in
                 real(kind=dbl) dimension(ndia),intent(in),depend(ndia) :: area_si
                 real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
             end subroutine dia2vel_khvorostyanov01_particles
-            subroutine dia2vel_khvorostyanov01_spheres(errorstatus,ndia,diaspec,rho_air,my,rho_particle,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+            subroutine dia2vel_khvorostyanov05_particles(errorstatus,ndia,diaspec_si,rho_air_si,nu_si,mass_si,area_si,rho_particle,velspec) ! in :pyDia2vel:../../src/dia2vel.f90:dia2vel
+                use report_module
+                use kinds
+                use constants
+                use settings, only: verbose
+                integer(kind=long_bn) intent(out) :: errorstatus
+                integer, optional,intent(in),check(len(diaspec_si)>=ndia),depend(diaspec_si) :: ndia=len(diaspec_si)
+                real(kind=dbl) dimension(ndia),intent(in) :: diaspec_si
+                real(kind=dbl) intent(in) :: rho_air_si
+                real(kind=dbl) intent(in) :: nu_si
+                real(kind=dbl) dimension(ndia),intent(in),depend(ndia) :: mass_si
+                real(kind=dbl) dimension(ndia),intent(in),depend(ndia) :: area_si
+                real(kind=dbl) dimension(ndia),intent(in),depend(ndia) :: rho_particle
+                real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
+            end subroutine dia2vel_khvorostyanov05_particles
+            subroutine dia2vel_khvorostyanov01_spheres(errorstatus,ndia,diaspec,rho_air,my,rho_particle,velspec) ! in :pyDia2vel:../../src/dia2vel.f90:dia2vel
                 use report_module
                 use kinds
                 use constants
@@ -62,7 +76,7 @@ python module pyDia2vel ! in
                 real(kind=dbl) dimension(ndia),intent(in),depend(ndia) :: rho_particle
                 real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
             end subroutine dia2vel_khvorostyanov01_spheres
-            subroutine dia2vel_khvorostyanov01_drops(errorstatus,ndia,diaspec,rho_air,my,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+            subroutine dia2vel_khvorostyanov01_drops(errorstatus,ndia,diaspec,rho_air,my,velspec) ! in :pyDia2vel:../../src/dia2vel.f90:dia2vel
                 use report_module
                 use kinds
                 use constants
@@ -74,7 +88,7 @@ python module pyDia2vel ! in
                 real(kind=dbl) intent(in) :: my
                 real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
             end subroutine dia2vel_khvorostyanov01_drops
-            subroutine dia2vel_foote69_rain(errorstatus,ndia,diaspec,rho_air,temp,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+            subroutine dia2vel_foote69_rain(errorstatus,ndia,diaspec,rho_air,temp,velspec) ! in :pyDia2vel:../../src/dia2vel.f90:dia2vel
                 use report_module
                 use kinds
                 use constants
@@ -86,7 +100,7 @@ python module pyDia2vel ! in
                 real(kind=dbl) intent(in) :: temp
                 real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
             end subroutine dia2vel_foote69_rain
-            subroutine dia2vel_pavlos_cloud(errorstatus,ndia,diaspec,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+            subroutine dia2vel_pavlos_cloud(errorstatus,ndia,diaspec,velspec) ! in :pyDia2vel:../../src/dia2vel.f90:dia2vel
                 use report_module
                 use kinds
                 use constants
@@ -96,7 +110,7 @@ python module pyDia2vel ! in
                 real(kind=dbl) dimension(ndia),intent(in) :: diaspec
                 real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
             end subroutine dia2vel_pavlos_cloud
-            subroutine dia2vel_metek_rain(errorstatus,ndia,diaspec,rho_air,temp,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+            subroutine dia2vel_metek_rain(errorstatus,ndia,diaspec,rho_air,temp,velspec) ! in :pyDia2vel:../../src/dia2vel.f90:dia2vel
                 use report_module
                 use kinds
                 use constants
@@ -108,7 +122,7 @@ python module pyDia2vel ! in
                 real(kind=dbl) intent(in) :: temp
                 real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
             end subroutine dia2vel_metek_rain
-            subroutine dia2vel_rogers_drops(errorstatus,ndia,diaspec,rho_air,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+            subroutine dia2vel_rogers_drops(errorstatus,ndia,diaspec,rho_air,velspec) ! in :pyDia2vel:../../src/dia2vel.f90:dia2vel
                 use report_module
                 use kinds
                 use constants
@@ -119,7 +133,7 @@ python module pyDia2vel ! in
                 real(kind=dbl) intent(in) :: rho_air
                 real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
             end subroutine dia2vel_rogers_drops
-            subroutine dia2vel_rogers_graupel(errorstatus,ndia,diaspec,velspec) ! in :pyDia2vel:dia2vel.f90:dia2vel
+            subroutine dia2vel_rogers_graupel(errorstatus,ndia,diaspec,velspec) ! in :pyDia2vel:../../src/dia2vel.f90:dia2vel
                 use report_module
                 use kinds
                 use constants
@@ -129,20 +143,402 @@ python module pyDia2vel ! in
                 real(kind=dbl) dimension(ndia),intent(in) :: diaspec
                 real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
             end subroutine dia2vel_rogers_graupel
+            subroutine dia2vel_power_law(errorstatus,ndia,diaspec,vel_size_mod,velspec) ! in :pyDia2vel:../../src/dia2vel.f90:dia2vel
+                use report_module
+                use kinds
+                use constants
+                integer(kind=long_bn) intent(out) :: errorstatus
+                integer, optional,intent(in),check(len(diaspec)>=ndia),depend(diaspec) :: ndia=len(diaspec)
+                real(kind=dbl) dimension(ndia),intent(in) :: diaspec
+                character*30 intent(in) :: vel_size_mod
+                real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
+            end subroutine dia2vel_power_law
+            subroutine dia2vel_corrected_power_law(errorstatus,ndia,diaspec,rho_air,temp,vel_size_mod,velspec) ! in :pyDia2vel:../../src/dia2vel.f90:dia2vel
+                use report_module
+                use kinds
+                use constants
+                use settings, only: verbose
+                integer(kind=long_bn) intent(out) :: errorstatus
+                integer, optional,intent(in),check(len(diaspec)>=ndia),depend(diaspec) :: ndia=len(diaspec)
+                real(kind=dbl) dimension(ndia),intent(in) :: diaspec
+                real(kind=dbl) intent(in) :: rho_air
+                real(kind=dbl) intent(in) :: temp
+                character*30 intent(in) :: vel_size_mod
+                real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
+            end subroutine dia2vel_corrected_power_law
+            subroutine dia2vel_atlas(errorstatus,ndia,mass,vel_size_mod,velspec) ! in :pyDia2vel:../../src/dia2vel.f90:dia2vel
+                use report_module
+                use kinds
+                use constants
+                integer(kind=long_bn) intent(out) :: errorstatus
+                integer, optional,intent(in),check(len(mass)>=ndia),depend(mass) :: ndia=len(mass)
+                real(kind=dbl) dimension(ndia),intent(in) :: mass
+                character*30 intent(in) :: vel_size_mod
+                real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
+            end subroutine dia2vel_atlas
+            subroutine dia2vel_corrected_atlas(errorstatus,ndia,mass,rho_air,temp,vel_size_mod,velspec) ! in :pyDia2vel:../../src/dia2vel.f90:dia2vel
+                use report_module
+                use kinds
+                use constants
+                use settings, only: verbose
+                integer(kind=long_bn) intent(out) :: errorstatus
+                integer, optional,intent(in),check(len(mass)>=ndia),depend(mass) :: ndia=len(mass)
+                real(kind=dbl) dimension(ndia),intent(in) :: mass
+                real(kind=dbl) intent(in) :: rho_air
+                real(kind=dbl) intent(in) :: temp
+                character*30 intent(in) :: vel_size_mod
+                real(kind=dbl) dimension(ndia),intent(out),depend(ndia) :: velspec
+            end subroutine dia2vel_corrected_atlas
         end module dia2vel
-        subroutine viscosity_air(t,eta) ! in :pyDia2vel:viscosity_air.f90
+        subroutine viscosity_air(t,eta) ! in :pyDia2vel:../../src/viscosity_air.f90
             use report_module
             use kinds
             real(kind=dbl) intent(in) :: t
             real(kind=dbl) intent(out) :: eta
         end subroutine viscosity_air
-        subroutine kinematic_viscosity_air(temp,press,mu) ! in :pyDia2vel:viscosity_air.f90
+        subroutine kinematic_viscosity_air(temp,press,mu) ! in :pyDia2vel:../../src/viscosity_air.f90
             use report_module
             use kinds
             real(kind=dbl) intent(in) :: temp
             real(kind=dbl) intent(in) :: press
             real(kind=dbl) intent(out) :: mu
         end subroutine kinematic_viscosity_air
+        module kinds ! in :pyDia2vel:../../src/kinds.f90
+            integer, parameter,optional :: short_bn=selected_int_kind(3)
+            integer, parameter,optional :: long_bn=selected_int_kind(9)
+            integer, parameter,optional :: dbl=selected_real_kind(13,200)
+            integer, parameter,optional :: ext=selected_real_kind(25)
+            integer, parameter,optional :: sgl=selected_real_kind(6,37)
+        end module kinds
+        module report_module ! in :pyDia2vel:../../src/report_module.f90
+            use vars_index, only: i_f,i_h,i_z,i_y,i_x
+            use kinds
+            integer(kind=4), parameter,optional :: info=3
+            integer(kind=4), parameter,optional :: fatal=2
+            integer(kind=4), parameter,optional :: nstatus=3
+            integer(kind=4), optional :: verbose=0
+            integer(kind=4), parameter,optional :: success=0
+            character(len=7), parameter,optional,dimension(4),depend(info,fatal,success,warning) :: status_text=(/'success','warning','fatal','info'/)
+            integer(kind=4), parameter,optional :: warning=1
+            subroutine report(status,message,nameofroutine) ! in :pyDia2vel:../../src/report_module.f90:report_module
+                integer(kind=4) intent(in) :: status
+                character*(*) intent(in) :: message
+                character*(*) intent(in) :: nameofroutine
+            end subroutine report
+            subroutine assert_true(error,logic,message) ! in :pyDia2vel:../../src/report_module.f90:report_module
+                integer intent(inout) :: error
+                logical intent(in) :: logic
+                character*(*) intent(in) :: message
+            end subroutine assert_true
+            subroutine assert_false(error,logic,message) ! in :pyDia2vel:../../src/report_module.f90:report_module
+                integer intent(inout) :: error
+                logical intent(in) :: logic
+                character*(*) intent(in) :: message
+            end subroutine assert_false
+        end module report_module
+        module vars_index ! in :pyDia2vel:../../src/vars_index.f90
+            use kinds
+            integer(kind=4), optional :: i_n=-99
+            integer(kind=4), optional :: i_z=-99
+            integer(kind=4), optional :: i_y=-99
+            integer(kind=4), optional :: i_h=-99
+            integer(kind=4), optional :: i_f=-99
+            integer(kind=4), optional :: i_x=-99
+            integer(kind=4), optional :: i_p=-99
+        end module vars_index
+        module constants ! in :pyDia2vel:../../src/constants.f90
+            use kinds, only: dbl
+            real(kind=8), parameter,optional :: estpt=611.14_dbl
+            real(kind=8), parameter,optional :: almostzero=1d-20
+            real(kind=8), parameter,optional :: sublim_hc=2.8345d+6
+            real(kind=8), parameter,optional :: rho_ice=917._dbl
+            real(kind=8), parameter,optional :: mmv=18.0153d-3
+            real(kind=8), parameter,optional :: delta_d_mono=1.d-8
+            complex(kind=8), parameter,optional :: im=(0.0_dbl, 1.0_dbl)
+            real(kind=8), parameter,optional :: mmd=28.9644d-3
+            real(kind=8), parameter,optional :: n_a=6.0221367d+23
+            real(kind=8), parameter,optional,depend(pi) :: deg2rad=pi/180.0_dbl
+            real(kind=8), parameter,optional :: c=299792458
+            real(kind=8), parameter,optional :: k_b=1.380658d-23
+            real(kind=8), public,parameter,optional,depend(pi) :: mu0=pi*4.0e-07_dbl
+            real(kind=8), parameter,optional :: g=9.80665_dbl
+            real(kind=8), parameter,optional :: rho_water=1000
+            real(kind=8), parameter,optional,depend(pi) :: rad2deg=180.0_dbl/pi
+            real(kind=8), parameter,optional :: r_v=461.5249933083879_dbl
+            real(kind=8), parameter,optional :: tpt=273.16_dbl
+            real(kind=8), parameter,optional :: sky_temp=2.73_dbl
+            real(kind=8), public,parameter,optional,depend(c,mu0) :: eps0=1._dbl/(mu0*c**2)
+            real(kind=8), parameter,optional :: t_abs=273.15_dbl
+            real(kind=8), parameter,optional :: pi=3.141592653589793_dbl
+            real(kind=8), parameter,optional :: r_d=287.0596736665907_dbl
+            real(kind=8), parameter,optional :: vapor_hc=2.5008d+6
+        end module constants
+        module settings ! in :pyDia2vel:../../src/settings.f90
+            use report_module
+            use kinds
+            real(kind=8) dimension(16) :: mu_values
+            integer(kind=4) :: radar_nfft
+            character(len=10) :: tmatrix_db
+            real(kind=8) :: radar_receiver_miscalibration_default
+            character(len=8) :: radar_mode
+            integer(kind=4) :: radar_aliasing_nyquist_interv
+            character(len=300) :: nc_out_file
+            character(len=9) :: frq_str_s
+            real(kind=8), parameter,optional :: missingreal=-9999._dbl
+            integer, parameter,optional :: maxv=64
+            real(kind=8) dimension(16) :: quad_weights
+            integer, parameter,optional :: maxnleg=200
+            logical :: radar_airmotion
+            real(kind=8) dimension(200) :: radar_receiver_miscalibration
+            real(kind=8) :: radar_noise_distance_factor_default
+            character(len=9) :: frq_str_e
+            integer(kind=4) :: randomseed
+            real(kind=8) :: obs_height
+            logical, parameter,optional :: lphase_flag=.true.
+            character(len=1), parameter,optional :: deltam='n'
+            character(len=10) :: radar_attenuation
+            character(len=2) :: outpol
+            integer(kind=4) :: radar_npol
+            logical :: lhyd_scattering
+            real(kind=8) dimension(200) :: radar_peak_min_bins
+            integer, parameter,optional :: src_code=2
+            logical :: passive
+            real(kind=8) :: radar_max_v_default
+            real(kind=8) :: hydro_threshold
+            real(kind=8) dimension(200) :: radar_pnoise0
+            integer(kind=4) dimension(200) :: radar_no_ave
+            character(len=1), parameter,optional :: quad_type='l'
+            real(kind=8) dimension(200) :: radar_k2
+            integer(kind=4) :: radar_npeaks
+            real(kind=8) :: radar_peak_min_snr_default
+            logical :: hydro_limit_density_area
+            logical :: add_obs_height_to_layer
+            real(kind=8) :: radar_airmotion_step_vmin
+            character(len=2) dimension(5) :: radar_pol
+            integer(kind=4) :: radar_no_ave_default
+            integer(kind=4) :: radar_nfft_aliased
+            character(len=1) dimension(5) :: att_pol
+            character(len=15) :: radar_polarisation
+            character(len=3) :: gas_mod
+            real(kind=8) dimension(200) :: radar_noise_distance_factor
+            real(kind=8), parameter,optional :: direct_flux=0._dbl
+            logical :: radar_save_noise_corrected_spectra
+            logical :: hydro_includehydroinrhoair
+            integer(kind=4) :: radar_airmotion_linear_steps
+            real(kind=8) dimension(200) :: freqs
+            real(kind=8) :: radar_airmotion_vmax
+            character(len=300) :: output_path
+            integer(kind=4) :: noutlevels
+            integer, parameter,optional :: numazimuths=1
+            real(kind=8) :: radar_min_v_default
+            character(len=18) :: freq_str
+            character(len=20) :: file_desc
+            real(kind=8) :: radar_airmotion_vmin
+            character(len=3) :: liq_mod
+            real(kind=8) :: radar_k2_default
+            logical :: read_turbulence_ascii
+            character(len=100) :: creator
+            character(len=8) :: radar_airmotion_model
+            logical :: hydro_adaptive_grid
+            character(len=300) :: input_pathfile
+            character(len=300) :: data_path
+            character(len=300) :: tmatrix_db_path
+            integer, parameter,optional :: aziorder=0
+            character(len=300) :: namelist_file
+            integer(kind=4) :: nfrq
+            logical :: lhyd_emission
+            real(kind=8) dimension(200) :: radar_fwhr_beamwidth_deg
+            logical :: write_nc
+            real(kind=8) :: radar_integration_time_default
+            integer, parameter,optional :: nummu=16
+            real(kind=8) dimension(200) :: radar_min_v
+            character(len=7) :: radar_peak_snr_definition
+            logical :: radar_allow_negative_dd_du
+            real(kind=8) :: radar_peak_min_bins_default
+            character(len=1), parameter,optional :: units='t'
+            real(kind=8), parameter,optional :: direct_mu=0._dbl
+            character(len=20) :: moments_file
+            real(kind=8) dimension(200) :: radar_receiver_uncertainty_std
+            logical :: save_psd
+            integer, parameter,optional :: missingint=-9999
+            integer, parameter,optional :: nstokes=2
+            integer(kind=4) :: att_npol
+            real(kind=8), parameter,optional :: radar_kolmogorov_constant=0.5
+            character(len=300) :: input_file
+            logical :: radar_use_hildebrand
+            logical :: radar_convolution_fft
+            real(kind=8) :: radar_fwhr_beamwidth_deg_default
+            character(len=300) :: descriptor_file_name
+            real(kind=8) :: hydro_softsphere_min_density
+            logical :: active
+            integer, parameter,optional :: maxlay=3000
+            real(kind=8) dimension(200) :: radar_max_v
+            logical :: save_ssp
+            logical :: radar_use_wider_peak
+            character(len=8) dimension(200) :: frqs_str
+            real(kind=8) :: radar_pnoise0_default
+            logical :: lhyd_absorption
+            logical :: in_python
+            logical :: conserve_mass_rescale_dsd
+            logical :: lgas_extinction
+            real(kind=8) :: radar_receiver_uncertainty_std_default
+            logical :: radar_smooth_spectrum
+            integer, parameter,optional :: maxfreq=200
+            integer, parameter,optional :: maxleg=200
+            logical :: liblapack
+            real(kind=8) dimension(200) :: radar_peak_min_snr
+            logical :: hydro_fullspec
+            real(kind=8) :: emissivity
+            real(kind=8) dimension(200) :: radar_integration_time
+            subroutine settings_read(errorstatus) ! in :pyDia2vel:../../src/settings.f90:settings
+                use kinds
+                integer(kind=4) intent(out) :: errorstatus
+            end subroutine settings_read
+            subroutine test_settings(errorstatus) ! in :pyDia2vel:../../src/settings.f90:settings
+                use kinds
+                integer(kind=4) intent(out) :: errorstatus
+            end subroutine test_settings
+            subroutine fillrealvalues(setarray,default_bn) ! in :pyDia2vel:../../src/settings.f90:settings
+                use kinds
+                real(kind=8) dimension(*),intent(inout) :: setarray
+                real(kind=8) intent(in) :: default_bn
+            end subroutine fillrealvalues
+            subroutine add_settings(errorstatus) ! in :pyDia2vel:../../src/settings.f90:settings
+                use rt_utilities, only: lobatto_quadrature,gauss_legendre_quadrature,double_gauss_quadrature
+                use kinds
+                integer(kind=4) intent(out) :: errorstatus
+            end subroutine add_settings
+            subroutine settings_fill_default ! in :pyDia2vel:../../src/settings.f90:settings
+                use nan, only: nan_dbl
+                use kinds
+            end subroutine settings_fill_default
+            subroutine print_settings ! in :pyDia2vel:../../src/settings.f90:settings
+            end subroutine print_settings
+        end module settings
+        function rho_air(t,p) ! in :pyDia2vel:../../src/rho_air.f90
+            use report_module
+            use kinds
+            real(kind=8) intent(in) :: t
+            real(kind=8) intent(in) :: p
+            real(kind=8) :: rho_air
+        end function rho_air
+        module nan ! in :pyDia2vel:../../src/nan.f90
+            function nan_dbl() ! in :pyDia2vel:../../src/nan.f90:nan
+                use kinds, only: dbl
+                real(kind=8) :: nan_dbl
+            end function nan_dbl
+        end module nan
+        module rt_utilities ! in :pyDia2vel:../../src/rt_utilities.f90
+            use kinds, only: dbl,long
+            subroutine planck_function(temp,units,wavelength,planck) ! in :pyDia2vel:../../src/rt_utilities.f90:rt_utilities
+                use kinds
+                real(kind=8) :: temp
+                character*1 :: units
+                real(kind=8) :: wavelength
+                real(kind=8) :: planck
+            end subroutine planck_function
+            subroutine gauss_legendre_quadrature(num,abscissas,weights) ! in :pyDia2vel:../../src/rt_utilities.f90:rt_utilities
+                use kinds
+                integer :: num
+                real(kind=8) dimension(1) :: abscissas
+                real(kind=8) dimension(1) :: weights
+            end subroutine gauss_legendre_quadrature
+            subroutine double_gauss_quadrature(num,abscissas,weights) ! in :pyDia2vel:../../src/rt_utilities.f90:rt_utilities
+                use kinds
+                integer :: num
+                real(kind=8) dimension(*) :: abscissas
+                real(kind=8) dimension(*) :: weights
+            end subroutine double_gauss_quadrature
+            subroutine lobatto_quadrature(num,abscissas,weights) ! in :pyDia2vel:../../src/rt_utilities.f90:rt_utilities
+                use kinds
+                integer :: num
+                real(kind=8) dimension(*) :: abscissas
+                real(kind=8) dimension(*) :: weights
+            end subroutine lobatto_quadrature
+            subroutine number_sums(nstokes,nlegen,coef,dosum) ! in :pyDia2vel:../../src/rt_utilities.f90:rt_utilities
+                use kinds
+                integer :: nstokes
+                integer :: nlegen
+                real(kind=8) dimension(6,*) :: coef
+                integer dimension(6) :: dosum
+            end subroutine number_sums
+            subroutine sum_legendre(nlegen,coef,x,dosum,phase_matrix) ! in :pyDia2vel:../../src/rt_utilities.f90:rt_utilities
+                use kinds
+                integer :: nlegen
+                real(kind=8) dimension(6,*) :: coef
+                real(kind=8) :: x
+                integer dimension(6) :: dosum
+                real(kind=8) dimension(4,4) :: phase_matrix
+            end subroutine sum_legendre
+            subroutine rotate_phase_matrix(phase_matrix1,mu1,mu2,delphi,cos_scat,phase_matrix2,nstokes) ! in :pyDia2vel:../../src/rt_utilities.f90:rt_utilities
+                use kinds
+                real(kind=8) dimension(4,4) :: phase_matrix1
+                real(kind=8) :: mu1
+                real(kind=8) :: mu2
+                real(kind=8) :: delphi
+                real(kind=8) :: cos_scat
+                real(kind=8) dimension(4,4) :: phase_matrix2
+                integer :: nstokes
+            end subroutine rotate_phase_matrix
+            subroutine matrix_symmetry(nstokes,matrix1,matrix2) ! in :pyDia2vel:../../src/rt_utilities.f90:rt_utilities
+                use kinds
+                integer :: nstokes
+                real(kind=8) dimension(4,4) :: matrix1
+                real(kind=8) dimension(4,4) :: matrix2
+            end subroutine matrix_symmetry
+            subroutine fourier_matrix(aziorder,numpts,nstokes,real_matrix,basis_matrix) ! in :pyDia2vel:../../src/rt_utilities.f90:rt_utilities
+                use kinds
+                integer :: aziorder
+                integer :: numpts
+                integer :: nstokes
+                real(kind=8) dimension(4,4,*) :: real_matrix
+                real(kind=8) dimension(4,4,*) :: basis_matrix
+            end subroutine fourier_matrix
+            subroutine fourier_basis(numbasis,order,numpts,direction,basis_vector,real_vector) ! in :pyDia2vel:../../src/rt_utilities.f90:rt_utilities
+                use kinds
+                integer :: numbasis
+                integer :: order
+                integer :: numpts
+                integer :: direction
+                real(kind=8) dimension(*) :: basis_vector
+                real(kind=8) dimension(*) :: real_vector
+            end subroutine fourier_basis
+            subroutine fft1dr(data,n,isign) ! in :pyDia2vel:../../src/rt_utilities.f90:rt_utilities
+                use kinds
+                real(kind=8) dimension(*) :: data
+                integer :: n
+                integer :: isign
+            end subroutine fft1dr
+            subroutine fftc(data,n,phase) ! in :pyDia2vel:../../src/rt_utilities.f90:rt_utilities
+                use kinds
+                real(kind=8) dimension(*) :: data
+                integer :: n
+                real(kind=8) dimension(*) :: phase
+            end subroutine fftc
+            subroutine makephase(phase,nmax) ! in :pyDia2vel:../../src/rt_utilities.f90:rt_utilities
+                use kinds
+                real(kind=8) dimension(*) :: phase
+                integer :: nmax
+            end subroutine makephase
+            subroutine fixreal(data,nyquist,n,isign,phase) ! in :pyDia2vel:../../src/rt_utilities.f90:rt_utilities
+                use kinds
+                real(kind=8) dimension(*) :: data
+                real(kind=8) dimension(2) :: nyquist
+                integer :: n
+                integer :: isign
+                real(kind=8) dimension(*) :: phase
+            end subroutine fixreal
+            subroutine convert_output(units,outpol,nstokes,nout,wavelen,fluxcode,output) ! in :pyDia2vel:../../src/rt_utilities.f90:rt_utilities
+                use kinds
+                character*1 :: units
+                character*2 :: outpol
+                integer, optional,check(shape(output,0)==nstokes),depend(output) :: nstokes=shape(output,0)
+                integer, optional,check(shape(output,1)==nout),depend(output) :: nout=shape(output,1)
+                real(kind=8) :: wavelen
+                integer :: fluxcode
+                real(kind=8) dimension(nstokes,nout) :: output
+            end subroutine convert_output
+        end module rt_utilities
     end interface 
 end python module pyDia2vel
 

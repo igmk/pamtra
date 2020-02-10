@@ -1,6 +1,6 @@
 subroutine get_gasabs &
-(errorstatus,&      ! out
-freq)              ! in
+    (errorstatus,&      ! out
+    freq)               ! in
     ! Description:
     !  Based on on the namelist parameter gas_mod, the routine for calculating the
     !  gas absorption due to air (N2 and O2) and water vapor for the input frequency

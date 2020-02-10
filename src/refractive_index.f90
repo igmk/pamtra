@@ -1,3 +1,5 @@
+! The subroutines in this file look like are NOT called by any other part of pamtra. Maybe we can get rid of them
+
 subroutine refractive_index(errorstatus,type, t, f, particle_size, as_ratio, particle_mass, ref)
 
     use kinds

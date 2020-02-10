@@ -1,15 +1,272 @@
 module rayleigh_gans
 
   use kinds
-  use constants, only: pi,c, Im, rho_ice
-  use settings, only: active,passive, nummu, mu_values, nstokes, quad_weights, maxnleg, lhyd_absorption, lphase_flag
+  use constants, only: pi, c, Im, rho_ice
+  use settings, only: active, passive, nummu, mu_values, nstokes, quad_weights, maxnleg, lhyd_absorption, lphase_flag
   use report_module
   use mie_scat_utilities  
-  use vars_index, only: i_x,i_y, i_z, i_h
+  use vars_index, only: i_x, i_y, i_z, i_h, i_p
   implicit none
 
 
   contains
+
+  subroutine calc_ssrga(errorstatus, &
+      freq, &
+      liq_ice, &
+      nbins, &
+      dmax, &
+      del_d, &
+      ndens, &
+      mass, &
+      refre, &
+      refim, & 
+      rg_kappa, &
+      rg_beta, &
+      rg_gamma, &
+      rg_zeta, &
+      as_ratio,& 
+      canting, &
+      scatter_matrix,&
+      extinct_matrix,&
+      emis_vector,&
+      back_spec,&
+      Sback)
+    
+    use settings, only: nummu, nstokes, radar_npol, radar_pol
+    implicit none
+
+    real(kind=dbl), intent(in) :: freq  ! frequency [Hz]
+    integer, intent(in) :: liq_ice
+    integer, intent(in) :: nbins
+    real(kind=dbl), intent(in), dimension(nbins) :: dmax
+    real(kind=dbl), intent(in), dimension(nbins) :: del_d    
+    real(kind=dbl), intent(in), dimension(nbins) :: ndens
+    real(kind=dbl), intent(in), dimension(nbins) :: mass ! in mie I have density
+    real(kind=dbl), intent(in), dimension(nbins) :: as_ratio
+    real(kind=dbl), intent(in), dimension(nbins) :: canting
+    real(kind=dbl), intent(in) :: refre
+    real(kind=dbl), intent(in) :: refim !positive(?)
+    real(kind=dbl), intent(in) :: rg_kappa
+    real(kind=dbl), intent(in) :: rg_beta
+    real(kind=dbl), intent(in) :: rg_gamma
+    real(kind=dbl), intent(in) :: rg_zeta
+    real(kind=dbl), intent(out), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix
+    real(kind=dbl), intent(out), dimension(nstokes,nstokes,nummu) :: extinct_matrix
+    real(kind=dbl), intent(out), dimension(nstokes,nummu) :: emis_vector
+    real(kind=dbl), intent(out), dimension(radar_npol,nbins) :: back_spec
+    real(kind=dbl), intent(out), dimension(2,2) :: Sback
+
+    ! Internal variables for single particles to cumulate over PSD
+    real(kind=dbl), dimension(nstokes,nummu,nstokes,nummu,2) :: scatter_matrix_part
+    real(kind=dbl), dimension(nstokes,nstokes,nummu) :: extinct_matrix_part
+    real(kind=dbl), dimension(nstokes,nummu) :: emis_vector_part
+    real(kind=dbl), dimension(2,2) :: Sback_part
+
+    ! Parameters for single particles
+    real(kind=dbl) :: ndens_eff, del_d_eff, beta
+
+    ! Indexes
+    integer :: ir ! for particle size
+
+    ! Other variables to be checked
+    character(1) :: quad
+    integer :: azimuth_num, azimuth0_num
+
+    !real(kind=dbl), intent(out) :: extinction
+    !real(kind=dbl), intent(out) :: albedo
+    !real(kind=dbl), intent(out) :: back_scatt
+    !integer, parameter :: maxn  = 5000
+    !real(kind=dbl), intent(out), dimension(maxnleg) :: legen1, legen2, legen3, legen4
+    !real(kind=dbl), dimension(maxn) :: sump1, coef1, sump2, coef2,   &
+    !                                   sump3, coef3, sump4, coef4
+    !complex(kind=dbl), dimension(maxn) :: a, b
+    !real(kind=dbl), intent(out), dimension(nbins) :: back_spec
+    !integer, intent(out) :: nlegen
+
+    !real(kind=dbl) :: wavelength
+    !real(kind=dbl) :: volume !volume of solid ice with same mass
+    !real(kind=dbl) :: K2 !dielectric variable square norm
+    !real(kind=dbl) :: wave_num !wavenumber
+    !real(kind=dbl) :: x !electrical size
+    !real(kind=dbl) :: term1, term2 ! partial terms in the ssrg formula
+    !real(kind=dbl) :: d_wave !size along beam propagation
+    !real(kind=dbl) :: prefactor, shape_fact, phas_func
+    !real(kind=dbl) :: pl, pl1, pl2
+    !real(kind=dbl) :: qext, qscat, qback, cabs, scatter, n_tot, del_d_eff, ndens_eff
+    !real(kind=dbl) :: sumqe, sumqs, sumqback, tmp
+    !real(kind=dbl) :: mu(maxn), wts(maxn)
+
+    !real(kind=dbl) :: angular_dep, scat_angle_rad
+    !real(kind=dbl), dimension(2*nummu) :: angles_rad, phas_func
+
+    !integer(kind=long) :: ii, i, l, m
+    !integer(kind=long) :: jj
+    !integer(kind=long) :: jmax
+    !integer(kind=long) :: ia
+    !integer(kind=long) :: nterms, nleg, nquad
+    !integer(kind=long) :: ia1
+    !integer(kind=long) :: ia2
+
+    !complex(kind=dbl) :: dielectric_const, K
+    !complex(kind=dbl) :: s11,s22 ! elements of amplitude matrix
+
+    integer(kind=long), intent(out) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
+    character(len=30) :: nameOfRoutine = 'calc_ssrga'
+
+    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)    
+      
+    if (verbose >= 4) print*,"frequency,ref_index,phase,nbins,dmax,del_d,ndens,mass,as_ratio"
+    if (verbose >= 4) print*,freq,refre+im*refim,liq_ice,nbins,dmax,del_d,"N ",&
+                             ndens,"rho ", mass,"AR ",as_ratio
+
+    err = 0
+
+    call assert_false(err,(isnan(freq) .or. freq < 0.d0), "nan or negative frequency")
+    call assert_false(err,(isnan(refre) .or. isnan(refim)), "nan ref_index")
+    call assert_true(err,(nbins>0), "nbins>0")
+    !call assert_true(err,(lhyd_absorption), "lhyd_absorption must be true for tmatrix, false has yet to be implemented")
+    call assert_false(err,(any(isnan(dmax)) .or. any(dmax <= 0.d0)), "nan or negative dmax")
+    call assert_false(err,(any(isnan(del_d)) .or. any(del_d <= 0.d0)), "nan del_d")
+    call assert_false(err,(any(isnan(ndens)) .or. any(ndens < 0.d0)), "nan or negative ndens")
+    call assert_true(err,SUM(ndens)>=0, "sum(ndens) must be greater equal zero")    
+    call assert_false(err,(any(isnan(mass)) .or. any(mass < 0.d0)), "nan or negative mass")
+    call assert_false(err,any(isnan(as_ratio)) .or. any(as_ratio <= 0.d0), "nan or negative as_ratio")
+    call assert_false(err,any(isnan(canting)) .or. any(canting < 0.d0), "nan or negative canting")
+    if (err > 0) then
+      errorstatus = fatal
+      msg = "assertation error"
+      call report(errorstatus, msg, nameOfRoutine)
+      return
+    end if
+
+    !T Matrix settings
+    !alpha = 0.0_dbl    ! orientation of the particle [°] not needed for ssrga since the alpha is ignored in the area function
+    azimuth_num = 30 
+    azimuth0_num = 1   
+    quad ="L" !quadrature
+
+    !initialize
+    back_spec(:,:) = 0.d0
+    scatter_matrix = 0.d0
+    extinct_matrix = 0.d0
+    emis_vector = 0.d0
+
+    do ir = 1, nbins
+      print*,'particle n ', ir
+      ndens_eff = ndens(ir)
+      del_d_eff = del_d(ir)
+      beta = canting(ir)
+
+      !in case we have no hydrometeors, we need no tmatrix calculations!
+      if (ndens_eff == 0.d0) then
+        if (verbose >= 4) print*, "Skipped iteration", ir, "because ndens_eff", ndens_eff
+        CYCLE
+      end if
+      call assert_true(err,ndens_eff>0, "nan or negative ndens_eff")
+      call assert_true(err,del_d_eff>0, "nan or negative del_d_eff")
+      call assert_true(err,mass(ir)>0, "nan or negative density(ir)")
+      if (err > 0) then
+        errorstatus = fatal
+        msg = "assertation error"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+      end if   
+      
+      !if ((phase == -1) .and. (density(ir) /= 917.d0)) then ! this part doesn't mean anything for ssrga
+      !  mMix = eps_mix((1.d0,0.d0),refre+im*refim,density(ir))
+      !else
+      !  mMix = refre+im*refim
+      !end if      
+      !mindex =conjg(mMix) !different convention
+
+      ! Again this part is not useful for ssrga that works with Dmax and aspect ratio along the electric path
+      !we want the volume equivalent radius
+      !if (as_ratio(ir) <= 1) then
+      !  !oblate, with axis of rotation vertically
+      !  axi = 0.5_dbl*dmax(ir)*as_ratio(ir)**(1.0_dbl/3.0_dbl) 
+      !else 
+      !  !prolate, with axis of rotation vertically
+      !  axi = 0.5_dbl*dmax(ir)/as_ratio(ir)**(2.0_dbl/3.0_dbl) 
+      !end if
+
+      ! Here we call ssrga for a single particle in a single orientation
+      !call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
+      !                           as_ratio(ir), alpha, beta, azimuth_num, azimuth0_num,&
+      !                           scatter_matrix_part,extinct_matrix_part,emis_vector_part, Sback_part)
+      if (err /= 0) then
+        msg = 'error in calc_single_tmatrix!'
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
+        return
+      end if
+      do i_p= 1, radar_npol
+        if (radar_pol(i_p) == "NN") then
+          !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is locking from BELOW, sc
+          !back_spec(i_p,ir) = 4*pi*ndens_eff*scatter_matrix_part(1,16,1,16,2)
+          back_spec(i_p,ir) = 4*pi*ndens_eff*Sback_part(1,1)
+        else if (radar_pol(i_p) == "HH") then
+          !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
+          back_spec(i_p,ir) = 2*pi*ndens_eff*( &
+                            + Sback_part(1,1) &
+                            - Sback_part(1,2) & 
+                            - Sback_part(2,1) & 
+                            + Sback_part(2,2))
+        else if (radar_pol(i_p) == "VV") then
+          back_spec(i_p,ir) = 2*pi*ndens_eff*( &
+                            + Sback_part(1,1) &
+                            + Sback_part(1,2) & 
+                            + Sback_part(2,1) & 
+                            + Sback_part(2,2))
+        else if (radar_pol(i_p) == "HV") then
+          back_spec(i_p,ir) = 2*pi*ndens_eff*DABS( & !avoid massive cancellation error
+                            + Sback_part(1,1) & ! The off diagonal terms are equal in backscattering
+                            - Sback_part(2,2)) 
+        else if (radar_pol(i_p) == "VH") then
+          back_spec(i_p,ir) = 2*pi*ndens_eff*DABS( & !avoid massive cancellation error
+                            + Sback_part(1,1) & ! The off diagonal terms are equal in backscattering
+                            - Sback_part(2,2))
+        else
+          msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)
+          err = fatal
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+        end if
+        ! print*,'Sback_part ',Sback_part(1,1), Sback_part(1,2), Sback_part(2,1), Sback_part(2,2)
+        ! print*, radar_pol(i_p), back_spec(i_p,ir)
+      end do ! radar_npol
+      scatter_matrix = scatter_matrix + scatter_matrix_part * ndens_eff * del_d_eff
+      extinct_matrix = extinct_matrix + extinct_matrix_part * ndens_eff * del_d_eff
+      emis_vector = emis_vector + emis_vector_part * ndens_eff * del_d_eff
+      Sback = Sback + Sback_part * ndens_eff * del_d_eff
+    end do !nbins
+    call assert_false(err,any(isnan(scatter_matrix)),&
+        "nan in scatter matrix")
+    call assert_false(err,any(isnan(extinct_matrix)),&
+        "nan in extinct_matrix")
+    call assert_false(err,any(isnan(emis_vector)),&
+        "nan in emis_vector")
+    call assert_false(err,any(isnan(back_spec)),&
+        "nan in back_spec")
+    if (err > 0) then
+      errorstatus = fatal
+      msg = "assertation error"
+      call report(errorstatus, msg, nameOfRoutine)
+      print*, radar_pol(i_p), back_spec
+      print*, '###################'
+      print*, radar_pol(i_p), Sback_part
+      return
+    end if   
+
+    errorstatus = err
+    if (verbose >= 2) call report(info,'End of ', nameOfRoutine) 
+    return
+
+  end subroutine calc_ssrga
+
 
   subroutine calc_self_similar_rayleigh_gans_rt3(&
       errorstatus, &
@@ -217,7 +474,7 @@ module rayleigh_gans
       return
     end if         
     nlegen = 2 * nterms 
-    nlegen = min(maxnleg-1, nlegen) 
+    nlegen = min(maxnleg-1, nlegen)
     nquad = (nlegen + 2 * nterms + 2) / 2 
     if (nquad.gt.maxn) then
       errorstatus = fatal

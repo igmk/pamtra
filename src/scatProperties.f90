@@ -80,7 +80,7 @@ contains
       calc_self_similar_rayleigh_gans_passive, &
       calc_self_similar_rayleigh_gans_rt3, &
       calc_rayleigh_gans, &
-      calc_rayleigh
+      calc_rayleigh, calc_ssrga
     use vars_rt, only: rt_kexttot,&
       rt_back,&
       rt_scattermatrix, &
@@ -120,6 +120,7 @@ contains
     real(kind=dbl), dimension(nstokes,nstokes,nummu,2) :: extinct_matrix_hydro
     real(kind=dbl), dimension(nstokes,nummu,2) :: emis_vector_hydro
     real(kind=dbl), dimension(radar_nfft_aliased) :: radar_spec_hydro
+    real(kind=dbl), dimension(2,2) :: Sback_hydro
     real(kind=dbl), dimension(nbin) :: num_density
     real(kind=dbl), dimension(radar_npol) :: back_hydro
     real(kind=dbl), dimension(radar_npol,nbin) :: back_spec_dia
@@ -200,6 +201,7 @@ contains
     extinct_matrix_hydro(:,:,:,:)   = 0.d0
     scatter_matrix_hydro(:,:,:,:,:) = 0.d0
     radar_spec_hydro(:) = 0.d0
+    Sback_hydro(:,:)    = 0.d0
 
     legen_coef1_hydro(:)   = 0.d0
     legen_coef2_hydro(:)  = 0.d0
@@ -265,7 +267,8 @@ contains
         scatter_matrix_hydro(:,:,:,:,1:2),&
         extinct_matrix_hydro(:,:,:,1),&
         emis_vector_hydro(:,:,1),&
-        back_spec_dia)
+        back_spec_dia,&
+        Sback_hydro)
 
       if (allocated(as_ratio_list)) deallocate(as_ratio_list)
       if (allocated(canting_list)) deallocate(canting_list)
@@ -284,29 +287,32 @@ contains
       emis_vector_hydro(:,:,2) = emis_vector_hydro(:,:,1)
 
       do i_p= 1, radar_npol
-        if (radar_pol(i_p) == "NN") then
-           back_hydro(i_p) = scatter_matrix_hydro(1,16,1,16,2) 
+        if (radar_pol(i_p) == "NN") then 
+          back_hydro(i_p) = Sback_hydro(1,1)
            ! scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), 
            ! in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). 
            ! this definition is looking from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
         else if (radar_pol(i_p) == "HH") then
           !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
-          back_hydro(i_p) = + scatter_matrix_hydro(1,16,1,16,2) &
-            - scatter_matrix_hydro(1,16,2,16,2) & 
-            - scatter_matrix_hydro(2,16,1,16,2) & 
-            + scatter_matrix_hydro(2,16,2,16,2) 
+          back_hydro(i_p) = ( Sback_hydro(1,1) &
+                            - Sback_hydro(1,2) & 
+                            - Sback_hydro(2,1) & 
+                            + Sback_hydro(2,2))*0.5
         else if (radar_pol(i_p) == "VV") then
-          !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
-          back_hydro(i_p) = + scatter_matrix_hydro(1,16,1,16,2) &
-            + scatter_matrix_hydro(1,16,2,16,2) & 
-            + scatter_matrix_hydro(2,16,1,16,2) & 
-            + scatter_matrix_hydro(2,16,2,16,2) 
+          back_hydro(i_p) = ( Sback_hydro(1,1) &
+                            + Sback_hydro(1,2) & 
+                            + Sback_hydro(2,1) & 
+                            + Sback_hydro(2,2))*0.5
         else if (radar_pol(i_p) == "HV") then
-          !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
-          back_hydro(i_p) = + scatter_matrix_hydro(1,16,1,16,2) &
-            - scatter_matrix_hydro(1,16,2,16,2) & 
-            + scatter_matrix_hydro(2,16,1,16,2) & 
-            - scatter_matrix_hydro(2,16,2,16,2) 
+          back_hydro(i_p) = ( Sback_hydro(1,1) &
+                            - Sback_hydro(1,2) & 
+                            + Sback_hydro(2,1) & 
+                            - Sback_hydro(2,2))*0.5
+        else if (radar_pol(i_p) == "VH") then
+          back_hydro(i_p) = ( Sback_hydro(1,1) &
+                            + Sback_hydro(1,2) & 
+                            - Sback_hydro(2,1) & 
+                            - Sback_hydro(2,2))*0.5 
         else
           errorstatus = fatal
           msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)
@@ -321,25 +327,131 @@ contains
         print*, "S22",scatter_matrix_hydro(2,16,2,16,2) 
       end if
 
-      back_hydro(:) = 4*pi*back_hydro(:)!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squard entries!
+      back_hydro(:) = 4*pi*back_hydro(:)!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squared entries!
       kext_hydro = extinct_matrix_hydro(1,1,16,1) !11 of extinction matrix (=not polarized), at 0°, first quadrature. equal to extinct_matrix(1,1,16,2)
 
-      !       back_hydro(1) = scatter_matrix_hydro(1,16,1,16,2) !scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). this definition is lokkiing from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
-      !       !hh
-      !       back_hydro(2) = (scatter_matrix_hydro(1,16,1,16,2) &
-      !            - scatter_matrix_hydro(1,16,2,16,2) &
-      !            - scatter_matrix_hydro(2,16,1,16,2) &
-      !            + scatter_matrix_hydro(2,16,2,16,2) ) /2.d0
-      !       !vv
-      !       back_hydro(3) = (scatter_matrix_hydro(1,16,1,16,2) &
-      !            + scatter_matrix_hydro(1,16,2,16,2) &
-      !            + scatter_matrix_hydro(2,16,1,16,2) &
-      !            + scatter_matrix_hydro(2,16,2,16,2) ) /2.d0
-      !       !vh 
-      !       back_hydro(4) = (scatter_matrix_hydro(1,16,1,16,2) &
-      !            - scatter_matrix_hydro(1,16,2,16,2) &
-      !            + scatter_matrix_hydro(2,16,1,16,2) &
-      !            - scatter_matrix_hydro(2,16,2,16,2) ) /2.d0
+    else if (scat_name(:5) == "ssrga") then
+      if (len(trim(scat_name)) > 5) then
+        pos1 = 7
+        nn = 0
+        tokenized(4) = '1.0' ! default value for rg_zeta
+        pos2 = index(scat_name(pos1:), "_")
+        do
+          nn = nn + 1
+          if (pos2 == 0) then ! no more _
+            tokenized(nn) = scat_name(pos1:)
+            exit
+          end if
+          !print*, scat_name(pos1:pos1+pos2-2), nn
+          tokenized(nn) = scat_name(pos1:pos1+pos2-2)
+          pos1 = pos2+pos1
+          pos2 = index(scat_name(pos1:), "_")
+        end do
+        read(tokenized(1),*) rg_kappa
+        read(tokenized(2),*) rg_beta
+        read(tokenized(3),*) rg_gamma
+        read(tokenized(4),*) rg_zeta
+      else
+        !take default values for aggregates of bullet rosettes or columns from Hogan and Westbrook 2014
+        rg_kappa = 0.25d0 !0.19d0 1.00_1.66_0.04
+        rg_beta = 1.0d0   !0.23d0
+        rg_gamma = 1.66d0 !5.d0/3.d0
+        rg_zeta = 0.04 !1.0d0
+      end if
+
+      call calc_ssrga(err,&
+        freq*1.d9,&
+        liq_ice,&
+        nbin,&
+        diameter2scat, &
+        delta_d_ds, &
+        num_density,&
+        mass_ds, &
+        refre, &
+        refim, & !positive(?)
+        rg_kappa, &
+        rg_beta, &
+        rg_gamma, &
+        rg_zeta, &
+        as_ratio_list,& 
+        canting_list, &
+        scatter_matrix_hydro(:,:,:,:,1:2),&
+        extinct_matrix_hydro(:,:,:,1),&
+        emis_vector_hydro(:,:,1),&
+        back_spec_dia,&
+        Sback_hydro)
+
+
+        !OUT from rt3 style not needed
+        !kext_hydro,&
+        !salb_hydro,&
+        !back_hydro_ssrg,&
+        !nlegen_coef_hydro,&
+        !legen_coef1_hydro,&
+        !legen_coef2_hydro,&
+        !legen_coef3_hydro,&
+        !legen_coef4_hydro,&
+        !back_spec_ssrg
+
+      if (allocated(as_ratio_list)) deallocate(as_ratio_list)
+      if (allocated(canting_list)) deallocate(canting_list)
+
+      if (err /= 0) then
+        msg = 'error in calc_ssrga!'
+        call report(err, msg, nameOfRoutine)
+        errorstatus = err
+        return
+      end if
+
+      !fill up the matrices
+      scatter_matrix_hydro(:,:,:,:,4) = scatter_matrix_hydro(:,:,:,:,1) 
+      scatter_matrix_hydro(:,:,:,:,3) = scatter_matrix_hydro(:,:,:,:,2)
+      extinct_matrix_hydro(:,:,:,2) = extinct_matrix_hydro(:,:,:,1)
+      emis_vector_hydro(:,:,2) = emis_vector_hydro(:,:,1)
+
+      do i_p= 1, radar_npol
+        if (radar_pol(i_p) == "NN") then 
+          back_hydro(i_p) = Sback_hydro(1,1)
+           ! scatter_matrix(A,B;C;D;E) backscattering is M11 of Mueller or Scattering Matrix (A;C=1), 
+           ! in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). 
+           ! this definition is looking from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
+        else if (radar_pol(i_p) == "HH") then
+          !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
+          back_hydro(i_p) = ( Sback_hydro(1,1) &
+                            - Sback_hydro(1,2) & 
+                            - Sback_hydro(2,1) & 
+                            + Sback_hydro(2,2))*0.5
+        else if (radar_pol(i_p) == "VV") then
+          back_hydro(i_p) = ( Sback_hydro(1,1) &
+                            + Sback_hydro(1,2) & 
+                            + Sback_hydro(2,1) & 
+                            + Sback_hydro(2,2))*0.5
+        else if (radar_pol(i_p) == "HV") then
+          back_hydro(i_p) = ( Sback_hydro(1,1) &
+                            - Sback_hydro(1,2) & 
+                            + Sback_hydro(2,1) & 
+                            - Sback_hydro(2,2))*0.5
+        else if (radar_pol(i_p) == "VH") then
+          back_hydro(i_p) = ( Sback_hydro(1,1) &
+                            + Sback_hydro(1,2) & 
+                            - Sback_hydro(2,1) & 
+                            - Sback_hydro(2,2))*0.5 
+        else
+          errorstatus = fatal
+          msg = 'do not understand radar_pol(i_p): '//radar_pol(i_p)
+          call report(errorstatus, msg, nameOfRoutine)
+          return
+        end if
+      end do
+      if (verbose >= 5) then
+        print*, "S11",scatter_matrix_hydro(1,16,1,16,2)
+        print*, "S12",scatter_matrix_hydro(1,16,2,16,2) 
+        print*, "S21",scatter_matrix_hydro(2,16,1,16,2) 
+        print*, "S22",scatter_matrix_hydro(2,16,2,16,2) 
+      end if
+
+      back_hydro(:) = 4*pi*back_hydro(:)!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squared entries!
+      kext_hydro = extinct_matrix_hydro(1,1,16,1) !11 of extinction matrix (=not polarized), at 0°, first quadrature. equal to extinct_matrix(1,1,16,2)  
 
       ! rayleigh gans only for active!
     else if (scat_name(:16) == "ss-rayleigh-gans") then
@@ -391,10 +503,21 @@ contains
         kext_hydro = 0.d0
         salb_hydro = 0.d0
 
-        ! for mie polarisatuion does not matter
+        ! for back Rayleigh HH and VV polarisatuion does not matter and cross-pol is null
         do i_p=1, radar_npol
-          back_spec_dia(i_p,:) = back_spec_rg(:)
-          back_hydro(i_p) = back_hydro_rg
+          if ((radar_pol(i_p) == "NN").or.(radar_pol(i_p) == "HH").or.(radar_pol(i_p) == "VV")) then
+            back_spec_dia(i_p,:) = back_spec_rg(:)
+            back_hydro(i_p) = back_hydro_rg
+          else if ((radar_pol(i_p) == "HV").or.(radar_pol(i_p) == "VH")) then
+            back_spec_dia(i_p,:) = 0.0d0
+            back_hydro(i_p) = 0.0d0
+          else
+            msg = 'do not understand radar_pol(i_p):'//radar_pol(i_p)
+            err = fatal
+            call report(err, msg, nameOfRoutine)
+            errorstatus = err
+            return
+          end if
         end do
 
       else if (passive) then
@@ -464,10 +587,21 @@ contains
       if (allocated(as_ratio_list)) deallocate(as_ratio_list)
       if (allocated(canting_list)) deallocate(canting_list)
 
-      ! for mie polarisatuion does not matter
+      ! for back Rayleigh HH and VV polarisatuion does not matter and cross-pol is null
       do i_p=1, radar_npol
-        back_spec_dia(i_p,:) = back_spec_rg(:)
-        back_hydro(i_p) = back_hydro_rg
+        if ((radar_pol(i_p) == "NN").or.(radar_pol(i_p) == "HH").or.(radar_pol(i_p) == "VV")) then
+          back_spec_dia(i_p,:) = back_spec_rg(:)
+          back_hydro(i_p) = back_hydro_rg
+        else if ((radar_pol(i_p) == "HV").or.(radar_pol(i_p) == "VH")) then
+          back_spec_dia(i_p,:) = 0.0d0
+          back_hydro(i_p) = 0.0d0
+        else
+          msg = 'do not understand radar_pol(i_p):'//radar_pol(i_p)
+          err = fatal
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+        end if
       end do
 
       if (err /= 0) then
@@ -500,10 +634,21 @@ contains
       if (allocated(as_ratio_list)) deallocate(as_ratio_list)
       if (allocated(canting_list)) deallocate(canting_list)
 
-      ! for mie polarisatuion does not matter
+      ! for back Rayleigh HH and VV polarisatuion does not matter and cross-pol is null
       do i_p=1, radar_npol
-        back_spec_dia(i_p,:) = back_spec_rg(:)
-        back_hydro(i_p) = back_hydro_rg
+        if ((radar_pol(i_p) == "NN").or.(radar_pol(i_p) == "HH").or.(radar_pol(i_p) == "VV")) then
+          back_spec_dia(i_p,:) = back_spec_rg(:)
+          back_hydro(i_p) = back_hydro_rg
+        else if ((radar_pol(i_p) == "HV").or.(radar_pol(i_p) == "VH")) then
+          back_spec_dia(i_p,:) = 0.0d0
+          back_hydro(i_p) = 0.0d0
+        else
+          msg = 'do not understand radar_pol(i_p):'//radar_pol(i_p)
+          err = fatal
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+        end if
       end do
 
       if (err /= 0) then
@@ -539,11 +684,23 @@ contains
         legen_coef4_hydro,&
         back_spec_mie)    
 
-      ! for mie polarisation does not matter at forward or backward scattering
+      ! for back mie HH and VV polarisatuion does not matter and cross-pol is null
       do i_p=1, radar_npol
-        back_spec_dia(i_p,:) = back_spec_mie(:)
-        back_hydro(i_p) = back_hydro_mie
+        if ((radar_pol(i_p) == "NN").or.(radar_pol(i_p) == "HH").or.(radar_pol(i_p) == "VV")) then
+          back_spec_dia(i_p,:) = back_spec_mie(:)
+          back_hydro(i_p) = back_hydro_mie
+        else if ((radar_pol(i_p) == "HV").or.(radar_pol(i_p) == "VH")) then
+          back_spec_dia(i_p,:) = 0.0d0
+          back_hydro(i_p) = 0.0d0
+        else
+          msg = 'do not understand radar_pol(i_p):'//radar_pol(i_p)
+          err = fatal
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+        end if
       end do
+
       nlegen_coef = max(nlegen_coef,nlegen_coef_hydro)
       if (err /= 0) then
         msg = 'error in calc_mie_spheres!'
@@ -575,13 +732,12 @@ contains
         read(tokenized(4),*) rg_zeta
       else
         !take default values for aggregates of bullet rosettes or columns from Hogan and Westbrook 2014
-        rg_kappa = 0.19d0
-        rg_beta = 0.23d0
-        rg_gamma = 5.d0/3.d0
-        rg_zeta = 1.0d0
+        rg_kappa = 0.25d0 !0.19d0 1.00_1.66_0.04
+        rg_beta = 1.0d0   !0.23d0
+        rg_gamma = 1.66d0 !5.d0/3.d0
+        rg_zeta = 0.04 !1.0d0
       end if
-      !print*, rg_kappa, rg_beta, rg_gamma, rg_zeta
-
+      
       call calc_self_similar_rayleigh_gans_rt3(err,&
         freq*1d9,&
         liq_ice,&
@@ -609,11 +765,23 @@ contains
         legen_coef4_hydro,&
         back_spec_ssrg)
 
-      ! for ssrg polarisation does not matter at forward or backward scattering
+      ! for back SSRGA HH and VV polarisatuion does not matter and cross-pol is null
       do i_p=1, radar_npol
-        back_spec_dia(i_p,:) = back_spec_ssrg(:) ! spectrum??
-        back_hydro(i_p) = back_hydro_ssrg        ! total ??
+        if ((radar_pol(i_p) == "NN").or.(radar_pol(i_p) == "HH").or.(radar_pol(i_p) == "VV")) then
+          back_spec_dia(i_p,:) = back_spec_ssrg(:)
+          back_hydro(i_p) = back_hydro_ssrg
+        else if ((radar_pol(i_p) == "HV").or.(radar_pol(i_p) == "VH")) then
+          back_spec_dia(i_p,:) = 0.0d0
+          back_hydro(i_p) = 0.0d0
+        else
+          msg = 'do not understand radar_pol(i_p):'//radar_pol(i_p)
+          err = fatal
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+        end if
       end do
+
       nlegen_coef = max(nlegen_coef,nlegen_coef_hydro)
       if (err /= 0) then
         msg = 'error in calc_self_similar_rayleigh_gans_rt3!'
@@ -643,6 +811,7 @@ contains
         errorstatus = err
         return
       end if
+
     else if (scat_name(:6) == "hongdb") then
       read(scat_name(8:8),*) hong_type
       call dda_db_hong(err,freq, layer_t, hong_type, refre-Im*refim,nbin,&
@@ -663,6 +832,7 @@ contains
         errorstatus = err
         return
       end if
+    
     else
       msg = 'do not understand scat_name: '//scat_name
       errorstatus = fatal

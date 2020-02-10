@@ -113,7 +113,7 @@ subroutine hydrometeor_extinction(errorstatus)
 
     hydros: do i_h = 1,n_hydro
 
-      !these ones are fore sure 1D
+      !these ones are for sure 1D
       hydro_name = hydro_name_arr(i_h)
       liq_ice    = liq_ice_arr(i_h)
       scat_name  = TRIM(scat_name_arr(i_h))
@@ -149,7 +149,6 @@ subroutine hydrometeor_extinction(errorstatus)
           ! not neccesary to set rt_hydros_present to false - its default value is false!
           CYCLE
         end if
-
       else
         moment_in  = moment_in_arr(i_h)
         dist_name  = dist_name_arr(i_h)
@@ -268,7 +267,7 @@ subroutine hydrometeor_extinction(errorstatus)
         pressure   = atmo_press(i_x,i_y,i_z)
 
 ! In case moment_in = 13 (number_concentration (#/kg) and mass_mixing ratio (kg/kg))
-! if number_concentration is less than 1 particle per kg, cycle.
+! if number_concentration is less than 1 particle per kg or absolute content is below threshold, cycle.
         if (moment_in .eq. 13 .and. (q_h < hydro_threshold .or. n_tot <= 1.)) then
           if (verbose >=3) print*, i_x,i_y,i_z,i_h,hydro_name, "q_h or n_tot below threshold", q_h, n_tot
           CYCLE
