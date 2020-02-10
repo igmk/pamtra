@@ -188,9 +188,6 @@ def PamtraFortranWrapper(
       print "Fortran view on hydro_fullspec variables"
       vars_hydrofullspec.print_hydrofs_vars()
 
-
-
-
   ##now, finally rund the model
   pamError = pypamtralib.run_pamtra()
   #if error > 0: raise RuntimeError("Error in run_pamtra")
