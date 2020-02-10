@@ -14,7 +14,7 @@ run the virtual machine with Pamtra on your computer:
 * Virtualbox https://www.virtualbox.org/
 * Vagrant https://www.vagrantup.com/
 
-Change the directory to tools/v in the terminal (on linux and 
+Change the directory to tools/virtual_machine in the terminal (on linux and 
 mac os `cd tools/virtual_machine`) and type 
 
     vagrant up
@@ -59,8 +59,7 @@ If you miss any of your favorite python packages, do
 
 Make sure that the correct python version is selected with `conda activate `. 
 
-The `update.sh` script in the shared folder can be used to update the pamtra model
-and the data provided on the FTP server if they get updated.
+The `update.sh` script in the shared folder can be used to update the pamtra model.
 
 
 Dependencies on Ubuntu
@@ -80,11 +79,11 @@ More recent Ubuntu versions have `python-netcdf4` instead of `python-netcdf`. Fo
 
     sudo pip install netcdf4
 
-If the system's numpy version is tto recent, use pip ::
+If the system's numpy version is too recent, use pip ::
 
     pip install --user netcdf4
 
-Not all numpy versions work with Pamtra, 1.11.3 and 1.12.1 are confirmed to work. 1.13.3 and 1.14.3 do not work. You can check the numpy version in python ::
+Not all numpy versions work with Pamtra, but 1.12.1 is confirmed to work. 1.13.3 and 1.14.3 do not work. You can check the numpy version in python ::
 
     import numpy
     print(numpy.__version__
