@@ -6,6 +6,7 @@ module rayleigh_gans
   use report_module
   use mie_scat_utilities  
   use vars_index, only: i_x, i_y, i_z, i_h, i_p
+  use rt_utilities, only: lobatto_quadrature
   implicit none
 
 
@@ -75,14 +76,6 @@ module rayleigh_gans
 
     !real(kind=dbl), intent(out) :: extinction
     !real(kind=dbl), intent(out) :: albedo
-    !real(kind=dbl), intent(out) :: back_scatt
-    !integer, parameter :: maxn  = 5000
-    !real(kind=dbl), intent(out), dimension(maxnleg) :: legen1, legen2, legen3, legen4
-    !real(kind=dbl), dimension(maxn) :: sump1, coef1, sump2, coef2,   &
-    !                                   sump3, coef3, sump4, coef4
-    !complex(kind=dbl), dimension(maxn) :: a, b
-    !real(kind=dbl), intent(out), dimension(nbins) :: back_spec
-    !integer, intent(out) :: nlegen
 
     !real(kind=dbl) :: wavelength
     !real(kind=dbl) :: volume !volume of solid ice with same mass
@@ -93,7 +86,7 @@ module rayleigh_gans
     !real(kind=dbl) :: d_wave !size along beam propagation
     !real(kind=dbl) :: prefactor, shape_fact, phas_func
     !real(kind=dbl) :: pl, pl1, pl2
-    !real(kind=dbl) :: qext, qscat, qback, cabs, scatter, n_tot, del_d_eff, ndens_eff
+    !real(kind=dbl) :: qext, qscat, qback, cabs, scatter, n_tot
     !real(kind=dbl) :: sumqe, sumqs, sumqback, tmp
     !real(kind=dbl) :: mu(maxn), wts(maxn)
 
@@ -193,11 +186,11 @@ module rayleigh_gans
       !end if
 
       ! Here we call ssrga for a single particle in a single orientation
-      !call calc_single_tmatrix(err,quad,nummu,frequency,mindex,axi, nstokes,&
-      !                           as_ratio(ir), alpha, beta, azimuth_num, azimuth0_num,&
-      !                           scatter_matrix_part,extinct_matrix_part,emis_vector_part, Sback_part)
+      call calc_single_ssrga(err, quad, nummu, freq, refre, refim, dmax(ir), nstokes, &
+                             as_ratio(ir), beta, azimuth_num, azimuth0_num, &
+                             scatter_matrix_part, extinct_matrix_part, emis_vector_part, Sback_part)
       if (err /= 0) then
-        msg = 'error in calc_single_tmatrix!'
+        msg = 'error in calc_single_ssrga!'
         call report(err, msg, nameOfRoutine)
         errorstatus = err
         return
@@ -266,6 +259,209 @@ module rayleigh_gans
     return
 
   end subroutine calc_ssrga
+
+
+  subroutine calc_single_ssrga(errorstatus, &
+      quad, qua_num, frequency, refre, refim, dmax, nstokes, &
+      as_ratio, beta, azimuth_num, azimuth0_num, &
+      scatter_matrix, extinct_matrix, emis_vector, Sback)
+
+    ! this is a first attempt for the implementation of a full polarimetric rt4-style ssrga subroutine
+    ! It is done by following the concept already implemented in tmatrix. A lot can be done in order to
+    ! simplify this scheme. For now I just want it to work. Some properties are the same for all the
+    ! particles and should not be calculated within the loop
+
+    implicit none
+
+    character(1), intent(in) :: quad
+    integer, intent(in) :: qua_num
+    real(kind=dbl), intent(in) :: frequency
+    !complex(kind=ext) :: ref_index
+    real(kind=dbl), intent(in) :: refre
+    real(kind=dbl), intent(in) :: refim
+    real(kind=dbl), intent(in) :: dmax
+    integer, intent(in) :: nstokes
+    real(kind=dbl), intent(in) :: as_ratio
+    real(kind=dbl), intent(in) :: beta
+    integer, intent(in) :: azimuth_num
+    integer, intent(in) :: azimuth0_num
+    real(kind=dbl), intent(out), dimension(nstokes,qua_num,nstokes,qua_num,2) :: scatter_matrix
+    real(kind=dbl), intent(out), dimension(nstokes,nstokes,qua_num) :: extinct_matrix
+    real(kind=dbl), intent(out), dimension(nstokes,qua_num) :: emis_vector
+    real(kind=dbl), intent(out), dimension(2,2) :: Sback
+
+    real(kind=dbl) :: lam, wave_num
+    real(kind=dbl) :: qua_angle(qua_num), qua_weights(qua_num)
+    real(kind=dbl) :: scatt_matrix_tmp1_11, scatt_matrix_tmp1_12,&
+                      scatt_matrix_tmp1_21, scatt_matrix_tmp1_22
+    real(kind=dbl) :: emis_vector_tmp2_11, emis_vector_tmp2_12, &
+                      emis_vector_tmp1_11(2*qua_num),&
+                      emis_vector_tmp1_12(2*qua_num)
+    integer :: qua_start
+    integer :: ii, jj, kk, ll, m, n, kkk1
+    real(kind=dbl) :: fact_sca, phi_weights, phi0_weights, thet_weights, thet0_weights
+    real(kind=dbl) :: thet, thet0, phi, phi0
+    complex(kind=dbl) :: fact_ext, s11, s12, s21, s22
+
+    integer(kind=long), intent(out) :: errorstatus
+    integer(kind=long) :: err = 0
+    character(len=80) :: msg
+    character(len=30) :: nameOfRoutine = 'ssrga_calc_single'
+
+    if (verbose >= 3) call report(info,'Start of ', nameOfRoutine) 
+    if (verbose >= 5) print*, "quad,qua_num,frequency,ref_index,dmax, nstokes,as_ratio, beta, azimuth_num, azimuth0_num"
+    if (verbose >= 5) print*, quad, qua_num, frequency, refre+Im*refim, dmax, nstokes, as_ratio, beta, azimuth_num, azimuth0_num
+
+    lam = c/(frequency)
+    wave_num = 2.0_dbl*pi/lam
+
+    err = 0
+    call assert_true(err,as_ratio> 0.d0,"nan or negative in as_ratio")    
+    call assert_true(err,dmax> 0.d0,"nan or negative in dmax")    
+    call assert_true(err,frequency> 0.d0,"nan or negative in frequency")   
+    call assert_true(err,(wave_num > 0.d0),"nan or <= 0 in wave-num")
+    call assert_true(err,(lam > 0.d0),"nan or <= 0 in lambda")
+    call assert_true(err,(as_ratio > 0.d0),"nan or <= 0 in as_ratio")
+
+    if (err > 0) then
+      errorstatus = fatal
+      msg = "assertation error"
+      call report(errorstatus, msg, nameOfRoutine)
+      return
+    end if
+
+    !refre ! mrr = REAL(ref_index)
+    !refim ! mri = abs(IMAG(ref_index))
+    if ((active .eqv. .true.) .and. (passive .eqv. .false.)) then
+      qua_start = 16 ! avoid all angles computations if only backscattering is needed? but than how to calculate extinction?
+    else
+      qua_start = 1
+    end if
+
+    ! call the tmatrix routine amplq -> fills common block /TMAT/
+    !call tmatrix_amplq(err,lam, mrr,mri, AXI, AS_RATIO, RAT, NP,nmax)
+
+    extinct_matrix = 0.d0
+    scatter_matrix = 0.d0
+    emis_vector = 0.d0
+    emis_vector_tmp2_11 = 0.d0
+    emis_vector_tmp2_12 = 0.d0
+    ! if the particle is rotationally-symmetric, reduce calculation time for orientation-averaging
+    ! if not, do orientation averaging for incident and scatterred directions ?????
+
+    !      write(*,*)wave_num
+
+    fact_sca = 0.5e0/(wave_num**2)
+    fact_ext = 2.0e0*pi*cmplx(0.,1.)/wave_num**2.e0
+    ! calculate the quadrature angle, number and weight according to quadrature method
+    ! subroutine lobatto_quadrature and gauss_legendre_quadrature in the file named 'refractive_index.f'
+    if (quad(1:1).eq.'l'.or.quad(1:1).eq.'L') then
+      call lobatto_quadrature(qua_num, qua_angle, qua_weights) ! I need to know them?
+    else
+      errorstatus = fatal
+      msg = "did not understand 'quad'="//quad
+      call report(errorstatus, msg, nameOfRoutine)
+      return
+    end if
+
+    ! for each quadrature angle
+    ii = 1 ! what is your purpose?
+    do 1241 jj = qua_start, qua_num
+      thet0=acos(qua_angle(jj)*(-1.)**(real(ii)-1))*180.d0/pi
+      thet0_weights = qua_weights(jj)
+      if(thet0.gt.179.9999)thet0=180.0d0
+      ! initializing the emis vector summation
+      emis_vector_tmp1_11 = 0.d0
+      emis_vector_tmp1_12 = 0.d0
+
+      do 1242 kk = 1, 2
+        kkk1 = kk
+        do 1243 ll = qua_start, qua_num
+          thet=acos(qua_angle(ll)*(-1.)**(real(kk)-1))*180.d0/pi
+          thet_weights=qua_weights(ll)
+          if(thet.gt.179.9999)thet=180.d0
+
+          do 1244 m = 1, azimuth0_num ! 1
+            phi0 = 360.0d0/(real(azimuth0_num))*(real(m)-1.d0)
+            phi0_weights = 1.d0/360.d0*(360.d0/azimuth0_num)
+            !        if(azimuth0_num.eq.1)phi0 = 0.0
+            scatt_matrix_tmp1_11 = 0.d0
+            scatt_matrix_tmp1_12 = 0.d0
+
+            scatt_matrix_tmp1_21 = 0.d0
+            scatt_matrix_tmp1_22 = 0.d0
+
+            do 1245 n = 1, azimuth_num ! 30
+              phi = 360.d0/real(azimuth_num)*(real(n)-1.d0)
+              phi_weights = 1.d0/360.d0*(360.d0/azimuth_num)
+
+              ! Here I should put the call to ssrga and convert the ssrga output to tmatrix reference frame and Mishenko notation
+              !CALL tmatrix_AMPL(NMAX,dble(LAM),THET0,THET,PHI0,PHI,ALPHA,BETA,&
+              !                  S11,S12,S21,S22)
+
+              s11 = s11*wave_num
+              s12 = s12*wave_num
+              s21 = s21*wave_num
+              s22 = s22*wave_num
+              ! print*,s11,'S tmm ',s22, s12, s21
+              ! print*,'Z0 tmm ', scatt_matrix_tmp1_11, scatt_matrix_tmp1_22, scatt_matrix_tmp1_12, scatt_matrix_tmp1_21
+              ! print*, "angles ",THET0,THET,PHI0,PHI,alpha,beta
+              if ((thet .eq. 180.0d0) .and. (phi .eq. phi0)) then ! this condition for backscattering is ok as long as the tmatrix routin sample that point
+                Sback(1,1) = s11*dconjg(s11)+s12*dconjg(s12)+s21*dconjg(s21)+s22*dconjg(s22)
+                Sback(1,2) = s11*dconjg(s11)-s12*dconjg(s12)+s21*dconjg(s21)-s22*dconjg(s22)
+                Sback(2,1) = s11*dconjg(s11)+s12*dconjg(s12)-s21*dconjg(s21)-s22*dconjg(s22)
+                Sback(2,2) = s11*dconjg(s11)-s12*dconjg(s12)-s21*dconjg(s21)+s22*dconjg(s22)
+                Sback = fact_sca*Sback
+                ! print*,"backscattering ", Sback, fact_sca, phi_weights
+              end if
+              scatt_matrix_tmp1_11 = scatt_matrix_tmp1_11 + (fact_sca*&
+                  (s11*dconjg(s11)+s12*dconjg(s12)+s21*dconjg(s21)+s22*dconjg(s22)))*phi_weights
+            
+              scatt_matrix_tmp1_12 = scatt_matrix_tmp1_12 + (fact_sca*&
+                  (s11*dconjg(s11)-s12*dconjg(s12)+s21*dconjg(s21)-s22*dconjg(s22)))*phi_weights
+            
+              scatt_matrix_tmp1_21 = scatt_matrix_tmp1_21 + (fact_sca*&
+                  (s11*dconjg(s11)+s12*dconjg(s12)-s21*dconjg(s21)-s22*dconjg(s22)))*phi_weights
+            
+              scatt_matrix_tmp1_22 = scatt_matrix_tmp1_22 + (fact_sca*&
+                  (s11*dconjg(s11)-s12*dconjg(s12)-s21*dconjg(s21)+s22*dconjg(s22)))*phi_weights
+                    !print*,'Z1 tmm ',scatt_matrix_tmp1_11,scatt_matrix_tmp1_22, scatt_matrix_tmp1_12, scatt_matrix_tmp1_21
+              if ((phi0 .eq. phi) .and. (thet0 .eq. thet)) then ! forward scattering
+                extinct_matrix(1,1,jj) = extinct_matrix(1,1,jj)+phi0_weights*(-real((s11 + s22)*fact_ext))
+                extinct_matrix(1,2,jj) = extinct_matrix(1,2,jj)+phi0_weights*(-real((s11 - s22)*fact_ext))
+                extinct_matrix(2,1,jj) = extinct_matrix(2,1,jj)+phi0_weights*(-real((s11 - s22)*fact_ext))
+                extinct_matrix(2,2,jj) = extinct_matrix(2,2,jj)+phi0_weights*(-real((s11 + s22)*fact_ext))
+              end if
+            1245 continue   ! phi
+
+            scatter_matrix(1,ll,1,jj,kkk1) = scatter_matrix(1,ll,1,jj,kkk1) + scatt_matrix_tmp1_11*phi0_weights
+            scatter_matrix(1,ll,2,jj,kkk1) = scatter_matrix(1,ll,2,jj,kkk1) + scatt_matrix_tmp1_12*phi0_weights
+            scatter_matrix(2,ll,1,jj,kkk1) = scatter_matrix(2,ll,1,jj,kkk1) + scatt_matrix_tmp1_21*phi0_weights
+            scatter_matrix(2,ll,2,jj,kkk1) = scatter_matrix(2,ll,2,jj,kkk1) + scatt_matrix_tmp1_22*phi0_weights
+
+          1244 continue  ! phi0
+
+          ! calculate the summation of the scattering matrix in the whole sphere
+          emis_vector_tmp1_11(ll+(kk-1)*qua_num) = scatter_matrix(1,ll,1,jj,kkk1)*thet_weights*2.*pi
+          emis_vector_tmp1_12(ll+(kk-1)*qua_num) = scatter_matrix(1,ll,2,jj,kkk1)*thet_weights*2.*pi
+
+        1243 continue ! thet ll
+
+      1242 continue ! emispheres
+
+      emis_vector(1,jj) = extinct_matrix(1,1,jj) - sum(emis_vector_tmp1_11)
+      emis_vector(2,jj) = extinct_matrix(1,2,jj) - sum(emis_vector_tmp1_12)
+
+    1241 continue ! thet0 jj
+    
+    errorstatus = err
+    if (verbose >= 3) call report(info,'End of ', nameOfRoutine) 
+    return
+
+
+
+
+  end subroutine calc_single_ssrga
 
 
   subroutine calc_self_similar_rayleigh_gans_rt3(&
@@ -402,34 +598,34 @@ module rayleigh_gans
     if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
     err = 0
 
-      call assert_true(err,(liq_ice==-1),&
-          "only for ice, liq_ice must be -1")  
-      call assert_true(err,all(mass>=0),&
-          "mass must be positive")  
-      call assert_true(err,all(ndens>=0),&
-          "ndens must be positive")
-      call assert_true(err,SUM(ndens)>=0,&
-          "sum(ndens) must be greater equal zero")    
-      call assert_true(err,all(diameter>0),&
-          "diameter must be positive")   
-      call assert_true(err,all(del_d>0),&
-          "del_d must be positive")   
-      call assert_true(err,(nbins>0),&
-          "nbins must be positive")   
-      call assert_true(err,(freq>0),&
-          "freq must be positive")   
-      call assert_true(err,all((canting == 0) .or. (canting == 90)),&
-          "Not yet implemented: canting must be zero or 90deg")   
-      call assert_true(err,all(as_ratio > 0.d0),&
-          "nan or negative as_ratio")
-!      call assert_false(err,active,&
-!          "'active' must be turned off")
-      if (err > 0) then
-          errorstatus = fatal
-          msg = "assertation error"
-          call report(errorstatus, msg, nameOfRoutine)
-          return
-      end if    
+    call assert_true(err,(liq_ice==-1),&
+        "only for ice, liq_ice must be -1")  
+    call assert_true(err,all(mass>=0),&
+        "mass must be positive")  
+    call assert_true(err,all(ndens>=0),&
+        "ndens must be positive")
+    call assert_true(err,SUM(ndens)>=0,&
+        "sum(ndens) must be greater equal zero")    
+    call assert_true(err,all(diameter>0),&
+        "diameter must be positive")   
+    call assert_true(err,all(del_d>0),&
+        "del_d must be positive")   
+    call assert_true(err,(nbins>0),&
+        "nbins must be positive")   
+    call assert_true(err,(freq>0),&
+        "freq must be positive")   
+    call assert_true(err,all((canting == 0) .or. (canting == 90)),&
+        "Not yet implemented: canting must be zero or 90deg")   
+    call assert_true(err,all(as_ratio > 0.d0),&
+        "nan or negative as_ratio")
+!    call assert_false(err,active,&
+!        "'active' must be turned off")
+    if (err > 0) then
+      errorstatus = fatal
+      msg = "assertation error"
+      call report(errorstatus, msg, nameOfRoutine)
+      return
+    end if    
 
     ! initialize intent(out) variables with 0
     extinction = 0.0d0
@@ -660,10 +856,10 @@ module rayleigh_gans
     ! Decide how many terms are needed
     jmax = floor(5.d0*x/pi + 1.d0)
     ! Evaluate summation
-    ! summ = 0.0d0 ! not needed anymore, initialized by the first term with rg_zeta
+    ! initialize the first term with the modified first term rg_zeta
     summ = zeta*(2.d0)**(-gamma)*(1.d0/(2.d0*(x+pi))**2 + 1.d0/(2.d0*(x-pi))**2)
     do jj = 2, jmax
-      summ = summ + (2.d0*jj)**(-gamma) &!* sin(x)**2 &
+      summ = summ + (2.d0*jj)**(-gamma) &
               *(1.d0/(2.d0*(x+pi*jj))**2 + 1.d0/(2.d0*(x-pi*jj))**2)
     end do
     summ = summ*beta*sin(x)**2

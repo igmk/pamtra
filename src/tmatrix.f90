@@ -473,8 +473,8 @@ module tmatrix
       real(kind=dbl), intent(out), dimension(2,2) :: Sback
 
       real(kind=dbl) :: wave_num
-      real(kind=dbl) ::thet0, thet, phi, phi0,&
-                       rat, phi_weights, phi0_weights
+      real(kind=dbl) :: thet0, thet, phi, phi0, &
+                        rat, phi_weights, phi0_weights
       integer ::  m, n, ii,jj,kk,ll, kkk1
 
       !       parameter(qua_num=8, nstokes = 4)
@@ -657,7 +657,7 @@ module tmatrix
       emis_vector(2,jj) = extinct_matrix(1,2,jj) - sum(emis_vector_tmp1_12)
 
     1241 continue ! thet0 jj
-    
+
     errorstatus = err
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine) 
     return
