@@ -187,6 +187,10 @@ class pamDescriptorFile(object):
       particle aspect ratio in the middle of the bin [no unit]
     dataFullSpec["canting"] : 
       particle canting the middle of the bin in [deg]
+    dataFullSpec["fallvelocity"] : 
+      particle fall velocity in [m/s]. Only used if any value > 0 m/s, 
+      otherwise the fall velocity relation provided in the descriptor file is 
+      used.
 
     Notes
     -----
@@ -207,4 +211,7 @@ class pamDescriptorFile(object):
     self.dataFullSpec["area_ds"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
     self.dataFullSpec["as_ratio"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
     self.dataFullSpec["canting"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
-  
+    self.dataFullSpec["fallvelocity"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
+
+
+    

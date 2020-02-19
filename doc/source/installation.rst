@@ -14,7 +14,7 @@ run the virtual machine with PAMTRA on your computer:
 * Virtualbox https://www.virtualbox.org/
 * Vagrant https://www.vagrantup.com/
 
-Change the directory to tools/v in the terminal (on linux and 
+Change the directory to tools/virtual_machine in the terminal (on linux and 
 mac os `cd tools/virtual_machine`) and type 
 
     vagrant up

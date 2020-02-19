@@ -43,9 +43,9 @@ export PYTHONPATH=$PYTHONPATH:$HOME/lib/python
 conda activate base
 conda config --add channels conda-forge 
 # Pamtra1 hates apparently conda's libgfortran... so use pip!
-pip install -q cython numpy scipy xarray dask numba jupyter matplotlib ipython pytest netcdf4 
-pip install -q arm_pyart
-
+# pip install -q cython numpy scipy xarray dask numba jupyter matplotlib ipython pytest netcdf4 
+# pip install -q arm_pyart
+conda install jupyter libgfortran
 #launch jupyter on startup
 mkdir -p /home/vagrant/.jupyter
 (crontab -l ; echo "@reboot cd /home/vagrant; source ~/.bashrc;  /home/vagrant/miniconda/bin/jupyter notebook  --ip 0.0.0.0 --no-browser >> jupyter.log")| crontab -
