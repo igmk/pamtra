@@ -179,9 +179,9 @@ Then, the python routines can be installed with ::
 
 Start PAMTRA
 ******************
-Although PAMTRA can be used without additional data by simply setting the data path to an empty directory, 
+Although PAMTRA can be used without additional data by simply setting the data path to an empty directory, :: 
 
-  echo 'export PAMTRA_DATADIR=""'' >> ~/.bashrc
+  echo 'export PAMTRA_DATADIR=""' >> ~/.bashrc
 
 it is recommended that you download the data. The data includes the land surface emissivity maps and some scattering databases. They can be found on the servers of University of Cologne
 
@@ -189,7 +189,7 @@ it is recommended that you download the data. The data includes the land surface
 
 Unpack the data and set the $PAMTRA_DATADIR variables ::
 
-  echo 'export PAMTRA_DATADIR="wherever/it/is/"'' >> ~/.bashrc
+  echo 'export PAMTRA_DATADIR="wherever/it/is/"' >> ~/.bashrc
 
 To start using pyPamtra, you have to open a new bash session or source the ~/.bashrc ::
 
