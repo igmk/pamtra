@@ -83,6 +83,8 @@ subroutine radar_spectrum(&
     delta_air, rho_air, rho, viscosity, nu, Ze, K, &
     min_V_aliased, max_V_aliased, k_factor
     integer :: ii, jj
+    logical :: use_vel_spec
+
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
     character(len=80) :: msg
@@ -124,7 +126,6 @@ subroutine radar_spectrum(&
       return
     end if
 
-
     if (back == 0) then 
         if (verbose >= 2) call report(info,'Taking shortcut because of back==0', nameOfRoutine)
         particle_spec(:) =0.d0
@@ -132,11 +133,9 @@ subroutine radar_spectrum(&
         if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
         return
     end if    
-
     !initialize
     back_vel_spec_ext(:) = 0.d0
     vel_spec_ext(:) = 0.d0
-
     ! get |K|**2 and lambda
 
 !     K2 = dielec_water(0.D0,radar_K2_temp-t_abs,frequency)
@@ -145,13 +144,20 @@ subroutine radar_spectrum(&
 
     diameter_spec_cp(:) = diameter_spec(:)
 
-
     rho = rho_air(temp, press)
     call viscosity_air(temp,viscosity)
     nu = viscosity/rho !kinematic viscosity
 
-    if ((hydro_fullSpec) .and. (ANY(hydrofs_fallvelocity > 0.d0))) then
+    !hydrofs_fallvelocity is not always allocated, so this is why this is so
+    !complex
+    use_vel_spec = .false.
+    if (hydro_fullSpec) then
+        if (ANY(hydrofs_fallvelocity > 0.d0)) then
+            use_vel_spec = .true.
+        end if
+    end if
 
+    if (use_vel_spec) then
         if (verbose >= 2) then
           call report(info,'Start of ', nameOfRoutine)
           print*, "Using hydro_fullSpec"

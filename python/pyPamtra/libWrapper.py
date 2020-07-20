@@ -123,7 +123,11 @@ def PamtraFortranWrapper(
   if sets["pyVerbose"] > 8:
     for key in profile.keys():
       if key not in ["noutlevels"]:
-        print key, getattr(vars_atmosphere, "atmo_"+key), profile[key]
+        try: 
+          print key, getattr(vars_atmosphere, "atmo_"+key), profile[key]
+        except AttributeError:
+          print key, getattr(vars_atmosphere, key), profile[key]
+
 
   #return  dict(),pyPamtraLib
   #deal with the atmospheric input_file
