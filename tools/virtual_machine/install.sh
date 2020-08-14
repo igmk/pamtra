@@ -10,7 +10,7 @@ chmod +x ~/shared/update.sh
 # # Sytem tools!
 sudo apt-get update -y 
 sudo apt-get install -y -qq tree git gcc gfortran liblapack-dev libfftw3-dev  libnetcdff5 libnetcdf-dev netcdf-bin gsl-bin libgsl0-dev libgsl0ldbl lftp
-
+sudo apt-get install -y -qq libhdf5-dev
 
 # guest additions update
 # cd /opt 
@@ -37,7 +37,8 @@ conda activate base
 echo "export PYTHONPATH=$PYTHONPATH:$HOME/lib/python" >> ~/.bashrc
 export PYTHONPATH=$PYTHONPATH:$HOME/lib/python
 
-
+echo "export PAMTRA_DATADIR=''" >> ~/.bashrc
+export PAMTRA_DATADIR=''
 
 # # python 3.6
 conda activate base
@@ -67,7 +68,9 @@ conda activate py27
 conda config --add channels conda-forge 
 # Pamtra1 hates apparently conda's libgfortran... so use pip!
 pip install -q numpy==1.12.1 scipy 
-pip install -q ipykernel matplotlib ipython xarray numba netcdf4 
+pip install llvmlite==0.31.0
+pip install numba==0.47.0
+pip install -q ipykernel matplotlib ipython xarray  netcdf4==1.3.1
 python -m ipykernel install --user
 
 
