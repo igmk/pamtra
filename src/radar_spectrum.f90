@@ -315,7 +315,7 @@ subroutine radar_spectrum(&
         !constant air motion
         if (radar_airmotion_model .eq. "constant") then
             if ((atmo_wind_w(i_x,i_y,i_z) /= 0.0) .and. (.not. ISNAN(atmo_wind_w(i_x,i_y,i_z)))) then
-              vel_spec = vel_spec + atmo_wind_w(i_x,i_y,i_z)
+              vel_spec = vel_spec - atmo_wind_w(i_x,i_y,i_z)
             else
               vel_spec = vel_spec + radar_airmotion_vmin
             end if
