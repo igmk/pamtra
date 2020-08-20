@@ -269,7 +269,7 @@ class pyPamtra(object):
     f = open(nmlFile,"w")
     f.write("&settings\n\r")
     for key in self.nmlSet.keys():
-      if self.set["pyVerbose"] > 1: print "write: ", key
+      if self.set["pyVerbose"] > 1: print("write: ", key)
       if type(self.nmlSet[key])==bool:
         value = str(self.nmlSet[key]).lower()
         f.write("%s=.%s.\n\r"%(key,value,))
@@ -312,10 +312,10 @@ class pyPamtra(object):
             elif nmlFile[key]["par"][0][subkey][0] == ".false.": value = False
             else: value = nmlFile[key]["par"][0][subkey][0]
           self.nmlSet[subkey.lower()] = value
-          if self.set["pyVerbose"] > 1: print subkey.lower(), ":", value
+          if self.set["pyVerbose"] > 1: print(subkey.lower(), ":", value)
         elif self.set["pyVerbose"] > 0:
-          print "Setting '"+ subkey.lower() +"' from '"+ inputFile +"' skipped."
-    if self.set["pyVerbose"] > 1: print "reading nml file done: ", inputFile
+          print("Setting '"+ subkey.lower() +"' from '"+ inputFile +"' skipped.")
+    if self.set["pyVerbose"] > 1: print("reading nml file done: ", inputFile)
     return
 
 
@@ -769,7 +769,7 @@ class pyPamtra(object):
       self.p["ngridx"] = np.shape(kwargs["hgt"])[0]
       self.p["ngridy"] = np.shape(kwargs["hgt"])[1]
     else:
-      print "Too many dimensions!"
+      print("Too many dimensions!")
       raise IOError
 
     self.p["max_nlyrs"] = np.shape(kwargs["hgt"])[-1]
@@ -1394,7 +1394,7 @@ class pyPamtra(object):
       self.p["ngridx"] = np.shape(hgt_lev)[0]
       self.p["ngridy"] = np.shape(hgt_lev)[1]
     else:
-      print "Too many dimensions!"
+      print("Too many dimensions!")
       raise IOError
 
     self.p["nlyrs"] = np.sum(hgt_lev!=missingNumber,axis=-1) -1
@@ -1482,7 +1482,7 @@ class pyPamtra(object):
 
     self.r["nmlSettings"] = self.nmlSet
 
-    if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
+    if self.set["pyVerbose"] > 0: print("pyPamtra runtime:", time.time() - tttt)
     return
 
   def runParallelPamtra(self,freqs,pp_local_workers="auto",pp_deltaF=1,pp_deltaX=0,pp_deltaY = 0,checkData=True,timeout=None):
@@ -1556,7 +1556,7 @@ class pyPamtra(object):
             if pp_endY > self.p["ngridy"]: pp_endY = self.p["ngridy"]
             pp_ngridy = pp_endY - pp_startY
 
-            if self.set["pyVerbose"] > 0: print "submitting job ", pp_i, pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY
+            if self.set["pyVerbose"] > 0: print("submitting job ", pp_i, pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY)
 
             indices = [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY]
             profilePart, dfPart,dfPart4D,dfPartFS, settings = self._sliceProfile(*indices)
@@ -1566,7 +1566,7 @@ class pyPamtra(object):
 
 
             pp_i += 1
-            if self.set["pyVerbose"] > 0: print "submitted job: ", pp_i
+            if self.set["pyVerbose"] > 0: print("submitted job: ", pp_i)
 
 
       #pool.close()
@@ -1574,20 +1574,20 @@ class pyPamtra(object):
     except KeyboardInterrupt:
       pool.terminate()
       pool.join()
-      print "TERMINATED: KeyboardInterrupt"
+      print("TERMINATED: KeyboardInterrupt")
 
-    if self.set["pyVerbose"] > 0: print "waiting for all jobs to finish"
+    if self.set["pyVerbose"] > 0: print("waiting for all jobs to finish")
     for jj,job in enumerate(jobs):
       #import pdb;pdb.set_trace()
       try: self._joinResults(job.get(timeout=timeout))
       except multiprocessing.TimeoutError:
-        print "KILLED pool due to timeout of job", jj+1
-      if self.set["pyVerbose"] > 0: print "got job", jj+1
+        print("KILLED pool due to timeout of job", jj+1)
+      if self.set["pyVerbose"] > 0: print("got job", jj+1)
 
     self.r["nmlSettings"] = self.nmlSet
 
     pool.terminate()
-    if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
+    if self.set["pyVerbose"] > 0: print("pyPamtra runtime:", time.time() - tttt)
     del pool, jobs
     return
 
@@ -1646,7 +1646,7 @@ class pyPamtra(object):
             if pp_endY > self.p["ngridy"]: pp_endY = self.p["ngridy"]
             pp_ngridy = pp_endY - pp_startY
 
-            if self.set["pyVerbose"] > 0: print "submitting job ", pp_i, pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY
+            if self.set["pyVerbose"] > 0: print("submitting job ", pp_i, pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY)
 
             indices = [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY]
             profilePart, dfPart,dfPart4D,dfPartFS, settings = self._sliceProfile(*indices)
@@ -1659,7 +1659,7 @@ class pyPamtra(object):
               f.write(inputPickle)
             os.rename(fname+".job.tmp",fname+".job")
             pp_i += 1
-            if self.set["pyVerbose"] > 0: print "wrote job: ", pp_i
+            if self.set["pyVerbose"] > 0: print("wrote job: ", pp_i)
 
       startTime = time.time()
 
@@ -1667,7 +1667,7 @@ class pyPamtra(object):
         fname = "%s.result"%(md5)
         while True:
           if ((time.time() - startTime) > maxWait):
-            print("\rWaiting too long for job %d: %s"%(mm,fname))
+            print(("\rWaiting too long for job %d: %s"%(mm,fname)))
             break
           try:
             with open(fname, 'r') as f:
@@ -1690,16 +1690,16 @@ class pyPamtra(object):
             sys.stdout.write("\rwaiting for job %d: %s"%(mm,fname) +" "*3  )
             sys.stdout.flush()
     except KeyboardInterrupt:
-      print "clean up"
+      print("clean up")
       for mm, md5 in enumerate(jobs):
         for fname in glob.glob("%s.*"%(md5)):
           try:
             os.remove(fname)
-            print fname, "removed."
+            print(fname, "removed.")
           except OSError: continue
       raise KeyboardInterrupt
     #pool.terminate()
-    if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
+    if self.set["pyVerbose"] > 0: print("pyPamtra runtime:", time.time() - tttt)
     #del pool, jobs
     print(" ")
     return
@@ -1760,7 +1760,7 @@ class pyPamtra(object):
             if pp_endY > self.p["ngridy"]: pp_endY = self.p["ngridy"]
             pp_ngridy = pp_endY - pp_startY
 
-            if self.set["pyVerbose"] > 0: print "submitting job ", pp_i, pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY
+            if self.set["pyVerbose"] > 0: print("submitting job ", pp_i, pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY)
 
             indices = [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY]
             profilePart, dfPart,dfPart4D,dfPartFS, settings = self._sliceProfile(*indices)
@@ -1772,7 +1772,7 @@ class pyPamtra(object):
             cluster.put(remotePicklePath+"/"+fname+".job.tmp",inputPickle)
             cluster.mv(remotePicklePath+"/"+fname+".job.tmp",remotePicklePath+"/"+fname+".job")
             pp_i += 1
-            if self.set["pyVerbose"] > 0: print "wrote job: ", pp_i
+            if self.set["pyVerbose"] > 0: print("wrote job: ", pp_i)
 
 
       del cluster
@@ -1783,7 +1783,7 @@ class pyPamtra(object):
         fname = "%s/%s.result"%(localPicklePath,md5)
         while True:
           if ((time.time() - startTime) > maxWait):
-            print("\rWaiting too long for job %d: %s"%(mm,fname))
+            print(("\rWaiting too long for job %d: %s"%(mm,fname)))
             break
           try:
             with open(fname, 'r') as f:
@@ -1806,7 +1806,7 @@ class pyPamtra(object):
             sys.stdout.write("\rwaiting for job %d: %s"%(mm,fname) +" "*3  )
             sys.stdout.flush()
     except KeyboardInterrupt:
-      print "clean up"
+      print("clean up")
       cluster = sftp2Cluster(host,user)
       for mm, md5 in enumerate(jobs):
           cluster.rm(remotePicklePath+"/"+md5+".job")
@@ -1816,7 +1816,7 @@ class pyPamtra(object):
       raise KeyboardInterrupt
 
     #pool.terminate()
-    if self.set["pyVerbose"] > 0: print "pyPamtra runtime:", time.time() - tttt
+    if self.set["pyVerbose"] > 0: print("pyPamtra runtime:", time.time() - tttt)
     #del pool, jobs
     print(" ")
 
@@ -1957,7 +1957,7 @@ class pyPamtra(object):
     '''
 
     [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY], results, fortError, host = resultList
-    if self.set["pyVerbose"] > 2: print "Callback started %s:"%host
+    if self.set["pyVerbose"] > 2: print("Callback started %s:"%host)
 
     self.fortError += fortError
 
@@ -2014,7 +2014,7 @@ class pyPamtra(object):
       os.makedirs(fname)
       for dic in ["r","p", "nmlSet","set","df.data","df.data4D","df.dataFullSpec"]:
         for key in self.__dict__[dic].keys():
-          if self.set["pyVerbose"]>1: print "saving: "+fname+"/"+dic+"%"+key+"%"+".npy"
+          if self.set["pyVerbose"]>1: print("saving: "+fname+"/"+dic+"%"+key+"%"+".npy")
           data = self.__dict__[dic][key]
           if  type(data) == np.ma.core.MaskedArray:
             data = data.filled(-9999)
@@ -2050,7 +2050,7 @@ class pyPamtra(object):
           key,subkey,dummy = fnames.split("%")
           self.__dict__[key][subkey] = np.load(fname+"/"+fnames)
       except:
-        print formatExceptionInfo()
+        print(formatExceptionInfo())
         raise IOError ("Could not read data from dir")
     else:
       try:
@@ -2058,7 +2058,7 @@ class pyPamtra(object):
         [self.r,self.p,self.nmlSet,self.set,self.df.data,self.df.data4D,self.df.dataFullSpec] = pickle.load(f)
         f.close()
       except:
-        print formatExceptionInfo()
+        print(formatExceptionInfo())
         raise IOError ("Could not read data from file")
 
       self.df.nhydro = len(self.df.data)
@@ -2468,7 +2468,7 @@ class pyPamtra(object):
       if not pyNc: nc_ct._fillValue =missingNumber
 
     cdfFile.close()
-    if self.set["pyVerbose"] > 0: print fname,"written"
+    if self.set["pyVerbose"] > 0: print(fname,"written")
 
   def averageResultTbs(self,translatorDict):
     """

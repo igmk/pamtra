@@ -347,7 +347,7 @@ def detect_liq_cloud(z, t, rh):  # , rh_thres, t_thres):
         n_base = len(i_base)
         n_top = len(i_top)
         if n_top != n_base:
-            print 'something wrong, number of bases NE number of cloud tops!'
+            print('something wrong, number of bases NE number of cloud tops!')
             return [], [], []
         # end if
     # end if

@@ -181,27 +181,27 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
     ffOK = 0 #successfull runs
 
     for ff, fname in enumerate(files):
-      if verbosity>0: print fname
+      if verbosity>0: print(fname)
       try:
         if fname.split(".")[-1]!="nc":
           tmpFile = tmpDir+"/pyPamtraImport_netcdf_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nc"
           if fname.split(".")[-1]=="tar":
-            if verbosity>3:print "tar -O --wildcards -x "+fnameInTar+" -f "+fname+">"+tmpFile+".gz"
+            if verbosity>3:print("tar -O --wildcards -x "+fnameInTar+" -f "+fname+">"+tmpFile+".gz")
             os.system("tar -O --wildcards -x "+fnameInTar+" -f "+fname+">"+tmpFile+".gz")
             gzFile = tmpFile+".gz"
             if os.stat(gzFile).st_size == 0:
               os.system("rm -f "+tmpFile+"*")
               raise IOError("fnameInTar not found in "+fname)
-            if verbosity>2:print "created ", gzFile
+            if verbosity>2:print("created ", gzFile)
           else:
             gzFile = fname
           os.system("zcat "+gzFile+">"+tmpFile)
-          if verbosity>1:print "created ", tmpFile
+          if verbosity>1:print("created ", tmpFile)
           ncFile = netCDF4.Dataset(tmpFile,"r")
-          if verbosity>1:print "opend ", tmpFile
+          if verbosity>1:print("opend ", tmpFile)
         else:
           ncFile = netCDF4.Dataset(fname,"r")
-          if verbosity>1:print "opend ", fname
+          if verbosity>1:print("opend ", fname)
 
         if maxLevel  == 0: maxLevel = ncFile.variables["hfl"].shape[1]
 
@@ -221,9 +221,9 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
           dataSingle[var] = np.swapaxes(ncFile.variables[var][[colIndex],:,forecastIndex,:],1,2)[...,::-1][...,:maxLevel]#reverse height order
 
         ncFile.close()
-        if verbosity>1:print "closed nc"
+        if verbosity>1:print("closed nc")
         if fname.split(".")[-1]!="nc":
-          if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+          if verbosity>1:print("removing ", glob.glob(tmpFile+"*"))
           os.system("rm -f "+tmpFile+"*")
         shape2D = (np.shape(dataSingle["latitude"])[0],np.shape(dataSingle["time1h"])[0],)
         shape3Dplus = (np.shape(dataSingle["latitude"])[0],np.shape(dataSingle["time1h"])[0],np.shape(dataSingle["temperature"])[2]+1)
@@ -264,12 +264,12 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
       #except IOError:
       except Exception as inst:
         if fname.split(".")[-1]!="nc":
-          if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+          if verbosity>1:print("removing ", glob.glob(tmpFile+"*"))
           os.system("rm -f "+tmpFile+"*")
-        print "ERROR:", fname
-        print type(inst)     # the exception instance
-        print inst.args      # arguments stored in .args
-        print inst
+        print("ERROR:", fname)
+        print(type(inst))     # the exception instance
+        print(inst.args)      # arguments stored in .args
+        print(inst)
         if debug: import pdb;pdb.set_trace()
 
 
@@ -315,27 +315,27 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
     ffOK = 0 #successfull runs
 
     for ff, fname in enumerate(files):
-      if verbosity>0: print fname
+      if verbosity>0: print(fname)
       try:
         if fname.split(".")[-1]!="nc":
           tmpFile = tmpDir+"/pyPamtraImport_netcdf_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nc"
           if fname.split(".")[-1]=="tar":
-            if verbosity>3:print "tar -O --wildcards -x "+fnameInTar+" -f "+fname+">"+tmpFile+".gz"
+            if verbosity>3:print("tar -O --wildcards -x "+fnameInTar+" -f "+fname+">"+tmpFile+".gz")
             os.system("tar -O --wildcards -x "+fnameInTar+" -f "+fname+">"+tmpFile+".gz")
             gzFile = tmpFile+".gz"
             if os.stat(gzFile).st_size == 0:
               os.system("rm -f "+tmpFile+"*")
               raise IOError("fnameInTar not found in "+fname)
-            if verbosity>2:print "created ", gzFile
+            if verbosity>2:print("created ", gzFile)
           else:
             gzFile = fname
           os.system("zcat "+gzFile+">"+tmpFile)
-          if verbosity>1:print "created ", tmpFile
+          if verbosity>1:print("created ", tmpFile)
           ncFile = netCDF4.Dataset(tmpFile,"r")
-          if verbosity>1:print "opend ", tmpFile
+          if verbosity>1:print("opend ", tmpFile)
         else:
           ncFile = netCDF4.Dataset(fname,"r")
-          if verbosity>1:print "opend ", fname
+          if verbosity>1:print("opend ", fname)
 
         #import pdb;pdb.set_trace()
         dataSingle = dict()
@@ -351,9 +351,9 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
             dataSingle[var] = np.swapaxes(ncFile.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
         timestamp =   ncFile.variables["time"][:]
         ncFile.close()
-        if verbosity>1:print "closed nc"
+        if verbosity>1:print("closed nc")
         if fname.split(".")[-1]!="nc":
-          if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+          if verbosity>1:print("removing ", glob.glob(tmpFile+"*"))
           os.system("rm -f "+tmpFile+"*")
         shape3Dplus = tuple(np.array(dataSingle["T"].shape) + np.array([0,0,1]))
         shape3D = dataSingle["T"].shape
@@ -394,12 +394,12 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
       #except IOError:
       except Exception as inst:
         if fname.split(".")[-1]!="nc":
-          if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+          if verbosity>1:print("removing ", glob.glob(tmpFile+"*"))
           os.system("rm -f "+tmpFile+"*")
-        print "ERROR:", fname
-        print type(inst)     # the exception instance
-        print inst.args      # arguments stored in .args
-        print inst
+        print("ERROR:", fname)
+        print(type(inst))     # the exception instance
+        print(inst.args)      # arguments stored in .args
+        print(inst)
         if debug: import pdb;pdb.set_trace()
 
     #shapes may have changed!
@@ -513,27 +513,27 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
 
 
     for ff, fnameA in enumerate(filesA):
-      if verbosity>0: print fnameA
+      if verbosity>0: print(fnameA)
       try:
         if fnameA.split(".")[-1]!="nc":
           tmpFile = tmpDir+"/pyPamtraImport_netcdf_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nc"
           if fnameA.split(".")[-1]=="tar":
-            if verbosity>3:print "tar -O --wildcards -x "+fnameInTar+" -f "+fnameA+">"+tmpFile+".gz"
+            if verbosity>3:print("tar -O --wildcards -x "+fnameInTar+" -f "+fnameA+">"+tmpFile+".gz")
             os.system("tar -O --wildcards -x "+fnameInTar+" -f "+fnameA+">"+tmpFile+".gz")
             gzFile = tmpFile+".gz"
             if os.stat(gzFile).st_size == 0:
               os.system("rm -f "+tmpFile+"*")
               raise IOError("fnameInTar not found in "+fnameA)
-            if verbosity>2:print "created ", gzFile
+            if verbosity>2:print("created ", gzFile)
           else:
             gzFile = fnameA
           os.system("zcat "+gzFile+">"+tmpFile)
-          if verbosity>1:print "created ", tmpFile
+          if verbosity>1:print("created ", tmpFile)
           ncFileA = netCDF4.Dataset(tmpFile,"r")
-          if verbosity>1:print "opend ", tmpFile
+          if verbosity>1:print("opend ", tmpFile)
         else:
           ncFileA = netCDF4.Dataset(fnameA,"r")
-          if verbosity>1:print "opend ", fnameA
+          if verbosity>1:print("opend ", fnameA)
 
         #import pdb;pdb.set_trace()
         dataSingle = dict()
@@ -549,9 +549,9 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
             dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
         timestamp = ncFileA.variables["time"][:]
         ncFileA.close()
-        if verbosity>1:print "closed nc"
+        if verbosity>1:print("closed nc")
         if fnameA.split(".")[-1]!="nc":
-          if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+          if verbosity>1:print("removing ", glob.glob(tmpFile+"*"))
           os.system("rm -f "+tmpFile+"*")
         shape3Dplus = tuple(np.array(dataSingle["T"].shape) + np.array([0,0,1]))
         shape3D = dataSingle["T"].shape
@@ -592,12 +592,12 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
       #except IOError:
       except Exception as inst:
         if fnameA.split(".")[-1]!="nc":
-          if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+          if verbosity>1:print("removing ", glob.glob(tmpFile+"*"))
           os.system("rm -f "+tmpFile+"*")
-        print "ERROR:", fnameA
-        print type(inst)     # the exception instance
-        print inst.args      # arguments stored in .args
-        print inst
+        print("ERROR:", fnameA)
+        print(type(inst))     # the exception instance
+        print(inst.args)      # arguments stored in .args
+        print(inst)
         if debug: import pdb;pdb.set_trace()
 
     data["hydro_n"] = np.zeros(data["QNCLOUD"].shape + (nHydro,)) + np.nan
@@ -624,48 +624,48 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
 
     for ff, fnameA in enumerate(filesA):
       fnameN = filesN[ff]
-      if verbosity>0: print fnameA, fnameN
+      if verbosity>0: print(fnameA, fnameN)
       try:
         if fnameA.split(".")[-1]!="nc":
           tmpFile = tmpDir+"/pyPamtraImport_netcdf_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nc"
           if fnameA.split(".")[-1]=="tar":
-            if verbosity>3:print "tar -O --wildcards -x "+fnameInTar+" -f "+fnameA+">"+tmpFile+".gz"
+            if verbosity>3:print("tar -O --wildcards -x "+fnameInTar+" -f "+fnameA+">"+tmpFile+".gz")
             os.system("tar -O --wildcards -x "+fnameInTar+" -f "+fnameA+">"+tmpFile+".gz")
             gzFile = tmpFile+".gz"
             if os.stat(gzFile).st_size == 0:
               os.system("rm -f "+tmpFile+"*")
               raise IOError("fnameInTar not found in "+fnameA)
-            if verbosity>2:print "created ", gzFile
+            if verbosity>2:print("created ", gzFile)
           else:
             gzFile = fnameA
           os.system("zcat "+gzFile+">"+tmpFile)
-          if verbosity>1:print "created ", tmpFile
+          if verbosity>1:print("created ", tmpFile)
           ncFileA = netCDF4.Dataset(tmpFile,"r")
-          if verbosity>1:print "opend ", tmpFile
+          if verbosity>1:print("opend ", tmpFile)
         else:
           ncFileA = netCDF4.Dataset(fnameA,"r")
-          if verbosity>1:print "opend ", fnameA
+          if verbosity>1:print("opend ", fnameA)
 
         # number density files
         if fnameN.split(".")[-1]!="nc":
           tmpFile = tmpDir+"/pyPamtraImport_netcdf_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nc"
           if fnameN.split(".")[-1]=="tar":
-            if verbosity>3:print "tar -O --wildcards -x "+fnameInTar+" -f "+fnameN+">"+tmpFile+".gz"
+            if verbosity>3:print("tar -O --wildcards -x "+fnameInTar+" -f "+fnameN+">"+tmpFile+".gz")
             os.system("tar -O --wildcards -x "+fnameInTar+" -f "+fnameN+">"+tmpFile+".gz")
             gzFile = tmpFile+".gz"
             if os.stat(gzFile).st_size == 0:
               os.system("rm -f "+tmpFile+"*")
               raise IOError("fnameInTar not found in "+fnameN)
-            if verbosity>2:print "created ", gzFile
+            if verbosity>2:print("created ", gzFile)
           else:
             gzFile = fnameN
           os.system("zcat "+gzFile+">"+tmpFile)
-          if verbosity>1:print "created ", tmpFile
+          if verbosity>1:print("created ", tmpFile)
           ncFileN = netCDF4.Dataset(tmpFile,"r")
-          if verbosity>1:print "opend ", tmpFile
+          if verbosity>1:print("opend ", tmpFile)
         else:
           ncFileN = netCDF4.Dataset(fnameN,"r")
-          if verbosity>1:print "opend ", fnameN
+          if verbosity>1:print("opend ", fnameN)
 
         #import pdb;pdb.set_trace()
         dataSingle = dict()
@@ -686,9 +686,9 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
             dataSingle[var] = np.swapaxes(ncFileA.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
         timestamp = ncFileA.variables["time"][:]
         ncFileA.close()
-        if verbosity>1:print "closed nc"
+        if verbosity>1:print("closed nc")
         if fnameA.split(".")[-1]!="nc":
-          if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+          if verbosity>1:print("removing ", glob.glob(tmpFile+"*"))
           os.system("rm -f "+tmpFile+"*")
         for var in variables4DN:
           if subGrid == None:
@@ -696,9 +696,9 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
           else:
             dataSingle[var] = np.swapaxes(ncFileN.variables[var][forecastIndex],0,2)[...,::-1][...,:maxLevel][subGrid[0]:subGrid[1],subGrid[2]:subGrid[3],:]
         ncFileN.close()
-        if verbosity>1:print "closed nc"
+        if verbosity>1:print("closed nc")
         if fnameN.split(".")[-1]!="nc":
-          if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+          if verbosity>1:print("removing ", glob.glob(tmpFile+"*"))
           os.system("rm -f "+tmpFile+"*")
         shape3Dplus = tuple(np.array(dataSingle["T"].shape) + np.array([0,0,1]))
         shape3D = dataSingle["T"].shape
@@ -739,12 +739,12 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
       #except IOError:
       except Exception as inst:
         if fnameA.split(".")[-1]!="nc":
-          if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+          if verbosity>1:print("removing ", glob.glob(tmpFile+"*"))
           os.system("rm -f "+tmpFile+"*")
-        print "ERROR:", fnameA
-        print type(inst)     # the exception instance
-        print inst.args      # arguments stored in .args
-        print inst
+        print("ERROR:", fnameA)
+        print(type(inst))     # the exception instance
+        print(inst.args)      # arguments stored in .args
+        print(inst)
         if debug: import pdb;pdb.set_trace()
 
     data["hydro_n"] = np.zeros(data["QNC"].shape + (nHydro,)) + np.nan
@@ -830,33 +830,33 @@ def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",deb
   variables1D = ["T_G","PS","U_10M","V_10M","FR_LAND"]
   variables2D = ["T","P","QV","QC","QI","QR","QS","QG","QH","QNCLOUD","QNICE","QNRAIN","QNSNOW","QNGRAUPEL","QNHAIL"]
 
-  if verbosity>0: print fnameA
+  if verbosity>0: print(fnameA)
   try:
     if fnameA.split(".")[-1]!="nc":
       tmpFile = tmpDir+"/pyPamtraImport_netcdf_"+''.join(random.choice(string.ascii_uppercase + string.digits) for x in range(5))+".nc"
       gzFile = fnameA
       os.system("zcat "+gzFile+">"+tmpFile)
-      if verbosity>1:print "created ", tmpFile
+      if verbosity>1:print("created ", tmpFile)
       data = ncToDict(tmpFile)
-      if verbosity>1:print "read ", tmpFile
+      if verbosity>1:print("read ", tmpFile)
     else:
       data = ncToDict(fnameA)
-      if verbosity>1:print "read ", fnameA
+      if verbosity>1:print("read ", fnameA)
 
     if debug: import pdb;pdb.set_trace()
-    if verbosity>1:print "closed nc"
+    if verbosity>1:print("closed nc")
     if fnameA.split(".")[-1]!="nc":
-      if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+      if verbosity>1:print("removing ", glob.glob(tmpFile+"*"))
       os.system("rm -f "+tmpFile+"*")
 
   except Exception as inst:
     if fnameA.split(".")[-1]!="nc":
-      if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+      if verbosity>1:print("removing ", glob.glob(tmpFile+"*"))
       os.system("rm -f "+tmpFile+"*")
-    print "ERROR:", fnameA
-    print type(inst)     # the exception instance
-    print inst.args      # arguments stored in .args
-    print inst
+    print("ERROR:", fnameA)
+    print(type(inst))     # the exception instance
+    print(inst.args)      # arguments stored in .args
+    print(inst)
     if debug: import pdb;pdb.set_trace()
 
   shape3D = (data["T"].shape[0], 1, data["T"].shape[1])
@@ -984,14 +984,14 @@ def readCosmoReAn2km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
     data['hhl'] = np.zeros(shape3Dplus) + np.nan
 
     for var in variables3DC:
-      if verbosity>1: print var
+      if verbosity>1: print(var)
       selected_grbs = grbsC(shortName=var)
       for i in range(nLev-maxLevel,nLev):
         data[var][...,nLev-1-i] = selected_grbs[i].values
 
     selected_grbs = grbsC(shortName=variables2DC)
     for var in selected_grbs:
-      if verbosity>1: print var.shortName
+      if verbosity>1: print(var.shortName)
       data[var.shortName] = var.values
 
     grbsC.close()
@@ -1000,11 +1000,11 @@ def readCosmoReAn2km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
 
     selected_grbs = grbs(shortName=variables2D)
     for var in selected_grbs:
-      if verbosity>1: print var.shortName
+      if verbosity>1: print(var.shortName)
       data[var.shortName] = var.values
 
     for var in variables3D:
-      if verbosity>1: print var
+      if verbosity>1: print(var)
       data[var] = np.zeros(shape3D) + np.nan
       selected_grbs = grbs(shortName=var)
       for i in range(nLev-maxLevel,nLev-1):
@@ -1013,7 +1013,7 @@ def readCosmoReAn2km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
     data['hydro_q'] = np.zeros(shape4D) + np.nan
 
     for j,var in enumerate(variables4D):
-      if verbosity>1: print var
+      if verbosity>1: print(var)
       selected_grbs = grbs(shortName=var)
       for i in range(nLev-maxLevel,nLev-1):
         data['hydro_q'][...,nLev-2-i,j] = selected_grbs[i].values
@@ -1021,12 +1021,12 @@ def readCosmoReAn2km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
     grbs.close()
   except Exception as inst:
     if fname.split(".")[-1]!="nc":
-      if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+      if verbosity>1:print("removing ", glob.glob(tmpFile+"*"))
       os.system("rm -f "+tmpFile+"*")
-    print "ERROR:", fname
-    print type(inst)     # the exception instance
-    print inst.args      # arguments stored in .args
-    print inst
+    print("ERROR:", fname)
+    print(type(inst))     # the exception instance
+    print(inst.args)      # arguments stored in .args
+    print(inst)
     if debug: import pdb;pdb.set_trace()
 
   def calc_p0(height):
@@ -1130,7 +1130,7 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
 
 
     for var in variables3D:
-      if verbosity>1: print var
+      if verbosity>1: print(var)
       data[var] = np.zeros(shape3D) + np.nan
       selected_grbs = grbs(shortName=var)
       for i in range(nLev-maxLevel,nLev-1):
@@ -1139,7 +1139,7 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
     data['hydro_q'] = np.zeros(shape4D) + np.nan
 
     for j,var in enumerate(variables4D):
-      if verbosity>1: print var
+      if verbosity>1: print(var)
       selected_grbs = grbs(shortName=var)
       for i in range(nLev-maxLevel,nLev-1):
         data['hydro_q'][...,nLev-2-i,j] = selected_grbs[i].values
@@ -1151,7 +1151,7 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
 
     selected_grbs = grbs(shortName=variables2D)
     for var in selected_grbs:
-      if verbosity>1: print var.shortName
+      if verbosity>1: print(var.shortName)
       data[var.shortName] = var.values
 
 
@@ -1161,10 +1161,10 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
     #if fname.split(".")[-1]!="nc":
       #if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
       #os.system("rm -f "+tmpFile+"*")
-    print "ERROR:", fname
-    print type(inst)     # the exception instance
-    print inst.args      # arguments stored in .args
-    print inst
+    print("ERROR:", fname)
+    print(type(inst))     # the exception instance
+    print(inst.args)      # arguments stored in .args
+    print(inst)
     if debug: import pdb;pdb.set_trace()
 
   def calc_p0(height):
@@ -1316,7 +1316,7 @@ def readIconLem1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   variables4D = ["temp","pres","qv","qc","qi","qr","qs"]
   variables4D_cloud = ["qg"]
 
-  if verbosity>0: print fname_fg
+  if verbosity>0: print(fname_fg)
 
   if not fname_fg.endswith('.nc'):
     raise IOError("fname_fg has to be .nc.", fname_fg)
@@ -1326,7 +1326,7 @@ def readIconLem1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   dataSingle = dict()
   try:
     ncFile_const = netCDF4.Dataset(constantFields, "r")
-    if verbosity > 1: print "opened ", constantFields
+    if verbosity > 1: print("opened ", constantFields)
 
     for var in variables2D_const:
       # nc dimensions: lat, lon; target dimensions: lon, lat
@@ -1334,14 +1334,14 @@ def readIconLem1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
       dataSingle[var] = np.swapaxes(ncFile_const.variables[var],0,1)
 
     ncFile_const.close()
-    if verbosity > 1: print "closed const nc"
+    if verbosity > 1: print("closed const nc")
 
     ncFile_fg = netCDF4.Dataset(fname_fg, "r")
-    if verbosity > 1: print "opened ", fname_fg
+    if verbosity > 1: print("opened ", fname_fg)
 
     fname_cloud = '_cloud_'.join(fname_fg.rsplit('_fg_',1)) # right-replace _fg_ with _cloud
     ncFile_cloud = netCDF4.Dataset(fname_cloud, "r")
-    if verbosity > 1: print "opened ", fname_cloud
+    if verbosity > 1: print("opened ", fname_cloud)
 
     if maxLevel == 0:
       assert ncFile_fg.variables["z_ifc"].dimensions == ('lat', 'height_3', 'lon')
@@ -1392,18 +1392,18 @@ def readIconLem1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
       assert dataSingle[key].shape == shape3Dplus
 
     ncFile_fg.close()
-    if verbosity > 1: print "closed fg nc"
+    if verbosity > 1: print("closed fg nc")
     ncFile_cloud.close()
-    if verbosity > 1: print "closed cloud nc"
+    if verbosity > 1: print("closed cloud nc")
 
     data = dataSingle
 
   #except IOError:
   except Exception as inst:
-    print "ERROR:", fname_fg
-    print type(inst)     # the exception instance
-    print inst.args      # arguments stored in .args
-    print inst
+    print("ERROR:", fname_fg)
+    print(type(inst))     # the exception instance
+    print(inst.args)      # arguments stored in .args
+    print(inst)
     if debug: import pdb;pdb.set_trace()
     raise
 
@@ -1501,7 +1501,7 @@ def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   variables4D_10m = ["u_10m","v_10m"]
   variables4D = ["temp","pres","qv","qc","qi","qr","qs","qg","qh","qnc","qni","qnr","qns","qng","qnh"]
 
-  if verbosity>0: print fname_fg
+  if verbosity>0: print(fname_fg)
 
   if not fname_fg.endswith('.nc'):
     raise IOError("fname_fg has to be .nc.", fname_fg)
@@ -1511,7 +1511,7 @@ def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   dataSingle = dict()
   try:
     ncFile_const = netCDF4.Dataset(constantFields, "r")
-    if verbosity > 1: print "opened ", constantFields
+    if verbosity > 1: print("opened ", constantFields)
 
     for var in variables2D_const:
       # nc dimensions: lat, lon; target dimensions: lon, lat
@@ -1519,10 +1519,10 @@ def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
       dataSingle[var] = np.swapaxes(ncFile_const.variables[var],0,1)
 
     ncFile_const.close()
-    if verbosity > 1: print "closed const nc"
+    if verbosity > 1: print("closed const nc")
 
     ncFile_fg = netCDF4.Dataset(fname_fg, "r")
-    if verbosity > 1: print "opened ", fname_fg
+    if verbosity > 1: print("opened ", fname_fg)
 
 
     if maxLevel == 0:
@@ -1569,16 +1569,16 @@ def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
       assert dataSingle[key].shape == shape3Dplus
 
     ncFile_fg.close()
-    if verbosity > 1: print "closed fg nc"
+    if verbosity > 1: print("closed fg nc")
 
     data = dataSingle
 
   #except IOError:
   except Exception as inst:
-    print "ERROR:", fname_fg
-    print type(inst)     # the exception instance
-    print inst.args      # arguments stored in .args
-    print inst
+    print("ERROR:", fname_fg)
+    print(type(inst))     # the exception instance
+    print(inst.args)      # arguments stored in .args
+    print(inst)
     if debug: import pdb;pdb.set_trace()
     raise
 
@@ -1887,7 +1887,7 @@ def readECMWF(fname,constantFile,descriptorFile,landseamask,debug=False,verbosit
   variables1D = ["SKT","SLP","U_10M","V_10M","lsm"]
   variables2D = ["T","P","Q","LWC","IWC","RWC","SWC"]
 
-  if verbosity>0: print fname
+  if verbosity>0: print(fname)
   if debug: import pdb;pdb.set_trace()
 
   dataTmp = ncToDict(fname)
@@ -2057,12 +2057,12 @@ def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,d
 
   except Exception as inst:
     if fname.split(".")[-1]!="nc":
-      if verbosity>1:print "removing ", glob.glob(tmpFile+"*")
+      if verbosity>1:print("removing ", glob.glob(tmpFile+"*"))
       os.system("rm -f "+tmpFile+"*")
-    print "ERROR:", fname
-    print type(inst)     # the exception instance
-    print inst.args      # arguments stored in .args
-    print inst
+    print("ERROR:", fname)
+    print(type(inst))     # the exception instance
+    print(inst.args)      # arguments stored in .args
+    print(inst)
     if debug: import pdb;pdb.set_trace()
 
   #data['hydro_wp'] = np.zeros(shape3DH) + np.nan
@@ -2505,7 +2505,7 @@ def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='net
   for ncFile in deepcopy(ncFiles):
     if ncFile.split("/")[-1] in skipFiles or ncFile in skipFiles:
       ncFiles.remove(ncFile)
-      print "skipping:", ncFile
+      print("skipping:", ncFile)
 
   for nn, ncFile in enumerate(ncFiles):
     tmpFile=False
@@ -2513,11 +2513,11 @@ def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='net
       tmpFile = True
       gzFile = deepcopy(ncFile)
       ncFile = tmpDir+"/maxLibs_netcdf_"+''.join(randomLib.choice(string.ascii_uppercase + string.digits) for x in range(5))+".tmp.nc"
-      print 'uncompressing', nn+1,'of',len(ncFiles), gzFile, ncFile
+      print('uncompressing', nn+1,'of',len(ncFiles), gzFile, ncFile)
       returnValue = os.system("zcat "+gzFile+">"+ncFile)
       assert returnValue == 0
     else:
-      print 'opening', nn+1,'of',len(ncFiles), ncFile
+      print('opening', nn+1,'of',len(ncFiles), ncFile)
     try: ncData = openNc(ncFile,'r')
     except: raise RuntimeError("Could not open file: '" + ncFile+"'")
     if nn == 0:

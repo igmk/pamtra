@@ -62,19 +62,19 @@ def PamtraFortranWrapper(
   for key in nmlSets.keys():
     isList = getattr(settings, key.lower()).size > 1
     if type(nmlSets[key]) == str:
-      if sets["pyVerbose"] > 3: print("settings."+key.lower() +"[:] = '" + str(nmlSets[key])+"'")
+      if sets["pyVerbose"] > 3: print(("settings."+key.lower() +"[:] = '" + str(nmlSets[key])+"'"))
       getattr(settings, key.lower())[:] = nmlSets[key]
     else:
       if isList:
-        if sets["pyVerbose"] > 3: print("settings."+key.lower() +"[:] = numpy.array(nmlSets['"+key+"']).tolist()")
+        if sets["pyVerbose"] > 3: print(("settings."+key.lower() +"[:] = numpy.array(nmlSets['"+key+"']).tolist()"))
         getattr(settings, key.lower())[0:numpy.asarray(nmlSets[key]).size] = numpy.asarray(nmlSets[key]).flatten()
       else:
-        if sets["pyVerbose"] > 3: print("settings."+key.lower() +" = " + str(nmlSets[key]))
+        if sets["pyVerbose"] > 3: print(("settings."+key.lower() +" = " + str(nmlSets[key])))
         setattr(settings, key.lower(), nmlSets[key])
 
   #see whether it worked:
   if sets["pyVerbose"] > 3:
-    print "Fortran view on settings variables"
+    print("Fortran view on settings variables")
     settings.print_settings()
 
 
@@ -91,25 +91,25 @@ def PamtraFortranWrapper(
   for name in descriptorFile.dtype.names:
     #1D data
     if name in ["moment_in","liq_ice"]:#,
-      if sets["pyVerbose"] > 3: print("descriptor_file."+name +"_arr = descriptorFile['"+name+"'].tolist()")
+      if sets["pyVerbose"] > 3: print(("descriptor_file."+name +"_arr = descriptorFile['"+name+"'].tolist()"))
       setattr(descriptor_file, name +"_arr", descriptorFile[name].tolist())
     #1d Strings, these are ugly...
     elif name in ["hydro_name","dist_name","scat_name","vel_size_mod"]:
-      if sets["pyVerbose"] > 3: print("setFortranStrList(descriptor_file."+name+"_arr,descriptorFile['"+name+"'])")
+      if sets["pyVerbose"] > 3: print(("setFortranStrList(descriptor_file."+name+"_arr,descriptorFile['"+name+"'])"))
       setFortranStrList(getattr(descriptor_file, name+"_arr"), descriptorFile[name])
     #potential 4D data
     else:
-      if sets["pyVerbose"] > 3: print("descriptor_file."+name +"_arr = [[[descriptorFile['"+name+"'].tolist()]]]")
+      if sets["pyVerbose"] > 3: print(("descriptor_file."+name +"_arr = [[[descriptorFile['"+name+"'].tolist()]]]"))
       setattr(descriptor_file, name +"_arr", [[[descriptorFile[name].tolist()]]])
   for name4d in descriptorFile4D.keys():
     assert descriptorFile4D[name4d].shape[0] == profile["lat"].shape[0]
     assert descriptorFile4D[name4d].shape[1] == profile["lat"].shape[1]
-    if sets["pyVerbose"] > 3: print("descriptor_file."+name4d +"_arr = descriptorFile4D['"+name4d+"'].tolist()")
+    if sets["pyVerbose"] > 3: print(("descriptor_file."+name4d +"_arr = descriptorFile4D['"+name4d+"'].tolist()"))
     setattr(descriptor_file, name4d +"_arr", descriptorFile4D[name4d].tolist())
 
   #see whether it worked:
   if sets["pyVerbose"] > 3:
-    print "Fortran view on descriptor_file variables"
+    print("Fortran view on descriptor_file variables")
     descriptor_file.printdescriptorvars()
 
 
@@ -124,9 +124,9 @@ def PamtraFortranWrapper(
     for key in profile.keys():
       if key not in ["noutlevels"]:
         try: 
-          print key, getattr(vars_atmosphere, "atmo_"+key), profile[key]
+          print(key, getattr(vars_atmosphere, "atmo_"+key), profile[key])
         except AttributeError:
-          print key, getattr(vars_atmosphere, key), profile[key]
+          print(key, getattr(vars_atmosphere, key), profile[key])
 
 
   #return  dict(),pyPamtraLib
@@ -138,19 +138,19 @@ def PamtraFortranWrapper(
     if key in ["ngridx","ngridy","max_nlyrs"]:
       continue
     elif key in ["noutlevels"]:
-      if sets["pyVerbose"] > 3: print("settings."+key +" = profile['"+key+"']")
+      if sets["pyVerbose"] > 3: print(("settings."+key +" = profile['"+key+"']"))
       setattr(settings, key, profile[key])
     elif key in ["sfc_type","sfc_model","sfc_salinity","sfc_slf","sfc_sif"]:
-      if sets["pyVerbose"] > 3: print("vars_atmosphere."+key +" = profile['"+key+"']")
+      if sets["pyVerbose"] > 3: print(("vars_atmosphere."+key +" = profile['"+key+"']"))
       setattr(vars_atmosphere, key, profile[key])
     elif key in ["sfc_refl"]:
-      if sets["pyVerbose"] > 3: print("vars_atmosphere."+key +" = profile['"+key+"'])")
+      if sets["pyVerbose"] > 3: print(("vars_atmosphere."+key +" = profile['"+key+"'])"))
       setattr(vars_atmosphere, key, profile[key])
     elif type(profile[key]) in [int, float, str]:
-      if sets["pyVerbose"] > 3: print("vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
+      if sets["pyVerbose"] > 3: print(("vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()"))
       setattr(vars_atmosphere, "atmo_"+key, profile[key])
     elif type(profile[key]) == numpy.ndarray:
-      if sets["pyVerbose"] > 3: print("vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()")
+      if sets["pyVerbose"] > 3: print(("vars_atmosphere.atmo_"+key +" = profile['"+key+"'].tolist()"))
       setattr(vars_atmosphere, "atmo_"+key, profile[key].tolist())
     else:
       raise TypeError("do not understand type of "+ key+": " + str(type(profile[key])))
@@ -159,10 +159,10 @@ def PamtraFortranWrapper(
   if sets["pyVerbose"] > 8:
     for key in profile.keys():
       if key not in ["noutlevels"]:
-        print key, getattr(vars_atmosphere, "atmo_"+key, profile[key])
+        print(key, getattr(vars_atmosphere, "atmo_"+key, profile[key]))
   #see whether it worked:
   if sets["pyVerbose"] > 3:
-    print "Fortran view on vars_atmosphere variables"
+    print("Fortran view on vars_atmosphere variables")
     vars_atmosphere.print_vars_atmosphere()
 
 
@@ -171,7 +171,7 @@ def PamtraFortranWrapper(
 
   #see whether it worked:
   if sets["pyVerbose"] > 3:
-    print "Fortran view on vars_atmosphere variables"
+    print("Fortran view on vars_atmosphere variables")
     vars_atmosphere.print_vars_atmosphere()
 
 
@@ -185,11 +185,11 @@ def PamtraFortranWrapper(
     for key in descriptorFileFS.keys():
       assert descriptorFileFS[key].shape[0] == profile["lat"].shape[0]
       assert descriptorFileFS[key].shape[1] == profile["lat"].shape[1]
-      if sets["pyVerbose"] > 3: print("vars_hydrofullspec.hydrofs_"+key +" = descriptorFileFS['"+key+"'].tolist()")
+      if sets["pyVerbose"] > 3: print(("vars_hydrofullspec.hydrofs_"+key +" = descriptorFileFS['"+key+"'].tolist()"))
       setattr(vars_hydrofullspec, "hydrofs_"+key, descriptorFileFS[key].tolist())
 
     if sets["pyVerbose"] > 3:
-      print "Fortran view on hydro_fullspec variables"
+      print("Fortran view on hydro_fullspec variables")
       vars_hydrofullspec.print_hydrofs_vars()
 
   ##now, finally rund the model
@@ -199,13 +199,13 @@ def PamtraFortranWrapper(
   ##process the results!
   results = dict()
   for key in ["tb","Ze","emissivity","Att_hydro","Att_atmo","radar_hgt","radar_moments","radar_edges","radar_slopes","radar_quality","radar_snr", "radar_spectra","radar_vel","psd_d","psd_deltad","psd_n","psd_mass","psd_area","psd_bscat","kextatmo","scatter_matrix","extinct_matrix","emis_vector","angles_deg"]:
-    if sets["pyVerbose"] > 3: print("allocTest = vars_output.out_"+key.lower()+" is None")
+    if sets["pyVerbose"] > 3: print(("allocTest = vars_output.out_"+key.lower()+" is None"))
     allocTest = getattr(vars_output, "out_"+key.lower()) is None
     if not allocTest:
-      if sets["pyVerbose"] > 3: print("results['"+key+"'] = copy.deepcopy(vars_output.out_"+key.lower()+")")
+      if sets["pyVerbose"] > 3: print(("results['"+key+"'] = copy.deepcopy(vars_output.out_"+key.lower()+")"))
       results[key] = copy.deepcopy(getattr(vars_output, "out_"+key.lower()))
     else:
-      if sets["pyVerbose"] > 3: print "filling key", key
+      if sets["pyVerbose"] > 3: print("filling key", key)
       if key in ["radar_quality"]: results[key] = -9999
       else: results[key] = -9999.
 
@@ -256,7 +256,7 @@ def setFortranStrList(fortranList,pythonList,charLength=None):
   return
 
 def parallelPamtraFortranWrapper(indices, *args, **kwargs):
-  if args[0]["pyVerbose"] > 1: print 'starting', __name__, 'parent process:', os.getppid(), 'process id:', os.getpid()
+  if args[0]["pyVerbose"] > 1: print('starting', __name__, 'parent process:', os.getppid(), 'process id:', os.getpid())
   results, pamError = PamtraFortranWrapper(*args, **kwargs)
   host = os.uname()[1]
   return indices, results, pamError, host
