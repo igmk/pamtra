@@ -3,7 +3,7 @@
 from __future__ import division
 import numpy as np
 import csv
-import cPickle as pickle
+import pickle as pickle
 import time,calendar,datetime
 import sys
 import os
@@ -268,7 +268,7 @@ class pyPamtra(object):
     """
     f = open(nmlFile,"w")
     f.write("&settings\n\r")
-    for key in self.nmlSet.keys():
+    for key in list(self.nmlSet.keys()):
       if self.set["pyVerbose"] > 1: print("write: ", key)
       if type(self.nmlSet[key])==bool:
         value = str(self.nmlSet[key]).lower()
@@ -301,11 +301,11 @@ class pyPamtra(object):
     if nmlFile == {}:
       raise IOError("file not found: "+inputFile)
 
-    for key in nmlFile.keys():
-      for subkey in nmlFile[key]["par"][0].keys():
-        if subkey.lower() in self._nmlDefaultSet.keys():
+    for key in list(nmlFile.keys()):
+      for subkey in list(nmlFile[key]["par"][0].keys()):
+        if subkey.lower() in list(self._nmlDefaultSet.keys()):
           try:
-            value = np.array(map(lambda x:x.replace("d","e").replace("D","e"),nmlFile[key]["par"][0][subkey]),dtype=float)
+            value = np.array([x.replace("d","e").replace("D","e") for x in nmlFile[key]["par"][0][subkey]],dtype=float)
             if len(value) == 1: value = value[0]
           except ValueError:
             if nmlFile[key]["par"][0][subkey][0] == ".true.": value = True
@@ -388,8 +388,8 @@ class pyPamtra(object):
     self.p["relhum_lev"] = np.ones(self._shape3Dplus) * np.nan
 
 
-    for xx in xrange(self._shape2D[0]):
-      for yy in xrange(self._shape2D[1]):
+    for xx in range(self._shape2D[0]):
+      for yy in range(self._shape2D[1]):
 
         #first all the stuff without heigth dimension
         year,month,day,time, self.p["nlyrs"][xx,yy], self.p["model_i"][xx,yy], self.p["model_j"][xx,yy] = g.next()[:7]
@@ -408,7 +408,7 @@ class pyPamtra(object):
 
         #if levels are provided we have one line more:
         if levLay == "lev":
-          dataLine = g.next()
+          dataLine = next(g)
           #in case we have spaces after the last value...
           try: dataLine = dataLine.remove("")
           except: pass
@@ -419,12 +419,12 @@ class pyPamtra(object):
           self.p["nlyrs"][xx,yy] = self.p["nlyrs"][xx,yy] - 1
         #import pdb;pdb.set_trace()
 
-        for zz in xrange(self.p["nlyrs"][xx,yy]):
-          dataLine =g.next()
+        for zz in range(self.p["nlyrs"][xx,yy]):
+          dataLine =next(g)
           dataLineCOPY = deepcopy(dataLine)
           try: dataLine = dataLine.remove("")
           except: pass
-          dataLine = map(float,dataLine)
+          dataLine = list(map(float,dataLine))
           #do we have layer or levels
           hgt,press,temp,relhum = dataLine[:4]
           if levLay == "lay":
@@ -441,7 +441,7 @@ class pyPamtra(object):
             raise IOError("Did not understand lay/lev: "+layLev)
 
           #for hydrometeors it's always layers:
-          for hh in xrange(self.df.nhydro):
+          for hh in range(self.df.nhydro):
             if self.df.data["moment_in"][hh] == 0:
               pass #nothing to read...
             elif self.df.data["moment_in"][hh] == 1:
@@ -461,7 +461,7 @@ class pyPamtra(object):
               self.p["hydro_q"][xx,yy,zz,hh] = dataLine.pop(0)
             else:
               raise IOError ('Did not understand df.data["moment_in"]')
-            if "airturb" in self.p.keys():
+            if "airturb" in list(self.p.keys()):
               self.p["airturb"][xx,yy,zz] = dataLine.pop(0)
 
           #make sure we used all the data!
@@ -489,7 +489,7 @@ class pyPamtra(object):
 
     f = open(inputFile,"r")
     g = csv.reader(f,delimiter=" ",skipinitialspace=True)
-    year,month,day,time, self.p["ngridx"], self.p["ngridy"], self.p["nlyrs"], deltax,deltay = g.next()
+    year,month,day,time, self.p["ngridx"], self.p["ngridy"], self.p["nlyrs"], deltax,deltay = next(g)
 
     self.p["ngridx"], self.p["ngridy"], self.p["nlyrs"],  = int(self.p["ngridx"]), int(self.p["ngridy"]), int(self.p["nlyrs"]),
 
@@ -547,13 +547,13 @@ class pyPamtra(object):
 
       for x in np.arange(self.p["ngridx"]):
         for y in np.arange(self.p["ngridy"]):
-          self.p["model_i"][x,y], self.p["model_j"][x,y] = np.array(np.array(g.next()),dtype=int)
-          self.p["lat"][x,y], self.p["lon"][x,y],lfrac,self.p["wind10u"][x,y],self.p["wind10v"][x,y]  = np.array(np.array(g.next()),dtype=float)
-          self.p["iwv"][x,y],self.p["cwp"][x,y],self.p["iwp"][x,y],self.p["rwp"][x,y],self.p["swp"][x,y],self.p["gwp"][x,y] = np.array(np.array(g.next()),dtype=float)
-          self.p["hgt_lev"][x,y,0],self.p["press_lev"][x,y,0],self.p["temp_lev"][x,y,0],self.p["relhum_lev"][x,y,0] = np.array(np.array(g.next()),dtype=float)
+          self.p["model_i"][x,y], self.p["model_j"][x,y] = np.array(np.array(next(g)),dtype=int)
+          self.p["lat"][x,y], self.p["lon"][x,y],lfrac,self.p["wind10u"][x,y],self.p["wind10v"][x,y]  = np.array(np.array(next(g)),dtype=float)
+          self.p["iwv"][x,y],self.p["cwp"][x,y],self.p["iwp"][x,y],self.p["rwp"][x,y],self.p["swp"][x,y],self.p["gwp"][x,y] = np.array(np.array(next(g)),dtype=float)
+          self.p["hgt_lev"][x,y,0],self.p["press_lev"][x,y,0],self.p["temp_lev"][x,y,0],self.p["relhum_lev"][x,y,0] = np.array(np.array(next(g)),dtype=float)
           self.p["sfc_type"][x,y] = np.around(lfrac) # lfrac is deprecated
           for z in np.arange(self.p["nlyrs"]):
-            self.p["hgt_lev"][x,y,z+1],self.p["press_lev"][x,y,z+1],self.p["temp_lev"][x,y,z+1],self.p["relhum_lev"][x,y,z+1],self.p["cwc_q"][x,y,z],self.p["iwc_q"][x,y,z],self.p["rwc_q"][x,y,z],self.p["swc_q"][x,y,z],self.p["gwc_q"][x,y,z] = np.array(np.array(g.next()),dtype=float)
+            self.p["hgt_lev"][x,y,z+1],self.p["press_lev"][x,y,z+1],self.p["temp_lev"][x,y,z+1],self.p["relhum_lev"][x,y,z+1],self.p["cwc_q"][x,y,z],self.p["iwc_q"][x,y,z],self.p["rwc_q"][x,y,z],self.p["swc_q"][x,y,z],self.p["gwc_q"][x,y,z] = np.array(np.array(next(g)),dtype=float)
 
     elif n_moments == 2:
       self.p["hwc_q"] = np.zeros(self._shape3D)
@@ -566,13 +566,13 @@ class pyPamtra(object):
 
       for x in np.arange(self.p["ngridx"]):
         for y in np.arange(self.p["ngridy"]):
-          self.p["model_i"][x,y], self.p["model_j"][x,y] = np.array(np.array(g.next()),dtype=int)
-          self.p["lat"][x,y], self.p["lon"][x,y],lfrac,self.p["wind10u"][x,y],self.p["wind10v"][x,y]  = np.array(np.array(g.next()),dtype=float)
-          self.p["iwv"][x,y],self.p["cwp"][x,y],self.p["iwp"][x,y],self.p["rwp"][x,y],self.p["swp"][x,y],self.p["gwp"][x,y],self.p["hwp"][x,y] = np.array(np.array(g.next()),dtype=float)
-          self.p["hgt_lev"][x,y,0],self.p["press_lev"][x,y,0],self.p["temp_lev"][x,y,0],self.p["relhum_lev"][x,y,0] = np.array(np.array(g.next()),dtype=float)
+          self.p["model_i"][x,y], self.p["model_j"][x,y] = np.array(np.array(next(g)),dtype=int)
+          self.p["lat"][x,y], self.p["lon"][x,y],lfrac,self.p["wind10u"][x,y],self.p["wind10v"][x,y]  = np.array(np.array(next(g)),dtype=float)
+          self.p["iwv"][x,y],self.p["cwp"][x,y],self.p["iwp"][x,y],self.p["rwp"][x,y],self.p["swp"][x,y],self.p["gwp"][x,y],self.p["hwp"][x,y] = np.array(np.array(next(g)),dtype=float)
+          self.p["hgt_lev"][x,y,0],self.p["press_lev"][x,y,0],self.p["temp_lev"][x,y,0],self.p["relhum_lev"][x,y,0] = np.array(np.array(next(g)),dtype=float)
           self.p["lfrac"][x,y] = np.around(lfrac) # lfrac is deprecated
           for z in np.arange(self.p["nlyrs"]):
-            self.p["hgt_lev"][x,y,z+1],self.p["press_lev"][x,y,z+1],self.p["temp_lev"][x,y,z+1],self.p["relhum_lev"][x,y,z+1],self.p["cwc_q"][x,y,z],self.p["iwc_q"][x,y,z],self.p["rwc_q"][x,y,z],self.p["swc_q"][x,y,z],self.p["gwc_q"][x,y,z],self.p["hwc_q"][x,y,z],self.p["cwc_n"][x,y,z],self.p["iwc_n"][x,y,z],self.p["rwc_n"][x,y,z],self.p["swc_n"][x,y,z],self.p["gwc_n"][x,y,z],self.p["hwc_n"][x,y,z] = np.array(np.array(g.next()),dtype=float)
+            self.p["hgt_lev"][x,y,z+1],self.p["press_lev"][x,y,z+1],self.p["temp_lev"][x,y,z+1],self.p["relhum_lev"][x,y,z+1],self.p["cwc_q"][x,y,z],self.p["iwc_q"][x,y,z],self.p["rwc_q"][x,y,z],self.p["swc_q"][x,y,z],self.p["gwc_q"][x,y,z],self.p["hwc_q"][x,y,z],self.p["cwc_n"][x,y,z],self.p["iwc_n"][x,y,z],self.p["rwc_n"][x,y,z],self.p["swc_n"][x,y,z],self.p["gwc_n"][x,y,z],self.p["hwc_n"][x,y,z] = np.array(np.array(next(g)),dtype=float)
     else:
       raise IOError("n_moments mus be 1 or 2")
 
@@ -632,7 +632,7 @@ class pyPamtra(object):
     day=str(firstTime.day).zfill(2)
     hhmm=datetime.datetime.strftime(firstTime,"%H%M")
 
-    if "iwv" not in self.p.keys():
+    if "iwv" not in list(self.p.keys()):
       self.p['iwv'] = np.ones((self._shape2D[0],self._shape2D[1]))*-9999.
       self.p['hydro_wp'] = np.ones((self._shape2D[0],self._shape2D[1],self.df.nhydro))*-9999.
       self.p['hydro_tn'] = np.ones((self._shape2D[0],self._shape2D[1],self.df.nhydro))*-9999.
@@ -704,7 +704,7 @@ class pyPamtra(object):
 
     #we don't want any masked arrays here:
 
-    for key in kwargs.keys():
+    for key in list(kwargs.keys()):
       if type(kwargs[key]) == np.ma.core.MaskedArray:
         kwargs[key] = kwargs[key].filled(np.nan)
       if type(kwargs[key]) == np.core.defchararray.chararray:
@@ -714,21 +714,21 @@ class pyPamtra(object):
     #make sure that an descriptor file exists already!
     if not self.df.data.shape[0] > 0:
       warnings.warn("No descriptor file defined. Assuming dry profile without hydrometeors")
-    if "hydro_q" in kwargs.keys():
+    if "hydro_q" in list(kwargs.keys()):
       assert self.df.data.shape[0] > 0
       assert self.df.nhydro == kwargs["hydro_q"].shape[-1]
-    elif "hydro_n" in kwargs.keys():
+    elif "hydro_n" in list(kwargs.keys()):
       assert self.df.data.shape[0] > 0
       assert  self.df.nhydro == kwargs["hydro_n"].shape[-1]
-    elif "hydro_reff" in kwargs.keys():
+    elif "hydro_reff" in list(kwargs.keys()):
       assert self.df.data.shape[0] > 0
       assert self.df.nhydro == kwargs["hydro_reff"].shape[-1]
 
     # Deprecation warning for lfrac
-    if 'lfrac' in kwargs.keys():
-      if 'sfc_type' in kwargs.keys():
+    if 'lfrac' in list(kwargs.keys()):
+      if 'sfc_type' in list(kwargs.keys()):
         raise DeprecationWarning('Using lfrac and sfc_type at the same time is not allowed. lfrac is deprecated.')
-      elif 'sfc_refl' in kwargs.keys():
+      elif 'sfc_refl' in list(kwargs.keys()):
         raise DeprecationWarning('Using lfrac and sfc_refl at the same time is not allowed. lfrac is deprecated.')
       else:
         warnings.warn("lfrac is deprecated. Set sfc_model and sfc_refl directly. "+
@@ -741,18 +741,18 @@ class pyPamtra(object):
 
     allVars = self.default_p_vars
 
-    for key in kwargs.keys():
+    for key in list(kwargs.keys()):
       if (key not in allVars and key.split("+")[0] not in allVars) or (key == "model_i") or (key == "model_j"):
         raise TypeError("Could not parse "+key)
 
 
-    if not (("hgt_lev" in kwargs.keys() or "hgt" in kwargs.keys()) and
-        ("temp_lev" in kwargs.keys() or "temp" in kwargs.keys()) and
-        ("press_lev" in kwargs.keys() or "press" in kwargs.keys()) and
-        ("relhum_lev" in kwargs.keys() or  "relhum" in kwargs.keys())):#"q" in kwargs.keys()
+    if not (("hgt_lev" in list(kwargs.keys()) or "hgt" in list(kwargs.keys())) and
+        ("temp_lev" in list(kwargs.keys()) or "temp" in list(kwargs.keys())) and
+        ("press_lev" in list(kwargs.keys()) or "press" in list(kwargs.keys())) and
+        ("relhum_lev" in list(kwargs.keys()) or  "relhum" in list(kwargs.keys()))):#"q" in kwargs.keys()
       raise TypeError("I need hgt(_lev) and temp(_lev) and press(_lev) and relhum(_lev)!")
 
-    if "hgt" not in kwargs.keys():
+    if "hgt" not in list(kwargs.keys()):
       kwargs["hgt"] = (kwargs["hgt_lev"][...,1:] + kwargs["hgt_lev"][...,:-1])/2.
 
 
@@ -799,14 +799,14 @@ class pyPamtra(object):
     self.p["nlyrs"] = self.p["nlyrs"].reshape(self._shape2D)
 
     for key in ["hgt_lev","temp_lev","press_lev","relhum_lev"]:
-      if key in kwargs.keys():
+      if key in list(kwargs.keys()):
         self.p[key]= kwargs[key].reshape(self._shape3Dplus)
 
     for key in ["hgt","temp","press","relhum"]:
-      if key in kwargs.keys():
+      if key in list(kwargs.keys()):
         self.p[key]= kwargs[key].reshape(self._shape3D)
 
-    if "hgt_lev" not in kwargs.keys():
+    if "hgt_lev" not in list(kwargs.keys()):
       self.p["hgt_lev"] = np.empty(self._shape3Dplus)
       self.p["hgt_lev"][...,0] = self.p["hgt"][...,0] - (self.p["hgt"][...,1] - self.p["hgt"][...,0])*0.5
       self.p["hgt_lev"][...,1:-1] = 0.5 * (self.p["hgt"][...,:-1] + self.p["hgt"][...,1:])
@@ -816,7 +816,7 @@ class pyPamtra(object):
     self.p["model_i"] = np.array(np.where(np.logical_not(np.isnan(self.p[hgtVar][:,:,0])))[0]).reshape(self._shape2D) +1
     self.p["model_j"] = np.array(np.where(np.logical_not(np.isnan(self.p[hgtVar][:,:,0])))[1]).reshape(self._shape2D) +1
 
-    if "timestamp" not in kwargs.keys():
+    if "timestamp" not in list(kwargs.keys()):
       self.p["unixtime"] = np.ones(self._shape2D)* int(time.time())
       warnings.warn("timestamp set to now", Warning)
     else:
@@ -833,7 +833,7 @@ class pyPamtra(object):
         raise TypeError("timestamp has to be int, float or datetime object")
 
     for environment, preset in [["lat",50.938056],["lon",6.956944],["wind10u",0],["wind10v",0],["groundtemp",np.nan],["sfc_salinity",33.],["sfc_slf",1.],["sfc_sif",0.]]:
-      if environment not in kwargs.keys():
+      if environment not in list(kwargs.keys()):
         self.p[environment] = np.ones(self._shape2D)*preset
         warnings.warn("%s set to %s"%(environment,preset,), Warning)
       else:
@@ -843,7 +843,7 @@ class pyPamtra(object):
           self.p[environment] = kwargs[environment].reshape(self._shape2D)
 
     for environment, preset in [["sfc_type",-9999],["sfc_model",-9999]]:
-      if environment not in kwargs.keys():
+      if environment not in list(kwargs.keys()):
         self.p[environment] = np.ones(self._shape2D,dtype=int)*preset
         warnings.warn("%s set to %s"%(environment,preset,), Warning)
       else:
@@ -853,7 +853,7 @@ class pyPamtra(object):
           self.p[environment] = kwargs[environment].reshape(self._shape2D)
 
     for environment, preset in [["sfc_refl",'S']]:
-      if environment not in kwargs.keys():
+      if environment not in list(kwargs.keys()):
         self.p[environment] = np.chararray(self._shape2D)
         self.p[environment][:] = preset
         warnings.warn("%s set to %s"%(environment,preset,), Warning)
@@ -866,7 +866,7 @@ class pyPamtra(object):
           self.p[environment] = kwargs[environment].reshape(self._shape2D)
 
     for environment, preset in [["obs_height",[833000.,0.]]]:
-      if environment not in kwargs.keys():
+      if environment not in list(kwargs.keys()):
         self.p[environment] = np.ones(self._shape3Dout)*preset
         warnings.warn("%s set to %s"%(environment,preset,), Warning)
       else:
@@ -876,24 +876,24 @@ class pyPamtra(object):
           self.p[environment] = kwargs[environment].reshape(self._shape3Dout)
 
     for qValue in ["hydro_q","hydro_reff","hydro_n"]:
-      if qValue not in kwargs.keys()  and qValue+"+no000" not in kwargs.keys():
+      if qValue not in list(kwargs.keys())  and qValue+"+no000" not in list(kwargs.keys()):
         self.p[qValue] = np.zeros(self._shape4D)
         warnings.warn(qValue + " set to 0", Warning)
-      elif qValue+"+no000" in kwargs.keys():
+      elif qValue+"+no000" in list(kwargs.keys()):
         self.p[qValue] = np.zeros(self._shape4D)
-        for hh in xrange(self.df.nhydro):
+        for hh in range(self.df.nhydro):
           self.p[qValue][...,hh] = kwargs[qValue+"+no"+str(hh).zfill(3)].reshape(self._shape3D)
       else:
         self.p[qValue] = kwargs[qValue].reshape(self._shape4D)
 
     for qValue in ["airturb","wind_w","wind_uv","turb_edr"]:
-      if qValue not in kwargs.keys():
+      if qValue not in list(kwargs.keys()):
         self.p[qValue] = np.zeros(self._shape3D) + np.nan
         warnings.warn(qValue + " set to nan", Warning)
       else:
         self.p[qValue] = kwargs[qValue].reshape(self._shape3D)
 
-    if "radar_prop" in kwargs.keys():
+    if "radar_prop" in list(kwargs.keys()):
       self.p["radar_prop"] = kwargs["radar_prop"].reshape(self._shape2D+tuple([2]))
     else:
       self.p["radar_prop"] = np.zeros(self._shape2D+tuple([2]))*np.nan
@@ -910,14 +910,14 @@ class pyPamtra(object):
   def _checkData(self):
     maxLimits = {"relhum_lev":200,"hydro_q":0.05,"temp_lev":320,"press_lev":110000,"relhum":200,"temp":320,"press":110000}
     minLimits = {"relhum_lev":0,  "hydro_q": 0 , "temp_lev":170,"press_lev":1,     "relhum":0,  "temp":170,"press":1}
-    for key in self.p.keys():
+    for key in list(self.p.keys()):
       if type(self.p[key]) != np.ndarray:
         continue
       p_data = self.p[key][~np.isnan(self.p[key])]
-      if key in maxLimits.keys() and len(p_data)>0:
+      if key in list(maxLimits.keys()) and len(p_data)>0:
         if np.max(p_data) > maxLimits[key]:
           raise ValueError("unrealistic value for "+ key + ": " +str(np.max(p_data)) + ", maximum is " + str(maxLimits[key]))
-      if key in minLimits.keys() and len(p_data)>0:
+      if key in list(minLimits.keys()) and len(p_data)>0:
         if len(p_data[p_data != missingNumber]) > 0:
           if np.min(p_data[p_data != missingNumber]) < minLimits[key]:
             raise ValueError("unrealistic value for "+ key + ": " +str(np.min(p_data)) + ", minimum is " + str(minLimits[key]))
@@ -967,37 +967,37 @@ class pyPamtra(object):
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
 
     for key in ["unixtime","nlyrs","lat","lon","model_i","model_j","wind10u","wind10v","groundtemp","iwv","sfc_type","sfc_model","sfc_refl","sfc_salinity","sfc_slf","sfc_sif"]:
-      if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape2D)
+      if key in list(self.p.keys()): self.p[key] = self.p[key][condition].reshape(self._shape2D)
 
     for key in ["obs_height"]:
-      if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3Dout)
+      if key in list(self.p.keys()): self.p[key] = self.p[key][condition].reshape(self._shape3Dout)
 
     for key in ["hydro_wp","hydro_tn"]:
-      if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3Dhyd)
+      if key in list(self.p.keys()): self.p[key] = self.p[key][condition].reshape(self._shape3Dhyd)
 
     for key in ["hydro_q","hydro_n","hydro_reff"]:
-      if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape4D)
+      if key in list(self.p.keys()): self.p[key] = self.p[key][condition].reshape(self._shape4D)
 
     for key in ["hgt_lev","temp_lev","press_lev","relhum_lev"]:
-      if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3Dplus)
+      if key in list(self.p.keys()): self.p[key] = self.p[key][condition].reshape(self._shape3Dplus)
 
     for key in ["airturb",'temp', 'press', 'relhum','hgt','wind_w','wind_uv','turb_edr']:
-      if key in self.p.keys(): self.p[key] = self.p[key][condition].reshape(self._shape3D)
+      if key in list(self.p.keys()): self.p[key] = self.p[key][condition].reshape(self._shape3D)
 
-    if "radar_prop" in self.p.keys(): self.p["radar_prop"] = self.p["radar_prop"][condition].reshape(self._shape2D+tuple([2]))
+    if "radar_prop" in list(self.p.keys()): self.p["radar_prop"] = self.p["radar_prop"][condition].reshape(self._shape2D+tuple([2]))
 
     #make sure we did not forget something
-    for key in self.p.keys():
+    for key in list(self.p.keys()):
       if type(self.p[key]) == np.ndarray:
         assert self.p[key].shape[0] == self.p["lat"].shape[0]
         assert self.p[key].shape[1] == self.p["lat"].shape[1]
 
 
 
-    for key in self.df.data4D.keys():
+    for key in list(self.df.data4D.keys()):
       self.df.data4D[key] = self.df.data4D[key][condition].reshape(self._shape4D)
 
-    for key in self.df.dataFullSpec.keys():
+    for key in list(self.df.dataFullSpec.keys()):
       if key == "d_bound_ds": shape5D = self._shape5Dplus
       else: shape5D = self._shape5D
       self.df.dataFullSpec[key] = self.df.dataFullSpec[key][condition].reshape(shape5D)
@@ -1040,19 +1040,19 @@ class pyPamtra(object):
     rep5D =  rep2D + (1,1,1,)
 
     for key in ["unixtime","nlyrs","lat","lon","model_i","model_j","wind10u","wind10v","obs_height","groundtemp","sfc_type","sfc_model","sfc_refl","sfc_salinity","sfc_slf","sfc_sif"]:
-      if key in self.p.keys(): self.p[key] = np.tile(self.p[key], rep2D)
+      if key in list(self.p.keys()): self.p[key] = np.tile(self.p[key], rep2D)
 
     for key in ["hydro_q","hydro_n","hydro_reff"]:
-      if key in self.p.keys(): self.p[key] = np.tile(self.p[key], rep4D)
+      if key in list(self.p.keys()): self.p[key] = np.tile(self.p[key], rep4D)
 
     for key in ["hgt_lev","temp_lev","press_lev","relhum_lev","airturb",'temp', 'press', 'relhum','hgt','wind_w',"radar_prop",'wind_uv','turb_edr']:
-      if key in self.p.keys(): self.p[key] = np.tile(self.p[key], rep3D)
+      if key in list(self.p.keys()): self.p[key] = np.tile(self.p[key], rep3D)
 
 
-    for key in self.df.data4D.keys():
+    for key in list(self.df.data4D.keys()):
       self.df.data4D[key] = np.tile(self.df.data4D[key],rep4D)
 
-    for key in self.df.dataFullSpec.keys():
+    for key in list(self.df.dataFullSpec.keys()):
       self.df.dataFullSpec[key] = np.tile(self.df.dataFullSpec[key],rep5D)
 
 
@@ -1072,7 +1072,7 @@ class pyPamtra(object):
         Pamtra profile to append
     axis : int
     """
-    for key in self.p.keys():
+    for key in list(self.p.keys()):
       if len(np.shape(self.p[key])) >= 2:
         self.p[key] = np.concatenate((self.p[key], profile[key]),axis=axis)
 
@@ -1115,7 +1115,7 @@ class pyPamtra(object):
     self._shape4D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro)
     self._shape5Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin+1)
     self._shape5D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],self.df.nhydro,self.df.fs_nbin)
-    assert len(self.df.dataFullSpec.keys()) == 0
+    assert len(list(self.df.dataFullSpec.keys())) == 0
 
     def extrap(x, xp, yp):
       """np.interp function with linear extrapolation"""
@@ -1125,12 +1125,12 @@ class pyPamtra(object):
       return y
 
     for key in ["hydro_q","hydro_n","hydro_reff",]:
-      if key in self.p.keys():
+      if key in list(self.p.keys()):
         #make new array
         newP = np.ones(self._shape4D) * missingNumber
-        for x in xrange(self._shape2D[0]):
-          for y in xrange(self._shape2D[1]):
-            for h in xrange(self.df.nhydro):
+        for x in range(self._shape2D[0]):
+          for y in range(self._shape2D[1]):
+            for h in range(self.df.nhydro):
             #interpolate!
               newP[x,y,:,h] = extrap(new_hgt[x,y,:],old_hgt[x,y,:],self.p[key][x,y,:,h])
         #save new array
@@ -1141,9 +1141,9 @@ class pyPamtra(object):
     for key in self.df.data4D:
       #make new array
       newP = np.ones(self._shape4D) * missingNumber
-      for x in xrange(self._shape2D[0]):
-        for y in xrange(self._shape2D[1]):
-          for h in xrange(self.df.nhydro):
+      for x in range(self._shape2D[0]):
+        for y in range(self._shape2D[1]):
+          for h in range(self.df.nhydro):
           #interpolate!
             newP[x,y,:,h] = extrap(new_hgt[x,y,:],old_hgt[x,y,:],self.df.data4D[key][x,y,:,h])
       #save new array
@@ -1151,10 +1151,10 @@ class pyPamtra(object):
 
 
     for key in ["hgt_lev","temp_lev", "relhum_lev"]:
-      if key in self.p.keys():
+      if key in list(self.p.keys()):
         newP = np.ones(self._shape3Dplus) * missingNumber
-        for x in xrange(self._shape2D[0]):
-          for y in xrange(self._shape2D[1]):
+        for x in range(self._shape2D[0]):
+          for y in range(self._shape2D[1]):
 #            newP[x,y] = np.interp(new_hgt_lev,old_hgt_lev[x,y],self.p[key][x,y])
 #            newP[x,y] = np.interp(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
             newP[x,y] = extrap(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
@@ -1182,10 +1182,10 @@ class pyPamtra(object):
     #     if key != "hgt" and self.p[key][self.p[key]<0]: print "Somethings wrong. Rel. humidity below 0!"
 
     for key in ["airturb","hgt","temp","relhum","wind_uv","turb_edr"]:
-      if key in self.p.keys():
+      if key in list(self.p.keys()):
         newP = np.ones(self._shape3D) * missingNumber
-        for x in xrange(self._shape2D[0]):
-          for y in xrange(self._shape2D[1]):
+        for x in range(self._shape2D[0]):
+          for y in range(self._shape2D[1]):
 #            newP[x,y] = np.interp(new_hgt,old_hgt[x,y],self.p[key][x,y])
 #            newP[x,y] = np.interp(new_hgt[x,y],old_hgt[x,y],self.p[key][x,y])
             newP[x,y] = extrap(new_hgt[x,y],old_hgt[x,y],self.p[key][x,y])
@@ -1194,10 +1194,10 @@ class pyPamtra(object):
 
 
     for key in ["press_lev"]:
-      if key in self.p.keys():
+      if key in list(self.p.keys()):
         newP = np.ones(self._shape3Dplus) * missingNumber
-        for x in xrange(self._shape2D[0]):
-          for y in xrange(self._shape2D[1]):
+        for x in range(self._shape2D[0]):
+          for y in range(self._shape2D[1]):
 #            newP[x,y] = np.exp(np.interp(new_hgt_lev,old_hgt_lev[x,y],np.log(self.p[key][x,y])))
 #            newP[x,y] = np.exp(np.interp(new_hgt_lev[x,y],old_hgt_lev[x,y],np.log(self.p[key][x,y])))
             newP[x,y] = np.exp(extrap(new_hgt_lev[x,y],old_hgt_lev[x,y],np.log(self.p[key][x,y])))
@@ -1205,10 +1205,10 @@ class pyPamtra(object):
         self.p[key][self.p[key]<-1.e-6] = missingNumber
 
     for key in ["press"]:
-      if key in self.p.keys():
+      if key in list(self.p.keys()):
         newP = np.ones(self._shape3D) * missingNumber
-        for x in xrange(self._shape2D[0]):
-          for y in xrange(self._shape2D[1]):
+        for x in range(self._shape2D[0]):
+          for y in range(self._shape2D[1]):
 #            newP[x,y] = np.exp(np.interp(new_hgt,old_hgt[x,y],np.log(self.p[key][x,y])))
 #            newP[x,y] = np.exp(np.interp(new_hgt[x,y],old_hgt[x,y],np.log(self.p[key][x,y])))
             newP[x,y] = np.exp(extrap(new_hgt[x,y],old_hgt[x,y],np.log(self.p[key][x,y])))
@@ -1243,7 +1243,7 @@ class pyPamtra(object):
 
     """
 
-    if "hgt" not in self.p.keys():
+    if "hgt" not in list(self.p.keys()):
       self.p["hgt"] = (self.p["hgt_lev"][...,:-1] + self.p["hgt_lev"][...,1:])/2.
 
 
@@ -1290,8 +1290,8 @@ class pyPamtra(object):
     self.p["cloudTop"] = np.ones(self._shape2D)*missingNumber
     self.p["cloudBase"] = np.ones(self._shape2D)*missingNumber
 
-    for x in xrange(self._shape2D[0]):
-      for y in xrange(self._shape2D[1]):
+    for x in range(self._shape2D[0]):
+      for y in range(self._shape2D[1]):
         i_top, i_base, i_cloud =  detect_liq_cloud(self.p["hgt_lev"][x,y,0:self.p["nlyrs"][x,y]], self.p["temp_lev"][x,y,0:self.p["nlyrs"][x,y]], self.p["relhum_lev"][x,y,0:self.p["nlyrs"][x,y]])
         if len(i_top)> 0:
           self.p["cloudTop"][x,y] = self.p["hgt_lev"][x,y,i_top[-1]+1]
@@ -1312,8 +1312,8 @@ class pyPamtra(object):
 
     self.p["cwc_q"][:] = 0
 
-    for x in xrange(self._shape2D[0]):
-      for y in xrange(self._shape2D[1]):
+    for x in range(self._shape2D[0]):
+      for y in range(self._shape2D[1]):
         i_top, i_base, i_cloud =  detect_liq_cloud(self.p["hgt_lev"][x,y,0:self.p["nlyrs"][x,y]], self.p["temp_lev"][x,y,0:self.p["nlyrs"][x,y]], self.p["relhum_lev"][x,y,0:self.p["nlyrs"][x,y]])
         for k in np.arange(len(i_top)):
           i_cloud_k = np.arange(i_base[k],i_top[k]+1)
@@ -1872,7 +1872,7 @@ class pyPamtra(object):
 
 
     profilePart = dict()
-    for key in self.p.keys():
+    for key in list(self.p.keys()):
       # import pdb;pdb.set_trace()
       if type(self.p[key]) is not np.ndarray and type(self.p[key]) is not np.core.defchararray.chararray:
         profilePart[key] = self.p[key]
@@ -1884,10 +1884,10 @@ class pyPamtra(object):
 
     dfData = self.df.data
     dfData4D = dict()
-    for key in self.df.data4D.keys():
+    for key in list(self.df.data4D.keys()):
       dfData4D[key] = self.df.data4D[key][pp_startX:pp_endX,pp_startY:pp_endY]
     dfDataFS = dict()
-    for key in self.df.dataFullSpec.keys():
+    for key in list(self.df.dataFullSpec.keys()):
       dfDataFS[key] = self.df.dataFullSpec[key][pp_startX:pp_endX,pp_startY:pp_endY]
 
     settings = deepcopy(self.set)
@@ -2013,7 +2013,7 @@ class pyPamtra(object):
       '''
       os.makedirs(fname)
       for dic in ["r","p", "nmlSet","set","df.data","df.data4D","df.dataFullSpec"]:
-        for key in self.__dict__[dic].keys():
+        for key in list(self.__dict__[dic].keys()):
           if self.set["pyVerbose"]>1: print("saving: "+fname+"/"+dic+"%"+key+"%"+".npy")
           data = self.__dict__[dic][key]
           if  type(data) == np.ma.core.MaskedArray:
@@ -2320,7 +2320,7 @@ class pyPamtra(object):
       nc_Attenuation_Atmosphere[:] = np.array(self.r["Att_atmo"],dtype='f')
       if not pyNc: nc_Attenuation_Atmosphere._fillValue =missingNumber
 
-      if "PIA" in self.r.keys():
+      if "PIA" in list(self.r.keys()):
         nc_PIA = cdfFile.createVariable('Path_Integrated_Attenuation', 'f',dim4d,**fillVDict)
         nc_PIA.units = "dB"
         nc_PIA[:] = np.array(self.r["PIA"],dtype='f')
@@ -2406,13 +2406,13 @@ class pyPamtra(object):
 
     #profile data
 
-    if ("iwv" in profileVars or profileVars =="all") and ("iwv" in self.p.keys()):
+    if ("iwv" in profileVars or profileVars =="all") and ("iwv" in list(self.p.keys())):
       nc_iwv = cdfFile.createVariable('iwv', 'f',dim2d,**fillVDict)
       nc_iwv.units = "kg/m^2"
       nc_iwv[:] = np.array(self.p["iwv"],dtype="f")
       if not pyNc: nc_iwv._fillValue =missingNumber
 
-    if ("hydro_wp" in profileVars or profileVars =="all") and ("hydro_wp" in self.p.keys()):
+    if ("hydro_wp" in profileVars or profileVars =="all") and ("hydro_wp" in list(self.p.keys())):
       for i,wp in enumerate(wpNames):
         nc_wp= cdfFile.createVariable(wp, 'f',dim2d,**fillVDict)
         nc_wp.units = "kg/m^2"
@@ -2455,13 +2455,13 @@ class pyPamtra(object):
       #nc_hwp[:] = np.array(self.p["hwp"],dtype="f")
       #if not pyNc: nc_hwp._fillValue =missingNumber
 
-    if ("cloudBase" in profileVars or profileVars =="all") and ("cloudBase" in self.p.keys()):
+    if ("cloudBase" in profileVars or profileVars =="all") and ("cloudBase" in list(self.p.keys())):
       nc_cb = cdfFile.createVariable('cloudBase', 'f',dim2d,**fillVDict)
       nc_cb.units = "m"
       nc_cb[:] = np.array(self.p["cloudBase"],dtype="f")
       if not pyNc: nc_cb._fillValue =missingNumber
 
-    if ("cloudTop" in profileVars or profileVars =="all") and ("cloudTop" in self.p.keys()):
+    if ("cloudTop" in profileVars or profileVars =="all") and ("cloudTop" in list(self.p.keys())):
       nc_ct = cdfFile.createVariable('cloudTop', 'f',dim2d,**fillVDict)
       nc_ct.units = "m"
       nc_ct[:] = np.array(self.p["cloudTop"],dtype="f")

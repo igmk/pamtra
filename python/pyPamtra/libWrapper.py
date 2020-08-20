@@ -26,12 +26,12 @@ def PamtraFortranWrapper(
   profile,
   returnModule=True
   ):
-  import pyPamtraLib
+  from . import pyPamtraLib
 
   report_module.verbose = sets["verbose"]
 
   #make sure the shape of the profiles is the same!
-  for key in profile.keys():
+  for key in list(profile.keys()):
     if type(profile[key]) == numpy.ndarray:
       assert profile[key].shape[0] == profile["lat"].shape[0]
       assert profile[key].shape[1] == profile["lat"].shape[1]
@@ -59,7 +59,7 @@ def PamtraFortranWrapper(
     raise DeprecationWarning("nmlSets['ground_type'] is deprecated. Use 2D profile 'sfc_refl' instead.")
 
   #loop through settings
-  for key in nmlSets.keys():
+  for key in list(nmlSets.keys()):
     isList = getattr(settings, key.lower()).size > 1
     if type(nmlSets[key]) == str:
       if sets["pyVerbose"] > 3: print(("settings."+key.lower() +"[:] = '" + str(nmlSets[key])+"'"))
@@ -101,7 +101,7 @@ def PamtraFortranWrapper(
     else:
       if sets["pyVerbose"] > 3: print(("descriptor_file."+name +"_arr = [[[descriptorFile['"+name+"'].tolist()]]]"))
       setattr(descriptor_file, name +"_arr", [[[descriptorFile[name].tolist()]]])
-  for name4d in descriptorFile4D.keys():
+  for name4d in list(descriptorFile4D.keys()):
     assert descriptorFile4D[name4d].shape[0] == profile["lat"].shape[0]
     assert descriptorFile4D[name4d].shape[1] == profile["lat"].shape[1]
     if sets["pyVerbose"] > 3: print(("descriptor_file."+name4d +"_arr = descriptorFile4D['"+name4d+"'].tolist()"))
@@ -121,7 +121,7 @@ def PamtraFortranWrapper(
   if error > 0: raise RuntimeError("Error in allocate_vars_atmosphere")
 
   if sets["pyVerbose"] > 8:
-    for key in profile.keys():
+    for key in list(profile.keys()):
       if key not in ["noutlevels"]:
         try: 
           print(key, getattr(vars_atmosphere, "atmo_"+key), profile[key])
@@ -131,7 +131,7 @@ def PamtraFortranWrapper(
 
   #return  dict(),pyPamtraLib
   #deal with the atmospheric input_file
-  for key in profile.keys():
+  for key in list(profile.keys()):
 
     assert type(profile[key]) != numpy.ma.core.MaskedArray
 
@@ -157,7 +157,7 @@ def PamtraFortranWrapper(
     #vars_atmosphere.atmo_max_nlyr
 
   if sets["pyVerbose"] > 8:
-    for key in profile.keys():
+    for key in list(profile.keys()):
       if key not in ["noutlevels"]:
         print(key, getattr(vars_atmosphere, "atmo_"+key, profile[key]))
   #see whether it worked:
@@ -182,7 +182,7 @@ def PamtraFortranWrapper(
     error = vars_hydrofullspec.allocate_hydrofs_vars(descriptorFileFS["d_ds"].shape[-1])
     if error > 0: raise RuntimeError("Error in allocate_hydrofs_vars")
 
-    for key in descriptorFileFS.keys():
+    for key in list(descriptorFileFS.keys()):
       assert descriptorFileFS[key].shape[0] == profile["lat"].shape[0]
       assert descriptorFileFS[key].shape[1] == profile["lat"].shape[1]
       if sets["pyVerbose"] > 3: print(("vars_hydrofullspec.hydrofs_"+key +" = descriptorFileFS['"+key+"'].tolist()"))
@@ -236,7 +236,7 @@ def _strList2charArray(strList,charLength=None,arrayLength=None):
   if charLength:
     dim2 = charLength
   else:
-    dim2 = numpy.max(map(len,strList))
+    dim2 = numpy.max(list(map(len,strList)))
   charArray = numpy.zeros((dim1,dim2),dtype="S1")
   for ss,string in enumerate(strList):
     charArray[ss,:len(string)] = list(string)

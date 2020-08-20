@@ -239,7 +239,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
         fr_land.T[:] = dataSingle["fr_land"]
         hfl =  np.zeros(shape3D)
         hhl =  np.zeros(shape3Dplus)
-        for t in xrange(shape2D[1]):
+        for t in range(shape2D[1]):
           hfl[:,t,:] = dataSingle["hfl"]
           hhl[:,t,:] = dataSingle["hhl"]
 
@@ -256,7 +256,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
         if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
           data = deepcopy(dataSingle)
         else:
-          for key in data.keys():
+          for key in list(data.keys()):
             data[key] = np.ma.concatenate((data[key],dataSingle[key],),axis=concatenateAxis)
 
         ffOK += 1
@@ -385,7 +385,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
         if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
           data = deepcopy(dataSingle)
         else:
-          for key in data.keys():
+          for key in list(data.keys()):
             data[key] = np.ma.concatenate((data[key],dataSingle[key],),axis=concatenateAxis)
 
         ffOK += 1
@@ -583,7 +583,7 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
         if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
           data = deepcopy(dataSingle)
         else:
-          for key in data.keys():
+          for key in list(data.keys()):
             data[key] = np.ma.concatenate((data[key],dataSingle[key],),axis=concatenateAxis)
 
         ffOK += 1
@@ -730,7 +730,7 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
         if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
           data = deepcopy(dataSingle)
         else:
-          for key in data.keys():
+          for key in list(data.keys()):
             data[key] = np.ma.concatenate((data[key],dataSingle[key],),axis=concatenateAxis)
 
         ffOK += 1
@@ -2127,9 +2127,9 @@ def readIcon1momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   pamData = dict() # empty dictionary to store pamtra Data
 
   hgt_key = 'height'
-  if vals.has_key(hgt_key):
+  if hgt_key in vals:
     hgt_key = 'height'
-  elif vals.has_key('heights'):
+  elif 'heights' in vals:
     hgt_key = 'heights'
   else:
     raise AttributeError('ICON file does not have a valid height label (I know only height, heights, height_2 and heights_2)')
@@ -2165,7 +2165,7 @@ def readIcon1momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   hydro_cmpl[...,1] = hydro_content[1]*np.flip(vals['QI'][timeidx],1)   # specific cloud ice content
   hydro_cmpl[...,2] = hydro_content[2]*np.flip(vals['QR'][timeidx],1)   # rain mixing ratio
   hydro_cmpl[...,3] = hydro_content[3]*np.flip(vals['QS'][timeidx],1)   # snow mixing ratio
-  if vals.has_key('QG'):
+  if 'QG' in vals:
     hydro_cmpl[...,4] = hydro_content[4]*np.flip(vals['QG'][timeidx],1)   # graupel mixing ratio
   else:
     hydro_cmpl[...,4] = 0.0*np.flip(vals['QC'][timeidx],1)   # graupel set to 0 (avoid double descriptorFile)
@@ -2235,9 +2235,9 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   pamData = dict() # empty dictionary to store pamtra Data
 
   hgt_key = 'height'
-  if vals.has_key(hgt_key):
+  if hgt_key in vals:
     hgt_key = 'height'
-  elif vals.has_key('heights'):
+  elif 'heights' in vals:
     hgt_key = 'heights'
   else:
     raise AttributeError('ICON file does not have a valid height label (I know only height, heights, height_2 and heights_2)')
@@ -2445,7 +2445,7 @@ def _createUsStandardProfile(**kwargs):
 
   import usStandard #see in tools
 
-  assert "hgt_lev" in kwargs.keys() #hgt_lev is mandatory
+  assert "hgt_lev" in list(kwargs.keys()) #hgt_lev is mandatory
 
   pamData = dict()
 
@@ -2464,10 +2464,10 @@ def _createUsStandardProfile(**kwargs):
         density[xx,yy], pamData["press_lev"][xx,yy], pamData["temp_lev"][xx,yy]  =  usStandard.usStandard(kwargs["hgt_lev"][xx,yy])
   else: raise IOError("hgt_lev has wrong number of dimensions")
 
-  for kk in kwargs.keys():
+  for kk in list(kwargs.keys()):
         pamData[kk] = np.array(kwargs[kk])
 
-  if ("relhum_lev" not in kwargs.keys()) and ("q" not in kwargs.keys()):
+  if ("relhum_lev" not in list(kwargs.keys())) and ("q" not in list(kwargs.keys())):
     pamData["relhum_lev"] = np.zeros_like(kwargs["hgt_lev"])
 
   return pamData
@@ -2522,9 +2522,9 @@ def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='net
     except: raise RuntimeError("Could not open file: '" + ncFile+"'")
     if nn == 0:
       if keys == 'all':
-        keys = ncData.variables.keys()
+        keys = list(ncData.variables.keys())
       #make sure the join dimension is actually present!
-      if noFiles > 1: assert joinDimension in ncData.dimensions.keys()
+      if noFiles > 1: assert joinDimension in list(ncData.dimensions.keys())
       #get the axis to join the arrays
       for key in keys:
         joinDimensionNumber[key] = -9999
@@ -2534,7 +2534,7 @@ def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='net
     #get and join the data
     for key in keys:
       #special sausage for nc files with time offset
-      if key in offsetKeys.keys():
+      if key in list(offsetKeys.keys()):
         data = ncData.variables[key][:] + ncData.variables[offsetKeys[key]].getValue()
       else:
         if ncData.variables[key].shape == ():
