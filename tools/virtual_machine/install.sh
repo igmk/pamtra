@@ -78,16 +78,20 @@ python -m ipykernel install --user
 cd ~/software
 git clone --recursive https://github.com/igmk/pamtra
 cd ~/software/pamtra
+git pull origin python3
+git checkout python3
 
 #for python 3
+cd ~/software/pamtra
 conda activate
 make clean
 make pyinstall
 cd ~/software
-python -c "import matplotlib; matplotlib.use('Agg'); execfile ('pamtra/examples/pyPamTest_ssrg_hogan2014.py');plt.savefig('test_pamtra_3.png')"
+python -c "import matplotlib; matplotlib.use('Agg'); exec(open('pamtra/examples/pyPamTest_ssrg_hogan2014.py').read());plt.savefig('test_pamtra_3.png')"
 
 
 # for python 2.7
+cd ~/software/pamtra
 conda activate py27
 make clean
 make pyinstall

@@ -237,7 +237,8 @@ def lenFortStrAr(arr):
   '''
   get string length of a fortran string array
 
-
+  I'm not sure whether this change is related to Python 2.7 -> 3 or 
+  numpy 1.12 -> 1.19
   '''
 
   if is3:
