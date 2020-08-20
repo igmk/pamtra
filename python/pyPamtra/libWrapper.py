@@ -8,12 +8,16 @@ import numpy# as np
 #import random
 #import string
 import copy
+import sys
 
 try:
     from .pyPamtraLib import *
 except ImportError:
     print('PAMTRA FORTRAN LIBRARY NOT AVAILABLE!')
 
+
+
+is3 = sys.version_info[0] == 3
 
 #logging.basicConfig(filename='/tmp/pyPamtraLibWrapper.log',level=logging.WARNING) #change WARNING to INFO or DEBUG if needed
 
@@ -64,7 +68,7 @@ def PamtraFortranWrapper(
     isList = getattr(settings, key.lower()).size > 1
     if type(nmlSets[key]) == str:
       if sets["pyVerbose"] > 3: print(("settings."+key.lower() +"[:] = '" + str(nmlSets[key])+"'"))
-      setattr(settings, key.lower(), nmlSets[key].ljust(getattr(settings,key.lower()).dtype.itemsize  ))
+      setattr(settings, key.lower(), nmlSets[key].ljust(lenFortStrAr(getattr(settings,key.lower()))  ))
     else:
       if isList:
         if sets["pyVerbose"] > 3: print(("settings."+key.lower() +"[:] = numpy.array(nmlSets['"+key+"']).tolist()"))
@@ -98,7 +102,7 @@ def PamtraFortranWrapper(
     elif name in ["hydro_name","dist_name","scat_name","vel_size_mod"]:
       if sets["pyVerbose"] > 3: print("setattr(descriptor_file, name+"+_str+", ','.join(descriptorFile[name])))")
       thisStr = ','.join(descriptorFile[name])
-      maxLen = getattr(descriptor_file, name+"_str").dtype.itemsize
+      maxLen = lenFortStrAr(getattr(descriptor_file, name+"_str"))
       assert len(thisStr) <= maxLen
       setattr(descriptor_file, name+"_str", thisStr.ljust(maxLen))
     #potential 4D data
@@ -228,39 +232,54 @@ def PamtraFortranWrapper(
     del pyPamtraLib
     return results,pamError
 
-def _str_py2f(array,length=None):
-  # the byte order of fortran and numpy string arrays is different, this here works sometimes...
-  #if len(array.shape) > 2: raise NotImplemented("Can only handle 1D lists of strings")
-  if length is None: length = array.shape[1]
-  return numpy.lib.stride_tricks.as_strided(array,strides=(length,1))
 
-def _strList2charArray(strList,charLength=None,arrayLength=None):
-  #makes from list strList an aray of type "s1" that Fortran can handle it.
-  if arrayLength:
-    dim1 = arrayLength
-  else:
-    dim1 = len(strList)
-  if charLength:
-    dim2 = charLength
-  else:
-    dim2 = numpy.max(list(map(len,strList)))
-  charArray = numpy.zeros((dim1,dim2),dtype="S1")
-  for ss,string in enumerate(strList):
-    charArray[ss,:len(string)] = list(string)
-    charArray[ss,len(string):]= " "
-  return charArray
+def lenFortStrAr(arr):
+  '''
+  get string length of a fortran string array
 
-def setFortranStrList(fortranList,pythonList,charLength=None):
-  #this routine takes care of all the oddities if yo transfer a list of strings from python to fortran
-  if len(fortranList.shape) > 2: raise NotImplemented("Can only handle 1D lists of strings and fortranList must be allocated")
-  if not charLength:
-    charLength = fortranList.shape[1]
-  #pythonList = _strList2charArray(pythonList,charLength=charLength)
-  for pp,pythonStr in enumerate(pythonList):
-    _str_py2f(fortranList)[pp][0:len(pythonStr)] = list(pythonStr)
-    #we have to fill teh rest of the variable with spaces, otherwise it contains only random!
-    _str_py2f(fortranList)[pp][len(pythonStr):] = " "
-  return
+
+  '''
+
+  if is3:
+    return arr.dtype.itemsize
+  else:
+    return len(arr)
+
+
+
+# def _str_py2f(array,length=None):
+#   # the byte order of fortran and numpy string arrays is different, this here works sometimes...
+#   #if len(array.shape) > 2: raise NotImplemented("Can only handle 1D lists of strings")
+#   if length is None: length = array.shape[1]
+#   return numpy.lib.stride_tricks.as_strided(array,strides=(length,1))
+
+# def _strList2charArray(strList,charLength=None,arrayLength=None):
+#   #makes from list strList an aray of type "s1" that Fortran can handle it.
+#   if arrayLength:
+#     dim1 = arrayLength
+#   else:
+#     dim1 = len(strList)
+#   if charLength:
+#     dim2 = charLength
+#   else:
+#     dim2 = numpy.max(list(map(len,strList)))
+#   charArray = numpy.zeros((dim1,dim2),dtype="S1")
+#   for ss,string in enumerate(strList):
+#     charArray[ss,:len(string)] = list(string)
+#     charArray[ss,len(string):]= " "
+#   return charArray
+
+# def setFortranStrList(fortranList,pythonList,charLength=None):
+#   #this routine takes care of all the oddities if yo transfer a list of strings from python to fortran
+#   if len(fortranList.shape) > 2: raise NotImplemented("Can only handle 1D lists of strings and fortranList must be allocated")
+#   if not charLength:
+#     charLength = fortranList.shape[1]
+#   #pythonList = _strList2charArray(pythonList,charLength=charLength)
+#   for pp,pythonStr in enumerate(pythonList):
+#     _str_py2f(fortranList)[pp][0:len(pythonStr)] = list(pythonStr)
+#     #we have to fill teh rest of the variable with spaces, otherwise it contains only random!
+#     _str_py2f(fortranList)[pp][len(pythonStr):] = " "
+#   return
 
 def parallelPamtraFortranWrapper(indices, *args, **kwargs):
   if args[0]["pyVerbose"] > 1: print('starting', __name__, 'parent process:', os.getppid(), 'process id:', os.getpid())

@@ -210,7 +210,7 @@ subroutine process_descriptor_file()
        pos1 = pos2+pos1
     END DO
 
-    if (verbose > -5) print*, ii, scat_name_arr, " old string: ", scat_name_str
+    if (verbose > 5) print*, ii, scat_name_arr, " old string: ", scat_name_str
 
     ii = 0
     pos1 = 1
@@ -228,7 +228,7 @@ subroutine process_descriptor_file()
        pos1 = pos2+pos1
     END DO
 
-    if (verbose > -5) print*, ii, dist_name_arr, " old string: ", dist_name_str
+    if (verbose > 5) print*, ii, dist_name_arr, " old string: ", dist_name_str
 
     ii = 0
     pos1 = 1
@@ -246,7 +246,7 @@ subroutine process_descriptor_file()
        pos1 = pos2+pos1
     END DO
 
-    if (verbose > -5) print*, ii, hydro_name_arr, " old string: ", hydro_name_str
+    if (verbose > 5) print*, ii, hydro_name_arr, " old string: ", hydro_name_str
 
     ii = 0
     pos1 = 1
