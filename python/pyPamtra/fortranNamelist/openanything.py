@@ -11,27 +11,27 @@ __date__ = '$Date: 2004/04/16 21:16:24 $'
 __copyright__ = 'Copyright (c) 2004 Mark Pilgrim'
 __license__ = 'Python'
 
-import urllib2, urlparse, gzip
-from StringIO import StringIO
+import urllib.request, urllib.error, urllib.parse, urllib.parse, gzip
+from io import StringIO
 
 USER_AGENT = 'OpenAnything/%s +http://diveintopython.org/http_web_services/' % __version__
 
-class SmartRedirectHandler(urllib2.HTTPRedirectHandler):
+class SmartRedirectHandler(urllib.request.HTTPRedirectHandler):
     def http_error_301(self, req, fp, code, msg, headers):
-        result = urllib2.HTTPRedirectHandler.http_error_301(
+        result = urllib.request.HTTPRedirectHandler.http_error_301(
             self, req, fp, code, msg, headers)
         result.status = code
         return result
 
     def http_error_302(self, req, fp, code, msg, headers):
-        result = urllib2.HTTPRedirectHandler.http_error_302(
+        result = urllib.request.HTTPRedirectHandler.http_error_302(
             self, req, fp, code, msg, headers)
         result.status = code
         return result
 
-class DefaultErrorHandler(urllib2.HTTPDefaultErrorHandler):
+class DefaultErrorHandler(urllib.request.HTTPDefaultErrorHandler):
     def http_error_default(self, req, fp, code, msg, headers):
-        result = urllib2.HTTPError(
+        result = urllib.error.HTTPError(
             req.get_full_url(), code, msg, headers, fp)
         result.status = code
         return result
@@ -63,16 +63,16 @@ def openAnything(source, etag=None, lastmodified=None, agent=USER_AGENT):
     if source == '-':
         return sys.stdin
 
-    if urlparse.urlparse(source)[0] == 'http':
+    if urllib.parse.urlparse(source)[0] == 'http':
         # open URL with urllib2
-        request = urllib2.Request(source)
+        request = urllib.request.Request(source)
         request.add_header('User-Agent', agent)
         if lastmodified:
             request.add_header('If-Modified-Since', lastmodified)
         if etag:
             request.add_header('If-None-Match', etag)
         request.add_header('Accept-encoding', 'gzip')
-        opener = urllib2.build_opener(SmartRedirectHandler(), DefaultErrorHandler())
+        opener = urllib.request.build_opener(SmartRedirectHandler(), DefaultErrorHandler())
         return opener.open(request)
     
     # try to open with native open function (if source is a filename)
