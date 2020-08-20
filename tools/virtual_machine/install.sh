@@ -44,9 +44,9 @@ export PAMTRA_DATADIR=''
 conda activate base
 conda config --add channels conda-forge 
 # Pamtra1 hates apparently conda's libgfortran... so use pip!
-# pip install -q cython numpy scipy xarray dask numba jupyter matplotlib ipython pytest netcdf4 
+pip install -q cython numpy scipy xarray dask numba jupyter matplotlib ipython pytest netcdf4 
 # pip install -q arm_pyart
-conda install jupyter libgfortran
+conda install jupyter 
 #launch jupyter on startup
 mkdir -p /home/vagrant/.jupyter
 (crontab -l ; echo "@reboot cd /home/vagrant; source ~/.bashrc;  /home/vagrant/miniconda/bin/jupyter notebook  --ip 0.0.0.0 --no-browser >> jupyter.log")| crontab -
@@ -74,15 +74,25 @@ pip install -q ipykernel matplotlib ipython xarray  netcdf4==1.3.1
 python -m ipykernel install --user
 
 
-# pamtra
-conda activate py27
+# pamtra 
 cd ~/software
 git clone --recursive https://github.com/igmk/pamtra
 cd ~/software/pamtra
+
+#for python 3
+conda activate
 make clean
 make pyinstall
 cd ~/software
-python -c "import matplotlib; matplotlib.use('Agg'); execfile ('pamtra/examples/pyPamTest_ssrg_hogan2014.py');plt.savefig('test_pamtra.png')"
+python -c "import matplotlib; matplotlib.use('Agg'); execfile ('pamtra/examples/pyPamTest_ssrg_hogan2014.py');plt.savefig('test_pamtra_3.png')"
+
+
+# for python 2.7
+conda activate py27
+make clean
+make pyinstall
+cd ~/software
+python -c "import matplotlib; matplotlib.use('Agg'); execfile ('pamtra/examples/pyPamTest_ssrg_hogan2014.py');plt.savefig('test_pamtra_27.png')"
 
 
 # # pamtra2
