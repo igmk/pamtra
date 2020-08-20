@@ -15,7 +15,7 @@ import sys
 
 import re
 
-from .openanything import openAnything
+# from .openanything import openAnything
 
 
 class Settings(dict):
@@ -28,7 +28,7 @@ class Settings(dict):
     def __init__(self,settingFile):
         dict.__init__(self)
         self._setFile = settingFile
-        self._setContent = openAnything(settingFile).read()
+        self._setContent = settingFile.read()
         self.update(self.parse())
 
     #==== Helper functions for Parsing of files
