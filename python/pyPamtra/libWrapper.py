@@ -51,7 +51,7 @@ def PamtraFortranWrapper(
   settings.settings_fill_default()
 
   #temporary fixes:
-  settings.input_file[:] = "test_mie.dat"
+  settings.input_file = "test_mie.dat".ljust(300)
 
   if 'salinity' in nmlSets:
     raise DeprecationWarning("nmlSets['salinity'] is deprecated. Use 2D profile 'sfc_salinity' instead.")
@@ -59,11 +59,12 @@ def PamtraFortranWrapper(
     raise DeprecationWarning("nmlSets['ground_type'] is deprecated. Use 2D profile 'sfc_refl' instead.")
 
   #loop through settings
+
   for key in list(nmlSets.keys()):
     isList = getattr(settings, key.lower()).size > 1
     if type(nmlSets[key]) == str:
       if sets["pyVerbose"] > 3: print(("settings."+key.lower() +"[:] = '" + str(nmlSets[key])+"'"))
-      getattr(settings, key.lower())[:] = nmlSets[key]
+      setattr(settings, key.lower(), nmlSets[key].ljust(getattr(settings,key.lower()).dtype.itemsize  ))
     else:
       if isList:
         if sets["pyVerbose"] > 3: print(("settings."+key.lower() +"[:] = numpy.array(nmlSets['"+key+"']).tolist()"))
@@ -95,8 +96,11 @@ def PamtraFortranWrapper(
       setattr(descriptor_file, name +"_arr", descriptorFile[name].tolist())
     #1d Strings, these are ugly...
     elif name in ["hydro_name","dist_name","scat_name","vel_size_mod"]:
-      if sets["pyVerbose"] > 3: print(("setFortranStrList(descriptor_file."+name+"_arr,descriptorFile['"+name+"'])"))
-      setFortranStrList(getattr(descriptor_file, name+"_arr"), descriptorFile[name])
+      if sets["pyVerbose"] > 3: print("setattr(descriptor_file, name+"+_str+", ','.join(descriptorFile[name])))")
+      thisStr = ','.join(descriptorFile[name])
+      maxLen = getattr(descriptor_file, name+"_str").dtype.itemsize
+      assert len(thisStr) <= maxLen
+      setattr(descriptor_file, name+"_str", thisStr.ljust(maxLen))
     #potential 4D data
     else:
       if sets["pyVerbose"] > 3: print(("descriptor_file."+name +"_arr = [[[descriptorFile['"+name+"'].tolist()]]]"))
@@ -106,6 +110,9 @@ def PamtraFortranWrapper(
     assert descriptorFile4D[name4d].shape[1] == profile["lat"].shape[1]
     if sets["pyVerbose"] > 3: print(("descriptor_file."+name4d +"_arr = descriptorFile4D['"+name4d+"'].tolist()"))
     setattr(descriptor_file, name4d +"_arr", descriptorFile4D[name4d].tolist())
+
+
+  descriptor_file.process_descriptor_file()
 
   #see whether it worked:
   if sets["pyVerbose"] > 3:
@@ -210,8 +217,8 @@ def PamtraFortranWrapper(
       else: results[key] = -9999.
 
 
-  results["pamtraVersion"] = copy.deepcopy("".join(list(pypamtralib.gitversion)).strip())
-  results["pamtraHash"] = copy.deepcopy("".join(list(pypamtralib.githash)).strip()  )
+  results["pamtraVersion"] = str(pypamtralib.gitversion.astype('U40')).strip()
+  results["pamtraHash"] = str(pypamtralib.githash.astype('U40')).strip()  
 
   if sets["pyVerbose"] > 2: "processed results"
 
