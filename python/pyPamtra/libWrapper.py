@@ -100,7 +100,7 @@ def PamtraFortranWrapper(
       setattr(descriptor_file, name +"_arr", descriptorFile[name].tolist())
     #1d Strings, these are ugly...
     elif name in ["hydro_name","dist_name","scat_name","vel_size_mod"]:
-      if sets["pyVerbose"] > 3: print("setattr(descriptor_file, name+"+_str+", ','.join(descriptorFile[name])))")
+      if sets["pyVerbose"] > 3: print("setattr("+"descriptor_file"+","+ name+"_str"+", ','.join(descriptorFile[name])))")
       thisStr = ','.join(descriptorFile[name])
       maxLen = lenFortStrAr(getattr(descriptor_file, name+"_str"))
       assert len(thisStr) <= maxLen
@@ -137,8 +137,10 @@ def PamtraFortranWrapper(
         try: 
           print(key, getattr(vars_atmosphere, "atmo_"+key), profile[key])
         except AttributeError:
-          print(key, getattr(vars_atmosphere, key), profile[key])
-
+          try:
+            print(key, getattr(vars_atmosphere, key), profile[key])
+          except ValueError:
+            print('Failed to print %s. This is likely because it is an allocated string array which cannot accessed from Python'%key)
 
   #return  dict(),pyPamtraLib
   #deal with the atmospheric input_file

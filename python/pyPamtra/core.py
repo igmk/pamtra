@@ -341,7 +341,7 @@ class pyPamtra(object):
       self.readClassicPamtraProfile(inputFile)
       return
 
-    self.p["ngridx"], self.p["ngridy"], self.p["max_nlyrs"], self.p["noutlevels"] = [int(el) for el in g.next()[:4]]
+    self.p["ngridx"], self.p["ngridy"], self.p["max_nlyrs"], self.p["noutlevels"] = [int(el) for el in next(g)[:4]]
 
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
@@ -392,10 +392,10 @@ class pyPamtra(object):
       for yy in range(self._shape2D[1]):
 
         #first all the stuff without heigth dimension
-        year,month,day,time, self.p["nlyrs"][xx,yy], self.p["model_i"][xx,yy], self.p["model_j"][xx,yy] = g.next()[:7]
+        year,month,day,time, self.p["nlyrs"][xx,yy], self.p["model_i"][xx,yy], self.p["model_j"][xx,yy] = next(g)[:7]
         self.p["unixtime"][xx,yy] = calendar.timegm(datetime.datetime(year = int(year), month = int(month), day = int(day), hour = int(time[0:2]), minute = int(time[2:4]), second = 0).timetuple())
-        self.p["obs_height"][xx,yy,:] = np.array(np.array(g.next()[:int(self.p["noutlevels"])]),dtype=float)
-        self.p["lat"][xx,yy], self.p["lon"][xx,yy], lfrac,self.p["wind10u"][xx,yy],self.p["wind10v"][xx,yy],self.p["groundtemp"][xx,yy],self.p["hgt_lev"][xx,yy,0]  = np.array(np.array(g.next()[:7]),dtype=float)
+        self.p["obs_height"][xx,yy,:] = np.array(np.array(next(g)[:int(self.p["noutlevels"])]),dtype=float)
+        self.p["lat"][xx,yy], self.p["lon"][xx,yy], lfrac,self.p["wind10u"][xx,yy],self.p["wind10v"][xx,yy],self.p["groundtemp"][xx,yy],self.p["hgt_lev"][xx,yy,0]  = np.array(np.array(next(g)[:7]),dtype=float)
 
         self.p["sfc_type"][xx,yy] = np.around(lfrac) # lfrac is deprecated
         if self.p["sfc_type"][xx,yy] == 0:
@@ -404,7 +404,7 @@ class pyPamtra(object):
         else:
             self.p["sfc_refl"][xx,yy] = 'S'
 
-        self.p["iwv"][xx,yy] = np.array(np.array(g.next()[0]),dtype=float)
+        self.p["iwv"][xx,yy] = np.array(np.array(next(g)[0]),dtype=float)
 
         #if levels are provided we have one line more:
         if levLay == "lev":
@@ -1439,7 +1439,7 @@ class pyPamtra(object):
     return
 
 
-  def runPamtra(self,freqs,checkData=True):
+  def runPamtra(self, freqs, checkData=True, failOnError=True):
     '''
     run Pamtra from python. Populates result dictionary 'r'.
 
@@ -1449,6 +1449,8 @@ class pyPamtra(object):
         Frequencies in GHz.They must be sorted from small to large.
     checkData : bool, optional
         Check input data for consitency (default True)
+    failOnError : 
+        raise Python Error in case of Fortran Error
     '''
     tttt = time.time()
 
@@ -1476,6 +1478,10 @@ class pyPamtra(object):
 
 
     fortResults, self.fortError, fortObject = PamtraFortranWrapper(self.set,self.nmlSet,self.df.data,self.df.data4D,self.df.dataFullSpec,self.p)
+    
+    if failOnError and (self.fortError != 0):
+        raise RuntimeError('Fortran code failed')
+
     self.r = fortResults
     self.fortObject = fortObject
 
@@ -2613,3 +2619,4 @@ class pyPamtra(object):
     f.write(s)
     f.close()
     return
+

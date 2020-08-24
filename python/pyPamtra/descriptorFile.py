@@ -47,7 +47,7 @@ class pamDescriptorFile(object):
         if self.types[ii] == float:
           row[ii] = item.replace("d", "e")
       #fortran strips quotes
-        if self.types[ii] == "S15":
+        if self.types[ii] in ("S15", "U15"):
           row[ii] = item.replace("'", "").replace('"', '')
   
       self.addHydrometeor(row)

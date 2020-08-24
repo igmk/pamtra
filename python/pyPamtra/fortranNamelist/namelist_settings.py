@@ -27,8 +27,8 @@ class Settings(dict):
 
     def __init__(self,settingFile):
         dict.__init__(self)
-        self._setFile = settingFile
-        self._setContent = settingFile.read()
+        with open(settingFile) as _setFile:
+            self._setContent = _setFile.read()
         self.update(self.parse())
 
     #==== Helper functions for Parsing of files
