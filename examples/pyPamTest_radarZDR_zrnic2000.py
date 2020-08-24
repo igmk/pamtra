@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import pyPamtra
 from copy import deepcopy
 import numpy as np
@@ -18,7 +20,7 @@ pam.df.addHydrometeor(("rain", -99., 1, -99., -99., -99., -99., -99., 0, 1, "ful
 
 pam = pyPamtra.importer.createUsStandardProfile(pam,hgt_lev=np.array([[np.arange(1000,1300,200).tolist()]*nT]*nD))
 
-for tt in xrange(nT):
+for tt in range(nT):
   pam.p["temp_lev"][:,tt,:] = temps[tt] - pyPamtra.meteoSI.Tnull
 
 pam.p["relhum_lev"][:] = 10
@@ -51,7 +53,7 @@ for dd,d_e in enumerate(D_es):
   #AR = 1
   DMax = d_e/(AR)**(1./3.)
   
-  print d_e, DMax, AR
+  print(d_e, DMax, AR)
   
   pam.df.dataFullSpec["d_ds"][dd,:,0,0,:] = DMax
   pam.df.dataFullSpec["d_bound_ds"][dd,:,0,0,:] = [0.99 ,1.01 ] * pam.df.dataFullSpec["d_ds"][dd,:,0,0,:] 
@@ -80,14 +82,14 @@ pam.runPamtra(freqs,checkData=False)
 
 plt.figure()
 plt.title("HH")
-for tt in xrange(nT):
+for tt in range(nT):
   plt.plot(D_es*1000,pam.r["Ze"][:,tt,0,0,1],styles[tt],label=str(temps[tt])+"C")  
 plt.ylim(-20,70)  
 plt.ylabel("Ze [dBz]")
 
 plt.figure()
 plt.title("ZDR")
-for tt in xrange(nT):
+for tt in range(nT):
   plt.plot(D_es*1000,pam.r["Ze"][:,tt,0,0,1]-pam.r["Ze"][:,tt,0,0,2],styles[tt],label=str(temps[tt])+"C")
 plt.ylim(0,10)  
 plt.ylabel("ZDR [dB]")
