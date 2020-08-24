@@ -22,7 +22,7 @@ When using Mac OS or Windows, download the installation routines frotm the
 
     sudo apt-get install virtualbox vagrant
 
-Change the directory to tools/virtual_machine in the terminal (on linux and 
+Change the directory to ´tools/virtual_machine in the terminal (on linux and 
 mac os `cd tools/virtual_machine`) and type 
 
     vagrant up
@@ -70,25 +70,25 @@ Make sure that the correct python version is selected with `conda activate `. Wh
 The `update.sh` script in the shared folder can be used to update the PAMTRA model
 and the data provided on the FTP server if they get updated.
 
+
+
+
 Install Dependencies
 ********************
 
 
-Ubuntu
-------
+Ubuntu 20.04
+------------
 
-On a fresh Ubuntu 16.04 installation, the following packages need to be installed to get PAMTRA from the github repository and to compile and install PAMTRA::
+On a fresh Ubuntu 20.04 installation, the following packages need to be installed to get PAMTRA from the github repository and to compile and install PAMTRA::
 
-    sudo apt install git gfortran libnetcdf-dev libnetcdff-dev liblapack-dev libfftw3-dev python-dev python-numpy 
+    sudo apt install git gfortran libnetcdf-dev libnetcdff-dev liblapack-dev libfftw3-dev python3-dev python3-numpy 
 
-The model is tested with gcc version 4.8.2. Although not required for comppilation and installation, to use PAMTRA, some additional python packages need to be installed on your system or python environemnt.::
+Replace python3-X with python-X when using Python 2.7 instead of 3.
 
-    sudo apt install python-matplotlib python-pandas python-scipy python-netcdf
+Although not required for comppilation and installation, to use PAMTRA, some additional python packages need to be installed on your system or python environemnt.::
 
-More recent Ubuntu versions have `python-netcdf4` instead of `python-netcdf`. For older versions use pip ::
-
-    sudo apt install python-pip
-    sudo pip install netcdf4
+    sudo apt install python3-matplotlib python3-pandas python3-scipy python3-netcdf4
 
 .. warning::
     As of August 2020, do NOT use conda for Ubuntu because the provided libgfortran 
@@ -174,8 +174,8 @@ Then, the python routines can be installed with ::
 
   make pyinstall
 
-Start PAMTRA
-******************
+Download data
+*************
 Although PAMTRA can be used without additional data by simply setting the data path to an empty directory, :: 
 
   echo 'export PAMTRA_DATADIR=""' >> ~/.bashrc
@@ -184,13 +184,23 @@ it is recommended that you download the data. The data includes the land surface
 
   https://uni-koeln.sciebo.de/s/As5fqDdPCOx4JbS
 
-Unpack the data and set the $PAMTRA_DATADIR variables ::
+Download and unpack the data::
+
+  wget -q -O data.tar.bz2 https://uni-koeln.sciebo.de/s/As5fqDdPCOx4JbS/download
+  tar xjf data.tar.bz2
+  rm data.tar.bz2
+
+and set the $PAMTRA_DATADIR variables ::
 
   echo 'export PAMTRA_DATADIR="wherever/it/is/"' >> ~/.bashrc
 
 To start using pyPamtra, you have to open a new bash session or source the ~/.bashrc ::
 
   source ~/.bashrc
+
+
+Start PAMTRA
+************
 
 You can start using pyPamtra in python with ::
 
