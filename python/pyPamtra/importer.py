@@ -6,9 +6,9 @@ Collection of importer modules for the different input types.
 They all return a pyPamtra object that holds the profile information in the .p object.
 
 In addition ncToDict is provide to easily read necdf files into a dictionary.
-""" 
+"""
 
-from __future__ import division
+from __future__ import division, print_function
 import numpy as np
 import datetime
 import random
