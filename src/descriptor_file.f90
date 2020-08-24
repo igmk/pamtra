@@ -98,7 +98,7 @@ subroutine read_descriptor_file(errorstatus)
                 b_ms_arr(1,1,1,i), alpha_as_arr(1,1,1,i), beta_as_arr(1,1,1,i), moment_in_arr(i), nbin_arr(1,1,1,i),&
                 dist_name_arr(i), p_1_arr(1,1,1,i), p_2_arr(1,1,1,i), p_3_arr(1,1,1,i),  &
                 p_4_arr(1,1,1,i), d_1_arr(1,1,1,i), d_2_arr(1,1,1,i), scat_name_arr(i), vel_size_mod_arr(i)
-      if ((verbose >= 4) .and. (i == 1)) write(6,'(a15,7(a12),a15,6(a12),2(a15))'),'hydro_name','as_ratio',&
+      if ((verbose >= 4) .and. (i == 1)) write(6,'(a15,7(a12),a15,6(a12),2(a15))') 'hydro_name','as_ratio',&
                                       'liq_ice','rho_ms','a_ms',&
                                      'b_ms','alpha_as','beta_as','moment_in','nbin','dist_name','p_1',&
                                       'p_2','p_3','p_4','d_1','d_2','scat_name', 'vel_size_mod'
