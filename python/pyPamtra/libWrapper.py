@@ -237,14 +237,13 @@ def lenFortStrAr(arr):
   '''
   get string length of a fortran string array
 
-  I'm not sure whether this change is related to Python 2.7 -> 3 or 
-  numpy 1.12 -> 1.19
+  This change is probably related to numpy 1.12 -> 1.16
   '''
-
-  if is3:
-    return arr.dtype.itemsize
-  else:
+  try:
     return len(arr)
+  except TypeError:
+    return arr.dtype.itemsize
+
 
 
 
