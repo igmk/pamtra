@@ -4,7 +4,8 @@
 Installation
 ============
 
-Note that PAMTRA supports Python 2.7 and Python 3.6 - 3.8 as of August 2020.
+.. note::
+   Note that PAMTRA finally supports Python 2.7 *and* Python 3.6 - 3.8 as of August 2020.
 
 
 Quickstart: Virtual Machine
@@ -18,12 +19,12 @@ which makes the installation 100% automatic. You have to install the following
 * Vagrant https://www.vagrantup.com/
 
 When using Mac OS or Windows, download the installation routines frotm the
- websites, on Linux use::
+websites, on Linux use ::
 
     sudo apt-get install virtualbox vagrant
 
 Change the directory to ´tools/virtual_machine in the terminal (on linux and 
-mac os `cd tools/virtual_machine`) and type 
+mac os `cd tools/virtual_machine`) and type ::
 
     vagrant up
 
@@ -31,19 +32,19 @@ This command will configure the virtual machine based on the information provide
 in `Vagrantfile`. It will download a lot of data, so don't do that with a bad 
 internet connection and make sure you have some GB space on your hard disk.
 
-When the machine is running, you can connect to it with 
+When the machine is running, you can connect to it with ::
 
     vagrant ssh
 
-in order to have terminal access. When you are done, do 
+in order to have terminal access. When you are done, do ::
 
     vagrant halt
 
-from the host computer to turn the virtual machine off. You can start with 
+from the host computer to turn the virtual machine off. You can start with ::
 
     vagrant up
 
-again. To delete the virtual machine and its containing data, do 
+again. To delete the virtual machine and its containing data, do ::
 
     vagrant destroy
 
@@ -53,19 +54,19 @@ the `virtual_machine` of the host system. I.e. you can use that directory for fi
 When the virtual machine is running, you should be able to access a jupyter notebook
 at http://localhost:8880 from your host machine.  The password is `jupyter`. All examples in shared/examples
 should work and produce a plot. Jupyter notebook is a python environment, but can be 
-used with other languages, too. More information at http://jupyter.org. The default python version is 3.8, but 2.7 is installed as well, PAMTRA is installed for both environments. From the command line, you can switch with 
+used with other languages, too. More information at http://jupyter.org. The default python version is 3.8, but 2.7 is installed as well, PAMTRA is installed for both environments. From the command line, you can switch with ::
 
     conda activate py27
 
-to python 2.7, and go back to 3.8 with 
+to python 2.7, and go back to 3.8 with ::
 
     conda activate base
 
-If you miss any of your favorite python packages, do
+If you miss any of your favorite python packages, do ::
 
     pip install missing_module_name
 
-Make sure that the correct python version is selected with `conda activate `. When using conda instaed of pip, make sure that libgfortran is not installed by conda. Doe some reason, PAMTRA does not like conda's libgfortran on Linux.
+Make sure that the correct python version is selected with `conda activate `. When using conda instaed of pip, make sure that libgfortran is not installed by conda. For some reason, PAMTRA does not like conda's libgfortran on Linux.
 
 The `update.sh` script in the shared folder can be used to update the PAMTRA model
 and the data provided on the FTP server if they get updated.
