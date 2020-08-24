@@ -4,15 +4,23 @@
 Installation
 ============
 
+Note that PAMTRA supports Python 2.7 and Python 3.6 - 3.8 as of August 2020.
 
-Virtual Machine
-***************
 
-For testing, a virtual machine is provided. You have to install the following software in order to 
-run the virtual machine with PAMTRA on your computer:
+Quickstart: Virtual Machine
+***************************
+
+This is the recommended way to test the model. A virtual machine is provided 
+which makes the installation 100% automatic. You have to install the following
+ software in order to run the virtual machine with PAMTRA on your computer:
 
 * Virtualbox https://www.virtualbox.org/
 * Vagrant https://www.vagrantup.com/
+
+When using Mac OS or Windows, download the installation routines frotm the
+ websites, on Linux use::
+
+    sudo apt-get install virtualbox vagrant
 
 Change the directory to tools/virtual_machine in the terminal (on linux and 
 mac os `cd tools/virtual_machine`) and type 
@@ -45,47 +53,35 @@ the `virtual_machine` of the host system. I.e. you can use that directory for fi
 When the virtual machine is running, you should be able to access a jupyter notebook
 at http://localhost:8880 from your host machine.  The password is `jupyter`. All examples in shared/examples
 should work and produce a plot. Jupyter notebook is a python environment, but can be 
-used with other languages, too. More information at http://jupyter.org. The default python version is 3.6, but 2.7 is installed which needs to be used with PAMTRA. From the command line, you can switch with 
+used with other languages, too. More information at http://jupyter.org. The default python version is 3.8, but 2.7 is installed as well, PAMTRA is installed for both environments. From the command line, you can switch with 
 
     conda activate py27
 
-to python 2.7, and go back to 3.6 with 
+to python 2.7, and go back to 3.8 with 
 
     conda activate base
 
 If you miss any of your favorite python packages, do
 
-    conda install missing_module_name
+    pip install missing_module_name
 
-Make sure that the correct python version is selected with `conda activate `. 
+Make sure that the correct python version is selected with `conda activate `. When using conda instaed of pip, make sure that libgfortran is not installed by conda. Doe some reason, PAMTRA does not like conda's libgfortran on Linux.
 
 The `update.sh` script in the shared folder can be used to update the PAMTRA model
 and the data provided on the FTP server if they get updated.
 
+Install Dependencies
+********************
 
-Dependencies on Ubuntu
-**********************
 
-On fresh Ubuntu 16.04 installation, the following packages need to be installed to get PAMTRA from github repository and to compile and install PAMTRA::
+Ubuntu
+------
+
+On a fresh Ubuntu 16.04 installation, the following packages need to be installed to get PAMTRA from the github repository and to compile and install PAMTRA::
 
     sudo apt install git gfortran libnetcdf-dev libnetcdff-dev liblapack-dev libfftw3-dev python-dev python-numpy 
 
-The model is tested with gcc version 4.8.2.
-
-Not all numpy versions work with PAMTRA, 1.11.3 and 1.12.1 are confirmed to work. 1.13.3 and 1.14.3 do not work. You can check the numpy version in python ::
-
-    import numpy
-    print numpy.__version__
-
-To ensure to have the correct version installed, do::
-
-    sudo pip install numpy==1.12.1
-
-if you do not have root permissions you can also use instead of the last line::
-
-    pip install --user numpy==1.12.1
-
-Although not required for comppilation and installation, to use PAMTRA, some additional python packages need to be installed on your system or python environemnt.::
+The model is tested with gcc version 4.8.2. Although not required for comppilation and installation, to use PAMTRA, some additional python packages need to be installed on your system or python environemnt.::
 
     sudo apt install python-matplotlib python-pandas python-scipy python-netcdf
 
@@ -94,37 +90,38 @@ More recent Ubuntu versions have `python-netcdf4` instead of `python-netcdf`. Fo
     sudo apt install python-pip
     sudo pip install netcdf4
 
-If the system's numpy version is to recent, use pip ::
-
-    pip install --user netcdf4
-
 .. warning::
-    As of June 2018, do NOT use conda for Ubuntu because the provided libgfortran 
+    As of August 2020, do NOT use conda for Ubuntu because the provided libgfortran 
     library does not work with PAMTRA.
 
+Now, follow -  :ref:`Get model from git repository`
 
-Dependencies on Mac OS X
-************************
+
+Mac OS X
+--------
 
 On Mac OS X, it is recommended to use brew (http://brew.sh) to install gfortran (via gcc) and netcdf ::
 
     brew install gcc
     brew install fftw
-    brew install netcdf --enable-fortran
+    brew install netcdf
 
 For the Python version, it is recommended not to use OS X's default python version,
 but to install an independent one, e.g. with brew or conda
-(https://www.continuum.io/downloads). Note that pyPamtra does not support Python3 yet.
+(https://www.continuum.io/downloads). 
 In addition, the following packages are required::
 
-    pip install pandas numpy==1.12.1 scipy matplotlib netcdf4
+    pip install pandas numpy scipy matplotlib netcdf4
 
-Please note that netcdf4 must be installed using pip even if you use the conda
-package manager. The reason is that conda brings its own netcdf library, but without
-the fortran libraries which are required by the fortran part of PAMTRA. Similar to Ubuntu teh most recent numpy versions do not work with PAMTRA. 
+or ::
 
-Installation on Microsoft Windows 10 with windows subsystem for linux
-**********************************************************************
+    conda install pandas numpy scipy matplotlib netcdf4
+
+Now, follow -  :ref:`Get model from git repository`
+
+
+Microsoft Windows 10 with windows subsystem for linux
+-----------------------------------------------------
 To install windows subsystem for linux follow the instructions on ::
 
 https://docs.microsoft.com/de-de/windows/wsl/install-win10
@@ -213,15 +210,6 @@ In addition, the numpydoc is required ::
 If not available try ::
 
     sudo easy_install numpydoc
-
-In addition, the sphinx-fortran-extension is required which can be found in the tools folder of PAMTRA::
-
-    cd tools/sphinx-fortran-extension
-    sudo python setup.py install
-
-if you do not have root permissions you can also use instead of the last line::
-
-    python setup.py install --user
 
 Eventually, you can build the documentation by using the Makefile in the PAMTRA main directory with ::
 
