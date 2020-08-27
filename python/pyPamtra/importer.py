@@ -2156,7 +2156,7 @@ def readIcon1momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   wind_v = np.flip(vals['V'][timeidx],1)               # meridional wind speed
   pamData['wind_uv'] = np.hypot(wind_u, wind_v)
   wind_w = np.flip(vals['W'][timeidx],1)               # vertical wind speed
-  pamData['wind_w'] = 0.5*(wind_w[:,:-1]+wind_w[:,1:])
+  pamData['wind_w'] = -0.5*(wind_w[:,:-1]+wind_w[:,1:]) #sign change due to conventions: for model upward is positive; in pamtra downward velocity is positive 
   pamData['relhum'] = np.flip(vals['REL_HUM'][timeidx],1)
 
   # Read hydrometeors content
@@ -2260,7 +2260,8 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   wind_v = np.flip(vals['V'][timeidx],1)               # meridional wind speed
   pamData['wind_uv'] = np.hypot(wind_u, wind_v)
   wind_w = np.flip(vals['W'][timeidx],1)               # vertical wind speed
-  pamData['wind_w'] = 0.5*(wind_w[:,:-1]+wind_w[:,1:])
+  pamData['wind_w'] = -0.5*(wind_w[:,:-1]+wind_w[:,1:]) #sign change due to conventions: for model upward is positive; in pamtra downward velocity is positive 
+
   pamData['relhum'] = np.flip(vals['REL_HUM'][timeidx],1)
 
   # Read hydrometeors content
@@ -2355,7 +2356,8 @@ def readIcon2momOnFlightTrack(fname, descriptorFile, debug=False, verbosity=0):
   #pamData['wind_u']  = np.flip(vals['U'][timeidx],1)    # zonal wind speed
   #pamData['wind_v']  = np.flip(vals['V'][timeidx],1)    # meridional wind speed
   # wind_w = np.flip(vals['W'][timeidx],1)    # vertical wind speed
-  # pamData['wind_w'] = 0.5*(wind_w[:,:-1]+wind_w[:,1:])
+  # pamData['wind_w'] = -0.5*(wind_w[:,:-1]+wind_w[:,1:]) #sign change due to conventions: for model upward is positive; in pamtra downward velocity is positive 
+
   pamData['relhum'] = np.swapaxes(np.flip(vals['REL_HUM'],0),0,1)
 
   # Read hydrometeors content
