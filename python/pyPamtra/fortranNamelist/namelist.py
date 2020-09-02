@@ -48,7 +48,7 @@ import sys
 
 import re
 
-from namelist_settings import Settings
+from .namelist_settings import Settings
 
 # import sys
 # import getopt
@@ -110,7 +110,7 @@ class Namelist(Settings):
                     mynmlfile[mynmlname]['raw'].append(item)
 
         #parse param in each section/namelist
-        for mynmlname in mynmlfile.keys():
+        for mynmlname in list(mynmlfile.keys()):
             #split strings
             bb = []
             for item in mynmlfile[mynmlname]['raw']:

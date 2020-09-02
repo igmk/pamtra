@@ -15,7 +15,7 @@ import sys
 
 import re
 
-from openanything import openAnything
+# from .openanything import openAnything
 
 
 class Settings(dict):
@@ -27,8 +27,8 @@ class Settings(dict):
 
     def __init__(self,settingFile):
         dict.__init__(self)
-        self._setFile = settingFile
-        self._setContent = openAnything(settingFile).read()
+        with open(settingFile) as _setFile:
+            self._setContent = _setFile.read()
         self.update(self.parse())
 
     #==== Helper functions for Parsing of files
@@ -46,9 +46,9 @@ class Settings(dict):
         if commentexpr:
             aa = [re.sub(commentexpr,"",item).strip() for item in aa]
         if spacemerge:
-            aa = [re.sub("[\s\t]+"," ",item).strip() for item in aa if len(item.strip()) <> 0]
+            aa = [re.sub("[\s\t]+"," ",item).strip() for item in aa if len(item.strip()) != 0]
         else:
-            aa = [item.strip() for item in aa if len(item.strip()) <> 0]
+            aa = [item.strip() for item in aa if len(item.strip()) != 0]
         return aa
 
     def splitstring(self,mystr):
@@ -61,7 +61,7 @@ class Settings(dict):
         squote=r"(^[^\"\']*)(\'[^']*\')(.*$)"
         mystrarr = re.sub(dquote,r"\1\n\2\n\3",re.sub(squote,r"\1\n\2\n\3",mystr)).split("\n")
         #remove zerolenght items
-        mystrarr = [item for item in mystrarr if len(item) <> 0]
+        mystrarr = [item for item in mystrarr if len(item) != 0]
         if len(mystrarr) > 1:
             mystrarr2 = []
             for item in mystrarr:
@@ -131,4 +131,4 @@ class Settings(dict):
             return ''
 
 if __name__ == '__main__':
-    print __doc__
+    print(__doc__)

@@ -1,10 +1,13 @@
+from __future__ import print_function
+
 import pyPamtra
 import shutil
 import netCDF4
 import matplotlib.pyplot as plt
 import numpy as np
+import imp
 
-reload(pyPamtra)
+imp.reload(pyPamtra)
 
 descriptorFile = "../descriptorfiles/descriptor_file_COSMO_1mom.txt"
 
@@ -33,7 +36,7 @@ plt.figure(2)
 plt.title("Ze")
 plt.plot(Ze.compressed(), label="Mie")
 
-print "##########################"
+print("##########################")
 
 
 pam = pyPamtra.pyPamtra()
@@ -59,7 +62,7 @@ plt.title("Ze")
 plt.plot(Ze.compressed(), label="tmatrix 1.0")
 
 
-print "##########################"
+print("##########################")
 
 pam = pyPamtra.pyPamtra()
 pam.df.readFile(descriptorFile)
@@ -83,7 +86,7 @@ plt.figure(2)
 plt.title("Ze")
 plt.plot(Ze.compressed(), label="tmatrix 1.0 from database", marker='x')
 
-print "##########################"
+print("##########################")
 
 
 pam = pyPamtra.pyPamtra()
@@ -109,7 +112,7 @@ plt.figure(2)
 plt.title("Ze")
 plt.plot(Ze.compressed(), label="tmatrix 0.6")
 
-print "##########################"
+print("##########################")
 
 pam = pyPamtra.pyPamtra()
 pam.df.readFile(descriptorFile)
@@ -134,7 +137,7 @@ plt.figure(2)
 plt.title("Ze")
 plt.plot(Ze.compressed(), label="tmatrix 0.6 from database", marker='+')
 
-print "##########################"
+print("##########################")
 
 
 plt.figure(1)
@@ -143,6 +146,6 @@ plt.legend()
 plt.figure(2)
 plt.legend()
 
-print 'cleaning up'
+print('cleaning up')
 shutil.rmtree('example_db')
-print 'cleaning up done'
+print('cleaning up done')

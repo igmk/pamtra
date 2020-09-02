@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import pyPamtra
 from copy import deepcopy
 import matplotlib.pyplot as plt
@@ -82,7 +84,7 @@ pamFS.runPamtra(freqs,checkData=False)
 plt.plot(pamFS.r["radar_vel"][0],pamFS.r["radar_spectra"][0,0,0,0,0])
 
 
-print pamFS.r["Ze"], pam.r["Ze"]
+print(pamFS.r["Ze"], pam.r["Ze"])
 
 plt.figure()
 plt.plot(pam.r['psd_d'].ravel(), pam.r['psd_n'].ravel()/pam.r['psd_deltad'].ravel(),label='para')

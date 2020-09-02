@@ -524,7 +524,7 @@ class satConv(object):
         self.s['settings'] = dict()
         self.s['lon'] = pamData['longitude']
         self.s['lat'] = pamData['latitude']
-        if 'lfrac' in pamData.keys():
+        if 'lfrac' in list(pamData.keys()):
             self.s['sfc_type'] = pamData['lfrac']
         else:
             self.s['sfc_type'] = pamData['sfc_type']
@@ -534,7 +534,7 @@ class satConv(object):
             self.s['tb2'] = pamData['tb'][:,:,:,:,pamChan,:]
             self.s['tb'] = (self.s['tb']+self.s['tb2'])*0.5
         for wp in ['iwv','cwp','iwp','rwp','swp','gwp','hwp']:
-          if wp in pamData.keys(): self.s[wp] = pamData[wp]
+          if wp in list(pamData.keys()): self.s[wp] = pamData[wp]
         self.s['ang'] = (pamData['angles']-180.)*(-1.)
          
         return
@@ -615,7 +615,7 @@ class satConv(object):
         footprint = np.zeros(self.o['vza'].shape[1])
         self.c['simTB'] = np.zeros(d3)
         for wp in ['iwv','cwp','iwp','rwp','swp','gwp','hwp']:
-            if wp in self.s.keys(): self.c[wp] = np.zeros(d3)
+            if wp in list(self.s.keys()): self.c[wp] = np.zeros(d3)
 
         # calculate distance around each foot print that needs to be included
         if self.o['fov']:
@@ -646,7 +646,7 @@ class satConv(object):
                 need['dists'] = np.zeros(np.size(need['lat']))
                 need['tb'] = np.zeros(np.size(need['lat']))
                 for wp in ['iwv','cwp','iwp','rwp','swp','gwp','hwp']:
-                    if wp in self.s.keys(): need[wp] = np.zeros(np.size(need['lat']))
+                    if wp in list(self.s.keys()): need[wp] = np.zeros(np.size(need['lat']))
                 index_needed = needed.nonzero()
                 # pdb.set_trace()
                 if self.o['instrument'] in ['amsua','amsub','mhs']:
@@ -674,7 +674,7 @@ class satConv(object):
                             need['dists'][k] = getDistanceByHaversine([need['lat'][k],need['lon'][k]],[self.c['lat'][i],self.c['lon'][i]])
                             need['tb'][k] = 0.5*(np.interp(zenith_mu[i],angle_mu,self.s['tb'][index_needed[0][k],index_needed[1][k],0,0:16,0][::-1])+np.interp(zenith_mu[i],angle_mu,self.s['tb'][index_needed[0][k],index_needed[1][k],0,0:16,1][::-1]))
                 for wp in ['iwv','cwp','iwp','rwp','swp','gwp','hwp']:
-                    if wp in self.s.keys(): 
+                    if wp in list(self.s.keys()): 
                         for k in range(np.size(need['lat'])):
                             need[wp][k] = self.s[wp][index_needed[0][k],index_needed[1][k]]
                 sigma = footprint[self.c['ind'][i]]/3.
@@ -684,7 +684,7 @@ class satConv(object):
                 weights = alph * bell
                 self.c['simTB'][i] = np.sum(weights*need['tb'].transpose())
                 for wp in ['iwv','cwp','iwp','rwp','swp','gwp','hwp']:
-                    if wp in self.s.keys(): self.c[wp][i] = np.sum(weights*need[wp].transpose())
+                    if wp in list(self.s.keys()): self.c[wp][i] = np.sum(weights*need[wp].transpose())
       
             else:
                 self.c['simTB'][i] = float('nan')
@@ -743,7 +743,7 @@ def makePlot(fig, ax_pos_grid0, sc,scm, hyd, lat, lon, row, norm, normd, nhyd, c
 
     map = Basemap(projection='merc',llcrnrlat=50.,urcrnrlat=60.,llcrnrlon=-42.5,urcrnrlon=-27.5,lat_ts=55.,resolution='c')
 
-    X,Y = map(sc._reduce(sc.c['lon']),sc._reduce(sc.c['lat']))
+    X,Y = list(map(sc._reduce(sc.c['lon']),sc._reduce(sc.c['lat'])))
 
     map.contourf(X,Y,sc._reduce(sc.c['obsTB']),25,norm=norm,cmap=cmap)
     if row == 0: plt.title('Observation')
@@ -754,7 +754,7 @@ def makePlot(fig, ax_pos_grid0, sc,scm, hyd, lat, lon, row, norm, normd, nhyd, c
 
     map = Basemap(projection='merc',llcrnrlat=50.,urcrnrlat=60.,llcrnrlon=-42.5,urcrnrlon=-27.5,lat_ts=55.,resolution='c')
 
-    X,Y = map(sc._reduce(scm.c['lon']),sc._reduce(scm.c['lat']))
+    X,Y = list(map(sc._reduce(scm.c['lon']),sc._reduce(scm.c['lat'])))
 
     map.contourf(X,Y,scm._reduce(scm.c['simTB']),25,norm=norm,cmap=cmap)
     if row == 0: plt.title('Mie')
@@ -764,7 +764,7 @@ def makePlot(fig, ax_pos_grid0, sc,scm, hyd, lat, lon, row, norm, normd, nhyd, c
 
     map = Basemap(projection='merc',llcrnrlat=50.,urcrnrlat=60.,llcrnrlon=-42.5,urcrnrlon=-27.5,lat_ts=55.,resolution='c')
 
-    X,Y = map(sc._reduce(sc.c['lon']),sc._reduce(sc.c['lat']))
+    X,Y = list(map(sc._reduce(sc.c['lon']),sc._reduce(sc.c['lat'])))
 
     map.contourf(X,Y,sc._reduce(sc.c['simTB']),25,norm=norm,cmap=cmap)
     if row == 0: plt.title('SSRGA')
@@ -784,7 +784,7 @@ def makePlot(fig, ax_pos_grid0, sc,scm, hyd, lat, lon, row, norm, normd, nhyd, c
 
     map = Basemap(projection='merc',llcrnrlat=50.,urcrnrlat=60.,llcrnrlon=-42.5,urcrnrlon=-27.5,lat_ts=55.,resolution='c')
 
-    X,Y = map(sc._reduce(sc.c['lon']),sc._reduce(sc.c['lat']))
+    X,Y = list(map(sc._reduce(sc.c['lon']),sc._reduce(sc.c['lat'])))
 
     map.contourf(X,Y,sc._reduce(sc.c['obsTB']-scm.c['simTB']),25,norm=normd,cmap='bwr')
 
@@ -795,7 +795,7 @@ def makePlot(fig, ax_pos_grid0, sc,scm, hyd, lat, lon, row, norm, normd, nhyd, c
 
     map = Basemap(projection='merc',llcrnrlat=50.,urcrnrlat=60.,llcrnrlon=-42.5,urcrnrlon=-27.5,lat_ts=55.,resolution='c')
 
-    X,Y = map(sc._reduce(sc.c['lon']),sc._reduce(sc.c['lat']))
+    X,Y = list(map(sc._reduce(sc.c['lon']),sc._reduce(sc.c['lat'])))
 
     map.contourf(X,Y,sc._reduce(sc.c['obsTB']-sc.c['simTB']),25,norm=normd,cmap='bwr')
 
@@ -806,7 +806,7 @@ def makePlot(fig, ax_pos_grid0, sc,scm, hyd, lat, lon, row, norm, normd, nhyd, c
 
     map = Basemap(projection='merc',llcrnrlat=50.,urcrnrlat=60.,llcrnrlon=-42.5,urcrnrlon=-27.5,lat_ts=55.,resolution='c')
 
-    X,Y = map(sc._reduce(sc.c['lon']),sc._reduce(sc.c['lat']))
+    X,Y = list(map(sc._reduce(sc.c['lon']),sc._reduce(sc.c['lat'])))
 
     map.contourf(X,Y,sc._reduce(sc.c['simTB']-scm.c['simTB']),25,norm=normd,cmap='bwr')
 
@@ -826,7 +826,7 @@ def makePlot(fig, ax_pos_grid0, sc,scm, hyd, lat, lon, row, norm, normd, nhyd, c
 
     map = Basemap(projection='merc',llcrnrlat=50.,urcrnrlat=60.,llcrnrlon=-42.5,urcrnrlon=-27.5,lat_ts=55.,resolution='c')
 
-    X,Y = map(lon,lat)
+    X,Y = list(map(lon,lat))
 
     map.contourf(X,Y,hyd,25,norm=nhyd,cmap='binary')
 

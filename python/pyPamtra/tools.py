@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import division
+from __future__ import division, print_function
 import numpy as np
 import traceback
 import warnings
@@ -31,7 +31,7 @@ class sftp2Cluster(object):
     def rm(self, filename, silent=True):
         try:
             self.sftp.remove(filename)
-            print "removed %s" % (filename)
+            print("removed %s" % (filename))
         except IOError:
             if silent:
                 pass

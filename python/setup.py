@@ -4,12 +4,12 @@ import sys
 from numpy.distutils.core import setup
 from numpy.distutils.misc_util import Configuration
 
-print('#'*75)
-print('WARNING '*10)
+print(('#'*75))
+print(('WARNING '*10))
 print('This setup file is currently only for readthedocs! '
   'It does not compile the Fortran module')
-print('WARNING '*10)
-print('#'*75)
+print(('WARNING '*10))
+print(('#'*75))
 
 
 def read(fname):

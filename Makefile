@@ -12,14 +12,14 @@ gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 NCCONF = $(shell which nf-config || which nc-config) # on newer Ubuntu version C and Fortran libraries have their own configure scripts
-F2PY := $(shell which f2py || which f2py2.7) # on newer Ubuntu systems, only f2py2.7 is available
+F2PY := $(shell which f2py || which f2py3 || which f2py2.7) # on newer Ubuntu systems, only f2py2.7 is available
 FC=gfortran
 CC=gcc
 FCFLAGS=-c -fPIC -Wunused  -cpp -J$(OBJDIR) -I$(OBJDIR)
 #FCFLAGS=-g -c -fPIC -Wunused -O0 -cpp -J$(OBJDIR) -I$(OBJDIR)
 
 NCFLAGS :=  $(shell $(NCCONF) --fflags)
-LFLAGS := -L/usr/lib/ -llapack -L$(LIBDIR) -L../$(LIBDIR) -lblas -lz -lfftw3
+LFLAGS := -L/usr/lib/ -L/usr/local/lib/ -llapack -L$(LIBDIR) -L../$(LIBDIR) -lblas -lz -lfftw3
 LDFLAGS := $(shell $(NCCONF) --flibs)
 # it's messi but needed for ubuntu 16.04
 to_remove:=-Wl,-Bsymbolic-functions -Wl,-z,relro
@@ -233,7 +233,7 @@ py: $(PYTDIR)pyPamtraLib.so
 
 $(PYTDIR)pyPamtraLib.so:  $(SRCDIR)pyPamtraLib.f90 $(OBJDIR)pypamtralib.pyf $(FOBJECTS) | $(BINDIR)
 	cd $(OBJDIR) && $(F2PY) $(LFLAGS) -c --fcompiler=gnu95  ../$(OBJDIR)pypamtralib.pyf $(OBJECTS) ../$(SRCDIR)pyPamtraLib.f90
-	mv $(OBJDIR)/pyPamtraLib.so $(PYTDIR)
+	mv $(OBJDIR)/pyPamtraLib*so $(PYTDIR)
 	cp $(PYTDIR)/pamtra.py $(BINDIR)
 
 

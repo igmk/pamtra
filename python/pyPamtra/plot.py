@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import division
+from __future__ import division, print_function
 import numpy as np
 import datetime
 import matplotlib.pyplot as plt
@@ -95,17 +95,17 @@ def plotTB(data, polarisation="H", angle=180., outlevel="space", frequency=0, xg
         ygridArray = np.zeros(shapeTB)
 
         if xgrid == "index":  # more options could be lat, lon, time....
-            xgridArray.T[:] = range(shapeTB[0])
+            xgridArray.T[:] = list(range(shapeTB[0]))
         else:
             raise ValueError("did not understand xgrid")
 
         if ygrid == "index":
-            ygridArray[:] = range(shapeTB[1])
+            ygridArray[:] = list(range(shapeTB[1]))
         else:
             raise ValueError("did not understand ygrid")
 
         cdfFile.close()
-    elif "r" in data.__dict__.keys():
+    elif "r" in list(data.__dict__.keys()):
         try:
             angleIndex = np.where(angle == data.r["angles_deg"])[0][0]
         except IndexError:
@@ -135,12 +135,12 @@ def plotTB(data, polarisation="H", angle=180., outlevel="space", frequency=0, xg
         ygridArray = np.zeros(shapeTB)
 
         if xgrid == "index":  # more options could be lat, lon, time....
-            xgridArray.T[:] = range(shapeTB[0])
+            xgridArray.T[:] = list(range(shapeTB[0]))
         else:
             raise ValueError("did not understand xgrid")
 
         if ygrid == "index":
-            ygridArray[:] = range(shapeTB[1])
+            ygridArray[:] = list(range(shapeTB[1]))
         else:
             raise ValueError("did not understand ygrid")
     else:
@@ -160,11 +160,11 @@ def plotTB(data, polarisation="H", angle=180., outlevel="space", frequency=0, xg
     sp = fig.add_subplot(111)
     # print zip(TB.ravel(),range(len(TB.ravel())))
     if (TB.shape[1] == 1):
-        sp.plot(range(len(TB.ravel())), TB.ravel())
+        sp.plot(list(range(len(TB.ravel()))), TB.ravel())
         sp.set_xlabel(xgrid)
         sp.set_ylabel("TB [K]")  # , fontsize=7)
     elif (TB.shape[0] == 1):
-        sp.plot(range(len(TB.ravel())), TB.ravel())
+        sp.plot(list(range(len(TB.ravel()))), TB.ravel())
         sp.set_xlabel(ygrid)
         sp.set_ylabel("TB [K]")  # , fontsize=7)
     else:
@@ -229,7 +229,7 @@ def plotTBLine(data, polarisation="H", angle=180., outlevel="space", frequency=0
         xData = data.p[xVar][xIndex, yIndex]
 
     if freqIndices == "all":
-        freqIndices = range(len(data.set["freqs"]))
+        freqIndices = list(range(len(data.set["freqs"])))
 
     cols = niceColors(len(freqIndices), cmap='hsv_r')
 
