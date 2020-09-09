@@ -138,7 +138,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
   concatenateAxis : {int}, optional
     concatenation along which axis (the default is 1)
   debug : {bool}, optional
-    stop and load debugger on exception (the default is False) (the default is False)
+    stop and load debugger on exception (the default is False)
   verbosity : {int}, optional
     verbosity of the module (the default is 0) (the default is 0)
   df_kind : {str}, optional
@@ -470,7 +470,7 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
   fnameInTar : {str}, optional
     [description] (the default is "")
   debug : {bool}, optional
-    stop and load debugger on exception (the default is False) (the default is False)
+    stop and load debugger on exception (the default is False)
   verbosity : {int}, optional
     verbosity of the module (the default is 0) (the default is 0)
   df_kind : {str}, optional
@@ -1484,7 +1484,7 @@ def readIconNwp2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   descriptorFile : {str}
     path and name of descriptor file
   debug : {bool}, optional
-    stop and load debugger on exception (the default is False) (the default is False)
+    stop and load debugger on exception (the default is False)
   verbosity : {int}, optional
     verbosity of the module (the default is 0) (the default is 0)
   constantFields : {str}, optional
@@ -1655,19 +1655,40 @@ def readIconNwp2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
 readIconNwp2MomDataset.__doc__ += __ICDN_regridding_remarks
 
 def readIconNwp1MomDataset_cells(fname_fg,descriptorFile,debug=False,verbosity=0,constantFields=None,maxLevel=0):
-  '''
+  """
   import ICON SRM 1-moment dataset where certain cell were sellected
-  (cdo -selgridcell)
-  It is Icon with cosmo physics
 
-  fname_fg = str , fileName of atmospheric variables ("_fg_" file, no wildCards allowed! must be nc file.
-              A corresponding "_cloud_" has do exist!
-  descriptorFile = Pamtra descriptor file
-  debug: stop and load debugger on exception
-  constantFields: str, file name of nc containing constant fields (ie. FR_LAND)
+  Such data gan be generated using $(cdo -selgridcell)
+  It is ICON with cosmo physics
 
   Use PAMTRAs internal "lat" index for cell. "lon"-dimension is 1.
-  '''
+
+  Parameters
+  ----------
+  fname_fg : {str}
+    path and name of file with atmospheric variables.
+    fname_fg has to include "_fg_".
+    A corresponding "_cloud_" has do exist.
+    No wildCards allowed. Must be nc file.
+  descriptorFile : {str}
+    path and name of descriptor file
+  debug : {bool}, optional
+    stop and load debugger on exception (the default is False)
+  verbosity : {int}, optional
+    verbosity of the module (the default is 0) (the default is 0)
+  constantFields : {str}, optional
+    path and name of file with constant fields (the default is None)
+  maxLevel : {int}, optional
+    Number of maximum levels to consider. (the default is 0)
+
+  Returns
+  -------
+  pam : pyPamtra Object
+
+  Raises
+  ------
+  IOError
+  """  
   import netCDF4
 
   assert constantFields
@@ -1682,7 +1703,7 @@ def readIconNwp1MomDataset_cells(fname_fg,descriptorFile,debug=False,verbosity=0
   variables4D = ["temp","pres","qv","qc","qi","qr","qs"]
   variables4D_cloud = ["qg"]
 
-  if verbosity>0: print fname_fg
+  if verbosity>0: print(fname_fg)
 
   if not fname_fg.endswith('.nc'):
     raise IOError("fname_fg has to be .nc.", fname_fg)
@@ -1692,7 +1713,7 @@ def readIconNwp1MomDataset_cells(fname_fg,descriptorFile,debug=False,verbosity=0
   dataSingle = dict()
   try:
     ncFile_const = netCDF4.Dataset(constantFields, "r")
-    if verbosity > 1: print "opened ", constantFields
+    if verbosity > 1: print("opened ", constantFields)
 
     for var in variables2D_const:
       # nc dimensions: cell; target dimensions: lon, lat
@@ -1700,14 +1721,14 @@ def readIconNwp1MomDataset_cells(fname_fg,descriptorFile,debug=False,verbosity=0
       dataSingle[var] = ncFile_const.variables[var][:][np.newaxis, :]
 
     ncFile_const.close()
-    if verbosity > 1: print "closed const nc"
+    if verbosity > 1: print("closed const nc")
 
     ncFile_fg = netCDF4.Dataset(fname_fg, "r")
-    if verbosity > 1: print "opened ", fname_fg
+    if verbosity > 1: print("opened ", fname_fg)
 
     fname_cloud = '_cloud_'.join(fname_fg.rsplit('_fg_',1)) # right-replace _fg_ with _cloud
     ncFile_cloud = netCDF4.Dataset(fname_cloud, "r")
-    if verbosity > 1: print "opened ", fname_cloud
+    if verbosity > 1: print("opened ", fname_cloud)
 
     if maxLevel == 0:
       assert ncFile_fg.variables["z_ifc"].dimensions == ('height_3', 'cell')
@@ -1753,18 +1774,17 @@ def readIconNwp1MomDataset_cells(fname_fg,descriptorFile,debug=False,verbosity=0
       assert dataSingle[key].shape == shape3Dplus
 
     ncFile_fg.close()
-    if verbosity > 1: print "closed fg nc"
+    if verbosity > 1: print("closed fg nc")
     ncFile_cloud.close()
-    if verbosity > 1: print "closed cloud nc"
+    if verbosity > 1: print("closed cloud nc")
 
     data = dataSingle
 
-  #except IOError:
   except Exception as inst:
-    print "ERROR:", fname_fg
-    print type(inst)     # the exception instance
-    print inst.args      # arguments stored in .args
-    print inst
+    print("ERROR:", fname_fg)
+    print(type(inst))     # the exception instance
+    print(inst.args)      # arguments stored in .args
+    print(inst)
     if debug: import pdb;pdb.set_trace()
     raise
 
@@ -1840,7 +1860,7 @@ def readHIRHAM(dataFile,additionalFile,topoFile,descriptorFile,grid=[0,200,0,218
   timestep : {int}, optional
     whcih if the 8 available time steps should be read (the default is 0, max is 7)
   debug : {bool}, optional
-    stop and load debugger on exception (the default is False) (the default is False)
+    stop and load debugger on exception (the default is False)
   verbosity : {int}, optional
     verbosity of the module (the default is 0) (the default is 0)
 
@@ -2047,7 +2067,7 @@ def readECMWF(fname,constantFile,descriptorFile,landseamask,debug=False,verbosit
   landseamask : {str}
     path and name of landseamask file
   debug : {bool}, optional
-    stop and load debugger on exception (the default is False) (the default is False)
+    stop and load debugger on exception (the default is False)
   verbosity : {int}, optional
     verbosity of the module (the default is 0) (the default is 0)
   grid : {[int,int,int,int]}, optional
@@ -2159,7 +2179,7 @@ def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,d
   dataDir : {str}, optional
     path to data directory (the default is ".")
   debug : {bool}, optional
-    stop and load debugger on exception (the default is False) (the default is False)
+    stop and load debugger on exception (the default is False)
   verbosity : {int}, optional
     verbosity of the module (the default is 0) (the default is 0)
   dimX : {int}, optional
