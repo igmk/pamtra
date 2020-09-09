@@ -37,7 +37,7 @@ missingNumber =-9999.
 
 def readWrfDataset(fname,kind):
   """
-  
+
   read WRF data set
 
   Parameters
@@ -46,7 +46,7 @@ def readWrfDataset(fname,kind):
     path and name of file  atmospheric variables
   kind : {str}
     kind of data file (up to now only gce is implemented)
-  
+
   Returns
   -------
   pam : pyPamtra Object
@@ -149,7 +149,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
     Number of maximum levels to consider. (the default is 0)
   subGrid : {[int,int,int,int]}, optional
     array with indices [lon_start,lon_end,lat_start,lat_end] ((1,1) in model corresponds to (0,0) in python!) (the default is None)
- 
+
   Returns
   -------
   pam : pyPamtra Object
@@ -452,7 +452,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
 def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',forecastIndex = 1,tmpDir="/tmp/",fnameInTar="",debug=False,verbosity=0,df_kind="default",constantFields=None,maxLevel=0,subGrid=None):
   """
   import COSMO 2-moment dataset
-  
+
   Parameters
   ----------
   fnamesA : {str}
@@ -481,7 +481,7 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
     Number of maximum levels to consider. (the default is 0)
   subGrid : {[int,int,int,int]}, optional
     array with indices [lon_start,lon_end,lat_start,lat_end] ((1,1) in model corresponds to (0,0) in python!) (the default is None)
-  
+
   Returns
   -------
   pam : pyPamtra Object
@@ -800,9 +800,9 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
   return pam
 
 def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",debug=False,verbosity=0,maxLevel=0):
-  """  
+  """
   import COSMO 2-moment dataset extracted on a HALO flight track
-  
+
   Parameters
   ----------
   fnameA : {str}
@@ -921,7 +921,7 @@ def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",deb
 def readCosmoReAn2km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDir="/tmp/",fnameInTar="",debug=False,verbosity=0,maxLevel=51,subGrid=None):
   """
   reads COSMO 2 km Re-Analyses
-   
+
   Parameters
   ----------
   constantFields : {str}
@@ -944,7 +944,7 @@ def readCosmoReAn2km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
     index of maximum level (the default is 51)
   subGrid : {[int,int,int,int]}, optional
     read subgrid of whole field (the default is None)
-  
+
   Returns
   -------
   pyPamtra object
@@ -1218,7 +1218,7 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
 __ICDN_regridding_remarks = """
 Remarks
 =======
-This importer is adjusted to read regridded ICON-LEM simulations as they where run by Daniel Klocke within the HErZ-NARVALII framework.
+This importer is adjusted to read regridded ICON-SRM simulations as they where run by Daniel Klocke within the HErZ-NARVALII framework.
 The Output consists of a *_fg_* and a *_cloud_* netcdf file.
 From the *_fg_* file, which contains most atmospheric variables, we need data on grid 2.
 From the *_cloud_* file, which contains qg, we need data on grid 1.
@@ -1273,12 +1273,12 @@ Apply weights:
     cdo remapnn,test_grid,test_grid_weights.nc -setgrid,narval_nestTropAtl_R1250m extpar_narval_nestTropAtl_R1250m.nc extpar_narval_nestTropAtl_R1250m_test_grid.nc
 """
 
-def readIconLem1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,constantFields=None,maxLevel=0):
+def readIconNwp1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,constantFields=None,maxLevel=0,diagnostic=False):
   """
-  import ICON LEM 1-moment dataset
+  import ICON SRM 1-moment dataset
 
   It is Icon with cosmo physics
-  
+
   Parameters
   ----------
   fname_fg : {str}
@@ -1286,18 +1286,20 @@ def readIconLem1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   descriptorFile : {str}
     path and name of descriptor file
   debug : {bool}, optional
-    stop and load debugger on exception (the default is False) (the default is False)
+    stop and load debugger on exception (the default is False)
   verbosity : {int}, optional
     verbosity of the module (the default is 0) (the default is 0)
   constantFields : {str}, optional
     path and name of file with constant fields (the default is None)
   maxLevel : {int}, optional
     Number of maximum levels to consider. (the default is 0)
-  
+  diagnostic : {bool}
+    Switch to use diagnostic qc and qi instead of prognostic ones is set to True (the default is False)
+
   Returns
   -------
   pam : pyPamtra Object
-  
+
   Raises
   ------
   IOError
@@ -1315,6 +1317,12 @@ def readIconLem1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   variables4D_10m = ["u_10m","v_10m"]
   variables4D = ["temp","pres","qv","qc","qi","qr","qs"]
   variables4D_cloud = ["qg"]
+
+  if diagnostic:
+    variables4D.remove('qc')
+    variables4D.remove('qi')
+    variables4D_cloud.append('tot_qc_dia')
+    variables4D_cloud.append('tot_qi_dia')
 
   if verbosity>0: print(fname_fg)
 
@@ -1419,9 +1427,13 @@ def readIconLem1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
 
   data["relhum"] = q2rh(data["qv"],data["temp"],data["pres"]) * 100.
 
-  data["hydro_q"] = np.zeros(data["qc"].shape + (nHydro,)) + np.nan
-  data["hydro_q"][...,0] = data["qc"]
-  data["hydro_q"][...,1] = data["qi"]
+  data["hydro_q"] = np.zeros(data["qr"].shape + (nHydro,)) + np.nan
+  if diagnostic:
+    data["hydro_q"][...,0] = data["tot_qc_dia"]
+    data["hydro_q"][...,1] = data["tot_qi_dia"]
+  else:
+    data["hydro_q"][...,0] = data["qc"]
+    data["hydro_q"][...,1] = data["qi"]
   data["hydro_q"][...,2] = data["qr"]
   data["hydro_q"][...,3] = data["qs"]
   data["hydro_q"][...,4] = data["qg"]
@@ -1456,15 +1468,15 @@ def readIconLem1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   return pam
 
 # Add regridding remarks
-readIconLem1MomDataset.__doc__ += __ICDN_regridding_remarks
+readIconNwp1MomDataset.__doc__ += __ICDN_regridding_remarks
 
 
-def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,constantFields=None,maxLevel=0):
+def readIconNwp2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,constantFields=None,maxLevel=0):
   """
-  import ICON LEM 2-moment dataset
+  import ICON SRM 2-moment dataset
 
   It is ICON with cosmo physics
-  
+
   Parameters
   ----------
   fname_fg : {str}
@@ -1479,11 +1491,11 @@ def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
     path and name of file with constant fields (the default is None)
   maxLevel : {int}, optional
     Number of maximum levels to consider. (the default is 0)
-  
+
   Returns
   -------
   pam : pyPamtra Object
-  
+
   Raises
   ------
   IOError
@@ -1640,14 +1652,179 @@ def readIconLem2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   return pam
 
 # Add regridding remarks
-readIconLem2MomDataset.__doc__ += __ICDN_regridding_remarks
+readIconNwp2MomDataset.__doc__ += __ICDN_regridding_remarks
+
+def readIconNwp1MomDataset_cells(fname_fg,descriptorFile,debug=False,verbosity=0,constantFields=None,maxLevel=0):
+  '''
+  import ICON SRM 1-moment dataset where certain cell were sellected
+  (cdo -selgridcell)
+  It is Icon with cosmo physics
+
+  fname_fg = str , fileName of atmospheric variables ("_fg_" file, no wildCards allowed! must be nc file.
+              A corresponding "_cloud_" has do exist!
+  descriptorFile = Pamtra descriptor file
+  debug: stop and load debugger on exception
+  constantFields: str, file name of nc containing constant fields (ie. FR_LAND)
+
+  Use PAMTRAs internal "lat" index for cell. "lon"-dimension is 1.
+  '''
+  import netCDF4
+
+  assert constantFields
+  forecastIndex = 0 # time step in forecast
+  nHydro = 5
+
+  data = dict()
+
+  variables2D_const = ["FR_LAND", 'lon', 'lat'] # 'topography_c' would be the ICON equivalent to the COSMO 'HSURF'
+  variables3D = ["t_g","pres_sfc"]
+  variables4D_10m = ["u_10m","v_10m"]
+  variables4D = ["temp","pres","qv","qc","qi","qr","qs"]
+  variables4D_cloud = ["qg"]
+
+  if verbosity>0: print fname_fg
+
+  if not fname_fg.endswith('.nc'):
+    raise IOError("fname_fg has to be .nc.", fname_fg)
+  if not '_fg_' in os.path.basename(fname_fg):
+    raise IOError("fname_fg has to contain '_fg_'.", fname_fg)
+
+  dataSingle = dict()
+  try:
+    ncFile_const = netCDF4.Dataset(constantFields, "r")
+    if verbosity > 1: print "opened ", constantFields
+
+    for var in variables2D_const:
+      # nc dimensions: cell; target dimensions: lon, lat
+      assert ncFile_const.variables[var].dimensions == ('cell', )
+      dataSingle[var] = ncFile_const.variables[var][:][np.newaxis, :]
+
+    ncFile_const.close()
+    if verbosity > 1: print "closed const nc"
+
+    ncFile_fg = netCDF4.Dataset(fname_fg, "r")
+    if verbosity > 1: print "opened ", fname_fg
+
+    fname_cloud = '_cloud_'.join(fname_fg.rsplit('_fg_',1)) # right-replace _fg_ with _cloud
+    ncFile_cloud = netCDF4.Dataset(fname_cloud, "r")
+    if verbosity > 1: print "opened ", fname_cloud
+
+    if maxLevel == 0:
+      assert ncFile_fg.variables["z_ifc"].dimensions == ('height_3', 'cell')
+      assert ncFile_fg.dimensions['height'].size + 1 == ncFile_fg.dimensions['height_3'].size
+      maxLevel = ncFile_fg.variables["z_ifc"].shape[0] - 1
+
+    for var in variables3D:
+      # nc dimensions: time, cell; target dimensions: lon, lat
+      assert ncFile_fg.variables[var].dimensions == ('time', 'cell')
+      dataSingle[var] = ncFile_fg.variables[var][:][forecastIndex, np.newaxis, :]
+
+    for var in variables4D_10m:
+      # nc dimensions: time, height_5, cell; target dimensions: lon, lat
+      assert ncFile_fg.variables[var].dimensions == ('time', 'height_5', 'cell')
+      assert ncFile_fg.dimensions['height_5'].size == 1
+      dataSingle[var] = ncFile_fg.variables[var][:][forecastIndex, np.newaxis, 0, :]
+
+    for var in variables4D:
+      # nc dimensions: time, height, cell; target dimensions: lon, lat, level
+      assert ncFile_fg.variables[var].dimensions == ('time', 'height', 'cell')
+      dataSingle[var] = np.transpose(ncFile_fg.variables[var][forecastIndex], (1, 0))[np.newaxis, :, ::-1][...,:maxLevel]#reverse height order
+
+    for var in variables4D_cloud:
+      # nc dimensions: time, height, cell; target dimensions: lon, lat, level
+      assert ncFile_cloud.variables[var].dimensions == ('time', 'height', 'cell')
+      dataSingle[var] = np.transpose(ncFile_cloud.variables[var][forecastIndex], (1, 0))[np.newaxis, :, ::-1][...,:maxLevel]#reverse height order
+
+    shape3D = dataSingle["temp"].shape
+    assert shape3D[0] == 1, 'Lon dimension should not be used'
+    shape3Dplus = (shape3D[0], shape3D[1], shape3D[2] + 1)
+    shape2D = shape3D[:2]
+
+    date_times = netCDF4.num2date(ncFile_fg.variables["time"][:], ncFile_fg.variables["time"].units) # convert from any given reference time
+    timestamp = netCDF4.date2num(date_times, "seconds since 1970-01-01 00:00:00") # to unix epoch timestamp
+
+    dataSingle["timestamp"] = np.zeros(shape2D)
+    dataSingle["timestamp"][:] = timestamp
+
+    for key in ["z_ifc"]:
+      # nc dimensions: height, cell; target dimensions: lon, lat, level
+      assert ncFile_fg.variables[key].dimensions == ('height_3', 'cell')
+      dataSingle[key] = np.transpose(ncFile_fg[key], (1, 0))[np.newaxis, : ,::-1][...,:maxLevel+1]#reverse height order
+      assert dataSingle[key].shape == shape3Dplus
+
+    ncFile_fg.close()
+    if verbosity > 1: print "closed fg nc"
+    ncFile_cloud.close()
+    if verbosity > 1: print "closed cloud nc"
+
+    data = dataSingle
+
+  #except IOError:
+  except Exception as inst:
+    print "ERROR:", fname_fg
+    print type(inst)     # the exception instance
+    print inst.args      # arguments stored in .args
+    print inst
+    if debug: import pdb;pdb.set_trace()
+    raise
+
+
+  #shapes may have changed!
+  shape3Dplus = tuple(np.array(data["temp"].shape) + np.array([0,0,1]))
+  shape3D = data["temp"].shape
+  shape2D = shape3D[:2]
+
+  #we can also fill the arrays partly!
+  data["press_lev"] = np.zeros(shape3Dplus) + np.nan
+  data["press_lev"][...,0] = data["pres_sfc"]
+
+  data["relhum"] = q2rh(data["qv"],data["temp"],data["pres"]) * 100.
+
+  data["hydro_q"] = np.zeros(data["qc"].shape + (nHydro,)) + np.nan
+  data["hydro_q"][...,0] = data["qc"]
+  data["hydro_q"][...,1] = data["qi"]
+  data["hydro_q"][...,2] = data["qr"]
+  data["hydro_q"][...,3] = data["qs"]
+  data["hydro_q"][...,4] = data["qg"]
+
+  varPairs = [["timestamp","timestamp"],["lat","lat"],["lon","lon"],
+    ["u_10m","wind10u"],["v_10m","wind10v"],
+    ["z_ifc","hgt_lev"],["pres","press"],["temp","temp"],["relhum","relhum"],["hydro_q","hydro_q"],
+    ["t_g","groundtemp"],["press_lev","press_lev"]]
+
+  pamData = dict()
+  for iconVar, pamVar in varPairs:
+    pamData[pamVar] = data[iconVar]
+
+  pam = pyPamtra()
+  pam.set["pyVerbose"]= verbosity
+  if isinstance(descriptorFile, str):
+    pam.df.readFile(descriptorFile)
+  else:
+    for df in descriptorFile:
+      pam.df.addHydrometeor(df)
+
+  # surface properties
+  pamData['sfc_type'] = np.around(data['FR_LAND'])
+  assert np.all(np.logical_or(0<=pamData['sfc_type'], pamData['sfc_type'] <=1))
+  pamData['sfc_model'] = np.zeros(shape2D)
+  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'][pamData['sfc_type'] == 0] = 'F' # ocean
+  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'L' # land
+
+  pam.createProfile(**pamData)
+
+  return pam
+
+# Add regridding remarks
+readIconNwp1MomDataset_cells.__doc__ += __ICDN_regridding_remarks
 
 def readHIRHAM(dataFile,additionalFile,topoFile,descriptorFile,grid=[0,200,0,218],timestep=0,debug=False,verbosity=0):
-  """  
+  """
   read  HIRHAM output into PAMTRA
 
   it reads the output produce by Ines Haberstedt at the AWI in Potsdam
-  
+
   Parameters
   ----------
   dataFile : {str}
@@ -1666,7 +1843,7 @@ def readHIRHAM(dataFile,additionalFile,topoFile,descriptorFile,grid=[0,200,0,218
     stop and load debugger on exception (the default is False) (the default is False)
   verbosity : {int}, optional
     verbosity of the module (the default is 0) (the default is 0)
-  
+
   Returns
   -------
   pam : pyPamtra Object
@@ -1691,7 +1868,7 @@ def readHIRHAM(dataFile,additionalFile,topoFile,descriptorFile,grid=[0,200,0,218
   data['hgt'] = np.moveaxis(fo['GHT'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1] # geopotnetial height [m] used as hgt
   data['temp'] = np.moveaxis(fo['TT'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1] # temperature [K]
   data['relhum'] = np.moveaxis(fo['RH'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1] # relative humidity [%]
-  Frain_ls = np.moveaxis(fo['LSRAIN'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]     # Flux large scale cloud rain in kg m^-2 s^ 
+  Frain_ls = np.moveaxis(fo['LSRAIN'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]     # Flux large scale cloud rain in kg m^-2 s^
   Frain_c = np.moveaxis(fo['CCRAIN'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]      # Flux convective cloud rain in kg m^-2 s^
   Fsnow_ls = np.moveaxis(fo['LSSNOW'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]     # Flux large scale cloud snow in kg m^-2 s^
   Fsnow_c = np.moveaxis(fo['CCSNOW'][t,...],[0,1,2],[2,0,1])[a:b,c:d,::-1]      # Flux convective cloud snow in kg m^-2 s^
@@ -1733,7 +1910,7 @@ def readHIRHAM(dataFile,additionalFile,topoFile,descriptorFile,grid=[0,200,0,218
   # Calculating pressure variable from a and b hybrid coefficients:
   data['press'] = np.zeros(shape3D)
 
-  for i in range(shape3D[2]): 
+  for i in range(shape3D[2]):
       if i == 0:
           data['press'][:,:,i] = a_mid[i] + b_mid[i]*ps
       else:
@@ -1760,7 +1937,7 @@ def readHIRHAM(dataFile,additionalFile,topoFile,descriptorFile,grid=[0,200,0,218
   R = 287.05 # [J/kg K] specific gas constant of dry air
   # snow:
   Cpr = 1. # assumtion that we have snow/ice/rain in the whole grid cell
-  rho = 1000. # density of water [kg/m^3] 
+  rho = 1000. # density of water [kg/m^3]
   a11 = 3.29
   b10 = 0.16
 
@@ -1782,7 +1959,7 @@ def readHIRHAM(dataFile,additionalFile,topoFile,descriptorFile,grid=[0,200,0,218
   # rs - mass mixing ratio of snow
   # rr - mass mixing ratio of rain
   # ri - mas mixing ratio of falling ice
-  # Fsnow - snow flux 
+  # Fsnow - snow flux
   # Frain - rain flux
   # Fitop - grid cell mean sedimantation flux
   # Cpr - fraction of the grid cell covered with snow
@@ -1842,7 +2019,7 @@ def readECMWF(fname,constantFile,descriptorFile,landseamask,debug=False,verbosit
   read ECMWF IFS data
 
   reads the data produced for the NAWDEX campaign by Heini Wernli at ETH Zuerich
-  
+
   Q          specific humidity                   kg/kg
   LWC    specific liquid water content    kg/kg
   IWC    specific ice water content        kg/kg
@@ -1858,7 +2035,7 @@ def readECMWF(fname,constantFile,descriptorFile,landseamask,debug=False,verbosit
   u_wind_10m  10 meter wind u component  m/s
   v_wind_10m  10 meter wind v component  m/s
   lsm   land-sea-mask            0-1   (0=sea, 1=land)
-  
+
   Parameters
   ----------
   fname : {str}
@@ -1875,7 +2052,7 @@ def readECMWF(fname,constantFile,descriptorFile,landseamask,debug=False,verbosit
     verbosity of the module (the default is 0) (the default is 0)
   grid : {[int,int,int,int]}, optional
     read only subgrid of whole model field
-  
+
   Returns
   -------
   pam : pyPamtra Object
@@ -1894,10 +2071,10 @@ def readECMWF(fname,constantFile,descriptorFile,landseamask,debug=False,verbosit
   dataC = ncToDict(constantFile,keys=['aklev','bklev','aklay','bklay'])
   pamData = dict()
 
-  a = grid[0]  
-  b = grid[1]  
-  c = grid[2]  
-  d = grid[3]  
+  a = grid[0]
+  b = grid[1]
+  c = grid[2]
+  d = grid[3]
 
 
   data = dict()
@@ -1993,7 +2170,7 @@ def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,d
     dimension in z (the default is 25)
   subGrid : {[int,int,int,int]}, optional
     only read subgrid (the default is None)
-  
+
   Returns
   -------
   pam : pyPamtra Object
@@ -2091,24 +2268,24 @@ def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,d
 
 def readIcon1momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timeidx=None, hydro_content=[1.,1.,1.,1.,1.]):
   '''
-  import ICON LEM 2-moment dataset output cross section over a site (Meteogram)
-  
+  import ICON LEM 1-moment dataset output cross section over a site (Meteogram)
+
   WARNING: This importer has been designed upon Icon meteogram output generated by Dr. Vera Schemann
   Might not work on other files.
-  
+
   fname = filename of the Icon output
   descriptorFile = pyPamtra descriptorFile object or filename of a proper formatted descriptorFile
   debug = flag causing stop and load of debugger upon raised exception
   verbosity = pyPamtra.pyVerbose verbosity level
   timeidx = indexes of timestep to be computed. Used to slice just a few profiles out of the .nc file for rapid testing
-  
+
   Pamtra assumes that the apart from height, the first given dimension is latitude, here coordinates do not change across the dimension, but time does, thus generating a meteogram
-  
+
   03/03/2018 - Davide Ori - dori@uni-koeln.de
   '''
-  
+
   import netCDF4
-  
+
   ICON_file = netCDF4.Dataset(fname, mode='r')
   vals = ICON_file.variables
 
@@ -2123,7 +2300,7 @@ def readIcon1momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
 #  soiltype = int([s for s in station if '_soiltype' in s][0].split('=')[-1])
 #  tile_frac=[',  u'1.]',
 #  tile_luclass=[4]
-  
+
   pamData = dict() # empty dictionary to store pamtra Data
 
   hgt_key = 'height'
@@ -2133,10 +2310,10 @@ def readIcon1momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
     hgt_key = 'heights'
   else:
     raise AttributeError('ICON file does not have a valid height label (I know only height, heights, height_2 and heights_2)')
-  
+
   Nh = len(vals[hgt_key])-1
   Nt = len(vals['time'])
-  
+
   #if vals.has_key('QG'): # It might be either 3 or 2 ice classes
   nhydros = 5
   #else:
@@ -2144,13 +2321,13 @@ def readIcon1momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   if timeidx is None:
     timeidx = timeidx = np.arange(0,Nt)
   shapeSFC = (len(timeidx),)
-    
+
   date_times = netCDF4.num2date(vals["time"][timeidx], vals["time"].units) # datetime autoconversion
   timestamp = netCDF4.date2num(date_times, "seconds since 1970-01-01 00:00:00") # to unix epoch timestamp (python uses nanoseconds int64 internally)
-  pamData['timestamp'] = timestamp  
+  pamData['timestamp'] = timestamp
   pamData['hgt_lev'] = np.tile(np.flip(vals[hgt_key],0),(len(timeidx),1)) # heights at which fields are defined
 
-  pamData['press']  = np.flip(vals['P'][timeidx],1)    # pressure 
+  pamData['press']  = np.flip(vals['P'][timeidx],1)    # pressure
   pamData['temp']   = np.flip(vals['T'][timeidx],1)    # temperature
   wind_u = np.flip(vals['U'][timeidx],1)               # zonal wind speed
   wind_v = np.flip(vals['V'][timeidx],1)               # meridional wind speed
@@ -2171,7 +2348,7 @@ def readIcon1momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
     hydro_cmpl[...,4] = 0.0*np.flip(vals['QC'][timeidx],1)   # graupel set to 0 (avoid double descriptorFile)
 
   pamData["hydro_q"] = hydro_cmpl
-  
+
   # surface properties
   pamData['wind10u'] = vals['U10M'][timeidx]
   pamData['wind10v'] = vals['V10M'][timeidx]
@@ -2191,32 +2368,32 @@ def readIcon1momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   else: # is an iterable containing arrays
     for df in descriptorFile:
       pam.df.addHydrometeor(df)
-  
+
   pam.createProfile(**pamData)
-  
+
   return pam
 
 
 def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timeidx=None, hydro_content=[1.,1.,1.,1.,1.,1.]):
   '''
   import ICON LEM 2-moment dataset output cross section over a site (Meteogram)
-  
+
   WARNING: This importer has been designed upon Icon meteogram output generated by Dr. Vera Schemann
   Might not work on other files.
-  
+
   fname = filename of the Icon output
   descriptorFile = pyPamtra descriptorFile object or filename of a proper formatted descriptorFile
   debug = flag causing stop and load of debugger upon raised exception
   verbosity = pyPamtra.pyVerbose verbosity level
   timeidx = indexes of timestep to be computed. Used to slice just a few profiles out of the .nc file for rapid testing
-  
+
   Pamtra assumes that the apart from height, the first given dimension is latitude, here coordinates do not change across the dimension, but time does, thus generating a meteogram
-  
+
   03/03/2018 - Davide Ori - dori@uni-koeln.de
   '''
-  
+
   import netCDF4
-  
+
   ICON_file = netCDF4.Dataset(fname, mode='r')
   vals = ICON_file.variables
 
@@ -2231,7 +2408,7 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
 #  soiltype = int([s for s in station if '_soiltype' in s][0].split('=')[-1])
 #  tile_frac=[',  u'1.]',
 #  tile_luclass=[4]
-  
+
   pamData = dict() # empty dictionary to store pamtra Data
 
   hgt_key = 'height'
@@ -2241,20 +2418,20 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
     hgt_key = 'heights'
   else:
     raise AttributeError('ICON file does not have a valid height label (I know only height, heights, height_2 and heights_2)')
-  
+
   Nh = len(vals[hgt_key])-1
   Nt = len(vals['time'])
   nhydros = 6
   if timeidx is None:
     timeidx = timeidx = np.arange(0,Nt)
   shapeSFC = (len(timeidx),)
-    
+
   date_times = netCDF4.num2date(vals["time"][timeidx], vals["time"].units) # datetime autoconversion
   timestamp = netCDF4.date2num(date_times, "seconds since 1970-01-01 00:00:00") # to unix epoch timestamp (python uses nanoseconds int64 internally)
-  pamData['timestamp'] = timestamp  
+  pamData['timestamp'] = timestamp
   pamData['hgt_lev'] = np.tile(np.flip(vals[hgt_key],0),(len(timeidx),1)) # heights at which fields are defined
 
-  pamData['press']  = np.flip(vals['P'][timeidx],1)    # pressure 
+  pamData['press']  = np.flip(vals['P'][timeidx],1)    # pressure
   pamData['temp']   = np.flip(vals['T'][timeidx],1)    # temperature
   wind_u = np.flip(vals['U'][timeidx],1)               # zonal wind speed
   wind_v = np.flip(vals['V'][timeidx],1)               # meridional wind speed
@@ -2280,11 +2457,11 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   hydro_num_cmpl[...,2] = hydro_content[2]*np.flip(vals['QNR'][timeidx],1)  # number concentration droplets
   hydro_num_cmpl[...,3] = hydro_content[3]*np.flip(vals['QNS'][timeidx],1)  # number concentration snow
   hydro_num_cmpl[...,4] = hydro_content[4]*np.flip(vals['QNG'][timeidx],1)  # number concentration graupel
-  hydro_num_cmpl[...,5] = hydro_content[5]*np.flip(vals['QNH'][timeidx],1)  # number concentration hail 
+  hydro_num_cmpl[...,5] = hydro_content[5]*np.flip(vals['QNH'][timeidx],1)  # number concentration hail
 
   pamData["hydro_q"] = hydro_cmpl
   pamData["hydro_n"] = hydro_num_cmpl
-  
+
   # surface properties
   pamData['wind10u'] = vals['U10M'][timeidx]
   pamData['wind10v'] = vals['V10M'][timeidx]
@@ -2304,54 +2481,54 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   else: # is an iterable containing arrays
     for df in descriptorFile:
       pam.df.addHydrometeor(df)
-  
+
   pam.createProfile(**pamData)
-  
+
   return pam
 
 def readIcon2momOnFlightTrack(fname, descriptorFile, debug=False, verbosity=0):
   '''
   import ICON LEM 2-moment dataset output along a flight track
-  
+
   WARNING: This importer has been designed upon Icon output generated by Dr. Vera Schemann
   Might not work on other files.
-  
+
   fname = filename of the Icon output
   descriptorFile = pyPamtra descriptorFile object or filename of a proper formatted descriptorFile
   debug = flag causing stop and load of debugger upon raised exception
   verbosity = pyPamtra.pyVerbose verbosity level
 
   Pamtra assumes that the apart from height, the first given dimension is latitude, here coordinates do not change across the dimension, but time does, thus generating a meteogram
-  
+
   16/05/2018 - Mario Mech - mario.mech@uni-koeln.de based on readIcon2momMeteogram by Davide Ori
   '''
-  
+
   import netCDF4
-  
+
   ICON_file = netCDF4.Dataset(fname, mode='r')
   vals = ICON_file.variables
 
   pamData = dict() # empty dictionary to store pamtra Data
-  
+
   Nh = len(vals['height_2d'])
   Nx = len(vals['lat'])
   nhydros = 6
   # if timeidx is None:
   latidx = np.arange(0,Nx)
   # shapeSFC = (len(timeidx),)
-    
+
   # date_times = netCDF4.num2date(vals["time"][timeidx], vals["time"].units) # datetime autoconversion
   # timestamp = netCDF4.date2num(date_times, "seconds since 1970-01-01 00:00:00") # to unix epoch timestamp (python uses nanoseconds int64 internally)
   # pamData['timestamp'] = timestamp
-  
+
 #  variables1D_const = ["FR_LAND", 'lon_2', 'lat_2'] # 'topography_c' would be the ICON equivalent to the COSMO 'HSURF'
 #  variables2D = ["t_g","pres_sfc"]
 #  variables3D_10m = ["u_10m","v_10m"]
 #  variables3D = ["temp","pres","qv","qc","qi","qr","qs","qg","qh","qnc","qni","qnr","qns","qng","qnh"]
-  
+
   pamData['hgt'] = np.swapaxes(np.flip(vals['height_2d'],0),0,1) # heights at which fields are defined
 
-  pamData['press'] = np.swapaxes(np.flip(vals['P'],0),0,1)    # pressure 
+  pamData['press'] = np.swapaxes(np.flip(vals['P'],0),0,1)    # pressure
   pamData['temp'] = np.swapaxes(np.flip(vals['T'],0),0,1)    # temperature
   #pamData['wind_u']  = np.flip(vals['U'][timeidx],1)    # zonal wind speed
   #pamData['wind_v']  = np.flip(vals['V'][timeidx],1)    # meridional wind speed
@@ -2376,23 +2553,23 @@ def readIcon2momOnFlightTrack(fname, descriptorFile, debug=False, verbosity=0):
   hydro_num_cmpl[...,2] = np.swapaxes(np.flip(vals['QNR'],0),0,1)  # number concentration droplets
   hydro_num_cmpl[...,3] = np.swapaxes(np.flip(vals['QNS'],0),0,1)  # number concentration snow
   hydro_num_cmpl[...,4] = np.swapaxes(np.flip(vals['QNG'],0),0,1)  # number concentration graupel
-  hydro_num_cmpl[...,5] = np.swapaxes(np.flip(vals['QNH'],0),0,1)  # number concentration hail 
+  hydro_num_cmpl[...,5] = np.swapaxes(np.flip(vals['QNH'],0),0,1)  # number concentration hail
 
   pamData["hydro_q"] = hydro_cmpl
   pamData["hydro_n"] = hydro_num_cmpl
-  
+
   #pamData["lfrac"] = np.array([1]) ####
   #pamData["groundtemp"] = pamData['temp'][149]
   #pamData['phalf'] = vals['PHALF'][:]# pressure on the half levels
 
   pam = pyPamtra()
   pam.set['pyVerbose'] = verbosity
-  
+
   # surface properties
   pamData['lat'] = vals['lat'][:]
   pamData['lon'] = vals['lon'][:]
 #  pamData['lon'] = lon
-  # pdb.set_trace()  
+  # pdb.set_trace()
   pamData['wind10u'] = vals['u10'][:]
   pamData['wind10v'] = vals['v10'][:]
   pamData['groundtemp'] = vals['TS'][:]
@@ -2408,12 +2585,12 @@ def readIcon2momOnFlightTrack(fname, descriptorFile, debug=False, verbosity=0):
   else:
     for df in descriptorFile:
       pam.df.addHydrometeor(df)
-  
+
   pam.createProfile(**pamData)
-  
+
   return pam
-  
-  
+
+
 
 def createUsStandardProfile(pam=pyPamtra(),**kwargs):
   '''
@@ -2478,7 +2655,7 @@ def _createUsStandardProfile(**kwargs):
 def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='netCDF4',tmpDir="/tmp/",skipFiles=[]):
   '''
   Load keys of netcdf file into dictionary that is returned.
-  By using wildcards in ncFilePath, multiple files are possible. They are joint using joinDimension. 
+  By using wildcards in ncFilePath, multiple files are possible. They are joint using joinDimension.
   Offsets of e.g.,, time vector can be corrected by offsetKeys with value to be corrected as key as correction key in value.
   gzip compressed netcdf with extension .gz are possible.
   '''
@@ -2555,3 +2732,4 @@ def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='net
       #os.system("rm -f "+ncFile)
       os.remove(ncFile)
   return joinedData
+

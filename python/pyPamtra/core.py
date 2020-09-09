@@ -910,8 +910,9 @@ class pyPamtra(object):
   def _checkData(self):
     maxLimits = {"relhum_lev":200,"hydro_q":0.05,"temp_lev":320,"press_lev":110000,"relhum":200,"temp":320,"press":110000}
     minLimits = {"relhum_lev":0,  "hydro_q": 0 , "temp_lev":170,"press_lev":1,     "relhum":0,  "temp":170,"press":1}
-    for key in list(self.p.keys()):
-      if type(self.p[key]) != np.ndarray:
+    non_numeric_keys = ['sfc_refl', ]
+    for key in self.p.keys():
+      if type(self.p[key]) != np.ndarray or key in non_numeric_keys:
         continue
       p_data = self.p[key][~np.isnan(self.p[key])]
       if key in list(maxLimits.keys()) and len(p_data)>0:
