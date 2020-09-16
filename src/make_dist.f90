@@ -149,11 +149,10 @@ subroutine make_dist(errorstatus)
         min_log = minval(d_bound_ds_log)
         if (min_log <= min_lin) then
            d_bound_ds_work(i) = min_log
-           d_bound_ds_log(minloc(d_bound_ds_log)) = 1.e30
-        endif
-        if (min_log > min_lin) then
+           d_bound_ds_log(minloc(d_bound_ds_log)) = 1.e30 ! unreasonable large value to exclude former smallest number (minloc) from next minval
+        else
            d_bound_ds_work(i) = min_lin
-           d_bound_ds_lin(minloc(d_bound_ds_lin)) = 1.e30
+           d_bound_ds_lin(minloc(d_bound_ds_lin)) = 1.e30 ! unreasonable large value to exclude former smallest number (minloc) from next minval
         endif
      enddo
 
