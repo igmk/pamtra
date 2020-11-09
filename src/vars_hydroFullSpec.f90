@@ -15,7 +15,8 @@ module vars_hydroFullSpec
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_area_ds
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_canting
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_as_ratio
-  
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_fallvelocity
+
   contains
 
   subroutine allocate_hydrofs_vars(errorstatus,nbins)
@@ -59,6 +60,7 @@ module vars_hydroFullSpec
     allocate(hydrofs_area_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
     allocate(hydrofs_canting(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
     allocate(hydrofs_as_ratio(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
+    allocate(hydrofs_fallvelocity(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
 
 
     errorstatus = err
@@ -81,6 +83,7 @@ module vars_hydroFullSpec
     if (allocated(hydrofs_area_ds)) deallocate(hydrofs_area_ds)
     if (allocated(hydrofs_canting)) deallocate(hydrofs_canting)
     if (allocated(hydrofs_as_ratio)) deallocate(hydrofs_as_ratio)
+    if (allocated(hydrofs_fallvelocity)) deallocate(hydrofs_fallvelocity)
  
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
 
@@ -106,6 +109,7 @@ module vars_hydroFullSpec
             print*, "hydrofs_area_ds", hydrofs_area_ds(xx,yy,zz,hh, :)
             print*, "hydrofs_canting", hydrofs_canting(xx,yy,zz,hh, :)
             print*, "hydrofs_as_ratio", hydrofs_as_ratio(xx,yy,zz,hh, :)
+            print*, "hydrofs_fallvelocity", hydrofs_fallvelocity(xx,yy,zz,hh, :)
 
           end do
         end do

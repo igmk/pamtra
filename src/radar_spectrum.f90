@@ -62,6 +62,7 @@ subroutine radar_spectrum(&
     use vars_index, only: i_x,i_y, i_z, i_f, i_h, i_p
     use vars_atmosphere, only:  &
       atmo_wind_w
+    use vars_hydroFullSpec, only: hydrofs_fallvelocity
 
     implicit none
 
@@ -82,6 +83,8 @@ subroutine radar_spectrum(&
     delta_air, rho_air, rho, viscosity, nu, Ze, K, &
     min_V_aliased, max_V_aliased, k_factor
     integer :: ii, jj
+    logical :: use_vel_spec
+
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
     character(len=80) :: msg
@@ -123,7 +126,6 @@ subroutine radar_spectrum(&
       return
     end if
 
-
     if (back == 0) then 
         if (verbose >= 2) call report(info,'Taking shortcut because of back==0', nameOfRoutine)
         particle_spec(:) =0.d0
@@ -131,11 +133,9 @@ subroutine radar_spectrum(&
         if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
         return
     end if    
-
     !initialize
     back_vel_spec_ext(:) = 0.d0
     vel_spec_ext(:) = 0.d0
-
     ! get |K|**2 and lambda
 
 !     K2 = dielec_water(0.D0,radar_K2_temp-t_abs,frequency)
@@ -144,62 +144,81 @@ subroutine radar_spectrum(&
 
     diameter_spec_cp(:) = diameter_spec(:)
 
-
     rho = rho_air(temp, press)
     call viscosity_air(temp,viscosity)
     nu = viscosity/rho !kinematic viscosity
 
-    err = 0
-    if (vel_size_mod == "khvorostyanov01_drops") then
-      call dia2vel_khvorostyanov01_drops(err,nbins,diameter_spec_cp,rho,nu,vel_spec)
-    else if (vel_size_mod == "khvorostyanov01_spheres") then
-      call dia2vel_khvorostyanov01_spheres(err,nbins,diameter_spec_cp,rho,nu,rho_particle,vel_spec)
-    else if (vel_size_mod .eq. "rogers_drops") then
-      call dia2vel_rogers_drops(err,nbins,diameter_spec_cp,rho,vel_spec)
-    else if (vel_size_mod == "heymsfield10_particles") then
-      k_factor = 0.5d0
-      call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,nu,&
-            mass,area,k_factor,vel_spec)
-!     else if (vel_size_mod == "heymsfield10_particles_K") then
-!       call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,nu,&
-!             mass,area,radar_fallvel_A,vel_spec)
-    else if (vel_size_mod == "khvorostyanov01_particles") then
-        call dia2vel_khvorostyanov01_particles(err,nbins,diameter_spec_cp,rho,nu,&
-            mass,area,vel_spec)
-    else if (vel_size_mod == "khvorostyanov05_particles") then
-        call dia2vel_khvorostyanov05_particles(err,nbins,diameter_spec_cp,rho,nu,&
-            mass,area,rho_particle,vel_spec)
-    else if (vel_size_mod .eq. "rogers_graupel") then
-      call dia2vel_rogers_graupel(err,nbins,diameter_spec_cp,vel_spec)
-    else if (vel_size_mod(:8) .eq. "powerLaw") then
-      call dia2vel_power_law(err,nbins,diameter_spec_cp,vel_size_mod,vel_spec)
-    else if (vel_size_mod(:11) .eq. "corPowerLaw") then
-      call dia2vel_corrected_power_law(err,nbins,diameter_spec_cp,rho,temp,vel_size_mod,vel_spec)
-    else if (vel_size_mod(:5) .eq. "atlas") then
-      call dia2vel_atlas(err,nbins,mass,vel_size_mod,vel_spec)
-    else if (vel_size_mod(:8) .eq. "corAtlas") then
-      call dia2vel_corrected_atlas(err,nbins,mass,rho,temp,vel_size_mod,vel_spec)
-    else
-      errorstatus = fatal
-      msg = 'Did not understand variable vel_size_mod: '//vel_size_mod
-      call report(errorstatus, msg, nameOfRoutine)
-      return
+    !hydrofs_fallvelocity is not always allocated, so this is why this is so
+    !complex
+    use_vel_spec = .false.
+    if (hydro_fullSpec) then
+        if (ANY(hydrofs_fallvelocity > 0.d0)) then
+            use_vel_spec = .true.
+        end if
     end if
 
-    !if in-situ measurements are used, mass or area might be zero (since corresponding ndens=0 as well)
-    where ((area == 0.d0) .or. (mass == 0.d0))
-      vel_spec = 0.d0
-    end where
+    if (use_vel_spec) then
+        if (verbose >= 2) then
+          call report(info,'Start of ', nameOfRoutine)
+          print*, "Using hydro_fullSpec"
+        end if
+        vel_spec(:) = hydrofs_fallvelocity(i_x, i_y, i_z, i_h, :)
+
+    else
+
+        err = 0
+        if (vel_size_mod == "khvorostyanov01_drops") then
+          call dia2vel_khvorostyanov01_drops(err,nbins,diameter_spec_cp,rho,nu,vel_spec)
+        else if (vel_size_mod == "khvorostyanov01_spheres") then
+          call dia2vel_khvorostyanov01_spheres(err,nbins,diameter_spec_cp,rho,nu,rho_particle,vel_spec)
+        else if (vel_size_mod .eq. "rogers_drops") then
+          call dia2vel_rogers_drops(err,nbins,diameter_spec_cp,rho,vel_spec)
+        else if (vel_size_mod == "heymsfield10_particles") then
+          k_factor = 0.5d0
+          call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,nu,&
+                mass,area,k_factor,vel_spec)
+    !     else if (vel_size_mod == "heymsfield10_particles_K") then
+    !       call dia2vel_heymsfield10_particles(err,nbins,diameter_spec_cp,rho,nu,&
+    !             mass,area,radar_fallvel_A,vel_spec)
+        else if (vel_size_mod == "khvorostyanov01_particles") then
+            call dia2vel_khvorostyanov01_particles(err,nbins,diameter_spec_cp,rho,nu,&
+                mass,area,vel_spec)
+        else if (vel_size_mod == "khvorostyanov05_particles") then
+            call dia2vel_khvorostyanov05_particles(err,nbins,diameter_spec_cp,rho,nu,&
+                mass,area,rho_particle,vel_spec)
+        else if (vel_size_mod .eq. "rogers_graupel") then
+          call dia2vel_rogers_graupel(err,nbins,diameter_spec_cp,vel_spec)
+        else if (vel_size_mod(:8) .eq. "powerLaw") then
+          call dia2vel_power_law(err,nbins,diameter_spec_cp,vel_size_mod,vel_spec)
+        else if (vel_size_mod(:11) .eq. "corPowerLaw") then
+          call dia2vel_corrected_power_law(err,nbins,diameter_spec_cp,rho,temp,vel_size_mod,vel_spec)
+        else if (vel_size_mod(:5) .eq. "atlas") then
+          call dia2vel_atlas(err,nbins,mass,vel_size_mod,vel_spec)
+        else if (vel_size_mod(:8) .eq. "corAtlas") then
+          call dia2vel_corrected_atlas(err,nbins,mass,rho,temp,vel_size_mod,vel_spec)
+        else
+          errorstatus = fatal
+          msg = 'Did not understand variable vel_size_mod: '//vel_size_mod
+          call report(errorstatus, msg, nameOfRoutine)
+          return
+        end if
+
+        !if in-situ measurements are used, mass or area might be zero (since corresponding ndens=0 as well)
+        where ((area == 0.d0) .or. (mass == 0.d0))
+          vel_spec = 0.d0
+        end where
+    end if
 
     call assert_true(err, (MAXVAL(vel_spec) < HUGE(vel_spec)),&
         "nan vel_spec")
+    call assert_true(err,ALL(vel_spec >= 0),&
+        "all vel_spec>=0")
     if (err /= 0) then
       msg = 'error in dia2vel_XX!'
       call report(err, msg, nameOfRoutine)
       errorstatus = err
       return
     end if
-
 
     back_spec_ref = (1d0/ (K2*pi**5) ) * back_spec * (wavelength)**4 ![m⁶/m⁴]
     back_spec_ref =  back_spec_ref * 1d18 !now non-SI: [mm⁶/m³/m]

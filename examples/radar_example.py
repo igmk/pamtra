@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import pyPamtra
 import numpy as np
 import matplotlib.pyplot as plt
@@ -33,7 +35,7 @@ for turb in [1,0.5,0.1,0.01,0]:
 
   pam.runPamtra(35)
   plt.plot(pam.r["radar_vel"][0],pam.r["radar_spectra"][0,0,1,0,0],label=turb)
-  print turb, pam.r["Ze"][0,0,1,0,0], pam.r["radar_moments"][0,0,1,0,0], pam.r["radar_slopes"][0,0,1,0,0]
+  print(turb, pam.r["Ze"][0,0,1,0,0], pam.r["radar_moments"][0,0,1,0,0], pam.r["radar_slopes"][0,0,1,0,0])
 
 plt.legend()
 plt.xlabel('Doppler velocity')

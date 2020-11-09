@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import pyPamtra
 from copy import deepcopy
 import matplotlib.pyplot as plt
@@ -30,7 +32,7 @@ for miscalibration in [-10,-5,0,5,10]:
   pam.runPamtra(freqs,checkData=False)
   plt.plot(pam.r["radar_vel"][0],pam.r["radar_spectra"][0,0,0,0,0])
 
-  print miscalibration, "Ze", pam.r["Ze"].ravel()[0], "W", pam.r["radar_moments"].ravel()[0], "SW", pam.r["radar_moments"].ravel()[1], "Sk", pam.r["radar_moments"].ravel()[2], "Ku", pam.r["radar_moments"].ravel()[3], "lS", pam.r["radar_slopes"].ravel()[0], "rS", pam.r["radar_slopes"].ravel()[1]
+  print(miscalibration, "Ze", pam.r["Ze"].ravel()[0], "W", pam.r["radar_moments"].ravel()[0], "SW", pam.r["radar_moments"].ravel()[1], "Sk", pam.r["radar_moments"].ravel()[2], "Ku", pam.r["radar_moments"].ravel()[3], "lS", pam.r["radar_slopes"].ravel()[0], "rS", pam.r["radar_slopes"].ravel()[1])
 
 
 #same but with additional miscalibrated noise
@@ -62,6 +64,6 @@ for miscalibration in [-10,-5,0,5,10]:
   pam.runPamtra(freqs,checkData=False)
   plt.plot(pam.r["radar_vel"][0],pam.r["radar_spectra"][0,0,0,0,0])
 
-  print miscalibration, "Ze", pam.r["Ze"].ravel()[0], "W", pam.r["radar_moments"].ravel()[0], "SW", pam.r["radar_moments"].ravel()[1], "Sk", pam.r["radar_moments"].ravel()[2], "Ku", pam.r["radar_moments"].ravel()[3], "lS", pam.r["radar_slopes"].ravel()[0], "rS", pam.r["radar_slopes"].ravel()[1]
+  print(miscalibration, "Ze", pam.r["Ze"].ravel()[0], "W", pam.r["radar_moments"].ravel()[0], "SW", pam.r["radar_moments"].ravel()[1], "Sk", pam.r["radar_moments"].ravel()[2], "Ku", pam.r["radar_moments"].ravel()[3], "lS", pam.r["radar_slopes"].ravel()[0], "rS", pam.r["radar_slopes"].ravel()[1])
   plt.show()
 

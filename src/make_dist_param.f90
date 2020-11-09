@@ -123,35 +123,45 @@ subroutine make_dist_params(errorstatus)
   ! print*, trim(dist_name) == "'mono'", dist_name(2:5),dist_name(2:5) == "mono"
   ! STOP
 
+  if (verbose >= 5) then
+      print*, 'dist:', dist_name, 'trim(dist):', trim(dist_name), 'moment_in', moment_in
+  end if
+
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   ! MONODISPERSE distribution   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if ((trim(dist_name) == 'mono') .or. (trim(dist_name) == 'mono_cosmo_ice') .or. &
     (trim(dist_name) == 'mono_echam_cl') .or. (trim(dist_name) == 'mono_echam_ice')) then
      ! Set parameter for the Gamma dist. to get a monodisperse dist.
+     if (verbose >= 7) print*, 'Distribution: Some kind of mono'
      lambda = 0._dbl
      mu = 0._dbl
      gam = 0._dbl
      if (trim(dist_name) == 'mono') then
+        if (verbose >= 7) print*, 'Distribution: mono'
         ! ! fixed radius (via d_1)
         if ((d_1 /= -99.) .and. (p_1 == -99.)) then
+           if (verbose >= 7) print*, 'Distribution: mono, fixed radius (via d_1)'
            d_mono = d_1
            if (moment_in == 3)    n_0 = q_h / (delta_d_mono * a_ms * d_1**b_ms)
            if (moment_in == 1)    n_0 = n_tot / delta_d_mono
         endif
         ! ! fixed n_tot (via p_1)
         if ((p_1 /= -99.) .and. (d_1 == -99.)) then
+           if (verbose >= 7) print*, 'Distribution: mono, fixed n_tot (via p_1)'
            n_0 = p_1 / delta_d_mono
            if (moment_in == 3)    d_mono = (q_h / (p_1 * a_ms))**(1._dbl / b_ms)
            if (moment_in == 2)    d_mono = r_eff * 2._dbl
         endif
         ! ! mass_conc and Reff from input
         if (moment_in == 23) then
+           if (verbose >= 7) print*, 'Distribution: mono, mass_conc and Reff from input'
            d_mono = r_eff * 2._dbl
            n_0 = q_h / (delta_d_mono * a_ms * d_mono**b_ms)
         endif
      endif
      if ((trim(dist_name) == 'mono_cosmo_ice') .and. (moment_in == 3 .or. moment_in == 13)) then
+        if (verbose >= 7) print*, 'Distribution: mono_cosmo_ice'
         ! ! Monodisperse size distribution coherent with COSMO-de 1-moment scheme
         ! Number_concentration of activated ice crystal is temperature dependent
         ! from COSMO-de code src_gscp.f90 routine: hydci_pp_gr
@@ -168,6 +178,7 @@ subroutine make_dist_params(errorstatus)
         endif
      endif
      if (trim(dist_name) == 'mono_echam_cl') then
+        if (verbose >= 7) print*, 'Distribution: mono_echam_cl'
         ! mono disperse distribution coherent with ECHAM6 1 moment scheme for liquid clouds
         if (sfc_type(i_x,i_y) > 0.5) then ! land
           n_0 = 220.d6  ! per m^-3
@@ -189,6 +200,7 @@ subroutine make_dist_params(errorstatus)
         end if 
      endif
      if (trim(dist_name) == 'mono_echam_ice') then
+        if (verbose >= 7) print*, 'Distribution: mono_echam_ice'
         ! mono disperse distribution coherent with ECHAM6 1 moment scheme for liquid clouds
 
         rho_dry = rho_air(atmo_temp(i_x,i_y,i_z),atmo_press(i_x,i_y,i_z))
