@@ -704,6 +704,7 @@ class pyPamtra(object):
     #we don't want any masked arrays here:
 
     for key in kwargs.keys():
+      print key
       if type(kwargs[key]) == np.ma.core.MaskedArray:
         kwargs[key] = kwargs[key].filled(np.nan)
       if type(kwargs[key]) == np.core.defchararray.chararray:

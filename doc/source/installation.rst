@@ -92,7 +92,7 @@ Although not required for comppilation and installation, to use PAMTRA, some add
 More recent Ubuntu versions have `python-netcdf4` instead of `python-netcdf`. For older versions use pip ::
 
     sudo apt install python-pip
-    sudo pip install netcdf4
+    sudo pip install netcdf4==1.3.1 # newer version have problems with `import netCDF3`
 
 If the system's numpy version is to recent, use pip ::
 

@@ -739,9 +739,27 @@ def makePlot(fig, ax_pos_grid0, sc,scm, hyd, lat, lon, row, norm, normd, nhyd, c
     hlabels = ['(s)','(t)','(u)']
     ancoords = (0.02,0.85)
 
+    def makeMap(xlabel=False,ylabel=False):
+
+        map = Basemap(projection='merc',llcrnrlat=50.,urcrnrlat=60.,llcrnrlon=-42.5,urcrnrlon=-27.5,lat_ts=55.,resolution='c')
+        if xlabel: 
+            map.drawmeridians(np.arange(-40.,41.,5.),labels=[1,0,0,1])
+        else:
+            map.drawmeridians(np.arange(-40.,41.,5.),labels=[0,0,0,0]) 
+        if ylabel: 
+            map.drawparallels(np.arange(50.,71.,2.),labels=[0,1,0,0])
+        else:
+            map.drawparallels(np.arange(50.,71.,2.),labels=[0,0,0,0])
+
+        return map
+
     ax = fig.add_subplot(ax_pos_grid0[row,0])
 
-    map = Basemap(projection='merc',llcrnrlat=50.,urcrnrlat=60.,llcrnrlon=-42.5,urcrnrlon=-27.5,lat_ts=55.,resolution='c')
+    if row == 2:
+        map = makeMap(xlabel=True)
+    else:
+        map = makeMap()
+
 
     X,Y = map(sc._reduce(sc.c['lon']),sc._reduce(sc.c['lat']))
 
@@ -752,7 +770,10 @@ def makePlot(fig, ax_pos_grid0, sc,scm, hyd, lat, lon, row, norm, normd, nhyd, c
 
     axm = fig.add_subplot(ax_pos_grid0[row,1])
 
-    map = Basemap(projection='merc',llcrnrlat=50.,urcrnrlat=60.,llcrnrlon=-42.5,urcrnrlon=-27.5,lat_ts=55.,resolution='c')
+    if row == 2:
+        map = makeMap(xlabel=True)
+    else:
+        map = makeMap()
 
     X,Y = map(sc._reduce(scm.c['lon']),sc._reduce(scm.c['lat']))
 
@@ -762,7 +783,10 @@ def makePlot(fig, ax_pos_grid0, sc,scm, hyd, lat, lon, row, norm, normd, nhyd, c
 
     axs = fig.add_subplot(ax_pos_grid0[row,2])
 
-    map = Basemap(projection='merc',llcrnrlat=50.,urcrnrlat=60.,llcrnrlon=-42.5,urcrnrlon=-27.5,lat_ts=55.,resolution='c')
+    if row == 2:
+        map = makeMap(xlabel=True)
+    else:
+        map = makeMap()
 
     X,Y = map(sc._reduce(sc.c['lon']),sc._reduce(sc.c['lat']))
 
@@ -782,7 +806,10 @@ def makePlot(fig, ax_pos_grid0, sc,scm, hyd, lat, lon, row, norm, normd, nhyd, c
 
     axdom = fig.add_subplot(ax_pos_grid0[row,3])
 
-    map = Basemap(projection='merc',llcrnrlat=50.,urcrnrlat=60.,llcrnrlon=-42.5,urcrnrlon=-27.5,lat_ts=55.,resolution='c')
+    if row == 2:
+        map = makeMap(xlabel=True)
+    else:
+        map = makeMap()
 
     X,Y = map(sc._reduce(sc.c['lon']),sc._reduce(sc.c['lat']))
 
@@ -793,7 +820,10 @@ def makePlot(fig, ax_pos_grid0, sc,scm, hyd, lat, lon, row, norm, normd, nhyd, c
 
     axdos = fig.add_subplot(ax_pos_grid0[row,4])
 
-    map = Basemap(projection='merc',llcrnrlat=50.,urcrnrlat=60.,llcrnrlon=-42.5,urcrnrlon=-27.5,lat_ts=55.,resolution='c')
+    if row == 2:
+        map = makeMap(xlabel=True)
+    else:
+        map = makeMap()
 
     X,Y = map(sc._reduce(sc.c['lon']),sc._reduce(sc.c['lat']))
 
@@ -804,7 +834,10 @@ def makePlot(fig, ax_pos_grid0, sc,scm, hyd, lat, lon, row, norm, normd, nhyd, c
 
     axdsm = fig.add_subplot(ax_pos_grid0[row,5])
 
-    map = Basemap(projection='merc',llcrnrlat=50.,urcrnrlat=60.,llcrnrlon=-42.5,urcrnrlon=-27.5,lat_ts=55.,resolution='c')
+    if row == 2:
+        map = makeMap(xlabel=True)
+    else:
+        map = makeMap()
 
     X,Y = map(sc._reduce(sc.c['lon']),sc._reduce(sc.c['lat']))
 
@@ -824,7 +857,10 @@ def makePlot(fig, ax_pos_grid0, sc,scm, hyd, lat, lon, row, norm, normd, nhyd, c
 
     axhyd = fig.add_subplot(ax_pos_grid0[row,6])
 
-    map = Basemap(projection='merc',llcrnrlat=50.,urcrnrlat=60.,llcrnrlon=-42.5,urcrnrlon=-27.5,lat_ts=55.,resolution='c')
+    if row == 2:
+        map = makeMap(xlabel=True,ylabel=True)
+    else:
+        map = makeMap(ylabel=True)
 
     X,Y = map(lon,lat)
 
@@ -905,3 +941,5 @@ nhyd = colors.Normalize(vmin=0.,vmax=hyd_max)
 
 for i,fstr in enumerate(fstrs):
     makePlot(fig, gs1, sc[i], scm[i], hyds[i], lat, lon, i,norm,normd,nhyd)
+
+plt.savefig('fig02.pdf',dpi=300)
