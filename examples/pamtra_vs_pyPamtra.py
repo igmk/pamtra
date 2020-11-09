@@ -1,10 +1,13 @@
+from __future__ import print_function
+
 import pyPamtra
 import os
 import netCDF4
 from matplotlib import pylab as plt
 import numpy as np
+import imp
 
-reload(pyPamtra)
+imp.reload(pyPamtra)
 
 if os.getenv('PAMTRA_DATADIR') is None:
   raise SystemError('Set $PAMTRA_DATADIR environment variable first')
@@ -23,7 +26,7 @@ pam.df.readFile(descriptorFile)
 pam.readPamtraProfile("../profile/example_input.lev")
 pam.readNmlFile("pamtra_vs_pyPamtra.nml")
 
-print "##########################"
+print("##########################")
 
 
 
@@ -42,13 +45,13 @@ plt.plot(pam.r["tb"].ravel(),label="pyPamtra level")
 plt.figure(2)
 plt.title("Ze")
 plt.plot(Ze.compressed(),label="pyPamtra level")
-print Ze.compressed()
+print(Ze.compressed())
 
 pam = pyPamtra.pyPamtra()
 pam.df.readFile(descriptorFile)
 pam.readPamtraProfile("../profile/example_input.lay")
 pam.readNmlFile("pamtra_vs_pyPamtra.nml")
-print "##########################"
+print("##########################")
 
 
 pam.runPamtra(freqs)
@@ -58,9 +61,9 @@ plt.figure(1)
 plt.plot(pam.r["tb"].ravel(),label="pyPamtra layer")
 plt.figure(2)
 plt.plot(Ze.compressed(),label="pyPamtra layer")
-print Ze.compressed()
+print(Ze.compressed())
 
-print "##########################"
+print("##########################")
 try:os.remove("../output/example_input_035.5000.nc")
 except: pass
 
@@ -75,10 +78,10 @@ plt.figure(2)
 plt.title("Ze")
 plt.plot(Ze.compressed(),":",lw=4,label="Pamtra level")
 
-print Ze.compressed()
+print(Ze.compressed())
 ncData.close()
 
-print "##########################"
+print("##########################")
 
 os.system("cd ../bin && ./pamtra -f "+",".join(map(str,freqs))+" -d ../descriptorfiles/descriptor_file_COSMO_1mom.txt -p ../profile/example_input.lay -n ../examples/pamtra_vs_pyPamtra.nml -o ../output")
 ncData = netCDF4.Dataset("../output/example_input_035.5000.nc")
@@ -92,7 +95,7 @@ plt.legend()
 plt.figure(2)
 plt.title("Ze")
 plt.plot(Ze.compressed(),":",lw=4,label="Pamtra layer")
-print Ze.compressed()
+print(Ze.compressed())
 plt.legend()
 ncData.close()
 

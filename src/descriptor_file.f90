@@ -32,6 +32,11 @@ module descriptor_file
   real(kind=dbl), dimension(:),allocatable      :: r_eff_arr                ! Effective radius [m]
 
 
+  character(600) :: scat_name_str, vel_size_mod_str
+  character(300) :: dist_name_str, hydro_name_str
+
+
+
  contains
 
 subroutine read_descriptor_file(errorstatus)
@@ -93,7 +98,7 @@ subroutine read_descriptor_file(errorstatus)
                 b_ms_arr(1,1,1,i), alpha_as_arr(1,1,1,i), beta_as_arr(1,1,1,i), moment_in_arr(i), nbin_arr(1,1,1,i),&
                 dist_name_arr(i), p_1_arr(1,1,1,i), p_2_arr(1,1,1,i), p_3_arr(1,1,1,i),  &
                 p_4_arr(1,1,1,i), d_1_arr(1,1,1,i), d_2_arr(1,1,1,i), scat_name_arr(i), vel_size_mod_arr(i)
-      if ((verbose >= 4) .and. (i == 1)) write(6,'(a15,7(a12),a15,6(a12),2(a15))'),'hydro_name','as_ratio',&
+      if ((verbose >= 4) .and. (i == 1)) write(6,'(a15,7(a12),a15,6(a12),2(a15))') 'hydro_name','as_ratio',&
                                       'liq_ice','rho_ms','a_ms',&
                                      'b_ms','alpha_as','beta_as','moment_in','nbin','dist_name','p_1',&
                                       'p_2','p_3','p_4','d_1','d_2','scat_name', 'vel_size_mod'
@@ -184,6 +189,85 @@ subroutine allocate_descriptor_file(errorstatus)
   return
 end subroutine allocate_descriptor_file
 
+
+subroutine process_descriptor_file()
+
+    integer(kind=long) :: pos1, pos2, ii
+
+    ii = 0
+    pos1 = 1
+    pos2 = 1
+
+    DO
+       pos2 = INDEX(scat_name_str(pos1:), ",")
+       IF (pos2 == 0) THEN
+          ii = ii + 1
+          scat_name_arr(ii) = scat_name_str(pos1:)
+          EXIT
+       END IF
+       ii = ii + 1
+       scat_name_arr(ii) = scat_name_str(pos1:pos1+pos2-2)
+       pos1 = pos2+pos1
+    END DO
+
+    if (verbose > 5) print*, ii, scat_name_arr, " old string: ", scat_name_str
+
+    ii = 0
+    pos1 = 1
+    pos2 = 1
+
+    DO
+       pos2 = INDEX(dist_name_str(pos1:), ",")
+       IF (pos2 == 0) THEN
+          ii = ii + 1
+          dist_name_arr(ii) = dist_name_str(pos1:)
+          EXIT
+       END IF
+       ii = ii + 1
+       dist_name_arr(ii) = dist_name_str(pos1:pos1+pos2-2)
+       pos1 = pos2+pos1
+    END DO
+
+    if (verbose > 5) print*, ii, dist_name_arr, " old string: ", dist_name_str
+
+    ii = 0
+    pos1 = 1
+    pos2 = 1
+
+    DO
+       pos2 = INDEX(hydro_name_str(pos1:), ",")
+       IF (pos2 == 0) THEN
+          ii = ii + 1
+          hydro_name_arr(ii) = hydro_name_str(pos1:)
+          EXIT
+       END IF
+       ii = ii + 1
+       hydro_name_arr(ii) = hydro_name_str(pos1:pos1+pos2-2)
+       pos1 = pos2+pos1
+    END DO
+
+    if (verbose > 5) print*, ii, hydro_name_arr, " old string: ", hydro_name_str
+
+    ii = 0
+    pos1 = 1
+    pos2 = 1
+
+    DO
+       pos2 = INDEX(vel_size_mod_str(pos1:), ",")
+       IF (pos2 == 0) THEN
+          ii = ii + 1
+          vel_size_mod_arr(ii) = vel_size_mod_str(pos1:)
+          EXIT
+       END IF
+       ii = ii + 1
+       vel_size_mod_arr(ii) = vel_size_mod_str(pos1:pos1+pos2-2)
+       pos1 = pos2+pos1
+    END DO
+
+    if (verbose > 5) print*, ii, vel_size_mod_arr, " old string: ", vel_size_mod_str
+
+
+end subroutine process_descriptor_file
 
 
 subroutine deallocate_descriptor_file()

@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import pyPamtra
 import numpy as np
 import matplotlib.pyplot as plt
@@ -30,8 +32,8 @@ pam.runPamtra(freqs,checkData=False)
 #plt.plot(pam.r["radar_vel"],pam.r["radar_spectra"][0,0,0,2])
 
 for i_p, pol in enumerate(pam.set['radar_pol']):
-    print pol, pam.r["Ze"][...,i_p,0]
-print 'ave HH VV ', np.log10(0.5*(10**pam.r["Ze"][...,1,0]+10**pam.r["Ze"][...,2,0]))
+    print(pol, pam.r["Ze"][...,i_p,0])
+print('ave HH VV ', np.log10(0.5*(10**pam.r["Ze"][...,1,0]+10**pam.r["Ze"][...,2,0])))
 plt.figure(11)
 plt.clf()
 for i_p in range(pam.set["radar_npol"]):

@@ -12,7 +12,7 @@ module settings
     integer, parameter :: MAXV = 64,   &
     MAXLAY = 3000, &
     maxleg = 200, &
-    maxfreq = 200, &
+    maxfreq = 400, &
     nummu = 16, & ! no. of observation angles
     NSTOKES = 2
 

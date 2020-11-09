@@ -2,7 +2,7 @@
 set -e
 
 echo '############################################################'
-echo updating pamtra
+echo updating pamtra for Python 2.7
 echo '############################################################'
 
 # pamtra
@@ -12,15 +12,16 @@ git pull
 make clean
 make pyinstall
 
-# echo '############################################################'
-# echo pamtra2
-# echo '############################################################'
+# #!/bin/bash
+set -e
 
-# # pamtra2
-# source activate base
-# cd ~/software/pamtra2
-# git pull
-# rm -rf build
-# python setup.py install
+echo '############################################################'
+echo updating pamtra for Python 3
+echo '############################################################'
 
-
+# pamtra
+source activate
+cd ~/software/pamtra
+git pull
+make clean
+make pyinstall

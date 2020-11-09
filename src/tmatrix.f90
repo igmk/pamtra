@@ -97,10 +97,12 @@ module tmatrix
     real(kind=dbl), dimension(nstokes*nummu*nstokes*nummu*2) :: scatter_matrix_flat
     real(kind=dbl), dimension(nstokes*nstokes*nummu) :: extinct_matrix_flat
     real(kind=dbl), dimension(nstokes*nummu) :: emis_vector_flat
+    real(kind=dbl), dimension(2*2) :: Sback_flat
 
     character(len=nstokes*nummu*nstokes*nummu*2*28) :: scatter_matrix_str
     character(len=nstokes*nstokes*nummu*28) :: extinct_matrix_str
     character(len=nstokes*nummu*28) :: emis_vector_str
+    character(len=2*2*28) :: Sback_str
 
     integer(kind=long), intent(out) :: errorstatus
     integer(kind=long) :: err = 0
@@ -203,14 +205,14 @@ module tmatrix
 !                 "/axxi_",axi, "/asra_",as_ratio(ir), "/alph_",alpha, "/beta_",beta,"/"
         if (phase == 1) then !ref_index name depends on phase
           write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,ES12.6,A6,SP,I3.2,SS,2(A6,ES9.3),A6,A3,4(A6,ES9.3),A1)'),&
-                        "/v02","/quad_", quad, &
+                        "/v03","/quad_", quad, &
                         "/numu_",nummu,"/azno_",azimuth_num, "/a0no_", azimuth0_num, "/nsto_",nstokes,&
                         "/freq_",frequency, &
                         "/phas_",phase, "/temp_",temp, "/dens_",density(ir), "/refi_",liq_mod,&
                         "/diam_",axi, "/asra_",as_ratio(ir), "/alph_",alpha, "/beta_",beta,"/"
         else if (phase == -1) then
           write(db_path,'(A4,A6,A1,4(A6,I3.3),A6,ES12.6,A6,SP,I3.2,SS,2(A6,ES9.3),A6,A3,4(A6,ES9.3),A1)'),&
-                        "/v02","/quad_", quad, &
+                        "/v03","/quad_", quad, &
                         "/numu_",nummu,"/azno_",azimuth_num, "/a0no_", azimuth0_num, "/nsto_",nstokes,&
                         "/freq_",frequency, &
                         "/phas_",phase, "/temp_",temp, "/dens_",density(ir), "/refi_","Mae",&
@@ -257,6 +259,13 @@ module tmatrix
 !           read(112,"("//format_str//"(ES25.17, 2x))")emis_vector_flat
           read(emis_vector_str,"("//format_str//"(ES25.17, 2x))")emis_vector_flat
 
+          call readline(port, Sback_str, "yes", ios)
+          if (ios /= 0) file_OK = .false.
+          write(format_str,"(I5.5)") SHAPE(Sback_flat)
+!           read(112,"("//format_str//"(ES25.17, 2x))")Sback_flat
+          read(Sback_str,"("//format_str//"(ES25.17, 2x))")Sback_flat
+
+
 !           close(112)
           exit
         end do
@@ -274,6 +283,8 @@ module tmatrix
               "shape of extinct_matrix_flat does not match")
           call assert_true(err,PRODUCT(SHAPE(emis_vector_part)) == PRODUCT(SHAPE(emis_vector_flat)),&
               "shape of emis_vector_flat does not match")
+          call assert_true(err,PRODUCT(SHAPE(Sback_part)) == PRODUCT(SHAPE(Sback_flat)),&
+              "shape of Sback_flat does not match")
           if (err > 0) then
             errorstatus = fatal
             msg = "assertation error"
@@ -284,6 +295,7 @@ module tmatrix
           scatter_matrix_part =reshape(scatter_matrix_flat,SHAPE(scatter_matrix_part))
           extinct_matrix_part =reshape(extinct_matrix_flat,SHAPE(extinct_matrix_part))
           emis_vector_part =reshape(emis_vector_flat,SHAPE(emis_vector_part))
+          Sback_part =reshape(Sback_flat,SHAPE(Sback_part))
 
           ! for debugging only: calculate scatter matrix and compare with file
           if (verbose .gt. 20) then
@@ -328,6 +340,7 @@ module tmatrix
         scatter_matrix_flat =reshape(scatter_matrix_part,SHAPE(scatter_matrix_flat))
         extinct_matrix_flat =reshape(extinct_matrix_part,SHAPE(extinct_matrix_flat))
         emis_vector_flat =reshape(emis_vector_part,SHAPE(emis_vector_flat))
+        Sback_flat =reshape(Sback_part,SHAPE(Sback_flat))
         if (verbose > 1) print * ,TRIM(db_path)//TRIM(db_file), " open..."
 
 !           open(113,file=TRIM(tmatrix_db_path)//TRIM(db_path)//TRIM(db_file),ACTION="WRITE")
@@ -345,6 +358,12 @@ module tmatrix
 !           write(113,"("//format_str//"(ES25.17, 2x))")emis_vector_flat
         write(emis_vector_str,"("//format_str//"(ES25.17, 2x))")emis_vector_flat
         call writeline(port, trim(emis_vector_str), "yes", ios)
+
+        write(format_str,"(I5.5)") SHAPE(Sback_flat)
+!           write(113,"("//format_str//"(ES25.17, 2x))")Sback_flat
+        write(Sback_str,"("//format_str//"(ES25.17, 2x))")Sback_flat
+        call writeline(port, trim(Sback_str), "yes", ios)
+
 
 !           close(113)
         call close_port(port, ios)
@@ -473,8 +492,8 @@ module tmatrix
       real(kind=dbl), intent(out), dimension(2,2) :: Sback
 
       real(kind=dbl) :: wave_num
-      real(kind=dbl) ::thet0, thet, phi, phi0,&
-                       rat, phi_weights, phi0_weights
+      real(kind=dbl) :: thet0, thet, phi, phi0, &
+                        rat, phi_weights, phi0_weights
       integer ::  m, n, ii,jj,kk,ll, kkk1
 
       !       parameter(qua_num=8, nstokes = 4)
@@ -657,7 +676,7 @@ module tmatrix
       emis_vector(2,jj) = extinct_matrix(1,2,jj) - sum(emis_vector_tmp1_12)
 
     1241 continue ! thet0 jj
-    
+
     errorstatus = err
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine) 
     return

@@ -16,13 +16,13 @@ Contents:
    :maxdepth: 2
 
    installation
-   physicalBasics
    descriptorFile
-   inputFile
+   .. inputFile
    settings
    pamtra
    pyPamtra
 
+Please see https://gmd.copernicus.org/preprints/gmd-2019-356/ for more information about the Physical Basics
 
 Indices and tables
 ==================

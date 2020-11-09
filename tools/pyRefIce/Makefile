@@ -1,5 +1,5 @@
 ARCH=$(shell uname -s)
-F2PY := $(shell which f2py2.7 || echo f2py)
+F2PY := $(shell which f2py || echo f2py2.7)
 
 src='../../src/'
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import division
+from __future__ import division, print_function
 import numpy as np
 import csv
 
@@ -15,8 +15,8 @@ class pamDescriptorFile(object):
          
   def __init__(self,parent):
     self.names = np.array(["hydro_name", "as_ratio", "liq_ice", "rho_ms", "a_ms", "b_ms", "alpha_as", "beta_as", "moment_in", "nbin", "dist_name", "p_1", "p_2", "p_3", "p_4", "d_1", "d_2", "scat_name", "vel_size_mod","canting"])
-    self.types = ["S15",float,int,float,float,float,float,float,int,int,"S15",float,float,float,float,float,float, "S30", "S30",float]  
-    self.data = np.recarray((0,),dtype=zip(self.names, self.types))
+    self.types = ["U15",float,int,float,float,float,float,float,int,int,"U15",float,float,float,float,float,float, "U30", "U30",float]  
+    self.data = np.recarray((0,),dtype=list(zip(self.names, self.types)))
     self.data4D = dict()
     self.nhydro = 0
     self.parent = parent
@@ -47,7 +47,7 @@ class pamDescriptorFile(object):
         if self.types[ii] == float:
           row[ii] = item.replace("d", "e")
       #fortran strips quotes
-        if self.types[ii] == "S15":
+        if self.types[ii] in ("S15", "U15"):
           row[ii] = item.replace("'", "").replace('"', '')
   
       self.addHydrometeor(row)
@@ -80,13 +80,13 @@ class pamDescriptorFile(object):
       "p_2", "p_3", "p_4", "d_1", "d_2", "scat_name", "vel_size_mod","canting"
     '''
     assert hydroTuple[0] not in self.data["hydro_name"]
-    assert len(self.dataFullSpec.keys()) == 0
+    assert len(list(self.dataFullSpec.keys())) == 0
     
-    self.data = np.append(self.data,np.array(tuple(hydroTuple),dtype=zip(self.names,self.types)))
+    self.data = np.append(self.data,np.array(tuple(hydroTuple),dtype=list(zip(self.names,self.types))))
     self.nhydro += 1
     self.parent._shape4D = (self.parent.p["ngridx"],self.parent.p["ngridy"],self.parent.p["max_nlyrs"],self.nhydro)
     for key in ["hydro_q","hydro_reff","hydro_n"]:
-      if key in self.parent.p.keys():    
+      if key in list(self.parent.p.keys()):    
         self.parent.p[key] = np.concatenate([self.parent.p[key],np.ones(self.parent._shape3D + tuple([1]))*missingNumber],axis=-1)
     return
     
@@ -100,13 +100,13 @@ class pamDescriptorFile(object):
       Name of hydrometeor to be removed.
     '''
 
-    assert len(self.dataFullSpec.keys()) == 0
+    assert len(list(self.dataFullSpec.keys())) == 0
     if hydroName == "all":
       self.__init__()
       return
     removed = False#
     hydroIndex = np.where(self.parent.df.data["hydro_name"]==hydroName)[0][0]
-    self.dataNew = np.recarray((0,),dtype=zip(self.names, self.types))
+    self.dataNew = np.recarray((0,),dtype=list(zip(self.names, self.types)))
     for ii in range(self.data.shape[0]):
       if self.data[ii][0] == hydroName:
         removed = True
@@ -121,7 +121,7 @@ class pamDescriptorFile(object):
       self.nhydro -= 1
       self.parent._shape4D = (self.parent.p["ngridx"],self.parent.p["ngridy"],self.parent.p["max_nlyrs"],self.nhydro)
       for key in ["hydro_q","hydro_reff","hydro_n", "nbin"]:
-        if key in self.parent.p.keys():
+        if key in list(self.parent.p.keys()):
           self.parent.p[key] = np.delete(self.parent.p[key],hydroIndex,axis=-1)
     return
 
@@ -187,6 +187,10 @@ class pamDescriptorFile(object):
       particle aspect ratio in the middle of the bin [no unit]
     dataFullSpec["canting"] : 
       particle canting the middle of the bin in [deg]
+    dataFullSpec["fallvelocity"] : 
+      particle fall velocity in [m/s]. Only used if any value > 0 m/s, 
+      otherwise the fall velocity relation provided in the descriptor file is 
+      used.
 
     Notes
     -----
@@ -207,4 +211,7 @@ class pamDescriptorFile(object):
     self.dataFullSpec["area_ds"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
     self.dataFullSpec["as_ratio"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
     self.dataFullSpec["canting"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
-  
+    self.dataFullSpec["fallvelocity"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
+
+
+    
