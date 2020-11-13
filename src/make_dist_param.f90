@@ -288,37 +288,37 @@ subroutine make_dist_params(errorstatus)
         end if
         ! !  inverse expenonetial like ecmwf/ifs: p_1 := n_ax, p_2 := n_bx 
         if ((p_1 /= -99.) .and. (p_2 /= -99.) .and. (moment_in == 3)) then
-           lambda = (p_1 * a_ms * dgamma(b_ms+1._dbl) / q_h)**(1._dbl / (b_ms + 1 - p_2))
+           lambda = (p_1 * a_ms * gamma(b_ms+1._dbl) / q_h)**(1._dbl / (b_ms + 1 - p_2))
            n_0 = p_1 * lambda ** p_2
         end if        
         ! ! fixed n_tot (via p_1)
         if ((p_1 /= -99.) .and. (p_2 == -99.) .and. (p_3 == -99.)) then
-           if (moment_in == 3)  lambda = (p_1 * a_ms * dgamma(b_ms+1._dbl) / q_h)**(1._dbl / b_ms)
+           if (moment_in == 3)  lambda = (p_1 * a_ms * gamma(b_ms+1._dbl) / q_h)**(1._dbl / b_ms)
            if (moment_in == 2)  lambda = 3._dbl / r_eff
            n_0    = p_1 * lambda
         endif
         ! ! fixed r_eff (via p_2)
         if ((p_1 == -99.) .and. (p_2 /= -99.) .and. (p_3 == -99.)) then
            lambda = 3._dbl / p_2
-           if (moment_in == 3)  n_0 = (q_h * lambda**(b_ms+1._dbl)) / (a_ms * dgamma(b_ms+1._dbl))
+           if (moment_in == 3)  n_0 = (q_h * lambda**(b_ms+1._dbl)) / (a_ms * gamma(b_ms+1._dbl))
            if (moment_in == 1)  n_0 = n_tot * lambda
         endif
         ! ! fixed N_0 (via p_3)
         if ((p_1 == -99.) .and. (p_2 == -99.) .and. (p_3 /= -99.)) then
            n_0 = p_3
-           if (moment_in == 3)  lambda = (n_0 * a_ms * dgamma(b_ms+1._dbl) / q_h)**(1._dbl / (b_ms+1._dbl))
+           if (moment_in == 3)  lambda = (n_0 * a_ms * gamma(b_ms+1._dbl) / q_h)**(1._dbl / (b_ms+1._dbl))
            if (moment_in == 1)  lambda = n_0 / n_tot
            if (moment_in == 2)  lambda = 3._dbl / r_eff
         endif
         ! ! both moments from input file
         if ((p_1 == -99.) .and. (p_2 == -99.)) then
            if (moment_in == 13)  then
-              lambda = (n_tot * a_ms * dgamma(b_ms+1._dbl) / q_h)**(1._dbl / b_ms)
+              lambda = (n_tot * a_ms * gamma(b_ms+1._dbl) / q_h)**(1._dbl / b_ms)
               n_0    = n_tot * lambda
            endif
            if (moment_in == 23)  then
               lambda = 3._dbl / r_eff
-              n_0    = (q_h * lambda**(b_ms+1)) / (a_ms * dgamma(b_ms+1._dbl))
+              n_0    = (q_h * lambda**(b_ms+1)) / (a_ms * gamma(b_ms+1._dbl))
            endif
            if (moment_in == 12)  then
               lambda = 3._dbl / r_eff
@@ -329,13 +329,13 @@ subroutine make_dist_params(errorstatus)
      ! ! Ryan (2000 JAS) Lambda = Lambda(layer_t)
      if (trim(dist_name) == 'exp_ryan') then
         lambda = 1220._dbl * 10._dbl**(-0.0245_dbl * (273.15_dbl-layer_t))
-        if (moment_in == 3) n_0 = (q_h * lambda**(b_ms+1)) / (a_ms * dgamma(b_ms+1._dbl))
+        if (moment_in == 3) n_0 = (q_h * lambda**(b_ms+1)) / (a_ms * gamma(b_ms+1._dbl))
         if (moment_in == 1) n_0 = n_tot * lambda
      endif
      ! ! Field et al. (2005 QJRM, end of page 2008 + end of page 2009 for the relation between N_0 and N_0,23) n_0 = n_0(T)
      if (trim(dist_name) == 'exp_field_t') then
         n_0 = 7.628d6 * exp(0.107_dbl * (273.15_dbl - layer_t))
-        if (moment_in == 3) lambda = (a_ms * n_0 * dgamma(b_ms+1._dbl) / q_h)**(1._dbl /(b_ms+1._dbl))
+        if (moment_in == 3) lambda = (a_ms * n_0 * gamma(b_ms+1._dbl) / q_h)**(1._dbl /(b_ms+1._dbl))
         if (moment_in == 2) lambda = 3._dbl / r_eff
      endif
      ! ! Field et al. (2005 QJRM, page 2007) n_0 = n_0(T,q_h)
@@ -364,7 +364,7 @@ subroutine make_dist_params(errorstatus)
         n_0 = MIN(n_0,1e2*hlp)
         n_0 = MIN(n_0,1e9)
         n_0 = MAX(n_0,1e6)
-        lambda = (a_ms * n_0 * dgamma(b_ms+1._dbl) / q_h)**(1._dbl /(b_ms+1._dbl))
+        lambda = (a_ms * n_0 * gamma(b_ms+1._dbl) / q_h)**(1._dbl /(b_ms+1._dbl))
      endif
      ! ! Check that the variables have been filled in
      if ((gam /= 1._dbl) .or. (mu /= 0._dbl) .or. (n_0 <= 0._dbl) .or. (lambda <= 0._dbl)) then
@@ -449,35 +449,35 @@ subroutine make_dist_params(errorstatus)
      ! ! fixed n_tot (via p_1)
      if ((p_1 /= -99.) .and. (p_2 == -99.)) then
         if (moment_in == 3)  then
-           work2 = dgamma((mu + b_ms + 1._dbl) / gam)
-           work3 = dgamma((mu + 1._dbl) / gam)
+           work2 = gamma((mu + b_ms + 1._dbl) / gam)
+           work3 = gamma((mu + 1._dbl) / gam)
            lambda = (a_ms / q_h * p_1 * work2 / work3)**(gam / b_ms)
            n_0 = gam * p_1 / work3 * lambda**((mu + 1._dbl) / gam)
         endif
         if (moment_in == 2)  then
-           work1 = dgamma((mu + 4._dbl) / gam)
-           work2 = dgamma((mu + 3._dbl) / gam) * r_eff * 2._dbl
+           work1 = gamma((mu + 4._dbl) / gam)
+           work2 = gamma((mu + 3._dbl) / gam) * r_eff * 2._dbl
            lambda = (work1 / work2)**gam
            work1 = (mu + 1._dbl) / gam
-           n_0 = p_1 * gam * lambda**work1 / dgamma(work1)
+           n_0 = p_1 * gam * lambda**work1 / gamma(work1)
         endif
      endif
      ! ! fixed r_eff (via p_2)
      if ((p_1 == -99.) .and. (p_2 /= -99.)) then
         if (moment_in == 3)  then
-           work1 = dgamma((mu + 4._dbl) / gam)
-           work2 = dgamma((mu + 3._dbl) / gam) * p_2 * 2._dbl
+           work1 = gamma((mu + 4._dbl) / gam)
+           work2 = gamma((mu + 3._dbl) / gam) * p_2 * 2._dbl
            lambda = (work1 / work2)**gam
            work1 = q_h * gam / a_ms
            work2 = (mu + b_ms + 1._dbl) / gam
-           n_0 = work1 * lambda**work2 / dgamma(work2)
+           n_0 = work1 * lambda**work2 / gamma(work2)
         endif
         if (moment_in == 1)  then
-           work1 = dgamma((mu + 4._dbl) / gam)
-           work2 = dgamma((mu + 3._dbl) / gam) * p_2 * 2._dbl
+           work1 = gamma((mu + 4._dbl) / gam)
+           work2 = gamma((mu + 3._dbl) / gam) * p_2 * 2._dbl
            lambda = (work1 / work2)**gam
            work1 = (mu + 1._dbl) / gam
-           n_0 = n_tot * gam * lambda**work1 / dgamma(work1)
+           n_0 = n_tot * gam * lambda**work1 / gamma(work1)
         endif
      endif
      ! ! MESO-NH distribution
@@ -490,33 +490,33 @@ subroutine make_dist_params(errorstatus)
            call report(errorstatus, msg, nameOfRoutine)
            return
         endif
-        work2 = dgamma((mu + b_ms + 1._dbl) / gam)
-        work3 = dgamma((mu + 1._dbl) / gam)
+        work2 = gamma((mu + b_ms + 1._dbl) / gam)
+        work3 = gamma((mu + 1._dbl) / gam)
         lambda = (a_ms * p_1 / q_h * work2 / work3)**(gam / (b_ms - p_2))
         n_0 = gam * p_1 / work3 * lambda**((mu + 1._dbl + p_2) / gam)
      endif
      ! ! 2 moments from the input file
      if ((p_1 == -99.) .and. (p_2 == -99.)) then
         if (moment_in == 13)  then
-           work2 = dgamma((mu + b_ms + 1._dbl) / gam)
-           work3 = dgamma((mu + 1._dbl) / gam)
+           work2 = gamma((mu + b_ms + 1._dbl) / gam)
+           work3 = gamma((mu + 1._dbl) / gam)
            lambda = (a_ms / q_h * n_tot * work2 / work3)**(gam / b_ms)
            n_0 = gam * n_tot / work3 * lambda**((mu + 1._dbl) / gam)
         endif
         if (moment_in == 23)  then
-           work1 = dgamma((mu + 4._dbl) / gam)
-           work2 = dgamma((mu + 3._dbl) / gam) * r_eff * 2._dbl
+           work1 = gamma((mu + 4._dbl) / gam)
+           work2 = gamma((mu + 3._dbl) / gam) * r_eff * 2._dbl
            lambda = (work1 / work2)**gam
            work1 = q_h * gam / a_ms
            work2 = (mu + b_ms + 1._dbl) / gam
-           n_0 = work1 * lambda**work2 / dgamma(work2)
+           n_0 = work1 * lambda**work2 / gamma(work2)
         endif
         if (moment_in == 12)  then
-           work1 = dgamma((mu + 4._dbl) / gam)
-           work2 = dgamma((mu + 3._dbl) / gam) * r_eff * 2._dbl
+           work1 = gamma((mu + 4._dbl) / gam)
+           work2 = gamma((mu + 3._dbl) / gam) * r_eff * 2._dbl
            lambda = (work1 / work2)**gam
            work1 = (mu + 1._dbl) / gam
-           n_0 = n_tot * gam * lambda**work1 / dgamma(work1)
+           n_0 = n_tot * gam * lambda**work1 / gamma(work1)
         endif
      endif
      ! ! Check that the variables have been filled in
