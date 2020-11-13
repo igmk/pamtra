@@ -50,7 +50,7 @@ program pamtra
      msg = 'error in settings_read!'
      call report(err, msg, nameOfRoutine)
      errorstatus = err
-     return
+     stop
   end if
 
   in_python = .false.! we are _not_ in python
