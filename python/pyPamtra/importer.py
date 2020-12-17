@@ -3062,7 +3062,7 @@ def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='net
       os.remove(ncFile)
   return joinedData
 
-def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
+def read_AVAPS_dropsonde(file_raw_sondes, sst=np.nan, opt_T=np.nan, opt_P=np.nan,
   opt_RH=np.nan, opt_Z=np.nan, verbose=False):
 
   """
@@ -3073,6 +3073,9 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
     ----------
     file_raw_sondes : str
       File of raw dropsonde data (preferred ending: 'PQC.nc').
+    sst : float, optional
+      Sea surface temperature (in K). If this parameter is not set, the lowest dropsonde
+      temperature measurement is used (eventually extrapolated).
     opt_T : float, optional
       Optional temperature (e.g. measured by BAHAMAS) (in K) at flight altitude.
     opt_P: float, optional
@@ -3085,8 +3088,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
       If True some extra information is printed. May be extensive if many dropsondes are imported!
   """
 
-
-  ############################################################################################
   # FUNCTIONS
 
   def fill_gaps(old_var, verbose=False):
@@ -3096,7 +3097,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
     new_var = deepcopy(old_var)
     # create flag variable indicating if an entry of old_var has been changed: if = 0: not interpol.
     interp_flag = np.zeros(old_var.shape)
-
 
     # identify regions of nan values in the middle of the drop. Extrapolation will be handled in another 
     # function.
@@ -3120,7 +3120,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
 
     else: # correct nan values: find the hole size via subtraction of subsequent indices
       hole_size = np.zeros((len(nan_idx)+1,)).astype(int)
-      # hole_size = np.zeros(nan_idx.shape)			# old version
       k = 0		# index to address a hole ('hole number')
 
       for m in range(0, len(temp_var)-1):
@@ -3157,14 +3156,12 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
         if c > len(hole_size)-1:
           break
 
-
     # overwrite the possibly holey section:
     new_var[limits[0]:limits[1]+1] = temp_var
     # update interp_flag
     interp_flag[limits[0]:limits[1]+1] = interp_flag_temp
 
     return new_var, interp_flag
-
 
   def std_extrapol_BAH(old_dict, ill_keys, bah_dict, old_ipflag_dict=dict(), verbose=False):
   # Will extrapolate some atmospheric variables to the ceiling of the dropsonde; old_ipflag will be updated.
@@ -3176,11 +3173,9 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
 
     new_ipflag_dict = old_ipflag_dict
 
-
     # To get the obs_height: Floor BAHAMAS altitude to the next lowest 100 m.
     drop_alt = np.floor(np.asarray(bah_dict['Z'])/100)*100
     obs_height = np.max(np.unique(drop_alt))		# omit repeated values; this value is used for the top of the extrapolation
-
 
     # BAHAMAS (or other optional measurement platform at flight altitude) temperature, pressure, relative humidity at launch time:
     bah_T = bah_dict['T']
@@ -3188,13 +3183,11 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
     bah_RH = bah_dict['RH']
     bah_alt = bah_dict['Z']
 
-
     ceiling = obs_height	# last entry of altitude
     if ceiling > 15000:
       raise ValueError("Dropsonde launch altitude appears to be > 15000 m. Extrapolation is aborted because the " +
         "tropopause may intervene.\n")
       return new_dict, new_ipflag_dict
-
 
     # Any value above obs_height will be deleted: So if e.g. Z has got values above obs_height, delete them:
     # Find the first index that overshoots obs_height:
@@ -3215,7 +3208,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
             if key in ill_keys or key == 'Z':
               new_ipflag_dict[key] = new_ipflag_dict[key][:overshoot]
 
-
     # At the end of 'Z' there may still be nans -> so we don't know to which altitude meteorological variables belong to in this region:
     # Therefore: delete it and replace by extrapolation:
     n_alt = len(new_dict['Z'])
@@ -3235,7 +3227,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
           if key in ill_keys or key == 'Z':
             new_ipflag_dict[key] = new_ipflag_dict[key][:last_nonnan_alt+1]
 
-
     # Extend the old height grid up to the ceiling if the distance is greater than 10 meters:
     alt = new_dict['Z']
     n_alt = len(alt)
@@ -3245,7 +3236,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
     # Update the altitude variable in the dictionary: & update ipflag for gpsalt:
     new_dict['Z'] = alt
     new_ipflag_dict['Z'] = np.append(new_ipflag_dict['Z'], np.ones((n_alt_new - n_alt,)))
-
 
     launch_time = datetime.datetime.utcfromtimestamp(new_dict['launch_time']).strftime("%Y-%m-%d %H:%M:%S") # for printing
 
@@ -3359,10 +3349,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
           continue
 
         else:
-          # # # extra_speed_length = 20		# amount of indices used for wind speed gradient calculation
-
-          # # # for k in range(idx, n_alt_new):
-            # # # new_var[n,k] = new_var[n,idx] + (k-idx)*(new_var[n,idx] - new_var[n,idx-extra_speed_length]) / (extra_speed_length + (k-idx))
 
           # Alternative: just use the latest value for higher altitudes:
           new_var[idx+1:] = new_var[idx]
@@ -3389,14 +3375,9 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
           new_ipflag_dict[key][idx+1:] = 1		# setting the interpol flag
           new_var[np.argwhere(new_var[:] < 0)] = 0.0
 
-
-      # More variables may be added here, if desired.
-
-
       new_dict[key] = new_var
 
     return new_dict, new_ipflag_dict, obs_height
-
 
   def std_extrapol(old_dict, ill_keys, old_ipflag_dict=dict(), verbose=False):
   # Will extrapolate some atmospheric variables to the ceiling of the dropsonde; old_ipflag will be updated.
@@ -3423,7 +3404,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
         "tropopause may intervene.\n")
       return new_dict, new_ipflag_dict
 
-
     # Any value above obs_height will be deleted: So if e.g. Z has got values above obs_height, delete them:
     # Find the first index that overshoots obs_height:
     with warnings.catch_warnings():
@@ -3442,7 +3422,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
             new_dict[key] = new_dict[key][:overshoot]	# limit variable to obs_height
             if key in ill_keys or key == 'Z':
               new_ipflag_dict[key] = new_ipflag_dict[key][:overshoot]
-
 
     # At the end of 'Z' there may still be nans -> so we don't know to which altitude meteorological variables belong to in this region:
     # Therefore: delete it and replace by extrapolation:
@@ -3488,7 +3467,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
 
       else: # new_ipflag also has to be extended to the new hgt grid:
         new_ipflag_dict[key] = np.append(new_ipflag_dict[key], np.zeros((n_alt_new - n_alt,)), axis=0)
-
 
 
       if key == 'T':
@@ -3578,10 +3556,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
           continue
 
         else:
-          # # # extra_speed_length = 20		# amount of indices used for wind speed gradient calculation
-
-          # # # for k in range(idx, n_alt_new):
-            # # # new_var[n,k] = new_var[n,idx] + (k-idx)*(new_var[n,idx] - new_var[n,idx-extra_speed_length]) / (extra_speed_length + (k-idx))
 
           # Alternative: Just use the latest value for higher altitudes:
           new_var[idx+1:] = new_var[idx]
@@ -3612,13 +3586,9 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
           new_ipflag_dict[key][idx+1:] = 1		# setting the interpol flag
           new_var[np.argwhere(new_var[:] < 0)] = 0.0
 
-
-      # More variables may be added here, if desired.
-
       new_dict[key] = new_var
 
     return new_dict, new_ipflag_dict, obs_height
-
 
   def regridding(new_dict, obs_height, ill_keys, resolution=10):
     '''
@@ -3635,7 +3605,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
     new_dict['Z'] = new_alt
 
     return new_dict
-
 
   def repair_surface(old_dict, ill_keys, old_ipflag_dict=dict(), verbose=False):
   # Filling nan values at the surface if the gap to the surface isn't too large (e.g. measurements below 200 m
@@ -3718,7 +3687,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
 
     return new_dict, new_ipflag_dict
 
-
   def mark_outliers(sonde_dict, ill_keys): # mark outliers: outliers defined when exceeding certain thresholds
 
     new_dict = sonde_dict
@@ -3741,7 +3709,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
       new_dict[key][exceed_idx] = float('nan')
 
     return new_dict
-
 
   def readDropsondeNCraw(filename, verbose=False):
     """
@@ -3780,7 +3747,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
         if ((ncvar_type == np.float32) or (ncvar_type == np.float64)):
           dropsonde_dict[nc_keys][missing_idx] = float('nan')
 
-
       # converting units: time stamps will be handled seperately.
       if hasattr(nc_var, 'units'):
         if nc_var.units == 'degC':
@@ -3809,10 +3775,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
 
 
 
-  ############################################################################################
-
-
-
   # Dropsonde quality control: if there are small gaps of measurements between launch altitude and surface, they will be filled via interpolation.
   # Additionally, the sondes will be extrapolated to a certain altitude.
 
@@ -3825,10 +3787,8 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
     raise ValueError("Optional measurements at flight altitude must include all four variables: Temperature (in K), pressure (in Pa), relative " +
       "humidity (in %), flight altitude (in m). If not all measurements can be provided, leave optional data input empty.")
 
-
   failed_sondes = []				# lists the filenames of failed sondes (nearly no measurements)
   stuck_sondes = []					# lists the filenames of stuck sondes (sondes that don't show values above 1500 m)
-
 
   sonde_dict = readDropsondeNCraw(file_raw_sondes, verbose)
   launch_date = datetime.datetime.utcfromtimestamp(sonde_dict['launch_time']).strftime("%Y-%m-%d")
@@ -3837,7 +3797,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
   if verbose:
     print("########## Launch time: " + datetime.datetime.utcfromtimestamp(sonde_dict['launch_time']).strftime("%Y-%m-%d %H:%M:%S") + " ##########\n")
     print("Input: ", file_raw_sondes)
-
 
   # Add another condition that checks if e.g. nearly no measurements exist at all (for T, P and RH):
   if np.any([np.count_nonzero(~np.isnan(sonde_dict['T'])) < 0.1*len(sonde_dict['T']),
@@ -3850,18 +3809,15 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
     failed_sondes.append(file_raw_sondes)
     raise ValueError("One PAMTRA-critical variable measurement failed. Skipping this dropsonde. \n")
 
-
   # Add yet another condition that checks if the sonde got stuck mid air:
   if not np.any(sonde_dict['Z'][~np.isnan(sonde_dict['Z'])] < 1500):	# then I assume that the whole launch was doomed
     raise ValueError("'gpsalt' doesn't seem to include any values below 1500 m. That is insufficient for extrapolation at the surface. \n")
     stuck_sondes.append(file_raw_sondes)
 
-
   # Subsequent variables will be cured from holey nan value disease...:
   # pressure, temperature, relhum, wind (u & v & w), lat, lon.
   # Other variables, of which you can expect a linear interpolated over gaps to be applicable, may be added.
   ill_keys = ['T', 'P', 'RH', 'lat', 'lon', 'u_wind', 'v_wind']
-
 
   sonde_ipflag = dict()		# will contain the interpolation flags for interpolated nan values in the middle of the drop
 
@@ -3872,7 +3828,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
     sonde_dict[key], sonde_ipflag[key] = fill_gaps(sonde_dict[key], verbose=verbose)	# altitude must be passed to check for dimensions of the to-be-cured variable...
 
   sonde_dict['ipflag'] = sonde_ipflag
-
 
   # The raw dropsonde files show an altitude variable with increases from [0 to -1] in general: but probably due to gps tracking,
   # the altitude decreases at the "top": this must be filtered out:
@@ -3913,7 +3868,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
           if key in ill_keys or key == 'Z':
             sonde_dict['ipflag'][key] = sonde_dict['ipflag'][key][:altitude_stop]
 
-
   # The altitude index may be a bit broken... needs to be fixed. mark them as nan and let it run through fill_gaps again:
   dz = sonde_dict['Z'][1:] - sonde_dict['Z'][:-1]		# dz[i] = z[i+1] - z[i]
 
@@ -3923,7 +3877,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
 
   sonde_dict['Z'], sonde_ipflag['Z'] = fill_gaps(sonde_dict['Z'], verbose=verbose)
 
-
   # Perform surface repair for altitude coordinate:
   sonde_dict, sonde_dict['ipflag'] = repair_surface(sonde_dict, ['Z'], sonde_dict['ipflag'], verbose=verbose)
   # for some reasons, 'alt' is sort of unused but an assigned key in the dictionary. So ... we can also just set it to gpsalt:
@@ -3932,7 +3885,6 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
   # now we still need to handle the nan values at the surface: If there are no non-nan values in the lowest 5 % of the variable
   # -> don't interpolate because the assumption would eventually lead to senseless surface values:
   sonde_dict, sonde_dict['ipflag'] = repair_surface(sonde_dict, ill_keys, sonde_dict['ipflag'], verbose=verbose)
-
 
   # Extrapolating the ill_keys to the ceiling of the dropsondes (e.g. below aircraft altitude):
   # CAUTION: it is expected that the dropsondes start BELOW THE TROPOPAUSE!
@@ -3946,13 +3898,11 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
   # Regridding to a uniform vertical grid with a user-specified resolution:
   sonde_dict = regridding(sonde_dict, obs_height, ill_keys, 10)
 
-
   # Find outliers and mark them (as nan): afterwards fill them again
   sonde_dict = mark_outliers(sonde_dict, ['T', 'P', 'RH', 'u_wind', 'v_wind'])
   for key in ill_keys:
     sonde_dict[key], sonde_ipflag[key] = fill_gaps(sonde_dict[key], verbose=verbose)
 
-  # # # # # # # # # # # # # # # # # # # # # # # # # #
 
   # Check for remaining NaNs in meteorological variables:
   # RH, T and P (and the height coordinate Z):
@@ -4011,7 +3961,10 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
     pamData['lat'] = np.broadcast_to(sonde_dict['lat'][~np.isnan(sonde_dict['lat'])][-1], shape2d)
 
   pamData['timestamp'] = np.broadcast_to(sonde_dict['launch_time'], shape2d)
-  pamData['groundtemp'] = np.broadcast_to(sonde_dict['T'][0], shape2d)
+  if np.isnan(sst):
+    pamData['groundtemp'] = np.broadcast_to(sonde_dict['T'][0], shape2d)
+  else:
+    pamData['groundtemp'] = np.broadcast_to(sst, shape2d)
 
   # Obseravtion height:
   obs_height = np.asarray(obs_height).flatten()
@@ -4023,31 +3976,20 @@ def read_AVAPS_dropsonde(file_raw_sondes, opt_T=np.nan, opt_P=np.nan,
   pamData['sfc_refl'][:] = 'F'
   pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'S'
 
-
   # 4d variables: hydrometeors:
-  shape4d = [Nx, Nx, Nh-1, 5]			# potentially 5 hydrometeor classes with this setting
+  shape4d = [Nx, Nx, Nh-1, 1]			# potentially 5 hydrometeor classes with this setting
   pamData['hydro_q'] = np.zeros(shape4d)
-  pamData['hydro_q'][...,0] = 0# CLOUD
-  pamData['hydro_q'][...,1] = 0# ICE
-  pamData['hydro_q'][...,2] = 0# RAIN
-  pamData['hydro_q'][...,3] = 0# SNOW
-  pamData['hydro_q'][...,4] = 0# GRAUPEL
-
+  pamData['hydro_q'][...,0] = 0 # CLOUD
 
   # Descriptorfile must be included. otherwise, pam.p.nhydro would be 0 which is not permitted.
   descriptorFile = np.array([
     #['hydro_name' 'as_ratio' 'liq_ice' 'rho_ms' 'a_ms' 'b_ms' 'alpha_as' 'beta_as' 'moment_in' 'nbin' 'dist_name' 'p_1' 'p_2' 'p_3' 'p_4' 'd_1' 'd_2' 'scat_name' 'vel_size_mod' 'canting']
-    ('cwc_q', -99.0, 1, -99.0, -99.0, -99.0, -99.0, -99.0, 3, 1, 'mono', -99.0, -99.0, -99.0, -99.0, 2e-05, -99.0, 'mie-sphere', 'khvorostyanov01_drops', -99.0),
-    ('iwc_q', -99.0, -1, -99.0, 130.0, 3.0, 0.684, 2.0, 3, 1, 'mono_cosmo_ice', -99.0, -99.0, -99.0, -99.0, -99.0, -99.0, 'mie-sphere', 'heymsfield10_particles', -99.0),
-    ('rwc_q', -99.0, 1, -99.0, -99.0, -99.0, -99.0, -99.0, 3, 50, 'exp', -99.0, -99.0, 8000000.0, -99.0, 0.00012, 0.006, 'mie-sphere', 'khvorostyanov01_drops', -99.0),
-    ('swc_q', -99.0, -1, -99.0, 0.038, 2.0, 0.3971, 1.88, 3, 50, 'exp_cosmo_snow', -99.0, -99.0, -99.0, -99.0, 5.1e-11, 0.02, 'mie-sphere', 'heymsfield10_particles', -99.0),
-    ('gwc_q', -99.0, -1, -99.0, 169.6, 3.1, -99.0, -99.0, 3, 50, 'exp', -99.0, -99.0, 4000000.0, -99.0, 1e-10, 0.01, 'mie-sphere', 'khvorostyanov01_spheres', -99.0)],
+    ('cwc_q', -99.0, 1, -99.0, -99.0, -99.0, -99.0, -99.0, 3, 1, 'mono', -99.0, -99.0, -99.0, -99.0, 2e-05, -99.0, 'mie-sphere', 'khvorostyanov01_drops', -99.0)],
     dtype=[('hydro_name', 'S15'), ('as_ratio', '<f8'), ('liq_ice', '<i8'), ('rho_ms', '<f8'), ('a_ms', '<f8'), ('b_ms', '<f8'), ('alpha_as', '<f8'), ('beta_as', '<f8'),
     ('moment_in', '<i8'), ('nbin', '<i8'), ('dist_name', 'S15'), ('p_1', '<f8'), ('p_2', '<f8'), ('p_3', '<f8'),
     ('p_4', '<f8'), ('d_1', '<f8'), ('d_2', '<f8'), ('scat_name', 'S15'), ('vel_size_mod', 'S30'), ('canting', '<f8')]
     )
   for hyd in descriptorFile: pam.df.addHydrometeor(hyd)
-
 
   pam.createProfile(**pamData)
 
