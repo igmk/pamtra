@@ -73,11 +73,13 @@ subroutine calc_moment(errorstatus)
   do i=1,nbin
     m_0 = m_0 + (f_ds(i) + f_ds(i+1)) /2._dbl * (d_bound_ds(i+1) - d_bound_ds(i))
   enddo
-  if (sum(n_ds) - m_0 > 1.d-12) then
-    msg = 'Something wrong with total number concentration!'
-    errorstatus = fatal
+  if (abs((sum(n_ds) - m_0)/m_0) > 1.d-12) then
+    print *, 'm_0', m_0
+    print *, 'sum(n_ds)', sum(n_ds)
+    print *, '(sum(n_ds) - m_0)/m_0', (sum(n_ds) - m_0)/m_0
+    msg = 'Total number concentration m_0 and sum(n_ds) do not match!'
+    errorstatus = warning
     call report(errorstatus, msg, nameOfRoutine)
-    return
   endif
 
 ! m_3 / m_2 --> Effective radius
