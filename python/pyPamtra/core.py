@@ -909,7 +909,7 @@ class pyPamtra(object):
 
   def _checkData(self):
     maxLimits = {"relhum_lev":200,"hydro_q":0.05,"temp_lev":320,"press_lev":110000,"relhum":200,"temp":320,"press":110000}
-    minLimits = {"relhum_lev":0,  "hydro_q": 0 , "temp_lev":170,"press_lev":1,     "relhum":0,  "temp":170,"press":1}
+    minLimits = {"relhum_lev":0,  "hydro_q": 0 , "temp_lev":160,"press_lev":1,     "relhum":0,  "temp":160,"press":1}
     non_numeric_keys = ['sfc_refl', ]
     for key in self.p.keys():
       if type(self.p[key]) != np.ndarray or key in non_numeric_keys:
@@ -1137,7 +1137,13 @@ class pyPamtra(object):
         #save new array
         self.p[key] = newP
         #and mark all entries below -1 as missing Number!
-        self.p[key][self.p[key]<-1.e-6] = missingNumber
+        # self.p[key][self.p[key]<-1.e-6] = missingNumber
+        # avoid values smaller than 0
+        # self.p[key][self.p[key]<0.] = 0.
+        _invalidArr = np.where(self.p[key]<0.)
+        for key2 in ["hydro_q","hydro_n","hydro_reff",]:
+          if key2 in list(self.p.keys()):
+            self.p[key][_invalidArr] = 0.
 
     for key in self.df.data4D:
       #make new array

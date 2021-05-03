@@ -12,8 +12,7 @@ Quickstart: Virtual Machine
 ***************************
 
 This is the recommended way to test the model. A virtual machine is provided 
-which makes the installation 100% automatic. You have to install the following
- software in order to run the virtual machine with PAMTRA on your computer:
+which makes the installation 100% automatic. You have to install the following software in order to run the virtual machine with PAMTRA on your computer:
 
 * Virtualbox https://www.virtualbox.org/
 * Vagrant https://www.vagrantup.com/
@@ -95,6 +94,12 @@ Although not required for compilation and installation, to use PAMTRA, some addi
     As of August 2020, do NOT use conda for Ubuntu because the provided libgfortran 
     library does not work with PAMTRA.
 
+On Ubunut systems (and probably as well other linux OS), there is an issue with `openblas` and competeting insterests of multiple parallel jobs. To avoid this, set the environment variable::
+
+    export OPENBLAS_NUM_THREADS=1
+
+before calling python.
+
 Now, follow -  :ref:`Get model from git repository`
 
 
@@ -175,6 +180,8 @@ Then, the python routines can be installed with ::
 
   make pyinstall
 
+To run pyPamtra with python3, `F2PY=f2py3` needs t be appended to `make` and `make pyinstall`.
+
 Download data
 *************
 Although PAMTRA can be used without additional data by simply setting the data path to an empty directory, :: 
@@ -202,6 +209,10 @@ To start using pyPamtra, you have to open a new bash session or source the ~/.ba
 
 Start PAMTRA
 ************
+.. warning::
+
+  When running on ubuntu 20.04 (and maybe above) one needs to set 
+  `export OPENBLAS_NUM_THREADS=1` before starting `python`. THis is because ubuntu 20.04 is running a BLAS library that is not thread save.
 
 You can start using pyPamtra in python with ::
 

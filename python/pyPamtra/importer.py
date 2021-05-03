@@ -2034,6 +2034,7 @@ def readHIRHAM(dataFile,additionalFile,topoFile,descriptorFile,grid=[0,200,0,218
 
   return pam
 
+
 def readECMWF(fname,constantFile,descriptorFile,landseamask,debug=False,verbosity=0,grid=[0,-1,0,-1]):
   """
   read ECMWF IFS data
@@ -2505,6 +2506,114 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
   pam.createProfile(**pamData)
 
   return pam
+
+def readICON2mom(fname, descriptorFile, fextpar=None, finit=None, forcing='ICON', time=0, kind=None, debug=False, verbosity=0):
+  '''
+  import ICON LEM 2-moment dataset output in it's pure version
+  
+  fname = filename of the Icon output
+  descriptorFile = pyPamtra descriptorFile object or filename of a proper formatted descriptorFile
+  processed = flag to specify whether the files have been processed or not. (default = True)
+  debug = flag causing stop and load of debugger upon raised exception
+  verbosity = pyPamtra.pyVerbose verbosity level
+
+  Pamtra assumes that the apart from height, the first given dimension is latitude, here coordinates do not change across the dimension, but time does, thus generating a meteogram
+
+  09/11/2020 - Mario Mech - mario.mech@uni-koeln.de based on readIcon2momOnFlightTrack
+  '''
+
+  import netCDF4
+
+  pamData = dict() # empty dictionary to store pamtra Data
+
+
+  EXTPAR_file = netCDF4.Dataset(fextpar, mode='r')
+  vals = EXTPAR_file.variables
+
+
+  Nx = len(vals['clon'])
+  Ny = len(vals['clat'])
+
+  pamData['lat'] = np.rad2deg(vals['clat'][:])
+  pamData['lon'] = np.rad2deg(vals['clon'][:])
+  pamData['sfc_slf'] = vals['FR_LAND'][:]
+
+  EXTPAR_file.close()
+
+  INIT_file = netCDF4.Dataset(finit, mode='r')
+  vals = INIT_file.variables
+
+  if forcing == 'ICON':
+    pamData['sfc_sif'] = vals['fr_seaice'][0,...]
+  elif forcing == 'IFS':
+    pamData['sfc_sif'] = vals['CI'][0,...]
+
+  INIT_file.close()
+
+  ICON_file = netCDF4.Dataset(fname, mode='r')
+  vals = ICON_file.variables
+
+  nhydros = 6
+    
+  # date_times = netCDF4.num2date(vals["time"][timeidx], vals["time"].units) # datetime autoconversion
+  # timestamp = netCDF4.date2num(date_times, "seconds since 1970-01-01 00:00:00") # to unix epoch timestamp (python uses nanoseconds int64 internally)
+  # pamData['timestamp'] = timestamp
+  
+  # variables2D = ['t_g']
+  # variables3D_10m = ['u_10m','v_10m']
+  # variables3D = ['hgt','temp','pres','qv']
+  # variables3Dplus = ['hgt_lev']
+  variables3Dqx = ['qc','qi','qr','qs','qg','qh']
+  variables3Dqnx = ['qnc','qni','qnr','qns','qng','qnh']
+  
+  pamData['hgt'] = np.swapaxes(vals['z_mc'][::-1,:],0,1)
+  pamData['hgt_lev'] = np.swapaxes(vals['z_ifc'][::-1,:],0,1)
+  pamData['press'] = np.swapaxes(vals['pres'][time,::-1,:],0,1)
+  pamData['temp'] = np.swapaxes(vals['temp'][time,::-1,:],0,1)
+  pamData['relhum'] = np.swapaxes(q2rh(vals['qv'][time,::-1,:],vals['temp'][time,::-1,:],vals['pres'][time,::-1,:]) * 100.,0,1)
+
+  # Read hydrometeors content
+  Nh = pamData['hgt'].shape[1]
+  pamData['hydro_q'] = np.zeros((Nx,Nh,nhydros))
+
+  for i,qi in enumerate(variables3Dqx):
+    pamData['hydro_q'][...,i] = np.swapaxes(vals[qi][time,::-1,...],0,1)
+
+  # Read hydrometeors number concentration
+  pamData['hydro_n'] = np.zeros((Nx,Nh,nhydros))
+
+  for i,ni in enumerate(variables3Dqnx):
+    pamData['hydro_n'][...,i] = np.swapaxes(vals[ni][time,::-1,...],0,1)
+  
+  # surface properties
+  pamData['wind10u'] = vals['u_10m'][time,0,:]
+  pamData['wind10v'] = vals['v_10m'][time,0,:]
+  pamData['groundtemp'] = vals['t_g'][time,:]
+
+  ICON_file.close()
+
+# surface properties
+  pamData['sfc_type']  = np.around(pamData['sfc_slf'])
+  pamData['sfc_model'] = np.zeros(pamData['groundtemp'].shape)
+  pamData['sfc_refl']  = np.chararray(pamData['groundtemp'].shape)
+  pamData['sfc_refl'][:] = 'S' # land  'F' # ocean 'L' lambertian, land
+  pamData['sfc_type'][(pamData['sfc_type'] == 0) & (pamData['sfc_sif'] > 0)] = 2
+
+
+  pam = pyPamtra()
+  pam.set['pyVerbose'] = verbosity
+
+  if isinstance(descriptorFile, str):
+    pam.df.readFile(descriptorFile)
+  else:
+    for df in descriptorFile:
+      pam.df.addHydrometeor(df)
+
+  pam.createProfile(**pamData)
+  
+
+  return pam
+
 
 def readIcon2momOnFlightTrack(fname, descriptorFile, time=0, kind='processed', constant_file=None, debug=False, verbosity=0):
   '''
