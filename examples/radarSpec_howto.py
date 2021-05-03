@@ -5,20 +5,20 @@ import matplotlib.pyplot as plt
 import sys
 
 pam = pyPamtra.pyPamtra()
-pam.df.addHydrometeor(('ice', -99.0, -1, 917,917 *  np.pi / 6., 3, np.pi/4., 2, 0, 100, 'exp', 3000, 3e9, -99.0, -99.0, 100e-6,  1.2e-3, 'mie-sphere', 'heymsfield10_particles',0.0))
+pam.df.addHydrometeor(('ice', -99.0, -1, 200,-99,-99, np.pi/4., 2, 0, 100, 'exp', 4000, 3e6, -99.0, -99.0, 100e-6,  1.2e-3, 'mie-sphere', 'heymsfield10_particles',0.0))
 
 pam = pyPamtra.importer.createUsStandardProfile(pam,hgt_lev=np.arange(1000,1300,200))
 pam.p["airturb"][:] = 0.2
 freqs = [35.5]#,80,150]
 
-pam.set["verbose"] = -666
-pam.set["pyVerbose"] =0
+pam.set["verbose"] = 2
+pam.set["pyVerbose"] =2
 pam.nmlSet["randomseed"] = 100
 pam.nmlSet["radar_mode"] = "spectrum"
-pam.nmlSet["radar_aliasing_nyquist_interv"] = 0
+pam.nmlSet["radar_aliasing_nyquist_interv"] = 2
 pam.nmlSet["save_psd"] = True
 
-pam.p["hydro_q"][:] = 0.002
+pam.p["hydro_q"][:] = 1e-2
 
 pam.nmlSet["hydro_fullspec"] = False
 

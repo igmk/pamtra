@@ -97,8 +97,7 @@ conda clean -a -y
 cd ~/software
 git clone --recursive https://github.com/igmk/pamtra
 cd ~/software/pamtra
-git pull origin python3
-git checkout python3
+
 
 #for python 3.x
 cd ~/software/pamtra

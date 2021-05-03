@@ -1347,35 +1347,38 @@ def readIconNwp1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
     ncFile_fg = netCDF4.Dataset(fname_fg, "r")
     if verbosity > 1: print("opened ", fname_fg)
 
-    fname_cloud = '_cloud_'.join(fname_fg.rsplit('_fg_',1)) # right-replace _fg_ with _cloud
-    ncFile_cloud = netCDF4.Dataset(fname_cloud, "r")
-    if verbosity > 1: print("opened ", fname_cloud)
+    if variables4D_cloud[0] not in ncFile_fg.variables.keys():
+      # for NARVAL1/2 simulations, the graupl field was not included in fg file but in cloud file
+      fname_cloud = '_cloud_'.join(fname_fg.rsplit('_fg_',1)) # right-replace _fg_ with _cloud_
+      ncFile_cloud = netCDF4.Dataset(fname_cloud, "r")
+      if verbosity > 1: print("opened ", fname_cloud)
+    else:
+      ncFile_cloud = ncFile_fg
 
     if maxLevel == 0:
-      assert ncFile_fg.variables["z_ifc"].dimensions == ('lat', 'height_3', 'lon')
-      assert ncFile_fg.dimensions['height'].size + 1 == ncFile_fg.dimensions['height_3'].size
-      maxLevel = ncFile_fg.variables["z_ifc"].shape[1] - 1
+      assert ncFile_fg.dimensions['height'].size == ncFile_fg.dimensions['height_3'].size - 1
+      maxLevel = ncFile_fg.dimensions['height'].size
 
     for var in variables3D:
-      # nc dimensions: time, lat, lon; target dimensions: lon, lat
-      assert ncFile_fg.variables[var].dimensions == ('time', 'lat', 'lon')
-      dataSingle[var] = np.swapaxes(ncFile_fg.variables[var][forecastIndex],0,1)
+      d = _transpose_nc_var_by_dims(ncFile_fg.variables[var], ('time', 'lon', 'lat'))
+      # target dimensions: lon, lat
+      dataSingle[var] = d[forecastIndex, :, :]
 
     for var in variables4D_10m:
-      # nc dimensions: time, lat, height_5 lon; target dimensions: lon, lat
-      assert ncFile_fg.variables[var].dimensions == ('time', 'lat', 'height_5', 'lon')
+      # target dimensions: lon, lat
       assert ncFile_fg.dimensions['height_5'].size == 1
-      dataSingle[var] = np.swapaxes(ncFile_fg.variables[var][forecastIndex, :, 0, :],0,1)
+      d = _transpose_nc_var_by_dims(ncFile_fg.variables[var], ('time', 'height_5', 'lon', 'lat'))
+      dataSingle[var] = d[forecastIndex, 0, :, :]
 
     for var in variables4D:
-      # nc dimensions: time, lat, height, lon; target dimensions: lon, lat, level
-      assert ncFile_fg.variables[var].dimensions == ('time', 'lat', 'height', 'lon')
-      dataSingle[var] = np.transpose(ncFile_fg.variables[var][forecastIndex], (2, 0, 1))[...,::-1][...,:maxLevel]#reverse height order
+      # target dimensions: lon, lat, level
+      d = _transpose_nc_var_by_dims(ncFile_fg.variables[var], ('time', 'lon', 'lat', 'height'))
+      dataSingle[var] = d[forecastIndex, :, :, ::-1] #reverse height order
 
     for var in variables4D_cloud:
       # nc dimensions: time, lat, height, lon; target dimensions: lon, lat, level
-      assert ncFile_cloud.variables[var].dimensions == ('time', 'lat', 'height', 'lon')
-      dataSingle[var] = np.transpose(ncFile_cloud.variables[var][forecastIndex], (2, 0, 1))[...,::-1][...,:maxLevel]#reverse height order
+      d = _transpose_nc_var_by_dims(ncFile_cloud.variables[var], ('time', 'lon', 'lat', 'height'))
+      dataSingle[var] = d[forecastIndex, :, :, ::-1] #reverse height order
 
     shape3D = dataSingle["temp"].shape
     shape3Dplus = (shape3D[0], shape3D[1], shape3D[2] + 1)
@@ -1393,16 +1396,19 @@ def readIconNwp1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
     #dataSingle['lat'] = lat
     #dataSingle['lon'] = lon # use exact lon_2 and lat_2 from constantFields.(the coordinates found by nearest neighbor interpolation)
 
-    for key in ["z_ifc"]:
+    for var in ["z_ifc"]:
       # nc dimensions: lat, height, lon; target dimensions: lon, lat, level
-      assert ncFile_fg.variables[key].dimensions == ('lat', 'height_3', 'lon')
-      dataSingle[key] = np.transpose(ncFile_fg[key],(2, 0, 1))[...,::-1][...,:maxLevel+1]#reverse height order
-      assert dataSingle[key].shape == shape3Dplus
+      d = _transpose_nc_var_by_dims(ncFile_fg.variables[var], ('lon', 'lat', 'height_3'))
+      d = d[:, :, ::-1] #reverse height order
+      dataSingle[var] = d[...,:maxLevel+1] # cut at top
+
+      assert dataSingle[var].shape == shape3Dplus
 
     ncFile_fg.close()
     if verbosity > 1: print("closed fg nc")
-    ncFile_cloud.close()
-    if verbosity > 1: print("closed cloud nc")
+    if ncFile_cloud is not ncFile_fg:
+      ncFile_cloud.close()
+      if verbosity > 1: print("closed cloud nc")
 
     data = dataSingle
 
@@ -3171,3 +3177,42 @@ def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='net
       os.remove(ncFile)
   return joinedData
 
+
+###
+# Helper functions
+#
+def _transpose_nc_var_by_dims(nc_var, dims):
+  """Permutes netCDF4 variable dimensions according to the values given.
+
+  This function makes sure that data is read in a well defined order of axes.
+  An error is raised if the dims are not the same as used in the netcdf
+
+  Parameters
+  ----------
+  nc_var : netCDF4._netCDF4.Variable
+    netCDF Variable object
+  dims : list of strings
+    List with strings of dimensions.
+
+  Returns
+  -------
+  var : np.ndarray
+    An array with the data axes orderd according to dims.
+
+  Raises
+  ------
+  ValueError
+
+  """
+
+  if len(dims) != len(set(dims)):
+    raise ValueError('dims must not contain duplicates (%r).' % dims)
+  if set(nc_var.dimensions) != set(dims):
+    raise ValueError('Dimensions in nc_var (%r) are different from dims (%r).' % (
+      nc_var.dimensions, dims
+    ))
+
+  order = [
+    nc_var.dimensions.index(d) for d in dims
+  ]
+  return np.transpose(nc_var, order)
