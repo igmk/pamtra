@@ -73,6 +73,7 @@ subroutine calc_moment(errorstatus)
   do i=1,nbin
     m_0 = m_0 + (f_ds(i) + f_ds(i+1)) /2._dbl * (d_bound_ds(i+1) - d_bound_ds(i))
   enddo
+
   if (abs((sum(n_ds) - m_0)/m_0) > 1.d-12) then
     print *, 'm_0', m_0
     print *, 'sum(n_ds)', sum(n_ds)

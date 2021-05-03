@@ -50,7 +50,7 @@ contains
     character(len=14) :: nameOfRoutine = 'set_sfc_optics'
 
     if (verbose >= 1) call report(info,'Start of ', nameOfRoutine)
-    
+
     if (sfc_type(i_x,i_y) == 0) then ! water
         if ((sfc_model(i_x,i_y) == 0) .or. (sfc_model(i_x,i_y) == -9999)) then ! TESSEM2
             call ocean_sfc_optics_tessem2(err,freq)
