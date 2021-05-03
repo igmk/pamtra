@@ -1,5 +1,5 @@
 ARCH=$(shell uname -s)
-F2PY := $(shell which f2py || echo f2py2.7) #on newer Ubuntu systems, only f2py2.7 is available
+F2PY := $(shell which f2py || which f2py3 || which f2py2.7) #on newer Ubuntu systems, only f2py2.7 is available
 
 src='../../src/'
 
@@ -22,7 +22,7 @@ else
 	LDFLAGS := $(shell nc-config --flibs)
 endif
 
-OBJECTS=kinds.o constants.o gasabs_module.o report_module.o
+OBJECTS=kinds.o constants.o vars_index.o gasabs_module.o report_module.o
 
 
 %.o: %.f90
