@@ -15,7 +15,7 @@ NCCONF = $(shell which nf-config || which nc-config) # on newer Ubuntu version C
 F2PY := $(shell which f2py || which f2py3 || which f2py2.7) # on newer Ubuntu systems, only f2py2.7 is available
 FC=gfortran
 CC=gcc
-FCFLAGS=-c -fPIC -cpp -I$(OBJDIR) #FCFLAGS=-c -fPIC -Wunused  -cpp -J$(OBJDIR) -I$(OBJDIR)
+FCFLAGS=-c -fPIC -cpp -J$(OBJDIR) -I$(OBJDIR) #FCFLAGS=-c -fPIC -Wunused  -cpp -J$(OBJDIR) -I$(OBJDIR)
 #FCFLAGS=-g -c -fPIC -Wunused -O0 -cpp -J$(OBJDIR) -I$(OBJDIR)
 
 NCFLAGS :=  $(shell $(NCCONF) --fflags)

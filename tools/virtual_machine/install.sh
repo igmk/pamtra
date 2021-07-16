@@ -17,10 +17,10 @@ chmod +x ~/shared/update.sh
 
 # ubtuntu 16.04
 sudo apt-get update -y 
-sudo apt-get install -y -qq tree git gcc gfortran liblapack-dev libfftw3-dev  
-sudo apt-get install -y -qq libnetcdff5 libnetcdf-dev netcdf-bin gsl-bin 
-sudo apt-get install -y -qq libgsl0-dev libgsl0ldbl lftp
-sudo apt-get install -y -qq libhdf5-dev
+sudo apt-get install -y tree git gcc gfortran liblapack-dev libfftw3-dev  
+sudo apt-get install -y libnetcdff7 libnetcdf-dev netcdf-bin gsl-bin 
+sudo apt-get install -y libgsl0-dev libgsl23 libgslcblas0 lftp
+sudo apt-get install -y libhdf5-dev make 
 
 # guest additions update
 # cd /opt 
