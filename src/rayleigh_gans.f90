@@ -1190,7 +1190,7 @@ module rayleigh_gans
 !   Self-Similar Rayleigh-Gans Approximation
 !
 !   bcs = self_similar_rayleigh_gans(wavelength, dielectric_const, D, ...
-!                                    volume, rg_kappa, rg_beta, rg_gamma)
+!                                    volume, rg_kappa, rg_beta, rg_gamma, rg_zeta)
 !   where the arguments are:
 !     bcs                  Backscatter cross-section (m2)
 !     wavelength           Wavelength of radiation (m)
@@ -1243,6 +1243,7 @@ module rayleigh_gans
     real(kind=dbl), intent(in) :: rg_kappa
     real(kind=dbl), intent(in) :: rg_beta
     real(kind=dbl), intent(in) :: rg_gamma
+    real(kind=dbl), intent(in) :: rg_zeta ! added zeta (Nina)
 
     real(kind=dbl), intent(out), dimension(nbins) :: back_spec
     real(kind=dbl), intent(out) :: sumqback
@@ -1327,12 +1328,14 @@ module rayleigh_gans
               - rg_kappa*(1.0d0/(2.0d0*x+3.0d0*pi)-1.0d0/(2.0d0*x-3.0d0*pi))))**2
 
       ! Initialize the summation in the second term in the braces of Eq. 12
-      term2 = 0.0d0
+      ! Initialize first term of sum with zeta (added by Nina, 15.02.22)
+      term2 = rg_zeta * (2.d0*jj)**(-rg_gamma) * sin(x)**2 &
+              *(1.d0/(2.d0*(x+pi*jj))**2 + 1.d0/(2.d0*(x-pi*jj))**2)
       ! Decide how many terms are needed
       jmax = floor(5.d0*x/pi + 1.d0)
 
       ! Evaluate summation
-      do jj = 1, jmax
+      do jj = 2, jmax ! start from second term
         term2 = term2 + (2.d0*jj)**(-rg_gamma) * sin(x)**2 &
               *(1.d0/(2.d0*(x+pi*jj))**2 + 1.d0/(2.d0*(x-pi*jj))**2)
       end do
