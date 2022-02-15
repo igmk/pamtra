@@ -102,7 +102,11 @@ contains
       area_ds, &
       dsd_canting, &
       soft_rho_eff, &
-      d_ds
+      d_ds, &
+      rg_beta_ds, &
+      rg_kappa_ds, &
+      rg_gamma_ds, &
+      rg_zeta_ds
     use constants, only: pi, Im
     use vars_index, only: i_x, i_y, i_z, i_f, i_h, i_p
     use vars_hydroFullSpec, only: hydrofs_as_ratio, hydrofs_canting
@@ -493,9 +497,15 @@ contains
           canting_list, &
           refre, &
           refim, & !positive(?)
-          rg_kappa, &
-          rg_beta, &
-          rg_gamma, &
+          !rg_kappa, &
+          !rg_beta, &
+          !rg_gamma, &
+          !rg_zeta, &
+          ! use size bin arrays
+          rg_kappa_ds, &
+          rg_beta_ds, &
+          rg_gamma_ds, &
+          rg_zeta_ds, &
           !OUT
           back_spec_rg, &
           back_hydro_rg )

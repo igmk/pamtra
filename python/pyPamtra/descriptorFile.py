@@ -213,5 +213,12 @@ class pamDescriptorFile(object):
     self.dataFullSpec["canting"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
     self.dataFullSpec["fallvelocity"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
 
+    # SSRGA parameter:
+
+    self.dataFullSpec["rg_kappa_ds"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["rg_beta_ds"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["rg_gamma_ds"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["rg_zeta_ds"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
+
 
     
