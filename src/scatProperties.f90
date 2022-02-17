@@ -102,14 +102,15 @@ contains
       area_ds, &
       dsd_canting, &
       soft_rho_eff, &
-      d_ds, &
-      rg_beta_ds, &
-      rg_kappa_ds, &
-      rg_gamma_ds, &
-      rg_zeta_ds
+      d_ds
     use constants, only: pi, Im
     use vars_index, only: i_x, i_y, i_z, i_f, i_h, i_p
-    use vars_hydroFullSpec, only: hydrofs_as_ratio, hydrofs_canting
+    use vars_hydroFullSpec, only: hydrofs_as_ratio, &
+      hydrofs_canting, &
+      hydrofs_rg_beta_ds, &
+      hydrofs_rg_zeta_ds, &
+      hydrofs_rg_gamma_ds, &
+      hydrofs_rg_kappa_ds
 
     implicit none
 
@@ -130,7 +131,12 @@ contains
     real(kind=dbl), dimension(radar_npol,nbin) :: back_spec_dia
     real(kind=dbl), dimension(nbin) :: back_spec_mie, back_spec_liu, back_spec_hong
     real(kind=dbl), dimension(nbin) :: back_spec_rg, back_spec_ssrg
-    real(kind=dbl), allocatable, dimension(:) :: as_ratio_list, canting_list
+    real(kind=dbl), allocatable, dimension(:) :: as_ratio_list
+    real(kind=dbl), allocatable, dimension(:) :: canting_list
+    real(kind=dbl), allocatable, dimension(:) :: rg_beta_list
+    real(kind=dbl), allocatable, dimension(:) :: rg_zeta_list
+    real(kind=dbl), allocatable, dimension(:) :: rg_gamma_list
+    real(kind=dbl), allocatable, dimension(:) :: rg_kappa_list
     real(kind=dbl) :: kext_hydro
     real(kind=dbl) :: salb_hydro
     real(kind=dbl) :: back_hydro_mie, back_hydro_liu, back_hydro_hong, back_hydro_ssrg
@@ -241,12 +247,24 @@ contains
     !some fixed settings for Tmatrix and rg
     allocate(as_ratio_list(nbin))
     allocate(canting_list(nbin))
+    allocate(rg_beta_list(nbin))
+    allocate(rg_kappa_list(nbin))
+    allocate(rg_gamma_list(nbin))
+    allocate(rg_zeta_list(nbin))
     if (hydro_fullSpec) then
       as_ratio_list(:) = hydrofs_as_ratio(i_x,i_y,i_z,i_h,:)
       canting_list(:) = hydrofs_canting(i_x,i_y,i_z,i_h,:)
+      rg_beta_list(:) = hydrofs_rg_beta_ds(i_x,i_y,i_z,i_h,:)
+      rg_kappa_list(:) = hydrofs_rg_kappa_ds(i_x,i_y,i_z,i_h,:)
+      rg_gamma_list(:) = hydrofs_rg_gamma_ds(i_x,i_y,i_z,i_h,:)
+      rg_zeta_list(:) = hydrofs_rg_zeta_ds(i_x,i_y,i_z,i_h,:)
     else
       as_ratio_list(:) =  as_ratio
       canting_list(:) =  dsd_canting
+      rg_beta_list(:) = rg_beta
+      rg_kappa_list(:) = rg_kappa
+      rg_gamma_list(:) = rg_gamma
+      rg_zeta_list(:) = rg_zeta
     end if
 
     where (canting_list < 0) canting_list = 0.d0
@@ -502,10 +520,10 @@ contains
           !rg_gamma, &
           !rg_zeta, &
           ! use size bin arrays
-          rg_kappa_ds, &
-          rg_beta_ds, &
-          rg_gamma_ds, &
-          rg_zeta_ds, &
+          rg_kappa_list, &
+          rg_beta_list, &
+          rg_gamma_list, &
+          rg_zeta_list, &
           !OUT
           back_spec_rg, &
           back_hydro_rg )
@@ -543,9 +561,10 @@ contains
           canting_list, &
           refre, &
           refim, & !positive(?)
-          rg_kappa, &
-          rg_beta, &
-          rg_gamma, &
+          rg_kappa_list, &
+          rg_beta_list, &
+          rg_gamma_list, &
+          rg_zeta_list, &
           !OUT
           scatter_matrix_hydro(:,:,:,:,1:2),&
           extinct_matrix_hydro(:,:,:,1),&
@@ -564,6 +583,11 @@ contains
 
       if (allocated(as_ratio_list)) deallocate(as_ratio_list)
       if (allocated(canting_list)) deallocate(canting_list)
+      if (allocated(rg_zeta_list)) deallocate(rg_zeta_list)
+      if (allocated(rg_gamma_list)) deallocate(rg_gamma_list)
+      if (allocated(rg_kappa_list)) deallocate(rg_kappa_list)
+      if (allocated(rg_beta_list)) deallocate(rg_beta_list)
+
 
       if (err /= 0) then
         msg = 'error in calc_self_similar_rayleigh_gans!'

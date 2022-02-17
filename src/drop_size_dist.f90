@@ -67,11 +67,6 @@ module drop_size_dist
   real(kind=dbl), dimension(:), allocatable  :: mass_ds ! particle mass for radar simulator [kg]
   real(kind=dbl), dimension(:), allocatable  :: area_ds ! particle cross section area for radar simulator [m^2]
 
-! SSRGA parameter
-  real(kind=dbl), dimension(:), allocatable  :: rg_kappa_ds ! kappa parameter
-  real(kind=dbl), dimension(:), allocatable  :: rg_beta_ds ! kappa parameter
-  real(kind=dbl), dimension(:), allocatable  :: rg_gamma_ds ! kappa parameter 
-  real(kind=dbl), dimension(:), allocatable  :: rg_zeta_ds ! kappa parameter
   
  contains
 
@@ -88,10 +83,6 @@ subroutine allocateVars_drop_size_dist
   allocate(f_ds(nbin+1))
   allocate(mass_ds(nbin))
   allocate(area_ds(nbin))
-  allocate(rg_kappa_ds(nbin))
-  allocate(rg_beta_ds(nbin))
-  allocate(rg_gamma_ds(nbin))
-  allocate(rg_zeta_ds(nbin))
 
 end subroutine allocateVars_drop_size_dist
 
@@ -110,10 +101,6 @@ subroutine deallocateVars_drop_size_dist
   if (allocated(soft_rho_eff)) deallocate(soft_rho_eff)
   if (allocated(area_ds)) deallocate(area_ds)
   if (allocated(mass_ds)) deallocate(mass_ds)
-  if (allocated(rg_kappa_ds)) deallocate(rg_kappa_ds)
-  if (allocated(rg_beta_ds)) deallocate(rg_beta_ds)
-  if (allocated(rg_gamma_ds)) deallocate(rg_gamma_ds)
-  if (allocated(rg_zeta_ds)) deallocate(rg_zeta_ds)
 
 end subroutine deallocateVars_drop_size_dist
 
