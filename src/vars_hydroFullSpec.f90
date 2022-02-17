@@ -122,6 +122,10 @@ module vars_hydroFullSpec
             print*, "hydrofs_canting", hydrofs_canting(xx,yy,zz,hh, :)
             print*, "hydrofs_as_ratio", hydrofs_as_ratio(xx,yy,zz,hh, :)
             print*, "hydrofs_fallvelocity", hydrofs_fallvelocity(xx,yy,zz,hh, :)
+            print*, "hydrofs_rg_kappa_ds", hydrofs_rg_kappa_ds(xx,yy,zz,hh, :)
+            print*, "hydrofs_rg_beta_ds", hydrofs_rg_beta_ds(xx,yy,zz,hh, :)
+            print*, "hydrofs_rg_zeta_ds", hydrofs_rg_zeta_ds(xx,yy,zz,hh, :)
+            print*, "hydrofs_rg_gamma_ds", hydrofs_rg_gamma_ds(xx,yy,zz,hh, :)
 
           end do
         end do

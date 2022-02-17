@@ -482,7 +482,7 @@ contains
       end if
       rg_gamma = 5.d0/3.d0 
 
-      if (verbose >= 5) print*,scat_name,  rg_gamma, rg_kappa, rg_beta
+      if (verbose >= 5) print*,scat_name, "test", rg_gamma, rg_kappa, rg_beta
 
       if (active) then
         call calc_self_similar_rayleigh_gans(err,&

@@ -595,7 +595,7 @@ module rayleigh_gans
     character(len=80) :: msg
     character(len=30) :: nameOfRoutine = 'calc_self_similar_rayleigh_gans_rt3'
 
-    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+    if (verbose >= 2) call report(info,'Start of1 ', nameOfRoutine)
     err = 0
 
     call assert_true(err,(liq_ice==-1),&
@@ -835,7 +835,7 @@ module rayleigh_gans
     end if    
 
     errorstatus = err    
-    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+    if (verbose >= 2) call report(info,'End of1 ', nameOfRoutine)
     return 
 
   end subroutine calc_self_similar_rayleigh_gans_rt3
@@ -1130,7 +1130,7 @@ module rayleigh_gans
 
 
     errorstatus = err    
-    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+    if (verbose >= 2) call report(info,'End of1 ', nameOfRoutine)
     return 
 
   end subroutine calc_self_similar_rayleigh_gans_passive
@@ -1239,7 +1239,7 @@ module rayleigh_gans
     real(kind=dbl), intent(in), dimension(nbins) :: del_d    
     real(kind=dbl), intent(in), dimension(nbins) ::  ndens
     real(kind=dbl), intent(in), dimension(nbins) :: mass
-    real(kind=dbl), intent(in), dimension(nbins) :: as_ratio
+    real(kind=dbl), intent(in), dimension(nbins) :: as_ratio !alpha_eff
     real(kind=dbl), intent(in), dimension(nbins) :: canting
     real(kind=dbl), intent(in) :: refre
     real(kind=dbl), intent(in) :: refim !positive(?)
@@ -1304,6 +1304,7 @@ module rayleigh_gans
           return
       end if    
 
+    print*, "I am using the correct module"
     wavelength = c/(freq) !m
     k = 2.d0*pi/wavelength
 
