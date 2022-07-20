@@ -2536,7 +2536,6 @@ def readICON2mom(fname, descriptorFile, fextpar=None, finit=None, forcing='ICON'
   EXTPAR_file = netCDF4.Dataset(fextpar, mode='r')
   vals = EXTPAR_file.variables
 
-
   Nx = len(vals['clon'])
   Ny = len(vals['clat'])
 
@@ -2553,6 +2552,7 @@ def readICON2mom(fname, descriptorFile, fextpar=None, finit=None, forcing='ICON'
     pamData['sfc_sif'] = vals['fr_seaice'][0,...]
   elif forcing == 'IFS':
     pamData['sfc_sif'] = vals['CI'][0,...]
+
 
   INIT_file.close()
 
