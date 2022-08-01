@@ -71,9 +71,9 @@ contains
         elseif (sfc_model(i_x,i_y) == 1) then ! SSMI
             call land_sfc_optics_ssmi(err,freq)
         end if
-        if (sfc_refl(i_x,i_y) .ne. 'S') then
+        if ((sfc_refl(i_x,i_y) .ne. 'S') .and. (sfc_refl(i_x,i_y) .ne. 'L') ) then
           errorstatus = warning
-          msg = "Only specular reflection makes sense for land surfaces"
+          msg = "Only specular or Lambertian reflection makes sense for land surfaces"
           call report(errorstatus, msg, nameOfRoutine)
         end if
     else ! default sfc_type == -9999, sfc_model == -9999 and sfc_refl == 'S'
