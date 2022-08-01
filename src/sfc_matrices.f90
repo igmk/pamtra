@@ -165,6 +165,8 @@ module sfc_matrices
     call midentity(n, trans(1, 1, 1, 1, 1)) 
     call midentity(n, trans(1, 1, 1, 1, 2)) 
 
+    call planck_function(ground_temp, 'r', wavelength, planck) 
+
     ! the code has been changed according to Xinxin Xie suggestion. It is now identical with Fresnel.
     do j = 1, nummu 
       rv = rt_sfc_reflectivity(1,j) ! The square of the vertical abs value
@@ -183,14 +185,10 @@ module sfc_matrices
       !   reflect(2, j, 1, j, 2) = r2 
       !   reflect(2, j, 2, j, 2) = r1 
       ! end if
-    end do
-    
-    call planck_function(ground_temp, 'r', wavelength, planck) 
-    do j = 1, nummu 
       radiance(1, j) = (1.0 - r1) * planck 
       radiance(2, j) = - r2 * planck 
     end do
-    
+        
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
     
   end subroutine specular_matrices
