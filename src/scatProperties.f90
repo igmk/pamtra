@@ -561,10 +561,10 @@ contains
           canting_list, &
           refre, &
           refim, & !positive(?)
-          rg_kappa_list, &
-          rg_beta_list, &
-          rg_gamma_list, &
-          rg_zeta_list, &
+          rg_kappa, &
+          rg_beta, &
+          rg_gamma, &
+          !rg_zeta_list, &
           !OUT
           scatter_matrix_hydro(:,:,:,:,1:2),&
           extinct_matrix_hydro(:,:,:,1),&

@@ -1304,7 +1304,6 @@ module rayleigh_gans
           return
       end if    
 
-    print*, "I am using the correct module"
     wavelength = c/(freq) !m
     k = 2.d0*pi/wavelength
 
