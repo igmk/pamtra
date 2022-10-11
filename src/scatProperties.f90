@@ -493,12 +493,16 @@ contains
         end do
         read(tokenized(2),*) rg_kappa
         read(tokenized(3),*) rg_beta
+        read(tokenized(4),*) rg_gamma
+        read(tokenized(5),*) rg_zeta
       else
         !take default values for aggregates of bullet rosettes or columns from Hogan and Westbrook 2014
         rg_kappa = 0.19d0
         rg_beta = 0.23d0
+        rg_gamma = 5.d0/3.d0 
+        rg_zeta = 1.d0
       end if
-      rg_gamma = 5.d0/3.d0 
+      
 
       if (verbose >= 5) print*,scat_name, "test", rg_gamma, rg_kappa, rg_beta
 
