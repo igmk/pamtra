@@ -1333,8 +1333,8 @@ module rayleigh_gans
 
       ! Initialize the summation in the second term in the braces of Eq. 12
       ! Initialize first term of sum with zeta (added by Nina, 15.02.22)
-      term2 = rg_zeta(ii) * (2.d0*jj)**(-1.0d0*rg_gamma(ii)) * sin(x)**2 &
-              *(1.d0/(2.d0*(x+pi*jj))**2 + 1.d0/(2.d0*(x-pi*jj))**2)
+      term2 = rg_zeta(ii) * (2.d0)**(-1.0d0*rg_gamma(ii)) * sin(x)**2 &
+              *(1.d0/(2.d0*(x+pi))**2 + 1.d0/(2.d0*(x-pi))**2)
       ! Decide how many terms are needed
       jmax = floor(5.d0*x/pi + 1.d0)
 
