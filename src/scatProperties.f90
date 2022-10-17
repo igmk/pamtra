@@ -12,7 +12,7 @@ module scatProperties
   !rt4 style
 
   !needed by rt3 and rt4
-  character(len=30) :: scat_name
+  character(len=60) :: scat_name
   character(len=30) :: vel_size_mod
   real(kind=dbl), allocatable, dimension(:,:) :: radar_spec
 
@@ -150,7 +150,7 @@ contains
     real(kind=dbl) :: rg_gamma
     real(kind=dbl) :: rg_zeta
 
-    character(30) :: tokenized(4)
+    character(60) :: tokenized(4)
 
     integer(kind=long) :: pos1, pos2, nn 
 
@@ -356,6 +356,8 @@ contains
       if (len(trim(scat_name)) > 5) then
         pos1 = 7
         nn = 0
+        tokenized(2) = '1.0' ! default value for rg_beta
+        tokenized(3) = '1.66' ! default value for rg_gamma
         tokenized(4) = '1.0' ! default value for rg_zeta
         pos2 = index(scat_name(pos1:), "_")
         do
@@ -380,6 +382,7 @@ contains
         rg_gamma = 1.66d0 !5.d0/3.d0
         rg_zeta = 0.04 !1.0d0
       end if
+
 
       call calc_ssrga(err,&
         freq*1.d9,&
@@ -478,23 +481,28 @@ contains
       ! rayleigh gans only for active!
     else if (scat_name(:16) == "ss-rayleigh-gans") then
       if (len(trim(scat_name)) > 16) then
-        pos1 = 1
+        tokenized(2) = '0.23' ! default value for rg_beta 
+        tokenized(3) = '1.667' ! default value for rg_gamma = 5.d0/3.d0
+        tokenized(4) = '1.0' ! default value for rg_zeta
+        pos1 = 18
         nn = 0
+        pos2 = index(scat_name(pos1:), "_")
         do
-          pos2 = index(scat_name(pos1:), "_")
-          if (pos2 == 0) then
-            nn = nn + 1
+          nn = nn + 1
+          if (pos2 == 0) then ! no more _
             tokenized(nn) = scat_name(pos1:)
             exit
           end if
-          nn = nn + 1
           tokenized(nn) = scat_name(pos1:pos1+pos2-2)
           pos1 = pos2+pos1
+          pos2 = index(scat_name(pos1:), "_")
         end do
-        read(tokenized(2),*) rg_kappa
-        read(tokenized(3),*) rg_beta
-        read(tokenized(4),*) rg_gamma
-        read(tokenized(5),*) rg_zeta
+        
+        read(tokenized(1),*) rg_kappa
+        read(tokenized(2),*) rg_beta
+        read(tokenized(3),*) rg_gamma
+        read(tokenized(4),*) rg_zeta
+
       else
         !take default values for aggregates of bullet rosettes or columns from Hogan and Westbrook 2014
         rg_kappa = 0.19d0
@@ -502,9 +510,12 @@ contains
         rg_gamma = 5.d0/3.d0 
         rg_zeta = 1.d0
       end if
-      
+      rg_beta_list(:) = rg_beta
+      rg_kappa_list(:) = rg_kappa
+      rg_gamma_list(:) = rg_gamma
+      rg_zeta_list(:) = rg_zeta
 
-      if (verbose >= 5) print*,scat_name, "test", rg_gamma, rg_kappa, rg_beta
+      if (verbose >= 5) print*,scat_name, "test", rg_gamma, rg_kappa, rg_beta, rg_zeta
 
       if (active) then
         call calc_self_similar_rayleigh_gans(err,&
