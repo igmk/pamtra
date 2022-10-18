@@ -12,7 +12,7 @@ module scatProperties
   !rt4 style
 
   !needed by rt3 and rt4
-  character(len=30) :: scat_name
+  character(len=60) :: scat_name
   character(len=30) :: vel_size_mod
   real(kind=dbl), allocatable, dimension(:,:) :: radar_spec
 
@@ -105,7 +105,12 @@ contains
       d_ds
     use constants, only: pi, Im
     use vars_index, only: i_x, i_y, i_z, i_f, i_h, i_p
-    use vars_hydroFullSpec, only: hydrofs_as_ratio, hydrofs_canting
+    use vars_hydroFullSpec, only: hydrofs_as_ratio, &
+      hydrofs_canting, &
+      hydrofs_rg_beta_ds, &
+      hydrofs_rg_zeta_ds, &
+      hydrofs_rg_gamma_ds, &
+      hydrofs_rg_kappa_ds
 
     implicit none
 
@@ -126,7 +131,12 @@ contains
     real(kind=dbl), dimension(radar_npol,nbin) :: back_spec_dia
     real(kind=dbl), dimension(nbin) :: back_spec_mie, back_spec_liu, back_spec_hong
     real(kind=dbl), dimension(nbin) :: back_spec_rg, back_spec_ssrg
-    real(kind=dbl), allocatable, dimension(:) :: as_ratio_list, canting_list
+    real(kind=dbl), allocatable, dimension(:) :: as_ratio_list
+    real(kind=dbl), allocatable, dimension(:) :: canting_list
+    real(kind=dbl), allocatable, dimension(:) :: rg_beta_list
+    real(kind=dbl), allocatable, dimension(:) :: rg_zeta_list
+    real(kind=dbl), allocatable, dimension(:) :: rg_gamma_list
+    real(kind=dbl), allocatable, dimension(:) :: rg_kappa_list
     real(kind=dbl) :: kext_hydro
     real(kind=dbl) :: salb_hydro
     real(kind=dbl) :: back_hydro_mie, back_hydro_liu, back_hydro_hong, back_hydro_ssrg
@@ -140,7 +150,7 @@ contains
     real(kind=dbl) :: rg_gamma
     real(kind=dbl) :: rg_zeta
 
-    character(30) :: tokenized(4)
+    character(60) :: tokenized(4)
 
     integer(kind=long) :: pos1, pos2, nn 
 
@@ -237,12 +247,24 @@ contains
     !some fixed settings for Tmatrix and rg
     allocate(as_ratio_list(nbin))
     allocate(canting_list(nbin))
+    allocate(rg_beta_list(nbin))
+    allocate(rg_kappa_list(nbin))
+    allocate(rg_gamma_list(nbin))
+    allocate(rg_zeta_list(nbin))
     if (hydro_fullSpec) then
       as_ratio_list(:) = hydrofs_as_ratio(i_x,i_y,i_z,i_h,:)
       canting_list(:) = hydrofs_canting(i_x,i_y,i_z,i_h,:)
+      rg_beta_list(:) = hydrofs_rg_beta_ds(i_x,i_y,i_z,i_h,:)
+      rg_kappa_list(:) = hydrofs_rg_kappa_ds(i_x,i_y,i_z,i_h,:)
+      rg_gamma_list(:) = hydrofs_rg_gamma_ds(i_x,i_y,i_z,i_h,:)
+      rg_zeta_list(:) = hydrofs_rg_zeta_ds(i_x,i_y,i_z,i_h,:)
     else
       as_ratio_list(:) =  as_ratio
       canting_list(:) =  dsd_canting
+      rg_beta_list(:) = rg_beta
+      rg_kappa_list(:) = rg_kappa
+      rg_gamma_list(:) = rg_gamma
+      rg_zeta_list(:) = rg_zeta
     end if
 
     where (canting_list < 0) canting_list = 0.d0
@@ -334,6 +356,8 @@ contains
       if (len(trim(scat_name)) > 5) then
         pos1 = 7
         nn = 0
+        tokenized(2) = '1.0' ! default value for rg_beta
+        tokenized(3) = '1.66' ! default value for rg_gamma
         tokenized(4) = '1.0' ! default value for rg_zeta
         pos2 = index(scat_name(pos1:), "_")
         do
@@ -358,6 +382,7 @@ contains
         rg_gamma = 1.66d0 !5.d0/3.d0
         rg_zeta = 0.04 !1.0d0
       end if
+
 
       call calc_ssrga(err,&
         freq*1.d9,&
@@ -456,29 +481,41 @@ contains
       ! rayleigh gans only for active!
     else if (scat_name(:16) == "ss-rayleigh-gans") then
       if (len(trim(scat_name)) > 16) then
-        pos1 = 1
+        tokenized(2) = '0.23' ! default value for rg_beta 
+        tokenized(3) = '1.667' ! default value for rg_gamma = 5.d0/3.d0
+        tokenized(4) = '1.0' ! default value for rg_zeta
+        pos1 = 18
         nn = 0
+        pos2 = index(scat_name(pos1:), "_")
         do
-          pos2 = index(scat_name(pos1:), "_")
-          if (pos2 == 0) then
-            nn = nn + 1
+          nn = nn + 1
+          if (pos2 == 0) then ! no more _
             tokenized(nn) = scat_name(pos1:)
             exit
           end if
-          nn = nn + 1
           tokenized(nn) = scat_name(pos1:pos1+pos2-2)
           pos1 = pos2+pos1
+          pos2 = index(scat_name(pos1:), "_")
         end do
-        read(tokenized(2),*) rg_kappa
-        read(tokenized(3),*) rg_beta
+        
+        read(tokenized(1),*) rg_kappa
+        read(tokenized(2),*) rg_beta
+        read(tokenized(3),*) rg_gamma
+        read(tokenized(4),*) rg_zeta
+
       else
         !take default values for aggregates of bullet rosettes or columns from Hogan and Westbrook 2014
         rg_kappa = 0.19d0
         rg_beta = 0.23d0
+        rg_gamma = 5.d0/3.d0 
+        rg_zeta = 1.d0
       end if
-      rg_gamma = 5.d0/3.d0 
+      rg_beta_list(:) = rg_beta
+      rg_kappa_list(:) = rg_kappa
+      rg_gamma_list(:) = rg_gamma
+      rg_zeta_list(:) = rg_zeta
 
-      if (verbose >= 5) print*,scat_name,  rg_gamma, rg_kappa, rg_beta
+      if (verbose >= 5) print*,scat_name, "test", rg_gamma, rg_kappa, rg_beta, rg_zeta
 
       if (active) then
         call calc_self_similar_rayleigh_gans(err,&
@@ -493,9 +530,15 @@ contains
           canting_list, &
           refre, &
           refim, & !positive(?)
-          rg_kappa, &
-          rg_beta, &
-          rg_gamma, &
+          !rg_kappa, &
+          !rg_beta, &
+          !rg_gamma, &
+          !rg_zeta, &
+          ! use size bin arrays
+          rg_kappa_list, &
+          rg_beta_list, &
+          rg_gamma_list, &
+          rg_zeta_list, &
           !OUT
           back_spec_rg, &
           back_hydro_rg )
@@ -536,6 +579,7 @@ contains
           rg_kappa, &
           rg_beta, &
           rg_gamma, &
+          !rg_zeta_list, &
           !OUT
           scatter_matrix_hydro(:,:,:,:,1:2),&
           extinct_matrix_hydro(:,:,:,1),&
@@ -554,6 +598,11 @@ contains
 
       if (allocated(as_ratio_list)) deallocate(as_ratio_list)
       if (allocated(canting_list)) deallocate(canting_list)
+      if (allocated(rg_zeta_list)) deallocate(rg_zeta_list)
+      if (allocated(rg_gamma_list)) deallocate(rg_gamma_list)
+      if (allocated(rg_kappa_list)) deallocate(rg_kappa_list)
+      if (allocated(rg_beta_list)) deallocate(rg_beta_list)
+
 
       if (err /= 0) then
         msg = 'error in calc_self_similar_rayleigh_gans!'

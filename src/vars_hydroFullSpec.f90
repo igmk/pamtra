@@ -16,6 +16,10 @@ module vars_hydroFullSpec
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_canting
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_as_ratio
   real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_fallvelocity
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_rg_kappa_ds
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_rg_beta_ds
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_rg_gamma_ds
+  real(kind=dbl), allocatable, dimension(:,:,:,:,:) :: hydrofs_rg_zeta_ds
 
   contains
 
@@ -61,6 +65,10 @@ module vars_hydroFullSpec
     allocate(hydrofs_canting(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
     allocate(hydrofs_as_ratio(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
     allocate(hydrofs_fallvelocity(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
+    allocate(hydrofs_rg_kappa_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
+    allocate(hydrofs_rg_beta_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
+    allocate(hydrofs_rg_gamma_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
+    allocate(hydrofs_rg_zeta_ds(atmo_ngridx,atmo_ngridy, atmo_max_nlyrs,n_hydro,hydrofs_nbins))
 
 
     errorstatus = err
@@ -84,6 +92,10 @@ module vars_hydroFullSpec
     if (allocated(hydrofs_canting)) deallocate(hydrofs_canting)
     if (allocated(hydrofs_as_ratio)) deallocate(hydrofs_as_ratio)
     if (allocated(hydrofs_fallvelocity)) deallocate(hydrofs_fallvelocity)
+    if (allocated(hydrofs_rg_kappa_ds)) deallocate(hydrofs_rg_kappa_ds)
+    if (allocated(hydrofs_rg_beta_ds)) deallocate(hydrofs_rg_beta_ds)
+    if (allocated(hydrofs_rg_gamma_ds)) deallocate(hydrofs_rg_gamma_ds)
+    if (allocated(hydrofs_rg_zeta_ds)) deallocate(hydrofs_rg_zeta_ds)
  
     if (verbose >= 3) call report(info,'End of ', nameOfRoutine)
 
@@ -110,6 +122,10 @@ module vars_hydroFullSpec
             print*, "hydrofs_canting", hydrofs_canting(xx,yy,zz,hh, :)
             print*, "hydrofs_as_ratio", hydrofs_as_ratio(xx,yy,zz,hh, :)
             print*, "hydrofs_fallvelocity", hydrofs_fallvelocity(xx,yy,zz,hh, :)
+            print*, "hydrofs_rg_kappa_ds", hydrofs_rg_kappa_ds(xx,yy,zz,hh, :)
+            print*, "hydrofs_rg_beta_ds", hydrofs_rg_beta_ds(xx,yy,zz,hh, :)
+            print*, "hydrofs_rg_zeta_ds", hydrofs_rg_zeta_ds(xx,yy,zz,hh, :)
+            print*, "hydrofs_rg_gamma_ds", hydrofs_rg_gamma_ds(xx,yy,zz,hh, :)
 
           end do
         end do

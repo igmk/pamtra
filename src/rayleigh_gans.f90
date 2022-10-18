@@ -595,7 +595,7 @@ module rayleigh_gans
     character(len=80) :: msg
     character(len=30) :: nameOfRoutine = 'calc_self_similar_rayleigh_gans_rt3'
 
-    if (verbose >= 2) call report(info,'Start of ', nameOfRoutine)
+    if (verbose >= 2) call report(info,'Start of1 ', nameOfRoutine)
     err = 0
 
     call assert_true(err,(liq_ice==-1),&
@@ -835,7 +835,7 @@ module rayleigh_gans
     end if    
 
     errorstatus = err    
-    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+    if (verbose >= 2) call report(info,'End of1 ', nameOfRoutine)
     return 
 
   end subroutine calc_self_similar_rayleigh_gans_rt3
@@ -1130,7 +1130,7 @@ module rayleigh_gans
 
 
     errorstatus = err    
-    if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
+    if (verbose >= 2) call report(info,'End of1 ', nameOfRoutine)
     return 
 
   end subroutine calc_self_similar_rayleigh_gans_passive
@@ -1182,6 +1182,7 @@ module rayleigh_gans
       rg_kappa, &
       rg_beta, &
       rg_gamma, &
+      rg_zeta, &
       back_spec, &
       sumqback )
 
@@ -1190,7 +1191,7 @@ module rayleigh_gans
 !   Self-Similar Rayleigh-Gans Approximation
 !
 !   bcs = self_similar_rayleigh_gans(wavelength, dielectric_const, D, ...
-!                                    volume, rg_kappa, rg_beta, rg_gamma)
+!                                    volume, rg_kappa, rg_beta, rg_gamma, rg_zeta)
 !   where the arguments are:
 !     bcs                  Backscatter cross-section (m2)
 !     wavelength           Wavelength of radiation (m)
@@ -1205,6 +1206,8 @@ module rayleigh_gans
 !   may be vectors or scalars, provided that any vectors are the same
 !   length, and D is also a vector. The output backscatter cross section
 !   will have the same size as D.
+!   
+!   !! Changed from scalar to vectors !!
 !
 !   This function is particularly suitable for computing the millimetre-wave
 !   backscatter cross-section of ice and snow aggregates. Note that the
@@ -1236,13 +1239,15 @@ module rayleigh_gans
     real(kind=dbl), intent(in), dimension(nbins) :: del_d    
     real(kind=dbl), intent(in), dimension(nbins) ::  ndens
     real(kind=dbl), intent(in), dimension(nbins) :: mass
-    real(kind=dbl), intent(in), dimension(nbins) :: as_ratio
+    real(kind=dbl), intent(in), dimension(nbins) :: as_ratio !alpha_eff
     real(kind=dbl), intent(in), dimension(nbins) :: canting
     real(kind=dbl), intent(in) :: refre
     real(kind=dbl), intent(in) :: refim !positive(?)
-    real(kind=dbl), intent(in) :: rg_kappa
-    real(kind=dbl), intent(in) :: rg_beta
-    real(kind=dbl), intent(in) :: rg_gamma
+    ! Nina: added arrays as input: dimension 
+    real(kind=dbl), intent(in), dimension(nbins) :: rg_kappa
+    real(kind=dbl), intent(in), dimension(nbins) :: rg_beta
+    real(kind=dbl), intent(in), dimension(nbins) :: rg_gamma
+    real(kind=dbl), intent(in), dimension(nbins) :: rg_zeta ! added zeta (Nina)
 
     real(kind=dbl), intent(out), dimension(nbins) :: back_spec
     real(kind=dbl), intent(out) :: sumqback
@@ -1323,22 +1328,24 @@ module rayleigh_gans
       ! Factor outside the braces in Eq. 12 of Hogan and Westbrook
       prefactor = 9.0d0 * pi * k**4 *K2 * volume**2 /16
 
-      term1=(cos(x)*((1.0d0+rg_kappa/3.0d0)*(1.0d0/(2.0d0*x+pi)-1.0d0/(2.0d0*x-pi)) &
-              - rg_kappa*(1.0d0/(2.0d0*x+3.0d0*pi)-1.0d0/(2.0d0*x-3.0d0*pi))))**2
+      term1=(cos(x)*((1.0d0+rg_kappa(ii)/3.0d0)*(1.0d0/(2.0d0*x+pi)-1.0d0/(2.0d0*x-pi)) &
+              - rg_kappa(ii)*(1.0d0/(2.0d0*x+3.0d0*pi)-1.0d0/(2.0d0*x-3.0d0*pi))))**2
 
       ! Initialize the summation in the second term in the braces of Eq. 12
-      term2 = 0.0d0
+      ! Initialize first term of sum with zeta (added by Nina, 15.02.22)
+      term2 = rg_zeta(ii) * (2.d0)**(-1.0d0*rg_gamma(ii)) * sin(x)**2 &
+              *(1.d0/(2.d0*(x+pi))**2 + 1.d0/(2.d0*(x-pi))**2)
       ! Decide how many terms are needed
       jmax = floor(5.d0*x/pi + 1.d0)
 
       ! Evaluate summation
-      do jj = 1, jmax
-        term2 = term2 + (2.d0*jj)**(-rg_gamma) * sin(x)**2 &
+      do jj = 2, jmax ! start from second term
+        term2 = term2 + (2.d0*jj)**(-1.0d0*rg_gamma(ii)) * sin(x)**2 &
               *(1.d0/(2.d0*(x+pi*jj))**2 + 1.d0/(2.d0*(x-pi*jj))**2)
       end do
 
       ! Put the terms together
-      back_spec(ii) = prefactor*(term1 + rg_beta*term2)
+      back_spec(ii) = prefactor*(term1 + rg_beta(ii)*term2)
       
       !Apply psd
       back_spec(ii) =  back_spec(ii) *ndens(ii)

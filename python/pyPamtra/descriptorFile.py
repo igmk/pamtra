@@ -15,7 +15,7 @@ class pamDescriptorFile(object):
          
   def __init__(self,parent):
     self.names = np.array(["hydro_name", "as_ratio", "liq_ice", "rho_ms", "a_ms", "b_ms", "alpha_as", "beta_as", "moment_in", "nbin", "dist_name", "p_1", "p_2", "p_3", "p_4", "d_1", "d_2", "scat_name", "vel_size_mod","canting"])
-    self.types = ["U15",float,int,float,float,float,float,float,int,int,"U15",float,float,float,float,float,float, "U30", "U30",float]  
+    self.types = ["U15",float,int,float,float,float,float,float,int,int,"U15",float,float,float,float,float,float, "U60", "U30",float]  
     self.data = np.recarray((0,),dtype=list(zip(self.names, self.types)))
     self.data4D = dict()
     self.nhydro = 0
@@ -212,6 +212,10 @@ class pamDescriptorFile(object):
     self.dataFullSpec["as_ratio"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
     self.dataFullSpec["canting"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
     self.dataFullSpec["fallvelocity"] = np.zeros(self.parent._shape4D+(self.fs_nbin,))
+    self.dataFullSpec["rg_kappa_ds"] = np.full(self.parent._shape4D+(self.fs_nbin,), 0.19)
+    self.dataFullSpec["rg_beta_ds"] = np.full(self.parent._shape4D+(self.fs_nbin,), 0.23)
+    self.dataFullSpec["rg_gamma_ds"] = np.full(self.parent._shape4D+(self.fs_nbin,), 5./3.)
+    self.dataFullSpec["rg_zeta_ds"] = np.full(self.parent._shape4D+(self.fs_nbin,), 1.)
 
 
     
