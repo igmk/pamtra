@@ -2257,9 +2257,9 @@ class pyPamtra(object):
       nc_stokes = cdfFile.createVariable('passive_polarisation', 'S1',("passive_polarisation",),**fillVDict)
       nc_stokes.units = "-"
       if xarrayCompatibleOutput:
-        nc_stokes[:] = ("H", "V")
+        nc_stokes[:] = ("V", "H")
       else:
-        nc_stokes[:] = "HV"
+        nc_stokes[:] = "VH"
 
       if xarrayCompatibleOutput:
         nc_outlevel = cdfFile.createVariable('outlevel','f',('outlevel',),**fillVDict)#= missingNumber)
