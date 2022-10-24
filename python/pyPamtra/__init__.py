@@ -13,3 +13,4 @@ from . import plot
 from . import fortranNamelist
 from . import tools
 from . import descriptorFile
+from . import riming
