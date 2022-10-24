@@ -6,15 +6,16 @@ SRCDIR := src/
 BINDIR := bin/
 LIBDIR := lib/
 PYTDIR := python/pyPamtra
-PYINSTDIR := ~/lib/python/
+#PYINSTDIR := ~/lib/python/
+PYINSTDIR := ~/miniconda3/envs/ac3/lib/
 
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
 
 NCCONF = $(shell which nf-config || which nc-config) # on newer Ubuntu version C and Fortran libraries have their own configure scripts
 F2PY := $(shell which f2py || which f2py3 || which f2py2.7) # on newer Ubuntu systems, only f2py2.7 is available
-FC=gfortran
-CC=gcc
+FC= gfortran #ifort
+CC= gcc #icc
 FCFLAGS=-c -fPIC -cpp -J$(OBJDIR) -I$(OBJDIR) #FCFLAGS=-c -fPIC -Wunused  -cpp -J$(OBJDIR) -I$(OBJDIR)
 #FCFLAGS=-g -c -fPIC -Wunused -O0 -cpp -J$(OBJDIR) -I$(OBJDIR)
 

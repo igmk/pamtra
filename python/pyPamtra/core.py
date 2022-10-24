@@ -2111,9 +2111,9 @@ class pyPamtra(object):
         integrated values to be saved (default [])
     xarrayCompatibleOutput: bool, optional, default(False)
         if True, make passive-only nc file xarray dataset compatible:
-            set passive_polarisation to H and V
+            set passive_polarisation to V and H
             rename dimension 'outlevels' to 'outlevel' and provide outlevel index vector
-        Otherwise passive_polarisation is filled with 'H' and 'H' and outlevel dimension is 'outlevels' (default)
+        Otherwise passive_polarisation is filled with 'VH' and outlevel dimension is 'outlevels' (default)
     ncCompression: bool, optional
         If True, use netCDF4 compression. (NETCDF4 and NETCDF4_CLASSIC only).
         Otherwise save with default settings (default, no compression)

@@ -68,7 +68,6 @@ module drop_size_dist
   real(kind=dbl), dimension(:), allocatable  :: area_ds ! particle cross section area for radar simulator [m^2]
 
   
-  
  contains
 
 subroutine allocateVars_drop_size_dist
