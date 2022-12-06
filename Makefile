@@ -9,7 +9,7 @@ PYTDIR := python/pyPamtra
 PYINSTDIR := ~/lib/python/
 
 gitHash    := $(shell git show -s --pretty=format:%H)
-gitVersion := $(shell git describe)-$(shell git name-rev --name-only HEAD)
+gitVersion := $(shell git describe --tags)-$(shell git name-rev --name-only HEAD)
 
 NCCONF = $(shell which nf-config || which nc-config) # on newer Ubuntu version C and Fortran libraries have their own configure scripts
 F2PY := $(shell which f2py || which f2py3 || which f2py2.7) # on newer Ubuntu systems, only f2py2.7 is available
