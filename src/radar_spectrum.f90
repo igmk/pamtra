@@ -164,6 +164,15 @@ subroutine radar_spectrum(&
         end if
         vel_spec(:) = hydrofs_fallvelocity(i_x, i_y, i_z, i_h, :)
 
+        call assert_false(err,ALL(hydrofs_fallvelocity(i_x, i_y, i_z, i_h, :) == 0),&
+            "all hydrofs_fallvelocity(i_x, i_y, i_z, i_h, :) == 0")
+        if (err /= 0) then
+          msg = 'error in radar_spectrum!'
+          call report(err, msg, nameOfRoutine)
+          errorstatus = err
+          return
+        end if
+
     else
 
         err = 0
