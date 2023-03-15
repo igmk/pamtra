@@ -31,19 +31,17 @@ library_dirs = ['~/.local/lib/', '/usr/local/lib/', '/opt/local/lib/']
 def configuration(parent_package='', top_path=None):
 
     config = Configuration(
-        'pamtra',
+        'pyPamtra',
         parent_package,
         top_path,
         version='0.1',
         author="Pamtra Team",
-        author_email="maximilian.maahn@uni-leipzig.de",
+        author_email="meteo-pamtra@uni-koeln.de",
         description="atmospheric microwace passive"
                     " and active instrument simulator",
         license="GPL v3",
         python_requires='>=3.5',
         url='https://github.com/igmk/pamtra',
-        download_url='https://github.com/maahn/pamtra/'
-                     'releases/download/0.1/pamtra-0.1.zip',
         long_description=read('readme.md'),
         classifiers=[
             "Development Status :: 2 - Beta",
@@ -60,7 +58,7 @@ def configuration(parent_package='', top_path=None):
 
 fortPath = 'src'
 pyPamtra = Extension(
-    'pamtra.pyPamtra.pyPamtraLib',
+    'pyPamtra.pyPamtraLib',
     sources=[
         '%s/pyPamtraLib.pyf' %fortPath,
         "%s/kinds.f90"%fortPath,
@@ -166,6 +164,18 @@ pyPamtra = Extension(
     extra_compile_args = [ "-fPIC", "-cpp", "-c"],
     **kw)
 
+
+usStandardPath = "tools/py_usStandard"
+usStandard = Extension(
+    'usStandard.usStandardAtmosphere',
+    sources=[
+        '%s/src/usStandardAtmosphere.pyf' %usStandardPath,
+        "%s/src/usStandard.f90"%usStandardPath,
+    ],
+    library_dirs=library_dirs,
+    extra_compile_args = [ "-fPIC", "-cpp", "-c"],
+    **kw)
+
 # cMie = Extension(
 #     name = "pamtra2.libs.singleScattering.cMie",
 #     sources = ["%s/Mie/cython/cMie.pyx" % singleScattering_path,
@@ -182,11 +192,13 @@ if __name__ == "__main__":
     setup(
         configuration=configuration,
         packages=[
-        'pamtra','pamtra.pyPamtra',
-        'pamtra.pyPamtra.fortranNamelist',
-                  ],
+        'pyPamtra',
+        'pyPamtra.fortranNamelist',
+        'usStandard'
+        ],
         package_dir={
-            'pamtra': 'python' ,
+            'pyPamtra': 'python/pyPamtra' ,
+            'usStandard': '%s/usStandard'%usStandardPath ,
         },
         package_data={
             # Don't aks me why, but I need an extra random character in front
@@ -201,6 +213,6 @@ if __name__ == "__main__":
         setup_requires=["pytest-runner"],
         tests_require=["pytest"],
         ext_modules=cythonize(
-            [pyPamtra]),
+            [pyPamtra,usStandard]),
 
     )

@@ -1,0 +1,7 @@
+*.so
+*.so.dSYM
+*.pyc
+.DS_Store
+build/*
+usStandard.egg-info/*
+.eggs/*

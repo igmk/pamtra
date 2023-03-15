@@ -2,7 +2,6 @@
 
 from __future__ import division
 
-print(1239)
 from .core import pyPamtra
 
 
