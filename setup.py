@@ -11,7 +11,6 @@ from numpy.distutils.core import setup
 from numpy.distutils.extension import Extension
 from numpy.distutils.misc_util import Configuration
 
-
 def read(fname):
     return open(os.path.join(os.path.dirname(__file__), fname)).read()
 
@@ -34,7 +33,7 @@ def configuration(parent_package='', top_path=None):
         'pyPamtra',
         parent_package,
         top_path,
-        version='0.1',
+        version='1.1',
         author="Pamtra Team",
         author_email="meteo-pamtra@uni-koeln.de",
         description="atmospheric microwace passive"
