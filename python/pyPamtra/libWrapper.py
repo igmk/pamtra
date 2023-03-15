@@ -15,7 +15,8 @@ try:
 except ImportError:
     print('PAMTRA FORTRAN LIBRARY NOT AVAILABLE!')
 
-
+from . import __version__
+from . import __versionFull__
 
 is3 = sys.version_info[0] == 3
 
@@ -222,9 +223,12 @@ def PamtraFortranWrapper(
       if key in ["radar_quality"]: results[key] = -9999
       else: results[key] = -9999.
 
+#  results["pamtraVersion"] = str(pypamtralib.gitversion.astype('U40')).strip()
+#  results["pamtraHash"] = str(pypamtralib.githash.astype('U40')).strip()  
 
-  results["pamtraVersion"] = str(pypamtralib.gitversion.astype('U40')).strip()
-  results["pamtraHash"] = str(pypamtralib.githash.astype('U40')).strip()  
+  results["pamtraVersion"] = __version__
+  results["pamtraHash"] = __versionFull__
+
 
   if sets["pyVerbose"] > 2: "processed results"
 

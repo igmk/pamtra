@@ -33,7 +33,9 @@ def configuration(parent_package='', top_path=None):
         'pyPamtra',
         parent_package,
         top_path,
-        version='1.1',
+        use_scm_version={ # means thast version is pulled from git label
+        "version_scheme": "post-release",
+    },
         author="Pamtra Team",
         author_email="meteo-pamtra@uni-koeln.de",
         description="atmospheric microwace passive"
@@ -175,16 +177,6 @@ usStandard = Extension(
     extra_compile_args = [ "-fPIC", "-cpp", "-c"],
     **kw)
 
-# cMie = Extension(
-#     name = "pamtra2.libs.singleScattering.cMie",
-#     sources = ["%s/Mie/cython/cMie.pyx" % singleScattering_path,
-#              "%s/Mie/src/cMie.c" % singleScattering_path],
-#     include_dirs = [numpy.get_include()],
-#     extra_compile_args = ["-O3", "-ffast-math",
-#                           "-Wall", "-lm", "-fPIC", "-std=c99"],
-#     language='c'
-# )
-
 
 if __name__ == "__main__":
 
@@ -209,9 +201,8 @@ if __name__ == "__main__":
         install_requires=["pandas", "numpy", "scipy", "matplotlib", "netcdf4",
                   'cython'],
         build_requires=['numpy', 'cython'],
-        setup_requires=["pytest-runner"],
+        setup_requires=["pytest-runner","setuptools_scm"],
         tests_require=["pytest"],
         ext_modules=cythonize(
             [pyPamtra,usStandard]),
-
     )
