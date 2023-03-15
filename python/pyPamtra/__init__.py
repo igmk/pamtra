@@ -2,7 +2,7 @@
 
 from __future__ import division
 
-
+print(1239)
 from .core import pyPamtra
 
 
@@ -10,6 +10,5 @@ from .core import pyPamtra
 from . import meteoSI
 from . import importer
 from . import plot
-from . import fortranNamelist
 from . import tools
 from . import descriptorFile

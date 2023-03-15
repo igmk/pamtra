@@ -1,6 +1,6 @@
 from __future__ import print_function
 
-import pyPamtra
+from pamtra import pyPamtra
 from copy import deepcopy
 import matplotlib.pyplot as plt
 import numpy as np

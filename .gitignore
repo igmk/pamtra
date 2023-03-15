@@ -63,3 +63,5 @@ tools/virtual_machine*/.vagrant
 examples/scatfiles/*
 examples/.ipynb_checkpoints/
 examples/data/
+.eggs
+pamtra.egg-info

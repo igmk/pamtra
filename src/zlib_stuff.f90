@@ -41,23 +41,12 @@
 ! iostat codes needed for wrinline etc
 !
 
-#define ZLIB 1
-#define OPEN64 0
-#define POPEN 1
-
 
 module iocodes
-#if OPEN64
-  integer, parameter :: eofcode = -4001
-  integer, parameter :: eolcode = -4006
-  character (len=10), parameter :: stream_access = 'sequential'
-  character (len=6), parameter :: stream_form = 'binary'
-#else
   integer, parameter :: eofcode = -1
   integer, parameter :: eolcode = -2
   character (len=6), parameter :: stream_access = 'stream'
   character (len=11), parameter :: stream_form = 'unformatted'
-#endif
 end module iocodes
 
 module ioports
@@ -68,9 +57,7 @@ module ioports
     !          Fortran style logical unit number
     !          gzip C-style file handle
     !
-#if !OPEN64
   use, intrinsic :: iso_c_binding
-#endif
   integer, parameter :: PORT_STANDARD = 1, PORT_GZIPPED = 2,  &
                         PORT_COPY = 3, PORT_PIPE = 4
   type, public :: ioport
@@ -78,13 +65,10 @@ module ioports
     character (len=1) :: stat = ' '
     integer :: filtyp
     integer :: fstream
-#if !OPEN64
     type (c_ptr) :: handle = c_null_ptr
-#endif
   end type ioport
 end module ioports
 
-#if ZLIB
 module f95zlib
 ! Fortran interface to zlib 
 !   based on looking at fgzlib, fgsl and Janus Weil's example
@@ -158,27 +142,12 @@ contains
     use, intrinsic :: iso_c_binding
     character(kind=c_char, len=*), intent(in) :: path, mode
     type (ioport) :: fd
-#if SUN
-    character(kind=c_char, len=len_trim(path)+1) :: cpath
-    character(kind=c_char, len=len_trim(mode)+1) :: cmode
-    integer :: eos
-#endif
     integer :: ios
     ios=0
     fd%filnam=path
     fd%filtyp=PORT_GZIPPED 
     fd%fstream=-1
-#if SUN
-    eos=len_trim(path)
-    cpath=path
-    cpath((eos+1):(eos+1))=c_null_char
-    eos=len_trim(mode)
-    cmode=mode
-    cmode((eos+1):(eos+1))=c_null_char
-    fd%handle = gzopen(cpath, cmode)
-#else
     fd%handle = gzopen(trim(path) // c_null_char, trim(mode) // c_null_char)
-#endif
     if (.not.c_associated(fd%handle)) ios=-1
     zbufpos=0
   end subroutine fgz_open
@@ -343,9 +312,7 @@ contains
     if (ic /= 0) ios = ic
   end subroutine fgz_close
 end module f95zlib
-#endif
 
-#if POPEN
 module f95pipes
     !
     ! Fortran interface to popen
@@ -474,63 +441,6 @@ contains
     if (ic /= 0) ios = ic
   end subroutine pipe_close
 end module f95pipes
-#endif
-#if !(ZLIB)
-
-module rndseed
-  ! time/random number generator seeds
-  integer :: ix = 1, iy = 2, iz = 3
-  integer :: initix = 1, initiy = 2, initiz = 3
-end module rndseed
-
-module rngs 
-    ! random number generators
-  contains
-
-  function rrandom()
-    !  
-    ! Algorithm AS 183 Appl Stat 1982; 31:188
-    ! Returns a pseudo-random number from U(0,1)
-    !  
-    ! ix,iy,iz should be "randomly" initialised to 1-30000
-    ! eg via time
-    !  
-    use rndseed
-    real :: rrandom
-    ix=171*mod(ix,177)-2*(ix/177)
-    iy=172*mod(iy,176)-35*(iy/176)
-    iz=170*mod(iz,178)-63*(iz/178)
-    if (ix < 0) ix=ix+30269
-    if (iy < 0) iy=iy+30307
-    if (iz < 0) iz=iz+30323
-    rrandom=amod(float(ix)/30269.0+float(iy)/30307.0 + float(iz)/30323.0,1.0)
-  end function rrandom
-
-  integer function irandom(lo,hi)
-    !  
-    ! Return a pseudo-random integer from integer U(lo..hi)
-    !  
-    integer, intent(in) :: lo
-    integer, intent(in) :: hi
-    real :: x
-    x=rrandom()
-    irandom=lo+int(float(hi-lo+1)*x)
-    if (irandom > hi) irandom=hi
-  end function irandom
-!
-! Random character string
-!
-  subroutine uniqnam(nchar, str)
-    integer, intent(in) :: nchar
-    character (len=*) :: str
-    integer i
-    str=' '
-    do i=1, nchar
-      str(i:i)=char(96+irandom(1,26))
-    end do  
-  end subroutine uniqnam
-end module rngs
-#endif
 
 module outstream
 !
@@ -569,12 +479,8 @@ module fileio
 
   use iocodes
   use ioports
-#if ZLIB
   use f95zlib
-#endif
-#if POPEN
   use f95pipes 
-#endif
   use outstream
   public :: close_port, newlun, open_port, readline, rewind_port
 contains
@@ -629,9 +535,7 @@ contains
 !
 ! Open a (plain or gzipped) file or pipe for reading or writing
 !  
-#if !ZLIB
-    use rngs
-#endif
+
     character (len=*), intent(in) :: filnam
     character (len=1), intent(in) :: mode
     type (ioport) :: port
@@ -640,9 +544,7 @@ contains
     integer :: eon, strm
     logical :: gzipped, apipe
     character(len=3) :: fileage
-#if !(ZLIB)
-    character(len=len(filnam)) :: wrkfil
-#endif
+
     ios=0
     apipe=.false.
     gzipped=.true. !ugly patch here
@@ -655,40 +557,18 @@ contains
       return
     end if
     port%stat=mode
-#if POPEN
     apipe=((mode == 'r' .and. filnam(eon:eon) == '|') .or.  &
            (mode == 'w' .and. filnam(1:1) == '|'))
-#endif
 !     if (.not.apipe) gzipped=isgzipped(filnam) !ugly patch here
     if (gzipped) then
-#if ZLIB
       call fgz_open(filnam, mode // 'b', port, ios)
-#else
-      if (mode == 'r') then
-        call uniqnam(5, wrkfil)
-        wrkfil='sp-' // trim(wrkfil) // '.txt'
-        call system('gzip -cd "' // trim(filnam) // '" > ' // wrkfil)
-        port%filnam=wrkfil
-      else
-        if (filnam(max(1,(eon-2)):eon) == '.gz') then
-          port%filnam=filnam(1:(eon-3))
-        else
-          port%filnam=filnam
-        end if
-      end if
-      call newlun(strm)
-      open(strm, file=port%filnam, status=fileage, iostat=ios)
-      port%filtyp=PORT_COPY
-      port%fstream=strm
-#endif
-#if POPEN
+
     else if (apipe) then
       if (mode == 'r') then
         call pipe_open(filnam(1:(eon-1)), port, ios)
       else
         call pipe_open(filnam(2:eon), port, ios)
       end if
-#endif
     else
       call newlun(strm)
       open(strm, file=filnam, status=fileage, iostat=ios)
@@ -708,14 +588,10 @@ contains
     ios=0
     if (port%filtyp == PORT_STANDARD .or. port%filtyp == PORT_COPY) then
       rewind(port%fstream)
-#if ZLIB
     else if (port%filtyp == PORT_GZIPPED) then
       call fgz_rewind(port, ios)
-#endif
-#if POPEN
     else if (port%filtyp == PORT_PIPE) then
       call pipe_rewind(port, ios)
-#endif
     end if
   end subroutine rewind_port
 !
@@ -733,14 +609,10 @@ contains
     end if
     if (port%filtyp == PORT_STANDARD .or. port%filtyp == PORT_COPY) then
       read(port%fstream,'(a)', advance=advancing, iostat=ios) lin
-#if ZLIB
     else if (port%filtyp == PORT_GZIPPED) then
       call fgz_read(port, lin, advance=advancing, ios=ios)
-#endif
-#if POPEN
     else if (port%filtyp == PORT_PIPE) then
       call pipe_read(port, lin, advance=advancing, ios=ios)
-#endif
     end if
   end subroutine readline
 
@@ -758,14 +630,10 @@ contains
     end if
     if (port%filtyp == PORT_STANDARD .or. port%filtyp == PORT_COPY) then
       write(port%fstream,'(a)', advance=advancing, iostat=ios) lin
-#if ZLIB
     else if (port%filtyp == PORT_GZIPPED) then
       call fgz_write(port, lin, advance=advancing, ios=ios)
-#endif
-#if POPEN
     else if (port%filtyp == PORT_PIPE) then
       call pipe_write(port, lin, advance=advancing, ios=ios)
-#endif
     end if
   end subroutine writeline
 
@@ -777,22 +645,10 @@ contains
     ios=0
     if (port%filtyp == PORT_STANDARD) then
       close(port%fstream)
-#if ZLIB
     else if (port%filtyp == PORT_GZIPPED) then
       call fgz_close(port, ios)
-#else
-    else if (port%filtyp == PORT_COPY) then
-      close(port%fstream)
-      if (port%stat == 'w') then
-        call system('gzip  -f "' // trim(port%filnam) // '"')
-      else
-        call delfile(port%filnam, -2)
-      end if
-#endif
-#if POPEN
     else if (port%filtyp == PORT_PIPE) then
       call pipe_close(port, ios)
-#endif
     end if
   end subroutine close_port
 
@@ -802,15 +658,7 @@ contains
     character (len=*), intent(in) :: filnam
     integer, intent(in) :: plevel
     integer :: ioerr
-#if IFORT || SUN
-    integer :: unlink
-    ioerr=unlink(filnam)
-#elif OPEN64
-    ioerr=0
-    call unlink(filnam)
-#else
     call unlink(filnam, ioerr)
-#endif
     if (ioerr == 0 .and. plevel >= 0) then
       write(outstr, '(3a)') 'Deleted file "', trim(filnam),'".'
     end if
