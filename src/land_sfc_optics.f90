@@ -22,7 +22,7 @@ contains
 
         if (verbose >= 3) call report(info,'Start of ', nameOfRoutine)
 
-        !call telsem2(err,atmo_month(i_x,i_y),atmo_lon(i_x,i_y),atmo_lat(i_x,i_y),freq,land_emissivity)
+        call telsem2(err,atmo_month(i_x,i_y),atmo_lon(i_x,i_y),atmo_lat(i_x,i_y),freq,land_emissivity)
 
         if (err /= 0) then
             print*, i_x, i_y,atmo_lon(i_x,i_y),atmo_lat(i_x,i_y),&

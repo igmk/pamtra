@@ -55,7 +55,6 @@ def configuration(parent_package='', top_path=None):
             "Topic :: Scientific/Engineering :: Atmospheric Science",
         ]
     )
-
     return config
 
 
@@ -98,8 +97,8 @@ pyPamtra = Extension(
         "%s/fastemx.f90"%fortPath,
         "%s/tessem2.f90"%fortPath,
         "%s/ocean_sfc_optics.f90"%fortPath,
-        #"%s/mod_mwatlas_nt_bin.f90"%fortPath,
-        #"%s/telsem2.f90"%fortPath,
+        "%s/mod_mwatlas_nt_bin.f90"%fortPath,
+        "%s/telsem2.f90"%fortPath,
         "%s/land_sfc_optics.f90"%fortPath,
         "%s/sfc_optics.f90"%fortPath,
         "%s/sfc_matrices.f90"%fortPath,

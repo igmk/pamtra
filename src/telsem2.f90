@@ -18,7 +18,7 @@ subroutine telsem2(errorstatus, month, lon, lat, freq, emissivity)
   integer(kind=long) :: imonth  !(1->12)
   character(len=2), intent(in) :: month
   character(len=80) :: dir  !directory of emis database
-  real(kind=dbl) :: theta  !(0->60°)
+  real(kind=dbl) :: theta  !(0->60Â°)
   real(kind=sgl) :: lon_tmp, lat_tmp
   real(kind=sgl) :: a1,a2
 
