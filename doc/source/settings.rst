@@ -44,7 +44,7 @@ radar\_attenuation                 disabled, bottom-up, top-down  disabled      
 radar_convolution_fft              boolean                        True               Use FFT for convolution. FFt is much faster, but can have numerical issues in rare cases.
 radar_fwhr_beamwidth_deg           float*                         0.3                radar full width half radiation beamwidth (required for spectral broadening estimation)
 radar_integration_time             float*                         1.4                radar beamwidth (required for spectral broadening estimation)
-radar\_K2 (|K_w^2|)                positive float*                0.93               Dielectric factor of water used to estimate radr reflectivity.
+radar\_K2 (\|K_w^2\|)                positive float*                0.93               Dielectric factor of water used to estimate radr reflectivity.
 radar\_max\_v ( v_nyq )            float*                         -7.885 m/s         Maximum Nyquist velocity (usually radar\_min\_V = -radar\_max\_V)
 radar\_min\_v ( v_nyq )            float*                         7.885 m/s          Minimum Nyquist velocity
 radar_peak_min_bins                int*                           2                  Minimum peak width
