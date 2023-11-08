@@ -288,7 +288,7 @@ subroutine refwater(sal1,freq,tempr,ref)
     !      write(*,*)  term1,term2
     !      write(*,*)  first_term,second_term,third_term
     !;calculate refractivity and mass/volume absorption coefficient
-    !;frequency in hz, lwc in g/m³
+    !;frequency in hz, lwc in g/m3
     !      re = (eps-1)/(eps+2)
     !      mass_abscof = 6.d*3.1415926*imag(re)*freq*1d-3/cl
     !      vol_abscof = mass_abscof * lwc

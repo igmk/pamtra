@@ -19,7 +19,7 @@ FCFLAGS=-c -fPIC -cpp -J$(OBJDIR) -I$(OBJDIR) #FCFLAGS=-c -fPIC -Wunused  -cpp -
 #FCFLAGS=-g -c -fPIC -Wunused -O0 -cpp -J$(OBJDIR) -I$(OBJDIR)
 
 NCFLAGS :=  $(shell $(NCCONF) --fflags)
-LFLAGS := -L/usr/lib/ -L/usr/local/lib/ -llapack -L$(LIBDIR) -L../$(LIBDIR) -lblas -lz -lfftw3
+LFLAGS := -L/usr/lib/ -L/usr/local/lib/ -L/opt/homebrew/lib/ -llapack -L$(LIBDIR) -L../$(LIBDIR) -lblas -lz -lfftw3
 LDFLAGS := $(shell $(NCCONF) --flibs)
 # it's messi but needed for ubuntu 16.04
 to_remove:=-Wl,-Bsymbolic-functions -Wl,-z,relro

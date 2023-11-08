@@ -38,13 +38,13 @@ subroutine radar_spectrum(&
     !in
     !nbins: No of bins
     !diameter_spec: Diameter Spectrum (SI)
-    !back_spec: backscattering cross section per volume in m²/m⁴ (includes number density)
+    !back_spec: backscattering cross section per volume in m2/m⁴ (includes number density)
     !temp: temperature in K
     !press: air pressure in Pa
     !frequency in GHz
     !rho_particle: density of particle
     !mass: mass of particle [kg]
-    !area: cross section area [m²]
+    !area: cross section area [m2]
     !area_size_b: b of mass size relation, needed for graupel, hail, snow, ice
     !out
     !particle_spec particle spectrum in dependence of radar Doppler velocity in m6m-3/ms-1
@@ -229,8 +229,8 @@ subroutine radar_spectrum(&
       return
     end if
 
-    back_spec_ref = (1d0/ (K2*pi**5) ) * back_spec * (wavelength)**4 ![m⁶/m⁴]
-    back_spec_ref =  back_spec_ref * 1d18 !now non-SI: [mm⁶/m³/m]
+    back_spec_ref = (1d0/ (K2*pi**5) ) * back_spec * (wavelength)**4 ![m6/m⁴]
+    back_spec_ref =  back_spec_ref * 1d18 !now non-SI: [mm6/m³/m]
 
     !spetial output for testing the radar simulator
     if (verbose == -666) then
@@ -238,7 +238,7 @@ subroutine radar_spectrum(&
       print*, "Diameter (D)"
       print*, diameter_spec
       print*, "##########################################"
-      print*, "back_spec_ref (D) [mm⁶/m³/m]"
+      print*, "back_spec_ref (D) [mm6/m³/m]"
       print*, back_spec_ref
       print*, "##########################################"
       if (nbins>300) then
@@ -289,7 +289,7 @@ subroutine radar_spectrum(&
 
 
     del_v_model(nbins) = del_v_model(nbins-1)
-    back_vel_spec = back_spec_ref * ABS(dD_dU)  !non-SI: [mm⁶/m³/m * m/(m/s)]
+    back_vel_spec = back_spec_ref * ABS(dD_dU)  !non-SI: [mm6/m³/m * m/(m/s)]
     !get delta velocity
     del_v_radar = (radar_max_V(i_f)-radar_min_V(i_f))/radar_nfft ![m/s]
 
@@ -329,7 +329,7 @@ subroutine radar_spectrum(&
               vel_spec = vel_spec + radar_airmotion_vmin
             end if
             !interpolate OR average (depending who's bins size is greater) from N(D) bins to radar bins.
-            call rescale_spectra(err,nbins,radar_nfft_aliased,.true.,vel_spec,back_vel_spec,out_radar_velo_aliased,particle_spec) ! particle_spec in [mm⁶/m³/m * m/(m/s)]
+            call rescale_spectra(err,nbins,radar_nfft_aliased,.true.,vel_spec,back_vel_spec,out_radar_velo_aliased,particle_spec) ! particle_spec in [mm6/m³/m * m/(m/s)]
         !step function
         else if (radar_airmotion_model .eq. "step") then
 
@@ -339,7 +339,7 @@ subroutine radar_spectrum(&
             back_vel_spec_ext = back_vel_spec * radar_airmotion_step_vmin
             !interpolate OR average (depending who's bins size is greater) from N(D) bins to radar bins.
             call rescale_spectra(err,nbins,radar_nfft_aliased,.true.,vel_spec_ext,back_vel_spec_ext,out_radar_velo_aliased,&
-            particle_spec_ext(1,:))! particle_spec in [mm⁶/m³/m * m/(m/s)]
+            particle_spec_ext(1,:))! particle_spec in [mm6/m³/m * m/(m/s)]
             !for vmax
             vel_spec_ext = vel_spec + radar_airmotion_vmax
             back_vel_spec_ext = back_vel_spec *(1.d0-radar_airmotion_step_vmin)
@@ -373,7 +373,7 @@ subroutine radar_spectrum(&
     else
         !no air motion, just rescale
         if (verbose >= 3) call report(info, "Averaging spectrum and Adding without vertical air motion", nameOfRoutine)
-        call rescale_spectra(err,nbins,radar_nfft_aliased,.true.,vel_spec,back_vel_spec,out_radar_velo_aliased,particle_spec) ! particle_spec in [mm⁶/m³/m * m/(m/s)]
+        call rescale_spectra(err,nbins,radar_nfft_aliased,.true.,vel_spec,back_vel_spec,out_radar_velo_aliased,particle_spec) ! particle_spec in [mm6/m³/m * m/(m/s)]
     end if
 
     if (err /= 0) then
@@ -413,7 +413,7 @@ subroutine radar_spectrum(&
       print*, "velocity (v)"
       print*, out_radar_velo_aliased
       print*, "##########################################"
-      print*, "particle_spec without turbulence (v) [mm⁶/m³/(m/s)]"
+      print*, "particle_spec without turbulence (v) [mm6/m³/(m/s)]"
       print*, particle_spec
       print*, "##########################################"
 
@@ -474,7 +474,7 @@ end subroutine radar_spectrum
 !     !in
 !     !nbins: No of bins + 1
 !     !diameter_spec: Diameter Spectrum (SI)
-!     !back_spec: backscattering cross section per volume in m²/m⁴ (includes number density)
+!     !back_spec: backscattering cross section per volume in m2/m⁴ (includes number density)
 !     !temp: temperature in K
 !     !press: air pressure in Pa
 !     !frequency in GHz
@@ -628,8 +628,8 @@ end subroutine radar_spectrum
 !
 !
 !
-!     back_spec_ref = (1d0/ (K2*pi**5) ) * back_spec * (wavelength)**4 ![m⁶/m⁴]
-!     back_spec_ref =  back_spec_ref * 1d18 !now non-SI: [mm⁶/m³/m]
+!     back_spec_ref = (1d0/ (K2*pi**5) ) * back_spec * (wavelength)**4 ![m6/m⁴]
+!     back_spec_ref =  back_spec_ref * 1d18 !now non-SI: [mm6/m³/m]
 !
 !
 !     del_d = (diameter_spec_cp(2)-diameter_spec_cp(1)) * 1.d3 ![mm]
@@ -658,7 +658,7 @@ end subroutine radar_spectrum
 !     end do
 !     dD_dU(nbins) = dD_dU(nbins-1)
 !     del_v_model(nbins) = del_v_model(nbins-1)
-!     back_vel_spec = back_spec_ref * ABS(dD_dU)  !non-SI: [mm⁶/m³/m * m/(m/s)]
+!     back_vel_spec = back_spec_ref * ABS(dD_dU)  !non-SI: [mm6/m³/m * m/(m/s)]
 !
 !     !get delta velocity
 !     del_v_radar = (radar_max_V-radar_min_V)/radar_nfft ![m/s]
@@ -677,7 +677,7 @@ end subroutine radar_spectrum
 !         if (radar_airmotion_model .eq. "constant") then
 !             vel_spec = vel_spec + radar_airmotion_vmin
 !             !interpolate OR average (depending who's bins size is greater) from N(D) bins to radar bins.
-!             call rescale_spectra(err,nbins,radar_nfft_aliased,.true.,vel_spec,back_vel_spec,out_radar_velo_aliased,particle_spec) ! particle_spec in [mm⁶/m³/m * m/(m/s)]
+!             call rescale_spectra(err,nbins,radar_nfft_aliased,.true.,vel_spec,back_vel_spec,out_radar_velo_aliased,particle_spec) ! particle_spec in [mm6/m³/m * m/(m/s)]
 !         !step function
 !         else if (radar_airmotion_model .eq. "step") then
 !
@@ -687,7 +687,7 @@ end subroutine radar_spectrum
 !             back_vel_spec_ext = back_vel_spec * radar_airmotion_step_vmin
 !             !interpolate OR average (depending who's bins size is greater) from N(D) bins to radar bins.
 !             call rescale_spectra(err,nbins,radar_nfft_aliased,.true.,vel_spec_ext,back_vel_spec_ext,out_radar_velo_aliased,&
-!             particle_spec_ext(1,:))! particle_spec in [mm⁶/m³/m * m/(m/s)]
+!             particle_spec_ext(1,:))! particle_spec in [mm6/m³/m * m/(m/s)]
 !             !for vmax
 !             vel_spec_ext = vel_spec + radar_airmotion_vmax
 !             back_vel_spec_ext = back_vel_spec *(1.d0-radar_airmotion_step_vmin)
@@ -721,7 +721,7 @@ end subroutine radar_spectrum
 !     else
 !         !no air motion, just rescale
 ! 	if (verbose >= 3) call report(info, "Averaging spectrum and Adding without vertical air motion", nameOfRoutine)
-!         call rescale_spectra(err,nbins,radar_nfft_aliased,.true.,vel_spec,back_vel_spec,out_radar_velo_aliased,particle_spec) ! particle_spec in [mm⁶/m³/m * m/(m/s)]
+!         call rescale_spectra(err,nbins,radar_nfft_aliased,.true.,vel_spec,back_vel_spec,out_radar_velo_aliased,particle_spec) ! particle_spec in [mm6/m³/m * m/(m/s)]
 !     end if
 !
 !     if (err /= 0) then

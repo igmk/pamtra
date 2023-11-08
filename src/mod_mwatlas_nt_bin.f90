@@ -546,7 +546,7 @@ CONTAINS
          & -0.4413041665E-06,-0.3717419474E-06,-0.4975536854E-06/
     ! Interpolation en angle
     DO j = 1,3
-       ! Calcul par regression multilineaire de la valeur e0 en theta=0°
+       ! Calcul par regression multilineaire de la valeur e0 en theta=0deg
        e0 = a0_k0(j,class1)+a0_k1(j,class1)*ev(j)+a0_k2(j,class1)*eh(j)
        ! Lecture des coefficients des polynomes ev et eh
        a0 = a0_eveh(j,class1)

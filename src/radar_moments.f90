@@ -23,12 +23,12 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
     ! calculate the 0th -4th moment and the slopes of the peak of a radar spectrum!
     !
     ! in
-    ! radar_spectrum_in: radar spectrum with noise [mm⁶/m³]
-    ! noise: mean spectral noise in [mm⁶/m³]
-    ! noise_max: max spectral noise in [mm⁶/m³]
+    ! radar_spectrum_in: radar spectrum with noise [mm6/m3]
+    ! noise: mean spectral noise in [mm6/m3]
+    ! noise_max: max spectral noise in [mm6/m3]
     ! out
-    ! radar_spectrum_out: radar spectrum with noise removed [mm⁶/m³]
-    ! moments, dimension(0:4):0th - 4th moment [mm⁶/m³, m/s, m/s,-,-]
+    ! radar_spectrum_out: radar spectrum with noise removed [mm6/m3]
+    ! moments, dimension(0:4):0th - 4th moment [mm6/m3, m/s, m/s,-,-]
     ! slope, dimension(2): left(0) and right(1) slope of the peak [dB/(m/s)]
     ! edge, dimension(2): left(0) and right(1) edge the peak [m/s]
     ! quality
@@ -227,7 +227,7 @@ subroutine radar_calc_moments(errorstatus,radar_nfft,radar_nPeaks,radar_spectrum
       if (verbose >= 5) print*, "spectra_velo", SHAPE(spectra_velo), spectra_velo
 
 !     calculate the moments
-      moments(0,nn) = SUM(radar_spectrum_4mom) ! mm⁶/m³
+      moments(0,nn) = SUM(radar_spectrum_4mom) ! mm6/m3
       moments(1,nn) = SUM(radar_spectrum_4mom*spectra_velo)/moments(0,nn) ! m/s
       moments(2,nn) = SQRT(SUM(radar_spectrum_4mom * (spectra_velo-moments(1,nn))**2)/moments(0,nn)) ! m/s
       moments(3,nn) = SUM(radar_spectrum_4mom * (spectra_velo-moments(1,nn))**3)/(moments(0,nn)*moments(2,nn)**3) ![-]

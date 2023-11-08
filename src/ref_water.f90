@@ -25,7 +25,7 @@ subroutine ref_water(errorstatus,s,T,f,refre,refim,absind,abscoef)
   implicit none
 
   real(kind=dbl), intent(in) :: s,& ! salinity [0/00]
-       T,& ! temperature [°C]
+       T,& ! temperature [degC]
        f   ! frequency [GHz]
 
   real(kind=dbl), intent(out) :: refre,& ! real part of complex index of refraction n_r []

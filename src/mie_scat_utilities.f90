@@ -86,7 +86,7 @@ module mie_scat_utilities
       !    qscat         scattering efficiency
       !    qbackscat     backscattering efficiency
       !
-      ! Note: qbackscat*pi*r² = back scattering crossection INCLUDING the
+      ! Note: qbackscat*pi*r2 = back scattering crossection INCLUDING the
       ! akward 4*pi, i.e. identical to sigma_b of eq 4.82 in Bohren & Huffmann
       ! (Max, 10/12)
 

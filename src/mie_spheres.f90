@@ -40,7 +40,7 @@ module mie_spheres
     ! note that mindex has the convention with negative imaginary part      
     !out
     !diameter: diameter spectrum [m]
-    !back_spec: backscattering cross section per volume per del_d [m²/m⁴]
+    !back_spec: backscattering cross section per volume per del_d [m2/m⁴]
 
     implicit none
 
@@ -211,16 +211,16 @@ module mie_spheres
       if (verbose >= 4) print*, "qext, qscat, qback"
       if (verbose >= 4) print*, qext, qscat, qback
       !from efficiencies cross sections
-      qext =   qext   * (diameter(ir)/2.d0)**2 *pi        ! [m²]!
-      qscat =  qscat  * (diameter(ir)/2.d0)**2 *pi       ! [m²]!
-      qback =  qback  * (diameter(ir)/2.d0)**2 *pi       !  [m²]! cross section
+      qext =   qext   * (diameter(ir)/2.d0)**2 *pi        ! [m2]!
+      qscat =  qscat  * (diameter(ir)/2.d0)**2 *pi       ! [m2]!
+      qback =  qback  * (diameter(ir)/2.d0)**2 *pi       !  [m2]! cross section
       !print*,"Mie cscat ", qscat
       !print*,"Mie back ", qback
    
       ! apply bin weights
-      qext =   qext  * ndens_eff      ! [m²/m⁴]!
-      qscat =  qscat * ndens_eff      ! [m²/m⁴]!
-      qback =  qback * ndens_eff      !  [m²/m⁴]! cross section per volume
+      qext =   qext  * ndens_eff      ! [m2/m⁴]!
+      qscat =  qscat * ndens_eff      ! [m2/m⁴]!
+      qback =  qback * ndens_eff      !  [m2/m⁴]! cross section per volume
       !print*,"Mie cs*ndens ", qscat
   
       if (verbose >= 4) print*, "qback* del_d_eff, ndens_eff , (diameter(ir)/2.d0), pi, del_d_eff"
@@ -233,7 +233,7 @@ module mie_spheres
 
       if (verbose >= 4) print*, "NEW: diameter(ir), ndens_eff, del_d_eff, n_tot, sumqback, sumqs, sumqe"
       if (verbose >= 4) print*, diameter(ir), ndens_eff, del_d_eff, n_tot, sumqback , sumqs, sumqe
-      back_spec(ir) =  qback   ! volumetric backscattering cross section for radar simulator in backscat per volume per del_d[m²/m⁴]
+      back_spec(ir) =  qback   ! volumetric backscattering cross section for radar simulator in backscat per volume per del_d[m2/m⁴]
 
       if (lphase_flag) then 
         nmie = min0(nmie, nterms) 

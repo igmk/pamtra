@@ -4,7 +4,7 @@ subroutine tessem2(errorstatus,freq,zenith_angle,wind_speed,temperature,salinity
     !         - angle from nadir (degree) 
     !         - surface wind speed at 10 m (m/s) between 0 and 25m/s
     !         - sea surface temperature (K) between 270 and 310 K
-    !         - salinity (°/°°) / typically 36 (between 0 and 40°/°°)
+    !         - salinity (deg/degdeg) / typically 36 (between 0 and 40deg/degdeg)
     ! ouputs: - sea surface emissivity for the given orthogonal polarization
 
     use kinds
