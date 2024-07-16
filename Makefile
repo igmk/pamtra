@@ -250,6 +250,7 @@ clean:
 	-rm -f $(OBJDIR)*.o
 	-rm -f $(OBJDIR)*.mod
 	-rm -f $(BINDIR)pamtra*
+	-rm -f $(PYTDIR)*.so
 	cd tools/py_usStandard/ && $(MAKE) clean
 
 htmldoc:
