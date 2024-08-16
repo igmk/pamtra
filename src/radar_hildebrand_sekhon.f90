@@ -41,7 +41,7 @@ subroutine radar_hildebrand_sekhon(&
 
   use kinds
 !  use settings, only: verbose
-        use report_module
+  use report_module
   implicit none
 
 

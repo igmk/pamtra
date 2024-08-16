@@ -24,14 +24,14 @@ contains
 
 
   subroutine rescale_spectra(&
-    errorstatus,&     	! out
-    nx1,& 	!in
-    nx2,& 	!in
-    sort,& 	!in
-    x1,& 	!in
-    y1,& 	!in
-    x2,& 	!in
-    y2)  	!out
+    errorstatus,& ! out
+    nx1,&         !in
+    nx2,&         !in
+    sort,&        !in
+    x1,&          !in
+    y1,&          !in
+    x2,&          !in
+    y2)           !out
     !(c) M.Maahn, IGMK, 11/2012
 
     !nx1,in: length of x1, y1
@@ -75,11 +75,11 @@ contains
 
     interface
       subroutine dsort (errorstatus, dx, dy, n, kflag)
-	use kinds
-	implicit none
-	integer(kind=long), intent(out) :: errorstatus	
-	real(kind=dbl), dimension(n), intent(inout) :: dx, dy
-	integer, intent(in) :: n, kflag
+        use kinds
+        implicit none
+        integer(kind=long), intent(out) :: errorstatus
+        real(kind=dbl), dimension(n), intent(inout) :: dx, dy
+      integer, intent(in) :: n, kflag
       end subroutine dsort
     end interface
 
@@ -199,13 +199,13 @@ contains
 
 
   subroutine average_spectra&
-    (errorstatus,&     	! out
-    nx12,& !in
-    nx2,& !in
-    x12_sorted,& !in
-    y12_sorted,& !in
-    x2,& !in
-    y_result) !out
+    (errorstatus,&     ! out
+    nx12,&             !in
+    nx2,&              !in
+    x12_sorted,&       !in
+    y12_sorted,&       !in
+    x2,&               !in
+    y_result)          !out
     !averages the spectrum
     !borders of the averaged intervalls must be already present in in x12_sorted!
     !works only in combination with average_spectra
@@ -232,9 +232,9 @@ contains
 
     interface
       SUBROUTINE locate (xx, n, x, j) 
-	use kinds                                                                 
-	INTEGER j, n 
-	REAL(kind=dbl) x, xx (n) 
+        use kinds
+        INTEGER j, n 
+        REAL(kind=dbl) x, xx (n) 
       end SUBROUTINE locate 
     end interface
 
@@ -252,16 +252,16 @@ contains
       call locate (x12_sorted, nx12, x2(ii+1), jj2) 
       !locate does not work properly if an entry is searched EQUAL to the last
       if (jj1 .eq. jj2) then
-	jj2 = jj1 +1 
+        jj2 = jj1 +1 
       end if
 
       if ((jj2 .gt. nx12) .or. (jj1 .gt. nx12)) then
-	  errorstatus = fatal
-	  msg = 'Exiting averaging loop'
-	  call report(errorstatus, msg, nameOfRoutine)
-	  return
+        errorstatus = fatal
+        msg = 'Exiting averaging loop'
+        call report(errorstatus, msg, nameOfRoutine)
+        return
       else
-	  err = success
+        err = success
       end if
 
       !make the averaging, first width half of the weights on the left side
@@ -288,13 +288,13 @@ contains
   end subroutine average_spectra
 
   subroutine interpolate_spectra(&
-    errorstatus,&     	! out
-    nx1,& !in
-    nx2,& !in
-    x1,& !in
-    y1,& !in
-    x2,& !in
-    y2)  !out
+    errorstatus,&  ! out
+    nx1,&          !in
+    nx2,&          !in
+    x1,&           !in
+    y1,&           !in
+    x2,&           !in
+    y2)            !out
 
     !interpolation which gives back ZERO if x2 is more than 1bin out of range of x1!
     !values MUST be sorted
@@ -335,9 +335,9 @@ contains
       call locate(x1_ext,nx1+2,x2(i),ix2)
       !points our of range?
       if ((ix2 .eq. 0) .or. (ix2 .eq. nx1+2)) then
-	y2(i) = 0.d0
+        y2(i) = 0.d0
       else
-	y2(i) = (x2(i)-x1_ext(ix2))*(y1_ext(ix2+1)-y1_ext(ix2))/(x1_ext(ix2+1)-x1_ext(ix2))+y1_ext(ix2)
+        y2(i) = (x2(i)-x1_ext(ix2))*(y1_ext(ix2+1)-y1_ext(ix2))/(x1_ext(ix2+1)-x1_ext(ix2))+y1_ext(ix2)
       end if
     if (verbose .gt. 5) print*, "y2(i),i",y2(i),i
     end do

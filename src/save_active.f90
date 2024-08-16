@@ -6,7 +6,7 @@ subroutine save_active(OUT_FILE_ACT,nx,ny,fi)
   use vars_output
 !   use constants
   use settings
-        use report_module
+  use report_module
 !   use vars_index, only: i_x, i_y
   implicit none
 
