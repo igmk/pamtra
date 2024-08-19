@@ -135,6 +135,11 @@ fortranobject_dep = declare_dependency(
   link_with: fortranobject_lib,
   include_directories: [incdir_numpy, incdir_f2py])
 
+fftw3dep = dependency('fftw3')
+blasdep = dependency('blas')
+lapackdep = dependency('lapack')
+netcdfdep = dependency('netcdf')
+
 # List sources
 csources = ['src/scatdb.c']
 fsources = ['src/kinds.f90',
@@ -219,7 +224,7 @@ fsources = ['src/kinds.f90',
             'src/tmatrix.f90',
             'src/rayleigh_gans.f90',
             'src/run_rt.f90',
-            'src/scatProperties.f90', # this gives compiling errors ..... and it is used by hydrometeor extinction
+            'src/scatProperties.f90', # this gives compiling errors # -fallow-argument-mismatch? 
             'src/hydrometeor_extinction.f90',
             'src/rescale_spectra.f90',
             'src/radar_moments.f90',
@@ -261,16 +266,16 @@ fortran_pamtra_source = custom_target(
    'interface_module',
    input : [f2py_sources],
    output : ['pyPamtraLib-f2pywrappers2.f90','pyPamtraLibmodule.c'],
-   command : [py3, '-m', 'numpy.f2py', '@INPUT@', '-m', 'pyPamtraLib', '--lower'])
+   command : [py3, '-m', 'numpy.f2py', '@INPUT@', '-m', 'pyPamtraLib', '--lower']) #, '--f2cmap', 'src/.f2py_f2cmap'])
 
 # Declare the fortran extension module
 py3.extension_module('pyPamtraLib', # extension module should have the same name ftmatrix as the target of f2py to be linked... at least when build with meson
   [fsources, csources, fortran_pamtra_source, fortranobject_c],
   c_args: c_flags,
-  fortran_args: ['-cpp'], # TODO this is probaly only valid for gcc, need to find a way to get meson set it
+  fortran_args: ['-cpp', '-fallow-argument-mismatch', '-fallow-invalid-boz'], # TODO this is probaly only valid for gcc, need to find a way to get meson set it
   include_directories: inc_dirs,
   link_with: fortranobject_lib,
-  dependencies : [py3_dep, fortranobject_dep],
+  dependencies : [py3_dep, fortranobject_dep, fftw3dep, blasdep, lapackdep, netcdfdep],
   subdir: 'pyPamtra/',
   install : true)
 
