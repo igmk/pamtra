@@ -1,6 +1,6 @@
 project( 'pyPamtra', 'c',
   # Note that the git commit hash cannot be added dynamically here
-  version: '1.1.0',
+  version: '1.0.1',
   license: 'GPL v3',
   meson_version: '>= 0.63.0',
   default_options: [
@@ -62,7 +62,6 @@ inc_dirs = include_directories(incdir_numpy, incdir_f2py)
 #     numpy_nodepr_api)
 #
 c_flags = ['-DNPY_NO_DEPRECATED_API=NPY_1_9_API_VERSION']
-#c_flags += ['-cpp'] # TODO this probably works only for gcc... meson should handle different compilers
 
 # Platform detection to set more flags for Windows systems
 is_windows = host_machine.system() == 'windows'
