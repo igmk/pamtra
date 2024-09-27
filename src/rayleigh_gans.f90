@@ -547,10 +547,15 @@ module rayleigh_gans
     real(kind=dbl), intent(in), dimension(nbins) :: canting
     real(kind=dbl), intent(in) :: refre
     real(kind=dbl), intent(in) :: refim !positive(?)
-    real(kind=dbl), intent(in) :: rg_kappa
-    real(kind=dbl), intent(in) :: rg_beta
-    real(kind=dbl), intent(in) :: rg_gamma
-    real(kind=dbl), intent(in) :: rg_zeta
+    !real(kind=dbl), intent(in) :: rg_kappa
+    !real(kind=dbl), intent(in) :: rg_beta
+    !real(kind=dbl), intent(in) :: rg_gamma
+    !real(kind=dbl), intent(in) :: rg_zeta
+    ! Nina: added arrays as input: dimension 
+    real(kind=dbl), intent(in), dimension(nbins) :: rg_kappa
+    real(kind=dbl), intent(in), dimension(nbins) :: rg_beta
+    real(kind=dbl), intent(in), dimension(nbins) :: rg_gamma
+    real(kind=dbl), intent(in), dimension(nbins) :: rg_zeta
 
     real(kind=dbl), intent(out) :: extinction
     real(kind=dbl), intent(out) :: albedo
@@ -708,7 +713,7 @@ module rayleigh_gans
         scat_angle_rad = dble(ia-1)*pi/dble(jmax-1)
         ! Electrical size
         x = wave_num * d_wave * sin(scat_angle_rad*0.5d0)
-        call calc_shape_factor(x, rg_kappa, rg_beta, rg_gamma, rg_zeta, shape_fact)
+        call calc_shape_factor(x, rg_kappa(ii), rg_beta(ii), rg_gamma(ii), rg_zeta(ii), shape_fact)
         phas_func = prefactor*shape_fact*(1.d0 + cos(scat_angle_rad)**2)*0.5d0
         qscat = qscat + phas_func*sin(scat_angle_rad)
       end do
@@ -732,7 +737,7 @@ module rayleigh_gans
       do ia = 1, nquad
         scat_angle_rad = acos(mu(ia))
         x = wave_num * d_wave * sin(scat_angle_rad*0.5d0)
-        call calc_shape_factor(x, rg_kappa, rg_beta, rg_gamma, rg_zeta, shape_fact)
+        call calc_shape_factor(x, rg_kappa(ii), rg_beta(ii), rg_gamma(ii), rg_zeta(ii), shape_fact)
         s22 = -im * 3. * wave_num**3 * K * volume * shape_fact**0.5d0 / (4.d0*pi) ! here I have multiplied by -j*wave_num because of mie_sphere convention
         s11 = s22*cos(scat_angle_rad)
         !print*,"s11 ",s11,"    s22 ",s22

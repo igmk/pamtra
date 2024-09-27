@@ -510,10 +510,6 @@ contains
         rg_gamma = 5.d0/3.d0 
         rg_zeta = 1.d0
       end if
-      rg_beta_list(:) = rg_beta
-      rg_kappa_list(:) = rg_kappa
-      rg_gamma_list(:) = rg_gamma
-      rg_zeta_list(:) = rg_zeta
 
       if (verbose >= 5) print*,scat_name, "test", rg_gamma, rg_kappa, rg_beta, rg_zeta
 
@@ -563,7 +559,7 @@ contains
           end if
         end do
 
-      else if (passive) then
+      else if (passive) then ! change rg_kappa etc to rg_kappa_list
         call calc_self_similar_rayleigh_gans_passive(err,&
           freq*1d9,&
           liq_ice, &
@@ -787,7 +783,7 @@ contains
         rg_zeta = 0.04 !1.0d0
       end if
       
-      call calc_self_similar_rayleigh_gans_rt3(err,&
+      call calc_self_similar_rayleigh_gans_rt3(err,& ! change rg_kappa to rg_kappa_list etc. 
         freq*1d9,&
         liq_ice,&
         nbin,&
@@ -799,10 +795,15 @@ contains
         canting_list, &
         refre, &
         refim, & !positive(?)
-        rg_kappa, &
-        rg_beta, &
-        rg_gamma, &
-        rg_zeta, &
+        !rg_kappa, &
+        !rg_beta, &
+        !rg_gamma, &
+        !rg_zeta, &
+        ! use size bin arrays
+        rg_kappa_list, &
+        rg_beta_list, &
+        rg_gamma_list, &
+        rg_zeta_list, &
         !OUT
         kext_hydro,&
         salb_hydro,&
@@ -813,6 +814,13 @@ contains
         legen_coef3_hydro,&
         legen_coef4_hydro,&
         back_spec_ssrg)
+
+    if (allocated(as_ratio_list)) deallocate(as_ratio_list)
+    if (allocated(canting_list)) deallocate(canting_list)
+    if (allocated(rg_zeta_list)) deallocate(rg_zeta_list)
+    if (allocated(rg_gamma_list)) deallocate(rg_gamma_list)
+    if (allocated(rg_kappa_list)) deallocate(rg_kappa_list)
+    if (allocated(rg_beta_list)) deallocate(rg_beta_list)
 
       ! for back SSRGA HH and VV polarisatuion does not matter and cross-pol is null
       do i_p=1, radar_npol
