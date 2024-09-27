@@ -136,7 +136,7 @@ module rayleigh_gans
     end if
 
     !T Matrix settings
-    !alpha = 0.0_dbl    ! orientation of the particle [°] not needed for ssrga since the alpha is ignored in the area function
+    !alpha = 0.0_dbl    ! orientation of the particle [deg] not needed for ssrga since the alpha is ignored in the area function
     azimuth_num = 30 
     azimuth0_num = 1   
     quad ="L" !quadrature
@@ -201,7 +201,7 @@ module rayleigh_gans
           !back_spec(i_p,ir) = 4*pi*ndens_eff*scatter_matrix_part(1,16,1,16,2)
           back_spec(i_p,ir) = 4*pi*ndens_eff*Sback_part(1,1)
         else if (radar_pol(i_p) == "HH") then
-          !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
+          !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053-1063 (1991).
           back_spec(i_p,ir) = 2*pi*ndens_eff*( &
                             + Sback_part(1,1) &
                             - Sback_part(1,2) & 
@@ -731,7 +731,7 @@ module rayleigh_gans
 
       if (verbose >= 4) print*, "NEW: diameter(ii), ndens_eff, del_d_eff, n_tot, sumqback, sumqs, sumqe"
       if (verbose >= 4) print*, diameter(ii), ndens_eff, del_d_eff, n_tot, sumqback , sumqs, sumqe
-      back_spec(ii) =  qback * ndens_eff  ! volumetric backscattering cross section for radar simulator in backscat per volume per del_d[m²/m⁴]
+      back_spec(ii) =  qback * ndens_eff  ! volumetric backscattering cross section for radar simulator in backscat per volume per del_d[m2/m⁴]
 
 
       do ia = 1, nquad

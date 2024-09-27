@@ -512,7 +512,7 @@ contains
         !MaximumNyquistVelocity in m/sec
         radar_min_V(:)= floatNfreq
         radar_min_V_default=-7.885
-        !radar noise at 1km in same unit as Ze 10*log10(mm⁶/m³). noise is calculated with noise = radar_pnoise0 + 20*log10(range/1000)
+        !radar noise at 1km in same unit as Ze 10*log10(mm6/m3). noise is calculated with noise = radar_pnoise0 + 20*log10(range/1000)
         radar_pnoise0(:)= floatNfreq ! mean value for BArrow MMCR during ISDAC
         radar_pnoise0_default=  -32.23 ! mean value for BArrow MMCR during ISDAC
         radar_integration_time(:)= floatNfreq ! radar integration time
@@ -527,7 +527,7 @@ contains
         radar_peak_min_snr(:)= floatNfreq
         radar_peak_min_snr_default = -10!threshold for peak detection. 
         radar_K2(:)= floatNfreq
-        radar_K2_default = 0.93 ! dielectric constant |K|² (always for liquid water by convention) for the radar equation
+        radar_K2_default = 0.93 ! dielectric constant |K|2 (always for liquid water by convention) for the radar equation
         radar_noise_distance_factor(:)= floatNfreq
         radar_noise_distance_factor_default = 1.25
         radar_receiver_uncertainty_std(:)= floatNfreq

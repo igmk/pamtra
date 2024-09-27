@@ -31,12 +31,12 @@ subroutine radar_hildebrand_sekhon(&
 ! written by P. Kollias, tranlated to Fortran by M. Maahn (12.2012)
 ! 
 ! in
-! spectrum: radar sectrum [mm⁶/m³]
+! spectrum: radar sectrum [mm6/m3]
 ! n_ave: no of averaged spectra [-]
 ! n_ffts: no fft points [-]
 !
 ! out
-! noise_mean: neam noise leveö according to Hildebrand [mm⁶/m³]
+! noise_mean: neam noise level according to Hildebrand [mm6/m3]
 
 
   use kinds

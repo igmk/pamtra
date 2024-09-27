@@ -315,7 +315,7 @@ contains
            ! in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). 
            ! this definition is looking from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
         else if (radar_pol(i_p) == "HH") then
-          !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
+          !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053-1063 (1991).
           back_hydro(i_p) = ( Sback_hydro(1,1) &
                             - Sback_hydro(1,2) & 
                             - Sback_hydro(2,1) & 
@@ -350,7 +350,7 @@ contains
       end if
 
       back_hydro(:) = 4*pi*back_hydro(:)!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squared entries!
-      kext_hydro = extinct_matrix_hydro(1,1,16,1) !11 of extinction matrix (=not polarized), at 0°, first quadrature. equal to extinct_matrix(1,1,16,2)
+      kext_hydro = extinct_matrix_hydro(1,1,16,1) !11 of extinction matrix (=not polarized), at 0deg, first quadrature. equal to extinct_matrix(1,1,16,2)
 
     else if (scat_name(:5) == "ssrga") then
       if (len(trim(scat_name)) > 5) then
@@ -441,7 +441,7 @@ contains
            ! in quadrature 2 (E) first 16 (B) is 180deg (upwelling), 2nd 16 (D) 0deg (downwelling). 
            ! this definition is looking from BELOW, scatter_matrix(1,16,1,16,3) would be from above!
         else if (radar_pol(i_p) == "HH") then
-          !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
+          !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053-1063 (1991).
           back_hydro(i_p) = ( Sback_hydro(1,1) &
                             - Sback_hydro(1,2) & 
                             - Sback_hydro(2,1) & 
@@ -476,7 +476,7 @@ contains
       end if
 
       back_hydro(:) = 4*pi*back_hydro(:)!/k**2 !eq 4.82 Bohren&Huffman without k**2 (because of different definition of Mueller matrix according to Mishenko AO 2000). note that scatter_matrix contains already squared entries!
-      kext_hydro = extinct_matrix_hydro(1,1,16,1) !11 of extinction matrix (=not polarized), at 0°, first quadrature. equal to extinct_matrix(1,1,16,2)  
+      kext_hydro = extinct_matrix_hydro(1,1,16,1) !11 of extinction matrix (=not polarized), at 0deg, first quadrature. equal to extinct_matrix(1,1,16,2)  
 
       ! rayleigh gans only for active!
     else if (scat_name(:16) == "ss-rayleigh-gans") then

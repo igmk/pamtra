@@ -136,7 +136,7 @@ module tmatrix
     end if   
 
     !T Matrix settings
-    alpha = 0.0_dbl    ! orientation of the particle [°]
+    alpha = 0.0_dbl    ! orientation of the particle [deg]
     azimuth_num = 30
     azimuth0_num = 1   
     quad ="L" !quadrature
@@ -383,7 +383,7 @@ module tmatrix
         !back_spec(i_p,ir) = 4*pi*ndens_eff*scatter_matrix_part(1,16,1,16,2)
         back_spec(i_p,ir) = 4*pi*ndens_eff*Sback_part(1,1)
       else if (radar_pol(i_p) == "HH") then
-        !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053–1063 (1991).
+        !1.Vivekanandan, J., Adams, W. M. & Bringi, V. N. Rigorous Approach to Polarimetric Radar Modeling of Hydrometeor Orientation Distributions. Journal of Applied Meteorology 30, 1053-1063 (1991).
         back_spec(i_p,ir) = 2*pi*ndens_eff*( &
                           + Sback_part(1,1) &
                           - Sback_part(1,2) & 
@@ -460,8 +460,8 @@ module tmatrix
       !       axi             double  equivalent sphere radius [m]
       !       nstokes         int     number of stokes components
       !       as_ratio        double  aspect ratio
-      !       alpha           double  orientation of the particle [°]
-      !       beta            double  orientation of the particle [°]
+      !       alpha           double  orientation of the particle [deg]
+      !       beta            double  orientation of the particle [deg]
       !       azimuth_num     int     number of azimuth angles
       !       azimuth0_num    int     number of azimuth angles
       !
