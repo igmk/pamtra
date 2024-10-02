@@ -251,14 +251,28 @@ contains
     allocate(rg_kappa_list(nbin))
     allocate(rg_gamma_list(nbin))
     allocate(rg_zeta_list(nbin))
-    if (hydro_fullSpec) then
+
+    ! When using SSRGA in active (calc_self_similar_rayleigh_gans) or passive mode (calc_self_similar_rayleigh_gans_rt3), SSRGA parameters beta, kappa, gamma, and zeta can be input. 
+    ! alpha_eff corresponds to the aspect ratio for horizontally aligned particles and vertical radar
+
+    if (hydro_fullSpec) then 
+      ! when fullSpec=True: beta, kappa, gamma, and zeta are filled with default values from Hogan and Westbrook 2014 in descriptorFile.py 
+      ! other values for beta, kappa, gamma, and zeta can be input with rg_xx_ds where xx is the respective parameter
+      ! input of beta, kappa, gamma, and zeta as string is not supported in fullSpec mode   
+
       as_ratio_list(:) = hydrofs_as_ratio(i_x,i_y,i_z,i_h,:)
       canting_list(:) = hydrofs_canting(i_x,i_y,i_z,i_h,:)
       rg_beta_list(:) = hydrofs_rg_beta_ds(i_x,i_y,i_z,i_h,:)
       rg_kappa_list(:) = hydrofs_rg_kappa_ds(i_x,i_y,i_z,i_h,:)
       rg_gamma_list(:) = hydrofs_rg_gamma_ds(i_x,i_y,i_z,i_h,:)
       rg_zeta_list(:) = hydrofs_rg_zeta_ds(i_x,i_y,i_z,i_h,:)
+
+
     else
+      ! when fullSpec=False: beta, kappa, gamma, and zeta are filled with default values from Hogan and Westbrook 2014 in this file
+      ! other values for beta, kappa, gamma, and zeta can be input as string ssrga_kappa_beta_gamma_zeta
+      ! string can be cut after each parameter and the rest is filled with default values; the order must be kept   
+
       as_ratio_list(:) =  as_ratio
       canting_list(:) =  dsd_canting
       rg_beta_list(:) = rg_beta
