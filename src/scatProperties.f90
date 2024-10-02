@@ -251,14 +251,28 @@ contains
     allocate(rg_kappa_list(nbin))
     allocate(rg_gamma_list(nbin))
     allocate(rg_zeta_list(nbin))
-    if (hydro_fullSpec) then
+
+    ! When using SSRGA in active (calc_self_similar_rayleigh_gans) or passive mode (calc_self_similar_rayleigh_gans_rt3), SSRGA parameters beta, kappa, gamma, and zeta can be input. 
+    ! alpha_eff corresponds to the aspect ratio for horizontally aligned particles and vertical radar
+
+    if (hydro_fullSpec) then 
+      ! when fullSpec=True: beta, kappa, gamma, and zeta are filled with default values from Hogan and Westbrook 2014 in descriptorFile.py 
+      ! other values for beta, kappa, gamma, and zeta can be input with rg_xx_ds where xx is the respective parameter
+      ! input of beta, kappa, gamma, and zeta as string is not supported in fullSpec mode   
+
       as_ratio_list(:) = hydrofs_as_ratio(i_x,i_y,i_z,i_h,:)
       canting_list(:) = hydrofs_canting(i_x,i_y,i_z,i_h,:)
       rg_beta_list(:) = hydrofs_rg_beta_ds(i_x,i_y,i_z,i_h,:)
       rg_kappa_list(:) = hydrofs_rg_kappa_ds(i_x,i_y,i_z,i_h,:)
       rg_gamma_list(:) = hydrofs_rg_gamma_ds(i_x,i_y,i_z,i_h,:)
       rg_zeta_list(:) = hydrofs_rg_zeta_ds(i_x,i_y,i_z,i_h,:)
+
+
     else
+      ! when fullSpec=False: beta, kappa, gamma, and zeta are filled with default values from Hogan and Westbrook 2014 in this file
+      ! other values for beta, kappa, gamma, and zeta can be input as string ssrga_kappa_beta_gamma_zeta
+      ! string can be cut after each parameter and the rest is filled with default values; the order must be kept   
+
       as_ratio_list(:) =  as_ratio
       canting_list(:) =  dsd_canting
       rg_beta_list(:) = rg_beta
@@ -510,10 +524,6 @@ contains
         rg_gamma = 5.d0/3.d0 
         rg_zeta = 1.d0
       end if
-      rg_beta_list(:) = rg_beta
-      rg_kappa_list(:) = rg_kappa
-      rg_gamma_list(:) = rg_gamma
-      rg_zeta_list(:) = rg_zeta
 
       if (verbose >= 5) print*,scat_name, "test", rg_gamma, rg_kappa, rg_beta, rg_zeta
 
@@ -563,7 +573,7 @@ contains
           end if
         end do
 
-      else if (passive) then
+      else if (passive) then ! change rg_kappa etc to rg_kappa_list
         call calc_self_similar_rayleigh_gans_passive(err,&
           freq*1d9,&
           liq_ice, &
@@ -787,7 +797,7 @@ contains
         rg_zeta = 0.04 !1.0d0
       end if
       
-      call calc_self_similar_rayleigh_gans_rt3(err,&
+      call calc_self_similar_rayleigh_gans_rt3(err,& ! change rg_kappa to rg_kappa_list etc. 
         freq*1d9,&
         liq_ice,&
         nbin,&
@@ -799,10 +809,15 @@ contains
         canting_list, &
         refre, &
         refim, & !positive(?)
-        rg_kappa, &
-        rg_beta, &
-        rg_gamma, &
-        rg_zeta, &
+        !rg_kappa, &
+        !rg_beta, &
+        !rg_gamma, &
+        !rg_zeta, &
+        ! use size bin arrays
+        rg_kappa_list, &
+        rg_beta_list, &
+        rg_gamma_list, &
+        rg_zeta_list, &
         !OUT
         kext_hydro,&
         salb_hydro,&
@@ -813,6 +828,13 @@ contains
         legen_coef3_hydro,&
         legen_coef4_hydro,&
         back_spec_ssrg)
+
+    if (allocated(as_ratio_list)) deallocate(as_ratio_list)
+    if (allocated(canting_list)) deallocate(canting_list)
+    if (allocated(rg_zeta_list)) deallocate(rg_zeta_list)
+    if (allocated(rg_gamma_list)) deallocate(rg_gamma_list)
+    if (allocated(rg_kappa_list)) deallocate(rg_kappa_list)
+    if (allocated(rg_beta_list)) deallocate(rg_beta_list)
 
       ! for back SSRGA HH and VV polarisatuion does not matter and cross-pol is null
       do i_p=1, radar_npol
