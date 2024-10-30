@@ -237,7 +237,7 @@ fsources = ['src/kinds.f90',
             'src/radintg4.f90',
             'src/scatcnv.f90',
             'src/rt4.f90',
-            'src/deallocate_everything.f90', # seems unused, perhaps pyPamtraLib.f90
+            'src/deallocate_everything.f90', # is this really necessary? only pyPamtra stuff
             'src/pyPamtraLib.f90'
             ]
 
@@ -265,7 +265,7 @@ fortran_pamtra_source = custom_target(
    'interface_module',
    input : [f2py_sources],
    output : ['pyPamtraLib-f2pywrappers2.f90','pyPamtraLibmodule.c'],
-   command : [py3, '-m', 'numpy.f2py', '@INPUT@', '-m', 'pyPamtraLib', '--lower']) #, '--f2cmap', 'src/.f2py_f2cmap'])
+   command : [py3, '-m', 'numpy.f2py', '@INPUT@', '-m', 'pyPamtraLib', '--lower', '--f2cmap', '../src/.f2py_f2cmap'])
 
 # Declare the fortran extension module
 py3.extension_module('pyPamtraLib', # extension module should have the same name ftmatrix as the target of f2py to be linked... at least when build with meson
