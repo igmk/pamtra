@@ -1995,6 +1995,7 @@ class pyPamtra(object):
       for key in ["psd_d","psd_n","psd_mass","psd_area","psd_bscat"]:
         self.r[key][pp_startX:pp_endX,pp_startY:pp_endY] = results[key]
     if self.nmlSet["save_ssp"]:
+      results["emission_vector"] = results["emis_vector"]
       for key in ["kextatmo","scatter_matrix","extinct_matrix","emission_vector"]:
         self.r[key] = results[key]
 
