@@ -131,7 +131,7 @@ FOBJECTS_NC=$(addprefix $(OBJDIR),$(OBJECTS_NC))
 
 BIN=pamtra
 
-all: pamtra py py_usStandard
+all: pamtra py
 
 warning:
 ifndef PAMTRA_DATADIR
@@ -237,13 +237,9 @@ $(PYTDIR)pyPamtraLib.so:  $(SRCDIR)pyPamtraLib.f90 $(OBJDIR)pypamtralib.pyf $(FO
 	cp $(PYTDIR)/pamtra.py $(BINDIR)
 
 
-py_usStandard:
-	cd tools/py_usStandard/ && $(MAKE) all
-
-pyinstall: warning py py_usStandard
+pyinstall: warning py 
 	mkdir -p $(PYINSTDIR)
 	cp -r $(PYTDIR) $(PYINSTDIR)
-	cd tools/py_usStandard/ && $(MAKE) install
 	cp tools/pyRadarMoments/radarMoments.py	 $(PYINSTDIR)
 
 clean:
@@ -251,7 +247,6 @@ clean:
 	-rm -f $(OBJDIR)*.mod
 	-rm -f $(BINDIR)pamtra*
 	-rm -f $(PYTDIR)*.so
-	cd tools/py_usStandard/ && $(MAKE) clean
 
 htmldoc:
 	cd doc && $(MAKE) html
