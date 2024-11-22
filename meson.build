@@ -146,7 +146,7 @@ fsources = ['src/kinds.f90',
             'src/zlib_stuff.f90',
             'src/mod_io_strings.f90',
             'src/rho_air.f90',
-            'src/versionNumber.auto.f90',
+            'src/versionNumber.auto.f90', # this needs to be created by a script
             'src/getopt.f90',#1
             'src/random.f90',
             'src/e_sat_gg_water.f90',
@@ -259,6 +259,25 @@ f2py_sources = ['src/report_module.f90',
                 ]
 
 
+#$(OBJDIR)versionNumber.auto.o: .git/HEAD .git/index
+#        echo "!edit in makefile only!" > $(SRCDIR)versionNumber.auto.f90
+#        echo "subroutine versionNumber(gitVersion,gitHash)" >> $(SRCDIR)versionNumber.auto.f90
+#        echo "implicit none" >> $(SRCDIR)versionNumber.auto.f90
+#        echo "character(40), intent(out) ::gitVersion,gitHash" >> $(SRCDIR)versionNumber.auto.f90
+#        echo "gitVersion = '$(gitVersion)'" >> $(SRCDIR)versionNumber.auto.f90
+#        echo "gitHash = '$(gitHash)'" >> $(SRCDIR)versionNumber.auto.f90
+#        echo "return" >> $(SRCDIR)versionNumber.auto.f90
+#        echo "end subroutine versionNumber" >> $(SRCDIR)versionNumber.auto.f90
+#        $(FC) $(FCFLAGS) $(SRCDIR)versionNumber.auto.f90 -o $(OBJDIR)versionNumber.auto.o #otherwise error on first make run!
+# Replicate the functionality of versionNumber.auto.o as it is done by the Makefile
+versionNumberAuto = custom_target(
+  'versionNumber.auto.f90',
+  output : 'versionNumber.auto.f90',
+  input : '_version_creator.py',
+  command : [py3, '@INPUT@'])
+
+
+
 # Make a custom target, output should not contain a path segment.
 # F2PY controls output names, so it may change at some point.
 fortran_pamtra_source = custom_target(
@@ -269,7 +288,7 @@ fortran_pamtra_source = custom_target(
 
 # Declare the fortran extension module
 py3.extension_module('pyPamtraLib', # extension module should have the same name ftmatrix as the target of f2py to be linked... at least when build with meson
-  [fsources, csources, fortran_pamtra_source, fortranobject_c],
+  [fsources, csources, fortran_pamtra_source, fortranobject_c, versionNumberAuto],
   c_args: c_flags,
   fortran_args: ['-cpp', '-fallow-argument-mismatch', '-fallow-invalid-boz'], # TODO this is probaly only valid for gcc, need to find a way to get meson set it
   include_directories: inc_dirs,
