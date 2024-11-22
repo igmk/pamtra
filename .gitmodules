@@ -1,3 +1,0 @@
-[submodule "tools/dfftpack"]
-	path = tools/dfftpack
-	url = https://github.com/maahn/dfftpack
