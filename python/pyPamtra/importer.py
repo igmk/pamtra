@@ -28,7 +28,7 @@ except:
 
 
 from .core import pyPamtra
-from .meteoSI import Rair, q2rh
+from .meteoSI import Rair, q2rh, usStandard
 
 
 from copy import deepcopy
@@ -3066,7 +3066,6 @@ def _createUsStandardProfile(**kwargs):
 
   '''
 
-  import usStandard #see in tools
 
   assert "hgt_lev" in list(kwargs.keys()) #hgt_lev is mandatory
 
@@ -3077,14 +3076,14 @@ def _createUsStandardProfile(**kwargs):
   pamData["temp_lev"] = np.zeros_like(kwargs["hgt_lev"])
 
   if len(np.shape(kwargs["hgt_lev"]))==1:
-    density[:], pamData["press_lev"][:], pamData["temp_lev"][:]  =  usStandard.usStandard(kwargs["hgt_lev"])
+    density[:], pamData["press_lev"][:], pamData["temp_lev"][:]  =  usStandard(kwargs["hgt_lev"])
   elif  len(np.shape(kwargs["hgt_lev"]))==2:
     for xx in range(np.shape(kwargs["hgt_lev"])[0]):
-      density[xx], pamData["press_lev"][xx], pamData["temp_lev"][xx]  =  usStandard.usStandard(kwargs["hgt_lev"][xx])
+      density[xx], pamData["press_lev"][xx], pamData["temp_lev"][xx]  =  usStandard(kwargs["hgt_lev"][xx])
   elif  len(np.shape(kwargs["hgt_lev"]))==3:
     for xx in range(np.shape(kwargs["hgt_lev"])[0]):
       for yy in range(np.shape(kwargs["hgt_lev"])[1]):
-        density[xx,yy], pamData["press_lev"][xx,yy], pamData["temp_lev"][xx,yy]  =  usStandard.usStandard(kwargs["hgt_lev"][xx,yy])
+        density[xx,yy], pamData["press_lev"][xx,yy], pamData["temp_lev"][xx,yy]  =  usStandard(kwargs["hgt_lev"][xx,yy])
   else: raise IOError("hgt_lev has wrong number of dimensions")
 
   for kk in list(kwargs.keys()):
