@@ -15,19 +15,6 @@ build:
   tools:
     python: "3.12"
 
-# Optionally set the version of Python and requirements required to build your docs
-python:
-  system_packages: true
-  install:
-      - method: pip
-        path: python
-
-
-# Read the Docs configuration file for Sphinx projects
-# See https://docs.readthedocs.io/en/stable/config-file/v2.html for details
-
-# Required
-version: 2
 
 # Set the OS, Python version and other tools you might need
 build:
