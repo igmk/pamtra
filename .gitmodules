@@ -1,6 +1,3 @@
 [submodule "tools/dfftpack"]
 	path = tools/dfftpack
 	url = https://github.com/maahn/dfftpack
-[submodule "tools/sphinx-fortran-extension"]
-	path = tools/sphinx-fortran-extension
-	url = https://github.com/maahn/sphinx-fortran-extension
