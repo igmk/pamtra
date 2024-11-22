@@ -146,7 +146,7 @@ fsources = ['src/kinds.f90',
             'src/zlib_stuff.f90',
             'src/mod_io_strings.f90',
             'src/rho_air.f90',
-            'src/versionNumber.auto.f90', # this needs to be created by a script
+#            'src/versionNumber.auto.f90', # this needs to be created by a script
             'src/getopt.f90',#1
             'src/random.f90',
             'src/e_sat_gg_water.f90',
@@ -258,18 +258,6 @@ f2py_sources = ['src/report_module.f90',
                 'src/pyPamtraLib.f90'
                 ]
 
-
-#$(OBJDIR)versionNumber.auto.o: .git/HEAD .git/index
-#        echo "!edit in makefile only!" > $(SRCDIR)versionNumber.auto.f90
-#        echo "subroutine versionNumber(gitVersion,gitHash)" >> $(SRCDIR)versionNumber.auto.f90
-#        echo "implicit none" >> $(SRCDIR)versionNumber.auto.f90
-#        echo "character(40), intent(out) ::gitVersion,gitHash" >> $(SRCDIR)versionNumber.auto.f90
-#        echo "gitVersion = '$(gitVersion)'" >> $(SRCDIR)versionNumber.auto.f90
-#        echo "gitHash = '$(gitHash)'" >> $(SRCDIR)versionNumber.auto.f90
-#        echo "return" >> $(SRCDIR)versionNumber.auto.f90
-#        echo "end subroutine versionNumber" >> $(SRCDIR)versionNumber.auto.f90
-#        $(FC) $(FCFLAGS) $(SRCDIR)versionNumber.auto.f90 -o $(OBJDIR)versionNumber.auto.o #otherwise error on first make run!
-# Replicate the functionality of versionNumber.auto.o as it is done by the Makefile
 versionNumberAuto = custom_target(
   'versionNumber.auto.f90',
   output : 'versionNumber.auto.f90',

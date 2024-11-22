@@ -14,7 +14,7 @@ requires = [
 [project]
 name = "pyPamtra"
 license = {file = "LICENSE"}
-version = "1.0.1"
+version = "1.0.3"
 description = "Python module pyPamtra"
 long_description = "Python code that wraps the fantastic pamtra microwave radiative transfer model"
 authors = [{name = "Pamtra team", email = "meteo-pamtra@uni-koeln.de"}]
