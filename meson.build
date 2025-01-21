@@ -33,6 +33,7 @@ endif
 
 # Add more link arguments
 add_project_link_arguments('-lquadmath', language: ['c', 'fortran'])
+add_project_link_arguments('-lz', language: ['c', 'fortran'])
 
 # https://mesonbuild.com/Python-module.html
 py_mod = import('python')
