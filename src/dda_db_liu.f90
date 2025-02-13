@@ -12,7 +12,7 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
   !out
   !...
   !diameter: diameter spectrum [m]
-  !back_spec: backscattering cross section per volume per del_d [m²/m⁴]
+  !back_spec: backscattering cross section per volume per del_d [m2/m⁴]
 
   use kinds
   use constants, only: pi,c
@@ -210,7 +210,7 @@ subroutine dda_db_liu(errorstatus,f, t,liu_type,mindex,nbins, &
      sumqe = sumqe + qext * ndens_eff * del_d_eff!weights(ir)
      sumqs = sumqs + qscat * ndens_eff * del_d_eff!weights(ir)
      sumqback = sumqback + qback * ndens_eff * del_d_eff!weights(ir)
-     back_spec(ir) = qback * ndens_eff !* weights(ir) *(dia2-dia1)/2.d0![m²/m⁴]
+     back_spec(ir) = qback * ndens_eff !* weights(ir) *(dia2-dia1)/2.d0![m2/m⁴]
 
      if (lphase_flag) then
         ang_quad = acos(mu(nquad:1:-1))*180.d0/pi

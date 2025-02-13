@@ -31,10 +31,10 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
 
     implicit none
 
-    real(kind=dbl), dimension(radar_npol),intent(in) ::  back !volumetric backscattering crossection in m²/m³
+    real(kind=dbl), dimension(radar_npol),intent(in) ::  back !volumetric backscattering crossection in m2/m3
     real(kind=dbl),intent(in) ::  delta_h !heigth of layer in m
     real(kind=dbl),intent(in) ::  kexthydro !hydrometeor absorption coefficient [Np/m]
-    real(kind=dbl), dimension(radar_npol,radar_nfft_aliased),intent(in):: particle_spectrum !backscattering particle spectrum per Doppler velocity [mm⁶/m³/(m/s)] NON-SI
+    real(kind=dbl), dimension(radar_npol,radar_nfft_aliased),intent(in):: particle_spectrum !backscattering particle spectrum per Doppler velocity [mm6/m3/(m/s)] NON-SI
 
     real(kind=dbl), dimension(radar_nfft_aliased) :: particle_spectrum_att
     real(kind=dbl), dimension(radar_nfft_aliased) :: spectra_velo_aliased
@@ -130,7 +130,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
       ! end if
 
       !transform backscattering in linear reflectivity units, 10*log10(back) would be in dBz
-      Ze_back = 1.d18* (1.d0/ (K2*pi**5) ) * back(i_p) * (wavelength)**4 ![mm⁶/m³]
+      Ze_back = 1.d18* (1.d0/ (K2*pi**5) ) * back(i_p) * (wavelength)**4 ![mm6/m3]
 
       !take care of path integrated attenuation
       PIA = 0.d0
@@ -334,7 +334,7 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
             print*, "velocity (m/s)"
             print*, spectra_velo
             print*, "##########################################"
-            print*, "particle_spec with turbulence (v) [mm⁶/m³/(m/s)] ", MAXVAL(turb_spectra_aliased)
+            print*, "particle_spec with turbulence (v) [mm6/m3/(m/s)] ", MAXVAL(turb_spectra_aliased)
             print*, SHAPE(turb_spectra_aliased)
             print*, turb_spectra_aliased
             print*, "##########################################"
@@ -404,14 +404,14 @@ subroutine radar_simulator(errorstatus,particle_spectrum,back,kexthydro,delta_h)
           !spetial output for testing the radar simulator
           if (verbose == 666) then
             print*, "##########################################"
-            print*, "particle_spec with turbulence and noise (v) [mm⁶/m³/(m/s)] ", MAXVAL(noise_turb_spectra)
+            print*, "particle_spec with turbulence and noise (v) [mm6/m3/(m/s)] ", MAXVAL(noise_turb_spectra)
             print*, noise_turb_spectra
             print*, "##########################################"
           end if
           out_debug_radarback_wturb_wnoise(:) = noise_turb_spectra(:)
 
           !apply spectral resolution
-          noise_turb_spectra = noise_turb_spectra * del_v !now [mm⁶/m³]
+          noise_turb_spectra = noise_turb_spectra * del_v !now [mm6/m3]
 
           if (verbose >= 4) then
               print*,"first K",K

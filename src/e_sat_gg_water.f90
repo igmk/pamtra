@@ -1,6 +1,6 @@
 function e_sat_gg_water(T)
   !    Calculates the saturation pressure over water after Goff and Gratch (1946).
-  !    It is the most accurate that you can get for a temperture range from -90°C to +80°C.
+  !    It is the most accurate that you can get for a temperture range from -90degC to +80degC.
   !    Source: Smithsonian Tables 1984, after Goff and Gratch 1946
   !    http://cires.colorado.edu/~voemel/vp.html
   !    http://hurri.kean.edu/~yoh/calculations/satvap/satvap.html

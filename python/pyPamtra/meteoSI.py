@@ -13,6 +13,11 @@ from __future__ import division, print_function
 import numpy as np
 import warnings
 try:
+  from collections.abc import Iterable
+except ImportError:
+  from collections import Iterable
+    
+try:
     import numexpr as ne
     neAvail = True
 except:
@@ -477,3 +482,102 @@ def vaphet(T):
     x = (2500.8-2.372*(T-273.15)) * 1000.0
 
     return x
+
+def _Atmosphere(alt):
+    """
+    ! PURPOSE - Compute the properties of the 1976 standard atmosphere to 86 km.
+    ! AUTHOR - Ralph Carmichael, Public Domain Aeronautical Software
+    ! NOTE - If alt > 86, the values returned will not be correct, but they will
+    !   not be too far removed from the correct values for density.
+    !   The reference document does not use the terms pressure and temperature
+    !   above 86 km.
+    translated to Python by M. Maahn
+    """
+
+    REARTH = 6369.0  # radius of the Earth (km)
+    GMR = 34.163195  # hydrostatic constant
+    NTAB = 8  # number of entries in the defining tables
+
+    htab = np.array([0.0, 11.0, 20.0, 32.0, 47.0, 51.0, 71.0, 84.852])
+    ttab = np.array([288.15, 216.65, 216.65, 228.65, 270.65, 270.65, 214.65, 186.946])
+    ptab = np.array(
+        [
+            1.0,
+            2.233611e-1,
+            5.403295e-2,
+            8.5666784e-3,
+            1.0945601e-3,
+            6.6063531e-4,
+            3.9046834e-5,
+            3.68501e-6,
+        ]
+    )
+    gtab = np.array([-6.5, 0.0, 1.0, 2.8, 0.0, -2.8, -2.0, 0.0])
+
+
+
+    h = alt * REARTH / (alt + REARTH)  # convert geometric to geopotential altitude
+
+    i = 1
+    j = NTAB  # setting up for binary search
+    while True:
+        k = (i + j) // 2  # integer division
+        if h < htab[k - 1]:
+            j = k
+        else:
+            i = k
+        if j <= i + 1:
+            break
+    #print(i, j, k)
+
+    tgrad = gtab[i - 1]  # i will be in 1...NTAB-1
+    tbase = ttab[i - 1]
+    deltah = h - htab[i - 1]
+    tlocal = tbase + tgrad * deltah
+    theta = tlocal / ttab[0]  # temperature ratio
+
+    if tgrad == 0.0:  # pressure ratio
+        delta = ptab[i-1] * np.exp(-GMR * deltah / tbase)
+    else:
+        delta = ptab[i-1] * (tbase / tlocal) ** (GMR / tgrad)
+
+    sigma = delta / theta  # density ratio
+    #print(tgrad, tbase, deltah, tlocal, theta, delta, sigma)
+
+    return sigma, delta, theta
+
+
+def usStandard(height):
+    """
+    Compute the US standard atmosphere
+
+    Input  : height      [m]      height as single value or list
+
+    Output : density [kg/m^3]   air density
+            pressure [pa]      air pressure
+            temperature [K]    air temperature
+    source: http://www.pdas.com/programs/atmos.f90
+    """
+
+    # check whether height is float or array:
+    if isinstance(height, Iterable):
+        density = np.ones_like(height, dtype=float)
+        pressure = np.ones_like(height, dtype=float)
+        temperature = np.ones_like(height, dtype=float)
+        for ii, hh in enumerate(height):
+            # Fortran processes only first entry of vector, so make sure it is not a vector
+            assert not isinstance(hh, Iterable)
+            density[ii], pressure[ii], temperature[ii] = (
+                _Atmosphere(hh / 1000.0)
+            )
+    else:
+        density, pressure, temperature = _Atmosphere(
+            height / 1000.0
+        )
+
+    # results of Fortran programm are normed to standard conditions:
+    density = density * 1.2250
+    pressure = pressure * 101325
+    temperature = temperature * 288.15
+
+    return density, pressure, temperature

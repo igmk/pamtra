@@ -82,15 +82,15 @@ module dia2vel
       !in
       !nDia: no of diameters
       !diaSpec_SI = diameter spectrum [m]
-      !rho_air_SI = density of air [kg/m³]
-      !nu_SI = kinematic viscosity of air [m²/s]
+      !rho_air_SI = density of air [kg/m3]
+      !nu_SI = kinematic viscosity of air [m2/s]
       !mass = mass of the particle [SI]
       !area = cross section area [SI]
       !out
       !velSpec: velocity spectrum [m/s]
 
       !Heymsfield, A. J. & Westbrook, C. D. Advances in the Estimation of Ice Particle Fall Speeds
-      !Using Laboratory and Field Measurements. Journal of the Atmospheric Sciences 67, 2469–2482 (2010).
+      !Using Laboratory and Field Measurements. Journal of the Atmospheric Sciences 67, 2469-2482 (2010).
 
       ! equations 9-11
 
@@ -152,8 +152,8 @@ module dia2vel
       !in
       !nDia: no of diameters
       !diaSpec_SI = diameter spectrum [m]
-      !rho_air_SI = density of air [kg/m³]
-      !nu_SI = kinematic viscosity of air [m²/s]
+      !rho_air_SI = density of air [kg/m3]
+      !nu_SI = kinematic viscosity of air [m2/s]
       !mass_size_a_SI,mass_size_b parameters of mass size relation m = a*D_max^b [SI]
       !area_size_a_SI,area_size_b parameters of mass area relation A = a*D_max^b [SI]
       !out
@@ -161,7 +161,7 @@ module dia2vel
 
       ! Khvorostyanov, V. I. & Curry, J. A. Terminal Velocities of Droplets and Crystals:
       ! Power Laws with Continuous Parameters over the Size Spectrum.
-      ! Journal of the Atmospheric Sciences 59, 1872–1884 (2002).
+      ! Journal of the Atmospheric Sciences 59, 1872-1884 (2002).
       ! equation 3.3
 
 
@@ -196,9 +196,9 @@ module dia2vel
       area = area_SI * 100.d0**2
 
       g_cp = g*100.d0 !cm/s
-      rho_air = rho_air_SI/1000.d0 !g/cm³
+      rho_air = rho_air_SI/1000.d0 !g/cm3
       diaSpec = 100.d0*diaSpec_SI !cm
-      my = nu_SI*10000.d0 !cm² /s
+      my = nu_SI*10000.d0 !cm2 /s
       c1 = 0.0902d0
       delta0 = 9.06d0
 
@@ -244,8 +244,8 @@ module dia2vel
       !in
       !nDia: no of diameters
       !diaSpec_SI = diameter spectrum [m]
-      !rho_air_SI = density of air [kg/m³]
-      !nu_SI = kinematic viscosity of air [m²/s]
+      !rho_air_SI = density of air [kg/m3]
+      !nu_SI = kinematic viscosity of air [m2/s]
       !mass_size_a_SI,mass_size_b parameters of mass size relation m = a*D_max^b [SI]
       !area_size_a_SI,area_size_b parameters of mass area relation A = a*D_max^b [SI]
       !out
@@ -253,7 +253,7 @@ module dia2vel
 
       ! Khvorostyanov, V. I. & Curry, J. A. Terminal Velocities of Droplets and Crystals:
       ! Power Laws with Continuous Parameters over the Size Spectrum.
-      ! Journal of the Atmospheric Sciences 59, 1872–1884 (2002).
+      ! Journal of the Atmospheric Sciences 59, 1872-1884 (2002).
       ! equation 3.3
 
 
@@ -331,9 +331,9 @@ module dia2vel
       !in
       !nDia: no of diameters
       !diaSpec = diameter spectrum [m]
-      !rho_air = density of air [kg/m³]
-      !rho_particle = density of particle [kg/m³]
-      !my = kinematic viscosity of air [m²/s]
+      !rho_air = density of air [kg/m3]
+      !rho_particle = density of particle [kg/m3]
+      !my = kinematic viscosity of air [m2/s]
 
       !
       !out
@@ -341,7 +341,7 @@ module dia2vel
 
       ! Khvorostyanov, V. I. & Curry, J. A. Terminal Velocities of Droplets and Crystals:
       ! Power Laws with Continuous Parameters over the Size Spectrum.
-      ! Journal of the Atmospheric Sciences 59, 1872–1884 (2002).
+      ! Journal of the Atmospheric Sciences 59, 1872-1884 (2002).
       ! equation 3.3
 
 
@@ -370,11 +370,11 @@ module dia2vel
       err = success
 
       !variables to cgs...
-      rho_particle_cp = rho_particle/1000.d0 !g/cm³
+      rho_particle_cp = rho_particle/1000.d0 !g/cm3
       g_cp = g*100.d0 !cm/s
-      rho_air_cp = rho_air/1000.d0 !g/cm³
+      rho_air_cp = rho_air/1000.d0 !g/cm3
       diaSpec_cp = 100.d0*diaSpec !cm
-      my_cp = my*10000.d0 !cm² /s
+      my_cp = my*10000.d0 !cm2 /s
       c1 = 0.0902d0
       delta0 = 9.06d0
 
@@ -411,15 +411,15 @@ module dia2vel
       !in
       !nDia: no of diameters
       !diaSpec = diameter spectrum [m]
-      !rho_air density of air [kg/m³]
-      !my = kinematic viscosity of air [m²/s]
+      !rho_air density of air [kg/m3]
+      !my = kinematic viscosity of air [m2/s]
 
       !out
       !velSpec: velocity spectrum [m/s]
 
       ! Khvorostyanov, V. I. & Curry, J. A. Terminal Velocities of Droplets and Crystals:
       ! Power Laws with Continuous Parameters over the Size Spectrum.
-      ! Journal of the Atmospheric Sciences 59, 1872–1884 (2002).
+      ! Journal of the Atmospheric Sciences 59, 1872-1884 (2002).
       ! equation 2.20c
 
       ! defined for diameters from 0 to 8.5 mm, non spherical shape is corrected
@@ -458,11 +458,11 @@ module dia2vel
 	  err = success
       end if
       !variables to cgs...
-      rho_water_cp = rho_water/1000.d0 !g/cm³
+      rho_water_cp = rho_water/1000.d0 !g/cm3
       g_cp = g*100.d0 !cm/s
-      rho_air_cp = rho_air/1000.d0 !g/cm³
+      rho_air_cp = rho_air/1000.d0 !g/cm3
       diaSpec_cp = 100.d0*diaSpec !cm
-      my_cp = my*10000.d0 !cm² /s
+      my_cp = my*10000.d0 !cm2 /s
       c1 = 0.0902d0
       delta0 = 9.06d0
 
@@ -510,11 +510,11 @@ module dia2vel
       !in
       !nDia: no of diameters
       !diaSpec = diameter spectrum [m]
-      !rho_air density of air [kg/m³]
+      !rho_air density of air [kg/m3]
       !out
       !velSpec: velocity spectrum [m/s]
 
-      !Foote, G. B. & Du Toit, P. S. Terminal Velocity of Raindrops Aloft. Journal of Applied Meteorology 8, 249–253 (1969).
+      !Foote, G. B. & Du Toit, P. S. Terminal Velocity of Raindrops Aloft. Journal of Applied Meteorology 8, 249-253 (1969).
       ! defined for 0.1-5.8 mm diameter
 
       use settings, only: verbose
@@ -564,7 +564,7 @@ module dia2vel
       end do
 
 
-      rho0 = 1.2038631624242195d0 !p=1013 hPa, T=20°C
+      rho0 = 1.2038631624242195d0 !p=1013 hPa, T=20degC
       if (rho0 < rho_air) rho0 = rho_air*1.00001 !it's numeric, stupid!
 
       !apply density correction
@@ -636,7 +636,7 @@ module dia2vel
       !velSpec: velocity spectrum [m/s]
 
       !v from Metek physical basics, density correction by foot et al
-      ! for 0.109 ≤ D ≤ 6 mm
+      ! for 0.109 <= D <= 6 mm
 
 
       use settings, only: verbose
@@ -680,7 +680,7 @@ module dia2vel
       end if
       velSpec= ( 9.65d0 - 10.3d0 * exp(-0.6d0 *diaSpec*1.d3))
 
-      rho0 = 1.2038631624242195d0 !p=1013 hPa, T=20°C
+      rho0 = 1.2038631624242195d0 !p=1013 hPa, T=20degC
       if (rho0 < rho_air) rho0 = rho_air*1.00001 !it's numeric, stupid!
 
       !apply density correction
@@ -705,7 +705,7 @@ module dia2vel
       !in
       !nDia: no of diameters
       !diaSpec = diameter spectrum [m]
-      !rho_air density of air [kg/m³]
+      !rho_air density of air [kg/m3]
       !out
       !velSpec: velocity spectrum [m/s]
 
@@ -745,7 +745,7 @@ module dia2vel
       end if
 
 
-      rho0 = 1.2038631624242195d0 !p=1013 hPa, T=20°C
+      rho0 = 1.2038631624242195d0 !p=1013 hPa, T=20degC
 
       where (diaSpec < 80d-6) !small drops
 	  velSpec = 1.19d6*(diaSpec*0.5*1d2)**2
@@ -892,11 +892,11 @@ module dia2vel
       !in
       !nDia: no of diameters
       !diaSpec = diameter spectrum [m]
-      !rho_air density of air [kg/m³]
+      !rho_air density of air [kg/m3]
       !out
       !velSpec: velocity spectrum [m/s]
 
-      !power law using the density correction of Foote, G. B. & Du Toit, P. S. Terminal Velocity of Raindrops Aloft. Journal of Applied Meteorology 8, 249–253 (1969).
+      !power law using the density correction of Foote, G. B. & Du Toit, P. S. Terminal Velocity of Raindrops Aloft. Journal of Applied Meteorology 8, 249-253 (1969).
 
       use settings, only: verbose
       use kinds
@@ -929,7 +929,7 @@ module dia2vel
 
       call dia2vel_power_law(err,nDia,diaSpec,vel_size_mod,velSpec)
 
-      rho0 = 1.2038631624242195d0 !p=1013 hPa, T=20°C
+      rho0 = 1.2038631624242195d0 !p=1013 hPa, T=20degC
       if (rho0 < rho_air) rho0 = rho_air*1.00001 !it's numeric, stupid!
 
       Y = 0.43d0*log10(rho0/rho_air)-0.4d0*(log10(rho0/rho_air))**2.5d0
@@ -1037,13 +1037,13 @@ module dia2vel
 
       !in
       !nDia: no of diameters
-      !rho_air density of air [kg/m³]
+      !rho_air density of air [kg/m3]
       !mass = mass of the particle [SI] (spectrum)
       !out
       !velSpec: velocity spectrum [m/s]
 
       ! Atlas [1973] type particle v = a - b*exp(-c*Deq) => v in [a-b, a] where Deq is melted equivalent diameter
-      !power law using the density correction of Foote, G. B. & Du Toit, P. S. Terminal Velocity of Raindrops Aloft. Journal of Applied Meteorology 8, 249–253 (1969).
+      !power law using the density correction of Foote, G. B. & Du Toit, P. S. Terminal Velocity of Raindrops Aloft. Journal of Applied Meteorology 8, 249-253 (1969).
 
       use settings, only: verbose
       use kinds
@@ -1076,7 +1076,7 @@ module dia2vel
 
       call dia2vel_atlas(err,nDia,mass,vel_size_mod,velSpec)
 
-      rho0 = 1.2038631624242195d0 !p=1013 hPa, T=20°C
+      rho0 = 1.2038631624242195d0 !p=1013 hPa, T=20degC
       if (rho0 < rho_air) rho0 = rho_air*1.00001 !it's numeric, stupid!
 
       Y = 0.43d0*log10(rho0/rho_air)-0.4d0*(log10(rho0/rho_air))**2.5d0

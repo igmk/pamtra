@@ -44,12 +44,12 @@ radar\_attenuation                 disabled, bottom-up, top-down  disabled      
 radar_convolution_fft              boolean                        True               Use FFT for convolution. FFt is much faster, but can have numerical issues in rare cases.
 radar_fwhr_beamwidth_deg           float*                         0.3                radar full width half radiation beamwidth (required for spectral broadening estimation)
 radar_integration_time             float*                         1.4                radar beamwidth (required for spectral broadening estimation)
-radar\_K2 (|K_w^2|)                positive float*                0.93               Dielectric factor of water used to estimate radr reflectivity.
+radar\_K2 (\|K_w^2\|)                positive float*                0.93               Dielectric factor of water used to estimate radr reflectivity.
 radar\_max\_v ( v_nyq )            float*                         -7.885 m/s         Maximum Nyquist velocity (usually radar\_min\_V = -radar\_max\_V)
 radar\_min\_v ( v_nyq )            float*                         7.885 m/s          Minimum Nyquist velocity
 radar_peak_min_bins                int*                           2                  Minimum peak width
 radar_peak_min_snr                 float*                         -10 dB             Minimal required SNR reqired for a peak. See radar_peak_min_snr for defintion
-radar_peak_snr_definition          specLin | log                  log                log: radar_peak_min_snr describes snr of peak in dB. linSpec: radar_peak_min_snr descibes mean signal+noise to noise ratio (available for historical reasons)
+radar_peak_snr_definition          specLin \| log                  log                log: radar_peak_min_snr describes snr of peak in dB. linSpec: radar_peak_min_snr descibes mean signal+noise to noise ratio (available for historical reasons)
 radar\_mode                        simple, spectrum, moments      simple             Use "simple" radar simulator provides only Z_e by integrating over D. The advanced "spectrum" simulator simulates the complete radar Doppler spectrum and estimates all moments from the spectrum. "moments" is identical to "spectrum" but the full Doppler spectrum is discarded to save memory.
 radar\_nfft ( N_fft )              positive integer               256                Number of FFT points in the Doppler spectrum
 radar\_no\_Ave ( Nave )            positive integer*              150                Number of spectral averages

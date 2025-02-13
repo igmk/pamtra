@@ -144,10 +144,9 @@ Get model from git repository
 *****************************
 The version control system git (http://git-scm.com/) is used to keep track of the code. Get a copy of the model with::
 
-    git clone --recursive https://github.com/igmk/pamtra
+    git clone https://github.com/igmk/pamtra
 
 The very basics of git can be found here https://try.github.io/levels/1/challenges/1 .
-"--recursive" is required because git submodules are used.
 
 
 Build PAMTRA

@@ -10,7 +10,7 @@ module eps_water
     !
     ! Input:
     !	s  salinity [ppt]
-    !	t  temperature [°C]
+    !	t  temperature [degC]
     !	f  frequency [GHz]
     !
     ! Result:
@@ -24,7 +24,7 @@ module eps_water
     implicit none
 
     real(kind=dbl), intent(in) :: s,& ! salinity [0/00]
-        T,& ! temperature [°C]
+        T,& ! temperature [degC]
         f   ! frequency [GHz]
 
     complex(kind=dbl), intent(out) :: eps_water
@@ -90,7 +90,7 @@ module eps_water
       !
       ! Input:
       ! s  salinity [ppt]
-      ! t  temperature [°C]
+      ! t  temperature [degC]
       ! f  frequency [GHz]
       !
       ! Result:
@@ -105,7 +105,7 @@ module eps_water
       implicit none
 
       real(kind=dbl), intent(in) :: s,& ! salinity [0/00]
-            T,& ! temperature [°C]
+            T,& ! temperature [degC]
             f   ! frequency [GHz]
       complex(kind=dbl), intent(out) :: eps
 
@@ -168,7 +168,7 @@ module eps_water
       !
       ! Input:
       ! s  salinity [ppt]
-      ! T  temperature [°C]
+      ! T  temperature [degC]
       ! f  frequency [GHz]
       !
       ! Result:
@@ -183,7 +183,7 @@ module eps_water
       implicit none
 
       real(kind=dbl), intent(in) :: s,& ! salinity [0/00]
-            T,& ! temperature [°C]
+            T,& ! temperature [degC]
             f   ! frequency [GHz]
       complex(kind=dbl), intent(out) :: eps
 
@@ -220,7 +220,7 @@ module eps_water
       !
       ! Input:
       ! s  salinity [ppt]
-      ! T  temperature [°C]
+      ! T  temperature [degC]
       ! f  frequency [GHz]
       !
       ! Result:
@@ -258,7 +258,7 @@ module eps_water
       implicit none
 
       real(kind=dbl), intent(in) :: s,& ! salinity [0/00]
-            T,& ! temperature [°C]
+            T,& ! temperature [degC]
             f   ! frequency [GHz]
       complex(kind=dbl), intent(out) :: eps
 
@@ -598,7 +598,7 @@ module eps_water
       !
       ! Input:
       ! s  salinity [ppt]
-      ! t  temperature [°C]
+      ! t  temperature [degC]
       ! f  frequency [GHz]
       !
       ! Result:
@@ -614,7 +614,7 @@ module eps_water
       implicit none
 
       real(kind=dbl), intent(in) :: s,& ! salinity [0/00]
-            T,& ! temperature [°C]
+            T,& ! temperature [degC]
             f   ! frequency [GHz]
       complex(kind=dbl), intent(out) :: eps
 
@@ -673,7 +673,7 @@ module eps_water
       !  Maria Cadeddu, Argonne National Laboratory
       !
       ! Input:
-      ! T  temperature [°C]
+      ! T  temperature [degC]
       ! f  frequency [GHz]
       !
       ! Result:
@@ -685,7 +685,7 @@ module eps_water
       implicit none
       
       real(kind=dbl), intent(in) :: &
-	    T,& ! temperature [°C]
+	    T,& ! temperature [degC]
       f   ! frequency [GHz]
       complex(kind=dbl), intent(out) :: eps
 
