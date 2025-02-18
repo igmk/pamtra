@@ -136,8 +136,9 @@ fortranobject_dep = declare_dependency(
   include_directories: [incdir_numpy, incdir_f2py])
 
 fftw3dep = dependency('fftw3')
-blasdep = dependency('blas')
-lapackdep = dependency('lapack')
+#blasdep = dependency('blas')
+#lapackdep = dependency('lapack')
+openblasdep = dependency('openblas')
 netcdfdep = dependency('netcdf')
 
 # List sources
@@ -282,7 +283,7 @@ py3.extension_module('pyPamtraLib', # extension module should have the same name
   fortran_args: ['-cpp', '-fallow-argument-mismatch', '-fallow-invalid-boz'], # TODO this is probaly only valid for gcc, need to find a way to get meson set it
   include_directories: inc_dirs,
   link_with: fortranobject_lib,
-  dependencies : [py3_dep, fortranobject_dep, fftw3dep, blasdep, lapackdep, netcdfdep],
+  dependencies : [py3_dep, fortranobject_dep, fftw3dep, openblasdep, netcdfdep],
   subdir: 'pyPamtra/',
   install : true)
 
