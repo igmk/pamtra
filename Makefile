@@ -6,8 +6,7 @@ SRCDIR := src/
 BINDIR := bin/
 LIBDIR := lib/
 PYTDIR := python/pyPamtra
-#PYINSTDIR := ~/lib/python/
-PYINSTDIR := ~/miniconda3/envs/ac3/lib/
+PYINSTDIR := ~/lib/python/
 
 gitHash    := $(shell git show -s --pretty=format:%H)
 gitVersion := $(shell git describe --tags)-$(shell git name-rev --name-only HEAD)
