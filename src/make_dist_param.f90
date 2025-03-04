@@ -32,7 +32,7 @@ subroutine make_dist_params(errorstatus)
   use constants, only: pi, rho_water, delta_d_mono
 
   use drop_size_dist, only: dist_name, rho_ms, p_1, p_2, p_3, p_4, a_ms, b_ms, d_1, d_2, moment_in, & ! IN
-       q_h, n_tot, r_eff, layer_t, nbin,                            & ! IN
+       q_h, n_tot, r_eff, layer_t, nbin, liq_ice,                            & ! IN
        n_0, lambda, mu, gam, n_t, sig, d_ln, d_mono, d_m, n_0_star ! OUT
 
   ! variables used for surface and pressure dependent parameters (ECHAM/HIRHAM)
@@ -535,23 +535,63 @@ subroutine make_dist_params(errorstatus)
   ! NORMALIZED GAMMA distribution   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
   if (trim(dist_name) == 'norm_gamma') then
-     ! ! The user MUST specify d_m, n_0_star and mu parameters
-     call assert_false(err,((p_1 == -99.) .or. (p_2 == -99.)),&
-          'Normalized Modified Gamma case: p_1 and p_2 parameters must be specified')
-     call assert_true(err,((p_3 /= -99.) .NEQV. (p_4 /= -99.)),& ! NEQV = xor
-          'Normalized Modified Gamma case: p_3 xor p_4 parameters must be specified...' )
-     call assert_true(err,(moment_in == 0),&
-          'Normalized Modified Gamma case: currently only implemented for moment_in = 0')
+     call assert_true(err,(moment_in == 0) .or. (moment_in == 23),&
+          'Normalized Modified Gamma case: currently only implemented for moment_in = 0 and 23')
      if (err > 0) then
         errorstatus = fatal
         msg = "assertation error"
         call report(errorstatus, msg, nameOfRoutine)
         return
      end if
-     d_m  = p_1
-     n_0_star = p_2
-     if (p_3 /= -99.) mu = p_3
-     if (p_4 /= -99.) mu = p_4 -(b_ms+1) !shifted mu value for better numerical handling in optimal estimation!
+     if (moment_in == 0) then 
+        ! ! The user MUST specify d_m, n_0_star and mu parameters
+        call assert_false(err,((p_1 == -99.) .or. (p_2 == -99.)),&
+             'Normalized Modified Gamma case: p_1 and p_2 parameters must be specified')
+        call assert_true(err,((p_3 /= -99.) .NEQV. (p_4 /= -99.)),& ! NEQV = xor
+             'Normalized Modified Gamma case: p_3 xor p_4 parameters must be specified...' )
+        if (err > 0) then
+           errorstatus = fatal
+           msg = "assertation error"
+           call report(errorstatus, msg, nameOfRoutine)
+           return
+        end if
+        d_m  = p_1
+        n_0_star = p_2
+        if (p_3 /= -99.) mu = p_3
+        if (p_4 /= -99.) mu = p_4 -(b_ms+1) !shifted mu value for better numerical handling in optimal estimation!
+     elseif (moment_in == 23) then 
+        ! attention, the normalized form requires the ration of the ratio of the (b_ms+1)nth to the (b_ms)nth moment, reff is usually 3rd to 2nd moment
+        d_m  = r_eff * 2 
+
+        !eq A14 of Maahn et al 2015:
+        work1 = gamma(b_ms+1)
+        work2 = work1/(b_ms+1)**(b_ms+1)
+        !eq8 of Testud 2001 & eq A9 of Maahn et al 2015:
+        n_0_star = q_h/(a_ms * d_m**(b_ms+1) * work2)
+
+
+        if (verbose >= 5)  print*, q_h, d_m, n_0_star, a_ms, b_ms, work1, work2
+
+        if (p_3 /= -99.) then
+          mu = p_3
+        else
+         call assert_true(err,(liq_ice == 1),& 
+             'Mu can be only estimated from d_m for rain' )
+          !Mroz et al. 2023 eq 21, for rain only!
+          mu = 10. * (d_m*1000.)**(-0.8) - 4.
+        end if  
+
+
+     end if
+
+     if (verbose >= 5)  print*, d_m, n_0_star, mu
+
+     if (err > 0) then
+        errorstatus = fatal
+        msg = "assertation error"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+     end if
      errorstatus = err
      if (verbose >= 2) call report(info,'End of ', nameOfRoutine)
      return

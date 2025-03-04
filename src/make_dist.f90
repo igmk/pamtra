@@ -96,6 +96,7 @@ subroutine make_dist(errorstatus)
      skip = .true.
   endif
 
+
   ! First loop:
   ! -uses a very large number of bin and wide range of diameters to found where f_ds_work(D) is smaller than thres_n
   ! Second loop:
@@ -156,6 +157,8 @@ subroutine make_dist(errorstatus)
         endif
      enddo
 
+
+
      ! calculate the particle number concentration
      ! ! LOG-NORMAL distribution
      if (trim(dist_name) == 'logn') then
@@ -175,6 +178,7 @@ subroutine make_dist(errorstatus)
            tmp1 = gamma(b_ms+1)/(b_ms+1)**(b_ms+1) * (b_ms+mu+1)**(b_ms+mu+1)/gamma(b_ms+mu+1)
            tmp2 = exp(-(b_ms+mu+1)*tmpX)
            f_ds_work(i) = n_0_star * tmp1 * tmpX**mu * tmp2
+           !print*, i, tmpX, d_m, a_ms, b_ms, mu, tmp1, tmp2, f_ds_work(i)
         enddo
         ! normalized modified gamma
         !follows the definition from Testud et al, 
