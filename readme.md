@@ -6,6 +6,7 @@
 Python/Fortran 90 package to solve the passive and active microwave radiative transfer in a plan parallel horizontally homogeneous atmosphere with hydrometeors
 
 ## Manual and Installation
+For a modern, pip-based, easy installation have a look at our wiki https://github.com/igmk/pamtra/wiki/PAMTRA
 
 See https://pamtra.readthedocs.io/ for documentation.
 
