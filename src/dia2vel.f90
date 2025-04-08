@@ -69,15 +69,15 @@ module dia2vel
   end subroutine  dia2vel_heymsfield10_particles_ms_as
   
   subroutine dia2vel_heymsfield10_particles &
-    (errorstatus,&     	! out
-    nDia,& 		!in
-    diaSpec_SI,&	!in
-    rho_air_SI,&	!in
-    nu_SI,&		!in
-    mass,&              !in
+    (errorstatus,&     ! out
+    nDia,&             !in
+    diaSpec_SI,&       !in
+    rho_air_SI,&       !in
+    nu_SI,&            !in
+    mass,&             !in
     area,&
-    k,&                 !in
-    velSpec)		!out
+    k,&                !in
+    velSpec)           !out
 
       !in
       !nDia: no of diameters
@@ -140,14 +140,14 @@ module dia2vel
 
 
   subroutine dia2vel_khvorostyanov01_particles &
-    (errorstatus,&     	! out
-    nDia,& 		!in
-    diaSpec_SI,&	!in
-    rho_air_SI,&	!in
-    nu_SI,&		!in
-    mass_SI,&	!in
-    area_SI,&	!in
-    velSpec)		!out
+    (errorstatus,&     ! out
+    nDia,&             !in
+    diaSpec_SI,&       !in
+    rho_air_SI,&       !in
+    nu_SI,&            !in
+    mass_SI,&          !in
+    area_SI,&          !in
+    velSpec)           !out
 
       !in
       !nDia: no of diameters
@@ -231,15 +231,15 @@ module dia2vel
   end subroutine dia2vel_khvorostyanov01_particles
 
   subroutine dia2vel_khvorostyanov05_particles &
-    (errorstatus,&     	! out
-    nDia,& 		!in
-    diaSpec_SI,&	!in
-    rho_air_SI,&	!in
-    nu_SI,&		!in
-    mass_SI,&	!in
-    area_SI,&	!in
-    rho_particle,& 	! in
-    velSpec)		!out
+    (errorstatus,&      ! out
+    nDia,&              !in
+    diaSpec_SI,&        !in
+    rho_air_SI,&        !in
+    nu_SI,&             !in
+    mass_SI,&           !in
+    area_SI,&           !in
+    rho_particle,&      ! in
+    velSpec)            !out
 
       !in
       !nDia: no of diameters
@@ -271,13 +271,13 @@ module dia2vel
       real(kind=dbl), dimension(ndia), intent(out) :: velSpec
       real(kind=dbl) :: delta0
       real(kind=dbl), dimension(ndia):: X, bRe, aRe, Vb , Fb!, Av, Bv
-	  real(kind=dbl) :: do_i
-	  real(kind=dbl) :: co_i
-	  real(kind=dbl) :: Ct
-	  real(kind=dbl) :: X0_i
-	  real(kind=dbl) :: c1
-	  real(kind=dbl) :: c2
-	  real(kind=dbl) :: rhoi
+      real(kind=dbl) :: do_i
+      real(kind=dbl) :: co_i
+      real(kind=dbl) :: Ct
+      real(kind=dbl) :: X0_i
+      real(kind=dbl) :: c1
+      real(kind=dbl) :: c2
+      real(kind=dbl) :: rhoi
       integer(kind=long), intent(out) :: errorstatus
       integer(kind=long) :: err = 0
       character(len=33) :: nameOfRoutine = 'dia2vel_khvorostyanov05_particles'
@@ -292,7 +292,7 @@ module dia2vel
       co_i = 0.6
       Ct = 1.6
       X0_i = .35714285714285714285e-6 !1.0_wp/2.8e6_wp
-	  ! derived constants
+      ! derived constants
       c1 = 4.0 / ( do_i**2 * SQRT(co_i) )
       c2 = 0.25 * do_i**2
       rhoi  = 919.0
@@ -320,13 +320,13 @@ module dia2vel
   end subroutine dia2vel_khvorostyanov05_particles
 
   subroutine dia2vel_khvorostyanov01_spheres &
-    (errorstatus,&     	! out
-    nDia,&     		! in
-    diaSpec,&     	! in
-    rho_air,&     	! in
-    my,&     		! in
-    rho_particle,&     	! in
-    velSpec)		! out
+    (errorstatus,&     ! out
+    nDia,&             ! in
+    diaSpec,&          ! in
+    rho_air,&          ! in
+    my,&               ! in
+    rho_particle,&     ! in
+    velSpec)           ! out
     
       !in
       !nDia: no of diameters
@@ -401,12 +401,12 @@ module dia2vel
 
 
   subroutine dia2vel_khvorostyanov01_drops &
-    (errorstatus,&     	! out
-    nDia,&    	 	! in
-    diaSpec,&     	! in
-    rho_air,&     	! in
-    my,&     		! in
-    velSpec)		! out
+    (errorstatus,&     ! out
+    nDia,&             ! in
+    diaSpec,&          ! in
+    rho_air,&          ! in
+    my,&               ! in
+    velSpec)           ! out
     
       !in
       !nDia: no of diameters
@@ -448,14 +448,14 @@ module dia2vel
 
       !check for boundaries (including 1% numerical tolerance)
       if (MAXVAL(diaSpec) > 8.5d-3*1.01d0) then
-	  print*, "Largest diameter for dia2vel_khvorostyanov01_spheres is 8.5 mm, got",&
-	  MAXVAL(diaSpec), "[m]"
-	  errorstatus = fatal
-	  msg = 'Diameter out of specs!'
-	  call report(errorstatus, msg, nameOfRoutine)
-	  return
+        print*, "Largest diameter for dia2vel_khvorostyanov01_spheres is 8.5 mm, got",&
+        MAXVAL(diaSpec), "[m]"
+        errorstatus = fatal
+        msg = 'Diameter out of specs!'
+        call report(errorstatus, msg, nameOfRoutine)
+        return
       else
-	  err = success
+        err = success
       end if
       !variables to cgs...
       rho_water_cp = rho_water/1000.d0 !g/cm3
@@ -499,12 +499,12 @@ module dia2vel
 
 
   subroutine dia2vel_foote69_rain &
-    (errorstatus,&     	! out
-    nDia,&    	 	! in
-    diaSpec,&     	! in
-    rho_air,&     	! in
-    temp,&    	 	! in
-    velSpec)		! out
+    (errorstatus,&     ! out
+    nDia,&             ! in
+    diaSpec,&          ! in
+    rho_air,&          ! in
+    temp,&             ! in
+    velSpec)           ! out
       
 
       !in
@@ -539,28 +539,28 @@ module dia2vel
 
       !check for boundaries (including 1% numerical tolerance)
       if (MINVAL(diaSpec) < 1d-4/1.01d0) then
-	  print*, "Smallest diameter for dia2vel_foote69_rain is 0.1mm, got",&
-	  MINVAL(diaSpec), "[m]"
-	  errorstatus = fatal
-	  msg = 'Diameter out of specs!'
-	  call report(errorstatus, msg, nameOfRoutine)
-	  return
+        print*, "Smallest diameter for dia2vel_foote69_rain is 0.1mm, got",&
+        MINVAL(diaSpec), "[m]"
+        errorstatus = fatal
+        msg = 'Diameter out of specs!'
+        call report(errorstatus, msg, nameOfRoutine)
+        return
       else if (MAXVAL(diaSpec) > 5.8d-3*1.01d0) then
-	  print*, "Largest diameter for dia2vel_foote69_rain is 5.8mm, got",&
-	  MAXVAL(diaSpec), "[m]"
-	  errorstatus = fatal
-	  msg = 'Diameter out of specs!'
-	  call report(errorstatus, msg, nameOfRoutine)
-	  return
+        print*, "Largest diameter for dia2vel_foote69_rain is 5.8mm, got",&
+        MAXVAL(diaSpec), "[m]"
+        errorstatus = fatal
+        msg = 'Diameter out of specs!'
+        call report(errorstatus, msg, nameOfRoutine)
+        return
       else
-	  err = success
+        err = success
       end if
       aj(:) = (/-8.5731540d-2, 3.3265862d0, 4.3843578d0, -6.8813414d0, 4.7570205d0,&
       -1.9046601d0, 4.6339978d-1, -6.7607898d-2, 5.4455480d-3, -1.8631087d-4/)
 
       velSpec = 0.d0
       do jj=1,10
-	  velSpec = velSpec + (aj(jj)*(diaSpec*1d3)**(jj-1))
+        velSpec = velSpec + (aj(jj)*(diaSpec*1d3)**(jj-1))
       end do
 
 
@@ -580,10 +580,10 @@ module dia2vel
 
 
   subroutine dia2vel_pavlos_cloud &
-    (errorstatus,&     	! out
-    nDia,&     		! in
-    diaSpec,&     	! in
-    velSpec)		! out
+    (errorstatus,&     ! out
+    nDia,&             ! in
+    diaSpec,&          ! in
+    velSpec)           ! out
     
       !in
       !nDia: no of diameters
@@ -622,12 +622,12 @@ module dia2vel
 
 
   subroutine dia2vel_metek_rain &
-    (errorstatus,&     	! out
-    nDia,&    	 	! in
-    diaSpec,&     	! in
-    rho_air,&     	! in
-    temp,&     		! in
-    velSpec)		! out
+    (errorstatus,&     ! out
+    nDia,&             ! in
+    diaSpec,&          ! in
+    rho_air,&          ! in
+    temp,&             ! in
+    velSpec)           ! out
     
       !in
       !nDia: no of diameters
@@ -662,21 +662,21 @@ module dia2vel
 
       !check for boundaries (including 1% numerical tolerance)
       if (MINVAL(diaSpec) < 1.09d-4/1.01d0) then
-	  print*, "Smallest diameter for dia2vel_metek_rain is 0.109 mm, got", &
-	  MINVAL(diaSpec), "[m]"
-	  errorstatus = fatal
-	  msg = 'Diameter out of specs!'
-	  call report(errorstatus, msg, nameOfRoutine)
-	  return
+        print*, "Smallest diameter for dia2vel_metek_rain is 0.109 mm, got", &
+        MINVAL(diaSpec), "[m]"
+        errorstatus = fatal
+        msg = 'Diameter out of specs!'
+        call report(errorstatus, msg, nameOfRoutine)
+        return
       else if (MAXVAL(diaSpec) > 6d-3*1.01d0) then
-	  print*, "Largest diameter for dia2vel_metek_rain is 6 mm, got", &
-	  MAXVAL(diaSpec), "[m]"
-	  errorstatus = fatal
-	  msg = 'Diameter out of specs!'
-	  call report(errorstatus, msg, nameOfRoutine)
-	  return
+        print*, "Largest diameter for dia2vel_metek_rain is 6 mm, got", &
+        MAXVAL(diaSpec), "[m]"
+        errorstatus = fatal
+        msg = 'Diameter out of specs!'
+        call report(errorstatus, msg, nameOfRoutine)
+        return
       else
-	  err = success
+        err = success
       end if
       velSpec= ( 9.65d0 - 10.3d0 * exp(-0.6d0 *diaSpec*1.d3))
 
@@ -696,11 +696,11 @@ module dia2vel
 
 
   subroutine dia2vel_rogers_drops &
-    (errorstatus,&     	! out
-    nDia,&   	 	! in
-    diaSpec,&     	! in
-    rho_air,&     	! in
-    velSpec)		! out
+    (errorstatus,&     ! out
+    nDia,&             ! in
+    diaSpec,&          ! in
+    rho_air,&          ! in
+    velSpec)           ! out
     
       !in
       !nDia: no of diameters
@@ -734,25 +734,25 @@ module dia2vel
 
       !check for boundaries (including 1% numerical tolerance)
       if (MAXVAL(diaSpec) > 8.5d-3*1.01d0) then
-	  print*, "Largest diameter for dia2vel_rogers_drops is 8.5 mm, got", &
-	  MAXVAL(diaSpec), "[m]"
-	  errorstatus = fatal
-	  msg = 'Diameter out of specs!'
-	  call report(errorstatus, msg, nameOfRoutine)
-	  return
+        print*, "Largest diameter for dia2vel_rogers_drops is 8.5 mm, got", &
+        MAXVAL(diaSpec), "[m]"
+        errorstatus = fatal
+        msg = 'Diameter out of specs!'
+        call report(errorstatus, msg, nameOfRoutine)
+        return
       else
-	  err = success
+        err = success
       end if
 
 
       rho0 = 1.2038631624242195d0 !p=1013 hPa, T=20degC
 
       where (diaSpec < 80d-6) !small drops
-	  velSpec = 1.19d6*(diaSpec*0.5*1d2)**2
+        velSpec = 1.19d6*(diaSpec*0.5*1d2)**2
       elsewhere (diaSpec > 1200d-6) !large drops
       velSpec = 2.2d3 * (rho0/rho_air)**0.5d0 * (diaSpec*0.5*1d2)**0.5d0 ! [m/s], diaSpec in m!
       elsewhere !intermediate
-	  velSpec = 8d3*diaSpec*0.5*1d2
+        velSpec = 8d3*diaSpec*0.5*1d2
       end where
 
       velSpec = velSpec*1d-2 !CGS to Si
@@ -764,10 +764,10 @@ module dia2vel
   end subroutine dia2vel_rogers_drops
 
   subroutine dia2vel_rogers_graupel &
-    (errorstatus,&     	! out
-    nDia,&     		! in
-    diaSpec,&     	! in
-    velSpec)		! out
+    (errorstatus,&     ! out
+    nDia,&             ! in
+    diaSpec,&          ! in
+    velSpec)           ! out
     
       !in
       !nDia: no of diameters

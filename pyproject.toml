@@ -1,0 +1,69 @@
+[build-system]
+build-backend = 'mesonpy'
+requires = [
+         "wheel", # TODO check if required
+         "meson-python",#>=0.8.0", 
+#         "setuptools<60.0",  # Do not increase, 60.0 enables vendored distutils # useless in this project
+         "Cython",#>=0.29.21", # TODO check if required
+#         "python-dev-tools",  # apparently not required by this project and also causing spurius errors
+#         "oldest-supported-numpy; python_version>'3.9'",
+         "numpy",
+         "netCDF4",
+]
+
+[project]
+name = "pyPamtra"
+license = {file = "LICENSE"}
+version = "1.0.3"
+description = "Python module pyPamtra"
+long_description = "Python code that wraps the fantastic pamtra microwave radiative transfer model"
+authors = [{name = "Pamtra team", email = "meteo-pamtra@uni-koeln.de"}]
+maintainers = [
+    {name = "Mario Mech"},
+    {name = "Max Maahn"},
+    {name = "Davide Ori"},
+]
+requires-python = ">=3.7" # TODO check it
+dependencies = [
+    # TODO: update to "pin-compatible" once possible, see
+    # https://github.com/FFY00/meson-python/issues/29
+    "numpy>=1.19.5", ## TODO: copied from apexpy, not sure if it is relevant here
+    "scipy", # TODO souds like this can also be dropped
+    "netCDF4",
+]
+readme = "readme.md"
+keywords = ["microwave",
+            "radiative transfer",
+	    "atmosphere",
+            "clouds",
+            "radiometer",
+            "radar"
+	    ]
+classifiers = [
+    "Development Status :: 4 - Beta", # TODO maybe switch to 5 Production/Stable
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Fortran",
+    "Programming Language :: Python",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Scientific/Engineering :: Atmospheric Science",
+    "Topic :: Utilities",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: POSIX",
+    "Operating System :: Unix",
+    "Operating System :: MacOS",
+]
+# dynamic = ['version']
+
+#[project.optional-dependencies]
+#test = ["unittest",]
+#doc = ["sphinx>=1.3", "sphinx-rtd-theme"]
+
+[project.urls]
+source = 'https://github.com/igmk/pamtra.git'
+documentation = "https://github.com/igmk/pamtra/wiki"
+tracker = "https://github.com/igmk/pamtra/issues"
+download = "https://github.com/igmk/pamtra/releases"
+
