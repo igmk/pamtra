@@ -276,11 +276,20 @@ fortran_pamtra_source = custom_target(
    output : ['pyPamtraLib-f2pywrappers2.f90','pyPamtraLibmodule.c'],
    command : [py3, '-m', 'numpy.f2py', '@INPUT@', '-m', 'pyPamtraLib', '--lower', '--f2cmap', '../src/.f2py_f2cmap'])
 
+
+extra_fflags_list = ['-fallow-argument-mismatch', '-fallow-invalid-boz'] # TODO check if these are really needed for modern gfortran
+extra_fflags = ['-cpp']
+foreach ff : extra_fflags_list
+  if fc.has_argument(ff) # older gfortran do not have certain flags
+    extra_fflags += ff
+  endif
+endforeach
+
 # Declare the fortran extension module
 py3.extension_module('pyPamtraLib', # extension module should have the same name ftmatrix as the target of f2py to be linked... at least when build with meson
   [fsources, csources, fortran_pamtra_source, fortranobject_c, versionNumberAuto],
   c_args: c_flags,
-  fortran_args: ['-cpp', '-fallow-argument-mismatch', '-fallow-invalid-boz'], # TODO this is probaly only valid for gcc, need to find a way to get meson set it
+  fortran_args: extra_fflags,
   include_directories: inc_dirs,
   link_with: fortranobject_lib,
   dependencies : [py3_dep, fortranobject_dep, fftw3dep, openblasdep, netcdfdep],
