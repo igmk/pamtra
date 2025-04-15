@@ -110,13 +110,17 @@ subroutine rosen98_gasabs &
      msg = 'Temperature lower than 100 K in rosen98_gasabs!'
      call report(errorstatus, msg, nameOfRoutine)
      return
-  elseif ((pres < 10.0_dbl) .or. (pres > 1.2d5)) then
+  elseif ((pres <= 0.0_dbl) .or. (pres > 1.2d5)) then
      print*, pres
      errorstatus = fatal
-     msg = 'Pressure not between 10 and 1.2d5 Pa in rosen98_gasabs!'
+     msg = 'Pressure not between 0+ and 1.2d5 Pa in rosen98_gasabs!'
      call report(errorstatus, msg, nameOfRoutine)
      return
   else
+     if (pres < 10.0_dbl) then
+        msg = 'Pressure lower than 10 Pa technically outside rosen98 model validity'
+        call report(warning, msg, nameOfRoutine)
+     end if
      err = success
   end if
 
