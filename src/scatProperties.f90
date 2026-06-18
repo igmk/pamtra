@@ -367,6 +367,15 @@ contains
       kext_hydro = extinct_matrix_hydro(1,1,16,1) !11 of extinction matrix (=not polarized), at 0deg, first quadrature. equal to extinct_matrix(1,1,16,2)
 
     else if (scat_name(:5) == "ssrga") then
+
+! this is Davide's new SSRGA implementation. Note by: 
+! So, the thing is I have initially set a new 4 parameters scattering model and left the old radar-only 3 parameters there for backward compatibility. And this is probably why I left also the old coefficients.
+! This was when I started writing ssrga, but got into problems, specifically how to convert the scattering-angle dependent scattering matrix into the RT4, that is because in ssrga the scat matrix is easily defined in coordinates relative to the polarization plane, but RT4 requires polarization to be defined in the ordinary space reference frame.
+! This is why I think I left ssrga as it is. I can't remember if I ever made progress translating to RT4... sorry.
+! What I did was to borrow code from the older RT3 implementation of the routines which makes the reference frame conversion internally and what I use and tell people to use is the ssrg-rt3 routine
+! There the most recent coefficients are used. Those are derived from our fitting to the multifrequency statistics derived from the TRIPEx campaign in 2015, and should be valid for generic stratiform, mid-latitude snowfall. 
+
+
       if (len(trim(scat_name)) > 5) then
         pos1 = 7
         nn = 0
