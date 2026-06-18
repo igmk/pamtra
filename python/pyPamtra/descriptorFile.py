@@ -382,7 +382,7 @@ def riming_dependent_area_size(M, monomer):
 
     if monomer == 'column':
         a_A_list = np.array([0.0508, 0.0392, 0.0506, 0.0831, 0.127, 0.161, 0.227, 0.298, 0.359, 0.427, 0.485])
-        b_A_list = np.array([1.77, 1,73, 1.77, 1.83, 1.88, 1.90, 1.94, 1.97, 1.98, 1.99, 1.99])
+        b_A_list = np.array([1.77, 1.73, 1.77, 1.83, 1.88, 1.90, 1.94, 1.97, 1.98, 1.99, 1.99])
 
         a_int = interp1d(M_list, a_A_list, kind='cubic')
         b_int = interp1d(M_list, b_A_list, kind='cubic')
