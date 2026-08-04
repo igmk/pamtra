@@ -221,6 +221,18 @@ contains
 
     ! normalize particle density
     num_density = n_ds / delta_d_ds
+    call assert_true(err,all(num_density>=0),&
+        "num_density must be positive")  
+    call assert_true(err,all(n_ds>=0),&
+        "n_ds must be positive")
+    call assert_true(err,all(delta_d_ds>0),&
+        "delta_d_ds must be positive")   
+    if (err > 0) then
+        errorstatus = fatal
+        msg = "assertation error"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+    end if    
 
 
     !get the refractive index

@@ -157,6 +157,15 @@ subroutine run_drop_size_dist(errorstatus)
     enddo
   print*,'sum(n_ds)',sum(n_ds)
   endif
+  
+  call assert_true(err,all(n_ds>=0),&
+      "n_ds must be positive")  
+  if (err > 0) then
+      errorstatus = fatal
+      msg = "assertation error"
+      call report(errorstatus, msg, nameOfRoutine)
+      return
+  end if    
 
 
 ! Calculate particle MASS at bin boundaries

@@ -54,14 +54,10 @@ subroutine make_dist(errorstatus)
 
   !- End of header ---------------------------------------------------------------
 
-  ! Local character:
-
-  character(len=80) :: msg
-
   ! Local scalar:
 
   real(kind=dbl) :: d_1_work, d_2_work, work1, tmp1, tmp2, tmpX, tmpG1, tmpG2, &
-        n_tot, mass_tot
+        n_tot, mass_tot, mass_one
   real(kind=dbl) :: d_1_new, d_2_new, min_lin, min_log, thres_n
   integer(kind=long) :: i, ibig, nbin_work, nbin_log, nbin_lin
   integer(kind=long) :: erroalloc
@@ -69,8 +65,8 @@ subroutine make_dist(errorstatus)
   ! Error handling
 
   integer(kind=long), intent(out) :: errorstatus
-  !   integer(kind=long) :: err = 0
-  !   character(len=80) :: msg
+  integer(kind=long) :: err = 0
+  character(len=80) :: msg
   character(len=14) :: nameOfRoutine = 'make_dist'
   logical :: skip
 
@@ -204,7 +200,11 @@ subroutine make_dist(errorstatus)
           (trim(dist_name) == 'exp_ryan') .or. (trim(dist_name) == 'mgamma_MNH') ) then
         do i=1,nbin_work+1
            f_ds_work(i) = n_0 * d_bound_ds_work(i)**mu * EXP(-lambda * d_bound_ds_work(i)**gam)
+           
         enddo
+
+
+
 
      else if ((trim(dist_name) /= 'mono')  .and. (trim(dist_name) /= 'mono_cosmo_ice') .and. &
           (trim(dist_name) /= 'const') .and. (trim(dist_name) /= 'const_cosmo_ice') .and. &
@@ -258,6 +258,20 @@ subroutine make_dist(errorstatus)
 
   enddo bigloop
 
+call assert_true(err,all(f_ds>=0),&
+     "f_ds_work must be zero or positive")  
+
+
+if (err > 0) then
+
+     errorstatus = fatal
+     msg = "assertation error"
+     call report(errorstatus, msg, nameOfRoutine)
+     return
+end if    
+
+
+
   do i = 1, nbin
      d_ds(i) = (d_bound_ds(i) + d_bound_ds(i+1)) * .5_dbl
      delta_d_ds(i) =  d_bound_ds(i+1) - d_bound_ds(i)
@@ -265,8 +279,17 @@ subroutine make_dist(errorstatus)
 
   mass_tot = 0.0_dbl
   do i=1,nbin
-     mass_tot = mass_tot + a_ms * (f_ds(i) + f_ds(i+1)) / 2._dbl * delta_d_ds(i) * d_ds(i)**b_ms
+     mass_one = a_ms * (f_ds(i) + f_ds(i+1)) / 2._dbl * delta_d_ds(i) * d_ds(i)**b_ms
+     mass_tot = mass_tot + mass_one
   enddo
+   call assert_true(err,mass_tot>0,&
+        "mass_tot must be positive. Try increasing setting hydro_threshold")  
+   if (err > 0) then
+        errorstatus = fatal
+        msg = "assertation error"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+   end if    
 
   if (conserve_mass_rescale_dsd .and. (moment_in == 3 .or. moment_in == 23 .or. moment_in == 13)) then
  ! rescale the drop-size-dist to avoid lost of mass
@@ -277,6 +300,24 @@ subroutine make_dist(errorstatus)
      n_ds(i) = (f_ds(i) + f_ds(i+1)) / 2._dbl * delta_d_ds(i)  ! Trapezoidal approximation of the integral
 !     print*, d_ds(i), f_ds(i),delta_d_ds(i), n_ds(i)
   enddo
+
+   call assert_true(err,all(n_ds>=0),&
+        "n_ds must be zero or positive")  
+
+   call assert_true(err,q_h>0,&
+        "q_h must be zero or positive")  
+
+   if (err > 0) then
+       do i=1,nbin
+         print*,'   distribution: i, n_ds, f_ds, delta_d_ds',&
+                    i, n_ds(i),f_ds(i),delta_d_ds(i)
+       enddo
+        errorstatus = fatal
+        msg = "assertation error"
+        call report(errorstatus, msg, nameOfRoutine)
+        return
+   end if    
+
 
   !remove numerical instabilities
   n_tot = SUM(n_ds)  
