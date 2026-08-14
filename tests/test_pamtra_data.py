@@ -1,6 +1,6 @@
 """Network-free test of pamtra_data.fetch_data(): serves a small fixture
 archive (same shape as the real one -- no single wrapping directory) over
-a local HTTP server instead of hitting the real ~250 MB Sciebo download.
+a local HTTP server instead of hitting the real ~250 MB GitHub release download.
 """
 
 import functools

@@ -29,7 +29,7 @@ import sys
 
 import pooch
 
-DATA_URL = "https://uni-koeln.sciebo.de/s/As5fqDdPCOx4JbS/download"
+DATA_URL = "https://github.com/igmk/pamtra/releases/download/data-v1/pamtra_data.tar.bz2"
 DATA_HASH = "sha256:ae647647e634a8d26c8ac6906950c64a4dc6d203493fef4a759a15039dd6d018"
 ARCHIVE_NAME = "pamtra_data.tar.bz2"
 EXTRACT_DIR = "pamtra_data"

@@ -40,10 +40,11 @@ methods.
     print(pam.r["tb"][0, 0, 0, 0])  # brightness temperature, [angle, V/H]
     print(pam.r["Ze"][0, 0, 0, 0])  # radar reflectivity, [layer]
 
-This runs entirely without ``PAMTRA_DATADIR`` pointing at real data (an
-empty string is fine, see :ref:`installation`) because Mie-sphere
-scattering and :any:`pyPamtra.importer.createUsStandardProfile` need no
-external database. Real work usually starts from an existing descriptor
+This runs entirely without ``PAMTRA_DATADIR`` pointing at real data, because
+Mie-sphere scattering and :any:`pyPamtra.importer.createUsStandardProfile`
+need no external database -- set ``export PAMTRA_DATADIR=""`` first if you
+want to skip PAMTRA's one-time automatic data download for this example
+(see :ref:`installation`). Real work usually starts from an existing descriptor
 file in ``descriptorfiles/`` (:ref:`descriptorFile`) and a profile built
 from your own model output via one of the importers in
 :any:`pyPamtra.importer` (:ref:`profiles`), rather than

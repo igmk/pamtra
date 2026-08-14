@@ -21,26 +21,44 @@ try:
 except ImportError:
     print('PAMTRA FORTRAN LIBRARY NOT AVAILABLE!')
 try:
-    pamdata =  os.environ['PAMTRA_DATADIR']
+    pamdata = os.environ['PAMTRA_DATADIR']
 except KeyError:
-    data_message = """
-        Environment variable PAMTRA_DATADIR not set.
+    # Not set at all (as opposed to explicitly set to "", which opts out of
+    # this and is left alone above): fetch PAMTRA's scattering-database and
+    # surface-emissivity data automatically instead of requiring a manual
+    # download step. Cached after the first run (see pamtra_data.py).
+    try:
+        import pamtra_data
+        print("PAMTRA_DATADIR not set: downloading and caching PAMTRA's external "
+              "data (one-time; set PAMTRA_DATADIR explicitly, including to an "
+              "empty string, to skip this).")
+        pamdata = pamtra_data.fetch_data()
+    except Exception as fetch_error:
+        data_message = """
+        Environment variable PAMTRA_DATADIR not set, and automatically downloading
+        the data failed (see the error above/below for why -- commonly no network
+        access).
 
-        This is required to make use of all features of PAMTRA (scattering databases, surface reflection catalogues).
+        This data is required to make use of all features of PAMTRA (scattering
+        databases, surface reflection catalogues); many features (e.g. Mie-sphere
+        scattering) work without it.
 
-        You can get the data from University of Cologne
+        Once you have network access, just retry -- pyPamtra downloads and caches
+        the data for you automatically. To download it yourself instead, see
 
-        https://uni-koeln.sciebo.de/s/As5fqDdPCOx4JbS
-        
-        Once downloaded and unpacked in a arbitrary directory you need to set the environment variables PAMTRA_DATADIR in ~/.profile or directly in your python script by
+        https://github.com/igmk/pamtra/releases/download/data-v1/pamtra_data.tar.bz2
+
+        and once downloaded and unpacked in an arbitrary directory, set PAMTRA_DATADIR
+        to point at it, in ~/.profile or directly in your python script by
 
         import os
 
         os.environ['PAMTRA_DATADIR'] = path_where_the_data_is
 
-        If you're absolutely sure what you do, you can set omit the data download and set the variable to an empty location.
+        If you're absolutely sure you don't need the data, set PAMTRA_DATADIR to an
+        empty string instead to skip this entirely.
         """
-    raise RuntimeError(data_message)
+        raise RuntimeError(data_message) from fetch_error
 from .descriptorFile import pamDescriptorFile
 from .tools import sftp2Cluster, formatExceptionInfo
 from .meteoSI import detect_liq_cloud, mod_ad, moist_rho_rh,rh2q

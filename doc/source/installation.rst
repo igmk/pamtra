@@ -166,27 +166,27 @@ every Fortran change::
 Download data
 *************
 
-Although PAMTRA can be used without additional data by simply setting the
-data path to an empty directory::
+This data includes the land surface emissivity maps and some scattering
+databases. Many features (e.g. Mie-sphere scattering, the built-in surface
+emissivity defaults) work without it.
 
-  export PAMTRA_DATADIR=""
-
-it is recommended that you download the data. It includes the land surface
-emissivity maps and some scattering databases.
-
-For ``pyPamtra``, the ``pip install .`` above already installed a small
-helper (`pooch <https://www.fatiando.org/pooch/>`_-based) that downloads
-and caches the data for you and prints the resulting path -- it's downloaded
-once and re-used (with a checksum check) on every later call::
+For ``pyPamtra``, nothing to do here: if ``PAMTRA_DATADIR`` isn't set at all,
+``import pyPamtra`` downloads and caches the data automatically (via
+`pooch <https://www.fatiando.org/pooch/>`_, with a checksum check), the first
+time only. If you'd rather not have the first import trigger a ~250 MB
+download, fetch it ahead of time the same way::
 
   export PAMTRA_DATADIR=$(pamtra-fetch-data)
 
-Add that line to your shell startup file to make it persist across
-sessions. For the standalone ``pamtra`` binary (:ref:`pamtra`, built via
-the Makefile, no pip/Python dependency), download and unpack the data
-manually instead::
+and add that line to your shell startup file. To explicitly skip the data
+entirely (rather than let it auto-download), set ``PAMTRA_DATADIR=""``
+before importing.
 
-  wget -q -O data.tar.bz2 https://uni-koeln.sciebo.de/s/As5fqDdPCOx4JbS/download
+For the standalone ``pamtra`` binary (:ref:`pamtra`, built via the Makefile,
+no pip/Python dependency, so no auto-download either), download and unpack
+the data manually::
+
+  wget -q -O data.tar.bz2 https://github.com/igmk/pamtra/releases/download/data-v1/pamtra_data.tar.bz2
   tar xjf data.tar.bz2
   rm data.tar.bz2
   echo 'export PAMTRA_DATADIR="wherever/it/is/"' >> ~/.bashrc

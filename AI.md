@@ -69,14 +69,17 @@ the Python wrapper output.
 
 ### Required runtime environment
 
-`pyPamtra` requires the `PAMTRA_DATADIR` environment variable to point at a directory containing
-scattering databases and surface reflection catalogues (`PAMTRA_DATADIR=""` is also valid --
-several scattering methods and the built-in surface emissivity defaults need no external data).
-Importing `pyPamtra` without it set at all raises `RuntimeError` at import time
-([python/pyPamtra/core.py](python/pyPamtra/core.py)). [pamtra_data.py](python/pamtra_data.py)
-(top-level, not inside the `pyPamtra` package, precisely so it can be imported/run before
-`PAMTRA_DATADIR` exists) downloads and caches the data via `pooch` and sets the env var; its
-console-script entry point is `pamtra-fetch-data` (see doc/source/installation.rst).
+`pyPamtra` uses the `PAMTRA_DATADIR` environment variable to point at a directory containing
+scattering databases and surface reflection catalogues. If it's set (`PAMTRA_DATADIR=""` counts
+as set, and opts out of everything below -- several scattering methods and the built-in surface
+emissivity defaults need no external data), it's used as-is. If it's unset entirely, `core.py`
+auto-downloads and caches the data via [pamtra_data.py](python/pamtra_data.py) (`pooch`-based;
+top-level, not inside the `pyPamtra` package, precisely so it's importable before `PAMTRA_DATADIR`
+exists) and sets the env var itself -- `import pyPamtra` just works on a fresh machine, at the
+cost of a one-time download on first import. If that download fails (no network, etc.), import
+raises `RuntimeError` with next steps. The same fetch is available standalone via the
+`pamtra-fetch-data` console script (see doc/source/installation.rst). The standalone Fortran CLI
+binary has no such auto-fetch -- it always needs `PAMTRA_DATADIR` set manually.
 
 External library dependencies for the Fortran build: LAPACK/BLAS (or OpenBLAS), FFTW3, NetCDF
 (Fortran bindings), and a Fortran 90 compiler (gfortran assumed by both build systems).
