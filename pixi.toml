@@ -1,0 +1,35 @@
+[workspace]
+name = "pamtra"
+description = "Passive and Active Microwave TRAnsfer radiative transfer model"
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "osx-64", "linux-64"]
+
+# Optional convenience layer on top of the conda-forge distribution. This is
+# NOT the primary documented install path (see doc/source/installation.rst)
+# -- it exists to give contributors and workshop users a one-command,
+# reproducible dev environment: `pixi run install && pixi run test`.
+[dependencies]
+python = ">=3.10"
+pip = "*"
+c-compiler = "*"
+fortran-compiler = "*"
+pkg-config = "*"
+meson = "*"
+meson-python = "*"
+ninja = "*"
+cython = "*"
+numpy = "*"
+scipy = "*"
+netcdf4 = "*"
+matplotlib = "*"
+pytest = "*"
+libopenblas = "*"
+fftw = "*"
+libnetcdf = "*"
+
+[tasks]
+install = "pip install --no-build-isolation -e . -Cbuild-dir=build"
+test = "pytest tests/ -v"
+
+[activation.env]
+PAMTRA_DATADIR = ""

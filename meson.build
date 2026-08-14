@@ -139,13 +139,32 @@ fftw3dep = dependency('fftw3')
 #blasdep = dependency('blas')
 #lapackdep = dependency('lapack')
 
-# openblas is keg-only in Homebrew (macOS ships BLAS/LAPACK via the Accelerate
-# framework instead), so its .pc file is not symlinked into the default
-# pkg-config search path and dependency('openblas') fails unless the user
-# manually exports PKG_CONFIG_PATH. Fall back to asking brew for the prefix
-# and wiring up the dependency manually so `pip install .` works out of the box.
+fs = import('fs')
 openblasdep = dependency('openblas', required: false)
+
+if not openblasdep.found()
+  # A conda/pixi environment's own libopenblas package doesn't ship a
+  # pkg-config file, but it must be preferred over any system copy: e.g.
+  # linking against Homebrew's openblas from inside a conda/pixi build
+  # pulls in a second, different OpenMP runtime that aborts at dlopen
+  # time when mixed with the env's own libraries. sys.prefix is
+  # authoritative for whatever Python environment is actually building.
+  py_prefix = run_command(py3, ['-c', 'import sys; print(sys.prefix)'], check: true).stdout().strip()
+  foreach libname : ['libopenblas.dylib', 'libopenblas.so', 'libopenblas.0.dylib', 'libopenblas.so.0']
+    candidate = py_prefix / 'lib' / libname
+    if not openblasdep.found() and fs.exists(candidate)
+      openblasdep = declare_dependency(link_args: [candidate])
+    endif
+  endforeach
+endif
+
 if not openblasdep.found() and is_mac
+  # openblas is keg-only in Homebrew (macOS ships BLAS/LAPACK via the
+  # Accelerate framework instead), so its .pc file is not symlinked into
+  # the default pkg-config search path and dependency('openblas') fails
+  # unless the user manually exports PKG_CONFIG_PATH. Only reached when
+  # there's no env-local openblas above (plain `pip install .` with
+  # Homebrew-installed dependencies, not a conda/pixi build).
   brew_prefix = run_command('brew', ['--prefix', 'openblas'], check: false)
   if brew_prefix.returncode() == 0
     openblas_root = brew_prefix.stdout().strip()
