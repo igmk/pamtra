@@ -47,6 +47,24 @@ jobs:
       - name: Run pytest
         run: pytest tests/ -v
 
+  conda-build:
+    name: pixi/conda-forge build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: prefix-dev/setup-pixi@v0.10.1
+
+      - name: pixi run install
+        run: pixi run install
+
+      - name: pixi run test
+        run: pixi run test
+
   make-build:
     name: make pamtra (legacy CLI build)
     runs-on: ubuntu-latest

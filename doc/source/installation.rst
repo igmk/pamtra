@@ -26,8 +26,39 @@ of the code. Get a copy of the model with::
     cd pamtra
 
 
-Linux (Ubuntu)
-**************
+conda-forge / pixi (recommended, cross-platform)
+*************************************************
+
+The dependencies below (openblas, fftw, netcdf, a matching C/Fortran
+compiler pair) are all available as `conda-forge <https://conda-forge.org/>`_
+packages, including working macOS (both Intel and Apple Silicon) builds.
+This avoids needing a system package manager (apt/brew) at all, and is the
+same install path used by PAMTRA's CI.
+
+With `conda <https://docs.conda.io/>`_ or `mamba <https://mamba.readthedocs.io/>`_::
+
+    conda create -n pamtra -c conda-forge python numpy scipy netcdf4 matplotlib \
+        meson meson-python cython pkg-config fftw libopenblas libnetcdf \
+        c-compiler fortran-compiler
+    conda activate pamtra
+    pip install --no-deps --no-build-isolation .
+
+Or, if you use `pixi <https://pixi.sh/>`_ (also conda-forge-based), the
+repository already has a ``pixi.toml`` with this dependency set defined ---
+just run::
+
+    pixi install
+    pixi run install
+    pixi run test    # optional, runs the test suite
+
+``pixi run install`` and the manual ``pip install`` above both build with
+``--no-build-isolation``, so the compiler/library versions actually pinned
+in your conda/pixi environment are used instead of a fresh isolated build
+environment.
+
+
+Linux (Ubuntu), apt
+********************
 
 Install the system libraries needed to compile PAMTRA::
 
@@ -56,8 +87,8 @@ Then install PAMTRA itself::
     before starting python.
 
 
-macOS
-*****
+macOS, Homebrew
+*****************
 
 Install the required libraries with `Homebrew <https://brew.sh>`_::
 
@@ -75,6 +106,21 @@ whatever ``brew install gcc`` provides on your system)::
    ``pkg-config`` search path. The build automatically falls back to
    ``brew --prefix openblas`` to locate it, so you do **not** need to
    manually export ``PKG_CONFIG_PATH`` for openblas.
+
+
+Windows, WSL2
+**************
+
+On Windows, install `WSL2 <https://learn.microsoft.com/windows/wsl/install>`_
+with an Ubuntu distribution, then follow the Linux instructions above
+verbatim inside the WSL2 Ubuntu shell -- there is no separate native Windows
+build.
+
+.. note::
+   A ready-to-go Vagrant/VirtualBox virtual machine is also available in
+   ``tools/virtual_machine`` in the repository, useful for zero-setup use
+   at workshops and summer schools. See ``tools/virtual_machine/install.sh``
+   for details.
 
 
 DKRZ Levante HPC
