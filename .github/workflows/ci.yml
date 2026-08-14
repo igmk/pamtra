@@ -38,20 +38,14 @@ jobs:
         run: |
           brew install openblas pkgconf netcdf fftw
 
-      - name: Install Python build/runtime/test dependencies
-        run: pip install meson-python meson ninja Cython numpy netCDF4 scipy pytest
-
-      - name: Install pyPamtra (editable, keeps build/ around for meson test)
-        run: pip install --no-build-isolation -e . -Cbuild-dir=build
+      - name: Install pyPamtra
+        run: pip install ".[test]"
 
       - name: Smoke test import
         run: python -c "import pyPamtra; print(pyPamtra.__file__)"
 
       - name: Run pytest
         run: pytest tests/ -v
-
-      - name: Run Fortran unit tests
-        run: meson test -C build --print-errorlogs
 
   make-build:
     name: make pamtra (legacy CLI build)

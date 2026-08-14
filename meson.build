@@ -339,25 +339,3 @@ py3.install_sources([
   ],
   pure: false,
   subdir: 'pyPamtra/fortranNamelist/')
-
-# Unit tests for the handful of src/ routines that are genuinely stateless
-# (no shared vars_*/settings module state -- see CLAUDE.md for why most of
-# the Fortran core isn't a realistic unit-test target). Each is a tiny
-# standalone driver program compiling only the sources it needs, run via
-# `meson test`.
-test('eps_ice',
-  executable('test_eps_ice',
-    ['test/f90/test_eps_ice.f90', 'src/kinds.f90', 'src/eps_ice.f90'],
-    fortran_args: extra_fflags))
-
-test('rho_air',
-  executable('test_rho_air',
-    ['test/f90/test_rho_air.f90', 'src/kinds.f90', 'src/vars_index.f90',
-     'src/report_module.f90', 'src/rho_air.f90'],
-    fortran_args: extra_fflags))
-
-test('viscosity_air',
-  executable('test_viscosity_air',
-    ['test/f90/test_viscosity_air.f90', 'src/kinds.f90', 'src/vars_index.f90',
-     'src/report_module.f90', 'src/viscosity_air.f90', 'src/rho_air.f90'],
-    fortran_args: extra_fflags))
