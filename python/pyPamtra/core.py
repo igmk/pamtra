@@ -1667,7 +1667,7 @@ class pyPamtra(object):
             md5 = hashlib.md5(inputPickle).hexdigest()
             fname = "%s/%d_%04d_%s"%(picklePath, time.time(), pp_i, md5)
             jobs.append(fname)
-            with open(fname+".job.tmp", 'w') as f:
+            with open(fname+".job.tmp", 'wb') as f:
               f.write(inputPickle)
             os.rename(fname+".job.tmp",fname+".job")
             pp_i += 1
@@ -1682,7 +1682,7 @@ class pyPamtra(object):
             print(("\rWaiting too long for job %d: %s"%(mm,fname)))
             break
           try:
-            with open(fname, 'r') as f:
+            with open(fname, 'rb') as f:
               resultPickle = pickle.load(f)
             os.remove(fname)
             if resultPickle[0] is not None:
@@ -1798,7 +1798,7 @@ class pyPamtra(object):
             print(("\rWaiting too long for job %d: %s"%(mm,fname)))
             break
           try:
-            with open(fname, 'r') as f:
+            with open(fname, 'rb') as f:
               resultPickle = pickle.load(f)
             os.remove(fname)
             if resultPickle[0] is not None:
