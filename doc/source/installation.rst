@@ -155,10 +155,10 @@ You can start using pyPamtra in python with ::
 Build documentation
 ********************
 
-The documentation is built using Sphinx. Install the build dependencies
+The documentation is built using Sphinx. Install the build dependency
 with pip::
 
-    pip install sphinx numpydoc sphinx_rtd_theme
+    pip install sphinx
 
 Then build it using the Makefile in the ``doc`` directory::
 

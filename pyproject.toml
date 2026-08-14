@@ -23,7 +23,7 @@ maintainers = [
     {name = "Max Maahn"},
     {name = "Davide Ori"},
 ]
-requires-python = ">=3.7" # TODO check it
+requires-python = ">=3.10" # matches versions tested in CI (meson-python / current numpy+netCDF4)
 dependencies = [
     # TODO: update to "pin-compatible" once possible, see
     # https://github.com/FFY00/meson-python/issues/29
@@ -57,13 +57,13 @@ classifiers = [
 ]
 # dynamic = ['version']
 
-#[project.optional-dependencies]
-#test = ["unittest",]
+[project.optional-dependencies]
+test = ["pytest"]
 #doc = ["sphinx>=1.3", "sphinx-rtd-theme"]
 
 [project.urls]
 source = 'https://github.com/igmk/pamtra.git'
-documentation = "https://github.com/igmk/pamtra/wiki"
+documentation = "https://pamtra.readthedocs.io/"
 tracker = "https://github.com/igmk/pamtra/issues"
 download = "https://github.com/igmk/pamtra/releases"
 
