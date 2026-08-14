@@ -5,7 +5,7 @@ scenario end-to-end and compare selected outputs against values stored in
 tests/golden/. This is the primary safety net against silent numerical
 regressions in the RT/scattering code, since the Fortran core is built
 around shared global module state rather than pure functions and isn't a
-realistic target for per-subroutine unit tests (see CLAUDE.md).
+realistic target for per-subroutine unit tests (see AI.md).
 
 To intentionally update the reference values after a real physics change,
 run: python tests/generate_golden_data.py

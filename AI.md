@@ -1,6 +1,7 @@
-# CLAUDE.md
+# AI.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI coding assistants (Claude Code, Codex, Gemini CLI, Cursor,
+etc.) when working with code in this repository.
 
 ## What this is
 
@@ -44,10 +45,27 @@ make clean      # remove build artifacts
 bash install_levante_readmefirst.sh
 ```
 
-There is no local test suite (no `pytest`/`unittest` files in the repo) and no CI workflow
-configured. Correctness is currently checked via the example scripts/notebooks in `examples/`
-(e.g. `examples/run_all_examples.py`, `examples/pamtra_vs_pyPamtra.py`) and by comparing the
-standalone Fortran binary output against the Python wrapper output.
+### Testing
+
+```bash
+pip install ".[test]"
+pytest tests/
+```
+
+`tests/` covers the pure-Python wrapper logic (descriptor file, meteoSI, namelist round-trips),
+a couple of already-f2py-exposed Fortran routines called directly through the compiled
+`pyPamtraLib` extension (`test_fortran_functions.py`), and golden-output regression tests
+(`test_regression.py`) that run a small end-to-end scenario and compare against stored reference
+arrays in `tests/golden/`. The Fortran core is otherwise built around shared `vars_*`/`settings`
+module state rather than pure functions, so it isn't a realistic target for per-subroutine unit
+tests — golden-output regression is the main safety net for it. To intentionally update the
+reference values after a real physics change: `python tests/generate_golden_data.py`.
+
+GitHub Actions CI (`.github/workflows/ci.yml`) runs the pip install + pytest above on Linux and
+macOS, `make pamtra` on Linux, and a Sphinx docs build, on every push/PR. Beyond that, correctness
+is checked via the example scripts/notebooks in `examples/` (e.g. `examples/run_all_examples.py`,
+`examples/pamtra_vs_pyPamtra.py`) and by comparing the standalone Fortran binary output against
+the Python wrapper output.
 
 ### Required runtime environment
 

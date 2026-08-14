@@ -2,7 +2,7 @@
 on the compiled pyPamtraLib extension (see f2py_sources in meson.build).
 
 Most of src/ is built around shared vars_*/settings module state and isn't
-a realistic unit-test target (see CLAUDE.md) -- but for the handful of
+a realistic unit-test target (see AI.md) -- but for the handful of
 routines meson.build already wires up for f2py, testing them straight
 through the compiled extension needs no new build infrastructure: no
 separate driver programs, no extra meson test() targets, just calling the
