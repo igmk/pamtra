@@ -1,10 +1,10 @@
 """End-to-end test of runPicklePamtra: it writes .job pickles to disk and
-waits for a separate consumer process to write back .result pickles (see
-tools/picklePam/ for the reference consumer, which is unrelated legacy
-Python 2 code and out of scope here). This test acts as that consumer in
-a background thread, so the actual runPicklePamtra code path -- job
-writing, result waiting/reading, and _joinResults -- is exercised for
-real rather than mocked.
+waits for a separate consumer process to write back .result pickles (the
+original cluster-worker consumer script was unported Python 2 code and
+has since been removed, see git history for tools/picklePam/). This test
+acts as that consumer in a background thread, so the actual
+runPicklePamtra code path -- job writing, result waiting/reading, and
+_joinResults -- is exercised for real rather than mocked.
 """
 
 import glob
