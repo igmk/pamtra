@@ -2016,7 +2016,7 @@ class pyPamtra(object):
       '''
       write the complete state of the session (profile,results,settings to a file
       '''
-      f = open(fname, "w")
+      f = open(fname, "wb")
       pickle.dump([self.r,self.p,self.nmlSet,self.set,self.df.data,self.df.data4D,self.df.dataFullSpec], f)
       f.close()
     else:
@@ -2066,7 +2066,7 @@ class pyPamtra(object):
         raise IOError ("Could not read data from dir")
     else:
       try:
-        f = open(fname, "r")
+        f = open(fname, "rb")
         [self.r,self.p,self.nmlSet,self.set,self.df.data,self.df.data4D,self.df.dataFullSpec] = pickle.load(f)
         f.close()
       except:
