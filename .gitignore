@@ -64,3 +64,5 @@ examples/scatfiles/*
 examples/.ipynb_checkpoints/
 examples/data/
 .idea
+.cecli*
+.aider*
