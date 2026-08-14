@@ -1,4 +1,4 @@
-{% set name = "pyPamtra" %}
+{% set name = "pamtra" %}
 {% set version = "1.0.3" %}
 
 # Draft conda-forge-style recipe. Usable today for local testing with
@@ -44,6 +44,7 @@ requirements:
     - netcdf4
     - matplotlib
     - libopenblas
+    - pooch
 
 test:
   imports:
@@ -52,6 +53,7 @@ test:
     - pytest
   source_files:
     - tests
+    - descriptorfiles
   commands:
     - PAMTRA_DATADIR="" pytest tests -v
 
