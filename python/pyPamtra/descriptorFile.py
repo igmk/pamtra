@@ -66,8 +66,11 @@ class pamDescriptorFile(object):
     fname : str
       filename
     '''
-    assert len(data[0]) == len(self.names)
-    return mlab.rec2csv(data, fname, delimiter=' ',withheader=False)
+    assert len(self.names) == len(self.data.dtype.names)
+    with open(fname,"w") as f:
+      writer = csv.writer(f,delimiter=' ')
+      for row in self.data:
+        writer.writerow(list(row))
       
   def addHydrometeor(self,hydroTuple):
     '''

@@ -11,7 +11,6 @@ import random
 import string
 import itertools
 from copy import deepcopy
-from matplotlib import mlab
 import multiprocessing
 import logging
 import glob
@@ -366,7 +365,7 @@ class pyPamtra(object):
 
     self.p["sfc_type"] = np.ones(self._shape2D,dtype=int) *missingIntNumber
     self.p["sfc_model"] = np.ones(self._shape2D,dtype=int) *missingIntNumber
-    self.p["sfc_refl"] = np.chararray(self._shape2D)
+    self.p["sfc_refl"] = np.char.chararray(self._shape2D)
     self.p["sfc_salinity"] = np.ones(self._shape2D) * np.nan
     self.p["sfc_slf"] = np.ones(self._shape2D) * np.nan
     self.p["sfc_sif"] = np.ones(self._shape2D) * np.nan
@@ -707,7 +706,7 @@ class pyPamtra(object):
     for key in list(kwargs.keys()):
       if type(kwargs[key]) == np.ma.core.MaskedArray:
         kwargs[key] = kwargs[key].filled(np.nan)
-      if type(kwargs[key]) == np.core.defchararray.chararray:
+      if type(kwargs[key]) == np.char.chararray:
           continue
       kwargs[key] = np.array(kwargs[key]) #in case its a list/tuple etc.
 
@@ -734,7 +733,7 @@ class pyPamtra(object):
         warnings.warn("lfrac is deprecated. Set sfc_model and sfc_refl directly. "+
           "For compatibility sfc_model is set to numpy.around(lfrac), sfc_refl is S on land and F on ocean.", Warning)
         kwargs['sfc_type'] = np.around(kwargs['lfrac']) # use lfrac as sfc_type
-        kwargs['sfc_refl'] = np.chararray(kwargs['sfc_type'].shape)
+        kwargs['sfc_refl'] = np.char.chararray(kwargs['sfc_type'].shape)
         kwargs['sfc_refl'][kwargs['sfc_type'] == 0] = 'F' # ocean
         kwargs['sfc_refl'][kwargs['sfc_type'] == 1] = 'S' # land
         kwargs.pop('lfrac') # remove lfrac from kwargs
@@ -854,13 +853,13 @@ class pyPamtra(object):
 
     for environment, preset in [["sfc_refl",'S']]:
       if environment not in list(kwargs.keys()):
-        self.p[environment] = np.chararray(self._shape2D)
+        self.p[environment] = np.char.chararray(self._shape2D)
         self.p[environment][:] = preset
         warnings.warn("%s set to %s"%(environment,preset,), Warning)
       else:
 #        if type(kwargs[environment]) in ('|S1'):
         if type(kwargs[environment]) == str:
-          self.p[environment] = np.chararray(self._shape2D)
+          self.p[environment] = np.char.chararray(self._shape2D)
           self.p[environment][:] = preset
         else:
           self.p[environment] = kwargs[environment].reshape(self._shape2D)
@@ -1887,7 +1886,7 @@ class pyPamtra(object):
     profilePart = dict()
     for key in list(self.p.keys()):
       # import pdb;pdb.set_trace()
-      if type(self.p[key]) is not np.ndarray and type(self.p[key]) is not np.core.defchararray.chararray:
+      if type(self.p[key]) is not np.ndarray and type(self.p[key]) is not np.char.chararray:
         profilePart[key] = self.p[key]
       else:
         profilePart[key] = self.p[key][pp_startX:pp_endX,pp_startY:pp_endY]
