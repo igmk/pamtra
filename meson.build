@@ -138,7 +138,28 @@ fortranobject_dep = declare_dependency(
 fftw3dep = dependency('fftw3')
 #blasdep = dependency('blas')
 #lapackdep = dependency('lapack')
-openblasdep = dependency('openblas')
+
+# openblas is keg-only in Homebrew (macOS ships BLAS/LAPACK via the Accelerate
+# framework instead), so its .pc file is not symlinked into the default
+# pkg-config search path and dependency('openblas') fails unless the user
+# manually exports PKG_CONFIG_PATH. Fall back to asking brew for the prefix
+# and wiring up the dependency manually so `pip install .` works out of the box.
+openblasdep = dependency('openblas', required: false)
+if not openblasdep.found() and is_mac
+  brew_prefix = run_command('brew', ['--prefix', 'openblas'], check: false)
+  if brew_prefix.returncode() == 0
+    openblas_root = brew_prefix.stdout().strip()
+    openblasdep = declare_dependency(
+      include_directories: include_directories(openblas_root / 'include'),
+      link_args: ['-L' + openblas_root / 'lib', '-lopenblas'],
+    )
+  endif
+endif
+if not openblasdep.found()
+  error('openblas not found. On macOS, install it with `brew install openblas`; ' +
+        'on other platforms, make sure its pkg-config file is on PKG_CONFIG_PATH.')
+endif
+
 netcdfdep = dependency('netcdf')
 
 # List sources
