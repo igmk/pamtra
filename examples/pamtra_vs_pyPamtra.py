@@ -5,9 +5,6 @@ import os
 import netCDF4
 from matplotlib import pylab as plt
 import numpy as np
-import imp
-
-imp.reload(pyPamtra)
 
 if os.getenv('PAMTRA_DATADIR') is None:
   raise SystemError('Set $PAMTRA_DATADIR environment variable first')

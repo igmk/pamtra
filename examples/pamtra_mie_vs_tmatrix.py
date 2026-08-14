@@ -5,9 +5,6 @@ import shutil
 import netCDF4
 import matplotlib.pyplot as plt
 import numpy as np
-import imp
-
-imp.reload(pyPamtra)
 
 descriptorFile = "../descriptorfiles/descriptor_file_COSMO_1mom.txt"
 

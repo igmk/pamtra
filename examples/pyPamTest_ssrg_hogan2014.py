@@ -5,8 +5,6 @@ import netCDF4
 import matplotlib.pyplot as plt
 import numpy as np
 import sys
-import imp
-imp.reload(pyPamtra)
 
 def field_size_distribution(mode, T, D, M2=None):
 #FIELD_SIZE_DISTRIBUTION
