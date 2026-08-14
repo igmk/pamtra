@@ -36,13 +36,16 @@ jobs:
       - name: Install system dependencies (macOS)
         if: runner.os == 'macOS'
         run: |
-          brew install openblas pkgconf netcdf fftw
+          brew install openblas pkgconf netcdf netcdf-fortran fftw
 
       - name: Install pyPamtra
         run: pip install ".[test]"
 
       - name: Smoke test import
         run: python -c "import pyPamtra; print(pyPamtra.__file__)"
+
+      - name: Smoke test standalone pamtra binary
+        run: command -v pamtra && pamtra -h
 
       - name: Run pytest
         run: pytest tests/ -v
@@ -65,8 +68,14 @@ jobs:
       - name: pixi run test
         run: pixi run test
 
+      - name: pixi run build-cli
+        run: pixi run build-cli
+
+      - name: Smoke test standalone pamtra binary
+        run: ./build/pamtra -h
+
   make-build:
-    name: make pamtra (legacy CLI build)
+    name: make pamtra (legacy/HPC-deployment build path)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4

@@ -4,16 +4,29 @@
 Installation
 ============
 
-PAMTRA is installed with pip, which compiles the Fortran core and builds the
-``pyPamtra`` Python extension in one step via `meson-python
+PAMTRA is installed with pip, which compiles the Fortran core and builds both
+the ``pyPamtra`` Python extension and the standalone ``pamtra`` command line
+binary (:ref:`pamtra`) in one step via `meson-python
 <https://mesonbuild.com/meson-python/>`_. This has replaced the old
 ``make`` / ``make pyinstall`` workflow.
 
 .. note::
-   The standalone Fortran command line binary (:ref:`pamtra`) is still built
-   with the legacy ``Makefile`` (``make pamtra``), since it links directly
-   against the NetCDF Fortran interface via ``nf-config``. The pip install
-   only builds the Python package (:ref:`pyPamtra`).
+   A regular ``pip install .`` puts the ``pamtra`` binary in the same
+   ``bin/`` directory as ``python``/``pip`` themselves, so it's already on
+   ``PATH`` whenever that environment is active -- no extra step needed. An
+   *editable* install (``pip install -e .``, see below) does **not** install
+   it, since meson-python's editable-install support only covers the Python
+   extension; build/run it straight out of the build directory instead (see
+   :ref:`pamtra`).
+
+.. warning::
+   If this checkout was ever built with the legacy ``Makefile`` (``make`` /
+   ``make pamtra``, still used for HPC deployments -- see below), run
+   ``make clean`` first. The Makefile compiles directly into ``src/``, and a
+   subsequent ``pip install .`` can pick up those leftover ``.mod`` files
+   instead of building fresh ones, failing with something like
+   ``Cannot read module file '../src/foo.mod' ... created by a different
+   version of GNU Fortran``.
 
 
 Get the code
@@ -116,12 +129,6 @@ with an Ubuntu distribution, then follow the Linux instructions above
 verbatim inside the WSL2 Ubuntu shell -- there is no separate native Windows
 build.
 
-.. note::
-   A ready-to-go Vagrant/VirtualBox virtual machine is also available in
-   ``tools/virtual_machine`` in the repository, useful for zero-setup use
-   at workshops and summer schools. See ``tools/virtual_machine/install.sh``
-   for details.
-
 
 DKRZ Levante HPC
 *****************
@@ -146,7 +153,10 @@ DKRZ Levante HPC
 The exact spack hashes may change over time; use ``spack find`` to look up
 the current ones if a ``spack load`` fails. See also
 ``install_levante_readmefirst.sh`` in the repository root, which automates
-the equivalent setup for the legacy ``Makefile`` build.
+an equivalent module/env setup using the legacy ``Makefile`` build --
+kept around specifically for HPC deployments like this one, where
+hand-tuned linker flags against cluster module paths are simpler to
+express as Makefile variables than through meson/pkg-config.
 
 For Jupyter support::
 
@@ -182,9 +192,9 @@ and add that line to your shell startup file. To explicitly skip the data
 entirely (rather than let it auto-download), set ``PAMTRA_DATADIR=""``
 before importing.
 
-For the standalone ``pamtra`` binary (:ref:`pamtra`, built via the Makefile,
-no pip/Python dependency, so no auto-download either), download and unpack
-the data manually::
+For the standalone ``pamtra`` binary (:ref:`pamtra`, no pip/Python dependency
+at runtime, so no auto-download either), download and unpack the data
+manually::
 
   wget -q -O data.tar.bz2 https://github.com/igmk/pamtra/releases/download/data-v1/pamtra_data.tar.bz2
   tar xjf data.tar.bz2

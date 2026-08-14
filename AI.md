@@ -13,35 +13,43 @@ that reads namelist + profile files directly, for users who don't need Python.
 
 ## Build systems
 
-There are **two parallel build systems** — know which one you're touching:
+**Meson (`meson.build`)** is the canonical build for normal use, driving both the pip-installable
+`pyPamtra` package (`pyproject.toml` uses `mesonpy` as the build backend) and the standalone
+`pamtra` Fortran CLI binary — both are declared as build targets in the same `meson.build` and
+produced by the same `pip install .`.
 
-1. **Meson (`meson.build`)** — the modern, canonical build, used for the pip-installable
-   `pyPamtra` package (`pyproject.toml` uses `mesonpy` as the build backend). This is what
-   `pip install .` uses.
-2. **`Makefile`** — the legacy/manual build, still used for building the standalone `pamtra`
-   Fortran binary and for quick local iteration without going through meson-python.
+**`Makefile`** is kept alongside it, but scoped down to one purpose: manual/HPC deployments (e.g.
+DKRZ Levante via `install_levante_readmefirst.sh`) where hand-tuned linker flags against
+cluster-specific module paths are easier to express as Makefile variables than to wire through
+meson/pkg-config. Don't treat it as a second general-purpose build path — for everything else
+(local dev, CI, packaging) use meson. When adding or removing a Fortran source file, update
+**both**: the `OBJECTS` list in `Makefile` (order matters — dependencies must be listed before
+dependents) and the `common_fsources`/`fsources`/`pamtra_fsources`/`f2py_sources` lists in
+`meson.build`.
 
-When adding or removing a Fortran source file, **update both**: the `OBJECTS` list in `Makefile`
-(order matters — dependencies must be listed before dependents) and the `fsources`/`f2py_sources`
-lists in `meson.build`.
+**Gotcha**: the Makefile compiles directly into `src/` (its `OBJDIR`/`SRCDIR` are both `src/` —
+see the comment on that in `Makefile` — unlike meson, which builds in an isolated build dir). If
+`make`/`make pamtra` has ever been run in a checkout, gfortran's subsequent meson build can pick up
+those leftover `.mod`/`.o` files instead of building fresh ones (gfortran implicitly also searches
+the directory of the source file it's compiling for module files), and fail with something like
+`Cannot read module file '../src/foo.mod' ... created by a different version of GNU Fortran`. Fix:
+`make clean` (or `rm -f src/*.o src/*.mod`) before building with meson/pip.
 
 ### Common commands
 
 ```bash
-# Modern build (installs pyPamtra into the current Python env)
+# Installs pyPamtra *and* puts the pamtra CLI binary on PATH (in the env's bin/)
 pip install .
 
-# Editable/dev install (rebuilds Fortran extension on change, useful while iterating)
+# Editable/dev install -- rebuilds the Python extension on change, but meson-python's
+# editable installs don't install non-Python targets, so the pamtra CLI binary is NOT
+# placed on PATH this way. Build/run it straight out of the build dir instead:
 pip install --no-build-isolation -e . -Cbuild-dir=build
+meson setup build --reconfigure && meson compile -C build   # -> build/pamtra
+# (the pixi env wraps this as `pixi run build-cli`)
 
-# Legacy Makefile build: Fortran binary + Python extension
-make            # builds both `bin/pamtra` and the pyPamtraLib.so (equivalent to `make pamtra py`)
-make pamtra     # standalone Fortran CLI binary only -> bin/pamtra
-make py         # python extension only -> python/pyPamtra/pyPamtraLib*.so
-make pamtraDebug   # debug build with -g -fbacktrace -fbounds-check (for gdb/valgrind)
-make clean      # remove build artifacts
-
-# Full install onto a cluster (DKRZ Levante), for reference on module/env setup
+# Full install onto a cluster (DKRZ Levante) via the legacy Makefile, for
+# reference on module/env setup and cluster-specific linker flags
 bash install_levante_readmefirst.sh
 ```
 
@@ -62,8 +70,9 @@ tests — golden-output regression is the main safety net for it. To intentional
 reference values after a real physics change: `python tests/generate_golden_data.py`.
 
 GitHub Actions CI (`.github/workflows/ci.yml`) runs the pip install + pytest above on Linux and
-macOS, `make pamtra` on Linux, and a Sphinx docs build, on every push/PR. Beyond that, correctness
-is checked via the example scripts/notebooks in `examples/` (e.g. `examples/run_all_examples.py`,
+macOS, `make pamtra` on Linux (so the retained Makefile doesn't silently bit-rot), and a Sphinx
+docs build, on every push/PR. Beyond that, correctness is checked via the
+example scripts/notebooks in `examples/` (e.g. `examples/run_all_examples.py`,
 `examples/pamtra_vs_pyPamtra.py`) and by comparing the standalone Fortran binary output against
 the Python wrapper output.
 
@@ -88,8 +97,8 @@ External library dependencies for the Fortran build: LAPACK/BLAS (or OpenBLAS), 
 
 ### Fortran core (`src/`)
 
-~107 Fortran source files, compiled in dependency order (see `OBJECTS` in `Makefile` for the
-canonical ordering). Rough grouping:
+~107 Fortran source files, compiled in dependency order (see `common_fsources` in `meson.build` for
+the canonical ordering). Rough grouping:
 
 - **Settings & I/O plumbing**: `settings.f90` (namelist parsing, global run settings),
   `parse_options.f90`/`getopt.f90` (CLI args), `descriptor_file.f90` (hydrometeor descriptor file

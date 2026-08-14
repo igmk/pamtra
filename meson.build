@@ -153,7 +153,15 @@ if not openblasdep.found()
   foreach libname : ['libopenblas.dylib', 'libopenblas.so', 'libopenblas.0.dylib', 'libopenblas.so.0']
     candidate = py_prefix / 'lib' / libname
     if not openblasdep.found() and fs.exists(candidate)
-      openblasdep = declare_dependency(link_args: [candidate])
+      # conda-forge's libopenblas has an @rpath-relative install name (unlike
+      # e.g. Homebrew's, which uses an absolute one), so a raw path here
+      # isn't enough -- dyld also needs a matching -rpath at link time, or
+      # the binary fails to even start with "Library not loaded: @rpath/...".
+      # This can't rely on some *other* dependency's pkg-config-derived
+      # rpath happening to cover the same directory: on a system where
+      # netcdf/fftw resolve to Homebrew but openblas falls back to this
+      # env, their lib dirs differ.
+      openblasdep = declare_dependency(link_args: [candidate, '-Wl,-rpath,' + py_prefix / 'lib'])
     endif
   endforeach
 endif
@@ -170,7 +178,7 @@ if not openblasdep.found() and is_mac
     openblas_root = brew_prefix.stdout().strip()
     openblasdep = declare_dependency(
       include_directories: include_directories(openblas_root / 'include'),
-      link_args: ['-L' + openblas_root / 'lib', '-lopenblas'],
+      link_args: ['-L' + openblas_root / 'lib', '-lopenblas', '-Wl,-rpath,' + openblas_root / 'lib'],
     )
   endif
 endif
@@ -180,10 +188,55 @@ if not openblasdep.found()
 endif
 
 netcdfdep = dependency('netcdf')
+netcdffdep = dependency('netcdf-fortran', required: false)
+
+if not netcdffdep.found()
+  # Same class of problem as the openblas fallback above: the active
+  # Python environment may have netcdf-fortran installed (e.g. via
+  # `conda install netcdf-fortran`) without its .pc file ever being found
+  # -- either because that environment has no pkg-config package of its
+  # own, so PATH falls back to a system/Homebrew pkg-config that doesn't
+  # know about the env's lib/pkgconfig at all, or PKG_CONFIG_PATH just
+  # isn't exported. sys.prefix is authoritative for whatever Python
+  # environment is actually building.
+  py_prefix = run_command(py3, ['-c', 'import sys; print(sys.prefix)'], check: true).stdout().strip()
+  foreach libname : ['libnetcdff.dylib', 'libnetcdff.so']
+    candidate = py_prefix / 'lib' / libname
+    if not netcdffdep.found() and fs.exists(candidate)
+      # See the matching comment on the openblas fallback above: this needs
+      # its own -rpath too, since conda-forge's libnetcdff also uses an
+      # @rpath-relative install name.
+      netcdffdep = declare_dependency(
+        include_directories: include_directories(py_prefix / 'include'),
+        link_args: [candidate, '-Wl,-rpath,' + py_prefix / 'lib'],
+      )
+    endif
+  endforeach
+endif
+
+if not netcdffdep.found() and is_mac
+  brew_prefix = run_command('brew', ['--prefix', 'netcdf-fortran'], check: false)
+  if brew_prefix.returncode() == 0
+    netcdff_root = brew_prefix.stdout().strip()
+    netcdffdep = declare_dependency(
+      include_directories: include_directories(netcdff_root / 'include'),
+      link_args: ['-L' + netcdff_root / 'lib', '-lnetcdff', '-Wl,-rpath,' + netcdff_root / 'lib'],
+    )
+  endif
+endif
+
+if not netcdffdep.found()
+  error('netcdf-fortran not found. Install it (e.g. `conda install -c conda-forge netcdf-fortran` ' +
+        'or `brew install netcdf-fortran`), and either make sure pkg-config itself is installed ' +
+        'in the active environment, or export PKG_CONFIG_PATH to include its lib/pkgconfig dir.')
+endif
 
 # List sources
 csources = ['src/scatdb.c']
-fsources = ['src/kinds.f90',
+# Shared by the pyPamtraLib python extension and the standalone `pamtra`
+# CLI binary -- their own entry points/glue (pyPamtraLib.f90 vs.
+# pamtra.f90 + write_nc_results.f90) are added separately below.
+common_fsources = ['src/kinds.f90',
             'src/mod_fastem4_coef.f90', # seems unused
             'src/zlib_stuff.f90',
             'src/mod_io_strings.f90',
@@ -280,8 +333,10 @@ fsources = ['src/kinds.f90',
             'src/scatcnv.f90',
             'src/rt4.f90',
             'src/deallocate_everything.f90', # is this really necessary? only pyPamtra stuff
-            'src/pyPamtraLib.f90'
             ]
+
+fsources = common_fsources + ['src/pyPamtraLib.f90']
+pamtra_fsources = common_fsources + ['src/write_nc_results.f90']
 
 f2py_sources = ['src/report_module.f90',
                 'src/vars_index.f90',
@@ -334,6 +389,23 @@ py3.extension_module('pyPamtraLib', # extension module should have the same name
   link_with: fortranobject_lib,
   dependencies : [py3_dep, fortranobject_dep, fftw3dep, openblasdep, netcdfdep],
   subdir: 'pyPamtra/',
+  install : true)
+
+# Standalone Fortran CLI binary (reads namelist + profile files directly,
+# writes NetCDF output) -- shares almost all physics code with pyPamtraLib
+# above, but has its own entry point and NetCDF-writing routine.
+executable('pamtra',
+  ['src/pamtra.f90', pamtra_fsources, csources, versionNumberAuto],
+  c_args: c_flags,
+  fortran_args: extra_fflags,
+  dependencies : [fftw3dep, openblasdep, netcdfdep, netcdffdep],
+  # Link with the Fortran driver (gfortran), not the project-default C
+  # driver: the T-matrix code uses quad precision, and only gfortran's
+  # own link spec pulls in the libgcc routines (__multf3 etc.) needed for
+  # that -- cc doesn't add them, so a plain executable() here fails to
+  # link (unlike the pyPamtraLib bundle, which hides the same gap behind
+  # -undefined dynamic_lookup).
+  link_language: 'fortran',
   install : true)
 
 # Declare and copy python sources
