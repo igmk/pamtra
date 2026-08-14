@@ -171,21 +171,24 @@ data path to an empty directory::
 
   export PAMTRA_DATADIR=""
 
-it is recommended that you download the data. The data includes the land
-surface emissivity maps and some scattering databases. They can be found on
-the servers of University of Cologne
+it is recommended that you download the data. It includes the land surface
+emissivity maps and some scattering databases.
 
-  https://uni-koeln.sciebo.de/s/As5fqDdPCOx4JbS
+For ``pyPamtra``, the ``pip install .`` above already installed a small
+helper (`pooch <https://www.fatiando.org/pooch/>`_-based) that downloads
+and caches the data for you and prints the resulting path -- it's downloaded
+once and re-used (with a checksum check) on every later call::
 
-Download and unpack the data::
+  export PAMTRA_DATADIR=$(pamtra-fetch-data)
+
+Add that line to your shell startup file to make it persist across
+sessions. For the standalone ``pamtra`` binary (:ref:`pamtra`, built via
+the Makefile, no pip/Python dependency), download and unpack the data
+manually instead::
 
   wget -q -O data.tar.bz2 https://uni-koeln.sciebo.de/s/As5fqDdPCOx4JbS/download
   tar xjf data.tar.bz2
   rm data.tar.bz2
-
-and set the ``$PAMTRA_DATADIR`` variable, e.g. by adding it to your shell
-startup file::
-
   echo 'export PAMTRA_DATADIR="wherever/it/is/"' >> ~/.bashrc
   source ~/.bashrc
 

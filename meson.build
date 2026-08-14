@@ -358,3 +358,8 @@ py3.install_sources([
   ],
   pure: false,
   subdir: 'pyPamtra/fortranNamelist/')
+
+# Top-level (not under pyPamtra/) so it can be imported/run before
+# PAMTRA_DATADIR is set -- pyPamtra/__init__.py raises at import time if
+# it isn't, so a helper that sets it up can't live inside that package.
+py3.install_sources(['python/pamtra_data.py'], pure: true)
