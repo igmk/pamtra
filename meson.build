@@ -188,6 +188,23 @@ if not openblasdep.found()
 endif
 
 netcdfdep = dependency('netcdf')
+
+# Best-effort early warning for the same class of problem as the
+# netcdf-fortran fallback below: if pkg-config resolved `netcdf` to a
+# copy outside the active Python environment even though that
+# environment has its own netcdf.pc, pkg-config itself is most likely
+# not installed in the environment, so PATH fell back to a system/
+# Homebrew pkg-config that found a different, possibly ABI-incompatible
+# netcdf (e.g. linked against a different libcurl/libhdf5 than the rest
+# of the environment). That mismatch otherwise only surfaces much later,
+# as a confusing "undefined reference" error at link time.
+netcdf_env_check_prefix = run_command(py3, ['-c', 'import sys; print(sys.prefix)'], check: true).stdout().strip()
+netcdf_own_pc = netcdf_env_check_prefix / 'lib' / 'pkgconfig' / 'netcdf.pc'
+netcdf_libdir = netcdfdep.get_variable(pkgconfig: 'libdir', default_value: '')
+if fs.exists(netcdf_own_pc) and netcdf_libdir != '' and not netcdf_libdir.startswith(netcdf_env_check_prefix)
+  warning('''pkg-config resolved `netcdf` to @0@, outside the active Python environment (@1@), even though that environment has its own copy at @2@. This usually means pkg-config itself is not installed in the environment, so a system/Homebrew pkg-config was used instead. This can cause confusing link errors later (e.g. undefined curl symbols) if the two netcdf/hdf5 builds are ABI-incompatible. Fix: install pkg-config into the active environment, e.g. `conda install pkg-config`.'''.format(netcdf_libdir, netcdf_env_check_prefix, netcdf_own_pc))
+endif
+
 netcdffdep = dependency('netcdf-fortran', required: false)
 
 if not netcdffdep.found()
