@@ -508,6 +508,16 @@ class pyPamtra(object):
     Input:
 
     inputFile: str filename with path
+
+    Note: this header format (year month day time ngridx ngridy nlyrs
+    deltax deltay, with an explicit ngridx/ngridy and no dummy fields) does
+    not match the standalone pamtra CLI's '.cla' classic-format reader
+    (src/vars_atmosphere.f90:read_classic_fill_variables), which reads
+    only year month day time <dummy> <dummy> nlyrs on this line and
+    always assumes a single grid point. There is no test data or example
+    file for either side to confirm which (if either) is still the
+    intended on-disk format -- this function is untested elsewhere in
+    the codebase, unlike readPamtraProfile/writePamtraProfile.
     """
 
     f = open(inputFile,"r")
@@ -538,6 +548,7 @@ class pyPamtra(object):
     self.p["lon"] = np.zeros(self._shape2D)
     self.p["wind10u"] = np.zeros(self._shape2D)
     self.p["wind10v"] = np.zeros(self._shape2D)
+    self.p["sfc_type"] = np.ones(self._shape2D,dtype=int) * missingIntNumber
 
     self.p["iwv"] = np.zeros(self._shape2D)
     self.p["cwp"] = np.zeros(self._shape2D)
@@ -593,7 +604,7 @@ class pyPamtra(object):
           self.p["lat"][x,y], self.p["lon"][x,y],lfrac,self.p["wind10u"][x,y],self.p["wind10v"][x,y]  = np.array(np.array(next(g)),dtype=float)
           self.p["iwv"][x,y],self.p["cwp"][x,y],self.p["iwp"][x,y],self.p["rwp"][x,y],self.p["swp"][x,y],self.p["gwp"][x,y],self.p["hwp"][x,y] = np.array(np.array(next(g)),dtype=float)
           self.p["hgt_lev"][x,y,0],self.p["press_lev"][x,y,0],self.p["temp_lev"][x,y,0],self.p["relhum_lev"][x,y,0] = np.array(np.array(next(g)),dtype=float)
-          self.p["lfrac"][x,y] = np.around(lfrac) # lfrac is deprecated
+          self.p["sfc_type"][x,y] = np.around(lfrac) # lfrac is deprecated
           for z in np.arange(self.p["nlyrs"]):
             self.p["hgt_lev"][x,y,z+1],self.p["press_lev"][x,y,z+1],self.p["temp_lev"][x,y,z+1],self.p["relhum_lev"][x,y,z+1],self.p["cwc_q"][x,y,z],self.p["iwc_q"][x,y,z],self.p["rwc_q"][x,y,z],self.p["swc_q"][x,y,z],self.p["gwc_q"][x,y,z],self.p["hwc_q"][x,y,z],self.p["cwc_n"][x,y,z],self.p["iwc_n"][x,y,z],self.p["rwc_n"][x,y,z],self.p["swc_n"][x,y,z],self.p["gwc_n"][x,y,z],self.p["hwc_n"][x,y,z] = np.array(np.array(next(g)),dtype=float)
     else:
