@@ -1,6 +1,6 @@
 project( 'pyPamtra', 'c',
   # Note that the git commit hash cannot be added dynamically here
-  version: '1.0.1',
+  version: '1.0.3',
   license: 'GPL v3',
   meson_version: '>= 0.63.0',
   default_options: [
