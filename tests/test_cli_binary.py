@@ -1,18 +1,20 @@
-"""Run the standalone pamtra CLI binary end-to-end and sanity-check it
-against the pyPamtra Python API, on the same fixed, no-external-data
-scenario used by the golden regression tests (see _scenario.py).
+"""Run the standalone pamtra CLI binary end-to-end and check it against
+the pyPamtra Python API, on the same fixed, no-external-data scenario
+used by the golden regression tests (see _scenario.py).
 
-The CLI and Python API are two separate entry points into (mostly) the
-same Fortran core, driven by two separate "fill settings" paths (see
-AI.md), so their outputs are not expected to match exactly -- notably,
-the CLI's netCDF output keeps `noutlevels` worth of extra padding in its
-layer dimension that the Python API's in-memory result does not, and
-this scenario's second hydrometeor layer does not come back with a
-Ze value from the CLI (radar_mode 'simple' picks up only the lowest
-hydrometeor-bearing layer) even though the Python path can see both.
-That gap is a pre-existing quirk of the CLI path, not something this
-test tries to fix -- it instead checks the CLI runs, produces a valid
-netCDF file, and that where the two do report a value, it agrees.
+Writing this test is what turned up the writePamtraProfile bugs fixed
+alongside it (see git history) -- notably a header field (the
+per-gridpoint layer/level count) that undercounted .lev files by one,
+silently dropping the top atmospheric layer from the Fortran read. With
+that fixed, the CLI and Python outputs agree closely (limited mainly by
+the ASCII profile format's precision, e.g. temperature/pressure are only
+written to 2/1 decimal places), so this compares them at a fairly tight
+tolerance rather than just smoke-testing that the binary runs. The CLI's
+netCDF output does still carry `noutlevels` worth of extra padding in its
+layer dimension that the Python API's in-memory result does not; the
+comparisons below account for that (matching layer counts, or comparing
+only the non-fill-value entries) rather than expecting identical shapes
+throughout.
 """
 
 import glob
@@ -96,15 +98,18 @@ def test_brightness_temperature_matches_python(cli_result, python_result):
     py_tb = python_result.r["tb"]
     assert cli_tb.shape == py_tb.shape
     assert np.isfinite(cli_tb).all()
-    # Loose tolerance: the two entry points fill settings via separate code
-    # paths (see module docstring), so small systematic differences are
-    # expected -- this is a sanity check, not a bit-exact regression test.
-    np.testing.assert_allclose(cli_tb, py_tb, rtol=0.01)
+    # Limited mainly by the ASCII profile format's precision (temperature
+    # is only written to 2 decimal places, pressure to 1), not by any
+    # remaining difference between the two entry points.
+    np.testing.assert_allclose(cli_tb, py_tb, rtol=1e-3)
 
 
-def test_radar_reflectivity_peak_matches_python(cli_result, python_result):
+def test_radar_reflectivity_matches_python(cli_result, python_result):
     cli_ze = np.ma.masked_equal(cli_result.variables["Ze"][:], -9999)
     py_ze = np.ma.masked_equal(python_result.r["Ze"], -9999)
-    assert cli_ze.count() >= 1
-    assert py_ze.count() >= 1
-    np.testing.assert_allclose(cli_ze.max(), py_ze.max(), rtol=0.01)
+    # Both hydrometeor layers in this scenario should come back with a Ze
+    # value from both paths, in the same order -- the CLI's array is just
+    # the Python one plus a few extra always-masked noutlevels slots.
+    assert py_ze.count() == 2
+    assert cli_ze.count() == py_ze.count()
+    np.testing.assert_allclose(cli_ze.compressed(), py_ze.compressed(), rtol=1e-3)

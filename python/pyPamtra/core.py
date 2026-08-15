@@ -427,8 +427,11 @@ class pyPamtra(object):
         if levLay == "lev":
           dataLine = next(g)
           #in case we have spaces after the last value...
-          try: dataLine = dataLine.remove("")
-          except: pass
+          # list.remove() mutates in place and returns None -- do not
+          # reassign dataLine to that, or a trailing empty field (which
+          # writePamtraProfile always produces) clobbers it with None.
+          try: dataLine.remove("")
+          except ValueError: pass
           dataLine = np.array(np.array(dataLine),dtype=float)
           self.p["hgt_lev"][xx,yy,0],self.p["press_lev"][xx,yy,0],self.p["temp_lev"][xx,yy,0],self.p["relhum_lev"][xx,yy,0] = dataLine
 
@@ -439,8 +442,11 @@ class pyPamtra(object):
         for zz in range(self.p["nlyrs"][xx,yy]):
           dataLine =next(g)
           dataLineCOPY = deepcopy(dataLine)
-          try: dataLine = dataLine.remove("")
-          except: pass
+          # list.remove() mutates in place and returns None -- do not
+          # reassign dataLine to that, or a trailing empty field (which
+          # writePamtraProfile always produces) clobbers it with None.
+          try: dataLine.remove("")
+          except ValueError: pass
           dataLine = list(map(float,dataLine))
           #do we have layer or levels
           hgt,press,temp,relhum = dataLine[:4]
@@ -676,14 +682,20 @@ class pyPamtra(object):
       self.p['hydro_tn'] = np.ones((self._shape2D[0],self._shape2D[1],self.df.nhydro))*-9999.
       #self.addIntegratedValues()
 
-    nHeights = self._shape3D[2]
-    if levLay == 'lev': nHeights+1
+    # The header's top-line layer count (read into max_nlyrs, unadjusted
+    # for either format -- see readPamtraProfile/Fortran's
+    # read_new_fill_variables) and its per-gridpoint line's count (read
+    # into nlyrs, then decremented by one for 'lev' specifically, since
+    # that line's count is levels = layers+1 there) are two different
+    # numbers, not the same value written twice.
+    nLayers = self._shape3D[2]
+    nHeightsPerGridpoint = nLayers + 1 if levLay == 'lev' else nLayers
 
-    s = str(self._shape2D[0])+" "+str(self._shape2D[1])+" "+str(nHeights)+" "+str(self._shape3Dout[2])+"\n"
+    s = str(self._shape2D[0])+" "+str(self._shape2D[1])+" "+str(nLayers)+" "+str(self._shape3Dout[2])+"\n"
 
     for xx in range(self._shape2D[0]):
       for yy in range(self._shape2D[1]):
-        s += year+" "+mon+" "+day+" "+hhmm+" "+str(nHeights)+" "+str(xx+1)+" "+str(yy+1)+"\n"
+        s += year+" "+mon+" "+day+" "+hhmm+" "+str(nHeightsPerGridpoint)+" "+str(xx+1)+" "+str(yy+1)+"\n"
         s += ' '.join(['%9e'%height for height in self.p['obs_height'][xx,yy,:]])+"\n"
         s += '%3.2f'%self.p["lat"][xx,yy]+" "+'%3.2f'%self.p["lon"][xx,yy]+" "+str(self.p["sfc_type"][xx,yy])+" "+str(self.p["wind10u"][xx,yy])+" "+str(self.p["wind10v"][xx,yy])+" "+str(self.p['groundtemp'][xx,yy])+" "+str(self.p['hgt_lev'][xx,yy,0])+"\n"
         s += str(self.p["iwv"][xx,yy])
