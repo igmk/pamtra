@@ -643,6 +643,27 @@ class pyPamtra(object):
 
     levLay = profileFile.split(".")[-1]
 
+    def hydroTokens(momentIn, nValue, reffValue, qValue):
+      # Column layout must match the read side (readPamtraProfile above,
+      # and Fortran's read_new_fill_variables): moment_in selects which
+      # 1-2 of (n, reff, q) are present, in this order.
+      if momentIn == 0:
+        return []
+      elif momentIn == 1:
+        return [nValue]
+      elif momentIn == 2:
+        return [reffValue]
+      elif momentIn == 3:
+        return [qValue]
+      elif momentIn == 12:
+        return [nValue, reffValue]
+      elif momentIn == 13:
+        return [nValue, qValue]
+      elif momentIn == 23:
+        return [reffValue, qValue]
+      else:
+        raise IOError('Did not understand df.data["moment_in"]')
+
     firstTime = datetime.datetime.utcfromtimestamp(self.p["unixtime"][0,0])
     year=str(firstTime.year)
     mon=str(firstTime.month).zfill(2)
@@ -667,29 +688,37 @@ class pyPamtra(object):
         s += '%3.2f'%self.p["lat"][xx,yy]+" "+'%3.2f'%self.p["lon"][xx,yy]+" "+str(self.p["sfc_type"][xx,yy])+" "+str(self.p["wind10u"][xx,yy])+" "+str(self.p["wind10v"][xx,yy])+" "+str(self.p['groundtemp'][xx,yy])+" "+str(self.p['hgt_lev'][xx,yy,0])+"\n"
         s += str(self.p["iwv"][xx,yy])
         for ihyd in range(self.df.nhydro):
-          if self.df.data['moment_in'][ihyd] == 1:
-            s +=" "+'%9e'%self.p["hydro_wp"][xx,yy,ihyd]
-          if self.df.data['moment_in'][ihyd] == 13:
-            s +=" "+'%9e'%self.p["hydro_wp"][xx,yy,ihyd]+" "+'%9e'%self.p["hydro_tn"][xx,yy,ihyd]
+          # Column-integrated equivalents of the per-layer n/reff/q triple;
+          # there is no column-integrated reff, so -9999 (missing) is the
+          # best available placeholder if a hydrometeor needs one -- these
+          # columns are parsed but otherwise unused by PAMTRA.
+          for token in hydroTokens(self.df.data['moment_in'][ihyd],
+                                    self.p["hydro_tn"][xx,yy,ihyd], -9999.,
+                                    self.p["hydro_wp"][xx,yy,ihyd]):
+            s += " " + '%9e'%token
         s += "\n"
         if levLay == 'lev':
           s += '%6.1f'%self.p["hgt_lev"][xx,yy,0]+" "+'%6.1f'%self.p["press_lev"][xx,yy,0]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,0]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,0])+"\n"
           for zz in range(1,self._shape3D[2]+1):
             s += '%6.1f'%self.p["hgt_lev"][xx,yy,zz]+" "+'%6.1f'%self.p["press_lev"][xx,yy,zz]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,zz])+" "
             for ihyd in range(self.df.nhydro):
-              if self.df.data['moment_in'][ihyd] == 1:
-                s +=str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
-              if self.df.data['moment_in'][ihyd] == 13:
-                s +=str('%9e'%self.p["hydro_n"][xx,yy,zz,ihyd])+" "+str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
+              # hydro_* arrays are layer-indexed (0-based, size nlyrs), but
+              # this row (level zz) corresponds to the layer below it.
+              tokens = hydroTokens(self.df.data['moment_in'][ihyd],
+                                    self.p["hydro_n"][xx,yy,zz-1,ihyd],
+                                    self.p["hydro_reff"][xx,yy,zz-1,ihyd],
+                                    self.p["hydro_q"][xx,yy,zz-1,ihyd])
+              s += "".join('%9e'%token+" " for token in tokens)
             s += "\n"
         elif levLay == 'lay':
           for zz in range(0,self._shape3D[2]):
             s += '%6.1f'%self.p["hgt"][xx,yy,zz]+" "+'%6.1f'%self.p["press"][xx,yy,zz]+" "+'%3.2f'%self.p["temp"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum"][xx,yy,zz])+" "
             for ihyd in range(self.df.nhydro):
-              if self.df.data['moment_in'][ihyd] == 1:
-                s +=str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
-              if self.df.data['moment_in'][ihyd] == 13:
-                s +=str('%9e'%self.p["hydro_n"][xx,yy,zz,ihyd])+" "+str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
+              tokens = hydroTokens(self.df.data['moment_in'][ihyd],
+                                    self.p["hydro_n"][xx,yy,zz,ihyd],
+                                    self.p["hydro_reff"][xx,yy,zz,ihyd],
+                                    self.p["hydro_q"][xx,yy,zz,ihyd])
+              s += "".join('%9e'%token+" " for token in tokens)
             s += "\n"
         else:
           raise IOError("Did not understand lay/lev: "+layLev)
