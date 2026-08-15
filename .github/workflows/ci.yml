@@ -47,8 +47,16 @@ jobs:
       - name: Smoke test standalone pamtra binary
         run: command -v pamtra && pamtra -h
 
-      - name: Run pytest
-        run: pytest tests/ -v
+      - name: Run pytest with coverage
+        run: pytest tests/ -v --cov --cov-report=term
+
+      - name: Upload coverage to Coveralls
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        run: |
+          pip install coveralls
+          coveralls
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   conda-build:
     name: pixi/conda-forge build (${{ matrix.os }})
