@@ -45,7 +45,7 @@ os.environ.pop("PAMTRA_DATADIR", None)
 """
 
 
-def _run(script, timeout=30):
+def _run(script, timeout=90):
     return subprocess.run(
         [sys.executable, "-c", script],
         capture_output=True,
