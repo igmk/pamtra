@@ -32,6 +32,7 @@ dependencies = [
     "netCDF4",
     "matplotlib", # pyPamtra/__init__.py unconditionally imports pyPamtra.plot
     "pooch", # used by pamtra_data.py to fetch/cache PAMTRA_DATADIR contents
+    "tqdm", # pooch's fetch() progress bar (default progressbar=True) needs this
 ]
 readme = "readme.md"
 keywords = ["microwave",

@@ -66,26 +66,20 @@ requirements:
     - libopenblas
     - netcdf-fortran
     - pooch
+    - tqdm
 
 tests:
   # PAMTRA_DATADIR must be set (even to "") before `import pyPamtra` --
   # otherwise it tries to auto-fetch external data over the network, which
-  # both isn't appropriate for a package test and currently fails outright
-  # here (pooch's progress bar needs `tqdm`, which isn't a declared
-  # dependency -- see conftest.py's PAMTRA_DATADIR handling for why the
-  # test suite always sets this first).
+  # isn't appropriate for a package test -- see conftest.py's
+  # PAMTRA_DATADIR handling for why the test suite always sets this first.
   - script:
       - PAMTRA_DATADIR="" python -c "import pyPamtra"
-      # test_unset_datadir_autofetches_and_imports is deselected: it
-      # exercises the PAMTRA_DATADIR-unset auto-fetch path, which currently
-      # fails on a missing `tqdm` dependency (pooch's progress bar) -- a
-      # real, separately tracked bug, not a recipe issue. Re-enable once
-      # that's fixed upstream. --rootdir=. pins pytest's config discovery to
-      # the test working directory -- without it, pytest walks upward past
-      # a local `path: ..` build dir (nested inside this checkout) and
-      # picks up this repo's own pyproject.toml as rootdir instead,
-      # silently breaking --deselect/-k matching.
-      - PAMTRA_DATADIR="" pytest tests -v --rootdir=. --deselect tests/test_data_autofetch.py::test_unset_datadir_autofetches_and_imports
+      # --rootdir=. pins pytest's config discovery to the test working
+      # directory -- without it, pytest walks upward past a local `path: ..`
+      # build dir (nested inside this checkout) and picks up this repo's
+      # own pyproject.toml as rootdir instead.
+      - PAMTRA_DATADIR="" pytest tests -v --rootdir=.
     requirements:
       run:
         - pytest
