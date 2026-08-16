@@ -207,6 +207,27 @@ endif
 
 netcdffdep = dependency('netcdf-fortran', required: false)
 
+if netcdffdep.found()
+  # pkg-config drops "-I/usr/include" from --cflags when that's the
+  # resolved includedir, since it's a default search path for the C
+  # compiler -- but gfortran, unlike cc, does NOT search /usr/include
+  # for .mod files unless told to explicitly. On Debian/Ubuntu (where
+  # netcdf-fortran.pc's includedir is exactly /usr/include, e.g. via
+  # apt's libnetcdff-dev), that silently drops the one flag gfortran
+  # needs to find netcdf.mod, breaking the `pamtra` executable target
+  # below with "Fatal Error: Cannot open module file 'netcdf.mod'"
+  # even though pkg-config resolution "succeeded". Re-add it by hand,
+  # using get_variable() (unaffected by the --cflags stripping) as the
+  # source of truth for where the .mod files actually live.
+  netcdff_includedir = netcdffdep.get_variable(pkgconfig: 'includedir', default_value: '')
+  if netcdff_includedir != ''
+    netcdffdep = declare_dependency(
+      dependencies: netcdffdep,
+      include_directories: include_directories(netcdff_includedir),
+    )
+  endif
+endif
+
 if not netcdffdep.found()
   # Same class of problem as the openblas fallback above: the active
   # Python environment may have netcdf-fortran installed (e.g. via

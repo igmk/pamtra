@@ -38,20 +38,6 @@ jobs:
         run: |
           brew install openblas pkgconf netcdf netcdf-fortran fftw
 
-      - name: DEBUG netcdf-fortran pkg-config layout (Linux)
-        if: runner.os == 'Linux'
-        run: |
-          echo "--- pkg-config --cflags --libs netcdf-fortran ---"
-          pkg-config --cflags --libs netcdf-fortran || echo "pkg-config lookup failed, exit $?"
-          echo "--- pkg-config --variable=includedir netcdf-fortran ---"
-          pkg-config --variable=includedir netcdf-fortran || true
-          echo "--- dpkg -L libnetcdff-dev (mod-related entries) ---"
-          dpkg -L libnetcdff-dev | grep -iE '\.mod$|fortran' || true
-          echo "--- find / -iname netcdf.mod ---"
-          find / -iname 'netcdf.mod' 2>/dev/null || true
-          echo "--- gfortran --version ---"
-          gfortran --version | head -1
-
       - name: Install pyPamtra
         run: pip install ".[test]"
 
