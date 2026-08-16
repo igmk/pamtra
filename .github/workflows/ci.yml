@@ -1,0 +1,125 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PAMTRA_DATADIR: ""
+
+jobs:
+  pip-build:
+    name: pip install (${{ matrix.os }}, py${{ matrix.python-version }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.11", "3.12", "3.13", "3.14"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install system dependencies (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gfortran libopenblas-dev libfftw3-dev libnetcdff-dev
+
+      - name: Install system dependencies (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          brew install openblas pkgconf netcdf netcdf-fortran fftw
+
+      - name: Install pyPamtra
+        run: pip install ".[test]"
+
+      - name: Smoke test import
+        run: python -c "import pyPamtra; print(pyPamtra.__file__)"
+
+      - name: Smoke test standalone pamtra binary
+        run: command -v pamtra && pamtra -h
+
+      - name: Run pytest with coverage
+        run: pytest tests/ -v --cov --cov-report=term
+
+      - name: Upload coverage to Coveralls
+        if: matrix.os == 'ubuntu-latest' && matrix.python-version == '3.12'
+        run: |
+          pip install coveralls
+          coveralls
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  conda-build:
+    name: pixi/conda-forge build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: prefix-dev/setup-pixi@v0.10.1
+
+      - name: pixi run install
+        run: pixi run install
+
+      - name: pixi run test
+        run: pixi run test
+
+      - name: pixi run build-cli
+        run: pixi run build-cli
+
+      - name: Smoke test standalone pamtra binary
+        run: ./build/pamtra -h
+
+  make-build:
+    name: make pamtra (legacy/HPC-deployment build path)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gfortran liblapack-dev libfftw3-dev libnetcdf-dev libnetcdff-dev
+
+      - name: make pamtra
+        run: make pamtra
+
+      - name: Check binary exists
+        run: test -x bin/pamtra
+
+  docs:
+    name: Build Sphinx docs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gfortran libopenblas-dev libfftw3-dev libnetcdff-dev
+
+      - name: Install pyPamtra and Sphinx
+        run: |
+          pip install .
+          pip install sphinx
+
+      - name: Build docs
+        run: |
+          cd doc
+          make html

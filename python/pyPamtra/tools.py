@@ -2,6 +2,7 @@
 
 from __future__ import division, print_function
 import numpy as np
+import os
 import traceback
 import warnings
 import sys

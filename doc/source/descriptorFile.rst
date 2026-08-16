@@ -1,3 +1,4 @@
+..  _descriptorFile:
 
 
 Descriptor File Structure
@@ -57,7 +58,8 @@ mgamma          N_T             -99             mu               gamma          
 mgamma          -99             R_eff           mu               gamma          1 or 3         d\_1            d\_2
 mgamma          -99             -99             mu               gamma          12, 13, or 23  d\_1            d\_2
 norm_gamma      -99             -99             mu               -99            23[*]_         d\_1            d\_2
-=============== =============== =============== =============== =============== ============== =============== =============== 
+=============== =============== =============== =============== =============== ============== =============== ===============
+
 .. [*] The normalized gamma relation needs Dm/2 as 2nd moment, see Maahn et al 2015, eq. 24 for definition.
 
 Note that it is also possible to provide discrete vectors for particle size concentration, mass, cross section area, density, and aspect ratio. See 

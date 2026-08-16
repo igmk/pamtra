@@ -1,14 +1,14 @@
 # PAMTRA package - Passive and Active Microwave TRANsfer 
 
 [![Documentation Status](https://readthedocs.org/projects/pamtra/badge/?version=latest)](https://pamtra.readthedocs.io/en/latest/?badge=latest)
+[![CI](https://github.com/igmk/pamtra/actions/workflows/ci.yml/badge.svg)](https://github.com/igmk/pamtra/actions/workflows/ci.yml)
+[![Coverage Status](https://coveralls.io/repos/github/igmk/pamtra/badge.svg?branch=master)](https://coveralls.io/github/igmk/pamtra?branch=master)
 
 
 Python/Fortran 90 package to solve the passive and active microwave radiative transfer in a plan parallel horizontally homogeneous atmosphere with hydrometeors
 
 ## Manual and Installation
-For a modern, pip-based, easy installation have a look at our wiki https://github.com/igmk/pamtra/wiki/PAMTRA
-
-See https://pamtra.readthedocs.io/ for documentation.
+See https://pamtra.readthedocs.io/ for documentation, including installation instructions.
 
 ## Mailing list
 

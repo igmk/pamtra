@@ -2,6 +2,7 @@
 
 from __future__ import division, print_function
 import numpy as np
+from numpy.lib import recfunctions as rfn
 import csv
 from scipy.interpolate import interp1d
 
@@ -66,8 +67,11 @@ class pamDescriptorFile(object):
     fname : str
       filename
     '''
-    assert len(data[0]) == len(self.names)
-    return mlab.rec2csv(data, fname, delimiter=' ',withheader=False)
+    assert len(self.names) == len(self.data.dtype.names)
+    with open(fname,"w") as f:
+      writer = csv.writer(f,delimiter=' ')
+      for row in self.data:
+        writer.writerow(list(row))
       
   def addHydrometeor(self,hydroTuple):
     '''
@@ -103,10 +107,13 @@ class pamDescriptorFile(object):
 
     assert len(list(self.dataFullSpec.keys())) == 0
     if hydroName == "all":
-      self.__init__()
+      self.__init__(self.parent)
       return
     removed = False#
-    hydroIndex = np.where(self.parent.df.data["hydro_name"]==hydroName)[0][0]
+    hydroMatches = np.where(self.parent.df.data["hydro_name"]==hydroName)[0]
+    if len(hydroMatches) == 0:
+      raise ValueError("Did not find "+hydroName)
+    hydroIndex = hydroMatches[0]
     self.dataNew = np.recarray((0,),dtype=list(zip(self.names, self.types)))
     for ii in range(self.data.shape[0]):
       if self.data[ii][0] == hydroName:
@@ -138,7 +145,7 @@ class pamDescriptorFile(object):
     arr : array 
       New 4D values
     '''
-    self.data = mlab.rec_drop_fields(self.data,[key])
+    self.data = rfn.drop_fields(self.data, [key], usemask=False, asrecarray=True)
     self.data4D[key] = arr.reshape(self.parent._shape4D)
     
   def remove4D(self, key, val):
@@ -149,12 +156,19 @@ class pamDescriptorFile(object):
     ----------
     key : str
       Name of hydrometeor property to be altered.
-    arr : array 
+    arr : array
       New 1 D values.
+
+    Note: the restored field is appended at the end of self.data's dtype,
+    not reinserted at its original position among self.names -- writeFile
+    only checks the field count, not order, so a file written after
+    calling this would have shuffled columns relative to what readFile
+    (and the Fortran side) expect.
     '''
 
-    self.data = mlab.rec_append_fields(self.data,key,val)
-    del data4D[key]
+    dtype = self.types[list(self.names).index(key)]
+    self.data = rfn.append_fields(self.data, key, val, dtypes=dtype, usemask=False, asrecarray=True)
+    del self.data4D[key]
     
   def addFullSpectra(self):
     '''
@@ -264,14 +278,14 @@ def riming_dependent_ssrga_name(M):
     '''
     try:
         para = ssrga_parameter(M)
-        stringname = 'ss-rayleigh-gans_' + str(np.round(ssrga_parameter(M), 3)[0]) + '_' + str(np.round(ssrga_parameter(M), 3)[1]) + '_' + str(np.round(ssrga_parameter(M), 3)[2]) + '_' + str(np.round(ssrga_parameter(M), 3)[3]) 
-        
-            
+        stringname = 'ss-rayleigh-gans_' + str(np.round(ssrga_parameter(M), 3)[0]) + '_' + str(np.round(ssrga_parameter(M), 3)[1]) + '_' + str(np.round(ssrga_parameter(M), 3)[2]) + '_' + str(np.round(ssrga_parameter(M), 3)[3])
+
+
         if len(stringname) > 40:
             print('enter single M value as float, not array!')
-    except:
-        print('enter single M value as float!')
-        
+    except Exception as e:
+        raise ValueError('enter single M value as float!') from e
+
     return stringname
 
 def riming_dependent_mass_size(M, monomer):
@@ -356,8 +370,8 @@ def riming_dependent_mass_size(M, monomer):
         a_m = a_int(M)
         b_m = b_int(M)
     else:
-        print('enter valid monomer type!')
-        
+        raise ValueError('enter valid monomer type!')
+
     return a_m, b_m
 
 def riming_dependent_area_size(M, monomer):
@@ -441,7 +455,7 @@ def riming_dependent_area_size(M, monomer):
         a_A = a_int(M)
         b_A = b_int(M)
     else:
-        print('enter valid monomer type!')
-        
+        raise ValueError('enter valid monomer type!')
+
     return a_A, b_A    
     
