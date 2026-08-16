@@ -16,9 +16,14 @@ Contents:
    :maxdepth: 2
 
    installation
+   quickstart
+   profiles
    descriptorFile
    .. inputFile
    settings
+   running
+   results
+   f90_core
    pamtra
    pyPamtra
 

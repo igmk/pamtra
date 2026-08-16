@@ -23,13 +23,16 @@ maintainers = [
     {name = "Max Maahn"},
     {name = "Davide Ori"},
 ]
-requires-python = ">=3.7" # TODO check it
+requires-python = ">=3.10" # matches versions tested in CI (meson-python / current numpy+netCDF4)
 dependencies = [
     # TODO: update to "pin-compatible" once possible, see
     # https://github.com/FFY00/meson-python/issues/29
     "numpy>=1.19.5", ## TODO: copied from apexpy, not sure if it is relevant here
     "scipy", # TODO souds like this can also be dropped
     "netCDF4",
+    "matplotlib", # pyPamtra/__init__.py unconditionally imports pyPamtra.plot
+    "pooch", # used by pamtra_data.py to fetch/cache PAMTRA_DATADIR contents
+    "tqdm", # pooch's fetch() progress bar (default progressbar=True) needs this
 ]
 readme = "readme.md"
 keywords = ["microwave",
@@ -57,13 +60,25 @@ classifiers = [
 ]
 # dynamic = ['version']
 
-#[project.optional-dependencies]
-#test = ["unittest",]
+[project.optional-dependencies]
+test = ["pytest", "pytest-cov"]
 #doc = ["sphinx>=1.3", "sphinx-rtd-theme"]
+
+[tool.coverage.run]
+source = ["pyPamtra", "pamtra_data"]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "if __name__ == .__main__.:",
+]
+
+[project.scripts]
+pamtra-fetch-data = "pamtra_data:_cli"
 
 [project.urls]
 source = 'https://github.com/igmk/pamtra.git'
-documentation = "https://github.com/igmk/pamtra/wiki"
+documentation = "https://pamtra.readthedocs.io/"
 tracker = "https://github.com/igmk/pamtra/issues"
 download = "https://github.com/igmk/pamtra/releases"
 

@@ -1,0 +1,45 @@
+[workspace]
+name = "pamtra"
+description = "Passive and Active Microwave TRAnsfer radiative transfer model"
+channels = ["conda-forge"]
+platforms = ["osx-arm64", "osx-64", "linux-64"]
+
+# Optional convenience layer on top of the conda-forge distribution. This is
+# NOT the primary documented install path (see doc/source/installation.rst)
+# -- it exists to give contributors and workshop users a one-command,
+# reproducible dev environment: `pixi run install && pixi run test`.
+[dependencies]
+python = ">=3.10"
+pip = "*"
+c-compiler = "*"
+fortran-compiler = "*"
+pkg-config = "*"
+meson = "*"
+meson-python = "*"
+ninja = "*"
+cython = "*"
+numpy = "*"
+scipy = "*"
+netcdf4 = "*"
+matplotlib = "*"
+pooch = "*"
+tqdm = "*"
+pytest = "*"
+pytest-cov = "*"
+libopenblas = "*"
+fftw = "*"
+libnetcdf = "*"
+netcdf-fortran = "*"
+zlib = "*"
+
+[tasks]
+install = "pip install --no-build-isolation -e . -Cbuild-dir=build"
+test = "pytest tests/ -v"
+# `pip install -e .` (the `install` task) only wires up the Python
+# extension for rebuild-on-import -- meson-python's editable installs
+# don't install non-Python targets, so the standalone `pamtra` CLI binary
+# never lands on PATH that way. Build/rebuild it straight into build/pamtra.
+build-cli = "meson setup build --reconfigure && meson compile -C build"
+
+[activation.env]
+PAMTRA_DATADIR = ""

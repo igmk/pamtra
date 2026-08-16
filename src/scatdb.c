@@ -113,7 +113,11 @@
 #define NSIZE		20   /* max number of sizes */
 #define NQ		37   /* number of anges in PF */
 
+#if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 202311L
+/* bool is a reserved keyword from C23 onwards, so this typedef is both
+ * unnecessary and a compile error there. */
 typedef char bool;
+#endif
 int little_endian();
 void reverse(void*,int);
 // when passing characters to from Fortran to C. character AND length have to be collected by C.

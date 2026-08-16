@@ -27,9 +27,11 @@ hydro_limit_density_area           bool                           True          
 hydro_softsphere_min_density       positive float                 10.0               If hydro_limit_density_area=True, limit minimal density to this value.
 hydro_threshold                    positive float                 1e-10              minimum required hydrometeor concentration kg/m\ :sup:`3`.
 lgas_extinction                    bool                           True               gas extinction desired
-lhyd_extinction                    bool                           True               hydrometeor extinction desired
+lhyd_absorption                    bool                           True               hydrometeor absorption desired
+lhyd_scattering                    bool                           True               hydrometeor scattering desired
+lhyd_emission                      bool                           True               hydrometeor emission desired
+liblapack                          bool                           True               Use LAPACK for matrix inversion (faster). If False, falls back to a slower built-in solver.
 liq_mod                            str                            Ell
-obs_height                         positive float                 833000.0           upper level output height [m] (> 100000. for satellite)
 outpol                             str                            VH
 passive                            bool                           True               estimate brightness temperatures
 radar_allow_negative_dD_dU         bool                           False              allow that particle velocity is decreasing with size. Should be usually set to false.
@@ -65,7 +67,6 @@ radar\_use\_hildebrand             boolean                        False         
 radar_use_wider_peak               boolean                        False              Include the found peak edge (if peak edge is still larger than mean noise) into the peak which is used for moment estimation.
 randomseed                         integer                        0                  0 is real noise, -1 means that the seed is created from latitude and longitude, other value gives always the same random numbers
 read_turbulence_ascii              bool                           False              If .true. turbulence need to be included in the ascii input_file, rightmost column. Not relevant for pyPamtra and for passive simulations.
-salinity                           float                          33.0               sea surface salinity
 save_psd                           boolean                        False              also saves the PSDs used for radiative transfer
 save_ssp                           boolean                        False              also saves the single scattering properties used for radiative transfer
 tmatrix_db                         none or file                   none               use data base to cache T-Matrix calculations
@@ -92,4 +93,6 @@ Other default settings
 Variable           Values                         Default            Description
 ================== ============================== ================== ==============================================================================================================================================================================================================================================================================================================================================================================
 sfc_refl           S,L,F                          S                  Specular, Lambertian, or Fresnel
+obs_height         positive float                 [833000., 0.]      Profile variable (pam.p, not nmlSet), dims (ngridx,ngridy,noutlevels). Output level heights [m] (>100000 for satellite); default is one space-observation level plus ground.
+sfc_salinity       positive float                 33.0               Profile variable (pam.p, not nmlSet), dims (ngridx,ngridy). Sea surface salinity [ppt]. Replaces the removed nmlSet['salinity'].
 ================== ============================== ================== ==============================================================================================================================================================================================================================================================================================================================================================================

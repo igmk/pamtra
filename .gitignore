@@ -65,4 +65,8 @@ examples/.ipynb_checkpoints/
 examples/data/
 .idea
 .cecli*
-.aider*
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.pytest_cache/

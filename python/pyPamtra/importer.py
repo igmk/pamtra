@@ -102,7 +102,7 @@ def readWrfDataset(fname,kind):
   pamData['sfc_type'] = np.zeros(data['PSFC'].shape)
   pamData['sfc_type'] = np.around(data['LANDMASK'])
   pamData['sfc_model'] = np.zeros(data['PSFC'].shape)
-  pamData['sfc_refl'] = np.chararray(data['PSFC'].shape)
+  pamData['sfc_refl'] = np.char.chararray(data['PSFC'].shape)
   pamData['sfc_refl'][:] = 'F'
 
   for wrfVar,pamVar in varPairs:
@@ -432,7 +432,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
   pamData['sfc_type'] = np.zeros(shape2D)
   pamData['sfc_type'] = np.around(data['FR_LAND'])
   pamData['sfc_model'] = np.zeros(shape2D)
-  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'] = np.char.chararray(shape2D)
   pamData['sfc_refl'][:] = 'F'
 
   pam = pyPamtra()
@@ -784,7 +784,7 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
   pamData['sfc_type'] = np.zeros(shape2D)
   pamData['sfc_type'] = np.around(data['FR_LAND'])
   pamData['sfc_model'] = np.zeros(shape2D)
-  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'] = np.char.chararray(shape2D)
   pamData['sfc_refl'][:] = 'F'
 
   pam = pyPamtra()
@@ -893,7 +893,7 @@ def readCosmoDe2MomDatasetOnFlightTrack(fnameA,descriptorFile,tmpDir="/tmp/",deb
   pamData['sfc_type'] = np.zeros(shape2D)
   pamData['sfc_type'] = np.around(data['FR_LAND'])
   pamData['sfc_model'] = np.zeros(shape2D)
-  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'] = np.char.chararray(shape2D)
   pamData['sfc_refl'][:] = 'F'
 
   varPairs = [["cosmoTime","timestamp"],["cosmoLat","lat"],["cosmoLon","lon"],["sfc_type","sfc_type"],["sfc_model","sfc_model"],["U_10M","wind10u"],["V_10M","wind10v"],["T_G","groundtemp"]]
@@ -1066,7 +1066,7 @@ def readCosmoReAn2km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
   pamData['sfc_type'] = np.zeros(shape2D)
   pamData['sfc_type'] = np.around(data['fr_land'])
   pamData['sfc_model'] = np.zeros(shape2D)
-  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'] = np.char.chararray(shape2D)
   pamData['sfc_refl'][:] = 'F'
 
   del data
@@ -1206,7 +1206,7 @@ def readCosmoReAn6km(constantFields,fname,descriptorFile,forecastIndex = 1,tmpDi
   pamData['sfc_type'] = np.zeros(shape2D)
   pamData['sfc_type'] = np.around(data['fr_land'])
   pamData['sfc_model'] = np.zeros(shape2D)
-  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'] = np.char.chararray(shape2D)
   pamData['sfc_refl'][:] = 'F'
 
   del data
@@ -1465,7 +1465,7 @@ def readIconNwp1MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   pamData['sfc_type'] = np.around(data['FR_LAND'])
   assert np.all(np.logical_or(0<=pamData['sfc_type'], pamData['sfc_type'] <=1))
   pamData['sfc_model'] = np.zeros(shape2D)
-  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'] = np.char.chararray(shape2D)
   pamData['sfc_refl'][pamData['sfc_type'] == 0] = 'F' # ocean
   pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'S' # land
 
@@ -1649,7 +1649,7 @@ def readIconNwp2MomDataset(fname_fg,descriptorFile,debug=False,verbosity=0,const
   pamData['sfc_type'] = np.around(data['FR_LAND'])
   assert np.all(np.logical_or(0<=pamData['sfc_type'], pamData['sfc_type'] <=1))
   pamData['sfc_model'] = np.zeros(shape2D)
-  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'] = np.char.chararray(shape2D)
   pamData['sfc_refl'][pamData['sfc_type'] == 0] = 'F' # ocean
   pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'S' # land
 
@@ -1834,7 +1834,7 @@ def readIconNwp1MomDataset_cells(fname_fg,descriptorFile,debug=False,verbosity=0
   pamData['sfc_type'] = np.around(data['FR_LAND'])
   assert np.all(np.logical_or(0<=pamData['sfc_type'], pamData['sfc_type'] <=1))
   pamData['sfc_model'] = np.zeros(shape2D)
-  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'] = np.char.chararray(shape2D)
   pamData['sfc_refl'][pamData['sfc_type'] == 0] = 'F' # ocean
   pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'L' # land
 
@@ -2021,7 +2021,7 @@ def readHIRHAM(dataFile,additionalFile,topoFile,descriptorFile,grid=[0,200,0,218
   pamData['sfc_type'] = np.zeros(shape2D)
   pamData['sfc_type'] = np.around(sealandfraction)
   pamData['sfc_model'] = np.zeros(shape2D)
-  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'] = np.char.chararray(shape2D)
   pamData['sfc_refl'][:] = 'F'
 
   pamData['sfc_refl'][(pamData['sfc_type'] == 1)] = 'S'
@@ -2156,7 +2156,7 @@ def readECMWF(fname,constantFile,descriptorFile,landseamask,debug=False,verbosit
   # surface properties
   pamData['sfc_type'] = np.around(np.swapaxes(data['LSM'],0,1))
   pamData['sfc_model'] = np.zeros(shape2D)
-  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'] = np.char.chararray(shape2D)
   pamData['sfc_refl'][:] = 'F'
   pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'S'
 
@@ -2284,7 +2284,7 @@ def readMesoNH(fnameBase,fnameExt,dataDir=".",debug=False,verbosity=0,dimX=160,d
   pamData['sfc_type'] = np.zeros(shape2D)
   pamData['sfc_type'] = np.around(data['lfrac'])
   pamData['sfc_model'] = np.zeros(shape2D)
-  pamData['sfc_refl'] = np.chararray(shape2D)
+  pamData['sfc_refl'] = np.char.chararray(shape2D)
   pamData['sfc_refl'][:] = 'F'
 
   del data
@@ -2384,7 +2384,7 @@ def readIcon1momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
 # surface properties
   pamData['sfc_type']  = np.ones(pamData['groundtemp'].shape)
   pamData['sfc_model'] = np.zeros(pamData['groundtemp'].shape)
-  pamData['sfc_refl']  = np.chararray(pamData['groundtemp'].shape)
+  pamData['sfc_refl']  = np.char.chararray(pamData['groundtemp'].shape)
   pamData['sfc_refl'][:] = 'S' # land  'F' # ocean 'L' lambertian, land
 
   pam = pyPamtra()
@@ -2497,7 +2497,7 @@ def readIcon2momMeteogram(fname, descriptorFile, debug=False, verbosity=0, timei
 # surface properties
   pamData['sfc_type']  = np.ones(pamData['groundtemp'].shape)
   pamData['sfc_model'] = np.zeros(pamData['groundtemp'].shape)
-  pamData['sfc_refl']  = np.chararray(pamData['groundtemp'].shape)
+  pamData['sfc_refl']  = np.char.chararray(pamData['groundtemp'].shape)
   pamData['sfc_refl'][:] = 'S' # land  'F' # ocean 'L' lambertian, land
 
   pam = pyPamtra()
@@ -2601,7 +2601,7 @@ def readICON2mom(fname, descriptorFile, fextpar=None, finit=None, forcing='ICON'
 # surface properties
   pamData['sfc_type']  = np.around(pamData['sfc_slf'])
   pamData['sfc_model'] = np.zeros(pamData['groundtemp'].shape)
-  pamData['sfc_refl']  = np.chararray(pamData['groundtemp'].shape)
+  pamData['sfc_refl']  = np.char.chararray(pamData['groundtemp'].shape)
   pamData['sfc_refl'][:] = 'S' # land  'F' # ocean 'L' lambertian, land
   pamData['sfc_type'][(pamData['sfc_type'] == 0) & (pamData['sfc_sif'] > 0)] = 2
 
@@ -2714,7 +2714,7 @@ def readIcon2momOnFlightTrack(fname, descriptorFile, time=0, kind='processed', c
   #  pamData['sfc_type'] = np.around(frland*np.ones(shapeSFC))
   #  assert np.all(np.logical_or(0<=pamData['sfc_type'], pamData['sfc_type'] <=1))
   #  pamData['sfc_model'] = np.zeros(shapeSFC)
-  #  pamData['sfc_refl'] = np.chararray(shapeSFC)
+  #  pamData['sfc_refl'] = np.char.chararray(shapeSFC)
   #  pamData['sfc_refl'][pamData['sfc_type'] == 0] = 'F' # ocean
   #  pamData['sfc_refl'][pamData['sfc_type'] == 1] = 'L' # land
 
@@ -2793,7 +2793,7 @@ def readIcon2momOnFlightTrack(fname, descriptorFile, time=0, kind='processed', c
   # surface properties
     pamData['sfc_type']  = np.around(pamData['sfc_slf'])
     pamData['sfc_model'] = np.zeros(pamData['groundtemp'].shape)
-    pamData['sfc_refl']  = np.chararray(pamData['groundtemp'].shape)
+    pamData['sfc_refl']  = np.char.chararray(pamData['groundtemp'].shape)
     pamData['sfc_refl'][:] = 'S' # land  'F' # ocean 'L' lambertian, land
     pamData['sfc_type'][(pamData['sfc_type'] == 0) & (pamData['sfc_sif'] > 0)] = 2
 
@@ -2848,7 +2848,7 @@ def readIcon2momOnFlightTrack(fname, descriptorFile, time=0, kind='processed', c
   # surface properties
     pamData['sfc_type']  = np.around(pamData['sfc_slf'])
     pamData['sfc_model'] = np.zeros(pamData['groundtemp'].shape)
-    pamData['sfc_refl']  = np.chararray(pamData['groundtemp'].shape)
+    pamData['sfc_refl']  = np.char.chararray(pamData['groundtemp'].shape)
     pamData['sfc_refl'][:] = 'S' # land  'F' # ocean 'L' lambertian, land
     pamData['sfc_type'][(pamData['sfc_type'] == 0) & (pamData['sfc_sif'] > 0)] = 2
 
@@ -2923,7 +2923,7 @@ def readIcon2momOnFlightTrack(fname, descriptorFile, time=0, kind='processed', c
   # surface properties
     pamData['sfc_type']  = np.around(pamData['sfc_slf'])
     pamData['sfc_model'] = np.zeros(pamData['groundtemp'].shape)
-    pamData['sfc_refl']  = np.chararray(pamData['groundtemp'].shape)
+    pamData['sfc_refl']  = np.char.chararray(pamData['groundtemp'].shape)
     pamData['sfc_refl'][:] = 'S' # land  'F' # ocean 'L' lambertian, land
     pamData['sfc_type'][(pamData['sfc_type'] == 0) & (pamData['sfc_sif'] > 0)] = 2
 
@@ -3019,7 +3019,7 @@ def readICON1momNWP(fname, descriptorFile, debug=False, verbosity=0,grid=[0,463,
 # surface properties
   pamData['sfc_type']  = np.around(pamData['sfc_slf'])
   pamData['sfc_model'] = np.zeros(pamData['groundtemp'].shape)
-  pamData['sfc_refl']  = np.chararray(pamData['groundtemp'].shape)
+  pamData['sfc_refl']  = np.char.chararray(pamData['groundtemp'].shape)
   pamData['sfc_refl'][:] = 'S' # land  'F' # ocean 'L' lambertian, land
   pamData['sfc_type'][(pamData['sfc_type'] == 0) & (pamData['sfc_sif'] > 0)] = 2
 

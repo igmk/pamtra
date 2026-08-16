@@ -11,7 +11,6 @@ import random
 import string
 import itertools
 from copy import deepcopy
-from matplotlib import mlab
 import multiprocessing
 import logging
 import glob
@@ -22,26 +21,44 @@ try:
 except ImportError:
     print('PAMTRA FORTRAN LIBRARY NOT AVAILABLE!')
 try:
-    pamdata =  os.environ['PAMTRA_DATADIR']
+    pamdata = os.environ['PAMTRA_DATADIR']
 except KeyError:
-    data_message = """
-        Environment variable PAMTRA_DATADIR not set.
+    # Not set at all (as opposed to explicitly set to "", which opts out of
+    # this and is left alone above): fetch PAMTRA's scattering-database and
+    # surface-emissivity data automatically instead of requiring a manual
+    # download step. Cached after the first run (see pamtra_data.py).
+    try:
+        import pamtra_data
+        print("PAMTRA_DATADIR not set: downloading and caching PAMTRA's external "
+              "data (one-time; set PAMTRA_DATADIR explicitly, including to an "
+              "empty string, to skip this).")
+        pamdata = pamtra_data.fetch_data()
+    except Exception as fetch_error:
+        data_message = """
+        Environment variable PAMTRA_DATADIR not set, and automatically downloading
+        the data failed (see the error above/below for why -- commonly no network
+        access).
 
-        This is required to make use of all features of PAMTRA (scattering databases, surface reflection catalogues).
+        This data is required to make use of all features of PAMTRA (scattering
+        databases, surface reflection catalogues); many features (e.g. Mie-sphere
+        scattering) work without it.
 
-        You can get the data from University of Cologne
+        Once you have network access, just retry -- pyPamtra downloads and caches
+        the data for you automatically. To download it yourself instead, see
 
-        https://uni-koeln.sciebo.de/s/As5fqDdPCOx4JbS
-        
-        Once downloaded and unpacked in a arbitrary directory you need to set the environment variables PAMTRA_DATADIR in ~/.profile or directly in your python script by
+        https://github.com/igmk/pamtra/releases/download/data-v1/pamtra_data.tar.bz2
+
+        and once downloaded and unpacked in an arbitrary directory, set PAMTRA_DATADIR
+        to point at it, in ~/.profile or directly in your python script by
 
         import os
 
         os.environ['PAMTRA_DATADIR'] = path_where_the_data_is
 
-        If you're absolutely sure what you do, you can set omit the data download and set the variable to an empty location.
+        If you're absolutely sure you don't need the data, set PAMTRA_DATADIR to an
+        empty string instead to skip this entirely.
         """
-    raise RuntimeError(data_message)
+        raise RuntimeError(data_message) from fetch_error
 from .descriptorFile import pamDescriptorFile
 from .tools import sftp2Cluster, formatExceptionInfo
 from .meteoSI import detect_liq_cloud, mod_ad, moist_rho_rh,rh2q
@@ -366,7 +383,7 @@ class pyPamtra(object):
 
     self.p["sfc_type"] = np.ones(self._shape2D,dtype=int) *missingIntNumber
     self.p["sfc_model"] = np.ones(self._shape2D,dtype=int) *missingIntNumber
-    self.p["sfc_refl"] = np.chararray(self._shape2D)
+    self.p["sfc_refl"] = np.char.chararray(self._shape2D)
     self.p["sfc_salinity"] = np.ones(self._shape2D) * np.nan
     self.p["sfc_slf"] = np.ones(self._shape2D) * np.nan
     self.p["sfc_sif"] = np.ones(self._shape2D) * np.nan
@@ -410,8 +427,11 @@ class pyPamtra(object):
         if levLay == "lev":
           dataLine = next(g)
           #in case we have spaces after the last value...
-          try: dataLine = dataLine.remove("")
-          except: pass
+          # list.remove() mutates in place and returns None -- do not
+          # reassign dataLine to that, or a trailing empty field (which
+          # writePamtraProfile always produces) clobbers it with None.
+          try: dataLine.remove("")
+          except ValueError: pass
           dataLine = np.array(np.array(dataLine),dtype=float)
           self.p["hgt_lev"][xx,yy,0],self.p["press_lev"][xx,yy,0],self.p["temp_lev"][xx,yy,0],self.p["relhum_lev"][xx,yy,0] = dataLine
 
@@ -422,8 +442,11 @@ class pyPamtra(object):
         for zz in range(self.p["nlyrs"][xx,yy]):
           dataLine =next(g)
           dataLineCOPY = deepcopy(dataLine)
-          try: dataLine = dataLine.remove("")
-          except: pass
+          # list.remove() mutates in place and returns None -- do not
+          # reassign dataLine to that, or a trailing empty field (which
+          # writePamtraProfile always produces) clobbers it with None.
+          try: dataLine.remove("")
+          except ValueError: pass
           dataLine = list(map(float,dataLine))
           #do we have layer or levels
           hgt,press,temp,relhum = dataLine[:4]
@@ -485,6 +508,16 @@ class pyPamtra(object):
     Input:
 
     inputFile: str filename with path
+
+    Note: this header format (year month day time ngridx ngridy nlyrs
+    deltax deltay, with an explicit ngridx/ngridy and no dummy fields) does
+    not match the standalone pamtra CLI's '.cla' classic-format reader
+    (src/vars_atmosphere.f90:read_classic_fill_variables), which reads
+    only year month day time <dummy> <dummy> nlyrs on this line and
+    always assumes a single grid point. There is no test data or example
+    file for either side to confirm which (if either) is still the
+    intended on-disk format -- this function is untested elsewhere in
+    the codebase, unlike readPamtraProfile/writePamtraProfile.
     """
 
     f = open(inputFile,"r")
@@ -515,6 +548,7 @@ class pyPamtra(object):
     self.p["lon"] = np.zeros(self._shape2D)
     self.p["wind10u"] = np.zeros(self._shape2D)
     self.p["wind10v"] = np.zeros(self._shape2D)
+    self.p["sfc_type"] = np.ones(self._shape2D,dtype=int) * missingIntNumber
 
     self.p["iwv"] = np.zeros(self._shape2D)
     self.p["cwp"] = np.zeros(self._shape2D)
@@ -570,7 +604,7 @@ class pyPamtra(object):
           self.p["lat"][x,y], self.p["lon"][x,y],lfrac,self.p["wind10u"][x,y],self.p["wind10v"][x,y]  = np.array(np.array(next(g)),dtype=float)
           self.p["iwv"][x,y],self.p["cwp"][x,y],self.p["iwp"][x,y],self.p["rwp"][x,y],self.p["swp"][x,y],self.p["gwp"][x,y],self.p["hwp"][x,y] = np.array(np.array(next(g)),dtype=float)
           self.p["hgt_lev"][x,y,0],self.p["press_lev"][x,y,0],self.p["temp_lev"][x,y,0],self.p["relhum_lev"][x,y,0] = np.array(np.array(next(g)),dtype=float)
-          self.p["lfrac"][x,y] = np.around(lfrac) # lfrac is deprecated
+          self.p["sfc_type"][x,y] = np.around(lfrac) # lfrac is deprecated
           for z in np.arange(self.p["nlyrs"]):
             self.p["hgt_lev"][x,y,z+1],self.p["press_lev"][x,y,z+1],self.p["temp_lev"][x,y,z+1],self.p["relhum_lev"][x,y,z+1],self.p["cwc_q"][x,y,z],self.p["iwc_q"][x,y,z],self.p["rwc_q"][x,y,z],self.p["swc_q"][x,y,z],self.p["gwc_q"][x,y,z],self.p["hwc_q"][x,y,z],self.p["cwc_n"][x,y,z],self.p["iwc_n"][x,y,z],self.p["rwc_n"][x,y,z],self.p["swc_n"][x,y,z],self.p["gwc_n"][x,y,z],self.p["hwc_n"][x,y,z] = np.array(np.array(next(g)),dtype=float)
     else:
@@ -626,6 +660,27 @@ class pyPamtra(object):
 
     levLay = profileFile.split(".")[-1]
 
+    def hydroTokens(momentIn, nValue, reffValue, qValue):
+      # Column layout must match the read side (readPamtraProfile above,
+      # and Fortran's read_new_fill_variables): moment_in selects which
+      # 1-2 of (n, reff, q) are present, in this order.
+      if momentIn == 0:
+        return []
+      elif momentIn == 1:
+        return [nValue]
+      elif momentIn == 2:
+        return [reffValue]
+      elif momentIn == 3:
+        return [qValue]
+      elif momentIn == 12:
+        return [nValue, reffValue]
+      elif momentIn == 13:
+        return [nValue, qValue]
+      elif momentIn == 23:
+        return [reffValue, qValue]
+      else:
+        raise IOError('Did not understand df.data["moment_in"]')
+
     firstTime = datetime.datetime.utcfromtimestamp(self.p["unixtime"][0,0])
     year=str(firstTime.year)
     mon=str(firstTime.month).zfill(2)
@@ -638,41 +693,55 @@ class pyPamtra(object):
       self.p['hydro_tn'] = np.ones((self._shape2D[0],self._shape2D[1],self.df.nhydro))*-9999.
       #self.addIntegratedValues()
 
-    nHeights = self._shape3D[2]
-    if levLay == 'lev': nHeights+1
+    # The header's top-line layer count (read into max_nlyrs, unadjusted
+    # for either format -- see readPamtraProfile/Fortran's
+    # read_new_fill_variables) and its per-gridpoint line's count (read
+    # into nlyrs, then decremented by one for 'lev' specifically, since
+    # that line's count is levels = layers+1 there) are two different
+    # numbers, not the same value written twice.
+    nLayers = self._shape3D[2]
+    nHeightsPerGridpoint = nLayers + 1 if levLay == 'lev' else nLayers
 
-    s = str(self._shape2D[0])+" "+str(self._shape2D[1])+" "+str(nHeights)+" "+str(self._shape3Dout[2])+"\n"
+    s = str(self._shape2D[0])+" "+str(self._shape2D[1])+" "+str(nLayers)+" "+str(self._shape3Dout[2])+"\n"
 
     for xx in range(self._shape2D[0]):
       for yy in range(self._shape2D[1]):
-        s += year+" "+mon+" "+day+" "+hhmm+" "+str(nHeights)+" "+str(xx+1)+" "+str(yy+1)+"\n"
+        s += year+" "+mon+" "+day+" "+hhmm+" "+str(nHeightsPerGridpoint)+" "+str(xx+1)+" "+str(yy+1)+"\n"
         s += ' '.join(['%9e'%height for height in self.p['obs_height'][xx,yy,:]])+"\n"
         s += '%3.2f'%self.p["lat"][xx,yy]+" "+'%3.2f'%self.p["lon"][xx,yy]+" "+str(self.p["sfc_type"][xx,yy])+" "+str(self.p["wind10u"][xx,yy])+" "+str(self.p["wind10v"][xx,yy])+" "+str(self.p['groundtemp'][xx,yy])+" "+str(self.p['hgt_lev'][xx,yy,0])+"\n"
         s += str(self.p["iwv"][xx,yy])
         for ihyd in range(self.df.nhydro):
-          if self.df.data['moment_in'][ihyd] == 1:
-            s +=" "+'%9e'%self.p["hydro_wp"][xx,yy,ihyd]
-          if self.df.data['moment_in'][ihyd] == 13:
-            s +=" "+'%9e'%self.p["hydro_wp"][xx,yy,ihyd]+" "+'%9e'%self.p["hydro_tn"][xx,yy,ihyd]
+          # Column-integrated equivalents of the per-layer n/reff/q triple;
+          # there is no column-integrated reff, so -9999 (missing) is the
+          # best available placeholder if a hydrometeor needs one -- these
+          # columns are parsed but otherwise unused by PAMTRA.
+          for token in hydroTokens(self.df.data['moment_in'][ihyd],
+                                    self.p["hydro_tn"][xx,yy,ihyd], -9999.,
+                                    self.p["hydro_wp"][xx,yy,ihyd]):
+            s += " " + '%9e'%token
         s += "\n"
         if levLay == 'lev':
           s += '%6.1f'%self.p["hgt_lev"][xx,yy,0]+" "+'%6.1f'%self.p["press_lev"][xx,yy,0]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,0]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,0])+"\n"
           for zz in range(1,self._shape3D[2]+1):
             s += '%6.1f'%self.p["hgt_lev"][xx,yy,zz]+" "+'%6.1f'%self.p["press_lev"][xx,yy,zz]+" "+'%3.2f'%self.p["temp_lev"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum_lev"][xx,yy,zz])+" "
             for ihyd in range(self.df.nhydro):
-              if self.df.data['moment_in'][ihyd] == 1:
-                s +=str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
-              if self.df.data['moment_in'][ihyd] == 13:
-                s +=str('%9e'%self.p["hydro_n"][xx,yy,zz,ihyd])+" "+str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
+              # hydro_* arrays are layer-indexed (0-based, size nlyrs), but
+              # this row (level zz) corresponds to the layer below it.
+              tokens = hydroTokens(self.df.data['moment_in'][ihyd],
+                                    self.p["hydro_n"][xx,yy,zz-1,ihyd],
+                                    self.p["hydro_reff"][xx,yy,zz-1,ihyd],
+                                    self.p["hydro_q"][xx,yy,zz-1,ihyd])
+              s += "".join('%9e'%token+" " for token in tokens)
             s += "\n"
         elif levLay == 'lay':
           for zz in range(0,self._shape3D[2]):
             s += '%6.1f'%self.p["hgt"][xx,yy,zz]+" "+'%6.1f'%self.p["press"][xx,yy,zz]+" "+'%3.2f'%self.p["temp"][xx,yy,zz]+" "+'%1.4f'%(self.p["relhum"][xx,yy,zz])+" "
             for ihyd in range(self.df.nhydro):
-              if self.df.data['moment_in'][ihyd] == 1:
-                s +=str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
-              if self.df.data['moment_in'][ihyd] == 13:
-                s +=str('%9e'%self.p["hydro_n"][xx,yy,zz,ihyd])+" "+str('%9e'%self.p["hydro_q"][xx,yy,zz,ihyd])+" "
+              tokens = hydroTokens(self.df.data['moment_in'][ihyd],
+                                    self.p["hydro_n"][xx,yy,zz,ihyd],
+                                    self.p["hydro_reff"][xx,yy,zz,ihyd],
+                                    self.p["hydro_q"][xx,yy,zz,ihyd])
+              s += "".join('%9e'%token+" " for token in tokens)
             s += "\n"
         else:
           raise IOError("Did not understand lay/lev: "+layLev)
@@ -707,7 +776,7 @@ class pyPamtra(object):
     for key in list(kwargs.keys()):
       if type(kwargs[key]) == np.ma.core.MaskedArray:
         kwargs[key] = kwargs[key].filled(np.nan)
-      if type(kwargs[key]) == np.core.defchararray.chararray:
+      if type(kwargs[key]) == np.char.chararray:
           continue
       kwargs[key] = np.array(kwargs[key]) #in case its a list/tuple etc.
 
@@ -734,7 +803,7 @@ class pyPamtra(object):
         warnings.warn("lfrac is deprecated. Set sfc_model and sfc_refl directly. "+
           "For compatibility sfc_model is set to numpy.around(lfrac), sfc_refl is S on land and F on ocean.", Warning)
         kwargs['sfc_type'] = np.around(kwargs['lfrac']) # use lfrac as sfc_type
-        kwargs['sfc_refl'] = np.chararray(kwargs['sfc_type'].shape)
+        kwargs['sfc_refl'] = np.char.chararray(kwargs['sfc_type'].shape)
         kwargs['sfc_refl'][kwargs['sfc_type'] == 0] = 'F' # ocean
         kwargs['sfc_refl'][kwargs['sfc_type'] == 1] = 'S' # land
         kwargs.pop('lfrac') # remove lfrac from kwargs
@@ -854,13 +923,13 @@ class pyPamtra(object):
 
     for environment, preset in [["sfc_refl",'S']]:
       if environment not in list(kwargs.keys()):
-        self.p[environment] = np.chararray(self._shape2D)
+        self.p[environment] = np.char.chararray(self._shape2D)
         self.p[environment][:] = preset
         warnings.warn("%s set to %s"%(environment,preset,), Warning)
       else:
 #        if type(kwargs[environment]) in ('|S1'):
         if type(kwargs[environment]) == str:
-          self.p[environment] = np.chararray(self._shape2D)
+          self.p[environment] = np.char.chararray(self._shape2D)
           self.p[environment][:] = preset
         else:
           self.p[environment] = kwargs[environment].reshape(self._shape2D)
@@ -1668,7 +1737,7 @@ class pyPamtra(object):
             md5 = hashlib.md5(inputPickle).hexdigest()
             fname = "%s/%d_%04d_%s"%(picklePath, time.time(), pp_i, md5)
             jobs.append(fname)
-            with open(fname+".job.tmp", 'w') as f:
+            with open(fname+".job.tmp", 'wb') as f:
               f.write(inputPickle)
             os.rename(fname+".job.tmp",fname+".job")
             pp_i += 1
@@ -1683,7 +1752,7 @@ class pyPamtra(object):
             print(("\rWaiting too long for job %d: %s"%(mm,fname)))
             break
           try:
-            with open(fname, 'r') as f:
+            with open(fname, 'rb') as f:
               resultPickle = pickle.load(f)
             os.remove(fname)
             if resultPickle[0] is not None:
@@ -1799,7 +1868,7 @@ class pyPamtra(object):
             print(("\rWaiting too long for job %d: %s"%(mm,fname)))
             break
           try:
-            with open(fname, 'r') as f:
+            with open(fname, 'rb') as f:
               resultPickle = pickle.load(f)
             os.remove(fname)
             if resultPickle[0] is not None:
@@ -1887,7 +1956,7 @@ class pyPamtra(object):
     profilePart = dict()
     for key in list(self.p.keys()):
       # import pdb;pdb.set_trace()
-      if type(self.p[key]) is not np.ndarray and type(self.p[key]) is not np.core.defchararray.chararray:
+      if type(self.p[key]) is not np.ndarray and type(self.p[key]) is not np.char.chararray:
         profilePart[key] = self.p[key]
       else:
         profilePart[key] = self.p[key][pp_startX:pp_endX,pp_startY:pp_endY]
@@ -2017,7 +2086,7 @@ class pyPamtra(object):
       '''
       write the complete state of the session (profile,results,settings to a file
       '''
-      f = open(fname, "w")
+      f = open(fname, "wb")
       pickle.dump([self.r,self.p,self.nmlSet,self.set,self.df.data,self.df.data4D,self.df.dataFullSpec], f)
       f.close()
     else:
@@ -2067,7 +2136,7 @@ class pyPamtra(object):
         raise IOError ("Could not read data from dir")
     else:
       try:
-        f = open(fname, "r")
+        f = open(fname, "rb")
         [self.r,self.p,self.nmlSet,self.set,self.df.data,self.df.data4D,self.df.dataFullSpec] = pickle.load(f)
         f.close()
       except:
