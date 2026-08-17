@@ -23,11 +23,15 @@ methods.
 
     # One liquid hydrometeor ("cwc_q"), exponential PSD, Mie-sphere
     # scattering. See :ref:`descriptorFile` for what each field means.
-    pam.df.addHydrometeor((
-        "cwc_q", -99.0, 1, -99.0, -99.0, -99.0, -99.0, -99.0,
-        3, 30, "exp", -99.0, -99.0, 8.0e6, -99.0, 1.0e-5, 6.0e-3,
-        "mie-sphere", "khvorostyanov01_drops", -99.0,
-    ))
+    # (addHydrometeor also accepts a positional tuple in field order --
+    # see :ref:`descriptorFile` -- but the keyword form below is safer:
+    # unrecognized or missing fields raise instead of silently landing
+    # in the wrong column.)
+    pam.df.addHydrometeor(
+        hydro_name="cwc_q", liq_ice=1, moment_in=3, nbin=30,
+        dist_name="exp", p_3=8.0e6, d_1=1.0e-5, d_2=6.0e-3,
+        scat_name="mie-sphere", vel_size_mod="khvorostyanov01_drops",
+    )
 
     # A built-in US Standard Atmosphere profile needs no external data.
     pam = pyPamtra.importer.createUsStandardProfile(pam, hgt_lev=[0.0, 1000.0, 2000.0])

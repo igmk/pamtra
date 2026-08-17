@@ -5,7 +5,9 @@ Descriptor File Structure
 ==========================
 
 
-This file contains microphysical specifications for all hydrometeors. It includes central parameters for PSD, m-D, A-D relation and selection of scattering model for frozen hydrometeors. All values (e.g. a and b parameter for m-D relation) have to be provided in SI units. 
+This file contains microphysical specifications for all hydrometeors. It includes central parameters for PSD, m-D, A-D relation and selection of scattering model for frozen hydrometeors. All values (e.g. a and b parameter for m-D relation) have to be provided in SI units.
+
+Hydrometeors can be added programmatically via :any:`pamDescriptorFile.addHydrometeor`, either as a positional tuple in the field order below, or (recommended, since a mismatched argument raises instead of silently landing in the wrong column) as keyword arguments named after the fields below. When using keyword arguments, ``hydro_name``, ``liq_ice``, ``moment_in``, ``nbin``, ``dist_name``, ``d_1``, ``scat_name``, and ``vel_size_mod`` must always be given; the remaining fields default to ``-99.`` (this file's "not applicable" sentinel, see below) since that is the correct value whenever a field does not apply to a given hydrometeor/distribution combination.
 
 The descriptor file consists of the following fields
 

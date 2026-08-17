@@ -8,12 +8,39 @@ from scipy.interpolate import interp1d
 missingNumber=-9999.
 missingIntNumber=int(missingNumber)
 
+# Fields where doc/source/descriptorFile.rst documents -99. as the
+# standard "not applicable" sentinel (e.g. "(ice only)", "not required
+# for mono-disperse distribution"), so addHydrometeor(**kwargs) can
+# default them safely. Every other field has no universally safe
+# default (e.g. liq_ice, dist_name, scat_name) and must be given
+# explicitly.
+_HYDROMETEOR_KWARG_DEFAULTS = {
+  "as_ratio": -99.,
+  "rho_ms": -99.,
+  "a_ms": -99.,
+  "b_ms": -99.,
+  "alpha_as": -99.,
+  "beta_as": -99.,
+  "p_1": -99.,
+  "p_2": -99.,
+  "p_3": -99.,
+  "p_4": -99.,
+  "d_2": -99.,
+  "canting": -99.,
+}
+
+# closed sets per doc/source/descriptorFile.rst, worth validating
+# explicitly since a typo here silently changes the physics
+_VALID_LIQ_ICE = (-1, 1)
+_VALID_MOMENT_IN = (0, 1, 2, 3, 12, 13, 23)
+
+
 class pamDescriptorFile(object):
   '''
-  class with the descriptor file content in data. In case you want to use 4D data, use data4D instead, 
+  class with the descriptor file content in data. In case you want to use 4D data, use data4D instead,
   the coreesponding column in data is automatically removed. Inializes with an empty array.
   '''
-         
+
   def __init__(self,parent):
     self.names = np.array(["hydro_name", "as_ratio", "liq_ice", "rho_ms", "a_ms", "b_ms", "alpha_as", "beta_as", "moment_in", "nbin", "dist_name", "p_1", "p_2", "p_3", "p_4", "d_1", "d_2", "scat_name", "vel_size_mod","canting"])
     self.types = ["U15",float,int,float,float,float,float,float,int,int,"U15",float,float,float,float,float,float, "U60", "U30",float]  
@@ -72,17 +99,44 @@ class pamDescriptorFile(object):
       for row in self.data:
         writer.writerow(list(row))
       
-  def addHydrometeor(self,hydroTuple):
+  def addHydrometeor(self,hydroTuple=None,**kwargs):
     '''
     Add hydrometeor to df array. See :any:`descriptorFile` for details.
 
+    Can be called either with a positional tuple (original, position-
+    sensitive interface) or with keyword arguments matching the field
+    names below (safer: a mismatched argument raises instead of silently
+    landing in the wrong column). The two styles are mutually exclusive.
+
     Parameters
     ----------
-    hydroTuple : tuple
+    hydroTuple : tuple, optional
       tuple describing the hydrometeor. Consists of
-      "hydro_name", "as_ratio", "liq_ice", "rho_ms", "a_ms", "b_ms", "alpha_as", "beta_as", "moment_in", "nbin", "dist_name", "p_1", 
+      "hydro_name", "as_ratio", "liq_ice", "rho_ms", "a_ms", "b_ms", "alpha_as", "beta_as", "moment_in", "nbin", "dist_name", "p_1",
       "p_2", "p_3", "p_4", "d_1", "d_2", "scat_name", "vel_size_mod","canting"
+    **kwargs
+      Alternative to hydroTuple: the same fields passed by name. See
+      doc/source/descriptorFile.rst for what each field means and which
+      values are valid. hydro_name, liq_ice, moment_in, nbin, dist_name,
+      d_1, scat_name, and vel_size_mod must always be given explicitly;
+      as_ratio, rho_ms, a_ms, b_ms, alpha_as, beta_as, p_1, p_2, p_3, p_4,
+      d_2, and canting default to -99. (the descriptor file's documented
+      "not applicable" sentinel) when not given, matching common cases
+      like liquid hydrometeors not needing rho_ms/a_ms/b_ms.
+
+    Examples
+    --------
+    >>> pam.df.addHydrometeor(
+    ...     hydro_name="cwc_q", liq_ice=1, moment_in=23, nbin=100,
+    ...     dist_name="logn", p_3=0.38, d_1=1.e-12, d_2=1.e-2,
+    ...     scat_name="mie-sphere", vel_size_mod="khvorostyanov01_drops",
+    ... )
     '''
+    if hydroTuple is None:
+      hydroTuple = self._hydrometeorTupleFromKwargs(**kwargs)
+    elif kwargs:
+      raise TypeError("addHydrometeor() accepts either hydroTuple or keyword arguments, not both")
+
     assert hydroTuple[0] not in self.data["hydro_name"]
     assert len(self.dataFullSpec.keys()) == 0
     
@@ -90,10 +144,40 @@ class pamDescriptorFile(object):
     self.nhydro += 1
     self.parent._shape4D = (self.parent.p["ngridx"],self.parent.p["ngridy"],self.parent.p["max_nlyrs"],self.nhydro)
     for key in ["hydro_q","hydro_reff","hydro_n"]:
-      if key in self.parent.p.keys():    
+      if key in self.parent.p.keys():
         self.parent.p[key] = np.concatenate([self.parent.p[key],np.ones(self.parent._shape3D + tuple([1]))*missingNumber],axis=-1)
     return
-    
+
+  def _hydrometeorTupleFromKwargs(self,**kwargs):
+    '''
+    Build a hydroTuple (see addHydrometeor) from keyword arguments matched
+    by field name instead of position. Raises on unknown field names,
+    missing required fields, and (for the two fields with a documented
+    closed set of valid values) out-of-range values.
+    '''
+    unknown = set(kwargs) - set(self.names)
+    if unknown:
+      raise TypeError("addHydrometeor() got unexpected keyword argument(s): " + ", ".join(sorted(unknown)))
+
+    if "liq_ice" in kwargs and kwargs["liq_ice"] not in _VALID_LIQ_ICE:
+      raise ValueError("liq_ice must be one of %s, got %r" % (_VALID_LIQ_ICE, kwargs["liq_ice"]))
+    if "moment_in" in kwargs and kwargs["moment_in"] not in _VALID_MOMENT_IN:
+      raise ValueError("moment_in must be one of %s, got %r" % (_VALID_MOMENT_IN, kwargs["moment_in"]))
+
+    values = []
+    missing = []
+    for name in self.names:
+      if name in kwargs:
+        values.append(kwargs[name])
+      elif name in _HYDROMETEOR_KWARG_DEFAULTS:
+        values.append(_HYDROMETEOR_KWARG_DEFAULTS[name])
+      else:
+        missing.append(name)
+    if missing:
+      raise TypeError("addHydrometeor() missing required keyword argument(s): " + ", ".join(missing))
+
+    return tuple(values)
+
   def removeHydrometeor(self,hydroName):
     '''
     Remove hydrometeor from df array. 

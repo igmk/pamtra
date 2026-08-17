@@ -67,6 +67,58 @@ def test_add_hydrometeor():
     assert pam.df.data["hydro_name"][0] == "rwc_q"
 
 
+def test_add_hydrometeor_kwargs_matches_tuple():
+    # kwargs form should produce byte-identical data to the equivalent
+    # positional tuple, including the defaulted (-99.) fields
+    pam_tuple = pyPamtra.pyPamtra()
+    pam_tuple.df.addHydrometeor(HYDROMETEOR)
+
+    pam_kwargs = pyPamtra.pyPamtra()
+    pam_kwargs.df.addHydrometeor(
+        hydro_name="rwc_q", liq_ice=1, moment_in=3, nbin=30,
+        dist_name="exp", p_3=8.0e6, d_1=1.0e-5, d_2=6.0e-3,
+        scat_name="mie-sphere", vel_size_mod="khvorostyanov01_drops",
+    )
+
+    assert (pam_tuple.df.data == pam_kwargs.df.data).all()
+
+
+def test_add_hydrometeor_kwargs_unknown_field_raises():
+    pam = pyPamtra.pyPamtra()
+    with pytest.raises(TypeError, match="unexpected keyword"):
+        pam.df.addHydrometeor(
+            hydro_name="rwc_q", liq_ice=1, moment_in=3, nbin=30,
+            dist_name="exp", d_1=1.0e-5, scat_name="mie-sphere",
+            vel_size_mod="khvorostyanov01_drops",
+            not_a_real_field=1.0,
+        )
+
+
+def test_add_hydrometeor_kwargs_missing_required_raises():
+    pam = pyPamtra.pyPamtra()
+    with pytest.raises(TypeError, match="missing required"):
+        pam.df.addHydrometeor(hydro_name="rwc_q", liq_ice=1)
+
+
+@pytest.mark.parametrize("field,value", [("liq_ice", 0), ("moment_in", 99)])
+def test_add_hydrometeor_kwargs_invalid_enum_raises(field, value):
+    pam = pyPamtra.pyPamtra()
+    kwargs = dict(
+        hydro_name="rwc_q", liq_ice=1, moment_in=3, nbin=30,
+        dist_name="exp", d_1=1.0e-5, scat_name="mie-sphere",
+        vel_size_mod="khvorostyanov01_drops",
+    )
+    kwargs[field] = value
+    with pytest.raises(ValueError):
+        pam.df.addHydrometeor(**kwargs)
+
+
+def test_add_hydrometeor_tuple_and_kwargs_together_raises():
+    pam = pyPamtra.pyPamtra()
+    with pytest.raises(TypeError, match="either hydroTuple or keyword"):
+        pam.df.addHydrometeor(HYDROMETEOR, hydro_name="something_else")
+
+
 def test_remove_hydrometeor():
     pam = make_pam_with_hydrometeor()
     pam.df.removeHydrometeor("rwc_q")
