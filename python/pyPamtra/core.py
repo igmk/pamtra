@@ -437,7 +437,6 @@ class pyPamtra(object):
 
           #in the file its actually nlevels, so:
           self.p["nlyrs"][xx,yy] = self.p["nlyrs"][xx,yy] - 1
-        #import pdb;pdb.set_trace()
 
         for zz in range(self.p["nlyrs"][xx,yy]):
           dataLine =next(g)
@@ -1231,39 +1230,15 @@ class pyPamtra(object):
         newP = np.ones(self._shape3Dplus) * missingNumber
         for x in range(self._shape2D[0]):
           for y in range(self._shape2D[1]):
-#            newP[x,y] = np.interp(new_hgt_lev,old_hgt_lev[x,y],self.p[key][x,y])
-#            newP[x,y] = np.interp(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
             newP[x,y] = extrap(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
         self.p[key] = newP
         if key != "hgt_lev": self.p[key][self.p[key]<-1.e-6] = missingNumber
-
-#     for key in ["relhum_lev"]:
-#       if key in self.p.keys():
-#         newP = np.ones(self._shape3Dplus) * missingNumber
-#         for x in xrange(self._shape2D[0]):
-#           for y in xrange(self._shape2D[1]):
-# #            newP[x,y] = np.interp(new_hgt_lev,old_hgt_lev[x,y],self.p[key][x,y])
-# #            newP[x,y] = np.interp(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
-#             newP[x,y] = extrap(new_hgt_lev[x,y],old_hgt_lev[x,y],self.p[key][x,y])
-#         self.p[key] = newP
-#         if key != "hgt_lev" and self.p[key][self.p[key]<0]: print "Somethings wrong. Rel. humidity below 0!"
-
-    # for key in ["relhum"]:
-    #   if key in self.p.keys():
-    #     newP = np.ones(self._shape3D) * missingNumber
-    #     for x in xrange(self._shape2D[0]):
-    #       for y in xrange(self._shape2D[1]):
-    #         newP[x,y] = np.interp(new_hgt[x,y],old_hgt[x,y],self.p[key][x,y])
-    #     self.p[key] = newP
-    #     if key != "hgt" and self.p[key][self.p[key]<0]: print "Somethings wrong. Rel. humidity below 0!"
 
     for key in ["airturb","hgt","temp","relhum","wind_uv","turb_edr"]:
       if key in list(self.p.keys()):
         newP = np.ones(self._shape3D) * missingNumber
         for x in range(self._shape2D[0]):
           for y in range(self._shape2D[1]):
-#            newP[x,y] = np.interp(new_hgt,old_hgt[x,y],self.p[key][x,y])
-#            newP[x,y] = np.interp(new_hgt[x,y],old_hgt[x,y],self.p[key][x,y])
             newP[x,y] = extrap(new_hgt[x,y],old_hgt[x,y],self.p[key][x,y])
         self.p[key] = newP
         if key != "hgt": self.p[key][self.p[key]<-1.e-6] = missingNumber
@@ -1274,8 +1249,6 @@ class pyPamtra(object):
         newP = np.ones(self._shape3Dplus) * missingNumber
         for x in range(self._shape2D[0]):
           for y in range(self._shape2D[1]):
-#            newP[x,y] = np.exp(np.interp(new_hgt_lev,old_hgt_lev[x,y],np.log(self.p[key][x,y])))
-#            newP[x,y] = np.exp(np.interp(new_hgt_lev[x,y],old_hgt_lev[x,y],np.log(self.p[key][x,y])))
             newP[x,y] = np.exp(extrap(new_hgt_lev[x,y],old_hgt_lev[x,y],np.log(self.p[key][x,y])))
         self.p[key] = newP
         self.p[key][self.p[key]<-1.e-6] = missingNumber
@@ -1285,8 +1258,6 @@ class pyPamtra(object):
         newP = np.ones(self._shape3D) * missingNumber
         for x in range(self._shape2D[0]):
           for y in range(self._shape2D[1]):
-#            newP[x,y] = np.exp(np.interp(new_hgt,old_hgt[x,y],np.log(self.p[key][x,y])))
-#            newP[x,y] = np.exp(np.interp(new_hgt[x,y],old_hgt[x,y],np.log(self.p[key][x,y])))
             newP[x,y] = np.exp(extrap(new_hgt[x,y],old_hgt[x,y],np.log(self.p[key][x,y])))
         self.p[key] = newP
         self.p[key][self.p[key]<-1.e-6] = missingNumber
@@ -1420,30 +1391,7 @@ class pyPamtra(object):
     Adds "PIA" to `self.r`
     """
 
-    sys.exit('Deprecated: use nmlSet radar_attenuation instead.')
-
-    # shapePIA = np.shape(self.r["Att_hydro"])
-    # if applyAtmo:
-    #   Att_atmo = np.zeros(shapePIA)
-    #   Att_atmo.T[:] = self.r["Att_atmo"].T
-    #   Att_atmo[Att_atmo==missingNumber] = 0
-    # else:
-    #   Att_atmo = np.zeros(shapePIA)
-    # if applyHydros:
-    #   Att_hydro = self.r["Att_hydro"]
-    #   Att_hydro[Att_hydro==missingNumber] = 0
-    # else:
-    #   Att_hydro = np.zeros(shapePIA)
-
-    # self.r["PIA"] = np.zeros(shapePIA) - missingNumber
-    # if direction == "bottom-up":
-    #   for hh in range(self.p["max_nlyrs"]):
-    #     self.r["PIA"][:,:,hh,:] = Att_atmo[:,:,hh,:] +Att_hydro[:,:,hh,:] + 2*np.sum(Att_atmo[:,:,:hh,:] +Att_hydro[:,:,:hh,:],axis=2)#only half for the current layer
-    # elif direction == "top-down":
-    #   for hh in range(self.p["max_nlyrs"]-1,-1,-1):
-    #     self.r["PIA"][:,:,hh,:] = Att_atmo[:,:,hh,:] +Att_hydro[:,:,hh,:] + 2*np.sum(Att_atmo[:,:,hh+1:,:] +Att_hydro[:,:,hh+1:,:],axis=2)#only half for the current layer
-
-    return
+    raise RuntimeError('addPIA is deprecated: use nmlSet radar_attenuation instead.')
 
 
   def createFullProfile(self,timestamp,lat,lon,wind10u,wind10v,
@@ -1660,7 +1608,6 @@ class pyPamtra(object):
 
     if self.set["pyVerbose"] > 0: print("waiting for all jobs to finish")
     for jj,job in enumerate(jobs):
-      #import pdb;pdb.set_trace()
       try: self._joinResults(job.get(timeout=timeout))
       except multiprocessing.TimeoutError:
         print("KILLED pool due to timeout of job", jj+1)
@@ -1732,7 +1679,6 @@ class pyPamtra(object):
 
             indices = [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY]
             profilePart, dfPart,dfPart4D,dfPartFS, settings = self._sliceProfile(*indices)
-            #import pdb;pdb.set_trace()
             inputPickle = pickle.dumps((indices,settings,self.nmlSet,dfPart,dfPart4D,dfPartFS,profilePart))
             md5 = hashlib.md5(inputPickle).hexdigest()
             fname = "%s/%d_%04d_%s"%(picklePath, time.time(), pp_i, md5)
@@ -1846,7 +1792,6 @@ class pyPamtra(object):
 
             indices = [pp_startF,pp_endF,pp_startX,pp_endX,pp_startY,pp_endY]
             profilePart, dfPart,dfPart4D,dfPartFS, settings = self._sliceProfile(*indices)
-            #import pdb;pdb.set_trace()
             inputPickle = pickle.dumps((indices,settings,self.nmlSet,dfPart,dfPart4D,dfPartFS,profilePart))
             md5 = hashlib.md5(inputPickle).hexdigest()
             fname = "%d_%04d_%s"%(time.time(), pp_i, md5)
@@ -1919,7 +1864,6 @@ class pyPamtra(object):
         reduceObsTop =+1
       if np.all(self.p["obs_height"][:,:,i] <= self.p["hgt_lev"][:,:,0]):
         reduceObsBot =+1
-#    import pdb; pdb.set_trace()
     new_hgt_lev = np.ones((self._shape3Dplus[0],self._shape3Dplus[1],self._shape3Dplus[2]+np.shape(self.p["obs_height"])[2]-reduceObsTop-reduceObsBot)) * np.nan
     for i in range(np.shape(self.p["obs_height"])[0]):
       for j in range(np.shape(self.p["obs_height"])[1]):
@@ -1955,7 +1899,6 @@ class pyPamtra(object):
 
     profilePart = dict()
     for key in list(self.p.keys()):
-      # import pdb;pdb.set_trace()
       if type(self.p[key]) is not np.ndarray and type(self.p[key]) is not np.char.chararray:
         profilePart[key] = self.p[key]
       else:
@@ -2308,7 +2251,6 @@ class pyPamtra(object):
       #nc_act_pol = cdfFile.createVariable('radar_polarisation', str,("radar_polarisation",))
       #nc_act_pol.units = "-"
       ##dataTmp = np.empty(self.set["radar_npol"],dtype="O")
-      ##import pdb;pdb.set_trace()
       ##for dd in xrange(self.set["radar_npol"]):
         ##dataTmp[dd] = self.set["radar_pol"][dd]
       #nc_act_pol[:] = np.array(self.set["radar_pol"],dtype="O")
