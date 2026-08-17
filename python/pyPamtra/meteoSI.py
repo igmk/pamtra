@@ -20,7 +20,7 @@ except ImportError:
 try:
     import numexpr as ne
     neAvail = True
-except:
+except ImportError:
     warnings.warn("numexpr not available", Warning)
     neAvail = False
 
@@ -96,7 +96,7 @@ def moist_rho_q(p, T, q, *qm):
         else:
             try:
                 moist_rho_q[moist_rho_q < 0] = 0
-            except:
+            except TypeError:
                 moist_rho_q = 0
 
     return moist_rho_q

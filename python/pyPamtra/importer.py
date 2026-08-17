@@ -22,7 +22,7 @@ import pdb
 try:
   import numexpr as ne
   neAvail = True
-except:
+except ImportError:
   warnings.warn("numexpr not available", Warning)
   neAvail = False
 
@@ -3141,7 +3141,7 @@ def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='net
     else:
       print('opening', nn+1,'of',len(ncFiles), ncFile)
     try: ncData = openNc(ncFile,'r')
-    except: raise RuntimeError("Could not open file: '" + ncFile+"'")
+    except Exception: raise RuntimeError("Could not open file: '" + ncFile+"'")
     if nn == 0:
       if keys == 'all':
         keys = list(ncData.variables.keys())

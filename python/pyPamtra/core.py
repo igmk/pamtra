@@ -1025,7 +1025,7 @@ class pyPamtra(object):
     self.p["ngridy"] = 1
 
     try: self.df.fs_nbin =  self.df.dataFullSpec["d_ds"].shape[-1]
-    except: self.df.fs_nbin = 0
+    except KeyError: self.df.fs_nbin = 0
 
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
@@ -1095,7 +1095,7 @@ class pyPamtra(object):
     self.p["ngridy"] = self.p["ngridy"] * rep2D[1]
 
     try: self.df.fs_nbin =  self.df.dataFullSpec["d_ds"].shape[-1]
-    except: self.df.fs_nbin = 0
+    except KeyError: self.df.fs_nbin = 0
 
     self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
     self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
@@ -1981,10 +1981,10 @@ class pyPamtra(object):
   def _prepareResults(self):
 
     try: maxNBin = np.max(self.df.data["nbin"])
-    except:
+    except (KeyError, ValueError):
       try:
         maxNBin = np.max(self.df.data4D["nbin"])
-      except:
+      except KeyError:
         maxNBin = self.df.dataFullSpec["d_ds"].shape[-1]
     radar_spectrum_length = self.nmlSet["radar_nfft"]
 
@@ -2131,7 +2131,7 @@ class pyPamtra(object):
         for fnames in os.listdir(fname):
           key,subkey,dummy = fnames.split("%")
           self.__dict__[key][subkey] = np.load(fname+"/"+fnames)
-      except:
+      except Exception:
         print(formatExceptionInfo())
         raise IOError ("Could not read data from dir")
     else:
@@ -2139,13 +2139,13 @@ class pyPamtra(object):
         f = open(fname, "rb")
         [self.r,self.p,self.nmlSet,self.set,self.df.data,self.df.data4D,self.df.dataFullSpec] = pickle.load(f)
         f.close()
-      except:
+      except Exception:
         print(formatExceptionInfo())
         raise IOError ("Could not read data from file")
 
       self.df.nhydro = len(self.df.data)
       try: self.df.fs_nbin =  self.df.dataFullSpec["d_bound_ds"].shape[-1]
-      except: self.df.fs_nbin = 0
+      except KeyError: self.df.fs_nbin = 0
       self._shape2D = (self.p["ngridx"],self.p["ngridy"],)
       self._shape3D = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"],)
       self._shape3Dplus = (self.p["ngridx"],self.p["ngridy"],self.p["max_nlyrs"]+1,)
@@ -2200,7 +2200,7 @@ class pyPamtra(object):
       try:
         import Scientific.IO.NetCDF as nc
         pyNc = False
-      except:
+      except ImportError:
         #fallback for cheops with the same syntax as netcdf4!
         import netCDF3 as nc
         pyNc = True
@@ -2213,7 +2213,7 @@ class pyPamtra(object):
     try:
       self.r
       self.r["pamtraVersion"]
-    except:
+    except (AttributeError, KeyError):
       raise IOError ("run runPamtra first!")
 
     if pyNc: cdfFile = nc.Dataset(fname,"w",format= ncForm)
