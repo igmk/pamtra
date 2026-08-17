@@ -11,26 +11,14 @@ context:
 # manual maintainer step (needs its own PR review process there) and not
 # something this recipe does on its own. See RELEASING.md for the full
 # release process.
-#
-# `source.path` below points at the repo checkout for local testing. A real
-# submission needs a fetchable release instead -- swap this for:
-#   source:
-#     url: https://github.com/igmk/pamtra/archive/refs/tags/v${{ version }}.tar.gz
-#     sha256: <sha256 of that tarball>
 
 package:
   name: ${{ name|lower }}
   version: ${{ version }}
 
 source:
-  path: ..
-  # rattler-build ignores gitignored paths by default for local `path:`
-  # sources -- descriptorfiles/* is gitignored (its individual files are
-  # tracked as pre-existing exceptions, but the blanket pattern still
-  # applies here) and would otherwise silently go missing from the build.
-  # Irrelevant once this becomes a url+sha256 source: an extracted release
-  # tarball has no such filtering.
-  use_gitignore: false
+  url: https://github.com/igmk/pamtra/archive/refs/tags/v${{ version }}.tar.gz
+  sha256: 81a30557fe7e1ecdb0db7b9d01b30d8e201bbae6f64ac8e3c5e2bceb81ea4c65
 
 build:
   number: 0
