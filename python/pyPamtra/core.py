@@ -902,25 +902,26 @@ class pyPamtra(object):
       else:
         raise TypeError("timestamp has to be int, float or datetime object")
 
-    for environment, preset in [["lat",50.938056],["lon",6.956944],["wind10u",0],["wind10v",0],["groundtemp",np.nan],["sfc_salinity",33.],["sfc_slf",1.],["sfc_sif",0.]]:
+    def fillOrReshape(environment, preset, shape, dtype=None):
+      '''
+      helper for createProfile: use kwargs[environment] reshaped to `shape`
+      if given, otherwise fill `shape` with `preset` and warn about the
+      default that was assumed.
+      '''
       if environment not in list(kwargs.keys()):
-        self.p[environment] = np.ones(self._shape2D)*preset
+        self.p[environment] = np.ones(shape,dtype=dtype)*preset
         warnings.warn("%s set to %s"%(environment,preset,), Warning)
       else:
         if type(kwargs[environment]) in (int,np.int32,np.int64,float,np.float32,np.float64):
-          self.p[environment] = np.ones(self._shape2D) * kwargs[environment]
+          self.p[environment] = np.ones(shape) * kwargs[environment]
         else:
-          self.p[environment] = kwargs[environment].reshape(self._shape2D)
+          self.p[environment] = kwargs[environment].reshape(shape)
+
+    for environment, preset in [["lat",50.938056],["lon",6.956944],["wind10u",0],["wind10v",0],["groundtemp",np.nan],["sfc_salinity",33.],["sfc_slf",1.],["sfc_sif",0.]]:
+      fillOrReshape(environment, preset, self._shape2D)
 
     for environment, preset in [["sfc_type",-9999],["sfc_model",-9999]]:
-      if environment not in list(kwargs.keys()):
-        self.p[environment] = np.ones(self._shape2D,dtype=int)*preset
-        warnings.warn("%s set to %s"%(environment,preset,), Warning)
-      else:
-        if type(kwargs[environment]) in (int,np.int32,np.int64,float,np.float32,np.float64):
-          self.p[environment] = np.ones(self._shape2D) * kwargs[environment]
-        else:
-          self.p[environment] = kwargs[environment].reshape(self._shape2D)
+      fillOrReshape(environment, preset, self._shape2D, dtype=int)
 
     for environment, preset in [["sfc_refl",'S']]:
       if environment not in list(kwargs.keys()):
@@ -936,14 +937,7 @@ class pyPamtra(object):
           self.p[environment] = kwargs[environment].reshape(self._shape2D)
 
     for environment, preset in [["obs_height",[833000.,0.]]]:
-      if environment not in list(kwargs.keys()):
-        self.p[environment] = np.ones(self._shape3Dout)*preset
-        warnings.warn("%s set to %s"%(environment,preset,), Warning)
-      else:
-        if type(kwargs[environment]) in (int,np.int32,np.int64,float,np.float32,np.float64):
-          self.p[environment] = np.ones(self._shape3Dout) * kwargs[environment]
-        else:
-          self.p[environment] = kwargs[environment].reshape(self._shape3Dout)
+      fillOrReshape(environment, preset, self._shape3Dout)
 
     for qValue in ["hydro_q","hydro_reff","hydro_n"]:
       if qValue not in list(kwargs.keys())  and qValue+"+no000" not in list(kwargs.keys()):
