@@ -73,3 +73,36 @@ Quick-look plotting
 profile grid) and :any:`pyPamtra.plot.plotTBLine` (brightness temperature
 along one grid axis, e.g. for a flight track or transect). Both operate
 directly on ``pam.r`` after a run.
+
+
+xarray interface
+**********************
+
+:any:`pyPamtra.core.pyPamtra.to_xarray` builds an :any:`xarray.Dataset`
+snapshot of ``pam.p`` or ``pam.r``, with dimension names and units taken
+from PAMTRA's own metadata instead of the bare, unlabeled arrays in the
+dicts::
+
+    ds = pam.to_xarray(source="r")   # or source="p" for the profile
+    ds["tb"]                         # labeled dims, units in .attrs
+    ds.to_netcdf("output.nc")        # xarray's own writer
+
+This is an additive, read-only snapshot: it never holds a live view into
+``pam.p``/``pam.r``, so mutating the returned ``Dataset`` never affects
+the ``pyPamtra`` object, and nothing about ``pam.p``/``pam.r`` themselves
+changes. Requires the optional ``xarray`` package
+(``pip install pamtra[xarray]``).
+
+Pass ``outer_dims`` to relabel the leading grid dimensions to something
+more meaningful than the generic grid index, e.g.
+``pam.to_xarray(outer_dims={"grid_x": "lat"})``.
+
+:any:`pyPamtra.core.pyPamtra.from_xarray` is the inverse for profiles:
+it builds a profile from an :any:`xarray.Dataset` (e.g. one assembled
+independently, not necessarily round-tripped through ``to_xarray``) by
+feeding its variables into :any:`pyPamtra.core.pyPamtra.createProfile`,
+so all of that method's usual defaulting and validation still applies::
+
+    pam2 = pyPamtra.pyPamtra()
+    pam2.df.addHydrometeor(...)   # descriptor file is not part of the Dataset
+    pam2.from_xarray(ds)

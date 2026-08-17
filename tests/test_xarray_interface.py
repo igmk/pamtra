@@ -1,0 +1,91 @@
+"""Tests for pyPamtra.to_xarray()/from_xarray().
+
+These are purely additive on top of self.p/self.r/self.df.data -- they
+never read a live view of them and never write to them, so the tests
+here focus on: (1) round-trip fidelity through from_xarray(), (2) that
+mutating the returned Dataset can never affect the pyPamtra object it
+came from, and (3) the optional-dependency contract.
+"""
+
+import sys
+
+import numpy as np
+import pytest
+
+xr = pytest.importorskip("xarray")
+
+import pyPamtra
+from _scenario import build_pamtra, run_scenario
+
+P_KEYS_TO_CHECK = [
+    "hgt_lev", "temp_lev", "press_lev", "relhum_lev",
+    "hydro_q", "lat", "lon", "unixtime", "sfc_type", "obs_height",
+]
+
+
+def test_to_xarray_missing_xarray_gives_clear_error(monkeypatch):
+    monkeypatch.setitem(sys.modules, "xarray", None)
+    pam = build_pamtra()
+    with pytest.raises(ImportError, match="optional 'xarray' package"):
+        pam.to_xarray()
+
+
+def test_to_xarray_invalid_source_raises():
+    pam = build_pamtra()
+    with pytest.raises(ValueError, match="source must be"):
+        pam.to_xarray(source="bogus")
+
+
+def test_to_xarray_p_round_trip_via_from_xarray():
+    pam = build_pamtra()
+    ds = pam.to_xarray(source="p")
+
+    pam2 = pyPamtra.pyPamtra()
+    pam2.df = pam.df  # same hydrometeors/order as the source profile
+    pam2.from_xarray(ds)
+
+    for key in P_KEYS_TO_CHECK:
+        np.testing.assert_allclose(pam2.p[key], pam.p[key], err_msg=key)
+
+
+def test_to_xarray_p_units_and_dims():
+    pam = build_pamtra()
+    ds = pam.to_xarray(source="p")
+
+    assert ds["hgt_lev"].attrs["units"] == "m"
+    assert ds["hgt_lev"].dims == ("grid_x", "grid_y", "heightbins_plus1")
+    assert ds["hydro_q"].dims == ("grid_x", "grid_y", "heightbins", "hydrometeor")
+    assert ds.sizes["hydrometeor"] == pam.df.nhydro
+
+
+def test_to_xarray_mutation_does_not_affect_pam():
+    pam = build_pamtra()
+    original = pam.p["temp_lev"].copy()
+
+    ds = pam.to_xarray(source="p")
+    ds["temp_lev"].values[:] = -1
+
+    np.testing.assert_allclose(pam.p["temp_lev"], original)
+
+
+def test_to_xarray_results_after_run():
+    pam = run_scenario()
+    ds = pam.to_xarray(source="r")
+
+    assert "tb" in ds
+    assert "Ze" in ds
+    assert ds.attrs["pamtraVersion"] == pam.r["pamtraVersion"]
+    np.testing.assert_allclose(ds["tb"].values, pam.r["tb"])
+
+
+def test_to_xarray_outer_dims_round_trip():
+    pam = build_pamtra()
+    ds = pam.to_xarray(source="p", outer_dims={"grid_x": "lat", "grid_y": "lon_idx"})
+    assert "lat" in ds["hgt_lev"].dims
+    assert "grid_x" not in ds.dims
+
+    pam2 = pyPamtra.pyPamtra()
+    pam2.df = pam.df
+    pam2.from_xarray(ds, outer_dims={"lat": "grid_x", "lon_idx": "grid_y"})
+
+    np.testing.assert_allclose(pam2.p["hgt_lev"], pam.p["hgt_lev"])

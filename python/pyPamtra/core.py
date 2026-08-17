@@ -66,6 +66,28 @@ from .fortranNamelist import Namelist
 missingNumber=-9999.
 missingIntNumber=int(missingNumber)
 
+# self.p and self.r historically use different dimension-name spellings
+# for the same axis (self.p: "ngridx"/"max_nlyrs", self.r: "gridx"/"lyr"),
+# and neither matches the names writeResultsToNetCDF() actually puts on
+# disk (grid_x/heightbins/...). to_xarray()/from_xarray() standardize on
+# the on-disk netCDF names, since that's the convention external readers
+# (e.g. xr.open_dataset() on a saved output file) already depend on.
+_CANONICAL_DIM_NAMES = {
+  "ngridx": "grid_x",
+  "ngridy": "grid_y",
+  "max_nlyrs": "heightbins",
+  "max_nlyrs+1": "heightbins_plus1",
+  "noutlevels": "outlevels",
+  "nhydro": "hydrometeor",
+  "gridx": "grid_x",
+  "gridy": "grid_y",
+  "lyr": "heightbins",
+  "radar_npol": "radar_polarisation",
+  "att_npol": "attenuation_polarisation",
+  "passive_npol": "passive_polarisation",
+  "radar_npeaks": "radar_peak_number",
+}
+
 #logging.basicConfig(filename='example.log',level=logging.DEBUG)
 
 
@@ -2097,6 +2119,110 @@ class pyPamtra(object):
         self._shape3Dout = (self.p["ngridx"],self.p["ngridy"],self.p["noutlevels"],)
       return
 
+  def to_xarray(self,source="p",outer_dims=None):
+    '''
+    Build a snapshot of self.p or self.r as an xarray.Dataset, using
+    self.dimensions/self.units for dimension names and units. This is
+    purely additive: self.p/self.r/self.df.data are never read via a
+    live view and never modified, so mutating the returned Dataset can
+    never affect this pyPamtra object (and vice versa).
+
+    Requires the optional 'xarray' package.
+
+    Parameters
+    ----------
+    source : {'p', 'r'}, optional
+        Which dict to convert: 'p' for the input profile (default), 'r'
+        for results (only populated after runPamtra()/runParallelPamtra()).
+    outer_dims : dict, optional
+        Rename map applied after the built-in ngridx/gridx/etc ->
+        grid_x/... canonicalization, e.g. {'grid_x': 'lat'} to label the
+        leading dimension something more meaningful than the generic
+        grid index. See from_xarray() to invert this on the way back in.
+
+    Returns
+    -------
+    xarray.Dataset
+    '''
+    try:
+      import xarray as xr
+    except ImportError as e:
+      raise ImportError("to_xarray() requires the optional 'xarray' package: pip install xarray") from e
+
+    if source not in ("p","r"):
+      raise ValueError("source must be 'p' or 'r', got %r" % (source,))
+    data = getattr(self,source)
+    outer_dims = outer_dims or {}
+
+    data_vars = {}
+    for key, arr in data.items():
+      if not isinstance(arr,np.ndarray):
+        continue
+      arr = np.asarray(arr) # strip exotic ndarray subclasses (e.g. np.char.chararray)
+
+      dims = self.dimensions.get(key)
+      if dims is None or len(dims) != arr.ndim:
+        dims = ["%s_dim%i" % (key,i) for i in range(arr.ndim)]
+      dims = [_CANONICAL_DIM_NAMES.get(d,d) for d in dims]
+      dims = [outer_dims.get(d,d) for d in dims]
+
+      attrs = {"units": self.units[key]} if key in self.units else {}
+      data_vars[key] = (dims,arr.copy(),attrs)
+
+    ds = xr.Dataset(data_vars)
+    for key in ["pamtraVersion","pamtraHash"]:
+      if key in data:
+        ds.attrs[key] = data[key]
+    return ds
+
+  def from_xarray(self,ds,outer_dims=None):
+    '''
+    Build a profile from an xarray.Dataset, via createProfile() -- so all
+    of createProfile's existing defaulting and validation still applies.
+    This is the inverse of to_xarray(source='p'): variables are matched
+    by name against self.default_p_vars, and reordered to match
+    self.dimensions[key] (undoing the same canonical/outer_dims name
+    mapping to_xarray() applies) before being handed to createProfile as
+    a plain numpy array.
+
+    Requires the optional 'xarray' package.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+        Profile data, e.g. as returned by to_xarray(source='p'), or
+        assembled independently as long as variable names match
+        self.default_p_vars.
+    outer_dims : dict, optional
+        Inverse of the outer_dims rename map passed to to_xarray(), if
+        any was used (e.g. {'lat': 'grid_x'} to undo {'grid_x': 'lat'}).
+
+    Returns
+    -------
+    None
+        Populates self.p via createProfile(), as usual.
+    '''
+    outer_dims = outer_dims or {}
+    # these self.p keys are always derived by createProfile itself
+    # (model_i/model_j from the hgt NaN mask, the rest from hgt's shape)
+    # and either rejected or silently ignored if passed in as kwargs
+    derivedKeys = {"model_i","model_j","ngridx","ngridy","max_nlyrs","nlyrs"}
+    # createProfile reads the timestamp kwarg as "timestamp", not "unixtime"
+    kwargKeyOverride = {"unixtime": "timestamp"}
+
+    kwargs = {}
+    for key in self.default_p_vars:
+      if key in derivedKeys or key not in ds:
+        continue
+      da = ds[key]
+      expectedDims = self.dimensions.get(key)
+      if expectedDims is not None:
+        expectedDims = [outer_dims.get(_CANONICAL_DIM_NAMES.get(d,d),_CANONICAL_DIM_NAMES.get(d,d)) for d in expectedDims]
+        if set(expectedDims) == set(da.dims):
+          da = da.transpose(*expectedDims)
+      kwargs[kwargKeyOverride.get(key,key)] = da.values
+
+    return self.createProfile(**kwargs)
 
   def writeResultsToNetCDF(self,fname,profileVars="all",wpNames=[],ncForm="NETCDF3_CLASSIC",
     xarrayCompatibleOutput=False,ncCompression=False,lfracCompatibility=False):
