@@ -34,6 +34,7 @@ check_moments
 *.so.dSYM
 *.tmp
 *.png
+*.nc
 snowCRYSTALuli
 cl340d14.dda
 runtestc
