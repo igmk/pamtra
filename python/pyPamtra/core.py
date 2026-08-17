@@ -568,46 +568,48 @@ class pyPamtra(object):
     self.p["rwc_q"] = np.zeros(self._shape3D)
     self.p["swc_q"] = np.zeros(self._shape3D)
     self.p["gwc_q"] = np.zeros(self._shape3D)
+    self.p["hwc_q"] = np.zeros(self._shape3D)
+    self.p["cwc_n"] = np.zeros(self._shape3D)
+    self.p["iwc_n"] = np.zeros(self._shape3D)
+    self.p["rwc_n"] = np.zeros(self._shape3D)
+    self.p["swc_n"] = np.zeros(self._shape3D)
+    self.p["gwc_n"] = np.zeros(self._shape3D)
+    self.p["hwc_n"] = np.zeros(self._shape3D)
+
+    if n_moments not in (1, 2):
+      raise IOError("n_moments mus be 1 or 2")
+
+    # per-gridpoint moment fields (iwv, water paths); hwp only for 2-moment
+    momentFields = ["iwv","cwp","iwp","rwp","swp","gwp"]
+    if n_moments == 2:
+      momentFields = momentFields + ["hwp"]
+
+    # per-layer fields: hgt_lev..relhum_lev are level values (offset z+1),
+    # the rest are layer values (offset z); n-moment fields only for 2-moment
+    levFields = ["hgt_lev","press_lev","temp_lev","relhum_lev"]
+    layerFields = ["cwc_q","iwc_q","rwc_q","swc_q","gwc_q"]
+    if n_moments == 2:
+      layerFields = layerFields + ["hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"]
+
+    for x in np.arange(self.p["ngridx"]):
+      for y in np.arange(self.p["ngridy"]):
+        self.p["model_i"][x,y], self.p["model_j"][x,y] = np.array(np.array(next(g)),dtype=int)
+        self.p["lat"][x,y], self.p["lon"][x,y],lfrac,self.p["wind10u"][x,y],self.p["wind10v"][x,y]  = np.array(np.array(next(g)),dtype=float)
+        for key, value in zip(momentFields, np.array(np.array(next(g)),dtype=float)):
+          self.p[key][x,y] = value
+        self.p["hgt_lev"][x,y,0],self.p["press_lev"][x,y,0],self.p["temp_lev"][x,y,0],self.p["relhum_lev"][x,y,0] = np.array(np.array(next(g)),dtype=float)
+        self.p["sfc_type"][x,y] = np.around(lfrac) # lfrac is deprecated
+        for z in np.arange(self.p["nlyrs"]):
+          lineValues = np.array(np.array(next(g)),dtype=float)
+          for key, value in zip(levFields, lineValues[:len(levFields)]):
+            self.p[key][x,y,z+1] = value
+          for key, value in zip(layerFields, lineValues[len(levFields):]):
+            self.p[key][x,y,z] = value
 
     if n_moments == 1:
-      self.p["hwc_q"] = np.ones(self._shape3D)*missingNumber
-      self.p["cwc_n"] = np.ones(self._shape3D)*missingNumber
-      self.p["iwc_n"] = np.ones(self._shape3D)*missingNumber
-      self.p["rwc_n"] = np.ones(self._shape3D)*missingNumber
-      self.p["swc_n"] = np.ones(self._shape3D)*missingNumber
-      self.p["gwc_n"] = np.ones(self._shape3D)*missingNumber
-      self.p["hwc_n"] = np.ones(self._shape3D)*missingNumber
-
-      for x in np.arange(self.p["ngridx"]):
-        for y in np.arange(self.p["ngridy"]):
-          self.p["model_i"][x,y], self.p["model_j"][x,y] = np.array(np.array(next(g)),dtype=int)
-          self.p["lat"][x,y], self.p["lon"][x,y],lfrac,self.p["wind10u"][x,y],self.p["wind10v"][x,y]  = np.array(np.array(next(g)),dtype=float)
-          self.p["iwv"][x,y],self.p["cwp"][x,y],self.p["iwp"][x,y],self.p["rwp"][x,y],self.p["swp"][x,y],self.p["gwp"][x,y] = np.array(np.array(next(g)),dtype=float)
-          self.p["hgt_lev"][x,y,0],self.p["press_lev"][x,y,0],self.p["temp_lev"][x,y,0],self.p["relhum_lev"][x,y,0] = np.array(np.array(next(g)),dtype=float)
-          self.p["sfc_type"][x,y] = np.around(lfrac) # lfrac is deprecated
-          for z in np.arange(self.p["nlyrs"]):
-            self.p["hgt_lev"][x,y,z+1],self.p["press_lev"][x,y,z+1],self.p["temp_lev"][x,y,z+1],self.p["relhum_lev"][x,y,z+1],self.p["cwc_q"][x,y,z],self.p["iwc_q"][x,y,z],self.p["rwc_q"][x,y,z],self.p["swc_q"][x,y,z],self.p["gwc_q"][x,y,z] = np.array(np.array(next(g)),dtype=float)
-
-    elif n_moments == 2:
-      self.p["hwc_q"] = np.zeros(self._shape3D)
-      self.p["cwc_n"] = np.zeros(self._shape3D)
-      self.p["iwc_n"] = np.zeros(self._shape3D)
-      self.p["rwc_n"] = np.zeros(self._shape3D)
-      self.p["swc_n"] = np.zeros(self._shape3D)
-      self.p["gwc_n"] = np.zeros(self._shape3D)
-      self.p["hwc_n"] = np.zeros(self._shape3D)
-
-      for x in np.arange(self.p["ngridx"]):
-        for y in np.arange(self.p["ngridy"]):
-          self.p["model_i"][x,y], self.p["model_j"][x,y] = np.array(np.array(next(g)),dtype=int)
-          self.p["lat"][x,y], self.p["lon"][x,y],lfrac,self.p["wind10u"][x,y],self.p["wind10v"][x,y]  = np.array(np.array(next(g)),dtype=float)
-          self.p["iwv"][x,y],self.p["cwp"][x,y],self.p["iwp"][x,y],self.p["rwp"][x,y],self.p["swp"][x,y],self.p["gwp"][x,y],self.p["hwp"][x,y] = np.array(np.array(next(g)),dtype=float)
-          self.p["hgt_lev"][x,y,0],self.p["press_lev"][x,y,0],self.p["temp_lev"][x,y,0],self.p["relhum_lev"][x,y,0] = np.array(np.array(next(g)),dtype=float)
-          self.p["sfc_type"][x,y] = np.around(lfrac) # lfrac is deprecated
-          for z in np.arange(self.p["nlyrs"]):
-            self.p["hgt_lev"][x,y,z+1],self.p["press_lev"][x,y,z+1],self.p["temp_lev"][x,y,z+1],self.p["relhum_lev"][x,y,z+1],self.p["cwc_q"][x,y,z],self.p["iwc_q"][x,y,z],self.p["rwc_q"][x,y,z],self.p["swc_q"][x,y,z],self.p["gwc_q"][x,y,z],self.p["hwc_q"][x,y,z],self.p["cwc_n"][x,y,z],self.p["iwc_n"][x,y,z],self.p["rwc_n"][x,y,z],self.p["swc_n"][x,y,z],self.p["gwc_n"][x,y,z],self.p["hwc_n"][x,y,z] = np.array(np.array(next(g)),dtype=float)
-    else:
-      raise IOError("n_moments mus be 1 or 2")
+      # these fields are not present in the 1-moment file format
+      for key in ["hwc_q","cwc_n","iwc_n","rwc_n","swc_n","gwc_n","hwc_n"]:
+        self.p[key][:] = missingNumber
 
 
     #in PyPamtra I want relhum not in %
