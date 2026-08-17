@@ -4,42 +4,86 @@
 pyPamtraXr
 ==========
 
-:any:`pyPamtra.pamtra_xr.pyPamtraXr` is a small, curated facade over :ref:`pyPamtra`
-for users who'd rather not touch ``pam.p["key"][x, y, z]``-style
-dict/array indexing directly. It is recommended for new code -- see
-:ref:`quickstart` for a full first example.
+:any:`pyPamtra.pamtra_xr.pyPamtraXr` is a small, curated facade over
+:ref:`pyPamtra` for users who'd rather not touch
+``pam.p["key"][x, y, z]``-style dict/array indexing or ``pam.df``'s
+positional-tuple recarray rows directly. It is recommended for new code
+-- see :ref:`quickstart` for a full first example.
 
-There is no separate, "live" xarray-native copy of the profile or
-results behind ``pyPamtraXr``: every array still lives in
-``pamxr.pam.p``/``pamxr.pam.r`` exactly as in plain :ref:`pyPamtra`,
-unchanged. ``pyPamtraXr``'s methods are verbs that delegate to it, and
-the only way to get a labeled ``xarray.Dataset`` out is to explicitly
-ask for one, via ``to_xarray()`` or the return value of ``run()`` --
-never a stored, directly-settable ``.profile``/``.results`` attribute.
-This keeps the actual state in exactly one place and matches the
-copy/snapshot semantics :any:`pyPamtra.core.pyPamtra.to_xarray` /
-:any:`pyPamtra.core.pyPamtra.from_xarray` already use.
+Unlike a plain :ref:`pyPamtra` object, ``.p``/``.r``/``.df``/``.df_4d``/
+``.df_full_spec`` are real, persistent, labeled attributes here:
+
+.. list-table::
+   :header-rows: 1
+
+   * - Attribute
+     - Type
+     - What it replaces
+   * - ``pamxr.p``
+     - ``xarray.Dataset``
+     - ``pam.p`` (the atmospheric profile)
+   * - ``pamxr.r``
+     - ``xarray.Dataset``
+     - ``pam.r`` (results, empty before the first ``run()``)
+   * - ``pamxr.df``
+     - ``pandas.DataFrame``, indexed by ``hydro_name``
+     - ``pam.df.data`` (per-hydrometeor scalar properties)
+   * - ``pamxr.df_4d``
+     - ``xarray.Dataset``
+     - ``pam.df.data4D`` (per-gridpoint property overrides)
+   * - ``pamxr.df_full_spec``
+     - ``xarray.Dataset``
+     - ``pam.df.dataFullSpec`` (full particle-size-spectrum input)
+
+``.df`` is a ``pandas.DataFrame``, not an ``xarray.Dataset`` --
+it's a small, mixed-dtype (strings, ints, floats), few-row table (one
+row per hydrometeor), which is what pandas is for; xarray is built for
+labeled N-D arrays like ``.p``/``.r``/``.df_4d``/``.df_full_spec``, and
+is a comparatively awkward fit for a handful of heterogeneous scalar
+columns. This costs nothing extra: pandas is already a hard dependency
+of xarray.
+
+There is still exactly one place the RT engine actually runs:
+``pamxr.pam``, a real :ref:`pyPamtra` object, always accessible as the
+escape hatch for anything this class doesn't cover. ``run()`` (and
+``add_instrument()``) translate ``.p`` into ``pamxr.pam.p`` right before
+calling ``pamxr.pam.runPamtra()``/``addInstrument()``, via the existing
+:any:`pyPamtra.core.pyPamtra.from_xarray` -- not a new, independently
+maintained reimplementation of ``createProfile()``'s shape/defaulting
+logic. ``.df``/``.df_4d``/``.df_full_spec`` instead stay eagerly synced
+from ``pamxr.pam.df`` on every ``add_hydrometeor()``/
+``remove_hydrometeor()``/``add_4d()``/``remove_4d()``/
+``add_full_spectra()`` call, by calling the existing, already-tested
+:any:`pyPamtra.descriptorFile.pamDescriptorFile` methods and re-deriving
+the pandas/xarray mirror from the result -- so there is exactly one
+implementation of what a valid hydrometeor row looks like, not two.
 
 Escape hatch
 ****************
 
 ``pamxr.pam`` is the underlying :ref:`pyPamtra` object -- always the
 same one, not a copy. Anything not covered by ``pyPamtraXr``'s curated
-methods below (``nmlSet``/``set`` tweaks, per-grid-point array edits, or
-any other :ref:`pyPamtra` method) is reachable through it, and any
-change made through it is immediately visible to ``pyPamtraXr`` too,
-since it's the same object::
+methods (``nmlSet``/``set`` tweaks, or any other :ref:`pyPamtra` method)
+is reachable through it::
 
     pamxr = pyPamtra.pyPamtraXr()
     pamxr.pam.nmlSet["hydro_threshold"] = 1e-8   # not covered by pyPamtraXr's own methods
-    pamxr.pam.p["hydro_q"][0, 0, 0, 0] = 1e-3    # per-grid-point edit
+
+If you mutate ``pamxr.pam`` directly, ``.p``/``.r``/``.df``/``.df_4d``/
+``.df_full_spec`` go stale until the next ``run()`` (which only
+refreshes ``.p``/``.r``) or an explicit ``pamxr.refresh()`` call --
+e.g. after set_profile() has already populated ``pamxr.pam.p["hydro_q"]``::
+
+    pamxr.pam.p["hydro_q"][0, 0, 0, 0] = 1e-3   # bypasses pamxr.p
+    pamxr.refresh()                             # pamxr.p now reflects it
 
 You can also wrap an already-built :ref:`pyPamtra` object instead of
-creating a fresh one, e.g. to migrate an existing script incrementally::
+creating a fresh one -- most usefully, to reuse any of the existing
+:any:`pyPamtra.importer` functions (which all build and return a plain
+:ref:`pyPamtra` object) without modifying them::
 
-    pam = pyPamtra.pyPamtra()
-    # ... existing script builds pam as usual ...
-    pamxr = pyPamtra.pyPamtraXr(pam=pam)
+    pam = pyPamtra.importer.createUsStandardProfile(pyPamtra.pyPamtra(), hgt_lev=[0.0, 1000.0])
+    pamxr = pyPamtra.pyPamtraXr.from_pam(pam)   # pam becomes pamxr.pam, not a copy
 
 Class reference
 ********************

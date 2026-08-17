@@ -39,13 +39,12 @@ Recommended: pyPamtraXr
     )
 
     # A built-in US Standard Atmosphere profile needs no external data.
+    # pamxr.p is now a real, labeled xarray.Dataset (see :ref:`pyPamtraXr`).
     pamxr.set_profile(hgt_lev=[0.0, 1000.0, 2000.0], temp_lev=[288.15, 281.5, 275.0],
                        press_lev=[101300.0, 89000.0, 79000.0], relhum_lev=[80.0, 70.0, 60.0])
 
-    # Put some liquid water content into the lowest layer. Not yet covered
-    # by pyPamtraXr's curated surface, so this reaches into the wrapped
-    # pyPamtra object directly -- see "Escape hatch" below.
-    pamxr.pam.p["hydro_q"][0, 0, 0, 0] = 1e-3
+    # Put some liquid water content into the lowest layer.
+    pamxr.p["hydro_q"].values[0, 0, 0, 0] = 1e-3
 
     results = pamxr.run(35.5)  # frequency in GHz
 
@@ -54,15 +53,16 @@ Recommended: pyPamtraXr
 
 ``results`` is a labeled ``xarray.Dataset`` (units in ``.attrs``, see
 :ref:`results`'s xarray section) -- ``pamxr.run()`` returns it directly,
-and it's reachable again afterwards via ``pamxr.to_xarray(source="r")``.
-Write it out with ``pamxr.to_netcdf("output.nc")``.
+and it's the same object as ``pamxr.r`` afterwards. Write it out with
+``pamxr.to_netcdf("output.nc")``.
 
 Escape hatch
     ``pamxr.pam`` is the underlying :ref:`pyPamtra` object -- the same
     one, always, not a copy -- for anything not covered by
-    :ref:`pyPamtraXr`'s curated methods (``nmlSet``/``set`` tweaks,
-    per-grid-point array edits like ``hydro_q`` above, or any other
-    :ref:`pyPamtra` method).
+    :ref:`pyPamtraXr`'s curated attributes/methods (``nmlSet``/``set``
+    tweaks, or any other :ref:`pyPamtra` method). It's also how existing
+    :any:`pyPamtra.importer` functions plug in, via
+    ``pyPamtra.pyPamtraXr.from_pam(pam)`` -- see :ref:`pyPamtraXr`.
 
 Multiple instrument configurations
     :ref:`pyPamtraXr`'s ``add_instrument()`` runs several

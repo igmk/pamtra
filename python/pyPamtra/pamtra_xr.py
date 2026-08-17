@@ -269,9 +269,9 @@ class pyPamtraXr(object):
     '''
     Run the RT engine across local CPU cores
     (pyPamtra.core.pyPamtra.runParallelPamtra). See run() for how self.p
-    is translated in; **kwargs also accepts runParallelPamtra's
-    pp_local_workers/pp_deltaF/pp_deltaX/pp_deltaY/timeout. Populates
-    and returns self.r.
+    is translated in; the keyword arguments also accept
+    runParallelPamtra's pp_local_workers/pp_deltaF/pp_deltaX/pp_deltaY/timeout.
+    Populates and returns self.r.
 
     Returns
     -------
