@@ -61,3 +61,28 @@ ranges in the profile before handing off to the compiled extension --
 worth leaving on, since a shape mismatch caught here is much easier to
 debug than the same problem surfacing as a Fortran-side crash or garbage
 output.
+
+Running several instrument configurations
+*********************************************
+
+Each ``run*`` call above overwrites the single, shared ``pam.r`` --
+running a second configuration (different frequencies, or a different
+``radar_mode``/``active``/``passive`` combination) against the same
+profile discards the first result unless you save it yourself first.
+:any:`pyPamtra.PamtraInstrument` wraps that bookkeeping: a name, a
+frequency list, and any ``nmlSet`` overrides specific to that
+configuration, run via :any:`pyPamtra.core.pyPamtra.addInstrument`::
+
+    pam.addInstrument(pyPamtra.PamtraInstrument("simple", 35.5, radar_mode="simple"))
+    pam.addInstrument(pyPamtra.PamtraInstrument("spectrum", 35.5, radar_mode="spectrum"))
+
+    pam.instruments["simple"].results["Ze"]
+    pam.instruments["spectrum"].results["radar_spectra"]
+
+Each instrument's ``nmlSet`` overrides apply only for the duration of
+its own run (``pam.nmlSet`` is restored afterwards, even if the run
+fails), and each instrument keeps its own :any:`xarray.Dataset` of
+results (see :ref:`results`'s xarray section) rather than sharing
+``pam.r`` -- so the two calls above don't interfere with each other.
+Pass ``run=False`` to register an instrument without running it yet, and
+call ``instrument.run()`` explicitly later.

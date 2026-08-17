@@ -20,6 +20,13 @@ descriptorFile Class
     :undoc-members:
     :inherited-members:
     :show-inheritance:
+Instrument Class
+****************
+.. automodule:: pyPamtra.instrument
+    :members:
+    :undoc-members:
+    :inherited-members:
+    :show-inheritance:
 Import Routines
 ***************
 .. automodule:: pyPamtra.importer

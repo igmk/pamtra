@@ -284,6 +284,7 @@ class pyPamtra(object):
     self._nangles = 16
 
     self.df = pamDescriptorFile(self)
+    self.instruments = dict() #: name -> PamtraInstrument, see addInstrument()
 
     self.p = dict() #:  test
     self.r = dict()
@@ -2223,6 +2224,40 @@ class pyPamtra(object):
       kwargs[kwargKeyOverride.get(key,key)] = da.values
 
     return self.createProfile(**kwargs)
+
+  def addInstrument(self,instrument,run=True,outer_dims=None):
+    '''
+    Register a :any:`pyPamtra.instrument.PamtraInstrument` under
+    self.instruments[instrument.name], so several differently-configured
+    instruments (different frequencies and/or nmlSet overrides, e.g. one
+    "simple" radar_mode and one "spectrum" radar_mode) can be run against
+    the same profile/descriptor file, each keeping its own results
+    instead of overwriting the shared self.r.
+
+    Parameters
+    ----------
+    instrument : pyPamtra.instrument.PamtraInstrument
+    run : bool, optional
+        Run the instrument immediately (default True). Pass False to
+        register several instruments first and call .run() on each
+        later, e.g. after further changes to the profile. If run=True
+        and the run fails (e.g. an invalid nmlSet override), the
+        instrument is not registered in self.instruments.
+    outer_dims : dict, optional
+        Passed through to instrument.run() (and from there to
+        to_xarray()) if run is True.
+
+    Returns
+    -------
+    instrument : pyPamtra.instrument.PamtraInstrument
+        The same instrument, now attached to self and (if run=True) with
+        .results populated.
+    '''
+    instrument.parent = self
+    if run:
+      instrument.run(outer_dims=outer_dims)
+    self.instruments[instrument.name] = instrument
+    return instrument
 
   def writeResultsToNetCDF(self,fname,profileVars="all",wpNames=[],ncForm="NETCDF3_CLASSIC",
     xarrayCompatibleOutput=False,ncCompression=False,lfracCompatibility=False):
