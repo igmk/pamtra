@@ -120,8 +120,8 @@ class pyPamtraXr(object):
     Run the RT engine across local CPU cores
     (pyPamtra.core.pyPamtra.runParallelPamtra) and return the results as
     an xarray.Dataset. See run() for the parameters shared with the
-    serial variant; **kwargs also accepts runParallelPamtra's
-    pp_local_workers/pp_deltaF/pp_deltaX/pp_deltaY/timeout.
+    serial variant; the keyword arguments also accept
+    runParallelPamtra's pp_local_workers/pp_deltaF/pp_deltaX/pp_deltaY/timeout.
 
     Returns
     -------

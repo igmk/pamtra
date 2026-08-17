@@ -78,7 +78,7 @@ directly on ``pam.r`` after a run.
 xarray interface
 **********************
 
-:any:`pyPamtra.core.pyPamtra.to_xarray` builds an :any:`xarray.Dataset`
+:any:`pyPamtra.core.pyPamtra.to_xarray` builds an ``xarray.Dataset``
 snapshot of ``pam.p`` or ``pam.r``, with dimension names and units taken
 from PAMTRA's own metadata instead of the bare, unlabeled arrays in the
 dicts::
@@ -98,7 +98,7 @@ more meaningful than the generic grid index, e.g.
 ``pam.to_xarray(outer_dims={"grid_x": "lat"})``.
 
 :any:`pyPamtra.core.pyPamtra.from_xarray` is the inverse for profiles:
-it builds a profile from an :any:`xarray.Dataset` (e.g. one assembled
+it builds a profile from an ``xarray.Dataset`` (e.g. one assembled
 independently, not necessarily round-tripped through ``to_xarray``) by
 feeding its variables into :any:`pyPamtra.core.pyPamtra.createProfile`,
 so all of that method's usual defaulting and validation still applies::

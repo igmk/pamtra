@@ -69,7 +69,7 @@ Each ``run*`` call above overwrites the single, shared ``pam.r`` --
 running a second configuration (different frequencies, or a different
 ``radar_mode``/``active``/``passive`` combination) against the same
 profile discards the first result unless you save it yourself first.
-:any:`pyPamtra.PamtraInstrument` wraps that bookkeeping: a name, a
+:any:`pyPamtra.instrument.PamtraInstrument` wraps that bookkeeping: a name, a
 frequency list, and any ``nmlSet`` overrides specific to that
 configuration, run via :any:`pyPamtra.core.pyPamtra.addInstrument`::
 
@@ -81,7 +81,7 @@ configuration, run via :any:`pyPamtra.core.pyPamtra.addInstrument`::
 
 Each instrument's ``nmlSet`` overrides apply only for the duration of
 its own run (``pam.nmlSet`` is restored afterwards, even if the run
-fails), and each instrument keeps its own :any:`xarray.Dataset` of
+fails), and each instrument keeps its own ``xarray.Dataset`` of
 results (see :ref:`results`'s xarray section) rather than sharing
 ``pam.r`` -- so the two calls above don't interfere with each other.
 Pass ``run=False`` to register an instrument without running it yet, and

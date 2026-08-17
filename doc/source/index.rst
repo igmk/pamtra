@@ -17,6 +17,7 @@ Contents:
 
    installation
    quickstart
+   pyPamtraXr
    profiles
    descriptorFile
    .. inputFile
