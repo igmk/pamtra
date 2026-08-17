@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import division, print_function
 import numpy as np
 from numpy.lib import recfunctions as rfn
 import csv
@@ -85,13 +84,13 @@ class pamDescriptorFile(object):
       "p_2", "p_3", "p_4", "d_1", "d_2", "scat_name", "vel_size_mod","canting"
     '''
     assert hydroTuple[0] not in self.data["hydro_name"]
-    assert len(list(self.dataFullSpec.keys())) == 0
+    assert len(self.dataFullSpec.keys()) == 0
     
     self.data = np.append(self.data,np.array(tuple(hydroTuple),dtype=list(zip(self.names,self.types))))
     self.nhydro += 1
     self.parent._shape4D = (self.parent.p["ngridx"],self.parent.p["ngridy"],self.parent.p["max_nlyrs"],self.nhydro)
     for key in ["hydro_q","hydro_reff","hydro_n"]:
-      if key in list(self.parent.p.keys()):    
+      if key in self.parent.p.keys():    
         self.parent.p[key] = np.concatenate([self.parent.p[key],np.ones(self.parent._shape3D + tuple([1]))*missingNumber],axis=-1)
     return
     
@@ -105,7 +104,7 @@ class pamDescriptorFile(object):
       Name of hydrometeor to be removed.
     '''
 
-    assert len(list(self.dataFullSpec.keys())) == 0
+    assert len(self.dataFullSpec.keys()) == 0
     if hydroName == "all":
       self.__init__(self.parent)
       return
@@ -129,7 +128,7 @@ class pamDescriptorFile(object):
       self.nhydro -= 1
       self.parent._shape4D = (self.parent.p["ngridx"],self.parent.p["ngridy"],self.parent.p["max_nlyrs"],self.nhydro)
       for key in ["hydro_q","hydro_reff","hydro_n", "nbin"]:
-        if key in list(self.parent.p.keys()):
+        if key in self.parent.p.keys():
           self.parent.p[key] = np.delete(self.parent.p[key],hydroIndex,axis=-1)
     return
 

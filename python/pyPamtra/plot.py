@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from __future__ import division, print_function
 import numpy as np
 import datetime
 import matplotlib.pyplot as plt
@@ -59,7 +58,7 @@ def plotTB(data, polarisation="H", angle=180., outlevel="space", frequency=0, xg
         raise ValueError("outlevel must be space or ground")
 
     # now specificly netcdf OR pyPamtra
-    if type(data) == str:
+    if isinstance(data, str):
         # open netcdf etc...
         if pyNc:
             cdfFile = nc.Dataset(data, "r")
@@ -105,7 +104,7 @@ def plotTB(data, polarisation="H", angle=180., outlevel="space", frequency=0, xg
             raise ValueError("did not understand ygrid")
 
         cdfFile.close()
-    elif "r" in list(data.__dict__.keys()):
+    elif "r" in data.__dict__.keys():
         try:
             angleIndex = np.where(angle == data.r["angles_deg"])[0][0]
         except IndexError:

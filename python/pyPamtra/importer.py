@@ -8,7 +8,6 @@ They all return a pyPamtra object that holds the profile information in the .p o
 In addition ncToDict is provide to easily read necdf files into a dictionary.
 """
 
-from __future__ import division, print_function
 import numpy as np
 import datetime
 import random
@@ -256,7 +255,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
         if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
           data = deepcopy(dataSingle)
         else:
-          for key in list(data.keys()):
+          for key in data.keys():
             data[key] = np.ma.concatenate((data[key],dataSingle[key],),axis=concatenateAxis)
 
         ffOK += 1
@@ -385,7 +384,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
         if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
           data = deepcopy(dataSingle)
         else:
-          for key in list(data.keys()):
+          for key in data.keys():
             data[key] = np.ma.concatenate((data[key],dataSingle[key],),axis=concatenateAxis)
 
         ffOK += 1
@@ -437,7 +436,7 @@ def readCosmoDe1MomDataset(fnames,kind,descriptorFile,forecastIndex = 1,colIndex
 
   pam = pyPamtra()
   pam.set["pyVerbose"]= verbosity
-  if type(descriptorFile) == str:
+  if isinstance(descriptorFile, str):
     pam.df.readFile(descriptorFile)
   else:
     for df in descriptorFile:
@@ -583,7 +582,7 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
         if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
           data = deepcopy(dataSingle)
         else:
-          for key in list(data.keys()):
+          for key in data.keys():
             data[key] = np.ma.concatenate((data[key],dataSingle[key],),axis=concatenateAxis)
 
         ffOK += 1
@@ -730,7 +729,7 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
         if ffOK == 0: #if the first file is broken, checking for ff==0 would fail!
           data = deepcopy(dataSingle)
         else:
-          for key in list(data.keys()):
+          for key in data.keys():
             data[key] = np.ma.concatenate((data[key],dataSingle[key],),axis=concatenateAxis)
 
         ffOK += 1
@@ -789,7 +788,7 @@ def readCosmoDe2MomDataset(fnamesA,descriptorFile,fnamesN=None,kind='new',foreca
 
   pam = pyPamtra()
   pam.set["pyVerbose"]= verbosity
-  if type(descriptorFile) == str:
+  if isinstance(descriptorFile, str):
     pam.df.readFile(descriptorFile)
   else:
     for df in descriptorFile:
@@ -3067,7 +3066,7 @@ def _createUsStandardProfile(**kwargs):
   '''
 
 
-  assert "hgt_lev" in list(kwargs.keys()) #hgt_lev is mandatory
+  assert "hgt_lev" in kwargs.keys() #hgt_lev is mandatory
 
   pamData = dict()
 
@@ -3086,10 +3085,10 @@ def _createUsStandardProfile(**kwargs):
         density[xx,yy], pamData["press_lev"][xx,yy], pamData["temp_lev"][xx,yy]  =  usStandard(kwargs["hgt_lev"][xx,yy])
   else: raise IOError("hgt_lev has wrong number of dimensions")
 
-  for kk in list(kwargs.keys()):
+  for kk in kwargs.keys():
         pamData[kk] = np.array(kwargs[kk])
 
-  if ("relhum_lev" not in list(kwargs.keys())) and ("q" not in list(kwargs.keys())):
+  if ("relhum_lev" not in kwargs.keys()) and ("q" not in kwargs.keys()):
     pamData["relhum_lev"] = np.zeros_like(kwargs["hgt_lev"])
 
   return pamData
@@ -3115,7 +3114,7 @@ def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='net
     raise ImportError('ncLib must be netCDF4, netCDF3 or Scientific.IO.NetCDF')
   joinDimensionNumber = dict()
   joinedData = dict()
-  if type(ncFilePath) == list:
+  if isinstance(ncFilePath, list):
     ncFiles = ncFilePath
   else:
     ncFiles = glob.glob(ncFilePath)
@@ -3144,9 +3143,11 @@ def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='net
     except Exception: raise RuntimeError("Could not open file: '" + ncFile+"'")
     if nn == 0:
       if keys == 'all':
+        # snapshot as a list: keys is read again on later iterations,
+        # after this file's ncData has already been closed
         keys = list(ncData.variables.keys())
       #make sure the join dimension is actually present!
-      if noFiles > 1: assert joinDimension in list(ncData.dimensions.keys())
+      if noFiles > 1: assert joinDimension in ncData.dimensions.keys()
       #get the axis to join the arrays
       for key in keys:
         joinDimensionNumber[key] = -9999
@@ -3156,7 +3157,7 @@ def ncToDict(ncFilePath,keys='all',joinDimension='time',offsetKeys={},ncLib='net
     #get and join the data
     for key in keys:
       #special sausage for nc files with time offset
-      if key in list(offsetKeys.keys()):
+      if key in offsetKeys.keys():
         data = ncData.variables[key][:] + ncData.variables[offsetKeys[key]].getValue()
       else:
         if ncData.variables[key].shape == ():
