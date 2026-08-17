@@ -1,10 +1,13 @@
 """Tests for pyPamtra.pyPamtraXr.
 
-pyPamtraXr is a pure delegation layer over pyPamtra/to_xarray()/
-from_xarray()/addInstrument() -- these tests focus on the delegation
-being correct (same result as calling the wrapped pam directly), the
-escape hatch (.pam) being the real, same object, and that there is no
-separate "live" state to get out of sync.
+.p/.r/.df/.df_4d/.df_full_spec are real, persistent attributes here (not
+hidden/export-on-demand): .p/.r are xarray.Dataset, .df is a
+pandas.DataFrame indexed by hydro_name, .df_4d/.df_full_spec are
+xarray.Dataset. self.pam is the one place the RT engine actually runs;
+these tests check that translation is correct in both directions
+(pam -> pamxr via from_pam()/refresh(), pamxr -> pam via run()), and that
+self.df stays eagerly in sync with self.pam.df on every hydrometeor call
+(reusing pamDescriptorFile's own tested methods, not a reimplementation).
 """
 
 import numpy as np
@@ -33,12 +36,18 @@ def build_pamxr():
     }
     pamxr.set_profile(**kwargs)
     pamxr.pam.p["hydro_q"][0, 0, 1, 0] = 1e-3
+    pamxr.refresh()
     return pamxr
 
 
-def test_construction_creates_fresh_pam():
+def test_construction_creates_fresh_empty_state():
     pamxr = pyPamtra.pyPamtraXr()
     assert isinstance(pamxr.pam, pyPamtra.pyPamtra)
+    assert len(pamxr.p.data_vars) == 0
+    assert len(pamxr.r.data_vars) == 0
+    assert len(pamxr.df) == 0
+    assert len(pamxr.df_4d.data_vars) == 0
+    assert len(pamxr.df_full_spec.data_vars) == 0
 
 
 def test_construction_wraps_existing_pam():
@@ -47,43 +56,98 @@ def test_construction_wraps_existing_pam():
     assert pamxr.pam is existing
 
 
-def test_add_and_remove_hydrometeor():
+def test_from_pam_bridges_importer_output():
+    reference = build_pamtra()  # built the classic way, like any pyPamtra.importer function would
+    pamxr = pyPamtra.pyPamtraXr.from_pam(reference)
+
+    assert pamxr.pam is reference
+    assert len(pamxr.df) == 2
+    np.testing.assert_allclose(pamxr.p["hgt_lev"].values, reference.p["hgt_lev"])
+
+
+def test_add_hydrometeor_updates_df_and_pam_df():
     pamxr = pyPamtra.pyPamtraXr()
     pamxr.add_hydrometeor(**HYDROMETEOR_KWARGS)
+
+    assert list(pamxr.df.index) == ["rwc_q"]
+    assert pamxr.df.loc["rwc_q", "dist_name"] == "exp"
     assert pamxr.pam.df.nhydro == 1
     assert pamxr.pam.df.data["hydro_name"][0] == "rwc_q"
 
+
+def test_remove_hydrometeor():
+    pamxr = pyPamtra.pyPamtraXr()
+    pamxr.add_hydrometeor(**HYDROMETEOR_KWARGS)
     pamxr.remove_hydrometeor("rwc_q")
+
+    assert len(pamxr.df) == 0
     assert pamxr.pam.df.nhydro == 0
+
+
+def test_add_4d_and_remove_4d():
+    pamxr = build_pamxr()
+
+    arr = np.zeros(pamxr.pam._shape4D)
+    arr[:] = 0.5
+    pamxr.add_4d("a_ms", arr)
+
+    assert "a_ms" in pamxr.df_4d
+    assert "a_ms" not in pamxr.df.columns
+    assert pamxr.df_4d["a_ms"].dims == ("grid_x", "grid_y", "heightbins", "hydrometeor")
+
+    pamxr.remove_4d("a_ms", np.array([-99.0]))
+    assert "a_ms" not in pamxr.df_4d
+    assert "a_ms" in pamxr.df.columns
+
+
+def test_add_full_spectra():
+    pamxr = build_pamxr()
+    pamxr.add_full_spectra()
+
+    assert "d_ds" in pamxr.df_full_spec
+    assert pamxr.df_full_spec["d_ds"].dims == ("grid_x", "grid_y", "heightbins", "hydrometeor", "sizebin")
+    # d_bound_ds has one more bin than the rest: distinct dim, not just distinct size
+    assert pamxr.df_full_spec["d_bound_ds"].dims[-1] == "sizebin_plus1"
 
 
 def test_set_profile_matches_direct_createProfile():
     pamxr = build_pamxr()
     reference = build_pamtra()
-    np.testing.assert_allclose(pamxr.pam.p["hgt_lev"], reference.p["hgt_lev"])
-    np.testing.assert_allclose(pamxr.pam.p["temp_lev"], reference.p["temp_lev"])
+    np.testing.assert_allclose(pamxr.p["hgt_lev"].values, reference.p["hgt_lev"])
+    np.testing.assert_allclose(pamxr.p["temp_lev"].values, reference.p["temp_lev"])
 
 
 def test_set_profile_from_xarray_round_trip():
     pamxr = build_pamxr()
-    ds = pamxr.to_xarray(source="p")
+    ds = pamxr.p
 
     pamxr2 = pyPamtra.pyPamtraXr()
     pamxr2.add_hydrometeor(**HYDROMETEOR_KWARGS)
     pamxr2.set_profile_from_xarray(ds)
 
-    np.testing.assert_allclose(pamxr2.pam.p["hgt_lev"], pamxr.pam.p["hgt_lev"])
-    np.testing.assert_allclose(pamxr2.pam.p["hydro_q"], pamxr.pam.p["hydro_q"])
+    np.testing.assert_allclose(pamxr2.p["hgt_lev"].values, pamxr.p["hgt_lev"].values)
+    np.testing.assert_allclose(pamxr2.p["hydro_q"].values, pamxr.p["hydro_q"].values)
 
 
-def test_run_returns_dataset_and_populates_pam_r():
+def test_run_returns_dataset_and_populates_r():
     pamxr = build_pamxr()
     results = pamxr.run(FREQUENCIES)
 
     assert "tb" in results
     assert "Ze" in results
-    assert "tb" in pamxr.pam.r
+    assert results is pamxr.r
     np.testing.assert_allclose(results["tb"].values, pamxr.pam.r["tb"])
+
+
+def test_run_translates_p_into_pam_before_running():
+    pamxr = build_pamxr()
+    # mutate .p directly (not through set_profile), then run(): pam.p must
+    # reflect this, not whatever pam.p happened to hold before
+    pamxr.p["hydro_q"].values[0, 0, 1, 0] = 9e-3
+
+    pamxr.run(FREQUENCIES)
+
+    np.testing.assert_allclose(pamxr.pam.p["hydro_q"][0, 0, 1, 0], 9e-3)
 
 
 def test_add_instrument_and_instruments_property():
@@ -118,7 +182,28 @@ def test_to_netcdf_can_write_profile_instead(tmp_path):
     assert out_file.stat().st_size > 0
 
 
-def test_escape_hatch_mutation_is_visible_through_pamxr():
+def test_to_netcdf_invalid_source_raises():
+    pamxr = build_pamxr()
+    with pytest.raises(ValueError, match="source must be"):
+        pamxr.to_netcdf("unused.nc", source="bogus")
+
+
+def test_refresh_picks_up_escape_hatch_mutation():
+    pamxr = build_pamxr()
+
+    pamxr.pam.df.addHydrometeor(
+        hydro_name="swc_q", liq_ice=-1, moment_in=3, nbin=30,
+        dist_name="exp_field_t", d_1=0.51e-10, d_2=2.0e-2,
+        scat_name="mie-sphere", vel_size_mod="heymsfield10_particles",
+    )
+    assert len(pamxr.df) == 1  # not yet reflected
+
+    pamxr.refresh()
+    assert len(pamxr.df) == 2
+    assert "swc_q" in pamxr.df.index
+
+
+def test_escape_hatch_is_same_object():
     pamxr = build_pamxr()
     pamxr.pam.p["hydro_q"][0, 0, 0, 0] = 7e-3
     assert pamxr.pam.p["hydro_q"][0, 0, 0, 0] == 7e-3
