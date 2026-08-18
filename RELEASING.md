@@ -109,3 +109,19 @@ worthwhile later, an sdist-only release (no compiled wheel, `pip install`
 compiles from source using the user's local toolchain — same as `pip
 install .` today) would be the low-effort first step, and would also let
 conda-forge's auto-tick bot pick up new versions automatically.
+
+A bundled OpenBLAS specifically has a second problem beyond "bundle it":
+numpy/scipy wheels already bundle their own OpenBLAS, and two dynamically
+linked copies loaded into the same process can collide (duplicate global
+symbols, shared thread-pool state) regardless of whether the versions
+match — matching versions doesn't rename or namespace anything.
+`tools/build_openblas_static.sh` addresses this: it builds OpenBLAS
+single-threaded (`USE_THREAD=0` — PAMTRA only uses it for small per-particle
+T-matrix solves, not large GEMMs, so this doesn't cost real performance) and
+statically, and `meson.build`'s `pyPamtraLib` target link-time-restricts its
+exported symbol table to just `PyInit_pyPamtraLib`, so none of OpenBLAS's
+(or PAMTRA's own) symbols are visible to anything else in the process. This
+is a building block for a future `cibuildwheel` pipeline, not a full one —
+FFTW and netCDF-Fortran still need their own bundling story, most likely via
+`auditwheel`/`delocate` in the conventional way, since there's no equivalent
+namespacing trick available for them.

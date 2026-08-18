@@ -50,6 +50,7 @@ mm_notes.txt
 scripts/
 tools/lapack-3.5.0
 build
+build-deps/
 lib
 doc/build
 *.pyf

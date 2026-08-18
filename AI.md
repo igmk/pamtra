@@ -93,6 +93,14 @@ binary has no such auto-fetch -- it always needs `PAMTRA_DATADIR` set manually.
 External library dependencies for the Fortran build: LAPACK/BLAS (or OpenBLAS), FFTW3, NetCDF
 (Fortran bindings), and a Fortran 90 compiler (gfortran assumed by both build systems).
 
+`tools/build_openblas_static.sh` builds a private, static, single-threaded OpenBLAS with hidden
+symbol visibility and installs its pkg-config file; point `meson.build`'s pkg-config-based
+`dependency('openblas', ...)` lookup at it with `PKG_CONFIG_PATH=<prefix>/lib/pkgconfig pip install
+.` (no meson.build changes needed for discovery). This exists for eventual PyPI wheel builds: a
+normal dynamic OpenBLAS bundled into a wheel would collide at runtime with numpy/scipy's own
+bundled copy in the same process. See [RELEASING.md](RELEASING.md) for the "why not PyPI" context
+this is a building block for.
+
 ## Architecture
 
 ### Fortran core (`src/`)
