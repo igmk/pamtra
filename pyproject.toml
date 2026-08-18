@@ -64,6 +64,27 @@ classifiers = [
 test = ["pytest", "pytest-cov"]
 #doc = ["sphinx>=1.3", "sphinx-rtd-theme"]
 
+[tool.cibuildwheel]
+# Matches the pip-build matrix in .github/workflows/ci.yml.
+build = "cp311-* cp312-* cp313-* cp314-*"
+skip = ["*-musllinux*", "*-win*", "pp*"]
+build-verbosity = 1
+before-all = "bash {project}/tools/cibw_before_all.sh"
+environment = { PAMTRA_DEPS_PREFIX = "/tmp/pamtra-deps", PKG_CONFIG_PATH = "/tmp/pamtra-deps/openblas/lib/pkgconfig:/tmp/pamtra-deps/fftw/lib/pkgconfig:/tmp/pamtra-deps/netcdf/lib/pkgconfig" }
+test-extras = ["test"]
+# {project}/tests isn't part of the installed wheel (meson.build only
+# installs python/pyPamtra and pamtra_data.py) -- {project} points back at
+# the source checkout specifically so the test suite is still reachable.
+# PAMTRA_DATADIR="" opts out of the data auto-fetch (see AI.md), same as
+# ci.yml. No LD_LIBRARY_PATH/DYLD_LIBRARY_PATH needed here unlike the local
+# testing done during development: by this point auditwheel/delocate have
+# already repaired the wheel to load its own bundled copies via a relative
+# rpath, so this doubles as a check that the repair actually worked.
+test-command = "PAMTRA_DATADIR=\"\" pytest {project}/tests -v && pamtra -h"
+
+[tool.cibuildwheel.linux]
+manylinux-x86_64-image = "manylinux_2_28"
+
 [tool.coverage.run]
 source = ["pyPamtra", "pamtra_data"]
 

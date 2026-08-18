@@ -47,7 +47,14 @@ export FCOMMON_OPT="-fvisibility=hidden"
 # under this toolchain (BGEMM_P/BGEMM_Q undeclared in gemm.c). This one is
 # passed on the command line deliberately, to override Makefile.system's
 # own arm64 default of BUILD_BFLOAT16=1.
-make -C "$WORK_DIR/OpenBLAS-${VERSION}" -j"$JOBS" \
+#
+# `libs` target explicitly, not the default `all` (which is `all :: tests`
+# in OpenBLAS's own Makefile): the default target also builds and links
+# OpenBLAS's own BLAS/LAPACK self-test programs (sblat2, dblat2, ...),
+# which we don't need and which failed to link in cibuildwheel's sandboxed
+# macOS environment specifically (worked fine in a plain interactive
+# shell) -- `libs` builds only the library itself.
+make -C "$WORK_DIR/OpenBLAS-${VERSION}" -j"$JOBS" libs \
   USE_THREAD=0 \
   USE_LOCKING=1 \
   NO_SHARED=1 \
