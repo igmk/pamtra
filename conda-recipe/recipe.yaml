@@ -69,6 +69,12 @@ requirements:
     - netcdf-fortran
     - pooch
     - tqdm
+    # Not yet on conda-forge (no conda-forge/meteo_si-feedstock exists) --
+    # this makes the environment unsolvable via `-c conda-forge` alone
+    # until one is submitted. Needed regardless: pyPamtra/meteoSI.py
+    # depends on it, and this recipe's --no-deps pip install means nothing
+    # here gets pulled in transitively from pyproject.toml.
+    - meteo_si
 
 tests:
   # PAMTRA_DATADIR must be set (even to "") before `import pyPamtra` --
