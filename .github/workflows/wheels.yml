@@ -1,0 +1,58 @@
+name: Wheels
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - pyproject.toml
+      - meson.build
+      - 'tools/build_*.sh'
+      - 'tools/cibw_*.sh'
+      - .github/workflows/wheels.yml
+
+concurrency:
+  group: wheels-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # macos-13 = Intel (x86_64), macos-14 = Apple Silicon (arm64) --
+        # spelled out explicitly rather than macos-latest, whose target
+        # architecture has changed before and would silently narrow this
+        # matrix if it did again.
+        os: [ubuntu-latest, macos-13, macos-14]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pypa/cibuildwheel@v4
+
+      - name: Verify a wheel is fully self-contained
+        shell: bash
+        run: |
+          set -euo pipefail
+          wheel=$(ls wheelhouse/*.whl | head -1)
+          workdir=$(mktemp -d)
+          unzip -q "$wheel" -d "$workdir"
+          so=$(find "$workdir" -name 'pyPamtraLib*.so' -o -name 'pyPamtraLib*.pyd' | head -1)
+          echo "Checking $so from $wheel"
+          if [[ "${{ matrix.os }}" == ubuntu-* ]]; then
+            echo "--- exported symbols (should be exactly one: PyInit_pyPamtraLib) ---"
+            nm -D "$so" | awk '$2=="T"'
+            echo "--- linked libs (should show no libopenblas/libfftw3) ---"
+            ldd "$so" | grep -iE "openblas|fftw3" && exit 1 || echo "OK: neither linked"
+          else
+            echo "--- exported symbols (should be exactly one: PyInit_pyPamtraLib) ---"
+            nm -gU "$so" 2>/dev/null
+            echo "--- linked libs (should show no libopenblas/libfftw3) ---"
+            otool -L "$so" | grep -iE "openblas|fftw3" && exit 1 || echo "OK: neither linked"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: wheelhouse/*.whl
