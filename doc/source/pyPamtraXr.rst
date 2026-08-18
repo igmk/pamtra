@@ -85,28 +85,51 @@ creating a fresh one -- most usefully, to reuse any of the existing
     pam = pyPamtra.importer.createUsStandardProfile(pyPamtra.pyPamtra(), hgt_lev=[0.0, 1000.0])
     pamxr = pyPamtra.pyPamtraXr.from_pam(pam)   # pam becomes pamxr.pam, not a copy
 
-Naming the grid dimensions
-********************************
+Naming (and counting) the grid dimensions
+***********************************************
 
-The leading two dimensions of every array are a generic grid index
+The leading dimensions of every array are a generic 2D grid index
 (``grid_x``/``grid_y``) by default, since that's all a plain
-:ref:`pyPamtra` profile is. Pass ``outer_dims`` to relabel them to
-whatever your data actually varies along -- a latitude, a time series, a
-flight track -- on construction::
+:ref:`pyPamtra` profile natively is. ``outer_dims`` is an ordered list
+naming what your data actually varies along instead -- a latitude and
+longitude, a time series, a flight track -- and, unlike a plain
+:ref:`pyPamtra` object, it doesn't have to be exactly 2 names::
 
-    pamxr = pyPamtra.pyPamtraXr(outer_dims={"grid_x": "lat", "grid_y": "lon"})
+    pamxr = pyPamtra.pyPamtraXr(outer_dims=["lat", "lon"])   # 2: a direct rename
+    pamxr = pyPamtra.pyPamtraXr(outer_dims=["scan"])          # 1
+    pamxr = pyPamtra.pyPamtraXr(outer_dims=["time", "lat", "lon"])  # 3+
+
+:ref:`pyPamtra`'s own core is genuinely, always a 2D grid (its Fortran
+layer is set up with exactly ``atmo_ngridx``/``atmo_ngridy``, nothing
+else) -- there's no way around that, and ``pyPamtraXr`` doesn't try to.
+2 names is therefore always a direct, lossless rename. Any other count
+is handled by folding the named axes into ``pyPamtra``'s single grid
+axis (with the second one left at size 1) right before handing off to
+``self.pam``, and splitting it back apart when reading ``.p``/``.r``/
+instrument results back out -- entirely within ``pyPamtraXr``, never
+touching :any:`pyPamtra.core.pyPamtra.to_xarray`/``from_xarray`` (which
+stay genuinely, natively 2D) or the Fortran boundary.
 
 This applies to every ``xarray.Dataset`` the object builds afterwards --
 ``.p``, ``.r``, and any :any:`pyPamtra.instrument.PamtraInstrument`
 results -- not just one call's output. It's stored as ``pamxr.outer_dims``;
 change it directly and call ``refresh()`` to re-label the current state::
 
-    pamxr.outer_dims = {"grid_x": "time"}
+    pamxr.outer_dims = ["time", "grid_y"]
     pamxr.refresh()
 
 Every method that takes its own ``outer_dims`` argument (``run()``,
-``run_parallel()``, ``add_instrument()``) defaults to
-``pamxr.outer_dims`` and accepts a per-call override instead.
+``run_parallel()``, ``add_instrument()``, ``set_profile_from_xarray()``)
+defaults to ``pamxr.outer_dims`` and accepts a per-call override
+instead.
+
+With 3 or more names, ``refresh()`` (and anything built on it) needs to
+know the original sizes to split the flattened grid back apart -- that
+information only exists once a profile has actually been set through
+``set_profile()``/``set_profile_from_xarray()``. Calling ``refresh()``
+before that (e.g. after building a profile directly on ``pamxr.pam``,
+bypassing ``pyPamtraXr`` entirely) raises ``RuntimeError`` rather than
+guessing.
 
 Class reference
 ********************

@@ -209,8 +209,16 @@ def test_escape_hatch_is_same_object():
     assert pamxr.pam.p["hydro_q"][0, 0, 0, 0] == 7e-3
 
 
-def test_outer_dims_relabels_p_and_r():
-    pamxr = build_pamxr(outer_dims={"grid_x": "lat", "grid_y": "lon"})
+def test_outer_dims_rejects_dict():
+    # list(a_dict) silently returns its keys -- reject explicitly rather
+    # than accepting the pre-N-D {"grid_x": "lat", ...} rename dict as a
+    # (wrong) list of names
+    with pytest.raises(TypeError, match="not a dict"):
+        pyPamtra.pyPamtraXr(outer_dims={"grid_x": "lat", "grid_y": "lon"})
+
+
+def test_outer_dims_two_names_relabels_p_and_r():
+    pamxr = build_pamxr(outer_dims=["lat", "lon"])
     assert pamxr.p["hgt_lev"].dims == ("lat", "lon", "heightbins_plus1")
 
     results = pamxr.run(FREQUENCIES)
@@ -220,7 +228,7 @@ def test_outer_dims_relabels_p_and_r():
 
 def test_outer_dims_run_matches_plain_run_numerically():
     plain = build_pamxr()
-    renamed = build_pamxr(outer_dims={"grid_x": "lat", "grid_y": "lon"})
+    renamed = build_pamxr(outer_dims=["lat", "lon"])
 
     results_plain = plain.run(FREQUENCIES)
     results_renamed = renamed.run(FREQUENCIES)
@@ -230,7 +238,7 @@ def test_outer_dims_run_matches_plain_run_numerically():
 
 
 def test_outer_dims_applies_to_instrument_results():
-    pamxr = build_pamxr(outer_dims={"grid_x": "lat", "grid_y": "lon"})
+    pamxr = build_pamxr(outer_dims=["lat", "lon"])
     instrument = pamxr.add_instrument(
         pyPamtra.PamtraInstrument("simple", FREQUENCIES[0], radar_mode="simple")
     )
@@ -241,7 +249,80 @@ def test_changing_outer_dims_and_refresh_relabels_p():
     pamxr = build_pamxr()
     assert pamxr.p["hgt_lev"].dims == ("grid_x", "grid_y", "heightbins_plus1")
 
-    pamxr.outer_dims = {"grid_x": "time"}
+    pamxr.outer_dims = ["time", "grid_y"]
     pamxr.refresh()
 
     assert pamxr.p["hgt_lev"].dims == ("time", "grid_y", "heightbins_plus1")
+
+
+def test_outer_dims_single_name():
+    # 1 outer dim: a stateless rename + squeeze, no reshape needed since
+    # pyPamtra already treats a bare leading axis as ngridx with ngridy=1
+    pamxr = pyPamtra.pyPamtraXr(outer_dims=["scan"])
+    pamxr.add_hydrometeor(**HYDROMETEOR_KWARGS)
+    reference = build_pamtra()
+    pamxr.set_profile(
+        hgt_lev=reference.p["hgt_lev"][:, 0],
+        temp_lev=reference.p["temp_lev"][:, 0],
+        press_lev=reference.p["press_lev"][:, 0],
+        relhum_lev=reference.p["relhum_lev"][:, 0],
+    )
+    assert pamxr.p["hgt_lev"].dims == ("scan", "heightbins_plus1")
+
+    results = pamxr.run(FREQUENCIES)
+    assert results["tb"].dims[0] == "scan"
+    np.testing.assert_allclose(results["tb"].values, pamxr.pam.r["tb"][:, 0])
+
+
+def test_outer_dims_three_names_round_trip():
+    # 3+ outer dims: a real reshape (pyPamtra's own grid is always 2D),
+    # exercising the actual "arbitrary number of dimensions" ask
+    pamxr = pyPamtra.pyPamtraXr(outer_dims=["time", "lat", "lon"])
+    pamxr.add_hydrometeor(**HYDROMETEOR_KWARGS)
+
+    reference = build_pamtra()  # shape (1, 2, nlyr[+1])
+    T, La, Lo = 2, 1, 2
+    def tile(key):
+        base = reference.p[key][0, 0]  # single profile, shape (nlyr[+1],)
+        return np.broadcast_to(base, (T, La, Lo) + base.shape).copy()
+
+    pamxr.set_profile(
+        hgt_lev=tile("hgt_lev"), temp_lev=tile("temp_lev"),
+        press_lev=tile("press_lev"), relhum_lev=tile("relhum_lev"),
+    )
+    assert pamxr.p["hgt_lev"].dims == ("time", "lat", "lon", "heightbins_plus1")
+    assert pamxr.p["hgt_lev"].shape == (T, La, Lo, reference.p["hgt_lev"].shape[-1])
+
+    # give one (time, lat, lon) gridpoint some liquid water, run, and check
+    # that exact gridpoint's result -- confirms the reshape didn't shuffle data
+    pamxr.p["hydro_q"].values[1, 0, 0, 0, 0] = 1e-3
+    results = pamxr.run(FREQUENCIES)
+    assert results["tb"].dims[:3] == ("time", "lat", "lon")
+    assert results["tb"].shape[:3] == (T, La, Lo)
+
+    other_pamxr = pyPamtra.pyPamtraXr()
+    other_pamxr.add_hydrometeor(**HYDROMETEOR_KWARGS)
+    other_pamxr.set_profile(
+        hgt_lev=reference.p["hgt_lev"][0, 0], temp_lev=reference.p["temp_lev"][0, 0],
+        press_lev=reference.p["press_lev"][0, 0], relhum_lev=reference.p["relhum_lev"][0, 0],
+    )
+    other_pamxr.p["hydro_q"].values[0, 0, 0, 0] = 1e-3
+    single_results = other_pamxr.run(FREQUENCIES)
+
+    np.testing.assert_allclose(
+        results["tb"].values[1, 0, 0], single_results["tb"].values[0, 0]
+    )
+
+
+def test_outer_dims_three_names_refresh_without_prior_shape_raises():
+    pamxr = pyPamtra.pyPamtraXr(outer_dims=["time", "lat", "lon"])
+    pamxr.add_hydrometeor(**HYDROMETEOR_KWARGS)
+    # bypass pyPamtraXr entirely: build a profile directly on the escape
+    # hatch, so pyPamtraXr never learns the (time, lat, lon) shape
+    reference = build_pamtra()
+    pamxr.pam.createProfile(
+        hgt_lev=reference.p["hgt_lev"], temp_lev=reference.p["temp_lev"],
+        press_lev=reference.p["press_lev"], relhum_lev=reference.p["relhum_lev"],
+    )
+    with pytest.raises(RuntimeError, match="no profile has been set"):
+        pamxr.refresh()
