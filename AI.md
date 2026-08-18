@@ -116,6 +116,16 @@ own `libnetcdff.so.7` package) and produce corrupted output rather than an error
 wheel doesn't have this problem: `auditwheel`/`delocate` rewrite the built library to load its own
 bundled copy via a relative rpath.
 
+**PyPI wheels drop the standalone `pamtra` CLI executable** (`meson_options.txt`'s `build_cli`
+option, off via `-Dbuild_cli=false` in `[tool.cibuildwheel]`'s `config-settings`) -- it kept
+segfaulting specifically inside cibuildwheel's manylinux container in a way that didn't reproduce
+in any manually-built-and-`auditwheel`-repaired wheel tested outside that container, and the CLI
+isn't the point of a PyPI wheel; `pyPamtraLib` (`import pyPamtra`) needs no netCDF at all (see
+above), so this also means wheel builds skip `tools/build_netcdf_stack.sh` entirely --
+`tools/cibw_before_all.sh` only calls the OpenBLAS/FFTW scripts. `pip install .`/the conda-forge
+recipe are unaffected (`build_cli` defaults to `true`), so the CLI is still available everywhere
+except the PyPI wheel.
+
 ## Architecture
 
 ### Fortran core (`src/`)

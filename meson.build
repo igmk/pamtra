@@ -187,6 +187,19 @@ if not openblasdep.found()
         'on other platforms, make sure its pkg-config file is on PKG_CONFIG_PATH.')
 endif
 
+# Both netCDF-C and netCDF-Fortran below are needed only by the
+# standalone `pamtra` executable further down (write_nc_results.f90) --
+# pyPamtraLib itself never calls netCDF at all, getting its NetCDF I/O
+# purely through the Python netCDF4 package instead. Skip resolving either
+# (and the CLI executable target itself, via disabler() propagation) when
+# build_cli is off, so a wheel build -- which doesn't want the CLI's
+# netCDF-C/netCDF-Fortran/HDF5 dependency chain bundled at all -- doesn't
+# need any of it present or even attempt to find it.
+build_cli = get_option('build_cli')
+netcdfdep = disabler()
+netcdffdep = disabler()
+
+if build_cli
 netcdfdep = dependency('netcdf')
 
 # Best-effort early warning for the same class of problem as the
@@ -275,6 +288,7 @@ if not netcdffdep.found()
         'or `brew install netcdf-fortran`), and either make sure pkg-config itself is installed ' +
         'in the active environment, or export PKG_CONFIG_PATH to include its lib/pkgconfig dir.')
 endif
+endif # build_cli
 
 # List sources
 csources = ['src/scatdb.c']
