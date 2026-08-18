@@ -209,6 +209,24 @@ def test_escape_hatch_is_same_object():
     assert pamxr.pam.p["hydro_q"][0, 0, 0, 0] == 7e-3
 
 
+def test_repr_reflects_state():
+    pamxr = pyPamtra.pyPamtraXr(outer_dims=["lat", "lon"])
+    assert "no hydrometeors" in repr(pamxr)
+    assert "no profile set" in repr(pamxr)
+    assert "no results yet" in repr(pamxr)
+    assert "outer_dims=['lat', 'lon']" in repr(pamxr)
+
+    pamxr.add_hydrometeor(**HYDROMETEOR_KWARGS)
+    assert "1 hydrometeor (rwc_q)" in repr(pamxr)
+
+    reference = build_pamtra()
+    pamxr.set_profile(**{k: reference.p[k] for k in ["hgt_lev", "temp_lev", "press_lev", "relhum_lev"]})
+    assert "no profile set" not in repr(pamxr)
+
+    pamxr.run(FREQUENCIES)
+    assert "results populated" in repr(pamxr)
+
+
 def test_outer_dims_rejects_dict():
     # list(a_dict) silently returns its keys -- reject explicitly rather
     # than accepting the pre-N-D {"grid_x": "lat", ...} rename dict as a

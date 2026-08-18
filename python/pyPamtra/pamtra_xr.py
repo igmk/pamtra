@@ -268,6 +268,23 @@ class pyPamtraXr(object):
     self._outer_shape = None
     self.refresh()
 
+  def __repr__(self):
+    '''Summarizes outer_dims, hydrometeors, profile shape, and whether results are populated.'''
+    names = list(self.df.index)
+    if not names:
+      hydroStr = "no hydrometeors"
+    elif len(names) <= 4:
+      hydroStr = "%i hydrometeor%s (%s)" % (len(names),"" if len(names)==1 else "s",", ".join(names))
+    else:
+      hydroStr = "%i hydrometeors (%s, ...)" % (len(names),", ".join(names[:4]))
+
+    profileStr = "profile %s" % dict(self.p.sizes) if len(self.p.data_vars) else "no profile set"
+    resultsStr = "results populated" if len(self.r.data_vars) else "no results yet"
+
+    return "<%s outer_dims=%r, %s, %s, %s>" % (
+      type(self).__name__,self.outer_dims,hydroStr,profileStr,resultsStr,
+    )
+
   @classmethod
   def from_pam(cls,pam,outer_dims=None):
     '''
