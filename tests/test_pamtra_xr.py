@@ -25,8 +25,8 @@ HYDROMETEOR_KWARGS = dict(
 )
 
 
-def build_pamxr():
-    pamxr = pyPamtra.pyPamtraXr()
+def build_pamxr(outer_dims=None):
+    pamxr = pyPamtra.pyPamtraXr(outer_dims=outer_dims)
     pamxr.add_hydrometeor(**HYDROMETEOR_KWARGS)
 
     reference = build_pamtra()  # legacy pam, only used here to source a valid profile
@@ -207,3 +207,41 @@ def test_escape_hatch_is_same_object():
     pamxr = build_pamxr()
     pamxr.pam.p["hydro_q"][0, 0, 0, 0] = 7e-3
     assert pamxr.pam.p["hydro_q"][0, 0, 0, 0] == 7e-3
+
+
+def test_outer_dims_relabels_p_and_r():
+    pamxr = build_pamxr(outer_dims={"grid_x": "lat", "grid_y": "lon"})
+    assert pamxr.p["hgt_lev"].dims == ("lat", "lon", "heightbins_plus1")
+
+    results = pamxr.run(FREQUENCIES)
+    assert "lat" in results["tb"].dims
+    assert "grid_x" not in results.dims
+
+
+def test_outer_dims_run_matches_plain_run_numerically():
+    plain = build_pamxr()
+    renamed = build_pamxr(outer_dims={"grid_x": "lat", "grid_y": "lon"})
+
+    results_plain = plain.run(FREQUENCIES)
+    results_renamed = renamed.run(FREQUENCIES)
+
+    np.testing.assert_allclose(results_renamed["tb"].values, results_plain["tb"].values)
+    np.testing.assert_allclose(renamed.pam.p["hydro_q"], plain.pam.p["hydro_q"])
+
+
+def test_outer_dims_applies_to_instrument_results():
+    pamxr = build_pamxr(outer_dims={"grid_x": "lat", "grid_y": "lon"})
+    instrument = pamxr.add_instrument(
+        pyPamtra.PamtraInstrument("simple", FREQUENCIES[0], radar_mode="simple")
+    )
+    assert "lat" in instrument.results["Ze"].dims
+
+
+def test_changing_outer_dims_and_refresh_relabels_p():
+    pamxr = build_pamxr()
+    assert pamxr.p["hgt_lev"].dims == ("grid_x", "grid_y", "heightbins_plus1")
+
+    pamxr.outer_dims = {"grid_x": "time"}
+    pamxr.refresh()
+
+    assert pamxr.p["hgt_lev"].dims == ("time", "grid_y", "heightbins_plus1")

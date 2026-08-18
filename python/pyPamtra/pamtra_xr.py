@@ -84,6 +84,13 @@ class pyPamtraXr(object):
   pam : pyPamtra, optional
       Wrap an existing pyPamtra object instead of creating a fresh one
       (see also from_pam(), the named constructor for this).
+  outer_dims : dict, optional
+      Rename map applied to the leading grid dimensions of every
+      Dataset this object builds (.p, .r, and instrument results), e.g.
+      {"grid_x": "lat", "grid_y": "lon"} to label them something more
+      meaningful than the generic grid index -- see
+      pyPamtra.core.pyPamtra.to_xarray. Stored as self.outer_dims;
+      change it directly and call refresh() to re-label existing state.
 
   Attributes
   ----------
@@ -92,6 +99,8 @@ class pyPamtraXr(object):
       The escape hatch for anything not covered by this class's curated
       methods (nmlSet/set tweaks, or any other pyPamtra method), and the
       only place the RT engine actually runs.
+  outer_dims : dict
+      See the outer_dims parameter above.
   p : xarray.Dataset
       The atmospheric profile. See set_profile()/set_profile_from_xarray()
       to populate it with validation, or assign/mutate it directly for
@@ -128,33 +137,36 @@ class pyPamtraXr(object):
   >>> results["tb"]
   '''
 
-  def __init__(self,pam=None):
+  def __init__(self,pam=None,outer_dims=None):
     _require_xarray_pandas()
     self.pam = pam if pam is not None else pyPamtra()
+    self.outer_dims = outer_dims or {}
     self.refresh()
 
   @classmethod
-  def from_pam(cls,pam):
+  def from_pam(cls,pam,outer_dims=None):
     '''
     Build a pyPamtraXr from an existing pyPamtra object -- e.g. one
     built by one of the pyPamtra.importer functions, so the existing
     importers keep working unmodified. pam becomes the new object's
     escape hatch (self.pam), not a copy.
     '''
-    return cls(pam=pam)
+    return cls(pam=pam,outer_dims=outer_dims)
 
   def refresh(self):
     '''
     Resync .p/.r/.df/.df_4d/.df_full_spec from the current state of
-    .pam. Only needed after mutating .pam directly through the escape
-    hatch -- every method on this class keeps them in sync on its own.
+    .pam (using the current self.outer_dims). Only needed after
+    mutating .pam directly through the escape hatch, or after changing
+    self.outer_dims -- every method on this class keeps .p/.r in sync
+    with both on its own otherwise.
 
     Returns
     -------
     self
     '''
-    self.p = self.pam.to_xarray(source="p")
-    self.r = self.pam.to_xarray(source="r")
+    self.p = self.pam.to_xarray(source="p",outer_dims=self.outer_dims)
+    self.r = self.pam.to_xarray(source="r",outer_dims=self.outer_dims)
     self._sync_df()
     return self
 
@@ -219,7 +231,7 @@ class pyPamtraXr(object):
     self.p (and self.pam.p).
     '''
     self.pam.createProfile(**kwargs)
-    self.p = self.pam.to_xarray(source="p")
+    self.p = self.pam.to_xarray(source="p",outer_dims=self.outer_dims)
     return self.p
 
   def set_profile_from_xarray(self,ds,outer_dims=None):
@@ -232,9 +244,18 @@ class pyPamtraXr(object):
 
     To skip validation/defaulting entirely (e.g. ds is already known to
     have every field set), assign self.p = ds directly instead.
+
+    Parameters
+    ----------
+    ds : xarray.Dataset
+    outer_dims : dict, optional
+        How ds's own dimensions relate to the canonical names (undone
+        before handing off to pyPamtra.from_xarray()) -- not the same
+        thing as self.outer_dims, which is how the *resulting* self.p
+        gets labeled once ds has been read in.
     '''
     self.pam.from_xarray(ds,outer_dims=outer_dims)
-    self.p = self.pam.to_xarray(source="p")
+    self.p = self.pam.to_xarray(source="p",outer_dims=self.outer_dims)
     return self.p
 
   # -- running -----------------------------------------------------------
@@ -252,7 +273,8 @@ class pyPamtraXr(object):
     freqs : float or list of float
         Frequencies in GHz.
     outer_dims : dict, optional
-        Passed through to to_xarray() for the results.
+        Overrides self.outer_dims for this call, for both reading self.p
+        back in and labeling the returned results.
     **kwargs
         Passed through to runPamtra() (e.g. checkData=False).
 
@@ -260,7 +282,8 @@ class pyPamtraXr(object):
     -------
     xarray.Dataset
     '''
-    self.pam.from_xarray(self.p)
+    outer_dims = self.outer_dims if outer_dims is None else outer_dims
+    self.pam.from_xarray(self.p,outer_dims=outer_dims)
     self.pam.runPamtra(freqs,**kwargs)
     self.r = self.pam.to_xarray(source="r",outer_dims=outer_dims)
     return self.r
@@ -269,15 +292,17 @@ class pyPamtraXr(object):
     '''
     Run the RT engine across local CPU cores
     (pyPamtra.core.pyPamtra.runParallelPamtra). See run() for how self.p
-    is translated in; the keyword arguments also accept
-    runParallelPamtra's pp_local_workers/pp_deltaF/pp_deltaX/pp_deltaY/timeout.
-    Populates and returns self.r.
+    is translated in and what outer_dims does; the keyword arguments
+    also accept runParallelPamtra's
+    pp_local_workers/pp_deltaF/pp_deltaX/pp_deltaY/timeout. Populates
+    and returns self.r.
 
     Returns
     -------
     xarray.Dataset
     '''
-    self.pam.from_xarray(self.p)
+    outer_dims = self.outer_dims if outer_dims is None else outer_dims
+    self.pam.from_xarray(self.p,outer_dims=outer_dims)
     self.pam.runParallelPamtra(freqs,**kwargs)
     self.r = self.pam.to_xarray(source="r",outer_dims=outer_dims)
     return self.r
@@ -290,9 +315,11 @@ class pyPamtraXr(object):
     pyPamtra.instrument.PamtraInstrument against the current self.p --
     see pyPamtra.core.pyPamtra.addInstrument. Access it afterwards via
     self.instruments[instrument.name]. self.p is translated into
-    self.pam.p first, same as run().
+    self.pam.p first, same as run(); outer_dims defaults to
+    self.outer_dims, same meaning as in run().
     '''
-    self.pam.from_xarray(self.p)
+    outer_dims = self.outer_dims if outer_dims is None else outer_dims
+    self.pam.from_xarray(self.p,outer_dims=outer_dims)
     return self.pam.addInstrument(instrument,run=run,outer_dims=outer_dims)
 
   @property

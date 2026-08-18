@@ -85,6 +85,29 @@ creating a fresh one -- most usefully, to reuse any of the existing
     pam = pyPamtra.importer.createUsStandardProfile(pyPamtra.pyPamtra(), hgt_lev=[0.0, 1000.0])
     pamxr = pyPamtra.pyPamtraXr.from_pam(pam)   # pam becomes pamxr.pam, not a copy
 
+Naming the grid dimensions
+********************************
+
+The leading two dimensions of every array are a generic grid index
+(``grid_x``/``grid_y``) by default, since that's all a plain
+:ref:`pyPamtra` profile is. Pass ``outer_dims`` to relabel them to
+whatever your data actually varies along -- a latitude, a time series, a
+flight track -- on construction::
+
+    pamxr = pyPamtra.pyPamtraXr(outer_dims={"grid_x": "lat", "grid_y": "lon"})
+
+This applies to every ``xarray.Dataset`` the object builds afterwards --
+``.p``, ``.r``, and any :any:`pyPamtra.instrument.PamtraInstrument`
+results -- not just one call's output. It's stored as ``pamxr.outer_dims``;
+change it directly and call ``refresh()`` to re-label the current state::
+
+    pamxr.outer_dims = {"grid_x": "time"}
+    pamxr.refresh()
+
+Every method that takes its own ``outer_dims`` argument (``run()``,
+``run_parallel()``, ``add_instrument()``) defaults to
+``pamxr.outer_dims`` and accepts a per-call override instead.
+
 Class reference
 ********************
 
