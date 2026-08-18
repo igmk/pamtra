@@ -15,7 +15,7 @@ import pytest
 xr = pytest.importorskip("xarray")
 
 import pyPamtra
-from _scenario import build_pamtra, run_scenario
+from _scenario import FREQUENCIES, build_pamtra, run_scenario
 
 P_KEYS_TO_CHECK = [
     "hgt_lev", "temp_lev", "press_lev", "relhum_lev",
@@ -76,6 +76,54 @@ def test_to_xarray_results_after_run():
     assert "Ze" in ds
     assert ds.attrs["pamtraVersion"] == pam.r["pamtraVersion"]
     np.testing.assert_allclose(ds["tb"].values, pam.r["tb"])
+
+
+def test_to_xarray_results_side_keys_get_real_dims_not_synthesized():
+    # self.dimensions only covered Ze/Att_hydro/Att_atmo/tb on the results
+    # side; everything else (angles_deg, emissivity, radar_snr/quality/
+    # moments/slopes/edges/vel, psd_*) fell back to synthesized
+    # key_dim0/key_dim1/... names
+    pam = run_scenario()
+    ds = pam.to_xarray(source="r")
+
+    assert ds["angles_deg"].dims == ("angles",)
+    assert ds["angles_deg"].attrs["units"] == "deg"
+    # emissivity's angle axis is half the length of tb's/angles_deg's --
+    # a genuinely different set, so it must not share their "angles" dim
+    assert ds["emissivity"].dims == ("grid_x", "grid_y", "passive_polarisation", "frequency", "emis_angles")
+    assert ds.sizes["emis_angles"] != ds.sizes["angles"]
+
+
+def test_to_xarray_radar_spectra_has_all_six_dims():
+    # self.dimensions["radar_spectra"] declared only 5 of its 6 actual
+    # dims when radar_mode == "spectrum", so it silently fell back to
+    # synthesized names even when correctly shaped, real data was present
+    pam = build_pamtra()
+    pam.nmlSet["radar_mode"] = "spectrum"
+    pam.runPamtra(FREQUENCIES)
+    ds = pam.to_xarray(source="r")
+
+    assert ds["radar_spectra"].dims == (
+        "grid_x", "grid_y", "heightbins", "frequency", "radar_polarisation", "radar_nfft",
+    )
+    assert ds["radar_vel"].dims == ("frequency", "radar_nfft")
+
+
+def test_to_xarray_save_ssp_and_save_psd_do_not_collide_dim_names():
+    # scatter_matrix/extinct_matrix/emis_vector each reuse the same
+    # "stokes"/"angle" axis size twice (in/out) -- xarray raises if two
+    # axes of one variable share a dim name, so these need genuinely
+    # distinct names, not just correct lengths
+    pam = build_pamtra()
+    pam.nmlSet["save_ssp"] = True
+    pam.nmlSet["save_psd"] = True
+    pam.runPamtra(FREQUENCIES)
+    ds = pam.to_xarray(source="r")  # raises ValueError on a dim-name collision
+
+    assert len(set(ds["scatter_matrix"].dims)) == len(ds["scatter_matrix"].dims)
+    assert len(set(ds["extinct_matrix"].dims)) == len(ds["extinct_matrix"].dims)
+    assert ds["psd_d"].dims == ("grid_x", "grid_y", "heightbins", "hydrometeor", "sizebin")
+    assert ds["psd_d"].attrs["units"] == "m"
 
 
 def test_to_xarray_previously_ungapped_keys_get_real_dims_and_units():

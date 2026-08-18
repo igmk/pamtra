@@ -228,12 +228,44 @@ class pyPamtra(object):
 
     self.dimensions["radar_hgt"] = ["ngridx","ngridy","max_nlyrs"]
     self.dimensions["radar_prop"] = ["ngridx","ngridy","2"]
-    self.dimensions["radar_spectra"] = ["gridx","gridy","lyr","frequency","radar_npol"]
+    self.dimensions["radar_spectra"] = ["gridx","gridy","lyr","frequency","radar_npol","radar_nfft"]
 
     self.dimensions["Ze"] = ["gridx","gridy","lyr","frequency","radar_npol","radar_npeaks"]
     self.dimensions["Att_hydro"] = ["gridx","gridy","lyr","frequency","att_npol"]
     self.dimensions["Att_atmo"] = ["gridx","gridy","lyr","frequency"]
     self.dimensions["tb"] = ["gridx","gridy","outlevels","angles","frequency","passive_npol"]
+    # emissivity's angle axis is self._nangles long, half of tb's (which is
+    # self._nangles*2) -- a genuinely different set, so it cannot share
+    # tb's/angles_deg's "angles" dimension (writeResultsToNetCDF never
+    # actually wrote emissivity out, so there's no existing convention to
+    # match here, just this array's own actual size to not collide with)
+    self.dimensions["emissivity"] = ["gridx","gridy","passive_npol","frequency","emis_angles"]
+    self.dimensions["angles_deg"] = ["angles"]
+
+    self.dimensions["radar_snr"] = ["gridx","gridy","lyr","frequency","radar_npol","radar_npeaks"]
+    self.dimensions["radar_quality"] = ["gridx","gridy","lyr","frequency","radar_npol","radar_npeaks"]
+    self.dimensions["radar_moments"] = ["gridx","gridy","lyr","frequency","radar_npol","radar_npeaks","moment"]
+    self.dimensions["radar_slopes"] = ["gridx","gridy","lyr","frequency","radar_npol","radar_npeaks","edge"]
+    self.dimensions["radar_edges"] = ["gridx","gridy","lyr","frequency","radar_npol","radar_npeaks","edge"]
+    self.dimensions["radar_vel"] = ["frequency","radar_nfft"]
+
+    self.dimensions["psd_area"] = ["gridx","gridy","lyr","hydrometeor","sizebin"]
+    self.dimensions["psd_n"] = ["gridx","gridy","lyr","hydrometeor","sizebin"]
+    self.dimensions["psd_d"] = ["gridx","gridy","lyr","hydrometeor","sizebin"]
+    self.dimensions["psd_mass"] = ["gridx","gridy","lyr","hydrometeor","sizebin"]
+    self.dimensions["psd_bscat"] = ["gridx","gridy","lyr","hydrometeor","sizebin"]
+
+    # save_ssp debug output. Axis semantics beyond lyr/stokes/angle are not
+    # documented anywhere in this codebase; "_in"/"_out" and the trailing
+    # component axes are structural guesses (distinct names chosen mainly
+    # to avoid xarray's duplicate-dimension-name error for the repeated
+    # stokes/angle axes), not a verified physical convention -- check the
+    # Fortran RT4 source before relying on axis order beyond lyr/stokes/angle.
+    self.dimensions["kextatmo"] = ["lyr"]
+    self.dimensions["scatter_matrix"] = ["lyr","stokes_in","angle_in","stokes_out","angle_out","scatter_element"]
+    self.dimensions["extinct_matrix"] = ["lyr","stokes_in","stokes_out","angle","extinct_element"]
+    self.dimensions["emis_vector"] = ["lyr","stokes","angle","emis_element"]
+    self.dimensions["emission_vector"] = self.dimensions["emis_vector"] # older/parallel-path placeholder key
 
     self.dimensions["sfc_type"] = ["ngridx","ngridy"]
     self.dimensions["sfc_model"] = ["ngridx","ngridy"]
@@ -286,6 +318,15 @@ class pyPamtra(object):
     self.units["Att_hydro"] = "dB"
     self.units["Att_atmo"] = "dB"
     self.units["tb"] = "K"
+    self.units["emissivity"] = "-"
+    self.units["angles_deg"] = "deg"
+
+    self.units["radar_snr"] = "dB"
+    self.units["radar_quality"] = "-"
+    self.units["radar_vel"] = "m/s"
+    self.units["radar_spectra"] = "dBz"
+
+    self.units["psd_d"] = "m"
 
     self.units["sfc_type"] = "-"
     self.units["sfc_model"] = "-"
