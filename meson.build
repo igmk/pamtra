@@ -453,7 +453,7 @@ py3.extension_module('pyPamtraLib', # extension module should have the same name
   link_with: fortranobject_lib,
   link_args: pyPamtraLib_link_args,
   link_depends: pyPamtraLib_link_depends,
-  dependencies : [py3_dep, fortranobject_dep, fftw3dep, openblasdep, netcdfdep],
+  dependencies : [py3_dep, fortranobject_dep, fftw3dep, openblasdep],
   subdir: 'pyPamtra/',
   install : true)
 
