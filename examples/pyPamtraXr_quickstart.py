@@ -11,6 +11,8 @@ Needs PAMTRA_DATADIR set (can be empty, e.g. `export PAMTRA_DATADIR=""`)
 and the optional 'xarray' package (`pip install pamtra[xarray]`).
 """
 
+import numpy as np
+
 import pyPamtra
 
 pamxr = pyPamtra.pyPamtraXr()
@@ -81,3 +83,34 @@ print("dopplerRadar spectrum shape:", pamxr.instruments["dopplerRadar"].results[
 pamxr.to_netcdf("pyPamtraXr_quickstart_results.nc")
 print()
 print("wrote pyPamtraXr_quickstart_results.nc")
+
+# --------------------------------------------------------------------
+# outer_dims: name the leading "grid" dimensions instead of the generic
+# default grid_x/grid_y -- here, 3 points along a named "lat" axis (a
+# single name works too: pyPamtra already treats one leading axis as
+# ngridx with ngridy=1). 3+ names also work (e.g. ["time","lat","lon"]),
+# via a real reshape around pyPamtra's own always-2D grid -- see
+# doc/source/pyPamtraXr.rst for how that's reconciled.
+# --------------------------------------------------------------------
+
+pamxr3 = pyPamtra.pyPamtraXr(outer_dims=["lat"])
+pamxr3.add_hydrometeor(
+    hydro_name="cwc_q", liq_ice=1, moment_in=3, nbin=30,
+    dist_name="exp", p_3=8.0e6, d_1=1.0e-5, d_2=6.0e-3,
+    scat_name="mie-sphere", vel_size_mod="khvorostyanov01_drops",
+)
+
+nLat = 3
+surfaceTemp = np.array([280.0, 285.0, 290.0])  # warmer towards the last "lat" point
+pamxr3.set_profile(
+    hgt_lev=np.tile([0.0, 1000.0, 2000.0], (nLat, 1)),
+    temp_lev=surfaceTemp[:, None] - np.array([0.0, 6.5, 13.0]),  # ~ dry adiabatic lapse rate
+    press_lev=np.tile([101300.0, 89000.0, 79000.0], (nLat, 1)),
+    relhum_lev=np.tile([80.0, 70.0, 60.0], (nLat, 1)),
+)
+pamxr3.p["hydro_q"].values[:, 0, 0] = 1e-3  # every "lat" point, lowest layer
+
+results3 = pamxr3.run(35.5)
+print()
+print(repr(pamxr3))
+print("tb per lat point [K]:", results3["tb"].isel(outlevels=0, angles=0, frequency=0, passive_polarisation=0).values)
