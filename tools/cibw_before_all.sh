@@ -21,9 +21,11 @@ if [ "$(uname)" = "Darwin" ]; then
   # a harmless no-op if it's already present.
   brew install gcc
 else
-  # manylinux images are minimal containers with no Fortran compiler and
-  # no zlib headers (only the runtime .so) by default.
-  (yum install -y gcc-gfortran zlib-devel) || (dnf install -y gcc-gfortran zlib-devel)
+  # manylinux images are minimal containers with no Fortran compiler, no
+  # zlib headers (only the runtime .so), and no libxml2-config by default
+  # (netCDF-C's configure wants the latter even with --disable-dap set --
+  # some other feature, not just DAP, depends on it).
+  (yum install -y gcc-gfortran zlib-devel libxml2-devel) || (dnf install -y gcc-gfortran zlib-devel libxml2-devel)
 fi
 
 PREFIX="$PAMTRA_DEPS_PREFIX/openblas" "$ROOT_DIR/tools/build_openblas_static.sh"

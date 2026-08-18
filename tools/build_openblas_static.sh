@@ -48,13 +48,23 @@ export FCOMMON_OPT="-fvisibility=hidden"
 # passed on the command line deliberately, to override Makefile.system's
 # own arm64 default of BUILD_BFLOAT16=1.
 #
-# `libs` target explicitly, not the default `all` (which is `all :: tests`
-# in OpenBLAS's own Makefile): the default target also builds and links
-# OpenBLAS's own BLAS/LAPACK self-test programs (sblat2, dblat2, ...),
-# which we don't need and which failed to link in cibuildwheel's sandboxed
-# macOS environment specifically (worked fine in a plain interactive
-# shell) -- `libs` builds only the library itself.
-make -C "$WORK_DIR/OpenBLAS-${VERSION}" -j"$JOBS" libs \
+# `shared` target explicitly, not the default `all` (which is `all ::
+# tests`) and not `libs` alone. OpenBLAS's own Makefile graph is
+# `tests : shared`, `shared : libs netlib $(RELA)`: `libs` alone only
+# builds the BLAS kernels -- LAPACK (netlib) is a separate prerequisite of
+# `shared`, so a `libs`-only build silently produces an archive missing
+# LAPACK routines entirely (discovered the hard way: pyPamtraLib linked
+# fine without ever calling into LAPACK, but the standalone pamtra
+# executable failed with "Undefined symbols ... _dgetri_"). `shared`
+# itself is safe to use with NO_SHARED=1: the actual .so/.dylib assembly
+# in its recipe is wrapped in `ifneq ($(NO_SHARED), 1)`, so that part is a
+# no-op and only its prerequisites (libs + netlib, i.e. everything the
+# static archive needs) actually build -- without ever reaching `tests`,
+# whose self-test programs (sblat2, dblat2, ...) don't link in
+# cibuildwheel's sandboxed macOS environment (worked in a plain
+# interactive shell, so not something worth chasing further -- we don't
+# need those programs regardless).
+make -C "$WORK_DIR/OpenBLAS-${VERSION}" -j"$JOBS" shared \
   USE_THREAD=0 \
   USE_LOCKING=1 \
   NO_SHARED=1 \
