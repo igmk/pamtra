@@ -12,7 +12,7 @@ requires = [
 ]
 
 [project]
-name = "pyPamtra"
+name = "pamtra"
 license = {file = "LICENSE"}
 version = "1.0.3"
 description = "Python module pyPamtra"
