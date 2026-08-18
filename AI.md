@@ -101,6 +101,21 @@ normal dynamic OpenBLAS bundled into a wheel would collide at runtime with numpy
 bundled copy in the same process. See [RELEASING.md](RELEASING.md) for the "why not PyPI" context
 this is a building block for.
 
+`tools/build_fftw_static.sh` and `tools/build_netcdf_stack.sh` are the same idea for the other two
+dependencies -- static for FFTW (no collision risk like OpenBLAS, just kept static to give
+auditwheel/delocate one less shared object to chase), dynamic for HDF5/netCDF-C/netCDF-Fortran
+(large, complex chain where the standard auditwheel/delocate bundling path is lower-risk than
+statically linking it ourselves; also what netCDF4's and h5py's own PyPI wheels do). Only the
+standalone `pamtra` CLI executable needs netCDF at all -- `pyPamtraLib` (what `import pyPamtra`
+loads) needs no direct netCDF link, since its NetCDF I/O goes through the pure-Python `netCDF4`
+package instead. **Local testing gotcha**: unlike the static builds, these are ordinary dynamic
+libraries installed to a non-standard prefix, so running anything against them locally (not
+through a repaired wheel) needs `LD_LIBRARY_PATH`/`DYLD_LIBRARY_PATH` set to `<prefix>/lib` --
+without it, the loader can silently resolve to a same-SONAME system copy instead (e.g. Debian's
+own `libnetcdff.so.7` package) and produce corrupted output rather than an error. The eventual
+wheel doesn't have this problem: `auditwheel`/`delocate` rewrite the built library to load its own
+bundled copy via a relative rpath.
+
 ## Architecture
 
 ### Fortran core (`src/`)

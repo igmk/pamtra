@@ -221,9 +221,16 @@ if netcdffdep.found()
   # source of truth for where the .mod files actually live.
   netcdff_includedir = netcdffdep.get_variable(pkgconfig: 'includedir', default_value: '')
   if netcdff_includedir != ''
+    # A raw '-I' compile_args string, not include_directories(): the latter
+    # rejects absolute paths that resolve inside the source tree (meson
+    # wants those expressed as relative paths instead), which a
+    # self-built netcdf-fortran can easily hit if its prefix happens to
+    # live under the project checkout (e.g. tools/build_netcdf_stack.sh's
+    # default of <repo>/build-deps/netcdf). compile_args has no such
+    # restriction -- it's passed to the compiler verbatim.
     netcdffdep = declare_dependency(
       dependencies: netcdffdep,
-      include_directories: include_directories(netcdff_includedir),
+      compile_args: ['-I' + netcdff_includedir],
     )
   endif
 endif
