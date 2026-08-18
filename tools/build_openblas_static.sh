@@ -53,7 +53,21 @@ make -C "$WORK_DIR/OpenBLAS-${VERSION}" -j"$JOBS" \
   NO_SHARED=1 \
   BUILD_BFLOAT16=0
 
-make -C "$WORK_DIR/OpenBLAS-${VERSION}" install PREFIX="$PREFIX"
+# OpenBLAS's own build output says it outright: "any flags passed to make
+# during build should also be passed to make install to circumvent any
+# install errors." NO_SHARED=1 is the one that actually matters here --
+# without it, `make install` unconditionally tries to `install` a shared
+# library that was never built and dies with a hard, non-ignorable error on
+# Linux (`install: cannot stat 'libopenblas...so': No such file or
+# directory`, make exits non-zero). macOS's install step hits the same
+# missing-file case but happens to use `cp` there in a make recipe line
+# that's allowed to fail, so this went unnoticed when this script was first
+# written and only tested on macOS.
+make -C "$WORK_DIR/OpenBLAS-${VERSION}" install PREFIX="$PREFIX" \
+  USE_THREAD=0 \
+  USE_LOCKING=1 \
+  NO_SHARED=1 \
+  BUILD_BFLOAT16=0
 
 # `make install` unconditionally creates libopenblas.{dylib,so}(.0) symlinks
 # for the shared library even though NO_SHARED=1 means one was never built,
