@@ -78,6 +78,32 @@ def test_to_xarray_results_after_run():
     np.testing.assert_allclose(ds["tb"].values, pam.r["tb"])
 
 
+def test_to_xarray_previously_ungapped_keys_get_real_dims_and_units():
+    # groundtemp/airturb/hgt/press_lev previously fell back to synthesized
+    # key_dim0/key_dim1/... names because self.dimensions had no entry for
+    # them (or, for press_lev, had one under the wrong key: "p_lev", which
+    # self.p never actually uses)
+    pam = build_pamtra()
+    ds = pam.to_xarray(source="p")
+
+    assert ds["groundtemp"].dims == ("grid_x", "grid_y")
+    assert ds["groundtemp"].attrs["units"] == "K"
+    assert ds["airturb"].dims == ("grid_x", "grid_y", "heightbins")
+    assert ds["hgt"].dims == ("grid_x", "grid_y", "heightbins")
+    assert ds["press_lev"].dims == ("grid_x", "grid_y", "heightbins_plus1")
+    assert ds["press_lev"].attrs["units"] == "Pa"
+
+
+def test_to_xarray_sanitizes_non_identifier_dim_names():
+    # self.dimensions["radar_prop"] declares a literal "2" as its last
+    # dim name, which is not a valid dimension identifier
+    pam = build_pamtra()
+    ds = pam.to_xarray(source="p")
+
+    assert "2" not in ds["radar_prop"].dims
+    assert all(d.isidentifier() for d in ds["radar_prop"].dims)
+
+
 def test_to_xarray_outer_dims_round_trip():
     pam = build_pamtra()
     ds = pam.to_xarray(source="p", outer_dims={"grid_x": "lat", "grid_y": "lon_idx"})

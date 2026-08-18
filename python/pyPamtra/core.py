@@ -212,8 +212,15 @@ class pyPamtra(object):
 
     self.dimensions["hgt_lev"] = ["ngridx","ngridy","max_nlyrs+1"]
     self.dimensions["temp_lev"] = ["ngridx","ngridy","max_nlyrs+1"]
-    self.dimensions["p_lev"] = ["ngridx","ngridy","max_nlyrs+1"]
+    self.dimensions["press_lev"] = ["ngridx","ngridy","max_nlyrs+1"]
     self.dimensions["relhum_lev"] = ["ngridx","ngridy","max_nlyrs+1"]
+
+    self.dimensions["hgt"] = ["ngridx","ngridy","max_nlyrs"]
+    self.dimensions["temp"] = ["ngridx","ngridy","max_nlyrs"]
+    self.dimensions["press"] = ["ngridx","ngridy","max_nlyrs"]
+    self.dimensions["relhum"] = ["ngridx","ngridy","max_nlyrs"]
+    self.dimensions["airturb"] = ["ngridx","ngridy","max_nlyrs"]
+    self.dimensions["groundtemp"] = ["ngridx","ngridy"]
 
     self.dimensions["hydro_q"] = ["ngridx","ngridy","max_nlyrs","nhydro"]
     self.dimensions["hydro_n"] = ["ngridx","ngridy","max_nlyrs","nhydro"]
@@ -259,9 +266,16 @@ class pyPamtra(object):
 
     self.units["hgt_lev"] = "m"
     self.units["temp_lev"] = "K"
-    self.units["p_lev"] = "Pa"
+    self.units["press_lev"] = "Pa"
     self.units["relhum_lev"] = "1"
-    self.units["rdar_prop"] = "dBz"
+    self.units["radar_prop"] = "dBz"
+
+    self.units["hgt"] = "m"
+    self.units["temp"] = "K"
+    self.units["press"] = "Pa"
+    self.units["relhum"] = "1"
+    self.units["airturb"] = "m/s"
+    self.units["groundtemp"] = "K"
 
     self.units["hydro_q"] = "kg/kg"
     self.units["hydro_n"] = "-"
@@ -269,7 +283,7 @@ class pyPamtra(object):
 
     self.units["radar_hgt"] = "m"
     self.units["Ze"] = "dBz"
-    self.units["Att_hydros"] = "dB"
+    self.units["Att_hydro"] = "dB"
     self.units["Att_atmo"] = "dB"
     self.units["tb"] = "K"
 
@@ -2162,9 +2176,12 @@ class pyPamtra(object):
       arr = np.asarray(arr) # strip exotic ndarray subclasses (e.g. np.char.chararray)
 
       dims = self.dimensions.get(key)
-      if dims is None or len(dims) != arr.ndim:
+      if dims is not None and len(dims) == arr.ndim:
+        dims = [_CANONICAL_DIM_NAMES.get(d,d) for d in dims]
+      if dims is None or len(dims) != arr.ndim or not all(d.isidentifier() for d in dims):
+        # missing/length-mismatched self.dimensions entry, or a declared
+        # but non-identifier name (e.g. radar_prop's bare "2")
         dims = ["%s_dim%i" % (key,i) for i in range(arr.ndim)]
-      dims = [_CANONICAL_DIM_NAMES.get(d,d) for d in dims]
       dims = [outer_dims.get(d,d) for d in dims]
 
       attrs = {"units": self.units[key]} if key in self.units else {}
