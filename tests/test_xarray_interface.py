@@ -86,12 +86,31 @@ def test_to_xarray_results_side_keys_get_real_dims_not_synthesized():
     pam = run_scenario()
     ds = pam.to_xarray(source="r")
 
-    assert ds["angles_deg"].dims == ("angles",)
-    assert ds["angles_deg"].attrs["units"] == "deg"
     # emissivity's angle axis is half the length of tb's/angles_deg's --
     # a genuinely different set, so it must not share their "angles" dim
     assert ds["emissivity"].dims == ("grid_x", "grid_y", "passive_polarisation", "frequency", "emis_angles")
     assert ds.sizes["emis_angles"] != ds.sizes["angles"]
+
+
+def test_to_xarray_promotes_angles_deg_and_freqs_to_coordinates():
+    # angles_deg/self.set["freqs"] are the real values the "angles"/
+    # "frequency" dimensions index into -- they should be genuine xarray
+    # coordinates (named to match their dimension), not separately-named
+    # data variables, so .sel(angles=..., frequency=...) works
+    pam = run_scenario()
+    ds = pam.to_xarray(source="r")
+
+    assert "angles_deg" not in ds.data_vars
+    assert "angles" in ds.coords
+    np.testing.assert_allclose(ds.coords["angles"].values, pam.r["angles_deg"])
+
+    assert "frequency" in ds.coords
+    np.testing.assert_allclose(ds.coords["frequency"].values, pam.set["freqs"])
+
+    np.testing.assert_allclose(
+        ds["tb"].sel(angles=180.0, frequency=pam.set["freqs"][0]).values,
+        pam.r["tb"][:, :, :, 0, 0, :],
+    )
 
 
 def test_to_xarray_radar_spectra_has_all_six_dims():

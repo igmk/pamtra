@@ -2228,10 +2228,26 @@ class pyPamtra(object):
       attrs = {"units": self.units[key]} if key in self.units else {}
       data_vars[key] = (dims,arr.copy(),attrs)
 
+    # angles_deg is the actual coordinate for the "angles" dimension (the
+    # real angle in degrees each position along it represents) -- expose
+    # it as such (named to match its dimension, xarray's convention for a
+    # dimension coordinate) instead of a same-shaped, separately-named
+    # data variable, so e.g. tb.sel(angles=180.0) works instead of
+    # needing tb.isel(angles=<index you had to look up yourself>).
+    if "angles_deg" in data_vars and data_vars["angles_deg"][0] == ["angles"]:
+      data_vars["angles"] = data_vars.pop("angles_deg")
+
     ds = xr.Dataset(data_vars)
     for key in ["pamtraVersion","pamtraHash"]:
       if key in data:
         ds.attrs[key] = data[key]
+
+    # self.set["freqs"] (the actual GHz values) never appears in self.p/
+    # self.r itself, so the loop above never sees it -- attach it as the
+    # "frequency" dimension's coordinate the same way, when there is one.
+    if source == "r" and "frequency" in ds.dims and len(self.set.get("freqs",[])) == ds.sizes["frequency"]:
+      ds = ds.assign_coords(frequency=np.asarray(self.set["freqs"]))
+
     return ds
 
   def from_xarray(self,ds,outer_dims=None):

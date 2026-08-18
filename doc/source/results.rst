@@ -87,6 +87,13 @@ dicts::
     ds["tb"]                         # labeled dims, units in .attrs
     ds.to_netcdf("output.nc")        # xarray's own writer
 
+For ``source="r"``, the ``angles``/``frequency`` dimensions get real
+coordinate values (the actual angle in degrees / frequency in GHz),
+not just an integer position, so you can select by physical value
+instead of an index you had to look up separately::
+
+    ds["tb"].sel(angles=180.0, frequency=35.5)
+
 This is an additive, read-only snapshot: it never holds a live view into
 ``pam.p``/``pam.r``, so mutating the returned ``Dataset`` never affects
 the ``pyPamtra`` object, and nothing about ``pam.p``/``pam.r`` themselves
