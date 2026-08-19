@@ -9,6 +9,13 @@ on:
       - 'tools/build_*.sh'
       - 'tools/cibw_*.sh'
       - .github/workflows/wheels.yml
+    tags:
+      # Release tags (see RELEASING.md's `git tag vX.Y.Z`) trigger the real
+      # PyPI publish job below. Safe to combine with `paths:` above even
+      # though a tag push touches none of those files: GitHub doesn't apply
+      # `paths` filtering to tag pushes at all (only to branch pushes), so
+      # this fires unconditionally on any v*-matching tag regardless.
+      - 'v*'
 
 concurrency:
   group: wheels-${{ github.workflow }}-${{ github.ref }}
@@ -68,8 +75,8 @@ jobs:
     # Deliberately not on every packaging-file push (this workflow's other
     # trigger): TestPyPI rejects re-uploading the same version, so that
     # would just fail on the second push after the first successful
-    # publish. Manual dispatch only, until this has been validated as a
-    # dry run and promoted to a real, tag-gated PyPI publish job.
+    # publish. Manual dispatch only -- kept around as an on-demand dry-run
+    # tool independent of publish-pypi below (the real, tag-gated job).
     if: github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     environment:
@@ -87,4 +94,29 @@ jobs:
       - uses: pypa/gh-action-pypi-publish@release/v1
         with:
           repository-url: https://test.pypi.org/legacy/
+          packages-dir: dist
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    # Only on an actual release tag (see RELEASING.md's `git tag vX.Y.Z`) --
+    # never on the workflow's other triggers (workflow_dispatch, packaging-
+    # file pushes), so an ordinary commit or manual dry run can never
+    # accidentally publish a real release.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pamtra
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
           packages-dir: dist
