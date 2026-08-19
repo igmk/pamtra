@@ -3,6 +3,13 @@ name: Wheels
 on:
   workflow_dispatch:
   push:
+    # branches: ['**'] looks redundant with no branches actually excluded,
+    # but it's load-bearing: adding `tags:` below with no `branches:` key
+    # at all silently suppresses ALL branch-push triggering (confirmed by
+    # this exact push not triggering a run), not just narrows it -- this
+    # restores the "any branch, filtered by paths" behavior alongside it.
+    branches:
+      - '**'
     paths:
       - pyproject.toml
       - meson.build
