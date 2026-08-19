@@ -21,11 +21,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # macos-13 = Intel (x86_64), macos-14 = Apple Silicon (arm64) --
-        # spelled out explicitly rather than macos-latest, whose target
-        # architecture has changed before and would silently narrow this
-        # matrix if it did again.
-        os: [ubuntu-latest, macos-13, macos-14]
+        # macos-14 = Apple Silicon (arm64) -- spelled out explicitly rather
+        # than macos-latest, whose target architecture has changed before
+        # and would silently narrow this matrix if it did again.
+        #
+        # No Intel macOS (macos-13): dropped intentionally, not an
+        # oversight -- GitHub's Intel-macOS runner queue is badly backlogged
+        # (one build sat queued for 3+ hours here), consistent with GitHub
+        # winding that pool down as Apple's own Intel Mac lineup ages out.
+        # Revisit if that changes.
+        os: [ubuntu-latest, macos-14]
     steps:
       - uses: actions/checkout@v4
 
