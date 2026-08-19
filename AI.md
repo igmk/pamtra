@@ -182,7 +182,16 @@ both entry points.
   input alongside the atmospheric profile for any RT run.
 - `importer.py` — readers for various external model/profile formats (large file; grep for the
   specific format function rather than reading it all).
-- `meteoSI.py` — meteorological unit conversions/thermodynamics helpers.
+- `meteoSI.py` — meteorological unit conversions/thermodynamics helpers. Most of these now delegate
+  to the standalone [meteo_si](https://github.com/maahn/meteo_si) package (same author, MIT,
+  independently tested) rather than duplicating the formulas locally; only PAMTRA-specific
+  adiabatic-LWC cloud physics (`detect_liq_cloud`, `adiab`, `mod_ad`, `pseudoAdiabLapseRate`,
+  `vaphet`) has no meteo_si equivalent and stays implemented here. One gotcha carried over from
+  that split: `meteoSI.e_sat_gg_water` and `meteo_si.humidity.e_sat_gg_water` share a name but are
+  **different formulas** (Goff-Gratch 1946 vs. WMO CIMO Guide 2008) — PAMTRA's copy aliases
+  `meteo_si.humidity.e_sat_goffgratch_water` specifically, because `src/e_sat_gg_water.f90` (the
+  Fortran core) uses Goff-Gratch and the two need to stay numerically consistent. Don't reuse
+  `meteo_si.humidity.e_sat_gg_water` (the CIMO one) for anything that has to match the Fortran side.
 - `fortranNamelist/` — generic Fortran namelist reader/writer used to parse `*.nml` files
   independent of f2py.
 - `plot.py`, `tools.py` — plotting helpers and misc utilities (e.g. `sftp2Cluster`).

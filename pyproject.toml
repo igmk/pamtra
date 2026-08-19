@@ -30,6 +30,7 @@ dependencies = [
     "numpy>=1.19.5", ## TODO: copied from apexpy, not sure if it is relevant here
     "scipy", # TODO souds like this can also be dropped
     "netCDF4",
+    "meteo_si>=0.2", # pyPamtra/meteoSI.py delegates most of its formulas here
     "matplotlib", # pyPamtra/__init__.py unconditionally imports pyPamtra.plot
     "pooch", # used by pamtra_data.py to fetch/cache PAMTRA_DATADIR contents
     "tqdm", # pooch's fetch() progress bar (default progressbar=True) needs this

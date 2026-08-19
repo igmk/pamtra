@@ -5,38 +5,47 @@
 # (c) Jan Schween 2005 (gnuplot) -> Mario Mech 2009 (python)
 # converted to sSI units
 # vaphet, pseudoAdiabLapseRate, rh2a, moist_rho2rh added by Max Maahn 2011
+# 2026: most formulas here now delegate to the standalone meteo_si package
+# (https://github.com/maahn/meteo_si), which carries the same formulas
+# under independent tests/CI -- see AI.md for which functions still live
+# here only (PAMTRA-specific adiabatic-LWC cloud physics) and why.
 # ----------------------------------------------------------
 #
 from __future__ import division, print_function
-#from math import *
-#import sys
 import numpy as np
-import warnings
+import meteo_si
 try:
   from collections.abc import Iterable
 except ImportError:
   from collections import Iterable
-    
-try:
-    import numexpr as ne
-    neAvail = True
-except:
-    warnings.warn("numexpr not available", Warning)
-    neAvail = False
 
-
-Grav = 9.80665  # m/s^2 der Wert fuer mittlere Breiten
-Rair = 287.04  # J/kg/K
-Rvapor = 461.5  # J/kg/K
-Cp = 1005.0  # J/kg/K specific heat capacity
-Gamma = -Grav/Cp  # =-0.0097..K/m  adiabatic temperature gradient
-Lv = 2.5e6  # J/kg  bei 0C Lv heat of vaporization
-Mwml = 0.622  # dimlos, Molmassenverhaeltnis
-Tnull = -273.15  # degC absolute zero
-Kadiab = Rair/Cp  # dimensionless adiabatic exponenet
-g = 9.80665  # gravitational acceleration
+# Re-exported from meteo_si.constants as the single source of truth --
+# `g` and `missingNumber` have no meteo_si.constants equivalent (the
+# former is just a PAMTRA-local alias of Grav, the latter is a PAMTRA
+# sentinel value, not a physical constant).
+Grav = meteo_si.constants.Grav
+Rair = meteo_si.constants.Rair
+Rvapor = meteo_si.constants.Rvapor
+Cp = meteo_si.constants.Cp
+Gamma = meteo_si.constants.Gamma
+Lv = meteo_si.constants.Lv
+Mwml = meteo_si.constants.Mwml
+Tnull = meteo_si.constants.Tnull
+Kadiab = meteo_si.constants.Kadiab
+g = Grav  # gravitational acceleration
 
 missingNumber = -9999
+
+
+# e_sat_gg_water is, despite the name, the Goff & Gratch (1946) formula --
+# not to be confused with meteo_si.humidity.e_sat_gg_water, which (despite
+# sharing that name) is a *different* formula (WMO CIMO Guide 2008). This
+# alias keeps PAMTRA's own e_sat_gg_water name and Goff-Gratch behavior
+# intact -- consistency with src/e_sat_gg_water.f90 (the Fortran core uses
+# the same formula) is what matters here, not the meteo_si name it
+# happens to share. See meteo_si's AI.md for the same caveat from its
+# side.
+e_sat_gg_water = meteo_si.humidity.e_sat_goffgratch_water
 
 
 def moist_rho_rh(p, T, rh, *qm):
@@ -87,7 +96,7 @@ def moist_rho_q(p, T, q, *qm):
     else:
         qm = 0
 
-    moist_rho_q = p/(Rair*T*(1+(Rvapor/Rair-1)*q-qm))
+    moist_rho_q = meteo_si.density.moist_rho_q(p, T, q, qm)
 
     if np.any(moist_rho_q < 0):
         if np.any(moist_rho_q < -0.001):
@@ -117,7 +126,7 @@ def T_virt_rh(T, rh, p):
     '''
     if np.any(rh > 5):
         raise TypeError("rh must not be in %")
-    return T_virt_q(T, rh2q(rh, T, p))
+    return meteo_si.temperature.T_virt_rh(T, rh, p)
 
 
 def T_virt_q(T, q):
@@ -131,12 +140,12 @@ def T_virt_q(T, q):
     Output:
     T_virt in K
     '''
-    return T + T * (Rvapor/Rair-1) * q
+    return meteo_si.temperature.T_virt_q(T, q)
 
 
 def e2q(e, p):
     '''
-    Calculate the specific humidity from water vapour pressure and air pressure. 
+    Calculate the specific humidity from water vapour pressure and air pressure.
 
     Input:
     e is in Pa
@@ -145,13 +154,12 @@ def e2q(e, p):
     Output
     q in kg/kg
     '''
-    q = Mwml*e/(p-(1-Mwml)*e)
-    return q
+    return meteo_si.humidity.e2q(e, p)
 
 
 def q2e(q, p):
     '''
-    Calculate water vapour pressure from the specific humidity and air pressure. 
+    Calculate water vapour pressure from the specific humidity and air pressure.
 
     Input:
     q in kg/kg
@@ -160,14 +168,13 @@ def q2e(q, p):
     Output
     e is in Pa
     '''
-    e = p/((Mwml/q)+1-Mwml)
-    return e
+    return meteo_si.humidity.q2e(q, p)
 
 
 def rh2q(rh, T, p):
     '''
     Calculate the specific humidity from relative humidity, air temperature,
-    and pressure. 
+    and pressure.
 
     Input:
     T is in K
@@ -177,14 +184,7 @@ def rh2q(rh, T, p):
     Output
     q in kg/kg
     '''
-    if np.any(rh > 5):
-        raise TypeError("rh must not be in %")
-
-    eStar = e_sat_gg_water(T)
-    e = rh*eStar
-    q = e2q(e, p)
-    del e, eStar
-    return q
+    return meteo_si.humidity.rh2q(rh, T, p, e_sat_func=e_sat_gg_water)
 
 
 def rh2a(rh, T):
@@ -195,18 +195,12 @@ def rh2a(rh, T):
     Input T is in K
     rh is in Pa/Pa
     p is in Pa
-    Output 
+    Output
     a in kg/m^3
 
     Source: Kraus: Chapter 8.1.2
     '''
-
-    if np.any(rh > 5):
-        raise TypeError("rh must not be in %")
-
-    e = rh*e_sat_gg_water(T)
-    a = e/(Rvapor*T)
-    return a
+    return meteo_si.humidity.rh2a(rh, T, e_sat_func=e_sat_gg_water)
 
 
 def a2rh(a, T):
@@ -221,10 +215,7 @@ def a2rh(a, T):
 
     Source: Kraus: Chapter 8.1.2
     '''
-
-    e = a*(Rvapor*T)
-    rh = e/e_sat_gg_water(T)
-    return rh
+    return meteo_si.humidity.a2rh(a, T, e_sat_func=e_sat_gg_water)
 
 
 def q2rh(q, T, p):
@@ -239,38 +230,7 @@ def q2rh(q, T, p):
     Output:
     rh is in Pa/Pa
     '''
-
-    if neAvail:
-        e = ne.evaluate("p/(Mwml*((1/q)+(1/(Mwml)-1)))")
-    else:
-        e = p/(Mwml*((1/q)+(1/(Mwml)-1)))
-
-    eStar = e_sat_gg_water(T)
-    rh = e/eStar
-    del e, eStar
-    return rh
-
-
-def e_sat_gg_water(T):
-    '''
-    Calculates the saturation pressure over water after Goff and Gratch (1946).
-    It is the most accurate that you can get for a temperture range from -90°C to +80°C.
-    Source: Smithsonian Tables 1984, after Goff and Gratch 1946
-    http://cires.colorado.edu/~voemel/vp.html
-    http://hurri.kean.edu/~yoh/calculations/satvap/satvap.html
-
-    Input:
-    T in Kelvin.
-    Output:
-    e_sat_gg_water in Pa.
-    '''
-    if neAvail:
-        e_sat_gg_water = ne.evaluate(
-            "100 * 1013.246 * 10**( -7.90298*(373.16/T-1) + 5.02808*log10(373.16/T) - 1.3816e-7*(10**(11.344*(1-T/373.16))-1) + 8.1328e-3 * (10**(-3.49149*(373.16/T-1))-1) )")
-    else:
-        e_sat_gg_water = 100 * 1013.246 * 10**(-7.90298*(373.16/T-1) + 5.02808*np.log10(
-            373.16/T) - 1.3816e-7*(10**(11.344*(1-T/373.16))-1) + 8.1328e-3 * (10**(-3.49149*(373.16/T-1))-1))
-    return e_sat_gg_water
+    return meteo_si.humidity.q2rh(q, T, p, e_sat_func=e_sat_gg_water)
 
 
 def rh_to_iwv(relhum_lev, temp_lev, press_lev, hgt_lev):
@@ -286,17 +246,8 @@ def rh_to_iwv(relhum_lev, temp_lev, press_lev, hgt_lev):
     Output
     iwv in kg/m^2
     '''
-    dz = np.diff(hgt_lev, axis=-1)
-    relhum = (relhum_lev[..., 0:-1] + relhum_lev[..., 1:])/2.
-    temp = (temp_lev[..., 0:-1] + temp_lev[..., 1:])/2.
-
-    xp = -1.*np.log(press_lev[..., 1:]/press_lev[..., 0:-1])/dz
-    press = -1.*press_lev[..., 0:-1]/xp*(exp(-xp*dz)-1.)/dz
-
-    q = meteoSI.rh2q(relhum, temp, press)
-    rho_moist = meteoSI.moist_rho_q(press, temp, q)
-
-    return np.sum(q*rho_moist*dz)
+    return meteo_si.humidity.rh_to_iwv(
+        relhum_lev, temp_lev, press_lev, hgt_lev, e_sat_func=e_sat_gg_water)
 
 
 def detect_liq_cloud(z, t, rh):  # , rh_thres, t_thres):
@@ -365,16 +316,16 @@ def detect_liq_cloud(z, t, rh):  # , rh_thres, t_thres):
 
 def adiab(i, T, P, z):
     """
-    Adiabtic liquid water content assuming pseudoadiabatic lapse rate 
-    throughout the whole cloud layer. Thus the assumed temperature     
-    profile is differnt from the measured one   
+    Adiabtic liquid water content assuming pseudoadiabatic lapse rate
+    throughout the whole cloud layer. Thus the assumed temperature
+    profile is differnt from the measured one
     Input:
     i no of levels
     T is in K
     p is in Pa
     z is in m
     Output:
-    LWC in 
+    LWC in
     translated to Python from adiab.pro by mx.
     """
 
@@ -446,17 +397,17 @@ def mod_ad(T_cloud, p_cloud, z_cloud, fak):
 
 
 def pseudoAdiabLapseRate(T, Ws):
-    """                                                                 
-    Pseudoadiabatic lapse rate                                        
-    Input: T   [K]  thermodynamic temperature                         
-    Ws   [1]  mixing ratio of saturation                       
-    Output: PSEUDO [K/m] pseudoadiabatic lapse rate                   
-    Constants: Grav   [m/s2]     : constant of acceleration           
-        CP  [J/(kg K)]    : specific heat cap. at const. press 
-        Rair  [J/(kg K)]  : gas constant of dry air            
-        Rvapor [J/(kg K)] : gas constant of water vapor        
-    Source: Rogers and Yau, 1989: A Short Course in Cloud Physics     
-    (III.Ed.), Pergamon Press, 293p. Page 32                  
+    """
+    Pseudoadiabatic lapse rate
+    Input: T   [K]  thermodynamic temperature
+    Ws   [1]  mixing ratio of saturation
+    Output: PSEUDO [K/m] pseudoadiabatic lapse rate
+    Constants: Grav   [m/s2]     : constant of acceleration
+        CP  [J/(kg K)]    : specific heat cap. at const. press
+        Rair  [J/(kg K)]  : gas constant of dry air
+        Rvapor [J/(kg K)] : gas constant of water vapor
+    Source: Rogers and Yau, 1989: A Short Course in Cloud Physics
+    (III.Ed.), Pergamon Press, 293p. Page 32
     translated to Python from pseudo1.pro by mx
     """
 
@@ -471,11 +422,11 @@ def pseudoAdiabLapseRate(T, Ws):
 
 def vaphet(T):
     """
-    Compute specific heat of vaporisation                             
-    Input  : T      [K]      thermodynamic temperature                
-    Output : VAPHET [J/kg]   specific heat of vaporisation            
-    Source: Liljequist, G.H. und K. Cehak, 1984: Allgemeine           
-        Meteorologie (III.Ed.). Vieweg, 396p. Page 95      
+    Compute specific heat of vaporisation
+    Input  : T      [K]      thermodynamic temperature
+    Output : VAPHET [J/kg]   specific heat of vaporisation
+    Source: Liljequist, G.H. und K. Cehak, 1984: Allgemeine
+        Meteorologie (III.Ed.). Vieweg, 396p. Page 95
     translated to Python from vaphet.pro by mx
     """
 
@@ -483,101 +434,5 @@ def vaphet(T):
 
     return x
 
-def _Atmosphere(alt):
-    """
-    ! PURPOSE - Compute the properties of the 1976 standard atmosphere to 86 km.
-    ! AUTHOR - Ralph Carmichael, Public Domain Aeronautical Software
-    ! NOTE - If alt > 86, the values returned will not be correct, but they will
-    !   not be too far removed from the correct values for density.
-    !   The reference document does not use the terms pressure and temperature
-    !   above 86 km.
-    translated to Python by M. Maahn
-    """
 
-    REARTH = 6369.0  # radius of the Earth (km)
-    GMR = 34.163195  # hydrostatic constant
-    NTAB = 8  # number of entries in the defining tables
-
-    htab = np.array([0.0, 11.0, 20.0, 32.0, 47.0, 51.0, 71.0, 84.852])
-    ttab = np.array([288.15, 216.65, 216.65, 228.65, 270.65, 270.65, 214.65, 186.946])
-    ptab = np.array(
-        [
-            1.0,
-            2.233611e-1,
-            5.403295e-2,
-            8.5666784e-3,
-            1.0945601e-3,
-            6.6063531e-4,
-            3.9046834e-5,
-            3.68501e-6,
-        ]
-    )
-    gtab = np.array([-6.5, 0.0, 1.0, 2.8, 0.0, -2.8, -2.0, 0.0])
-
-
-
-    h = alt * REARTH / (alt + REARTH)  # convert geometric to geopotential altitude
-
-    i = 1
-    j = NTAB  # setting up for binary search
-    while True:
-        k = (i + j) // 2  # integer division
-        if h < htab[k - 1]:
-            j = k
-        else:
-            i = k
-        if j <= i + 1:
-            break
-    #print(i, j, k)
-
-    tgrad = gtab[i - 1]  # i will be in 1...NTAB-1
-    tbase = ttab[i - 1]
-    deltah = h - htab[i - 1]
-    tlocal = tbase + tgrad * deltah
-    theta = tlocal / ttab[0]  # temperature ratio
-
-    if tgrad == 0.0:  # pressure ratio
-        delta = ptab[i-1] * np.exp(-GMR * deltah / tbase)
-    else:
-        delta = ptab[i-1] * (tbase / tlocal) ** (GMR / tgrad)
-
-    sigma = delta / theta  # density ratio
-    #print(tgrad, tbase, deltah, tlocal, theta, delta, sigma)
-
-    return sigma, delta, theta
-
-
-def usStandard(height):
-    """
-    Compute the US standard atmosphere
-
-    Input  : height      [m]      height as single value or list
-
-    Output : density [kg/m^3]   air density
-            pressure [pa]      air pressure
-            temperature [K]    air temperature
-    source: http://www.pdas.com/programs/atmos.f90
-    """
-
-    # check whether height is float or array:
-    if isinstance(height, Iterable):
-        density = np.ones_like(height, dtype=float)
-        pressure = np.ones_like(height, dtype=float)
-        temperature = np.ones_like(height, dtype=float)
-        for ii, hh in enumerate(height):
-            # Fortran processes only first entry of vector, so make sure it is not a vector
-            assert not isinstance(hh, Iterable)
-            density[ii], pressure[ii], temperature[ii] = (
-                _Atmosphere(hh / 1000.0)
-            )
-    else:
-        density, pressure, temperature = _Atmosphere(
-            height / 1000.0
-        )
-
-    # results of Fortran programm are normed to standard conditions:
-    density = density * 1.2250
-    pressure = pressure * 101325
-    temperature = temperature * 288.15
-
-    return density, pressure, temperature
+usStandard = meteo_si.atmosphere.usStandard
