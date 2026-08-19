@@ -61,3 +61,30 @@ jobs:
         with:
           name: wheels-${{ matrix.os }}
           path: wheelhouse/*.whl
+
+  publish-testpypi:
+    name: Publish to TestPyPI
+    needs: build
+    # Deliberately not on every packaging-file push (this workflow's other
+    # trigger): TestPyPI rejects re-uploading the same version, so that
+    # would just fail on the second push after the first successful
+    # publish. Manual dispatch only, until this has been validated as a
+    # dry run and promoted to a real, tag-gated PyPI publish job.
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/pamtra
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: dist
