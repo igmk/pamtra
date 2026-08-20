@@ -53,7 +53,6 @@ classifiers = [
     "Topic :: Software Development :: Libraries",
     "Topic :: Scientific/Engineering :: Atmospheric Science",
     "Topic :: Utilities",
-    "Operating System :: Microsoft :: Windows",
     "Operating System :: POSIX :: Linux",
     "Operating System :: POSIX",
     "Operating System :: Unix",
