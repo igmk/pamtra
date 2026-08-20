@@ -1,0 +1,2 @@
+option('build_cli', type: 'boolean', value: true,
+  description: 'Build and install the standalone pamtra CLI executable (needs netCDF-Fortran). Off for wheel builds -- see pyproject.toml [tool.cibuildwheel].')

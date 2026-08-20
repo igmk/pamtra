@@ -32,6 +32,15 @@ libnetcdf = "*"
 netcdf-fortran = "*"
 zlib = "*"
 
+# meteo_si isn't on conda-forge (no conda-forge/meteo_si-feedstock exists
+# yet), so it's declared here rather than in [dependencies] above -- pixi
+# natively mixes conda and PyPI dependencies in one environment. The
+# `install` task's `pip install -e .` would resolve it transitively anyway
+# via pyproject.toml, but listing it explicitly matches this file's
+# existing practice of declaring every dependency up front.
+[pypi-dependencies]
+meteo_si = ">=0.2"
+
 [tasks]
 install = "pip install --no-build-isolation -e . -Cbuild-dir=build"
 test = "pytest tests/ -v"

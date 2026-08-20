@@ -1,0 +1,129 @@
+name: Wheels
+
+on:
+  workflow_dispatch:
+  push:
+    # branches: ['**'] looks redundant with no branches actually excluded,
+    # but it's load-bearing: adding `tags:` below with no `branches:` key
+    # at all silently suppresses ALL branch-push triggering (confirmed by
+    # this exact push not triggering a run), not just narrows it -- this
+    # restores the "any branch, filtered by paths" behavior alongside it.
+    branches:
+      - '**'
+    paths:
+      - pyproject.toml
+      - meson.build
+      - 'tools/build_*.sh'
+      - 'tools/cibw_*.sh'
+      - .github/workflows/wheels.yml
+    tags:
+      # Release tags (see RELEASING.md's `git tag vX.Y.Z`) trigger the real
+      # PyPI publish job below. Safe to combine with `paths:` above even
+      # though a tag push touches none of those files: GitHub doesn't apply
+      # `paths` filtering to tag pushes at all (only to branch pushes), so
+      # this fires unconditionally on any v*-matching tag regardless.
+      - 'v*'
+
+concurrency:
+  group: wheels-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    name: build (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # macos-14 = Apple Silicon (arm64) -- spelled out explicitly rather
+        # than macos-latest, whose target architecture has changed before
+        # and would silently narrow this matrix if it did again.
+        #
+        # No Intel macOS (macos-13): dropped intentionally, not an
+        # oversight -- GitHub's Intel-macOS runner queue is badly backlogged
+        # (one build sat queued for 3+ hours here), consistent with GitHub
+        # winding that pool down as Apple's own Intel Mac lineup ages out.
+        # Revisit if that changes.
+        os: [ubuntu-latest, macos-14]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pypa/cibuildwheel@v4.2.0
+
+      - name: Verify a wheel is fully self-contained
+        shell: bash
+        run: |
+          set -euo pipefail
+          wheel=$(ls wheelhouse/*.whl | head -1)
+          workdir=$(mktemp -d)
+          unzip -q "$wheel" -d "$workdir"
+          so=$(find "$workdir" -name 'pyPamtraLib*.so' -o -name 'pyPamtraLib*.pyd' | head -1)
+          echo "Checking $so from $wheel"
+          if [[ "${{ matrix.os }}" == ubuntu-* ]]; then
+            echo "--- exported symbols (should be exactly one: PyInit_pyPamtraLib) ---"
+            nm -D "$so" | awk '$2=="T"'
+            echo "--- linked libs (should show no libopenblas/libfftw3) ---"
+            ldd "$so" | grep -iE "openblas|fftw3" && exit 1 || echo "OK: neither linked"
+          else
+            echo "--- exported symbols (should be exactly one: PyInit_pyPamtraLib) ---"
+            nm -gU "$so" 2>/dev/null
+            echo "--- linked libs (should show no libopenblas/libfftw3) ---"
+            otool -L "$so" | grep -iE "openblas|fftw3" && exit 1 || echo "OK: neither linked"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wheels-${{ matrix.os }}
+          path: wheelhouse/*.whl
+
+  publish-testpypi:
+    name: Publish to TestPyPI
+    needs: build
+    # Deliberately not on every packaging-file push (this workflow's other
+    # trigger): TestPyPI rejects re-uploading the same version, so that
+    # would just fail on the second push after the first successful
+    # publish. Manual dispatch only -- kept around as an on-demand dry-run
+    # tool independent of publish-pypi below (the real, tag-gated job).
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+      url: https://test.pypi.org/p/pamtra
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+          packages-dir: dist
+
+  publish-pypi:
+    name: Publish to PyPI
+    needs: build
+    # Only on an actual release tag (see RELEASING.md's `git tag vX.Y.Z`) --
+    # never on the workflow's other triggers (workflow_dispatch, packaging-
+    # file pushes), so an ordinary commit or manual dry run can never
+    # accidentally publish a real release.
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/p/pamtra
+    permissions:
+      id-token: write
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: wheels-*
+          path: dist
+          merge-multiple: true
+
+      - uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist

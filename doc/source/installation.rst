@@ -29,6 +29,40 @@ binary (:ref:`pamtra`) in one step via `meson-python
    version of GNU Fortran``.
 
 
+pip install (recommended, prebuilt wheels)
+*********************************************
+
+For **Linux (x86_64)** and **macOS (Apple Silicon / arm64) only**::
+
+    pip install pamtra
+
+This installs a self-contained wheel with FFTW and OpenBLAS already bundled
+in -- no system libraries, compiler, or conda/pixi environment needed. It
+does **not** include the standalone ``pamtra`` CLI binary (:ref:`pamtra`),
+which needs netCDF-Fortran (not bundled into the wheel); use one of the
+from-source installs below if you need it.
+
+Not available for **Windows** or **Intel macOS** (``osx-64``) -- no wheels
+are built for either platform. Use conda-forge/pixi below (covers Intel
+macOS) or WSL2 below (Windows) instead.
+
+.. warning::
+   If you previously used the legacy ``make pyinstall`` workflow (from
+   before PAMTRA switched to ``pip``/meson-python), it copied the Python
+   package to ``~/lib/python/pyPamtra`` -- a path with no meaning to pip
+   itself, only useful if manually added to ``PYTHONPATH`` (a common setup
+   on shared/HPC systems without permission to install into the environment
+   directly). If that's still on your ``PYTHONPATH``, it will **shadow** a
+   freshly ``pip install``ed PAMTRA: Python resolves ``import pyPamtra`` to
+   whichever copy comes first on ``sys.path``, and a stale
+   ``PYTHONPATH``-injected directory typically wins over the environment's
+   own site-packages. This silently reintroduces old bugs/missing features
+   with no error to explain why. Fix: remove ``~/lib/python/pyPamtra`` (or
+   the whole ``~/lib/python`` entry from ``PYTHONPATH``, if nothing else
+   still needs it) by hand -- ``pip uninstall`` has no knowledge of it,
+   since ``make pyinstall`` never went through pip in the first place.
+
+
 Get the code
 *************
 
@@ -39,8 +73,8 @@ of the code. Get a copy of the model with::
     cd pamtra
 
 
-conda-forge / pixi (recommended, cross-platform)
-*************************************************
+conda-forge / pixi (cross-platform, needed for Windows/Intel macOS)
+**********************************************************************
 
 The dependencies below (openblas, fftw, netcdf, a matching C/Fortran
 compiler pair) are all available as `conda-forge <https://conda-forge.org/>`_

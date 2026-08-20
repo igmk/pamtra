@@ -1,6 +1,5 @@
 context:
-  name: pamtra
-  version: "1.0.3"
+  version: "1.1.0"
 
 # v1 (rattler-build) recipe. conda-forge/staged-recipes requires this format for
 # new submissions -- the old conda-build v0 meta.yaml format is deprecated for
@@ -13,7 +12,7 @@ context:
 # release process.
 
 package:
-  name: ${{ name|lower }}
+  name: pamtra
   version: ${{ version }}
 
 source:
@@ -23,7 +22,7 @@ source:
 build:
   number: 0
   script:
-    - $PYTHON -m pip install . -vv --no-deps --no-build-isolation
+    - ${{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
   # meson.build's openblas fallback logic prefers an env-local libopenblas
   # (this recipe's own host dependency) over pkg-config or Homebrew, so no
   # extra environment wiring is needed here for that.
@@ -69,6 +68,12 @@ requirements:
     - netcdf-fortran
     - pooch
     - tqdm
+    # Not yet on conda-forge (no conda-forge/meteo_si-feedstock exists) --
+    # this makes the environment unsolvable via `-c conda-forge` alone
+    # until one is submitted. Needed regardless: pyPamtra/meteoSI.py
+    # depends on it, and this recipe's --no-deps pip install means nothing
+    # here gets pulled in transitively from pyproject.toml.
+    - meteo_si
 
 tests:
   # PAMTRA_DATADIR must be set (even to "") before `import pyPamtra` --
