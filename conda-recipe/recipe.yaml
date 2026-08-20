@@ -1,5 +1,5 @@
 context:
-  version: "1.0.3"
+  version: "1.1.0"
 
 # v1 (rattler-build) recipe. conda-forge/staged-recipes requires this format for
 # new submissions -- the old conda-build v0 meta.yaml format is deprecated for
