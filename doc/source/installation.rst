@@ -29,6 +29,24 @@ binary (:ref:`pamtra`) in one step via `meson-python
    version of GNU Fortran``.
 
 
+pip install (prebuilt wheels, quickest)
+*****************************************
+
+For **Linux (x86_64)** and **macOS (Apple Silicon / arm64) only**::
+
+    pip install pamtra
+
+This installs a self-contained wheel with FFTW and OpenBLAS already bundled
+in -- no system libraries, compiler, or conda/pixi environment needed. It
+does **not** include the standalone ``pamtra`` CLI binary (:ref:`pamtra`),
+which needs netCDF-Fortran (not bundled into the wheel); use one of the
+from-source installs below if you need it.
+
+Not available for **Windows** or **Intel macOS** (``osx-64``) -- no wheels
+are built for either platform. Use conda-forge/pixi below (covers Intel
+macOS) or WSL2 below (Windows) instead.
+
+
 Get the code
 *************
 

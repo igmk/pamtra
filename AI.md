@@ -93,6 +93,39 @@ binary has no such auto-fetch -- it always needs `PAMTRA_DATADIR` set manually.
 External library dependencies for the Fortran build: LAPACK/BLAS (or OpenBLAS), FFTW3, NetCDF
 (Fortran bindings), and a Fortran 90 compiler (gfortran assumed by both build systems).
 
+`tools/build_openblas_static.sh` builds a private, static, single-threaded OpenBLAS with hidden
+symbol visibility and installs its pkg-config file; point `meson.build`'s pkg-config-based
+`dependency('openblas', ...)` lookup at it with `PKG_CONFIG_PATH=<prefix>/lib/pkgconfig pip install
+.` (no meson.build changes needed for discovery). This exists for eventual PyPI wheel builds: a
+normal dynamic OpenBLAS bundled into a wheel would collide at runtime with numpy/scipy's own
+bundled copy in the same process. See [RELEASING.md](RELEASING.md) for the "why not PyPI" context
+this is a building block for.
+
+`tools/build_fftw_static.sh` and `tools/build_netcdf_stack.sh` are the same idea for the other two
+dependencies -- static for FFTW (no collision risk like OpenBLAS, just kept static to give
+auditwheel/delocate one less shared object to chase), dynamic for HDF5/netCDF-C/netCDF-Fortran
+(large, complex chain where the standard auditwheel/delocate bundling path is lower-risk than
+statically linking it ourselves; also what netCDF4's and h5py's own PyPI wheels do). Only the
+standalone `pamtra` CLI executable needs netCDF at all -- `pyPamtraLib` (what `import pyPamtra`
+loads) needs no direct netCDF link, since its NetCDF I/O goes through the pure-Python `netCDF4`
+package instead. **Local testing gotcha**: unlike the static builds, these are ordinary dynamic
+libraries installed to a non-standard prefix, so running anything against them locally (not
+through a repaired wheel) needs `LD_LIBRARY_PATH`/`DYLD_LIBRARY_PATH` set to `<prefix>/lib` --
+without it, the loader can silently resolve to a same-SONAME system copy instead (e.g. Debian's
+own `libnetcdff.so.7` package) and produce corrupted output rather than an error. The eventual
+wheel doesn't have this problem: `auditwheel`/`delocate` rewrite the built library to load its own
+bundled copy via a relative rpath.
+
+**PyPI wheels drop the standalone `pamtra` CLI executable** (`meson_options.txt`'s `build_cli`
+option, off via `-Dbuild_cli=false` in `[tool.cibuildwheel]`'s `config-settings`) -- it kept
+segfaulting specifically inside cibuildwheel's manylinux container in a way that didn't reproduce
+in any manually-built-and-`auditwheel`-repaired wheel tested outside that container, and the CLI
+isn't the point of a PyPI wheel; `pyPamtraLib` (`import pyPamtra`) needs no netCDF at all (see
+above), so this also means wheel builds skip `tools/build_netcdf_stack.sh` entirely --
+`tools/cibw_before_all.sh` only calls the OpenBLAS/FFTW scripts. `pip install .`/the conda-forge
+recipe are unaffected (`build_cli` defaults to `true`), so the CLI is still available everywhere
+except the PyPI wheel.
+
 ## Architecture
 
 ### Fortran core (`src/`)

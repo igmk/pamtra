@@ -1,9 +1,8 @@
 # Making a PAMTRA release
 
-This describes how to cut a new PAMTRA version and get it published on
-conda-forge. It's maintainer-facing (parallel to [AI.md](AI.md), which covers
-day-to-day build/test); PyPI publishing is intentionally out of scope (see
-"Why not PyPI" below).
+This describes how to cut a new PAMTRA version and get it published on both
+conda-forge and PyPI. It's maintainer-facing (parallel to [AI.md](AI.md),
+which covers day-to-day build/test).
 
 ## 1. Bump the version number
 
@@ -22,6 +21,14 @@ Use [semantic versioning](https://semver.org/) (`MAJOR.MINOR.PATCH`).
 git tag vX.Y.Z
 git push origin vX.Y.Z
 ```
+
+Pushing the tag alone (before creating any GitHub Release) already triggers
+[wheels.yml](.github/workflows/wheels.yml)'s `publish-pypi` job: it builds
+wheels for every supported platform/Python version and publishes them to
+PyPI via trusted publishing (OIDC, no stored token) — no separate manual
+step. See "PyPI" below for the one-time setup this depends on, and check
+[the Actions tab](https://github.com/igmk/pamtra/actions/workflows/wheels.yml)
+to confirm it went green before moving on.
 
 Then create a GitHub Release from that tag (`gh release create vX.Y.Z` or via
 the GitHub UI) — GitHub's auto-generated source tarball for the tag is what
@@ -96,16 +103,41 @@ release needs a manual PR against `conda-forge/pamtra-feedstock`:
       before merging
 - [ ] After merge, `conda install -c conda-forge pamtra` works in a clean
       environment
+- [ ] `wheels.yml`'s `publish-pypi` job (triggered by the tag push in step 2)
+      is green, and `pip install pamtra` works in a clean environment/venv
+      with no system libraries preinstalled
 
-## Why not PyPI
+## PyPI
 
-PAMTRA links against netCDF (C + Fortran bindings, which pull in HDF5/zlib/
-curl), FFTW, and OpenBLAS. A PyPI wheel can't depend on system packages the
-way a conda package can — those libraries would have to be bundled *inside*
-each wheel (via `cibuildwheel` + `auditwheel`/`delocate`/`delvewheel`), which
-is a second, non-trivial CI pipeline. conda-forge gets this for free because
-conda already manages those dependencies as packages. If PyPI becomes
-worthwhile later, an sdist-only release (no compiled wheel, `pip install`
-compiles from source using the user's local toolchain — same as `pip
-install .` today) would be the low-effort first step, and would also let
-conda-forge's auto-tick bot pick up new versions automatically.
+`pip install pamtra` works via [wheels.yml](.github/workflows/wheels.yml)'s
+`build` + `publish-pypi` jobs (`cibuildwheel`, triggered on `vX.Y.Z` tags).
+No conda/system libraries needed at install time — PAMTRA's own C/Fortran
+dependencies are bundled into the wheel itself:
+
+- **OpenBLAS**: `tools/build_openblas_static.sh` builds it single-threaded
+  (`USE_THREAD=0` — PAMTRA only uses it for small per-particle T-matrix
+  solves, not large GEMMs, so this costs nothing in practice) and statically,
+  and `meson.build`'s `pyPamtraLib` target link-time-restricts its exported
+  symbol table to just `PyInit_pyPamtraLib`. Both matter because numpy/scipy
+  wheels already bundle their own dynamically-linked OpenBLAS, and two
+  copies loaded into the same process can collide (duplicate global symbols,
+  shared thread-pool state) regardless of whether the versions match —
+  matching versions alone doesn't rename or namespace anything.
+- **FFTW**: `tools/build_fftw_static.sh`, static for the same
+  one-less-shared-object reason as OpenBLAS, though it has no collision risk
+  of its own (nothing else commonly bundles it).
+- **netCDF-C/-Fortran/HDF5**: only needed by the standalone `pamtra` CLI
+  executable, not by `pyPamtraLib` (`import pyPamtra` gets its NetCDF I/O
+  through the pure-Python `netCDF4` package instead) — so wheel builds pass
+  `-Dbuild_cli=false` (`meson_options.txt`) and skip this dependency chain
+  entirely rather than bundle it. `tools/build_netcdf_stack.sh` still exists
+  for `pip install .`/conda builds, which build the CLI by default.
+
+**One-time setup this depends on**: a
+[trusted publisher](https://pypi.org/manage/account/publishing/) registered
+on pypi.org for project `pamtra`, GitHub repo `igmk/pamtra`, workflow
+`wheels.yml`, environment `pypi` — no API token stored anywhere. Without
+this, `publish-pypi` fails at the trusted-publishing handshake even though
+the build itself succeeds. A `testpypi`-environment publisher (same setup,
+on test.pypi.org) backs the separate `publish-testpypi` job, a manual
+(`workflow_dispatch`-only) dry-run path independent of tag pushes.

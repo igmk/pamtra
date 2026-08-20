@@ -187,6 +187,19 @@ if not openblasdep.found()
         'on other platforms, make sure its pkg-config file is on PKG_CONFIG_PATH.')
 endif
 
+# Both netCDF-C and netCDF-Fortran below are needed only by the
+# standalone `pamtra` executable further down (write_nc_results.f90) --
+# pyPamtraLib itself never calls netCDF at all, getting its NetCDF I/O
+# purely through the Python netCDF4 package instead. Skip resolving either
+# (and the CLI executable target itself, via disabler() propagation) when
+# build_cli is off, so a wheel build -- which doesn't want the CLI's
+# netCDF-C/netCDF-Fortran/HDF5 dependency chain bundled at all -- doesn't
+# need any of it present or even attempt to find it.
+build_cli = get_option('build_cli')
+netcdfdep = disabler()
+netcdffdep = disabler()
+
+if build_cli
 netcdfdep = dependency('netcdf')
 
 # Best-effort early warning for the same class of problem as the
@@ -221,9 +234,16 @@ if netcdffdep.found()
   # source of truth for where the .mod files actually live.
   netcdff_includedir = netcdffdep.get_variable(pkgconfig: 'includedir', default_value: '')
   if netcdff_includedir != ''
+    # A raw '-I' compile_args string, not include_directories(): the latter
+    # rejects absolute paths that resolve inside the source tree (meson
+    # wants those expressed as relative paths instead), which a
+    # self-built netcdf-fortran can easily hit if its prefix happens to
+    # live under the project checkout (e.g. tools/build_netcdf_stack.sh's
+    # default of <repo>/build-deps/netcdf). compile_args has no such
+    # restriction -- it's passed to the compiler verbatim.
     netcdffdep = declare_dependency(
       dependencies: netcdffdep,
-      include_directories: include_directories(netcdff_includedir),
+      compile_args: ['-I' + netcdff_includedir],
     )
   endif
 endif
@@ -268,6 +288,7 @@ if not netcdffdep.found()
         'or `brew install netcdf-fortran`), and either make sure pkg-config itself is installed ' +
         'in the active environment, or export PKG_CONFIG_PATH to include its lib/pkgconfig dir.')
 endif
+endif # build_cli
 
 # List sources
 csources = ['src/scatdb.c']
@@ -418,6 +439,32 @@ foreach ff : extra_fflags_list
   endif
 endforeach
 
+# Restrict pyPamtraLib's exported dynamic symbol table to just the one
+# symbol CPython's import machinery actually needs (dlopen + dlsym for
+# PyInit_pyPamtraLib). Nothing else in the process ever looks up symbols in
+# this .so by name, so this is safe -- and it matters for OpenBLAS: if
+# another package in the same process (e.g. numpy/scipy) bundles its own
+# copy of OpenBLAS, two same-named global symbols (dgemm_, thread-pool
+# state, ...) loaded into one process can collide. `-fvisibility=hidden`
+# passed to OpenBLAS's own build (see tools/build_openblas_static.sh)
+# handles most of it, but not all: several of its ARM64 kernels are
+# hand-written assembly with their own `.globl` directives, which ignore
+# C-compiler visibility flags entirely and still end up global in
+# libopenblas.a. A link-time whitelist here closes that gap regardless of
+# where a leak comes from.
+pyPamtraLib_link_args = []
+pyPamtraLib_link_depends = []
+if is_mac
+  pyPamtraLib_link_args = ['-Wl,-exported_symbol,_PyInit_pyPamtraLib']
+elif not is_windows
+  pyPamtraLib_map = meson.current_source_dir() / 'src/pyPamtraLib.map'
+  pyPamtraLib_link_args = ['-Wl,--version-script=' + pyPamtraLib_map]
+  pyPamtraLib_link_depends = [pyPamtraLib_map]
+endif
+# Windows is intentionally left alone: PAMTRA has no Windows build to test
+# this against (see RELEASING.md), and MSVC/MinGW handle symbol export via
+# .def files / __declspec, not GNU-ld version scripts or ld64 flags.
+
 # Declare the fortran extension module
 py3.extension_module('pyPamtraLib', # extension module should have the same name ftmatrix as the target of f2py to be linked... at least when build with meson
   [fsources, csources, fortran_pamtra_source, fortranobject_c, versionNumberAuto],
@@ -425,7 +472,9 @@ py3.extension_module('pyPamtraLib', # extension module should have the same name
   fortran_args: extra_fflags,
   include_directories: inc_dirs,
   link_with: fortranobject_lib,
-  dependencies : [py3_dep, fortranobject_dep, fftw3dep, openblasdep, netcdfdep],
+  link_args: pyPamtraLib_link_args,
+  link_depends: pyPamtraLib_link_depends,
+  dependencies : [py3_dep, fortranobject_dep, fftw3dep, openblasdep],
   subdir: 'pyPamtra/',
   install : true)
 
