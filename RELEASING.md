@@ -138,6 +138,4 @@ dependencies are bundled into the wheel itself:
 on pypi.org for project `pamtra`, GitHub repo `igmk/pamtra`, workflow
 `wheels.yml`, environment `pypi` — no API token stored anywhere. Without
 this, `publish-pypi` fails at the trusted-publishing handshake even though
-the build itself succeeds. A `testpypi`-environment publisher (same setup,
-on test.pypi.org) backs the separate `publish-testpypi` job, a manual
-(`workflow_dispatch`-only) dry-run path independent of tag pushes.
+the build itself succeeds.
