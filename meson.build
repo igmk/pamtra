@@ -428,7 +428,7 @@ fortran_pamtra_source = custom_target(
    'interface_module',
    input : [f2py_sources],
    output : ['pyPamtraLib-f2pywrappers2.f90','pyPamtraLibmodule.c'],
-   command : [py3, '-m', 'numpy.f2py', '@INPUT@', '-m', 'pyPamtraLib', '--lower', '--f2cmap', '../src/.f2py_f2cmap'])
+   command : [py3, '-m', 'numpy.f2py', '@INPUT@', '-m', 'pyPamtraLib', '--lower', '--f2cmap', meson.current_source_dir() / 'src/.f2py_f2cmap'])
 
 
 extra_fflags_list = ['-fallow-argument-mismatch', '-fallow-invalid-boz'] # TODO check if these are really needed for modern gfortran
