@@ -3,6 +3,7 @@
 [![Documentation Status](https://readthedocs.org/projects/pamtra/badge/?version=latest)](https://pamtra.readthedocs.io/en/latest/?badge=latest)
 [![CI](https://github.com/igmk/pamtra/actions/workflows/ci.yml/badge.svg)](https://github.com/igmk/pamtra/actions/workflows/ci.yml)
 [![Coverage Status](https://coveralls.io/repos/github/igmk/pamtra/badge.svg?branch=master)](https://coveralls.io/github/igmk/pamtra?branch=master)
+[![PyPI Downloads](https://static.pepy.tech/badge/pamtra)](https://pepy.tech/projects/pamtra)
 
 
 Python/Fortran 90 package to solve the passive and active microwave radiative transfer in a plan parallel horizontally homogeneous atmosphere with hydrometeors
