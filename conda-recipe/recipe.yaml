@@ -17,7 +17,7 @@ package:
 
 source:
   url: https://github.com/igmk/pamtra/archive/refs/tags/v${{ version }}.tar.gz
-  sha256: 81a30557fe7e1ecdb0db7b9d01b30d8e201bbae6f64ac8e3c5e2bceb81ea4c65
+  sha256: 2bc385ade0604452aa51016f8bf45f2e276ec5b22e41f49c3003a61217dd6905
 
 build:
   number: 0
@@ -71,12 +71,10 @@ requirements:
     # them into run: automatically with an appropriate version constraint.
     - pooch
     - tqdm
-    # Not yet on conda-forge (no conda-forge/meteo_si-feedstock exists) --
-    # this makes the environment unsolvable via `-c conda-forge` alone
-    # until one is submitted. Needed regardless: pyPamtra/meteoSI.py
-    # depends on it, and this recipe's --no-deps pip install means nothing
-    # here gets pulled in transitively from pyproject.toml.
-    - meteo_si
+    # This recipe's --no-deps pip install means nothing here gets pulled
+    # in transitively from pyproject.toml -- pyPamtra/meteoSI.py depends
+    # on meteo_si directly, so it needs to be spelled out explicitly.
+    - meteo_si >=0.2
 
 tests:
   # PAMTRA_DATADIR must be set (even to "") before `import pyPamtra` --
