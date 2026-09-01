@@ -16,14 +16,22 @@ Recommended, for Linux (x86_64) and macOS (Apple Silicon / arm64):
 pip install pamtra
 ```
 
+This installs the `pyPamtra` Python package only -- not the standalone
+`pamtra` command-line binary, since bundling its netCDF-Fortran dependency
+into a wheel isn't practical. If you need the CLI binary too, install from
+conda-forge instead (works for Intel macOS as well, though not Windows):
+
+```
+conda install -c conda-forge pamtra
+```
+
 (If you previously used the old `make pyinstall` workflow, see the
 installation docs below for a warning about removing its leftover
 `~/lib/python/pyPamtra` by hand -- it can silently shadow this.)
 
-Not available as a wheel for Windows or Intel macOS -- see
-https://pamtra.readthedocs.io/en/latest/installation.html for those and
-other install options (conda-forge/pixi, building from source, HPC
-clusters).
+See https://pamtra.readthedocs.io/en/latest/installation.html for the full
+picture, including Windows (WSL2) and building from source (HPC clusters,
+editable/dev installs).
 
 ## Mailing list
 

@@ -43,8 +43,8 @@ which needs netCDF-Fortran (not bundled into the wheel); use one of the
 from-source installs below if you need it.
 
 Not available for **Windows** or **Intel macOS** (``osx-64``) -- no wheels
-are built for either platform. Use conda-forge/pixi below (covers Intel
-macOS) or WSL2 below (Windows) instead.
+are built for either platform. Use conda-forge below (covers Intel macOS,
+and includes the CLI binary) or WSL2 below (Windows) instead.
 
 .. warning::
    If you previously used the legacy ``make pyinstall`` workflow (from
@@ -63,6 +63,33 @@ macOS) or WSL2 below (Windows) instead.
    since ``make pyinstall`` never went through pip in the first place.
 
 
+conda-forge (prebuilt, includes the CLI binary)
+*************************************************
+
+For **Linux (x86_64)** and **macOS (both Intel and Apple Silicon)**::
+
+    conda install -c conda-forge pamtra
+
+or, with `mamba <https://mamba.readthedocs.io/>`_::
+
+    mamba install -c conda-forge pamtra
+
+This is a self-contained install like the pip wheel above -- no system
+libraries, compiler, or manually-managed environment needed -- but with one
+important difference: it **does** include the standalone ``pamtra`` CLI
+binary (:ref:`pamtra`). The pip wheel omits it (see the warning above)
+specifically because bundling netCDF-Fortran into a wheel is impractical;
+the conda-forge package doesn't have that constraint, since conda already
+manages netCDF-Fortran (and every other dependency) as a regular package,
+so the recipe just declares it as a dependency and builds the CLI normally
+alongside the ``pyPamtra`` Python extension. In short: pip gives you
+``pyPamtra`` only; conda-forge gives you ``pyPamtra`` *and* the ``pamtra``
+binary.
+
+Not available for **Windows** -- the conda-forge recipe currently skips it,
+since PAMTRA's Fortran code has never been built against MSVC. Use WSL2
+below instead.
+
 Get the code
 *************
 
@@ -73,14 +100,16 @@ of the code. Get a copy of the model with::
     cd pamtra
 
 
-conda-forge / pixi (cross-platform, needed for Windows/Intel macOS)
+conda-forge / pixi, building from source (dev/editable installs)
 **********************************************************************
 
-The dependencies below (openblas, fftw, netcdf, a matching C/Fortran
-compiler pair) are all available as `conda-forge <https://conda-forge.org/>`_
-packages, including working macOS (both Intel and Apple Silicon) builds.
-This avoids needing a system package manager (apt/brew) at all, and is the
-same install path used by PAMTRA's CI.
+If you need an editable/dev install (see below), or want to build on a
+platform the prebuilt conda-forge package doesn't cover, its own
+dependencies (openblas, fftw, netcdf, a matching C/Fortran compiler pair)
+are all available as standalone `conda-forge <https://conda-forge.org/>`_
+packages too, including working macOS (both Intel and Apple Silicon)
+builds. This avoids needing a system package manager (apt/brew) at all, and
+is the same install path used by PAMTRA's CI.
 
 With `conda <https://docs.conda.io/>`_ or `mamba <https://mamba.readthedocs.io/>`_::
 
