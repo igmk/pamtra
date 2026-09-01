@@ -69,9 +69,10 @@ This builds the package and runs its embedded test (the `pyPamtra` import
 check, plus the full `pytest tests/` suite) inside a fresh conda environment
 — a good end-to-end check independent of the pip-based CI.
 
-## 4a. First-ever conda-forge submission (one-time)
+## 4a. First-ever conda-forge submission (one-time, done)
 
-Only needed once, to get PAMTRA onto conda-forge in the first place:
+Already completed — `conda-forge/pamtra-feedstock` exists. Left here for
+reference in case the feedstock ever needs to be recreated from scratch:
 
 1. Fork `conda-forge/staged-recipes`, branch from `main`.
 2. Add the recipe at `recipes/pamtra/recipe.yaml` (their required layout).
@@ -83,24 +84,60 @@ Only needed once, to get PAMTRA onto conda-forge in the first place:
 
 ## 4b. Every subsequent release
 
-Since PAMTRA isn't on PyPI, conda-forge's auto-tick bot (which mostly tracks
-PyPI/CRAN releases) won't reliably notice new GitHub-only tags. So each
-release needs a manual PR against `conda-forge/pamtra-feedstock`:
+Now that PyPI releases are live (see "PyPI" below), conda-forge's autotick
+bot (`regro-cf-autotick-bot`) notices the new PyPI release on its own and
+opens a version-bump PR against `conda-forge/pamtra-feedstock` — no manual
+PR needed to get one started. But the bot only bumps `recipe/recipe.yaml`'s
+`version`/`sha256`/`build.number`; it does **not** diff against whatever
+changed in [conda-recipe/recipe.yaml](conda-recipe/recipe.yaml) since the
+last feedstock sync. Concretely, this bit us going from 1.0.3 to 1.1.0: the
+bot's PR built fine but failed at test time with
+`ModuleNotFoundError: No module named 'meteo_si'`, because `meteo_si`
+had been added as a run dependency in the interim and the bot had no way to
+know that.
 
-1. Clone/update your fork of `pamtra-feedstock`.
-2. Edit `recipe/recipe.yaml`: bump `version`, update `sha256` for the new
-   tarball (same command as step 2 above), reset `build.number` to `0`.
-3. Open a PR against the feedstock; its own CI (linux/osx/win matrix) builds
-   and tests it.
-4. Merge once green — conda-forge publishes the new version automatically.
+1. **Diff `conda-recipe/recipe.yaml` against the bot PR's
+   `recipe/recipe.yaml`.** Apply any dependency added/removed/changed in the
+   former to the latter by hand — this is the step that's easy to skip, and
+   the failure mode (an import error, or an unsolvable environment) doesn't
+   point back at "the recipe is out of sync" on its own.
+2. Push the fix straight to the bot's PR branch — maintainers listed in
+   `extra.recipe-maintainers` have push access to
+   `regro-cf-autotick-bot/pamtra-feedstock`, same as any fork you have
+   commit rights on:
+   ```bash
+   git clone --branch <bot-branch-name> https://github.com/regro-cf-autotick-bot/pamtra-feedstock.git
+   cd pamtra-feedstock
+   # edit recipe/recipe.yaml to match conda-recipe/recipe.yaml
+   git commit -am "..."
+   git push origin <bot-branch-name>
+   ```
+3. Once the feedstock's own CI (linux-64/osx-64/win-64) is green, merge —
+   conda-forge publishes the new version automatically.
+
+If no bot PR shows up within a few days of the PyPI release, fall back to
+opening one manually: clone/update your fork of `pamtra-feedstock`, apply
+the same `recipe/recipe.yaml` edits, and open the PR yourself.
+
+Separately, conda-forge sometimes opens **migration PRs** (e.g. a new
+Python version) on their own bot branch, independent of version bumps —
+these only touch `.ci_support/*.yaml`/`.azure-pipelines/*.yml`, not
+`recipe.yaml`. If one is open when a version-bump PR merges, it'll still be
+testing the old version; merge `main` into the migration PR's branch (same
+clone-push pattern as above, plus `git remote add upstream
+https://github.com/conda-forge/pamtra-feedstock.git && git fetch upstream
+main && git merge upstream/main`) to pick up the bump before merging it —
+the two touch disjoint files, so this is conflict-free in practice.
 
 ## Verification checklist
 
 - [ ] `rattler-build build --recipe conda-recipe/recipe.yaml -c conda-forge`
       succeeds locally against the real tagged tarball (not the local `path:`
       source used for day-to-day recipe edits)
-- [ ] The feedstock PR's own CI (linux-64/osx-64/osx-arm64/win-64) is green
-      before merging
+- [ ] `conda-recipe/recipe.yaml` and the feedstock PR's `recipe/recipe.yaml`
+      actually match (see 4b — the bot doesn't sync dependency changes)
+- [ ] The feedstock PR's own CI (linux-64/osx-64/win-64) is green before
+      merging
 - [ ] After merge, `conda install -c conda-forge pamtra` works in a clean
       environment
 - [ ] `wheels.yml`'s `publish-pypi` job (triggered by the tag push in step 2)
